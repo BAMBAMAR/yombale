@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import {
   FileText,
   Download,
@@ -368,27 +369,48 @@ export default function MesLocationCard({
                         {isEnRetard ? 'Loyer Impayé' : "En attente d'encaissement"}
                       </span>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => onPayLoyer(ech.id)}
-                        disabled={payingId === ech.id}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          padding: '6px 12px',
-                          borderRadius: 8,
-                          background: '#1D4ED8',
-                          color: '#ffffff',
-                          border: 'none',
-                          fontSize: 11.5,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <CreditCard size={13} />
-                        <span>{payingId === ech.id ? 'Paiement en cours...' : 'Régler par Wave'}</span>
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          type="button"
+                          onClick={() => onPayLoyer(ech.id)}
+                          disabled={payingId === ech.id}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                            background: '#1D4ED8',
+                            color: '#ffffff',
+                            border: 'none',
+                            fontSize: 11.5,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <CreditCard size={13} />
+                          <span>{payingId === ech.id ? 'Redirection Wave...' : 'Payer par Wave'}</span>
+                        </button>
+                        <Link
+                          href={`/payer-loyer/${ech.id}`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '6px 10px',
+                            borderRadius: 8,
+                            background: '#F1F5F9',
+                            color: 'var(--navy, #1C2B4A)',
+                            border: '1px solid #CBD5E1',
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                          }}
+                          title="Plus d'options de paiement (Orange Money, virement...)"
+                        >
+                          <span>Options</span>
+                        </Link>
+                      </div>
                     )}
                   </div>
                 </div>

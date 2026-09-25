@@ -55,9 +55,20 @@ export default function MesLocationsClient() {
       })
       const data = await res.json()
       if (data.success) {
-        setPaySuccessMsg('Règlement validé avec succès ! Votre quittance officielle certifiée a été émise.')
+        if (data.wave_url) {
+          // Redirection immédiate vers le checkout sécurisé Wave
+          window.location.href = data.wave_url
+          return
+        }
+        if (data.en_attente_validation) {
+          setPaySuccessMsg('Déclaration de règlement transmise à l\'agence pour confirmation comptable.')
+        } else {
+          setPaySuccessMsg('Règlement validé avec succès ! Votre quittance officielle certifiée a été émise.')
+        }
         await chargerLocations()
-        setTimeout(() => setPaySuccessMsg(null), 5000)
+        setTimeout(() => setPaySuccessMsg(null), 6000)
+      } else {
+        alert(data.error || 'Erreur lors de l\'initialisation du paiement Wave')
       }
     } catch (err) {
       console.error('[PayerLoyerErr]', err)

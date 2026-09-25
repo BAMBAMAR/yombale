@@ -153,6 +153,42 @@ export default function ConnexionForm() {
 
   return (
     <div>
+      {/* ── Accès direct Locataire sans compte requis ── */}
+      <div
+        style={{
+          background: '#F0FDF4',
+          border: '1px solid #BBF7D0',
+          borderRadius: 12,
+          padding: '10px 14px',
+          marginBottom: 18,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+          flexWrap: 'wrap'
+        }}
+      >
+        <div style={{ fontSize: 12.5, color: '#166534', fontWeight: 600 }}>
+          Vous êtes <strong>locataire</strong> ? Consultez vos baux et payez sans compte.
+        </div>
+        <Link
+          href="/payer-loyer"
+          style={{
+            fontSize: 12,
+            fontWeight: 800,
+            color: 'var(--price, #0A5C36)',
+            background: '#ffffff',
+            padding: '5px 12px',
+            borderRadius: 8,
+            textDecoration: 'none',
+            border: '1px solid #86EFAC',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          }}
+        >
+          Portail Locataire &rarr;
+        </Link>
+      </div>
+
       {/* ── Sélecteur de méthode WhatsApp / Email ultra visible & engageant ── */}
       <div style={{ marginBottom: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>

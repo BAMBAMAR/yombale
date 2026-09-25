@@ -476,16 +476,24 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
         [cleanPhone, withPlus, raw9Digits]
       );
       if (!rows.length) {
-        return res.status(404).json({
-          error: 'Aucun compte associé à ce numéro WhatsApp. Veuillez d\'abord vous inscrire.',
-          code: 'ACCOUNT_NOT_FOUND',
-          telephone: cleanPhone,
-        });
-      }
-      if (rows[0].suspendu) {
+        // Vérification si ce numéro correspond à un contact locataire/propriétaire enregistré par une agence
+        const short9 = raw9Digits.length >= 9 ? raw9Digits.slice(-9) : raw9Digits;
+        const { rows: contactRows } = await pool.query(
+          `SELECT id FROM contacts_immo 
+           WHERE RIGHT(REGEXP_REPLACE(COALESCE(telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+              OR RIGHT(REGEXP_REPLACE(COALESCE(whatsapp, ''), '[^0-9]', '', 'g'), 9) = $1 LIMIT 1`,
+          [short9]
+        );
+        if (!contactRows.length) {
+          return res.status(404).json({
+            error: 'Aucun compte associé à ce numéro WhatsApp. Veuillez d\'abord vous inscrire.',
+            code: 'ACCOUNT_NOT_FOUND',
+            telephone: cleanPhone,
+          });
+        }
+      } else if (rows[0].suspendu) {
         return res.status(403).json({ error: 'Ce compte est suspendu.' });
-      }
-      if (rows[0].supprime_le) {
+      } else if (rows[0].supprime_le) {
         return res.status(403).json({ error: 'Ce compte est en cours de suppression.' });
       }
     } else if (type === 'register') {
@@ -572,9 +580,36 @@ router.post('/whatsapp-otp-login', limiterAuth, async (req, res) => {
       [cleanPhone, withPlus, raw9Digits]
     );
     
-    if (!rows.length) return res.status(404).json({ error: 'Aucun compte associé à ce numéro' });
+    let user = rows[0];
     
-    const user = rows[0];
+    if (!user) {
+      // Auto-provisioning sécurisé pour un locataire/bailleur reconnu en base contacts_immo
+      const short9 = raw9Digits.length >= 9 ? raw9Digits.slice(-9) : raw9Digits;
+      const { rows: contactRows } = await pool.query(
+        `SELECT id, nom, prenom, email, telephone FROM contacts_immo 
+         WHERE RIGHT(REGEXP_REPLACE(COALESCE(telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+            OR RIGHT(REGEXP_REPLACE(COALESCE(whatsapp, ''), '[^0-9]', '', 'g'), 9) = $1 LIMIT 1`,
+        [short9]
+      );
+      if (!contactRows.length) {
+        return res.status(404).json({ error: 'Aucun compte associé à ce numéro' });
+      }
+      const c = contactRows[0];
+      const userNom = [c.prenom, c.nom].filter(Boolean).join(' ') || 'Locataire Nopalou';
+      const dummyEmail = c.email && !c.email.includes('example.com') ? c.email : `${short9}@whatsapp.nopalou.com`;
+      const randomPassword = crypto.randomBytes(16).toString('hex');
+      const hash = await bcrypt.hash(randomPassword, 12);
+      const insertUser = await pool.query(
+        `INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie)
+         VALUES ($1, $2, $3, $4, true)
+         ON CONFLICT (telephone) DO UPDATE SET nom = EXCLUDED.nom
+         RETURNING id, nom, email, telephone`,
+        [userNom, dummyEmail, hash, cleanPhone]
+      );
+      user = insertUser.rows[0];
+      await pool.query(`UPDATE contacts_immo SET utilisateur_id = $1 WHERE id = $2`, [user.id, c.id]);
+    }
+    
     if (user.suspendu) return res.status(403).json({ error: 'Compte suspendu' });
     if (user.supprime_le) return res.status(403).json({ error: 'Compte en cours de suppression' });
     

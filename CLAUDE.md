@@ -23,6 +23,56 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Portail Locataire Public par Téléphone, Téléchargement Contrat sans Compte & Rapprochement Automatique (25 septembre 2026)** ⚡🛡️🚀✅ :
+  * **🎯 Problématique Résolue** :
+    - Les locataires qui n'avaient pas créé de compte Nopalou recevaient des notifications les redirigeant vers `/compte?tab=locations`, ce qui les bloquait avec une redirection forcée vers la page de connexion (`/connexion`) leur demandant de créer un compte avec email et mot de passe.
+    - Impossibilité pour un locataire sans compte de télécharger son **contrat de bail officiel**, de vérifier la liste de ses échéances, ou de payer son loyer sans disposer de l'identifiant UUID exact de l'échéance.
+  * **🛠️ Solutions & Fonctionnalités Implémentées** :
+    1. **Portail Public Locataire par Numéro de Téléphone (`/payer-loyer`)** :
+       - Enrichissement de la page `/payer-loyer` avec le nouveau composant interactif `PortailLocataireClient.tsx` et `BailLocataireCard.tsx`.
+       - Recherche universelle par **numéro de téléphone** (ex: `77 720 20 86` ou `78 169 03 79`) ou par référence d'échéance.
+       - Prise en charge automatique du paramètre URL `?tel=...` (ex: lien direct depuis WhatsApp).
+       - Affichage de tous les baux rattachés : fiche du logement, agence mandataire avec contacts directs (téléphone, WhatsApp), loyer, charges.
+       - **Bouton direct « Contrat de bail (PDF) »** permettant de télécharger le document officiel conforme COCC sans avoir besoin de compte.
+       - Liste complète des échéances : bouton **« Payer par Wave »** direct pour les loyers en attente et bouton **« Quittance PDF »** pour les loyers acquittés.
+    2. **Nouveaux Endpoints Backend Publics Sécurisés (`locatif-immo.js`)** :
+       - `GET /api/locatif-immo/public/locataire-lookup?tel=...` : Recherche de tous les baux et échéances rattachés à un numéro de téléphone avec normalisation stricte des 9 derniers chiffres.
+       - `GET /api/locatif-immo/public/echeance/:echeanceId/bail.pdf` : Téléchargement du contrat de bail officiel directement depuis l'échéance reçue par le locataire.
+       - `GET /api/locatif-immo/public/bail/:bailId.pdf?tel=...` : Téléchargement direct du contrat de bail sécurisé par le numéro de téléphone ou jeton.
+       - Enrichissement de `GET /api/locatif-immo/public/echeance/:echeanceId` pour retourner les métadonnées du bail (`bail_id`, `bail_pdf_url`, `conditions`, `caution`, `jour_echeance`).
+    3. **Page de Paiement Dédiée Échéance (`/payer-loyer/[echeanceId]`)** :
+       - Intégration du composant `PayerLoyerContratCard.tsx` permettant au locataire de télécharger son contrat avant ou après paiement.
+       - Modularisation avec `PayerLoyerSuccesCard.tsx` maintenant le fichier sous la barre des 450 lignes.
+       - Raccourci direct vers le portail global par téléphone.
+    4. **Notification WhatsApp Nouveau Bail Sans Friction (`immo-whatsapp-notifications.js`)** :
+       - Remplacement du lien vers `/compte` par le lien direct du portail locataire : `${SITE_URL}/payer-loyer?tel=${cleanPh}` et lien direct de téléchargement PDF du contrat.
+    5. **Auto-Provisioning & Connexion OTP WhatsApp Transparente (`auth.js` & `ConnexionForm.tsx`)** :
+       - Dans `POST /api/auth/whatsapp-otp-send`, reconnaissance immédiate des locataires enregistrés dans `contacts_immo` sans renvoyer d'erreur `ACCOUNT_NOT_FOUND`.
+       - Dans `POST /api/auth/whatsapp-otp-login`, création automatique à la volée du compte utilisateur (`utilisateurs`) et association transparente (`contacts_immo.utilisateur_id`), permettant une connexion WhatsApp 1-clic sans mot de passe.
+       - Bandeau d'accès direct au portail locataire sur la page de connexion pour ceux qui ne souhaitent pas se connecter.
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur.
+    - `npm run lint:slop` : 0 composant monolithique, 100% conforme design system Nopalou.
+  * **🎯 Analyse des Logs & Problème de Paiement** :
+    - **Logs Wave Checkout** : L'API Wave Checkout (`https://api.wave.com/v1/checkout/sessions`) est pleinement fonctionnelle sur le serveur de production Render (`74.220.50.216`). En local, Wave renvoie un statut 403 `ip-not-allowed` si l'IP n'est pas autorisée dans le portail Wave Business.
+    - **Blocage constaté dans "Mon Compte"** : Lorsqu'un locataire cliquait sur "Régler par Wave", le backend initialisait avec succès la session Wave et renvoyait `{ success: true, en_ligne: true, wave_url: 'https://pay.wave.com/...' }`. Cependant, le code frontend `MesLocationsClient.tsx` et `PayerLoyerClient.tsx` ignorait `data.wave_url`, affichait un message de confirmation fictif sans rediriger l'utilisateur vers Wave, puis rechargeait la page avec le loyer toujours impayé.
+    - **Correction** : Redirection automatique et instantanée vers `data.wave_url` (`window.location.href = data.wave_url`) permettant à l'utilisateur de valider le prélèvement sur son application Wave. Ajout d'un lien « Options » ouvrant le portail complet `/payer-loyer/:echeanceId` pour les paiements alternatifs (Orange Money, virement).
+  * **🛠️ Personnalisation & Modification du Contrat de Bail par l'Agence** :
+    1. **Impression des Clauses Personnalisées dans le Contrat PDF (COCC)** :
+       - Intégration de l'**Article 6 - Conditions Particulières et Clauses Spéciales** dans le moteur de génération PDF `genererPdfContratBailStream`.
+       - Les conditions personnalisées saisies par l'agence (ex: animaux autorisés, interdiction de sous-location, parking n° 12, remise des clés) s'impriment désormais textuellement sur le contrat officiel de bail téléchargeable par le locataire et le propriétaire.
+       - Ajout d'une pagination intelligente pour garantir que les blocs de signatures ne débordent jamais du bas de page.
+    2. **Nouvel Endpoint de Modification de Bail (`PUT /api/locatif-immo/agence/:slugOrId/baux/:bailId`)** :
+       - Permet à l'agence de mettre à jour le loyer, les provisions sur charges, le dépôt de garantie, le jour d'échéance mensuel, la durée, les conditions particulières et l'URL du bail signé numérisé.
+       - Journalisation automatique dans les logs d'audit d'agence (`enregistrerAgenceAuditLog`).
+    3. **Interface d'Édition Dédiée pour l'Agence** :
+       - Création de `ModalEditerBail.tsx` et modularisation du tableau des baux avec `BailTableRow.tsx` (< 370 lignes).
+       - Bouton **« Éditer »** intégré sur chaque ligne de bail actif dans l'espace ERP locatif de l'agence.
+  * **🧪 Validation & Qualité** :
+    - Test direct sur Render : session Wave générée avec succès HTTP 200.
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme.
+
 - **Correction Critique Visibilité Baux & Contrats dans « Mon Compte » (25 septembre 2026)** ⚡🛡️🚀✅ :
   * **🎯 Problème Identifié** :
     - L'utilisateur connecté ne voyait aucun contrat de bail dans `/compte?tab=mes-locations` ("Aucun contrat de location actif"), malgré la présence de baux actifs en base de données.

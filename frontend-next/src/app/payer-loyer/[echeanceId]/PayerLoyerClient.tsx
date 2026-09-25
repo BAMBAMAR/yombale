@@ -17,6 +17,8 @@ import {
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import BadgePaySafe from '@/components/BadgePaySafe'
+import PayerLoyerContratCard from './components/PayerLoyerContratCard'
+import PayerLoyerSuccesCard from './components/PayerLoyerSuccesCard'
 
 interface EcheanceInfo {
   id: string
@@ -46,6 +48,15 @@ interface EcheanceInfo {
     whatsapp: string
     slug: string
     logo_url?: string
+  }
+  bail?: {
+    id: string
+    pdf_url: string
+    conditions?: string
+    depot_garantie?: number
+    jour_echeance?: number
+    date_debut?: string
+    date_fin?: string
   }
 }
 
@@ -141,6 +152,10 @@ export default function PayerLoyerClient({ echeanceId, initialData, initialError
 
       const json = await res.json()
       if (json.success) {
+        if (json.wave_url) {
+          window.location.href = json.wave_url
+          return
+        }
         setPayeSucces(true)
         setQuittancePdfUrl(json.quittance_url || `/api/locatif-immo/public/quittance/${echeanceId}.pdf`)
       } else {
@@ -253,6 +268,13 @@ export default function PayerLoyerClient({ echeanceId, initialData, initialError
           </div>
         </div>
 
+        {/* Accès direct & Téléchargement Contrat de Bail Officiel */}
+        <PayerLoyerContratCard
+          echeanceId={echeanceId}
+          bienTitre={echeance.bien.titre}
+          pdfUrl={echeance.bail?.pdf_url}
+        />
+
         {/* Récapitulatif Financier */}
         <div style={{ marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#475569' }}>
@@ -293,50 +315,11 @@ export default function PayerLoyerClient({ echeanceId, initialData, initialError
 
         {/* ÉTAT 1 : DÉJÀ PAYÉ / PAIEMENT CONFIRMÉ */}
         {payeSucces ? (
-          <div
-            style={{
-              background: '#F0FDF4',
-              border: '1.5px solid #A7F3D0',
-              borderRadius: 14,
-              padding: 18,
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#0A5C36' }}>
-              <CheckCircle2 size={24} />
-              <strong style={{ fontSize: 15 }}>Ce loyer est officiellement acquitté !</strong>
-            </div>
-            <p style={{ margin: 0, fontSize: 12, color: '#166534' }}>
-              Votre quittance certifiée conforme est générée et consultable à tout moment.
-            </p>
-
-            <a
-              href={quittancePdfUrl || `/api/locatif-immo/public/quittance/${echeanceId}.pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              download={`quittance-${echeance.periode}.pdf`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                background: '#0A5C36',
-                color: '#ffffff',
-                padding: '12px 18px',
-                borderRadius: 10,
-                fontSize: 13.5,
-                fontWeight: 800,
-                textDecoration: 'none',
-                boxShadow: '0 4px 12px rgba(10, 92, 54, 0.25)'
-              }}
-            >
-              <Download size={16} />
-              <span>Télécharger ma Quittance PDF</span>
-            </a>
-          </div>
+          <PayerLoyerSuccesCard
+            periode={echeance.periode}
+            echeanceId={echeanceId}
+            quittancePdfUrl={quittancePdfUrl}
+          />
         ) : (
           /* ÉTAT 2 : FORMULAIRE DE PAIEMENT SÉCURISÉ */
           <form onSubmit={handlePayer} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -453,6 +436,27 @@ export default function PayerLoyerClient({ echeanceId, initialData, initialError
 
       {/* Sceau de Confiance Nopalou Pay Safe */}
       <BadgePaySafe type="immo" />
+
+      {/* Raccourci vers le portail global sans compte */}
+      {echeance.locataire.telephone && (
+        <div style={{ textAlign: 'center', marginTop: 4 }}>
+          <Link
+            href={`/payer-loyer?tel=${encodeURIComponent(echeance.locataire.telephone)}`}
+            style={{
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: 'var(--accent, #C75B00)',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            <span>Consulter tous mes baux, loyers &amp; quittances sans mot de passe</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
 
       {/* Contact Agence */}
       <div style={{ textAlign: 'center', fontSize: 12, color: '#64748b' }}>

@@ -257,6 +257,83 @@ router.post('/agence/:slugOrId/baux/:bailId/resilier', verifierToken, requireAge
   }
 });
 
+// ── PUT /api/locatif-immo/agence/:slugOrId/baux/:bailId — Modifier / Personnaliser un contrat de bail ──
+router.put('/agence/:slugOrId/baux/:bailId', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bailId } = req.params;
+    const {
+      loyer_mensuel,
+      charges,
+      depot_garantie,
+      jour_echeance,
+      duree_mois,
+      date_fin,
+      conditions,
+      document_url
+    } = req.body;
+
+    // 1. Vérifier existence
+    const { rows: existing } = await pool.query(
+      'SELECT bx.*, b.titre AS bien_titre FROM baux_immo bx JOIN biens_immo b ON bx.bien_id = b.id WHERE bx.id = $1 AND bx.agence_id = $2',
+      [bailId, agenceId]
+    );
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable' });
+    }
+
+    const currentBail = existing[0];
+
+    // 2. Mettre à jour les champs autorisés
+    const { rows: updated } = await pool.query(
+      `UPDATE baux_immo
+       SET loyer_mensuel = COALESCE($1, loyer_mensuel),
+           charges = COALESCE($2, charges),
+           depot_garantie = COALESCE($3, depot_garantie),
+           jour_echeance = COALESCE($4, jour_echeance),
+           duree_mois = COALESCE($5, duree_mois),
+           date_fin = COALESCE($6, date_fin),
+           conditions = COALESCE($7, conditions),
+           document_url = COALESCE($8, document_url),
+           updated_at = NOW()
+       WHERE id = $9 AND agence_id = $10
+       RETURNING *`,
+      [
+        loyer_mensuel !== undefined ? parseFloat(loyer_mensuel) : null,
+        charges !== undefined ? parseFloat(charges) : null,
+        depot_garantie !== undefined ? parseFloat(depot_garantie) : null,
+        jour_echeance !== undefined ? parseInt(jour_echeance, 10) : null,
+        duree_mois !== undefined ? parseInt(duree_mois, 10) : null,
+        date_fin || null,
+        conditions !== undefined ? conditions : null,
+        document_url !== undefined ? document_url : null,
+        bailId,
+        agenceId
+      ]
+    );
+
+    // 3. Audit log
+    enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.userId || req.user?.id,
+      null,
+      'modification_bail',
+      `Modification du contrat de bail pour "${currentBail.bien_titre}" (Loyer: ${updated[0].loyer_mensuel} FCFA, Jour échéance: ${updated[0].jour_echeance})`,
+      { bail_id: bailId, modifications: req.body },
+      req
+    );
+
+    res.json({
+      success: true,
+      message: 'Contrat de bail mis à jour avec succès.',
+      bail: updated[0]
+    });
+  } catch (err) {
+    console.error('[PUT /baux/:bailId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la mise à jour du bail' });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════
 // 2. LOYERS / ÉCHÉANCES & ENCAISSEMENTS
 // ══════════════════════════════════════════════════════════════
@@ -1004,7 +1081,24 @@ function genererPdfContratBailStream(res, b) {
      .text("Le Preneur s'engage à user des lieux loués paisiblement et conformément à leur destination d'habitation. Il est expressément convenu qu'à défaut de paiement d'un seul terme de loyer ou charges à son échéance exacte, ou en cas d'inexécution d'une clause du bail, le présent contrat sera résilié de plein droit un mois après un commandement de payer demeuré infructueux.", 45, currentY, { width: 505, lineGap: 2 });
   currentY += 34;
 
+  // ── Article 6 : Conditions particulières & clauses spéciales (si personnalisées par l'agence) ──
+  if (b.conditions && String(b.conditions).trim()) {
+    if (currentY > 620) {
+      doc.addPage();
+      currentY = 45;
+    }
+    doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 6 - CONDITIONS PARTICULIÈRES ET CLAUSES SPÉCIALES", 45, currentY);
+    currentY += 14;
+    doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
+       .text(cleanPdfText(b.conditions), 45, currentY, { width: 505, lineGap: 2 });
+    currentY += 32;
+  }
+
   // ── Signatures ──
+  if (currentY > 670) {
+    doc.addPage();
+    currentY = 45;
+  }
   doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("Fait en trois exemplaires originaux à " + (b.agence_ville || 'Dakar') + ", le " + dateDeb, 45, currentY);
   currentY += 18;
 
@@ -1303,7 +1397,8 @@ router.get('/public/echeance/:echeanceId', async (req, res) => {
     const { rows } = await pool.query(
       `SELECT le.id, le.periode, le.date_echeance, le.montant_du, le.montant_paye, le.montant_restant,
               le.statut, le.quittance_url,
-              ba.loyer_mensuel, ba.charges,
+              ba.id AS bail_id, ba.loyer_mensuel, ba.charges, ba.conditions AS bail_conditions,
+              ba.depot_garantie, ba.jour_echeance, ba.date_debut, ba.date_fin,
               b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville,
               c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel,
               a.nom AS agence_nom, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.slug AS agence_slug, a.logo_url AS agence_logo
@@ -1351,12 +1446,211 @@ router.get('/public/echeance/:echeanceId', async (req, res) => {
           whatsapp: ech.agence_wa,
           slug: ech.agence_slug,
           logo_url: ech.agence_logo,
+        },
+        bail: {
+          id: ech.bail_id,
+          pdf_url: `/api/locatif-immo/public/echeance/${ech.id}/bail.pdf`,
+          conditions: ech.bail_conditions,
+          depot_garantie: Number(ech.depot_garantie || 0),
+          jour_echeance: ech.jour_echeance,
+          date_debut: ech.date_debut,
+          date_fin: ech.date_fin
         }
       }
     });
   } catch (err) {
     console.error('[GET /api/locatif-immo/public/echeance/:echeanceId]', err.message);
     res.status(500).json({ success: false, error: 'Erreur chargement des détails de l\'échéance' });
+  }
+});
+
+// ── GET /api/locatif-immo/public/echeance/:echeanceId/bail.pdf — Téléchargement direct Contrat de Bail public via échéance ──
+router.get('/public/echeance/:echeanceId/bail.pdf', async (req, res) => {
+  try {
+    const { echeanceId } = req.params;
+    const { rows } = await pool.query(
+      `SELECT bx.*,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
+              b.ville AS bien_ville, b.type_bien, b.surface_m2, b.nb_pieces, b.nb_chambres, b.reference AS bien_ref,
+              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel,
+              c.email AS locataire_email, c.profession AS locataire_profession,
+              p.nom AS bailleur_nom, p.prenom AS bailleur_prenom, p.telephone AS bailleur_tel,
+              p.adresse AS bailleur_adresse,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.email_contact AS agence_email,
+              a.adresse AS agence_adresse, a.ville AS agence_ville, a.numero_agrement
+       FROM loyers_echeances le
+       JOIN baux_immo bx ON le.bail_id = bx.id
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       LEFT JOIN proprietaires_immo p ON COALESCE(bx.proprietaire_id, b.proprietaire_id) = p.id
+       JOIN agences_immo a ON bx.agence_id = a.id
+       WHERE le.id = $1`,
+      [echeanceId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable pour cette échéance' });
+    }
+
+    const b = rows[0];
+    genererPdfContratBailStream(res, b);
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/public/echeance/:echeanceId/bail.pdf]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur génération contrat de bail' });
+  }
+});
+
+// ── GET /api/locatif-immo/public/bail/:bailId.pdf — Téléchargement direct Contrat de Bail avec vérification téléphone/token ──
+router.get('/public/bail/:bailId.pdf', async (req, res) => {
+  try {
+    const { bailId } = req.params;
+    const { tel } = req.query;
+    const cleanPh = tel ? String(tel).replace(/\D/g, '') : '';
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const { rows } = await pool.query(
+      `SELECT bx.*,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
+              b.ville AS bien_ville, b.type_bien, b.surface_m2, b.nb_pieces, b.nb_chambres, b.reference AS bien_ref,
+              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel,
+              c.email AS locataire_email, c.profession AS locataire_profession,
+              p.nom AS bailleur_nom, p.prenom AS bailleur_prenom, p.telephone AS bailleur_tel,
+              p.adresse AS bailleur_adresse,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.email_contact AS agence_email,
+              a.adresse AS agence_adresse, a.ville AS agence_ville, a.numero_agrement
+       FROM baux_immo bx
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       LEFT JOIN proprietaires_immo p ON COALESCE(bx.proprietaire_id, b.proprietaire_id) = p.id
+       JOIN agences_immo a ON bx.agence_id = a.id
+       WHERE bx.id = $1
+         AND (
+           $2 = ''
+           OR RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $2
+           OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $2
+           OR RIGHT(REGEXP_REPLACE(COALESCE(p.telephone, ''), '[^0-9]', '', 'g'), 9) = $2
+         )`,
+      [bailId, shortPh]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable ou accès non autorisé' });
+    }
+
+    const b = rows[0];
+    genererPdfContratBailStream(res, b);
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/public/bail/:bailId.pdf]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur génération contrat de bail' });
+  }
+});
+
+// ── GET /api/locatif-immo/public/locataire-lookup — Consultation portail locataire par téléphone ──
+router.get('/public/locataire-lookup', async (req, res) => {
+  try {
+    const { tel } = req.query;
+    if (!tel) {
+      return res.status(400).json({ success: false, error: 'Veuillez renseigner un numéro de téléphone' });
+    }
+
+    const cleanPh = String(tel).replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    if (shortPh.length < 8) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone incomplet' });
+    }
+
+    const { rows: baux } = await pool.query(
+      `SELECT bx.id, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance,
+              bx.date_debut, bx.date_fin, bx.statut, bx.conditions,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
+              b.ville AS bien_ville, b.photos AS bien_photos, b.reference AS bien_ref,
+              c.id AS contact_id, c.nom AS locataire_nom, c.prenom AS locataire_prenom,
+              c.telephone AS locataire_tel, c.whatsapp AS locataire_wa,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.whatsapp AS agence_wa,
+              a.slug AS agence_slug, a.logo_url AS agence_logo
+       FROM baux_immo bx
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN agences_immo a ON bx.agence_id = a.id
+       WHERE (
+         RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+         OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $1
+       )
+       ORDER BY bx.created_at DESC`,
+      [shortPh]
+    );
+
+    if (baux.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Aucun contrat de location actif ou historique trouvé pour ce numéro de téléphone.'
+      });
+    }
+
+    const bailIds = baux.map(b => b.id);
+    const { rows: echeances } = await pool.query(
+      `SELECT id, bail_id, periode, date_echeance, montant_du, montant_paye, montant_restant,
+              statut, quittance_url, date_paiement, mode_paiement
+       FROM loyers_echeances
+       WHERE bail_id = ANY($1)
+       ORDER BY date_echeance ASC`,
+      [bailIds]
+    );
+
+    const bauxAvecEcheances = baux.map(b => {
+      const eches = echeances.filter(e => e.bail_id === b.id);
+      return {
+        id: b.id,
+        bien_titre: b.bien_titre,
+        bien_adresse: b.bien_adresse,
+        bien_quartier: b.bien_quartier,
+        bien_ville: b.bien_ville,
+        bien_photos: b.bien_photos || [],
+        bien_ref: b.bien_ref,
+        loyer_mensuel: Number(b.loyer_mensuel),
+        charges: Number(b.charges || 0),
+        depot_garantie: Number(b.depot_garantie || 0),
+        jour_echeance: b.jour_echeance,
+        date_debut: b.date_debut,
+        date_fin: b.date_fin,
+        statut: b.statut,
+        conditions: b.conditions,
+        contrat_pdf_url: `/api/locatif-immo/public/bail/${b.id}.pdf?tel=${encodeURIComponent(shortPh)}`,
+        agence: {
+          nom: b.agence_nom,
+          telephone: b.agence_tel,
+          whatsapp: b.agence_wa,
+          slug: b.agence_slug,
+          logo_url: b.agence_logo
+        },
+        echeances: eches.map(ech => ({
+          id: ech.id,
+          periode: ech.periode,
+          date_echeance: ech.date_echeance,
+          montant_du: Number(ech.montant_du),
+          montant_paye: Number(ech.montant_paye || 0),
+          montant_restant: Number(ech.montant_restant || 0),
+          statut: ech.statut,
+          quittance_url: ech.statut === 'paye' ? `/api/locatif-immo/public/quittance/${ech.id}.pdf` : null,
+          lien_paiement: `/payer-loyer/${ech.id}`
+        }))
+      };
+    });
+
+    res.json({
+      success: true,
+      locataire: {
+        nom: baux[0].locataire_nom,
+        prenom: baux[0].locataire_prenom,
+        telephone: baux[0].locataire_tel,
+        whatsapp: baux[0].locataire_wa
+      },
+      baux: bauxAvecEcheances
+    });
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/public/locataire-lookup]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la recherche des baux du locataire' });
   }
 });
 

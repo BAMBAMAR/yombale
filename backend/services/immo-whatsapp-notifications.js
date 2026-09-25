@@ -375,8 +375,16 @@ async function notifierNouveauBailLocataireWhatsApp({ bailId }) {
 
     const loyerFmt = Number(b.loyer_mensuel || 0).toLocaleString('fr-FR');
     const chargesFmt = Number(b.charges || 0).toLocaleString('fr-FR');
-    const totalFmt = (Number(b.loyer_mensuel || 0) + Number(b.charges || 0)).toLocaleString('fr-FR');
-    const lienCompte = `${SITE_URL}/compte?tab=locations`;
+    const { rows: echRows } = await pool.query(
+      `SELECT id FROM loyers_echeances WHERE bail_id = $1 ORDER BY date_echeance ASC LIMIT 1`,
+      [bailId]
+    );
+    const firstEchId = echRows[0]?.id;
+    const cleanPh = String(telLocataire).replace(/\D/g, '');
+    const lienPortail = `${SITE_URL}/payer-loyer?tel=${cleanPh}`;
+    const lienContratPdf = firstEchId
+      ? `${SITE_URL}/api/locatif-immo/public/echeance/${firstEchId}/bail.pdf`
+      : `${SITE_URL}/api/locatif-immo/public/bail/${b.id}.pdf?tel=${cleanPh}`;
 
     const msgLocataire = [
       `🏠 *FÉLICITATIONS ! VOTRE CONTRAT DE LOCATION EST VALIDÉ*`,
@@ -390,8 +398,11 @@ async function notifierNouveauBailLocataireWhatsApp({ bailId }) {
       `- Échéance : le *${b.jour_echeance || 5}* de chaque mois`,
       `- Début du bail : ${new Date(b.date_debut).toLocaleDateString('fr-FR')}`,
       ``,
-      `📄 *Consulter votre contrat, payer par Wave et télécharger vos quittances officielles :*`,
-      lienCompte,
+      `📄 *Consulter votre Contrat de Bail officiel (PDF) :*`,
+      lienContratPdf,
+      ``,
+      `💳 *Portail Locataire Sécurisé (Suivi sans compte, règlement Wave & quittances) :*`,
+      lienPortail,
       ``,
       `Bienvenue dans votre nouveau logement,\nL'agence ${b.agence_nom} & Nopalou Immo`
     ].join('\n');
@@ -401,8 +412,8 @@ async function notifierNouveauBailLocataireWhatsApp({ bailId }) {
       title: 'Contrat de bail validé',
       montant: `${totalFmt} FCFA/mois`,
       detail: `Bail actif pour "${(b.bien_titre || '').slice(0, 40)}" chez ${b.agence_nom}.`,
-      url: lienCompte,
-      buttonParam: 'compte?tab=baux',
+      url: lienPortail,
+      buttonParam: `payer-loyer?tel=${cleanPh}`,
       type: 'service',
     });
 

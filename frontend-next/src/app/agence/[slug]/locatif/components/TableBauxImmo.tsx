@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { Key, Plus, FileText, XCircle, AlertTriangle, Download, Trash2 } from 'lucide-react'
+import { Key, Plus, FileText, XCircle, AlertTriangle, Download, Trash2, Edit2 } from 'lucide-react'
 import { getImmoAuthToken, getImmoAuthHeaders } from '@/lib/immo-auth'
 import BailCardMobile from './BailCardMobile'
+import BailTableRow from './BailTableRow'
 import ModalResilierBail from './ModalResilierBail'
+import ModalEditerBail from './ModalEditerBail'
 import { AgenceTableToolbar, SortOption } from '../../../components/AgenceTableToolbar'
 import { AgenceTableTh } from '../../../components/AgenceTableTh'
 import { AgenceBatchActionBar, BatchActionItem } from '../../../components/AgenceBatchActionBar'
@@ -41,6 +43,7 @@ const SORT_OPTIONS: SortOption[] = [
 
 export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: TableBauxImmoProps) {
   const [bailAResilier, setBailAResilier] = useState<BailItem | null>(null)
+  const [bailAEditer, setBailAEditer] = useState<BailItem | null>(null)
   const [motif, setMotif] = useState('')
   const [loadingResiliation, setLoadingResiliation] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -305,112 +308,22 @@ export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: 
             </tr>
           </thead>
           <tbody>
-            {bauxFiltres.map(b => {
-              const isSelected = selectedIds.includes(b.id)
-              const isActif = b.statut === 'actif'
-              const bailPdfUrl = `/api/agences/agence/${slug}/documents/bail/${b.id}.pdf${token ? `?token=${encodeURIComponent(token)}` : ''}`
-
-              return (
-                <tr key={b.id} className={isSelected ? 'selected' : ''}>
-                  <td style={{ textAlign: 'center' }}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => handleToggleSelect(b.id)}
-                      className="immo-checkbox"
-                    />
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{b.bien_titre}</div>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-                      {b.locataire_nom} {b.locataire_prenom || ''}
-                    </div>
-                    {b.locataire_tel && (
-                      <div style={{ fontSize: 11.5, color: '#64748B' }}>{b.locataire_tel}</div>
-                    )}
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                      {Number(b.loyer_mensuel).toLocaleString('fr-FR')} FCFA
-                    </div>
-                    {Number(b.charges) > 0 && (
-                      <div style={{ fontSize: 11.5, color: '#64748B' }}>
-                        + {Number(b.charges).toLocaleString('fr-FR')} FCFA charges
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    <div style={{ fontSize: 12.5, fontWeight: 600 }}>
-                      Début : {new Date(b.date_debut).toLocaleDateString('fr-FR')}
-                    </div>
-                    {b.date_fin && (
-                      <div style={{ fontSize: 11.5, color: '#64748B' }}>
-                        Fin : {new Date(b.date_fin).toLocaleDateString('fr-FR')}
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    <span className={`status-badge ${b.statut}`}>
-                      {b.statut === 'actif' ? 'En cours' : b.statut === 'resilie' ? 'Résilié' : b.statut}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                      <a
-                        href={bailPdfUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '5px 10px',
-                          borderRadius: 6,
-                          background: '#F1F5F9',
-                          color: 'var(--navy, #1C2B4A)',
-                          border: '1px solid #CBD5E1',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          textDecoration: 'none',
-                        }}
-                      >
-                        <FileText size={13} />
-                        <span>Contrat</span>
-                      </a>
-
-                      {isActif && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBailAResilier(b)
-                            setMotif('')
-                            setErrorMsg(null)
-                          }}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            padding: '5px 10px',
-                            borderRadius: 6,
-                            background: '#FFF1F2',
-                            color: '#E11D48',
-                            border: '1px solid #FECDD3',
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <XCircle size={13} />
-                          <span>Résilier</span>
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
+            {bauxFiltres.map(b => (
+              <BailTableRow
+                key={b.id}
+                bail={b}
+                isSelected={selectedIds.includes(b.id)}
+                slug={slug}
+                token={token}
+                onToggleSelect={handleToggleSelect}
+                onEditer={item => setBailAEditer(item)}
+                onResilier={item => {
+                  setBailAResilier(item)
+                  setMotif('')
+                  setErrorMsg(null)
+                }}
+              />
+            ))}
           </tbody>
         </table>
       </div>
@@ -425,6 +338,16 @@ export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: 
         labelSingulier="bail sélectionné"
         labelPluriel="baux sélectionnés"
       />
+
+      {/* Modale Édition / Personnalisation de bail */}
+      {bailAEditer && (
+        <ModalEditerBail
+          slug={slug}
+          bail={bailAEditer}
+          onClose={() => setBailAEditer(null)}
+          onSuccess={() => onRefresh && onRefresh()}
+        />
+      )}
 
       {/* Modale Résiliation individuelle */}
       <ModalResilierBail

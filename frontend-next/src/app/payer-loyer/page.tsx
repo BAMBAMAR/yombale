@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
@@ -10,17 +11,18 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react'
-import PayerLoyerForm from './components/PayerLoyerForm'
+import PortailLocataireClient from './components/PortailLocataireClient'
 
 export const metadata: Metadata = {
-  title: 'Payer mon Loyer en Ligne (Wave & Orange Money) — Nopalou Immo',
-  description: 'Portail sécurisé de règlement de loyer au Sénégal : payez en 1 clic avec Wave ou Orange Money et téléchargez votre quittance certifiée conforme.',
+  title: 'Portail Locataire Sécurisé — Contrat de Bail & Paiement Loyer (Wave & OM) — Nopalou Immo',
+  description: 'Portail officiel locataire au Sénégal : consultez votre contrat de bail conforme, réglez en 1 clic avec Wave ou Orange Money et téléchargez vos quittances sans mot de passe.',
   keywords: [
     'payer loyer dakar',
+    'contrat de bail dakar',
     'paiement loyer wave sénégal',
     'quittance de loyer dakar',
     'nopalou immo paiement loyer',
-    'loyer orange money sénégal'
+    'portail locataire senegal'
   ],
 }
 
@@ -37,7 +39,7 @@ export default function PayerLoyerHubPage() {
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         
         {/* En-tête */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div
             style={{
               display: 'inline-flex',
@@ -66,35 +68,26 @@ export default function PayerLoyerHubPage() {
               lineHeight: 1.25
             }}
           >
-            Paiement de Loyer 1-Clic
+            Espace Locataire &amp; Paiement 1-Clic
           </h1>
 
           <p
             style={{
               fontSize: 14.5,
               color: 'var(--text-subtle, #5A4E42)',
-              maxWidth: 480,
+              maxWidth: 520,
               margin: '0 auto',
               lineHeight: 1.5
             }}
           >
-            Réglez votre loyer mensuel par Wave ou Orange Money et obtenez immédiatement votre quittance officielle certifiée avec QR Code.
+            Consultez votre contrat de bail, réglez votre loyer par Wave ou Orange Money et téléchargez vos quittances officielles certifiées sans mot de passe requis.
           </p>
         </div>
 
-        {/* Formulaire de saisie du code échéance */}
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: 18,
-            padding: '24px 20px',
-            border: '1px solid var(--border, #E8DDD2)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-            marginBottom: 28
-          }}
-        >
-          <PayerLoyerForm />
-        </div>
+        {/* Composant interactif de consultation et de règlement */}
+        <Suspense fallback={<div style={{ textAlign: 'center', padding: '30px 0', color: '#64748b' }}>Chargement du portail locataire...</div>}>
+          <PortailLocataireClient />
+        </Suspense>
 
         {/* 3 Garanties Locataire */}
         <div
