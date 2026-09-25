@@ -8,7 +8,7 @@ import {
   Building2,
   Store,
   Package,
-  Eye,
+  ArrowUpRight,
   MapPin,
 } from 'lucide-react'
 
@@ -116,7 +116,7 @@ export default function ChatbotMessageItem({ msg, onChipClick }: ChatbotMessageI
                           item.type === 'immo'
                             ? 'Voir le bien'
                             : item.type === 'boutique'
-                            ? 'Visiter la boutique'
+                            ? 'Voir la boutique'
                             : item.type === 'agence'
                             ? 'Voir la vitrine'
                             : 'Voir le produit',
@@ -184,8 +184,8 @@ export default function ChatbotMessageItem({ msg, onChipClick }: ChatbotMessageI
                               : 'npl-chat-card-btn-primary'
                           }`}
                         >
-                          {act.variant !== 'secondary' && <Eye size={12} />}
                           <span>{act.label}</span>
+                          <ArrowUpRight size={12} className="shrink-0" />
                         </Link>
                       ))}
                     </div>

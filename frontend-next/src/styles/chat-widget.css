@@ -445,15 +445,29 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 5px;
+  font-size: 11.5px;
   font-weight: 600;
-  padding: 5px 10px;
+  padding: 6px 10px;
   border-radius: 6px;
   text-decoration: none;
   transition: all 0.15s ease;
   white-space: nowrap;
   flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.npl-chat-card-btn span {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.npl-chat-card-btn svg {
+  flex-shrink: 0;
 }
 
 .npl-chat-card-btn-primary {

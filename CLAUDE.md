@@ -23,6 +23,19 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Typographique & Ergonomique des Boutons « Voir... » du Chatbot Web (24 septembre 2026)** ⚡🛡️🚀✅ :
+  * **🎯 Symptôme & Causes Racines** :
+    - L'utilisateur constatait un « V » manquant ou altéré sur les liens et boutons d'action du chatbot web (`Voir le produit`, `Voir la boutique`, `Voir l'annonce`).
+    - *Cause 1 (Illusion & Collision SVG)* : L'icône Lucide `<Eye size={12} />` était placée immédiatement devant le texte du bouton (`👁 Voir le produit`). À petite taille (11px/12px) et en blanc sur fond marine foncé, sa forme ovale fermée avec un point central ressemblait fortement à un « O », provoquant une illusion d'optique (`(O) oir...`) ou une collision visuelle masquant le « V ».
+    - *Cause 2 (Rognage Flexbox gauche sous contrainte d'espace)* : Les boutons d'action dans `.npl-chat-card-actions` utilisaient `justify-content: center` avec `flex: 1 1 auto`. Lorsque deux boutons étaient côte à côte (`Voir le produit` + `Voir la boutique`) sur mobile ou avec le facteur d'échelle Windows (125%), le rétrécissement des boutons centrait le texte en le débordant symétriquement vers la gauche, coupant le premier caractère (**le « V »**) contre le bord intérieur de la carte.
+  * **🛠️ Correctifs Appliqués** :
+    1. **Suppression de l'icône œil ambiguë et ajout de l'indicateur d'action à droite** (`ChatbotMessageItem.tsx`) : Le libellé du bouton démarre directement et clairement par son grand « V » non obstrué (`Voir le produit ↗`, `Voir la boutique ↗`, `Voir l'annonce ↗`), avec l'icône vectorielle `<ArrowUpRight size={12} className="shrink-0" />` positionnée proprement à droite.
+    2. **Sécurisation CSS anti-rognage gauche** (`chat-widget.css`) : Ajout de `min-width: 0;` sur `.npl-chat-card-btn`, et de `display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;` sur le `span`. En cas d'espace restreint, la troncature intervient proprement par des points de suspension à droite, préservant 100% du début du libellé et son « V ».
+    3. **Harmonisation des libellés** (`ChatbotMessageItem.tsx` & `backend/routes/chat.js`) : Remplacement de `Visiter la boutique` par `Voir la boutique` pour une cohérence globale du vocabulaire des boutons du chatbot.
+  * **🧪 Validation** :
+    - Rendu visuel validé sur desktop standard, desktop 125% DPI et émulation mobile 375px via Playwright.
+    - Contrôle qualité : TypeScript 0 erreur, linter Anti-AI-Slop conforme.
+
 - **Résolution du 401 Unauthorized sur l'Approbation Admin, Extension Session 7 Jours, Optimisation Payload & Navigation Clavier Galerie (24 septembre 2026)** ⚡🛡️🚀✅ :
   * **🎯 Diagnostic & Causes Racines Identifiées** :
     1. **Expiration JWT Admin trop courte (8h) & Déconnexion silencieuse** : Le token d'authentification du personnel d'administration (`admin-auth.js`) expirait au bout de 8 heures (`expiresIn: '8h'`). Passé ce délai, toute action administrative déclenchait une cascade de rejets HTTP 401 Unauthorized (`PUT /api/annonces/admin/:id → 401`, `GET /api/admin/auth/me → 401`).

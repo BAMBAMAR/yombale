@@ -140,7 +140,7 @@ async function searchBoutiquesIlike(query) {
         categorie: row.categorie,
         url: `/boutiques/${bRef}`,
         actions: [
-          { label: 'Visiter la boutique', url: `/boutiques/${bRef}`, variant: 'primary' },
+          { label: 'Voir la boutique', url: `/boutiques/${bRef}`, variant: 'primary' },
         ],
       };
     });
