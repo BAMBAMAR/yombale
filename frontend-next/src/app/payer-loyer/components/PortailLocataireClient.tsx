@@ -126,6 +126,12 @@ export default function PortailLocataireClient() {
   }
 
   function handleReset() {
+    try {
+      localStorage.removeItem('token_immo')
+      localStorage.removeItem('token')
+    } catch {
+      // Ignorer les erreurs d'accès au localStorage
+    }
     setStep('tel')
     setError(null)
     setBaux([])

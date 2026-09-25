@@ -2070,6 +2070,7 @@ router.post('/public/verifier-otp', async (req, res) => {
               b.ville AS bien_ville, b.photos AS bien_photos, b.reference AS bien_ref,
               c.id AS contact_id, c.nom AS locataire_nom, c.prenom AS locataire_prenom,
               c.telephone AS locataire_tel, c.whatsapp AS locataire_wa, c.email AS locataire_email,
+              c.utilisateur_id AS contact_utilisateur_id,
               a.nom AS agence_nom, a.telephone AS agence_tel, a.whatsapp AS agence_wa,
               a.slug AS agence_slug, a.logo_url AS agence_logo
        FROM baux_immo bx
@@ -2104,31 +2105,76 @@ router.post('/public/verifier-otp', async (req, res) => {
     // 2. Provisioning / Liaison compte utilisateur pour session sécurisée JWT
     const contact = baux[0];
     const withPlus = '+' + normPhone;
-    const { rows: existingUsers } = await pool.query(
-      `SELECT id, nom, email, telephone FROM utilisateurs
-       WHERE telephone = $1 OR telephone = $2 OR telephone = $3`,
-      [normPhone, withPlus, shortPh]
-    );
+    const candidateEmail = contact.locataire_email && !contact.locataire_email.includes('example.com')
+      ? contact.locataire_email.trim().toLowerCase()
+      : `${shortPh}@whatsapp.nopalou.com`;
 
-    let user = existingUsers[0];
+    let user = null;
+
+    // Si le contact est déjà lié à un utilisateur existant
+    if (contact.contact_utilisateur_id) {
+      const { rows: uLinked } = await pool.query(
+        'SELECT id, nom, email, telephone FROM utilisateurs WHERE id = $1',
+        [contact.contact_utilisateur_id]
+      );
+      if (uLinked.length > 0) {
+        user = uLinked[0];
+      }
+    }
+
+    // Sinon recherche par téléphone ou par email
+    if (!user) {
+      const { rows: existingUsers } = await pool.query(
+        `SELECT id, nom, email, telephone FROM utilisateurs
+         WHERE telephone = $1 OR telephone = $2 OR telephone = $3 OR email = $4 LIMIT 1`,
+        [normPhone, withPlus, shortPh, candidateEmail]
+      );
+      if (existingUsers.length > 0) {
+        user = existingUsers[0];
+      }
+    }
+
+    // Création atomique sans colonne 'role' (qui n'existe pas dans la table utilisateurs)
     if (!user) {
       const userNom = [contact.locataire_prenom, contact.locataire_nom].filter(Boolean).join(' ') || 'Locataire Nopalou';
-      const userEmail = contact.locataire_email && !contact.locataire_email.includes('example.com')
-        ? contact.locataire_email
-        : `${shortPh}@whatsapp.nopalou.com`;
       const randomPassword = crypto.randomBytes(16).toString('hex');
       const hash = await bcrypt.hash(randomPassword, 12);
-      const { rows: newUserRows } = await pool.query(
-        `INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie, role)
-         VALUES ($1, $2, $3, $4, true, 'acheteur')
-         ON CONFLICT (telephone) DO UPDATE SET nom = EXCLUDED.nom
-         RETURNING id, nom, email, telephone`,
-        [userNom, userEmail, hash, normPhone]
-      );
-      user = newUserRows[0];
-      if (contact.contact_id) {
-        await pool.query('UPDATE contacts_immo SET utilisateur_id = $1 WHERE id = $2', [user.id, contact.contact_id]);
+      try {
+        const { rows: newUserRows } = await pool.query(
+          `INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie)
+           VALUES ($1, $2, $3, $4, true)
+           ON CONFLICT (telephone) DO UPDATE SET nom = EXCLUDED.nom
+           RETURNING id, nom, email, telephone`,
+          [userNom, candidateEmail, hash, normPhone]
+        );
+        user = newUserRows[0];
+      } catch (insertErr) {
+        // En cas de conflit sur l'email, récupérer le compte existant associé à cet email
+        const { rows: fallbackRows } = await pool.query(
+          'SELECT id, nom, email, telephone FROM utilisateurs WHERE email = $1 LIMIT 1',
+          [candidateEmail]
+        );
+        if (fallbackRows.length > 0) {
+          user = fallbackRows[0];
+        } else {
+          throw insertErr;
+        }
       }
+    }
+
+    if (!user) {
+      const { rows: recheck } = await pool.query(
+        'SELECT id, nom, email, telephone FROM utilisateurs WHERE telephone = $1 OR telephone = $2 LIMIT 1',
+        [normPhone, shortPh]
+      );
+      user = recheck[0];
+    }
+
+    if (user && contact.contact_id) {
+      await pool.query(
+        'UPDATE contacts_immo SET utilisateur_id = $1 WHERE id = $2 AND (utilisateur_id IS NULL OR utilisateur_id != $1)',
+        [user.id, contact.contact_id]
+      );
     }
 
     // 3. Émission du jeton d'authentification officiel JWT

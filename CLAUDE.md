@@ -23,6 +23,23 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Critique Portail Locataire : Résolution de l'Erreur 500 sur l'Auto-Provisioning OTP (`column "role" of relation "utilisateurs" does not exist`) et Déconnexion Propre (25 septembre 2026)** 🔐🏠⚡✅ :
+  * **🎯 Problème Détecté en Production & Logs** :
+    - Échec lors de la vérification OTP d'un locataire sans compte existant sur la route `POST /api/locatif-immo/public/verifier-otp` : `column "role" of relation "utilisateurs" does not exist` avec retour HTTP 500.
+    - Cause racine : L'instruction d'insertion automatique dans la table `utilisateurs` incluait à tort la colonne `role` avec la valeur `'acheteur'`, alors que la table `utilisateurs` de Nopalou ne possède aucun champ `role` (les rôles sont gérés dans `boutique_utilisateurs`, `admin_utilisateurs`, `agence_membres` ou encodés directement dans le token JWT).
+  * **🛠️ Solutions Techniques & Corrections Réalisées** :
+    1. **Correction SQL & Résilience Auto-Provisioning (`backend/routes/locatif-immo.js`)** :
+       - Retrait de la colonne inexistante `role` de la requête `INSERT INTO utilisateurs`.
+       - Rapprochement préalable via `c.utilisateur_id AS contact_utilisateur_id` si le locataire était déjà rattaché dans `contacts_immo`.
+       - Recherche élargie par téléphone normalisé ou email candidat (`contact.locataire_email` ou `${shortPh}@whatsapp.nopalou.com`).
+       - Sécurisation du `INSERT` avec gestion gracieuse des conflits email (`try/catch` de repli pour récupérer le compte existant).
+       - Liaison automatique `contacts_immo.utilisateur_id` mise à jour de façon persistante.
+    2. **Déconnexion Propre Portails Locataires (`frontend-next/src/app/payer-loyer/components/PortailLocataireClient.tsx`)** :
+       - Ajout du nettoyage explicite de `localStorage.removeItem('token_immo')` et `localStorage.removeItem('token')` dans `handleReset()` lorsqu'un locataire clique sur « Quitter » / change de numéro, assurant une déconnexion client totale sans persistance de session fantôme.
+    3. **Tests & Validation** :
+       - Validation syntaxique Node.js (`node -c backend/routes/locatif-immo.js`) : 0 erreur.
+       - Validation qualité (`npm run lint:slop`) : Conforme aux règles d'or Nopalou.
+
 - **Grand Plan de Correction SEO & Indexation Google : Résolution des Conflits Canoniques, Élimination des 301 Internes, Dé-orphelinage et Création du Silo Sama Xaalis (25 septembre 2026)** 🔍🚀⚡✅ :
   * **🎯 Demande Utilisateur & Constats d'Audit** :
     - Suite à un audit SEO approfondi et exhaustif de l'écosystème Nopalou (172 routes, 110 tables SQL, balises canoniques, sitemaps, robots.txt, schema.org), instruction « corriger » pour exécuter le plan complet de remédiation.
