@@ -229,6 +229,7 @@ export default function MesLocationsClient() {
           location={loc}
           payingId={payingId}
           onPayLoyer={handlePayerLoyer}
+          onRefresh={chargerLocations}
         />
       ))}
     </div>

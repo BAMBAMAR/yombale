@@ -13,6 +13,18 @@ const {
   notifierNouveauBailLocataireWhatsApp
 } = require('../services/immo-whatsapp-notifications');
 const wave = require('../services/wave');
+const { genererPdfContratBailStream, genererTextesDefautBail } = require('../lib/immo-pdf-bail');
+const multer = require('multer');
+const uploadDoc = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 },
+});
+const { uploadDocumentBuffer } = require('../services/cloudinary');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { normalisePhone, sendWhatsAppTemplate, sendWhatsAppText } = require('../services/whatsapp');
+const { genererOtpPhone, verifierOtpPhone } = require('../services/otp');
 
 // ══════════════════════════════════════════════════════════════
 // 1. BAUX IMMOBILIERS
@@ -73,7 +85,8 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
       depot_garantie = 0,
       periodicite = 'mensuel',
       jour_echeance = 5,
-      conditions
+      conditions,
+      clauses_personnalisees
     } = req.body;
 
     if (!bien_id || !locataire_id || !date_debut || !loyer_mensuel) {
@@ -112,13 +125,16 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
       resolvedProprioId = bRows[0]?.proprietaire_id || null;
     }
 
+    const cpData = clauses_personnalisees && typeof clauses_personnalisees === 'object' ? clauses_personnalisees : {};
+    const finalConditions = conditions || cpData.article6_conditions || null;
+
     // 1. Insérer le bail
     const { rows: bailRows } = await pool.query(
       `INSERT INTO baux_immo (
         agence_id, bien_id, locataire_id, proprietaire_id, agent_id,
         date_debut, date_fin, duree_mois, loyer_mensuel, charges, depot_garantie,
-        periodicite, jour_echeance, statut, conditions
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'actif', $14)
+        periodicite, jour_echeance, statut, conditions, clauses_personnalisees
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'actif', $14, $15::jsonb)
       RETURNING *`,
       [
         agenceId,
@@ -134,7 +150,8 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
         parseFloat(depot_garantie) || 0,
         periodicite,
         parseInt(jour_echeance, 10) || 5,
-        conditions || null
+        finalConditions,
+        JSON.stringify(cpData)
       ]
     );
 
@@ -270,7 +287,8 @@ router.put('/agence/:slugOrId/baux/:bailId', verifierToken, requireAgenceAccess(
       duree_mois,
       date_fin,
       conditions,
-      document_url
+      document_url,
+      clauses_personnalisees
     } = req.body;
 
     // 1. Vérifier existence
@@ -284,6 +302,16 @@ router.put('/agence/:slugOrId/baux/:bailId', verifierToken, requireAgenceAccess(
 
     const currentBail = existing[0];
 
+    // Synchronisation conditions <-> clauses_personnalisees.article6_conditions
+    let finalConditions = conditions !== undefined ? conditions : null;
+    let finalClauses = null;
+    if (clauses_personnalisees !== undefined) {
+      finalClauses = typeof clauses_personnalisees === 'object' ? JSON.stringify(clauses_personnalisees) : clauses_personnalisees;
+      if (clauses_personnalisees && clauses_personnalisees.article6_conditions !== undefined && conditions === undefined) {
+        finalConditions = clauses_personnalisees.article6_conditions;
+      }
+    }
+
     // 2. Mettre à jour les champs autorisés
     const { rows: updated } = await pool.query(
       `UPDATE baux_immo
@@ -295,8 +323,9 @@ router.put('/agence/:slugOrId/baux/:bailId', verifierToken, requireAgenceAccess(
            date_fin = COALESCE($6, date_fin),
            conditions = COALESCE($7, conditions),
            document_url = COALESCE($8, document_url),
+           clauses_personnalisees = COALESCE($9::jsonb, clauses_personnalisees),
            updated_at = NOW()
-       WHERE id = $9 AND agence_id = $10
+       WHERE id = $10 AND agence_id = $11
        RETURNING *`,
       [
         loyer_mensuel !== undefined ? parseFloat(loyer_mensuel) : null,
@@ -305,8 +334,9 @@ router.put('/agence/:slugOrId/baux/:bailId', verifierToken, requireAgenceAccess(
         jour_echeance !== undefined ? parseInt(jour_echeance, 10) : null,
         duree_mois !== undefined ? parseInt(duree_mois, 10) : null,
         date_fin || null,
-        conditions !== undefined ? conditions : null,
+        finalConditions,
         document_url !== undefined ? document_url : null,
+        finalClauses,
         bailId,
         agenceId
       ]
@@ -331,6 +361,238 @@ router.put('/agence/:slugOrId/baux/:bailId', verifierToken, requireAgenceAccess(
   } catch (err) {
     console.error('[PUT /baux/:bailId]', err.message);
     res.status(500).json({ success: false, error: 'Erreur lors de la mise à jour du bail' });
+  }
+});
+
+// ── GET /api/locatif-immo/agence/:slugOrId/baux/:bailId/modeles-articles — Modèles légaux et clauses de bail ──
+router.get('/agence/:slugOrId/baux/:bailId/modeles-articles', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bailId } = req.params;
+
+    const { rows } = await pool.query(
+      `SELECT bx.*,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
+              b.ville AS bien_ville, b.type_bien, b.surface_m2, b.nb_pieces, b.nb_chambres, b.reference AS bien_ref,
+              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel,
+              c.email AS locataire_email, c.profession AS locataire_profession,
+              p.nom AS bailleur_nom, p.prenom AS bailleur_prenom, p.telephone AS bailleur_tel,
+              p.adresse AS bailleur_adresse,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.email_contact AS agence_email,
+              a.adresse AS agence_adresse, a.ville AS agence_ville, a.numero_agrement
+       FROM baux_immo bx
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       LEFT JOIN proprietaires_immo p ON COALESCE(bx.proprietaire_id, b.proprietaire_id) = p.id
+       JOIN agences_immo a ON bx.agence_id = a.id
+       WHERE bx.id = $1 AND bx.agence_id = $2`,
+      [bailId, agenceId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable' });
+    }
+
+    const b = rows[0];
+    const defauts = genererTextesDefautBail(b);
+    res.json({
+      success: true,
+      defauts,
+      clauses_personnalisees: b.clauses_personnalisees || {},
+      conditions: b.conditions || '',
+      bail: b
+    });
+  } catch (err) {
+    console.error('[GET /baux/:bailId/modeles-articles]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement modèles du bail' });
+  }
+});
+
+// ── POST /api/locatif-immo/agence/:slugOrId/baux/:bailId/signer — Signature électronique agence / bailleur ──
+router.post('/agence/:slugOrId/baux/:bailId/signer', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bailId } = req.params;
+    const { signature, nom_signataire } = req.body;
+
+    if (!signature) {
+      return res.status(400).json({ success: false, error: 'Signature requise' });
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE baux_immo
+       SET signature_bailleur = $1,
+           date_signature_bailleur = NOW(),
+           nom_signataire_bailleur = $2,
+           statut_signature = CASE WHEN signature_locataire IS NOT NULL THEN 'valide' ELSE 'signe_agence' END,
+           updated_at = NOW()
+       WHERE id = $3 AND agence_id = $4
+       RETURNING *`,
+      [signature, nom_signataire || req.user?.nom || 'L\'Agence Mandataire', bailId, agenceId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable' });
+    }
+
+    enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.userId || req.user?.id,
+      null,
+      'signature_bail_agence',
+      `Signature électronique du contrat de bail ${bailId} par l'agence (${nom_signataire || 'Mandataire'})`,
+      { bail_id: bailId },
+      req
+    );
+
+    res.json({
+      success: true,
+      message: 'Bail signé avec succès par l\'agence.',
+      bail: rows[0]
+    });
+  } catch (err) {
+    console.error('[POST /baux/:bailId/signer]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la signature du bail' });
+  }
+});
+
+// ── POST /api/locatif-immo/agence/:slugOrId/baux/:bailId/documents — Dépôt de pièce justificative (CNI, etc.) par l'agence ──
+router.post('/agence/:slugOrId/baux/:bailId/documents', verifierToken, requireAgenceAccess(), uploadDoc.single('file'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bailId } = req.params;
+    const { type_piece = 'autre', label } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'Fichier requis' });
+    }
+
+    const { rows: bRows } = await pool.query(
+      'SELECT id, locataire_id, pieces_jointes FROM baux_immo WHERE id = $1 AND agence_id = $2',
+      [bailId, agenceId]
+    );
+    if (bRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable' });
+    }
+
+    const bail = bRows[0];
+    const secureUrl = await uploadDocumentBuffer(file.buffer, 'documents_locatif', file.originalname);
+
+    const docItem = {
+      id: require('crypto').randomUUID(),
+      type_piece,
+      label: label || type_piece,
+      nom_fichier: file.originalname,
+      url: secureUrl,
+      taille: file.size,
+      mimetype: file.mimetype,
+      uploaded_at: new Date().toISOString(),
+      uploaded_by: 'agence',
+      statut: 'valide',
+      motif_rejet: null
+    };
+
+    const nextPieces = [...(bail.pieces_jointes || []), docItem];
+
+    const { rows: updated } = await pool.query(
+      'UPDATE baux_immo SET pieces_jointes = $1::jsonb, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [JSON.stringify(nextPieces), bailId]
+    );
+
+    // Synchronisation sur contacts_immo
+    if (bail.locataire_id) {
+      await pool.query(
+        'UPDATE contacts_immo SET pieces_jointes = COALESCE(pieces_jointes, \'[]\'::jsonb) || $1::jsonb WHERE id = $2',
+        [JSON.stringify([docItem]), bail.locataire_id]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'Pièce justificative ajoutée avec succès.',
+      document: docItem,
+      pieces_jointes: updated[0].pieces_jointes
+    });
+  } catch (err) {
+    console.error('[POST /baux/:bailId/documents]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors du téléversement du document' });
+  }
+});
+
+// ── PUT /api/locatif-immo/agence/:slugOrId/baux/:bailId/documents/:docId/statut — Valider / Rejeter un document ──
+router.put('/agence/:slugOrId/baux/:bailId/documents/:docId/statut', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bailId, docId } = req.params;
+    const { statut, motif_rejet } = req.body;
+
+    const { rows: bRows } = await pool.query(
+      'SELECT id, pieces_jointes FROM baux_immo WHERE id = $1 AND agence_id = $2',
+      [bailId, agenceId]
+    );
+    if (bRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable' });
+    }
+
+    const currentPieces = bRows[0].pieces_jointes || [];
+    const nextPieces = currentPieces.map(p => {
+      if (p.id === docId) {
+        return {
+          ...p,
+          statut: statut || p.statut,
+          motif_rejet: statut === 'rejete' ? (motif_rejet || 'Document non conforme ou illisible') : null,
+          verifie_le: new Date().toISOString()
+        };
+      }
+      return p;
+    });
+
+    const { rows: updated } = await pool.query(
+      'UPDATE baux_immo SET pieces_jointes = $1::jsonb, updated_at = NOW() WHERE id = $2 RETURNING pieces_jointes',
+      [JSON.stringify(nextPieces), bailId]
+    );
+
+    res.json({
+      success: true,
+      message: `Statut du document mis à jour (${statut}).`,
+      pieces_jointes: updated[0].pieces_jointes
+    });
+  } catch (err) {
+    console.error('[PUT /baux/:bailId/documents/:docId/statut]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la mise à jour du document' });
+  }
+});
+
+// ── DELETE /api/locatif-immo/agence/:slugOrId/baux/:bailId/documents/:docId — Supprimer un document ──
+router.delete('/agence/:slugOrId/baux/:bailId/documents/:docId', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bailId, docId } = req.params;
+
+    const { rows: bRows } = await pool.query(
+      'SELECT id, pieces_jointes FROM baux_immo WHERE id = $1 AND agence_id = $2',
+      [bailId, agenceId]
+    );
+    if (bRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable' });
+    }
+
+    const nextPieces = (bRows[0].pieces_jointes || []).filter(p => p.id !== docId);
+
+    const { rows: updated } = await pool.query(
+      'UPDATE baux_immo SET pieces_jointes = $1::jsonb, updated_at = NOW() WHERE id = $2 RETURNING pieces_jointes',
+      [JSON.stringify(nextPieces), bailId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Document supprimé avec succès.',
+      pieces_jointes: updated[0].pieces_jointes
+    });
+  } catch (err) {
+    console.error('[DELETE /baux/:bailId/documents/:docId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la suppression du document' });
   }
 });
 
@@ -975,148 +1237,7 @@ function genererPdfQuittanceStream(res, d) {
   doc.end();
 }
 
-function genererPdfContratBailStream(res, b) {
-  const bailRef = `BAIL-${b.id.slice(0, 8).toUpperCase()}`;
 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="contrat_bail_${bailRef}.pdf"`);
-
-  const doc = new PDFDocument({ margin: 45, size: 'A4' });
-  doc.pipe(res);
-
-  // ── En-tête officiel ──
-  doc.fillColor(PDF_NAVY).fontSize(7.5).font('Helvetica-Bold')
-     .text("RÉPUBLIQUE DU SÉNÉGAL • CODE DES OBLIGATIONS CIVILES ET COMMERCIALES (COCC) • DÉCRET N° 2023-442", 45, 40);
-
-  doc.fillColor(PDF_NAVY).fontSize(16).font('Helvetica-Bold').text(b.agence_nom, 45, 56);
-  doc.fontSize(8.5).font('Helvetica').fillColor(PDF_GRAY)
-     .text(`Mandataire de gestion • Agrément : ${b.numero_agrement || 'En cours'} • ${b.agence_ville || 'Dakar'}`, 45, 75);
-
-  doc.moveTo(45, 90).lineTo(550, 90).strokeColor(PDF_NAVY).lineWidth(1.2).stroke();
-
-  // ── Titre ──
-  doc.fillColor(PDF_NAVY).fontSize(16).font('Helvetica-Bold')
-     .text("CONTRAT DE BAIL À USAGE D'HABITATION", 45, 105, { align: 'center', width: 505 });
-  doc.fillColor(PDF_PRICE_GREEN).fontSize(9).font('Helvetica-Bold')
-     .text(`RÉFÉRENCE OFFICIELLE : ${bailRef}`, 45, 125, { align: 'center', width: 505 });
-
-  let currentY = 145;
-
-  // ── Article 1 : Les Parties ──
-  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 1 - DÉSIGNATION DES PARTIES", 45, currentY);
-  currentY += 14;
-
-  const propNom = [b.bailleur_prenom, b.bailleur_nom].filter(Boolean).join(' ') || 'Le Propriétaire';
-  const locNom = [b.locataire_prenom, b.locataire_nom].filter(Boolean).join(' ');
-
-  doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
-     .text(`1. LE BAILLEUR : Monsieur/Madame ${propNom}, représenté(e) valablement aux fins des présentes par l'Agence ${b.agence_nom}, mandataire de gestion dument habilité.`, 45, currentY, { width: 505, lineGap: 2 });
-  currentY += 28;
-
-  doc.text(`2. LE PRENEUR (LOCATAIRE) : Monsieur/Madame ${locNom}, Téléphone : ${b.locataire_tel || 'Non renseigné'}${b.locataire_profession ? `, Profession : ${b.locataire_profession}` : ''}, Email : ${b.locataire_email || 'Non renseigné'}.`, 45, currentY, { width: 505, lineGap: 2 });
-  currentY += 32;
-
-  // ── Article 2 : Objet du bail & Description ──
-  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 2 - OBJET DU CONTRAT ET DÉSIGNATION DU BIEN", 45, currentY);
-  currentY += 14;
-
-  doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
-     .text("Le Bailleur donne à bail à usage exclusif d'habitation au Preneur qui accepte les locaux désignés ci-après :", 45, currentY, { width: 505 });
-  currentY += 14;
-
-  doc.roundedRect(45, currentY, 505, 52, 4).fillColor('#F8FAFC').strokeColor('#E2E8F0').lineWidth(0.5).fillAndStroke();
-  doc.fillColor(PDF_NAVY).fontSize(9).font('Helvetica-Bold')
-     .text(cleanPdfText(b.bien_titre), 55, currentY + 8)
-     .text(`Type : ${String(b.type_bien || 'Appartement').toUpperCase()} • Surface : ${b.surface_m2 || 'N/A'} m² • Pièces : ${b.nb_pieces || 'N/A'} (Chambres : ${b.nb_chambres || 'N/A'})`, 55, currentY + 22);
-  doc.font('Helvetica').fontSize(8.5).fillColor(PDF_GRAY)
-     .text(`Adresse géographique : ${b.bien_adresse || 'Sise à'} ${b.bien_quartier ? `(${b.bien_quartier})` : ''} - ${b.bien_ville || 'Dakar'} (Réf : ${b.bien_ref || 'BIEN'})`, 55, currentY + 36);
-
-  currentY += 62;
-
-  // ── Article 3 : Durée & Prise d'effet ──
-  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 3 - DURÉE ET RENOUVELLEMENT DU BAIL", 45, currentY);
-  currentY += 14;
-
-  const dateDeb = new Date(b.date_debut).toLocaleDateString('fr-FR');
-  const dateFin = b.date_fin ? new Date(b.date_fin).toLocaleDateString('fr-FR') : 'Indéterminée (Tacite reconduction)';
-
-  doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
-     .text(`Le présent contrat est consenti pour une durée ferme de ${b.duree_mois || 12} mois, prenant effet le ${dateDeb} et se terminant le ${dateFin}. Sauf congé délivré par l'une des parties par acte d'huissier ou lettre recommandée avec préavis de 3 mois, le contrat sera reconduit tacitement.`, 45, currentY, { width: 505, lineGap: 2 });
-  currentY += 32;
-
-  // ── Article 4 : Loyer, Charges & Caution ──
-  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 4 - CONDITIONS FINANCIÈRES ET RÈGLEMENT", 45, currentY);
-  currentY += 14;
-
-  const loyer = Number(b.loyer_mensuel || 0);
-  const charges = Number(b.charges || 0);
-  const caution = Number(b.depot_garantie || 0);
-
-  doc.rect(45, currentY, 505, 20).fillColor(PDF_NAVY).fill();
-  doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold')
-     .text('RUBRIQUE FINANCIÈRE', 55, currentY + 5)
-     .text('PERIODICITÉ / MODALITÉ', 280, currentY + 5)
-     .text('MONTANT', 460, currentY + 5, { align: 'right', width: 80 });
-  currentY += 20;
-
-  const addFinRow = (titre, modalite, montant) => {
-    doc.rect(45, currentY, 505, 18).fillColor('#FFFFFF').fill();
-    doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica').text(titre, 55, currentY + 5);
-    doc.fillColor(PDF_GRAY).text(modalite, 280, currentY + 5);
-    doc.fillColor(PDF_NAVY).font('Helvetica-Bold').text(`${fmtPdfNum(montant)} FCFA`, 460, currentY + 5, { align: 'right', width: 80 });
-    doc.moveTo(45, currentY + 18).lineTo(550, currentY + 18).strokeColor('#E2E8F0').lineWidth(0.5).stroke();
-    currentY += 18;
-  };
-
-  addFinRow('Loyer mensuel principal', `Échéance le ${b.jour_echeance || 5} du mois d'avance`, loyer);
-  addFinRow('Provisions sur charges locatives', 'Mensuel avec le loyer', charges);
-  addFinRow('Dépôt de garantie (Caution)', 'Versé à la signature (Max 2 mois)', caution);
-
-  currentY += 10;
-
-  // ── Article 5 : Obligations & Clause résolutoire ──
-  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 5 - OBLIGATIONS & CLAUSE RÉSOLUTOIRE DE PLEIN DROIT", 45, currentY);
-  currentY += 14;
-  doc.fillColor('#1F2937').fontSize(8).font('Helvetica')
-     .text("Le Preneur s'engage à user des lieux loués paisiblement et conformément à leur destination d'habitation. Il est expressément convenu qu'à défaut de paiement d'un seul terme de loyer ou charges à son échéance exacte, ou en cas d'inexécution d'une clause du bail, le présent contrat sera résilié de plein droit un mois après un commandement de payer demeuré infructueux.", 45, currentY, { width: 505, lineGap: 2 });
-  currentY += 34;
-
-  // ── Article 6 : Conditions particulières & clauses spéciales (si personnalisées par l'agence) ──
-  if (b.conditions && String(b.conditions).trim()) {
-    if (currentY > 620) {
-      doc.addPage();
-      currentY = 45;
-    }
-    doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 6 - CONDITIONS PARTICULIÈRES ET CLAUSES SPÉCIALES", 45, currentY);
-    currentY += 14;
-    doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
-       .text(cleanPdfText(b.conditions), 45, currentY, { width: 505, lineGap: 2 });
-    currentY += 32;
-  }
-
-  // ── Signatures ──
-  if (currentY > 670) {
-    doc.addPage();
-    currentY = 45;
-  }
-  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("Fait en trois exemplaires originaux à " + (b.agence_ville || 'Dakar') + ", le " + dateDeb, 45, currentY);
-  currentY += 18;
-
-  // Cadres de signature
-  doc.roundedRect(45, currentY, 240, 75, 4).strokeColor(PDF_NAVY).lineWidth(0.8).stroke();
-  doc.fillColor(PDF_NAVY).fontSize(8.5).font('Helvetica-Bold').text("POUR LE PRENEUR (LE LOCATAIRE)", 55, currentY + 8);
-  doc.fillColor(PDF_GRAY).fontSize(7.5).font('Helvetica')
-     .text("Mention manuscrite 'Lu et approuvé'", 55, currentY + 22)
-     .text(locNom, 55, currentY + 58);
-
-  doc.roundedRect(310, currentY, 240, 75, 4).strokeColor(PDF_PRICE_GREEN).lineWidth(0.8).stroke();
-  doc.fillColor(PDF_PRICE_GREEN).fontSize(8.5).font('Helvetica-Bold').text("POUR LE BAILLEUR / L'AGENCE (MANDATAIRE)", 320, currentY + 8);
-  doc.fillColor(PDF_GRAY).fontSize(7.5).font('Helvetica')
-     .text("Cachet et signature du mandataire habilité", 320, currentY + 22)
-     .text(cleanPdfText(b.agence_nom), 320, currentY + 58);
-
-  doc.end();
-}
 
 // ── GET /api/locatif-immo/mes-locations — Espace Locataire connecté ──
 router.get('/mes-locations', verifierToken, async (req, res) => {
@@ -1169,6 +1290,8 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
 
     const query = `
       SELECT bx.id AS bail_id, bx.date_debut, bx.date_fin, bx.duree_mois, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance, bx.statut AS statut_bail, bx.document_url,
+             bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire,
+             bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.statut_signature,
              b.id AS bien_id, b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville, b.type_bien, b.photos AS bien_photos,
              a.id AS agence_id, a.nom AS agence_nom, a.slug AS agence_slug, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.email_contact AS agence_email,
              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email,
@@ -1230,6 +1353,14 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
         depot_garantie: Number(bail.depot_garantie || 0),
         jour_echeance: bail.jour_echeance,
         statut_bail: bail.statut_bail,
+        pieces_jointes: bail.pieces_jointes || [],
+        signature_locataire: bail.signature_locataire,
+        date_signature_locataire: bail.date_signature_locataire,
+        nom_signataire_locataire: bail.nom_signataire_locataire,
+        signature_bailleur: bail.signature_bailleur,
+        date_signature_bailleur: bail.date_signature_bailleur,
+        nom_signataire_bailleur: bail.nom_signataire_bailleur,
+        statut_signature: bail.statut_signature || 'en_attente',
         contrat_url: `/api/locatif-immo/mes-locations/bail/${bail.bail_id}.pdf`,
         document_url: bail.document_url || null,
         bien: {
@@ -1390,6 +1521,142 @@ router.get('/mes-locations/bail/:bailId.pdf', verifierToken, async (req, res) =>
   }
 });
 
+// ── POST /api/locatif-immo/mes-locations/bail/:bailId/signer — Signature électronique locataire connecté ──
+router.post('/mes-locations/bail/:bailId/signer', verifierToken, async (req, res) => {
+  try {
+    const { bailId } = req.params;
+    const { signature, nom_signataire } = req.body;
+    const userId = req.user.userId || req.user.id;
+
+    if (!signature) {
+      return res.status(400).json({ success: false, error: 'Signature requise' });
+    }
+
+    const { rows: uRows } = await pool.query('SELECT id, email, telephone, prenom, nom FROM utilisateurs WHERE id = $1', [userId]);
+    const user = uRows[0] || {};
+    const userEmail = (user.email || '').trim().toLowerCase();
+    const cleanPh = String(user.telephone || '').replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const { rows: check } = await pool.query(
+      `SELECT bx.id, bx.locataire_id, c.prenom, c.nom
+       FROM baux_immo bx
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       WHERE bx.id = $1
+         AND (
+           c.utilisateur_id = $2
+           OR ($3 != '' AND LOWER(c.email) = $3)
+           OR ($4 != '' AND RIGHT(REGEXP_REPLACE(c.telephone, '[^0-9]', '', 'g'), 9) = $4)
+         )`,
+      [bailId, userId, userEmail, shortPh]
+    );
+
+    if (check.length === 0) {
+      return res.status(404).json({ success: false, error: 'Bail introuvable ou vous n\'êtes pas le preneur désigné' });
+    }
+
+    const locName = nom_signataire || `${check[0].prenom || ''} ${check[0].nom || ''}`.trim() || `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Le Preneur';
+
+    const { rows: updated } = await pool.query(
+      `UPDATE baux_immo
+       SET signature_locataire = $1,
+           date_signature_locataire = NOW(),
+           nom_signataire_locataire = $2,
+           statut_signature = CASE WHEN signature_bailleur IS NOT NULL THEN 'valide' ELSE 'signe_locataire' END,
+           updated_at = NOW()
+       WHERE id = $3
+       RETURNING *`,
+      [signature, locName, bailId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Contrat de bail signé électroniquement avec succès.',
+      bail: updated[0]
+    });
+  } catch (err) {
+    console.error('[POST /mes-locations/bail/:bailId/signer]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la signature du contrat' });
+  }
+});
+
+// ── POST /api/locatif-immo/mes-locations/bail/:bailId/documents — Dépôt de pièce justificative (CNI...) locataire connecté ──
+router.post('/mes-locations/bail/:bailId/documents', verifierToken, uploadDoc.single('file'), async (req, res) => {
+  try {
+    const { bailId } = req.params;
+    const { type_piece = 'autre', label } = req.body;
+    const userId = req.user.userId || req.user.id;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'Fichier requis' });
+    }
+
+    const { rows: uRows } = await pool.query('SELECT id, email, telephone FROM utilisateurs WHERE id = $1', [userId]);
+    const user = uRows[0] || {};
+    const userEmail = (user.email || '').trim().toLowerCase();
+    const cleanPh = String(user.telephone || '').replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const { rows: check } = await pool.query(
+      `SELECT bx.id, bx.locataire_id, bx.pieces_jointes
+       FROM baux_immo bx
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       WHERE bx.id = $1
+         AND (
+           c.utilisateur_id = $2
+           OR ($3 != '' AND LOWER(c.email) = $3)
+           OR ($4 != '' AND RIGHT(REGEXP_REPLACE(c.telephone, '[^0-9]', '', 'g'), 9) = $4)
+         )`,
+      [bailId, userId, userEmail, shortPh]
+    );
+
+    if (check.length === 0) {
+      return res.status(404).json({ success: false, error: 'Bail introuvable' });
+    }
+
+    const secureUrl = await uploadDocumentBuffer(file.buffer, 'documents_locatif', file.originalname);
+
+    const docItem = {
+      id: require('crypto').randomUUID(),
+      type_piece,
+      label: label || type_piece,
+      nom_fichier: file.originalname,
+      url: secureUrl,
+      taille: file.size,
+      mimetype: file.mimetype,
+      uploaded_at: new Date().toISOString(),
+      uploaded_by: 'locataire',
+      statut: 'en_attente',
+      motif_rejet: null
+    };
+
+    const nextPieces = [...(check[0].pieces_jointes || []), docItem];
+
+    const { rows: updated } = await pool.query(
+      'UPDATE baux_immo SET pieces_jointes = $1::jsonb, updated_at = NOW() WHERE id = $2 RETURNING pieces_jointes',
+      [JSON.stringify(nextPieces), bailId]
+    );
+
+    if (check[0].locataire_id) {
+      await pool.query(
+        'UPDATE contacts_immo SET pieces_jointes = COALESCE(pieces_jointes, \'[]\'::jsonb) || $1::jsonb WHERE id = $2',
+        [JSON.stringify([docItem]), check[0].locataire_id]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'Document versé avec succès. En attente de validation par l\'agence.',
+      document: docItem,
+      pieces_jointes: updated[0].pieces_jointes
+    });
+  } catch (err) {
+    console.error('[POST /mes-locations/bail/:bailId/documents]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors du versement du document' });
+  }
+});
+
 // ── GET /api/locatif-immo/public/echeance/:echeanceId — Détails publics pour paiement de loyer ──
 router.get('/public/echeance/:echeanceId', async (req, res) => {
   try {
@@ -1399,6 +1666,8 @@ router.get('/public/echeance/:echeanceId', async (req, res) => {
               le.statut, le.quittance_url,
               ba.id AS bail_id, ba.loyer_mensuel, ba.charges, ba.conditions AS bail_conditions,
               ba.depot_garantie, ba.jour_echeance, ba.date_debut, ba.date_fin,
+              ba.pieces_jointes, ba.signature_locataire, ba.date_signature_locataire, ba.nom_signataire_locataire,
+              ba.signature_bailleur, ba.date_signature_bailleur, ba.nom_signataire_bailleur, ba.statut_signature,
               b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville,
               c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel,
               a.nom AS agence_nom, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.slug AS agence_slug, a.logo_url AS agence_logo
@@ -1454,7 +1723,13 @@ router.get('/public/echeance/:echeanceId', async (req, res) => {
           depot_garantie: Number(ech.depot_garantie || 0),
           jour_echeance: ech.jour_echeance,
           date_debut: ech.date_debut,
-          date_fin: ech.date_fin
+          date_fin: ech.date_fin,
+          pieces_jointes: ech.pieces_jointes || [],
+          signature_locataire: ech.signature_locataire,
+          date_signature_locataire: ech.date_signature_locataire,
+          signature_bailleur: ech.signature_bailleur,
+          date_signature_bailleur: ech.date_signature_bailleur,
+          statut_signature: ech.statut_signature || 'en_attente',
         }
       }
     });
@@ -1545,6 +1820,384 @@ router.get('/public/bail/:bailId.pdf', async (req, res) => {
   }
 });
 
+// ── POST /api/locatif-immo/public/bail/:bailId/signer — Signature électronique sans compte (par téléphone) ──
+router.post('/public/bail/:bailId/signer', async (req, res) => {
+  try {
+    const { bailId } = req.params;
+    const { tel, signature, nom_signataire } = req.body;
+
+    if (!tel || !signature) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone et signature requis' });
+    }
+
+    const cleanPh = String(tel).replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const { rows: check } = await pool.query(
+      `SELECT bx.id, bx.locataire_id, c.prenom, c.nom
+       FROM baux_immo bx
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       WHERE bx.id = $1
+         AND (
+           RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $2
+           OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $2
+         )`,
+      [bailId, shortPh]
+    );
+
+    if (check.length === 0) {
+      return res.status(404).json({ success: false, error: 'Bail introuvable ou numéro de téléphone non correspondant' });
+    }
+
+    const locName = nom_signataire || `${check[0].prenom || ''} ${check[0].nom || ''}`.trim() || 'Le Preneur';
+
+    const { rows: updated } = await pool.query(
+      `UPDATE baux_immo
+       SET signature_locataire = $1,
+           date_signature_locataire = NOW(),
+           nom_signataire_locataire = $2,
+           statut_signature = CASE WHEN signature_bailleur IS NOT NULL THEN 'valide' ELSE 'signe_locataire' END,
+           updated_at = NOW()
+       WHERE id = $3
+       RETURNING *`,
+      [signature, locName, bailId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Contrat de bail signé électroniquement avec succès.',
+      bail: updated[0]
+    });
+  } catch (err) {
+    console.error('[POST /public/bail/:bailId/signer]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la signature du contrat' });
+  }
+});
+
+// ── POST /api/locatif-immo/public/bail/:bailId/documents — Dépôt de pièce justificative (CNI...) sans compte ──
+router.post('/public/bail/:bailId/documents', uploadDoc.single('file'), async (req, res) => {
+  try {
+    const { bailId } = req.params;
+    const { tel, type_piece = 'autre', label } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'Fichier requis' });
+    }
+    if (!tel) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone requis' });
+    }
+
+    const cleanPh = String(tel).replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const { rows: check } = await pool.query(
+      `SELECT bx.id, bx.locataire_id, bx.pieces_jointes
+       FROM baux_immo bx
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       WHERE bx.id = $1
+         AND (
+           RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $2
+           OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $2
+         )`,
+      [bailId, shortPh]
+    );
+
+    if (check.length === 0) {
+      return res.status(404).json({ success: false, error: 'Bail introuvable ou numéro de téléphone non correspondant' });
+    }
+
+    const secureUrl = await uploadDocumentBuffer(file.buffer, 'documents_locatif', file.originalname);
+
+    const docItem = {
+      id: require('crypto').randomUUID(),
+      type_piece,
+      label: label || type_piece,
+      nom_fichier: file.originalname,
+      url: secureUrl,
+      taille: file.size,
+      mimetype: file.mimetype,
+      uploaded_at: new Date().toISOString(),
+      uploaded_by: 'locataire',
+      statut: 'en_attente',
+      motif_rejet: null
+    };
+
+    const nextPieces = [...(check[0].pieces_jointes || []), docItem];
+
+    const { rows: updated } = await pool.query(
+      'UPDATE baux_immo SET pieces_jointes = $1::jsonb, updated_at = NOW() WHERE id = $2 RETURNING pieces_jointes',
+      [JSON.stringify(nextPieces), bailId]
+    );
+
+    if (check[0].locataire_id) {
+      await pool.query(
+        'UPDATE contacts_immo SET pieces_jointes = COALESCE(pieces_jointes, \'[]\'::jsonb) || $1::jsonb WHERE id = $2',
+        [JSON.stringify([docItem]), check[0].locataire_id]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'Document versé avec succès. En attente de vérification par l\'agence.',
+      document: docItem,
+      pieces_jointes: updated[0].pieces_jointes
+    });
+  } catch (err) {
+    console.error('[POST /public/bail/:bailId/documents]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors du versement du document' });
+  }
+});
+
+// ── POST /api/locatif-immo/public/demander-otp — Envoi d'un code OTP WhatsApp de sécurisation portail locataire ──
+router.post('/public/demander-otp', async (req, res) => {
+  try {
+    const { tel } = req.body;
+    if (!tel) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone requis.' });
+    }
+
+    const cleanPh = String(tel).replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    if (shortPh.length < 8) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone incomplet ou invalide.' });
+    }
+
+    // 1. Vérifier si un locataire avec bail existe pour ce numéro
+    const { rows: contactRows } = await pool.query(
+      `SELECT c.id, c.prenom, c.nom, c.telephone, c.whatsapp
+       FROM contacts_immo c
+       WHERE (
+         RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+         OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $1
+       )
+       LIMIT 1`,
+      [shortPh]
+    );
+
+    if (contactRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Aucun contrat de location associé à ce numéro. Veuillez vérifier votre numéro ou contacter votre agence.'
+      });
+    }
+
+    const contact = contactRows[0];
+    const targetPhone = contact.whatsapp || contact.telephone || tel;
+    const normPhone = normalisePhone(targetPhone);
+
+    // 2. Générer le code OTP
+    const code = await genererOtpPhone(normPhone, 'locataire_portal');
+    console.log(`[LOCATIF OTP] Code généré pour ${normPhone.slice(0, 4)}**** (${contact.prenom || ''} ${contact.nom || ''})`);
+
+    // 3. Envoyer par WhatsApp
+    try {
+      await sendWhatsAppTemplate(normPhone, 'nopalou_auth_otp', [
+        {
+          type: 'body',
+          parameters: [{ type: 'text', text: code }],
+        },
+        {
+          type: 'button',
+          sub_type: 'url',
+          index: '0',
+          parameters: [{ type: 'text', text: code }],
+        },
+      ]);
+    } catch {
+      try {
+        await sendWhatsAppText(
+          normPhone,
+          `🔐 *Nopalou Immo — Code de Sécurité*\n\nVoici votre code pour accéder à votre contrat de bail et quittances :\n👉 *${code}* 👈\n\n⏱️ Expire dans 10 minutes.\n⚠️ Ne partagez ce code avec personne.`
+        );
+      } catch (textErr) {
+        console.warn('[LOCATIF OTP SEND ERR]', textErr.message);
+      }
+    }
+
+    const telAffiche = normPhone.length > 6 
+      ? `${normPhone.slice(0, 5)} *** ** ${normPhone.slice(-2)}`
+      : normPhone;
+
+    res.json({
+      success: true,
+      message: `Code de sécurité envoyé par WhatsApp au ${telAffiche}.`,
+      telephoneMasque: telAffiche,
+      telephone: normPhone,
+      dev_code: process.env.NODE_ENV !== 'production' ? code : undefined
+    });
+  } catch (err) {
+    console.error('[POST /public/demander-otp]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'envoi du code de sécurité' });
+  }
+});
+
+// ── POST /api/locatif-immo/public/verifier-otp — Validation de l'OTP et déverrouillage de la session locataire ──
+router.post('/public/verifier-otp', async (req, res) => {
+  try {
+    const { tel, code } = req.body;
+    if (!tel || !code) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone et code de sécurité requis.' });
+    }
+
+    const normPhone = normalisePhone(tel);
+    const cleanPh = String(tel).replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const verif = await verifierOtpPhone(normPhone, 'locataire_portal', code);
+    if (!verif.valide) {
+      return res.status(verif.tropDeTentatives ? 429 : 400).json({
+        success: false,
+        error: verif.error || 'Code de sécurité incorrect ou expiré.'
+      });
+    }
+
+    // 1. Trouver les baux associés à ce locataire
+    const { rows: baux } = await pool.query(
+      `SELECT bx.id, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance,
+              bx.date_debut, bx.date_fin, bx.statut, bx.conditions,
+              bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire,
+              bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.statut_signature,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
+              b.ville AS bien_ville, b.photos AS bien_photos, b.reference AS bien_ref,
+              c.id AS contact_id, c.nom AS locataire_nom, c.prenom AS locataire_prenom,
+              c.telephone AS locataire_tel, c.whatsapp AS locataire_wa, c.email AS locataire_email,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.whatsapp AS agence_wa,
+              a.slug AS agence_slug, a.logo_url AS agence_logo
+       FROM baux_immo bx
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN agences_immo a ON bx.agence_id = a.id
+       WHERE (
+         RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+         OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $1
+       )
+       ORDER BY bx.created_at DESC`,
+      [shortPh]
+    );
+
+    if (baux.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Aucun contrat de location actif ou historique trouvé pour ce numéro de téléphone.'
+      });
+    }
+
+    const bailIds = baux.map(b => b.id);
+    const { rows: echeances } = await pool.query(
+      `SELECT id, bail_id, periode, date_echeance, montant_du, montant_paye, montant_restant,
+              statut, quittance_url, date_paiement, mode_paiement
+       FROM loyers_echeances
+       WHERE bail_id = ANY($1)
+       ORDER BY date_echeance ASC`,
+      [bailIds]
+    );
+
+    // 2. Provisioning / Liaison compte utilisateur pour session sécurisée JWT
+    const contact = baux[0];
+    const withPlus = '+' + normPhone;
+    const { rows: existingUsers } = await pool.query(
+      `SELECT id, nom, email, telephone FROM utilisateurs
+       WHERE telephone = $1 OR telephone = $2 OR telephone = $3`,
+      [normPhone, withPlus, shortPh]
+    );
+
+    let user = existingUsers[0];
+    if (!user) {
+      const userNom = [contact.locataire_prenom, contact.locataire_nom].filter(Boolean).join(' ') || 'Locataire Nopalou';
+      const userEmail = contact.locataire_email && !contact.locataire_email.includes('example.com')
+        ? contact.locataire_email
+        : `${shortPh}@whatsapp.nopalou.com`;
+      const randomPassword = crypto.randomBytes(16).toString('hex');
+      const hash = await bcrypt.hash(randomPassword, 12);
+      const { rows: newUserRows } = await pool.query(
+        `INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie, role)
+         VALUES ($1, $2, $3, $4, true, 'acheteur')
+         ON CONFLICT (telephone) DO UPDATE SET nom = EXCLUDED.nom
+         RETURNING id, nom, email, telephone`,
+        [userNom, userEmail, hash, normPhone]
+      );
+      user = newUserRows[0];
+      if (contact.contact_id) {
+        await pool.query('UPDATE contacts_immo SET utilisateur_id = $1 WHERE id = $2', [user.id, contact.contact_id]);
+      }
+    }
+
+    // 3. Émission du jeton d'authentification officiel JWT
+    const token = jwt.sign(
+      { userId: user.id, role: 'locataire', tel: shortPh, type: 'locataire_portal' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const bauxAvecEcheances = baux.map(b => {
+      const eches = echeances.filter(e => e.bail_id === b.id);
+      return {
+        id: b.id,
+        bien_titre: b.bien_titre,
+        bien_adresse: b.bien_adresse,
+        bien_quartier: b.bien_quartier,
+        bien_ville: b.bien_ville,
+        bien_photos: b.bien_photos || [],
+        bien_ref: b.bien_ref,
+        loyer_mensuel: Number(b.loyer_mensuel),
+        charges: Number(b.charges || 0),
+        depot_garantie: Number(b.depot_garantie || 0),
+        jour_echeance: b.jour_echeance,
+        date_debut: b.date_debut,
+        date_fin: b.date_fin,
+        statut: b.statut,
+        conditions: b.conditions,
+        pieces_jointes: b.pieces_jointes || [],
+        signature_locataire: b.signature_locataire,
+        date_signature_locataire: b.date_signature_locataire,
+        nom_signataire_locataire: b.nom_signataire_locataire,
+        signature_bailleur: b.signature_bailleur,
+        date_signature_bailleur: b.date_signature_bailleur,
+        nom_signataire_bailleur: b.nom_signataire_bailleur,
+        statut_signature: b.statut_signature || 'en_attente',
+        contrat_pdf_url: `/api/locatif-immo/mes-locations/bail/${b.id}.pdf?token=${encodeURIComponent(token)}`,
+        agence: {
+          nom: b.agence_nom,
+          telephone: b.agence_tel,
+          whatsapp: b.agence_wa,
+          slug: b.agence_slug,
+          logo_url: b.agence_logo
+        },
+        echeances: eches.map(ech => ({
+          id: ech.id,
+          periode: ech.periode,
+          date_echeance: ech.date_echeance,
+          montant_du: Number(ech.montant_du),
+          montant_paye: Number(ech.montant_paye || 0),
+          montant_restant: Number(ech.montant_restant || 0),
+          statut: ech.statut,
+          quittance_url: ech.statut === 'paye' ? `/api/locatif-immo/mes-locations/quittance/${ech.id}.pdf?token=${encodeURIComponent(token)}` : null,
+          lien_paiement: `/payer-loyer/${ech.id}`
+        }))
+      };
+    });
+
+    res.json({
+      success: true,
+      message: 'Authentification réussie. Session sécurisée déverrouillée.',
+      token,
+      user,
+      locataire: {
+        nom: contact.locataire_nom,
+        prenom: contact.locataire_prenom,
+        telephone: contact.locataire_tel,
+        whatsapp: contact.locataire_wa
+      },
+      baux: bauxAvecEcheances
+    });
+  } catch (err) {
+    console.error('[POST /public/verifier-otp]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la validation du code' });
+  }
+});
+
 // ── GET /api/locatif-immo/public/locataire-lookup — Consultation portail locataire par téléphone ──
 router.get('/public/locataire-lookup', async (req, res) => {
   try {
@@ -1563,6 +2216,8 @@ router.get('/public/locataire-lookup', async (req, res) => {
     const { rows: baux } = await pool.query(
       `SELECT bx.id, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance,
               bx.date_debut, bx.date_fin, bx.statut, bx.conditions,
+              bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire,
+              bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.statut_signature,
               b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
               b.ville AS bien_ville, b.photos AS bien_photos, b.reference AS bien_ref,
               c.id AS contact_id, c.nom AS locataire_nom, c.prenom AS locataire_prenom,
@@ -1616,6 +2271,14 @@ router.get('/public/locataire-lookup', async (req, res) => {
         date_fin: b.date_fin,
         statut: b.statut,
         conditions: b.conditions,
+        pieces_jointes: b.pieces_jointes || [],
+        signature_locataire: b.signature_locataire,
+        date_signature_locataire: b.date_signature_locataire,
+        nom_signataire_locataire: b.nom_signataire_locataire,
+        signature_bailleur: b.signature_bailleur,
+        date_signature_bailleur: b.date_signature_bailleur,
+        nom_signataire_bailleur: b.nom_signataire_bailleur,
+        statut_signature: b.statut_signature || 'en_attente',
         contrat_pdf_url: `/api/locatif-immo/public/bail/${b.id}.pdf?tel=${encodeURIComponent(shortPh)}`,
         agence: {
           nom: b.agence_nom,

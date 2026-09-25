@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
-import { useParams } from 'next/navigation'
+import React, { useState, useEffect, useMemo, Suspense } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
 import { Plus, DollarSign, CheckCircle2, Download, CheckCheck, MessageCircle } from 'lucide-react'
 
 import LocatifModals from './components/LocatifModals'
@@ -24,9 +24,18 @@ const SORT_LOYERS: SortOption[] = [
 
 export default function LocatifPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const slug = params?.slug as string
+  const tabParam = searchParams?.get('tab')
 
-  const [tab, setTab] = useState<'loyers' | 'baux'>('loyers')
+  const [tab, setTab] = useState<'loyers' | 'baux'>(tabParam === 'baux' ? 'baux' : 'loyers')
+
+  useEffect(() => {
+    if (tabParam === 'baux' || tabParam === 'loyers') {
+      setTab(tabParam)
+    }
+  }, [tabParam])
+
   const [baux, setBaux] = useState<BailItem[]>([])
   const [loyers, setLoyers] = useState<LoyerEcheance[]>([])
   const [loading, setLoading] = useState(true)

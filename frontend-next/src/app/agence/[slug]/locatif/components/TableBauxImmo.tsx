@@ -7,6 +7,8 @@ import BailCardMobile from './BailCardMobile'
 import BailTableRow from './BailTableRow'
 import ModalResilierBail from './ModalResilierBail'
 import ModalEditerBail from './ModalEditerBail'
+import SignaturePadModal from '@/components/immo/SignaturePadModal'
+import DossierPiecesModal, { PieceJointeItem } from '@/components/immo/DossierPiecesModal'
 import { AgenceTableToolbar, SortOption } from '../../../components/AgenceTableToolbar'
 import { AgenceTableTh } from '../../../components/AgenceTableTh'
 import { AgenceBatchActionBar, BatchActionItem } from '../../../components/AgenceBatchActionBar'
@@ -21,10 +23,23 @@ export interface BailItem {
   loyer_mensuel: number
   charges: number
   depot_garantie?: number
+  duree_mois?: number
+  jour_echeance?: number
   date_debut: string
   date_fin?: string
   statut: string
   nb_impayes?: number
+  conditions?: string
+  document_url?: string
+  clauses_personnalisees?: Record<string, string>
+  pieces_jointes?: PieceJointeItem[]
+  signature_locataire?: string | null
+  date_signature_locataire?: string | null
+  nom_signataire_locataire?: string | null
+  signature_bailleur?: string | null
+  date_signature_bailleur?: string | null
+  nom_signataire_bailleur?: string | null
+  statut_signature?: string
 }
 
 interface TableBauxImmoProps {
@@ -44,9 +59,29 @@ const SORT_OPTIONS: SortOption[] = [
 export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: TableBauxImmoProps) {
   const [bailAResilier, setBailAResilier] = useState<BailItem | null>(null)
   const [bailAEditer, setBailAEditer] = useState<BailItem | null>(null)
+  const [bailASigner, setBailASigner] = useState<BailItem | null>(null)
+  const [bailPieces, setBailPieces] = useState<BailItem | null>(null)
   const [motif, setMotif] = useState('')
   const [loadingResiliation, setLoadingResiliation] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  async function handleSaveSignatureAgence(signatureDataUrl: string, signerName: string) {
+    if (!bailASigner) return
+    const res = await fetch(`/api/locatif-immo/agence/${slug}/baux/${bailASigner.id}/signer`, {
+      method: 'POST',
+      headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        signature: signatureDataUrl,
+        nom_signataire: signerName,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Erreur lors de la signature du contrat.')
+    }
+    setBailASigner(null)
+    if (onRefresh) onRefresh()
+  }
 
   // Filtres, Recherche, Tri
   const [searchTerm, setSearchTerm] = useState('')
@@ -274,11 +309,14 @@ export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: 
             key={b.id}
             slug={slug}
             bail={b}
+            onEditer={item => setBailAEditer(item)}
             onResilier={item => {
               setBailAResilier(item)
               setMotif('')
               setErrorMsg(null)
             }}
+            onSigner={item => setBailASigner(item)}
+            onPieces={item => setBailPieces(item)}
             isSelected={selectedIds.includes(b.id)}
             onToggleSelect={handleToggleSelect}
           />
@@ -322,6 +360,8 @@ export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: 
                   setMotif('')
                   setErrorMsg(null)
                 }}
+                onSigner={item => setBailASigner(item)}
+                onPieces={item => setBailPieces(item)}
               />
             ))}
           </tbody>
@@ -359,6 +399,31 @@ export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: 
         onClose={() => setBailAResilier(null)}
         onConfirm={handleConfirmerResiliation}
       />
+
+      {/* Modale Signature Numérique Agence / Mandataire */}
+      <SignaturePadModal
+        isOpen={Boolean(bailASigner)}
+        signerRole="agence"
+        title="Signature Électronique Mandataire / Bailleur"
+        subtitle="Signez à l'écran ou à la souris pour valider et certifier le contrat de bail."
+        onClose={() => setBailASigner(null)}
+        onSaveSignature={handleSaveSignatureAgence}
+      />
+
+      {/* Modale Dossier & Pièces Justificatives Agence */}
+      {bailPieces && (
+        <DossierPiecesModal
+          isOpen={Boolean(bailPieces)}
+          bailId={bailPieces.id}
+          pieces={bailPieces.pieces_jointes || []}
+          isAgency={true}
+          agencySlug={slug}
+          onClose={() => setBailPieces(null)}
+          onRefresh={() => {
+            if (onRefresh) onRefresh()
+          }}
+        />
+      )}
     </>
   )
 }

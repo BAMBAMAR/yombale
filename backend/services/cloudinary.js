@@ -55,4 +55,21 @@ async function uploadVideoBuffer(buffer, folder) {
   });
 }
 
-module.exports = { uploadBuffer, uploadVideoBuffer };
+async function uploadDocumentBuffer(buffer, folder, filename) {
+  return new Promise(function(resolve, reject) {
+    var stream = cloudinary.uploader.upload_stream(
+      {
+        folder: folder || 'documents_locatif',
+        resource_type: 'auto',
+        max_bytes: 15 * 1024 * 1024,
+      },
+      function(err, result) {
+        if (err) return reject(err);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+module.exports = { uploadBuffer, uploadVideoBuffer, uploadDocumentBuffer };

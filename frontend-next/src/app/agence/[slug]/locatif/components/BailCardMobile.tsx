@@ -2,15 +2,16 @@
 
 import React from 'react'
 import {
-  Key,
   FileText,
   XCircle,
-  Calendar,
   Home,
   User,
   Phone,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Edit2,
+  PenTool,
+  FileCheck,
 } from 'lucide-react'
 import { getImmoAuthToken } from '@/lib/immo-auth'
 import { BailItem } from './TableBauxImmo'
@@ -18,17 +19,35 @@ import { BailItem } from './TableBauxImmo'
 interface BailCardMobileProps {
   slug: string
   bail: BailItem
+  onEditer?: (bail: BailItem) => void
   onResilier: (bail: BailItem) => void
+  onSigner?: (bail: BailItem) => void
+  onPieces?: (bail: BailItem) => void
   isSelected?: boolean
   onToggleSelect?: (bailId: string) => void
 }
 
-export function BailCardMobile({ slug, bail, onResilier, isSelected = false, onToggleSelect }: BailCardMobileProps) {
+export function BailCardMobile({
+  slug,
+  bail,
+  onEditer,
+  onResilier,
+  onSigner,
+  onPieces,
+  isSelected = false,
+  onToggleSelect,
+}: BailCardMobileProps) {
   const token = getImmoAuthToken()
   const isActif = bail.statut === 'actif'
   const telNet = (bail.locataire_tel || '').replace(/[^0-9]/g, '')
   const nomComplet = `${bail.locataire_nom} ${bail.locataire_prenom || ''}`.trim()
-  const bailPdfUrl = `/api/agences/agence/${slug}/documents/bail/${bail.id}.pdf${token ? `?token=${encodeURIComponent(token)}` : ''}`
+  const bailPdfUrl = `/api/agences/agence/${slug}/documents/bail/${bail.id}.pdf${
+    token ? `?token=${encodeURIComponent(token)}` : ''
+  }`
+
+  const hasSigneLoc = Boolean(bail.signature_locataire)
+  const hasSigneBailleur = Boolean(bail.signature_bailleur)
+  const nbPieces = bail.pieces_jointes?.length || 0
 
   return (
     <div
@@ -57,23 +76,43 @@ export function BailCardMobile({ slug, bail, onResilier, isSelected = false, onT
             {bail.bien_titre}
           </span>
         </div>
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            padding: '3px 8px',
-            borderRadius: 20,
-            fontSize: 11,
-            fontWeight: 800,
-            background: isActif ? '#DCFCE7' : '#F1F5F9',
-            color: isActif ? '#166534' : '#64748B',
-            flexShrink: 0,
-          }}
-        >
-          {isActif ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-          {isActif ? 'Actif' : bail.statut === 'resilie' ? 'Résilié' : bail.statut}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '3px 8px',
+              borderRadius: 20,
+              fontSize: 11,
+              fontWeight: 800,
+              background: isActif ? '#DCFCE7' : '#F1F5F9',
+              color: isActif ? '#166534' : '#64748B',
+              flexShrink: 0,
+            }}
+          >
+            {isActif ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+            {isActif ? 'Actif' : bail.statut === 'resilie' ? 'Résilié' : bail.statut}
+          </span>
+
+          {hasSigneLoc && hasSigneBailleur ? (
+            <span style={{ fontSize: 9.5, fontWeight: 800, color: '#166534', background: '#DCFCE7', padding: '1px 6px', borderRadius: 4 }}>
+              Signé 2/2
+            </span>
+          ) : hasSigneLoc ? (
+            <span style={{ fontSize: 9.5, fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', padding: '1px 6px', borderRadius: 4 }}>
+              Signé locataire
+            </span>
+          ) : hasSigneBailleur ? (
+            <span style={{ fontSize: 9.5, fontWeight: 800, color: '#4338CA', background: '#E0E7FF', padding: '1px 6px', borderRadius: 4 }}>
+              Signé agence
+            </span>
+          ) : (
+            <span style={{ fontSize: 9.5, fontWeight: 700, color: '#92400E', background: '#FEF3C7', padding: '1px 6px', borderRadius: 4 }}>
+              Non signé
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Locataire & Contact */}
@@ -126,6 +165,7 @@ export function BailCardMobile({ slug, bail, onResilier, isSelected = false, onT
             </div>
           )}
         </div>
+
         <div>
           <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Période</div>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
@@ -140,54 +180,136 @@ export function BailCardMobile({ slug, bail, onResilier, isSelected = false, onT
       </div>
 
       {/* Actions Tactiles */}
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {/* Dossier pièces */}
+        {onPieces && (
+          <button
+            type="button"
+            onClick={() => onPieces(bail)}
+            style={{
+              flex: '1 1 auto',
+              minHeight: 38,
+              padding: '0 8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              borderRadius: 8,
+              background: '#FAF8F5',
+              border: '1px solid var(--border, #E8DDD2)',
+              color: 'var(--navy, #1C2B4A)',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            <FileCheck size={13} style={{ color: 'var(--accent, #C75B00)' }} />
+            <span>Pièces ({nbPieces})</span>
+          </button>
+        )}
+
+        {/* Signer agence */}
+        {isActif && !hasSigneBailleur && onSigner && (
+          <button
+            type="button"
+            onClick={() => onSigner(bail)}
+            style={{
+              flex: '1 1 auto',
+              minHeight: 38,
+              padding: '0 8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              borderRadius: 8,
+              background: 'var(--accent, #C75B00)',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+            }}
+          >
+            <PenTool size={13} />
+            <span>Signer</span>
+          </button>
+        )}
+
         <a
           href={bailPdfUrl}
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            flex: 1,
-            minHeight: 44,
+            flex: '1 1 auto',
+            minHeight: 38,
+            padding: '0 8px',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 6,
+            gap: 4,
             borderRadius: 8,
             background: '#F1F5F9',
             border: '1px solid #CBD5E1',
             color: 'var(--navy, #1C2B4A)',
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: 750,
             textDecoration: 'none',
           }}
         >
-          <FileText size={15} />
-          <span>Contrat PDF</span>
+          <FileText size={13} />
+          <span>Contrat</span>
         </a>
 
         {isActif && (
-          <button
-            type="button"
-            onClick={() => onResilier(bail)}
-            style={{
-              minHeight: 44,
-              padding: '0 14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              borderRadius: 8,
-              background: '#FEE2E2',
-              border: '1px solid #FECACA',
-              color: '#DC2626',
-              fontSize: 12.5,
-              fontWeight: 750,
-              cursor: 'pointer',
-            }}
-          >
-            <XCircle size={14} />
-            <span>Résilier</span>
-          </button>
+          <>
+            {onEditer && (
+              <button
+                type="button"
+                onClick={() => onEditer(bail)}
+                style={{
+                  minHeight: 38,
+                  padding: '0 10px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                  borderRadius: 8,
+                  background: '#FAF8F5',
+                  border: '1px solid var(--border, #E8DDD2)',
+                  color: 'var(--navy, #1C2B4A)',
+                  fontSize: 12,
+                  fontWeight: 750,
+                  cursor: 'pointer',
+                }}
+              >
+                <Edit2 size={13} />
+                <span>Éditer</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => onResilier(bail)}
+              style={{
+                minHeight: 38,
+                padding: '0 10px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                borderRadius: 8,
+                background: '#FEE2E2',
+                border: '1px solid #FECACA',
+                color: '#DC2626',
+                fontSize: 12,
+                fontWeight: 750,
+                cursor: 'pointer',
+              }}
+            >
+              <XCircle size={13} />
+              <span>Résilier</span>
+            </button>
+          </>
         )}
       </div>
     </div>

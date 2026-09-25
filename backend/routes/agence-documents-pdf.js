@@ -9,6 +9,7 @@ const PDFDocument = require('pdfkit');
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
+const { genererPdfContratBailStream } = require('../lib/immo-pdf-bail');
 
 // Helper de nettoyage de texte (élimine les retours chariot Windows \r parasites dans PDFKit)
 const cleanText = (str) => String(str || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
@@ -217,7 +218,7 @@ router.get('/agence/:slugOrId/documents/bail/:bailId.pdf', verifierToken, requir
        FROM baux_immo bx
        JOIN biens_immo b ON bx.bien_id = b.id
        JOIN contacts_immo c ON bx.locataire_id = c.id
-       LEFT JOIN proprietaires_immo p ON b.proprietaire_id = p.id
+       LEFT JOIN proprietaires_immo p ON COALESCE(bx.proprietaire_id, b.proprietaire_id) = p.id
        JOIN agences_immo a ON bx.agence_id = a.id
        WHERE bx.id = $1 AND bx.agence_id = $2`,
       [bailId, agenceId]
@@ -227,130 +228,7 @@ router.get('/agence/:slugOrId/documents/bail/:bailId.pdf', verifierToken, requir
       return res.status(404).json({ success: false, error: 'Contrat de bail introuvable' });
     }
 
-    const b = rows[0];
-    const bailRef = `BAIL-${b.id.slice(0, 8).toUpperCase()}`;
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="contrat_bail_${bailRef}.pdf"`);
-
-    const doc = new PDFDocument({ margin: 45, size: 'A4' });
-    doc.pipe(res);
-
-    // ── En-tête officiel ──
-    doc.fillColor(NAVY).fontSize(7.5).font('Helvetica-Bold')
-       .text("RÉPUBLIQUE DU SÉNÉGAL • CODE DES OBLIGATIONS CIVILES ET COMMERCIALES (COCC) • DÉCRET N° 2023-442", 45, 40);
-
-    doc.fillColor(NAVY).fontSize(16).font('Helvetica-Bold').text(b.agence_nom, 45, 56);
-    doc.fontSize(8.5).font('Helvetica').fillColor(GRAY)
-       .text(`Mandataire de gestion • Agrément : ${b.numero_agrement || 'En cours'} • ${b.agence_ville || 'Dakar'}`, 45, 75);
-
-    doc.moveTo(45, 90).lineTo(550, 90).strokeColor(NAVY).lineWidth(1.2).stroke();
-
-    // ── Titre ──
-    doc.fillColor(NAVY).fontSize(16).font('Helvetica-Bold')
-       .text("CONTRAT DE BAIL À USAGE D'HABITATION", 45, 105, { align: 'center', width: 505 });
-    doc.fillColor(ACCENT).fontSize(9).font('Helvetica-Bold')
-       .text(`RÉFÉRENCE OFFICIELLE : ${bailRef}`, 45, 125, { align: 'center', width: 505 });
-
-    let currentY = 145;
-
-    // ── Article 1 : Les Parties ──
-    doc.fillColor(NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 1 - DÉSIGNATION DES PARTIES", 45, currentY);
-    currentY += 14;
-
-    const propNom = [b.bailleur_prenom, b.bailleur_nom].filter(Boolean).join(' ') || 'Le Propriétaire';
-    const locNom = [b.locataire_prenom, b.locataire_nom].filter(Boolean).join(' ');
-
-    doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
-       .text(`1. LE BAILLEUR : Monsieur/Madame ${propNom}, représenté(e) valablement aux fins des présentes par l'Agence ${b.agence_nom}, mandataire de gestion dument habilité.`, 45, currentY, { width: 505, lineGap: 2 });
-    currentY += 28;
-
-    doc.text(`2. LE PRENEUR (LOCATAIRE) : Monsieur/Madame ${locNom}, Téléphone : ${b.locataire_tel || 'Non renseigné'}${b.locataire_profession ? `, Profession : ${b.locataire_profession}` : ''}, Email : ${b.locataire_email || 'Non renseigné'}.`, 45, currentY, { width: 505, lineGap: 2 });
-    currentY += 32;
-
-    // ── Article 2 : Objet du bail & Description ──
-    doc.fillColor(NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 2 - OBJET DU CONTRAT ET DÉSIGNATION DU BIEN", 45, currentY);
-    currentY += 14;
-
-    doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
-       .text(`Le Bailleur donne à bail à usage exclusif d'habitation au Preneur qui accepte les locaux désignés ci-après :`, 45, currentY, { width: 505 });
-    currentY += 14;
-
-    doc.roundedRect(45, currentY, 505, 52, 4).fillColor('#F8FAFC').strokeColor(BORDER_COLOR).lineWidth(0.5).fillAndStroke();
-    doc.fillColor(NAVY).fontSize(9).font('Helvetica-Bold')
-       .text(cleanText(b.bien_titre), 55, currentY + 8)
-       .text(`Type : ${String(b.type_bien || 'Appartement').toUpperCase()} • Surface : ${b.surface_m2 || 'N/A'} m² • Pièces : ${b.nb_pieces || 'N/A'} (Chambres : ${b.nb_chambres || 'N/A'})`, 55, currentY + 22);
-    doc.font('Helvetica').fontSize(8.5).fillColor(GRAY)
-       .text(`Adresse géographique : ${b.bien_adresse || 'Sise à'} ${b.bien_quartier ? `(${b.bien_quartier})` : ''} - ${b.bien_ville || 'Dakar'} (Réf : ${b.bien_ref || 'BIEN'})`, 55, currentY + 36);
-
-    currentY += 62;
-
-    // ── Article 3 : Durée & Prise d'effet ──
-    doc.fillColor(NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 3 - DURÉE ET RENOUVELLEMENT DU BAIL", 45, currentY);
-    currentY += 14;
-
-    const dateDeb = new Date(b.date_debut).toLocaleDateString('fr-FR');
-    const dateFin = b.date_fin ? new Date(b.date_fin).toLocaleDateString('fr-FR') : 'Indéterminée (Tacite reconduction)';
-
-    doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
-       .text(`Le présent contrat est consenti pour une durée ferme de ${b.duree_mois || 12} mois, prenant effet le ${dateDeb} et se terminant le ${dateFin}. Sauf congé délivré par l'une des parties par acte d'huissier ou lettre recommandée avec préavis de 3 mois, le contrat sera reconduit tacitement.`, 45, currentY, { width: 505, lineGap: 2 });
-    currentY += 32;
-
-    // ── Article 4 : Loyer, Charges & Caution ──
-    doc.fillColor(NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 4 - CONDITIONS FINANCIÈRES ET RÈGLEMENT", 45, currentY);
-    currentY += 14;
-
-    const loyer = Number(b.loyer_mensuel || 0);
-    const charges = Number(b.charges || 0);
-    const caution = Number(b.depot_garantie || 0);
-
-    doc.rect(45, currentY, 505, 20).fillColor(NAVY).fill();
-    doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold')
-       .text('RUBRIQUE FINANCIÈRE', 55, currentY + 5)
-       .text('PERIODICITÉ / MODALITÉ', 280, currentY + 5)
-       .text('MONTANT', 460, currentY + 5, { align: 'right', width: 80 });
-    currentY += 20;
-
-    const addFinRow = (titre, modalite, montant) => {
-      doc.rect(45, currentY, 505, 18).fillColor('#FFFFFF').fill();
-      doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica').text(titre, 55, currentY + 5);
-      doc.fillColor(GRAY).text(modalite, 280, currentY + 5);
-      doc.fillColor(NAVY).font('Helvetica-Bold').text(`${fmtNum(montant)} FCFA`, 460, currentY + 5, { align: 'right', width: 80 });
-      doc.moveTo(45, currentY + 18).lineTo(550, currentY + 18).strokeColor(BORDER_COLOR).lineWidth(0.5).stroke();
-      currentY += 18;
-    };
-
-    addFinRow('Loyer mensuel principal', `Échéance le ${b.jour_echeance || 5} du mois d'avance`, loyer);
-    addFinRow('Provisions sur charges locatives', 'Mensuel avec le loyer', charges);
-    addFinRow('Dépôt de garantie (Caution)', 'Versé à la signature (Max 2 mois)', caution);
-
-    currentY += 10;
-
-    // ── Article 5 : Obligations & Clause résolutoire ──
-    doc.fillColor(NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 5 - OBLIGATIONS & CLAUSE RÉSOLUTOIRE DE PLEIN DROIT", 45, currentY);
-    currentY += 14;
-    doc.fillColor('#1F2937').fontSize(8).font('Helvetica')
-       .text("Le Preneur s'engage à user des lieux loués paisiblement et conformément à leur destination d'habitation. Il est expressément convenu qu'à défaut de paiement d'un seul terme de loyer ou charges à son échéance exacte, ou en cas d'inexécution d'une clause du bail, le présent contrat sera résilié de plein droit un mois après un commandement de payer demeuré infructueux.", 45, currentY, { width: 505, lineGap: 2 });
-    currentY += 34;
-
-    // ── Signatures ──
-    doc.fillColor(NAVY).fontSize(10).font('Helvetica-Bold').text("Fait en trois exemplaires originaux à " + (b.agence_ville || 'Dakar') + ", le " + dateDeb, 45, currentY);
-    currentY += 18;
-
-    // Cadres de signature
-    doc.roundedRect(45, currentY, 240, 75, 4).strokeColor(NAVY).lineWidth(0.8).stroke();
-    doc.fillColor(NAVY).fontSize(8.5).font('Helvetica-Bold').text("POUR LE PRENEUR (LE LOCATAIRE)", 55, currentY + 8);
-    doc.fillColor(GRAY).fontSize(7.5).font('Helvetica')
-       .text("Mention manuscrite 'Lu et approuvé'", 55, currentY + 22)
-       .text(locNom, 55, currentY + 58);
-
-    doc.roundedRect(310, currentY, 240, 75, 4).strokeColor(PRICE_GREEN).lineWidth(0.8).stroke();
-    doc.fillColor(PRICE_GREEN).fontSize(8.5).font('Helvetica-Bold').text("POUR LE BAILLEUR / L'AGENCE (MANDATAIRE)", 320, currentY + 8);
-    doc.fillColor(GRAY).fontSize(7.5).font('Helvetica')
-       .text("Cachet et signature du mandataire habilité", 320, currentY + 22)
-       .text(cleanText(b.agence_nom), 320, currentY + 58);
-
-    doc.end();
+    genererPdfContratBailStream(res, rows[0]);
   } catch (err) {
     console.error('[PDF BAIL ERR]', err);
     res.status(500).json({ success: false, error: 'Erreur lors de la génération du contrat de bail PDF' });

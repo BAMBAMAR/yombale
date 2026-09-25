@@ -23,6 +23,72 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Signature Électronique sur Écran/Souris & Dépôt des Pièces Justificatives Locataire (CNI, Bulletins...) (25 septembre 2026)** ✍️📱📑🏛️✅ :
+  * **🎯 Demande Utilisateur & Objectif** :
+    - « est ce qui est prevu que le locataire verse des document comme sa carte identite et autres? » (Dépôt des pièces d'identité et justificatifs de solvabilité par le locataire).
+    - « oui et pour les signature? est il possible de signer sur lecran ou avec la souris » (Signature électronique manuscrite directement sur écran tactile mobile/tablette au doigt ou à la souris sur PC).
+  * **🛠️ Solutions & Implémentations Réalisées** :
+    1. **Signature Électronique Tactile & Souris (`SignaturePadModal.tsx` & `SignatureCanvas.tsx`)** :
+       - Modale de tracé manuscrit haute performance utilisant l'élément HTML5 `<canvas>` avec support Hi-DPI / Retina (`devicePixelRatio`) pour des signatures ultra-nettes, jamais pixelisées.
+       - Prise en charge universelle : événements tactiles (`touchstart`, `touchmove`, `touchend` avec désactivation du scroll natif sur le canvas) pour écran de smartphone/tablette + événements souris (`mousedown`, `mousemove`, `mouseup`, `mouseleave`) pour ordinateur portable ou PC bureau.
+       - Nom du signataire pré-rempli et éditable, bouton d'effacement / remise à zéro instantané.
+       - Clause d'engagement juridique conforme au Code des Obligations Civiles et Commerciales (COCC) du Sénégal.
+       - Exportation haute résolution sous format PNG base64 Data URL.
+    2. **Intégration Directe dans le Moteur PDF (`backend/lib/immo-pdf-bail.js`)** :
+       - Conversion directe des Data URLs base64 des signatures preneur et bailleur/mandataire en tampons binaires via `Buffer.from(b64, 'base64')`.
+       - Rendu élégant et scellé de la signature manuscrite directement dans les cadres officiels en fin de contrat de bail PDF.
+       - Horodatage certifié automatique (`Signé électroniquement le DD/MM/YYYY à HH:mm`) et mention légale d'intégrité.
+    3. **Dossier & Pièces Justificatives KYC (`DossierPiecesModal.tsx`, `PieceUploadForm.tsx`, `PieceItemRow.tsx`)** :
+       - Modale de dépôt et de consultation des pièces justificatives : CNI (Recto/Verso), Passeport en cours de validité, Bulletins de salaire / justificatif de revenus, Contrat de travail / attestation d'emploi, Facture Senelec / justificatif de domicile, CNI du garant.
+       - Upload Cloudinary sécurisé via `uploadDocumentBuffer` (dédié aux documents légaux et d'identité, sans filigrane/watermark publicitaire « © nopalou.com »).
+       - Suivi des statuts des pièces avec badges couleur (`en_attente`, `valide`, `rejete` avec motif de rejet).
+       - Côté agence : validation, rejet motivé ou suppression des pièces du dossier locatif.
+    4. **Sécurité d'Accès Sans Compte : Double Authentification par Code OTP WhatsApp (Option A)** :
+       - **Protection Inviolable contre l'Usurpation** : Empêche toute personne connaissant simplement le numéro du locataire de consulter ses quittances, son contrat ou ses pièces d'identité.
+       - **Endpoints Dédiés** :
+         * `POST /api/locatif-immo/public/demander-otp` : Vérification de l'existence d'un bail pour ce numéro, génération d'un OTP à 6 chiffres via `genererOtpPhone` et envoi automatique sur WhatsApp (`sendWhatsAppTemplate` / `sendWhatsAppText`).
+         * `POST /api/locatif-immo/public/verifier-otp` : Validation cryptographique du code OTP (`verifierOtpPhone`), auto-provisioning du compte dans `utilisateurs` et émission d'un jeton JWT sécurisé de 7 jours.
+       - **Interface Utilisateur Épurée (`PortailLocataireClient.tsx` & `PortailOtpCard.tsx`)** :
+         * Formulaire numéro de téléphone avec badge de réassurance.
+         * Carte de saisie OTP avec compte à rebours de 60s pour renvoi et masque de confidentialité (`+221 77 *** ** 86`).
+         * Session déverrouillée avec badge de certification de session et possibilité de déconnexion.
+    5. **Accessibilité & Parité d'Expérience** :
+       - **Espace Locataire Connecté (`/compte?tab=mes-locations`)** : Bouton « Signer le bail », bouton « Dossier (N) », badge de confirmation de signature.
+       - **Portail Locataire Public (`/payer-loyer`)** : Accès déverrouillé par OTP WhatsApp sans mot de passe, signature tactile immédiate et dépôt des pièces d'identité.
+       - **Espace Gestion Agence (`/agence/:slug/locatif`)** : Signatures mandataire/bailleur, suivi du dossier de pièces, filtres et badges de suivi de signature (Signé 2/2, Signé locataire, Signé agence, Non signé).
+    6. **Respect Strict des 5 Règles d'Or** :
+       - Zéro composant monolithique : modularisation en sous-composants dédiés (`PortailOtpCard`, `SignatureCanvas`, `PieceUploadForm`, `PieceItemRow`, `MesLocationHeader`, `BailLocataireFinanceSummary`). Tous les composants ont été testés et sont strictement sous le plafond de 450 lignes.
+       - Zéro émoji Unicode dans l'UI : utilisation exclusive des icônes SVG de `lucide-react`.
+       - Design system Nopalou (`--navy: #1C2B4A`, `--accent: #C75B00`, `--price: #0A5C36`, `--border: #E8DDD2`).
+       - Validation TypeScript intégrale (`npx tsc --noEmit` : 0 erreur).
+
+- **Éditeur Intégral de Contrat de Bail COCC : Personnalisation Complète des Articles 1 à 6 & Clauses Complémentaires (25 septembre 2026)** 📜⚖️🏢✅ :
+  * **🎯 Demande Utilisateur & Objectif** :
+    - Rendre **l'intégralité du contrat de bail modifiable** par l'agence immobilière, et pas seulement les conditions financières ou l'Article 6.
+    - Pouvoir personnaliser et réécrire n'importe lequel des articles officiels (Article 1 Désignation des parties & garants, Article 2 Désignation du bien & annexes, Article 3 Durée & préavis de congé, Article 4 Conditions financières & révision, Article 5 Obligations réciproques preneur/bailleur & clause résolutoire, Article 6 Règlement intérieur & conditions particulières, et Article 7 Dispositions complémentaires libres).
+    - Refléter fidèlement toutes ces clauses personnalisées dans le document officiel PDF généré pour le locataire, le mandataire et le propriétaire bailleur.
+  * **🛠️ Solutions & Implémentations Réalisées** :
+    1. **Moteur PDF Unifié & Modulaire (`backend/lib/immo-pdf-bail.js`)** :
+       - Création d'un module centralisé `immo-pdf-bail.js` éliminant plus de 150 lignes de code dupliqué entre `locatif-immo.js` et `agence-documents-pdf.js`.
+       - Rendu dynamique et intelligent pour chacun des 6 articles : si une clause personnalisée a été enregistrée par l'agence, elle est imprimée avec mise en page soignée ; sinon, le texte légal standard officiel COCC & Décret 2023-442 est automatiquement appliqué avec les variables réelles du bail (parties, adresse, caractéristiques, dates, montants).
+       - Conservation du tableau financier certifié à l'Article 4 et du calcul automatique de pagination avec sauts de page sécurisés (`ensureSpace`) évitant tout chevauchement lors de textes longs.
+       - Numérotation dynamique des pages en pied de page (`Page X sur Y`) et blocs de signature légaux scellés.
+    2. **Base de Données & Rétrocompatibilité (`backend/migrate-inline.js`)** :
+       - Colonne PostgreSQL `clauses_personnalisees JSONB DEFAULT '{}'::jsonb` déclarée sur `baux_immo`.
+       - Migration inline automatique et idempotente.
+    3. **Routes Backend Dédiées (`backend/routes/locatif-immo.js`)** :
+       - `GET /api/locatif-immo/agence/:slugOrId/baux/:bailId/modeles-articles` : Récupère les modèles légaux standards calculés pour ce bail ainsi que les clauses personnalisées existantes.
+       - `PUT /api/locatif-immo/agence/:slugOrId/baux/:bailId` : Sauvegarde les modifications financières et l'objet JSON `clauses_personnalisees` avec synchronisation automatique sur `conditions` pour la rétrocompatibilité.
+       - `POST /api/locatif-immo/agence/:slugOrId/baux` : Prise en charge des clauses personnalisées dès la création initiale d'un bail.
+       - Déportation de la génération PDF de `agence-documents-pdf.js` et `locatif-immo.js` vers le module unifié `immo-pdf-bail.js`.
+    4. **Interface d'Édition Complète & Sub-Composants (`ModalEditerBail.tsx` & `ModalEditerBailArticles.tsx`)** :
+       - Respect strict des 5 Règles d'Or : modularisation en sous-composants dédiés sous la barre des 450 lignes (chacun < 380 lignes), zéro émoji Unicode (icônes SVG Lucide exclusivement), tokens Nopalou (`--navy`, `--accent`, `--price`, `--border`).
+       - Deux onglets clairs : **Articles du Contrat (1 à 6)** et **Paramètres Financiers & Échéances**.
+       - Sélecteur horizontal élégant d'articles avec indicateur visuel pour repérer instantanément les articles personnalisés.
+       - Bouton **« Rétablir standard »** sur chaque article permettant de réinitialiser instantanément le texte à sa formulation légale standard.
+       - Compteur de caractères et retour visuel du statut juridique (Standard COCC vs Personnalisé).
+       - Badge de comptage du nombre d'articles personnalisés sur l'onglet et le pied de modal.
+
 - **Portail Locataire Public par Téléphone, Téléchargement Contrat sans Compte & Rapprochement Automatique (25 septembre 2026)** ⚡🛡️🚀✅ :
   * **🎯 Problématique Résolue** :
     - Les locataires qui n'avaient pas créé de compte Nopalou recevaient des notifications les redirigeant vers `/compte?tab=locations`, ce qui les bloquait avec une redirection forcée vers la page de connexion (`/connexion`) leur demandant de créer un compte avec email et mot de passe.
@@ -50,9 +116,10 @@
        - Dans `POST /api/auth/whatsapp-otp-send`, reconnaissance immédiate des locataires enregistrés dans `contacts_immo` sans renvoyer d'erreur `ACCOUNT_NOT_FOUND`.
        - Dans `POST /api/auth/whatsapp-otp-login`, création automatique à la volée du compte utilisateur (`utilisateurs`) et association transparente (`contacts_immo.utilisateur_id`), permettant une connexion WhatsApp 1-clic sans mot de passe.
        - Bandeau d'accès direct au portail locataire sur la page de connexion pour ceux qui ne souhaitent pas se connecter.
-  * **🧪 Validation & Qualité** :
-    - `npx tsc --noEmit` : 0 erreur.
-    - `npm run lint:slop` : 0 composant monolithique, 100% conforme design system Nopalou.
+    6. **Accès Menu Agence Dédié & Bouton Éditer Mobile** :
+       - Ajout de l'entrée directe **« Contrats de Bail »** (`/agence/:slug/locatif?tab=baux`) dans le menu latéral et mobile de l'agence sous **Gestion Locative**.
+       - Support de l'URL avec paramètre `?tab=baux` pour basculer automatiquement sur l'onglet des baux.
+       - Intégration du bouton **« Éditer »** sur les cartes mobiles `BailCardMobile.tsx` pour permettre la modification des baux depuis smartphone.
   * **🎯 Analyse des Logs & Problème de Paiement** :
     - **Logs Wave Checkout** : L'API Wave Checkout (`https://api.wave.com/v1/checkout/sessions`) est pleinement fonctionnelle sur le serveur de production Render (`74.220.50.216`). En local, Wave renvoie un statut 403 `ip-not-allowed` si l'IP n'est pas autorisée dans le portail Wave Business.
     - **Blocage constaté dans "Mon Compte"** : Lorsqu'un locataire cliquait sur "Régler par Wave", le backend initialisait avec succès la session Wave et renvoyait `{ success: true, en_ligne: true, wave_url: 'https://pay.wave.com/...' }`. Cependant, le code frontend `MesLocationsClient.tsx` et `PayerLoyerClient.tsx` ignorait `data.wave_url`, affichait un message de confirmation fictif sans rediriger l'utilisateur vers Wave, puis rechargeait la page avec le loyer toujours impayé.

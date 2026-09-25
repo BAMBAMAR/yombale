@@ -95,7 +95,8 @@ export function AgenceMobileDrawer({
     {
       titre: 'Gestion Locative',
       items: [
-        { href: `/agence/${slug}/locatif`, label: 'Baux, Loyers & Quittances', icon: Key, badge: compteurs.loyers_retard },
+        { href: `/agence/${slug}/locatif`, label: 'Loyers & Quittances', icon: Key, badge: compteurs.loyers_retard },
+        { href: `/agence/${slug}/locatif?tab=baux`, label: 'Contrats de Bail', icon: FileSignature },
         { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
         { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs Propriétaires', icon: Building2 },
         { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench, badge: compteurs.tickets_urgents },

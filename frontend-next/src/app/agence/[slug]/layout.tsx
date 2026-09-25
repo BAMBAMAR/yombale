@@ -152,7 +152,8 @@ export default function AgenceWorkspaceLayout({
     {
       titre: 'Gestion Locative',
       items: [
-        { href: `/agence/${slug}/locatif`, label: 'Baux, Loyers & Quittances', icon: Key, badge: compteurs.loyers_retard > 0 ? compteurs.loyers_retard : null, badgeColor: '#DC2626' },
+        { href: `/agence/${slug}/locatif`, label: 'Loyers & Quittances', icon: Key, badge: compteurs.loyers_retard > 0 ? compteurs.loyers_retard : null, badgeColor: '#DC2626' },
+        { href: `/agence/${slug}/locatif?tab=baux`, label: 'Contrats de Bail', icon: FileSignature },
         { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
         { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs Propriétaires', icon: Building2 },
         { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench, badge: compteurs.tickets_urgents > 0 ? compteurs.tickets_urgents : null, badgeColor: '#991B1B' },
