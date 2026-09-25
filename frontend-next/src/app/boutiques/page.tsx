@@ -2,7 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import BoutiquesSearch from './BoutiquesSearch'
-import { Store, ShieldCheck, MapPin, Sparkles, Star, MessageCircle, ArrowRight, Building2 } from 'lucide-react'
+import {
+  Store, ShieldCheck, MapPin, Sparkles, Star, MessageCircle, ArrowRight,
+  Building2, CheckCircle2, Smartphone, Laptop, Tv, Shirt, Home, Car,
+  Gamepad2, Utensils, Watch, Hammer, Wrench, Layers
+} from 'lucide-react'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import HeroCarousel from './HeroCarousel'
 import ExternalImg from '@/components/ExternalImg'
@@ -37,21 +41,40 @@ interface Boutique {
   created_at: string
 }
 
+function getCategoryIcon(slug: string) {
+  switch (slug) {
+    case 'smartphones': return <Smartphone size={14} />
+    case 'informatique': return <Laptop size={14} />
+    case 'tv-electro': return <Tv size={14} />
+    case 'mode': return <Shirt size={14} />
+    case 'maison': return <Home size={14} />
+    case 'auto-moto': return <Car size={14} />
+    case 'jeux': return <Gamepad2 size={14} />
+    case 'alimentation': return <Utensils size={14} />
+    case 'beaute': return <Sparkles size={14} />
+    case 'bijouterie': return <Watch size={14} />
+    case 'quincaillerie': return <Hammer size={14} />
+    case 'services': return <Wrench size={14} />
+    case 'mixte': return <Layers size={14} />
+    default: return <Store size={14} />
+  }
+}
+
 const CATEGORIES_BOUTIQUE = [
-  { slug: '', label: 'Toutes les boutiques', icon: '' },
-  { slug: 'smartphones', label: 'Smartphones & Tech', icon: '' },
-  { slug: 'informatique', label: 'Informatique & PC', icon: '' },
-  { slug: 'tv-electro', label: 'TV & Électro', icon: '📺' },
-  { slug: 'mode', label: 'Mode & Beauté', icon: '👗' },
-  { slug: 'maison', label: 'Maison & Déco', icon: '' },
-  { slug: 'auto-moto', label: 'Auto-Moto', icon: '' },
-  { slug: 'jeux', label: 'Jeux & Consoles', icon: '🎮' },
-  { slug: 'alimentation', label: 'Alimentation', icon: '🥗' },
-  { slug: 'beaute', label: 'Beauté & Soins', icon: '💄' },
-  { slug: 'bijouterie', label: 'Bijouterie & Horlogerie', icon: '' },
-  { slug: 'quincaillerie', label: 'Quincaillerie & BTP', icon: '🧱' },
-  { slug: 'services', label: 'Services & Pro', icon: '' },
-  { slug: 'mixte', label: 'Généraliste', icon: '' },
+  { slug: '', label: 'Toutes les boutiques' },
+  { slug: 'smartphones', label: 'Smartphones & Tech' },
+  { slug: 'informatique', label: 'Informatique & PC' },
+  { slug: 'tv-electro', label: 'TV & Électro' },
+  { slug: 'mode', label: 'Mode & Beauté' },
+  { slug: 'maison', label: 'Maison & Déco' },
+  { slug: 'auto-moto', label: 'Auto-Moto' },
+  { slug: 'jeux', label: 'Jeux & Consoles' },
+  { slug: 'alimentation', label: 'Alimentation' },
+  { slug: 'beaute', label: 'Beauté & Soins' },
+  { slug: 'bijouterie', label: 'Bijouterie & Horlogerie' },
+  { slug: 'quincaillerie', label: 'Quincaillerie & BTP' },
+  { slug: 'services', label: 'Services & Pro' },
+  { slug: 'mixte', label: 'Généraliste' },
 ]
 
 const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Mbour']
@@ -213,13 +236,13 @@ export default async function BoutiquesPage({
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12.5, color: '#334155' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> <b>0% commission</b>
+                  <CheckCircle2 size={13} style={{ color: '#10b981' }} /> <b>0% commission</b>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> <b>100% Vendeurs vérifiés</b>
+                  <CheckCircle2 size={13} style={{ color: '#10b981' }} /> <b>100% Vendeurs vérifiés</b>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ color: '#10b981', fontWeight: 900 }}>✔</span> <b>Contact WhatsApp direct</b>
+                  <CheckCircle2 size={13} style={{ color: '#10b981' }} /> <b>Contact WhatsApp direct</b>
                 </span>
               </div>
             </div>
@@ -353,7 +376,7 @@ export default async function BoutiquesPage({
                   transition: 'all 0.15s ease',
                 }}
               >
-                <span>{c.icon}</span>
+                {getCategoryIcon(c.slug)}
                 <span>{c.label}</span>
               </Link>
             )

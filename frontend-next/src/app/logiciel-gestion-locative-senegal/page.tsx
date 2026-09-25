@@ -14,6 +14,8 @@ import {
   Download
 } from 'lucide-react'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
 export const metadata: Metadata = {
   title: 'Logiciel Gestion Locative Sénégal & Dakar | Baux, Quittances & Loyers Wave',
   description: 'Le logiciel N°1 de gestion locative au Sénégal pour agences et bailleurs : baux conformes OHADA, quittances certifiées PDF et encaissement des loyers par Wave & Orange Money sans commission.',
@@ -24,20 +26,84 @@ export const metadata: Metadata = {
     'quittance de loyer dakar',
     'bail de location sénégal ohada',
     'paiement loyer wave dakar',
+    'logiciel immobilier dakar',
     'nopalou immo'
   ],
+  alternates: {
+    canonical: `${BASE}/logiciel-gestion-locative-senegal`,
+  },
   openGraph: {
     title: 'Logiciel de Gestion Locative au Sénégal — Nopalou Immo',
     description: 'Automatisez vos baux, quittances PDF certifiées et la collecte des loyers Wave à Dakar. Démarrez gratuitement.',
-    url: 'https://nopalou.com/logiciel-gestion-locative-senegal',
+    url: `${BASE}/logiciel-gestion-locative-senegal`,
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Logiciel de Gestion Locative au Sénégal — Nopalou Immo',
+    description: 'Automatisez vos baux, quittances PDF certifiées et la collecte des loyers Wave à Dakar.',
+  },
+}
+
+const IMMO_FAQ = [
+  {
+    q: "Les baux et quittances générés sont-ils conformes au droit sénégalais et OHADA ?",
+    a: "Oui, les modèles de baux d'habitation et commerciaux intégrés dans Nopalou respectent scrupuleusement les exigences du Code des Obligations Civiles et Commerciales (COCC) du Sénégal et l'Acte Uniforme OHADA portant sur le droit commercial général."
+  },
+  {
+    q: "Comment fonctionne l'encaissement des loyers par Wave et Orange Money ?",
+    a: "Chaque début de mois, le locataire reçoit son avis d'échéance par SMS ou WhatsApp avec un lien de paiement direct. Il valide le règlement avec son application Wave ou Orange Money habituelle. Les fonds sont versés directement sur le compte de l'agence ou du propriétaire, avec 0% de commission prélevée par Nopalou."
+  },
+  {
+    q: "Le locataire reçoit-il une quittance certifiée automatiquement ?",
+    a: "Dès validation de l'encaissement, une quittance de loyer officielle au format PDF avec QR code d'authentification infalsifiable est générée instantanément. Le locataire peut la télécharger depuis son espace personnel ou la recevoir par message."
+  },
+  {
+    q: "Combien coûte le logiciel de gestion locative Nopalou au Sénégal ?",
+    a: "La formule Starter est 100% offerte jusqu'à 3 baux actifs. Pour les agences et gestionnaires ayant un parc plus important, les formules Pro et Business démarrent dès 9 900 FCFA/mois sans engagement de durée."
+  }
+]
+
+const JSON_LD_SOFTWARE = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Nopalou Immo - Logiciel de Gestion Locative Sénégal',
+  operatingSystem: 'Android, iOS, Windows, Mac, Web',
+  applicationCategory: 'RealEstateApplication',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'XOF',
+    description: 'Gestion locative gratuite jusqu\'à 3 baux avec quittances certifiées et paiement Wave.',
+  },
+}
+
+const JSON_LD_FAQ = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: IMMO_FAQ.map(item => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.a,
+    },
+  })),
 }
 
 export default function LogicielGestionLocativePage() {
   return (
-    <main
-      style={{
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_SOFTWARE) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_FAQ) }}
+      />
+      <main
+        style={{
         background: '#f8fafc',
         color: '#0f172a',
         minHeight: '100vh',
@@ -295,5 +361,6 @@ export default function LogicielGestionLocativePage() {
       </section>
 
     </main>
+    </>
   )
 }

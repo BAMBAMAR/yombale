@@ -6,6 +6,8 @@ import {
   FileCheck, Database, Zap
 } from 'lucide-react'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
 export const metadata: Metadata = {
   title: 'Migration Shopify & Excel vers Nopalou en 1 Clic | Zéro Perte de Données',
   description: 'Quittez Shopify et ses frais en dollars. Transférez tout votre catalogue (titres, photos, prix FCFA, stocks, clients) sur Nopalou en moins de 3 minutes. Service d\'accompagnement gratuit.',
@@ -22,11 +24,19 @@ export const metadata: Metadata = {
     'migration e-commerce sénégal',
     'nopalou migration'
   ],
+  alternates: {
+    canonical: `${BASE}/migration`,
+  },
   openGraph: {
     title: 'Passez à Nopalou sans recommencer votre boutique.',
     description: 'Transférez vos produits, photos et stocks depuis Shopify, WooCommerce ou Excel en 1 clic. 1 mois offert.',
-    url: 'https://nopalou.com/migration',
+    url: `${BASE}/migration`,
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Passez à Nopalou sans recommencer votre boutique.',
+    description: 'Transférez vos produits, photos et stocks depuis Shopify, WooCommerce ou Excel en 1 clic.',
   },
 }
 

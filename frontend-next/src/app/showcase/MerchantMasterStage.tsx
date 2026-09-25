@@ -162,7 +162,7 @@ export default function MerchantMasterStage() {
                 </Link>
 
                 <Link
-                  href="/pos"
+                  href="/logiciel-caisse-senegal"
                   style={{
                     padding: '11px 16px',
                     color: 'var(--navy, #1C2B4A)',
@@ -292,7 +292,7 @@ export default function MerchantMasterStage() {
                 </Link>
 
                 <Link
-                  href="/whatsapp"
+                  href="/vendre-sur-whatsapp"
                   style={{
                     padding: '11px 16px',
                     color: '#15803D',

@@ -161,7 +161,17 @@ export default function ProduitSimilairesTable({
                   {l.courant ? (
                     <span className="simil-courant-lbl">Vous êtes ici</span>
                   ) : (
-                    <span className="simil-voir-btn">Voir →</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                      <span className="simil-voir-btn">Voir →</span>
+                      <Link
+                        href={`/comparer/${encodeURIComponent(produit.nom)}/${encodeURIComponent(l.nom)}`}
+                        onClick={(e) => e.stopPropagation()}
+                        title={`Comparer ${produit.nom} vs ${l.nom}`}
+                        style={{ fontSize: 11, color: 'var(--accent, #C75B00)', textDecoration: 'none', fontWeight: 700 }}
+                      >
+                        vs ce modèle
+                      </Link>
+                    </div>
                   )}
                 </td>
               </SimilRow>

@@ -416,8 +416,10 @@ export default async function RootLayout({
                 <p className="footer-col-titre">Boutique &amp; POS</p>
                 <a href="/boutiques" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Annuaire des Boutiques</a>
                 <a href="/marchands">Créer une Boutique en Ligne</a>
-                <a href="/pos">Caisse Enregistreuse POS (Offline)</a>
-                <a href="/whatsapp">Vendre sur WhatsApp</a>
+                <a href="/logiciel-caisse-senegal">Caisse Enregistreuse POS (Offline)</a>
+                <a href="/vendre-sur-whatsapp">Vendre sur WhatsApp</a>
+                <a href="/sama-xaalis">Sama Xaalis (Budget &amp; Dépenses)</a>
+                <a href="/partenaires">Programme Partenaires</a>
                 <a href="/migration">Migration Shopify &amp; Excel</a>
                 <a href="/pourquoi-nopalou">Pourquoi Choisir Nopalou ?</a>
                 <a href="/tarifs-boutique">Tarifs Forfaits Vendeurs</a>
@@ -494,18 +496,19 @@ export default async function RootLayout({
           <div className="footer-seo-links" style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Solutions Commerçants &amp; E-Commerce Sénégal</p>
             <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13, marginBottom: 12 }}>
-              <a href="/creer-boutique-en-ligne" style={{ color: '#fed7aa', fontWeight: 700 }}>Créer une boutique en ligne Sénégal</a>
-              <a href="/alternative-shopify-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Alternative Shopify Sénégal</a>
+              <a href="/marchands" style={{ color: '#fed7aa', fontWeight: 700 }}>Créer une boutique en ligne Sénégal</a>
+              <a href="/pourquoi-nopalou" style={{ color: '#fed7aa', fontWeight: 700 }}>Alternative Shopify Sénégal</a>
               <a href="/logiciel-caisse-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Logiciel de caisse Sénégal</a>
               <a href="/vendre-sur-whatsapp" style={{ color: '#fed7aa', fontWeight: 700 }}>Vendre sur WhatsApp Sénégal</a>
+              <a href="/sama-xaalis" style={{ color: '#fed7aa', fontWeight: 700 }}>Gestion budget Sama Xaalis</a>
               <a href="/paiement-en-ligne-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Paiement Wave boutique en ligne</a>
               <a href="/gestion-stock-carnet-dettes" style={{ color: '#fed7aa', fontWeight: 700 }}>Carnet de dettes commerçant</a>
               <a href="/logiciel-gestion-locative-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Logiciel gestion locative Dakar</a>
             </div>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires &amp; Comparatifs d&apos;achats</p>
             <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13 }}>
-              <a href="/pos">Caisse enregistreuse Dakar</a>
-              <a href="/pos">Caisse tactile petit commerce</a>
+              <a href="/logiciel-caisse-senegal">Caisse enregistreuse Dakar</a>
+              <a href="/logiciel-caisse-senegal">Caisse tactile petit commerce</a>
               <a href="/guide-sourcing-revente">Acheter sur Alibaba revendre Dakar</a>
               <a href="/categorie/tv-electro/climatiseurs">Climatiseur prix Dakar</a>
               <a href="/categorie/smartphones/iphone">iPhone prix Dakar</a>

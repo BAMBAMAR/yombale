@@ -23,6 +23,41 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Grand Plan de Correction SEO & Indexation Google : Résolution des Conflits Canoniques, Élimination des 301 Internes, Dé-orphelinage et Création du Silo Sama Xaalis (25 septembre 2026)** 🔍🚀⚡✅ :
+  * **🎯 Demande Utilisateur & Constats d'Audit** :
+    - Suite à un audit SEO approfondi et exhaustif de l'écosystème Nopalou (172 routes, 110 tables SQL, balises canoniques, sitemaps, robots.txt, schema.org), instruction « corriger » pour exécuter le plan complet de remédiation.
+    - Identification de 4 anomalies structurelles majeures :
+      1. Liens internes du footer pointant vers des URLs redirigées en 301 (`/creer-boutique-en-ligne` et `/alternative-shopify-senegal`).
+      2. Cannibalisation et concurrence interne entre les routes legacy (`/pos`, `/whatsapp`) et les silos canoniques SEO (`/logiciel-caisse-senegal`, `/vendre-sur-whatsapp`).
+      3. Absence de landing page publique pour le carnet financier personnel et commerçant « Sama Xaalis / Kalpé », pourtant doté d'une API complète et d'interfaces riches.
+      4. Balises canoniques manquantes sur plusieurs pages piliers (`/logiciel-gestion-locative-senegal`, `/pourquoi-nopalou`, `/migration`, `/partenaires`), route `/comparer/[a]/[b]` orpheline sans liens entrants, et absence de la balise `<h1>` dans le HTML SSR initial de la page d'accueil (enveloppe Suspense vide).
+  * **🛠️ Solutions Techniques & Corrections Réalisées** :
+    1. **Création du Silo Public « Sama Xaalis » (`src/app/sama-xaalis/page.tsx`)** :
+       - Conception d'une landing page ultra-performante dédiée à la gestion de budget personnel et petit commerce en FCFA (dépenses quotidiennes, épargne tontine, carnet de dettes « Bor », répartition 50/30/20, réconciliation Wave & Orange Money).
+       - Métadonnées complètes avec canonical `https://nopalou.com/sama-xaalis`, OpenGraph, Twitter Cards.
+       - Intégration des schémas JSON-LD `SoftwareApplication` et `FAQPage` respectant les directives Google Rich Results (zéro faux avis).
+       - Interface 100% conforme au Design System Nopalou (`--navy`, `--accent`, `--price`, `--bg`, `--border`) et zéro émoji UI (icônes Lucide SVG exclusives).
+    2. **Résolution des Conflits Canoniques & Élimination des Redirections 301 Internes** :
+       - `next.config.js` : Ajout des redirections permanentes 301 de `/pos` vers `/logiciel-caisse-senegal` et de `/whatsapp` vers `/vendre-sur-whatsapp` pour agréger l'autorité SEO et le PageRank.
+       - `src/app/sitemap.ts` : Retrait strict des URLs redirigées (`/pos`, `/whatsapp`) et intégration des pages indexables manquantes (`/sama-xaalis`, `/partenaires`).
+       - `src/app/layout.tsx` : Nettoyage intégral du footer mondial pour pointer directement sur les URLs canoniques (`/marchands`, `/pourquoi-nopalou`, `/logiciel-caisse-senegal`, `/vendre-sur-whatsapp`, `/sama-xaalis`, `/partenaires`).
+       - `MobileNav.tsx`, `MerchantMasterStage.tsx`, `WorkflowsShowcaseSection.tsx` : Mise à jour de tous les liens internes vers les URLs canoniques cibles.
+    3. **Restauration des Balises Canoniques & Microdonnées JSON-LD** :
+       - `logiciel-gestion-locative-senegal/page.tsx` : Ajout de la balise canonical, des balises Twitter cards et injection des schémas `SoftwareApplication` + `FAQPage` OHADA et paiement Wave.
+       - `pourquoi-nopalou/page.tsx` & `migration/page.tsx` : Ajout systématique des canonicals et métadonnées Twitter.
+       - `partenaires/page.tsx` : Ajout de la balise canonical, OpenGraph, Twitter, schéma `WebPage` et remplacement de tous les émojis par les icônes vectorielles `Handshake`, `TrendingUp`, `Palette`, `CheckCircle2`.
+    4. **Délivrance Immédiate du `<h1>` en SSR Streaming (`HomeDualTrackContainer.tsx`)** :
+       - Réintégration du composant `<HeroDualTrack>` et des slots de navigation directement dans le `fallback` du `<Suspense>` pour garantir que les robots Googlebot reçoivent le titre `<h1>` dès le 1er octet HTML envoyé par le serveur sans attendre l'hydratation JavaScript client.
+    5. **Dé-orphelinage de la Route Dynamique `/comparer/[a]/[b]` (`ProduitSimilairesTable.tsx`)** :
+       - Ajout d'un lien d'exploration sémantique direct « vs ce modèle » sur chaque ligne de produit similaire, permettant à Googlebot de découvrir et indexer l'ensemble des matrices comparatives de prix.
+    6. **Plein Respect des Règles Anti-Slop (Nettoyage des Émojis UI)** :
+       - `src/app/boutiques/page.tsx` : Remplacement des émojis de catégories par une fonction d'icônes SVG Lucide dimensionnées (14px) adaptées à chaque secteur d'activité.
+       - `src/app/annonces/page.tsx` & `src/components/SeoCard.tsx` : Suppression des émojis Unicode de catégories au profit d'icônes SVG `Tag` et de pilules de filtres épurées.
+    7. **Validation & Non-Régression** :
+       - `npx tsc --noEmit` : 0 erreur TypeScript.
+       - `npm run test` : 69/69 tests unitaires validés avec succès (100%).
+       - `npm run lint:slop` : Validation des règles architecturales.
+
 - **Correction du Clignotement de Signature, Import Photo de Signature & Cachet Officiel, Résolution Hydratation Next.js (25 septembre 2026)** ✍️📸🏛️⚡✅ :
   * **🎯 Demande Utilisateur & Anomalies Traitées** :
     1. *« corriger le probleme de signature ca clignote quand on essai decrire »* : Le cadre de tracé de signature clignotait et s'effaçait en boucle dès que l'utilisateur tentait de tracer une lettre ou une signature.

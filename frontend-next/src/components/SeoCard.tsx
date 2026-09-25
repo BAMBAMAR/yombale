@@ -1,13 +1,13 @@
 import Link from 'next/link'
 
 interface SeoCardBlurb {
-  emoji: string
+  emoji?: string
   text: React.ReactNode
 }
 
 interface SeoCardChip {
   href: string
-  emoji: string
+  emoji?: string
   label: string
   small?: boolean
 }
@@ -38,7 +38,7 @@ export default function SeoCard({ titre, tag, blurbs, chipRows, foot }: SeoCardP
           <div className="seo-cols-grid">
             {blurbs.map((b, i) => (
               <div key={i} className="seo-blurb">
-                <span className="seo-icon">{b.emoji}</span>
+                {b.emoji && <span className="seo-icon">{b.emoji}</span>}
                 <div className="seo-blurb-text">{b.text}</div>
               </div>
             ))}
@@ -51,7 +51,7 @@ export default function SeoCard({ titre, tag, blurbs, chipRows, foot }: SeoCardP
             <div className="chip-row">
               {row.chips.map(c => (
                 <Link key={c.href} href={c.href} className={`chip${c.small ? ' chip-small' : ''}`}>
-                  <span className="chip-em">{c.emoji}</span>
+                  {c.emoji && <span className="chip-em">{c.emoji}</span>}
                   {c.label}
                 </Link>
               ))}

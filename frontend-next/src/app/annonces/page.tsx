@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '@/styles/annonces.css'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
+import { Tag } from 'lucide-react'
 import CardActions from '@/app/CardActions'
 import PageHeader from '@/components/PageHeader'
 import FiltresBar from '@/components/FiltresBar'
@@ -32,19 +33,19 @@ async function fetchAnnonces(
 }
 
 const CATEGORIES = [
-  { slug: '',             label: 'Toutes',       emoji: '🗂' },
-  { slug: 'smartphones',  label: 'Téléphones',   emoji: '' },
-  { slug: 'informatique', label: 'Informatique', emoji: '' },
-  { slug: 'tv-electro',   label: 'TV & Électro', emoji: '📺' },
-  { slug: 'mode',         label: 'Mode',         emoji: '👗' },
-  { slug: 'maison',       label: 'Maison',       emoji: '' },
-  { slug: 'auto-moto',    label: 'Auto & Moto',  emoji: '' },
-  { slug: 'immo',         label: 'Immobilier',   emoji: '' },
-  { slug: 'beaute',       label: 'Beauté',       emoji: '💄' },
-  { slug: 'emploi',       label: 'Emploi',       emoji: '' },
-  { slug: 'jeux',         label: 'Jeux',         emoji: '🎮' },
-  { slug: 'services',     label: 'Services',     emoji: '' },
-  { slug: 'divers',       label: 'Divers',       emoji: '' },
+  { slug: '',             label: 'Toutes' },
+  { slug: 'smartphones',  label: 'Téléphones' },
+  { slug: 'informatique', label: 'Informatique' },
+  { slug: 'tv-electro',   label: 'TV & Électro' },
+  { slug: 'mode',         label: 'Mode' },
+  { slug: 'maison',       label: 'Maison' },
+  { slug: 'auto-moto',    label: 'Auto & Moto' },
+  { slug: 'immo',         label: 'Immobilier' },
+  { slug: 'beaute',       label: 'Beauté' },
+  { slug: 'emploi',       label: 'Emploi' },
+  { slug: 'jeux',         label: 'Jeux' },
+  { slug: 'services',     label: 'Services' },
+  { slug: 'divers',       label: 'Divers' },
 ]
 
 const TRIS = [
@@ -206,7 +207,7 @@ export default async function AnnoncesPage({
         essentiels={[
           ...filteredCategories.map(cat => ({
             key: `cat-${cat.slug || 'toutes'}`,
-            label: `${cat.emoji} ${cat.label}`,
+            label: cat.label,
             href: buildLink({ categorie: cat.slug, page: '' }),
             active: cat.slug === categorie,
           })),
@@ -278,8 +279,8 @@ export default async function AnnoncesPage({
                     {photo
                       // eslint-disable-next-line @next/next/no-img-element
                       ? <img src={cloudinaryHQ(photo, { width: 400 })} alt={a.titre} className="annonce-pub-img" />
-                      : <div className="annonce-pub-img annonce-pub-img--vide">
-                          <span>{CATEGORIES.find(c => c.slug === a.categorie_slug)?.emoji ?? ''}</span>
+                      : <div className="annonce-pub-img annonce-pub-img--vide" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Tag size={24} style={{ color: '#94a3b8' }} />
                         </div>
                     }
                     <span className="annonce-pub-cat">{catLabel(a.categorie_slug)}</span>
@@ -350,7 +351,7 @@ export default async function AnnoncesPage({
         chipRows={[
           {
             label: 'Catégories populaires',
-            chips: filteredCategories.filter(c => c.slug).map(c => ({ href: buildLink({ categorie: c.slug, page: '' }), emoji: c.emoji, label: c.label, small: true })),
+            chips: filteredCategories.filter(c => c.slug).map(c => ({ href: buildLink({ categorie: c.slug, page: '' }), label: c.label, small: true })),
           },
         ]}
         foot="Nouvelles annonces publiées chaque jour par des particuliers au Sénégal"

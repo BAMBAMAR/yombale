@@ -160,7 +160,7 @@ export default function LogicielCaisseSenegalPage() {
                 <ArrowRight size={18} />
               </Link>
               <Link
-                href="/pos"
+                href="/demo?role=marchand&tab=pos"
                 style={{
                   background: 'rgba(255,255,255,0.08)',
                   color: '#ffffff',

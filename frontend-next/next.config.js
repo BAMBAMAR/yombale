@@ -81,6 +81,16 @@ const nextConfig = {
         destination: '/pourquoi-nopalou',
         permanent: true,
       },
+      {
+        source: '/pos',
+        destination: '/logiciel-caisse-senegal',
+        permanent: true,
+      },
+      {
+        source: '/whatsapp',
+        destination: '/vendre-sur-whatsapp',
+        permanent: true,
+      },
     ]
   },
 

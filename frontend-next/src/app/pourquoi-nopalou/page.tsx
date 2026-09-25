@@ -6,6 +6,8 @@ import {
   Zap, Award, Users, Scale, Monitor
 } from 'lucide-react'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
 export const metadata: Metadata = {
   title: 'Pourquoi Choisir Nopalou ? | Comparatif Complet & Honnête pour Commerçants',
   description: 'Découvrez pourquoi Nopalou est la meilleure solution de commerce au Sénégal face à Shopify, WhatsApp seul, aux carnets papier et aux caisses traditionnelles. 30 jours offerts.',
@@ -13,11 +15,19 @@ export const metadata: Metadata = {
     'pourquoi nopalou', 'nopalou vs shopify sénégal', 'nopalou vs whatsapp business',
     'comparatif logiciel caisse dakar', 'alternative carnet de dette sénégal', 'avis nopalou commerçant'
   ],
+  alternates: {
+    canonical: `${BASE}/pourquoi-nopalou`,
+  },
   openGraph: {
     title: 'Pourquoi choisir Nopalou ? Le comparatif complet.',
     description: 'Comparez Nopalou aux solutions existantes (Shopify, WhatsApp seul, carnet papier, caisse classique).',
-    url: 'https://nopalou.com/pourquoi-nopalou',
+    url: `${BASE}/pourquoi-nopalou`,
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Pourquoi choisir Nopalou ? Le comparatif complet.',
+    description: 'Comparez Nopalou aux solutions existantes (Shopify, WhatsApp seul, carnet papier, caisse classique).',
   },
 }
 

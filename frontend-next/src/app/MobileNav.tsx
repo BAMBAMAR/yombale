@@ -221,13 +221,17 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             <Zap size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
             <span>Forfaits &amp; Abonnements Vendeurs</span>
           </a>
-          <a href="/pos" className="mobile-nav-link" onClick={close}>
+          <a href="/logiciel-caisse-senegal" className="mobile-nav-link" onClick={close}>
             <ShoppingCart size={15} style={{ color: '#16A34A', marginRight: 8 }} />
             <span>Caisse Enregistreuse POS (Offline)</span>
           </a>
-          <a href="/whatsapp" className="mobile-nav-link" onClick={close}>
+          <a href="/vendre-sur-whatsapp" className="mobile-nav-link" onClick={close}>
             <MessageCircle size={15} style={{ color: '#25D366', marginRight: 8 }} />
             <span>Vendre sur WhatsApp (0% commission)</span>
+          </a>
+          <a href="/sama-xaalis" className="mobile-nav-link" onClick={close}>
+            <CreditCard size={15} style={{ color: '#0A5C36', marginRight: 8 }} />
+            <span>Sama Xaalis (Budget &amp; Dépenses)</span>
           </a>
           <a href="/demo?role=marchand" className="mobile-nav-link" onClick={close}>
             <Sparkles size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />

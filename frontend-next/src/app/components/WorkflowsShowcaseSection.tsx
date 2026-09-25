@@ -173,7 +173,7 @@ export default function WorkflowsShowcaseSection() {
 
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <Link
-                  href="/pos"
+                  href="/logiciel-caisse-senegal"
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     padding: '10px 20px', borderRadius: 12, background: 'var(--navy, #1C2B4A)',

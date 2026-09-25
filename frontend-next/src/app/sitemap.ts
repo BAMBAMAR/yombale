@@ -65,8 +65,8 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/gestion-stock-carnet-dettes`, changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/logiciel-gestion-locative-senegal`, changeFrequency: 'weekly', priority: 0.95 },
   // Boutique, POS & Forfaits Vendeurs existants
-  { url: `${BASE}/pos`,                  changeFrequency: 'weekly', priority: 0.9 },
-  { url: `${BASE}/whatsapp`,             changeFrequency: 'weekly', priority: 0.9 },
+  { url: `${BASE}/sama-xaalis`,          changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/partenaires`,          changeFrequency: 'monthly', priority: 0.8 },
   { url: `${BASE}/migration`,            changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/creer-boutique`,       changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/tarifs-boutique`,      changeFrequency: 'weekly', priority: 0.9 },

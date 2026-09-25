@@ -153,11 +153,44 @@ function HomeDualTrackContainerContent({
 export default function HomeDualTrackContainer(props: Props) {
   return (
     <Suspense fallback={
-      <main id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
-        <div>
-          {props.buyerContentSlot}
-        </div>
-      </main>
+      <>
+        <section className="hero-dualtrack-section" style={{
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 60%, var(--bg, #F8F5F0) 100%)',
+          borderBottom: '1px solid var(--border, #E8DDD2)',
+          position: 'relative',
+          overflow: 'hidden',
+          width: '100%',
+          boxSizing: 'border-box',
+        }}>
+          <div style={{ maxWidth: 1060, margin: '0 auto', position: 'relative', zIndex: 2, width: '100%', boxSizing: 'border-box' }}>
+            <HeroDualTrack
+              activeTab={props.initialMode || 'acheteur'}
+              onTabChange={() => {}}
+              prixTafTaf={props.prixTafTaf || 2500}
+            />
+          </div>
+        </section>
+        <main id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '0.75rem', paddingBottom: '0.5rem' }}>
+          <div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              marginBottom: 12,
+              width: '100%',
+              boxSizing: 'border-box',
+            }}>
+              <div style={{ width: '100%' }}>
+                {props.searchBarSlot}
+              </div>
+              <div style={{ width: '100%' }}>
+                {props.categoriesSlot}
+              </div>
+            </div>
+            {props.buyerContentSlot}
+          </div>
+        </main>
+      </>
     }>
       <HomeDualTrackContainerContent {...props} />
     </Suspense>
