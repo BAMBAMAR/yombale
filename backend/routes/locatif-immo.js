@@ -90,6 +90,28 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
     const endDate = new Date(startDate);
     endDate.setMonth(endDate.getMonth() + nbMois);
 
+    // Vérifier si un bail actif existe déjà sur ce bien
+    const { rows: activeBaux } = await pool.query(
+      `SELECT id FROM baux_immo WHERE bien_id = $1 AND agence_id = $2 AND statut = 'actif'`,
+      [bien_id, agenceId]
+    );
+    if (activeBaux.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Ce bien fait déjà l'objet d'un contrat de bail actif en cours. Veuillez résilier le bail précédent avant d'en créer un nouveau."
+      });
+    }
+
+    // Résoudre automatiquement le proprietaire_id depuis biens_immo si non transmis
+    let resolvedProprioId = proprietaire_id || null;
+    if (!resolvedProprioId) {
+      const { rows: bRows } = await pool.query(
+        'SELECT proprietaire_id FROM biens_immo WHERE id = $1 AND agence_id = $2',
+        [bien_id, agenceId]
+      );
+      resolvedProprioId = bRows[0]?.proprietaire_id || null;
+    }
+
     // 1. Insérer le bail
     const { rows: bailRows } = await pool.query(
       `INSERT INTO baux_immo (
@@ -102,8 +124,8 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
         agenceId,
         bien_id,
         locataire_id,
-        proprietaire_id || null,
-        agent_id || req.user.userId,
+        resolvedProprioId,
+        agent_id || req.user?.userId || req.user?.id,
         date_debut,
         endDate.toISOString().split('T')[0],
         nbMois,
@@ -891,10 +913,11 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email,
              p.nom AS proprietaire_nom, p.prenom AS proprietaire_prenom, p.telephone AS proprietaire_tel,
              CASE
-               WHEN bx.proprietaire_id IS NOT NULL AND bx.proprietaire_id IN (
+               WHEN COALESCE(bx.proprietaire_id, b.proprietaire_id) IN (
                  SELECT pr.id FROM proprietaires_immo pr
                  WHERE (
-                   ($2 != '' AND LOWER(pr.email) = $2)
+                   pr.utilisateur_id = $1
+                   OR ($2 != '' AND LOWER(pr.email) = $2)
                    OR ($3 != '' AND RIGHT(REPLACE(REPLACE(pr.telephone, ' ', ''), '+', ''), 9) = $3)
                  )
                ) THEN 'bailleur'
@@ -904,16 +927,17 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
       JOIN biens_immo b ON bx.bien_id = b.id
       JOIN agences_immo a ON bx.agence_id = a.id
       JOIN contacts_immo c ON bx.locataire_id = c.id
-      LEFT JOIN proprietaires_immo p ON bx.proprietaire_id = p.id
+      LEFT JOIN proprietaires_immo p ON p.id = COALESCE(bx.proprietaire_id, b.proprietaire_id)
       WHERE (
         c.utilisateur_id = $1
         OR ($2 != '' AND LOWER(c.email) = $2)
         OR ($3 != '' AND RIGHT(REPLACE(REPLACE(c.telephone, ' ', ''), '+', ''), 9) = $3)
         OR (
-          bx.proprietaire_id IS NOT NULL AND bx.proprietaire_id IN (
+          COALESCE(bx.proprietaire_id, b.proprietaire_id) IN (
             SELECT pr.id FROM proprietaires_immo pr
             WHERE (
-              ($2 != '' AND LOWER(pr.email) = $2)
+              pr.utilisateur_id = $1
+              OR ($2 != '' AND LOWER(pr.email) = $2)
               OR ($3 != '' AND RIGHT(REPLACE(REPLACE(pr.telephone, ' ', ''), '+', ''), 9) = $3)
             )
           )

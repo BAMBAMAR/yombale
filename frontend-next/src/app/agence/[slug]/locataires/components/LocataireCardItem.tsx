@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { AlertTriangle, Building2, Phone, Mail, Pencil, MessageCircle, Home, Layers } from 'lucide-react'
+import { AlertTriangle, Building2, Phone, Mail, Pencil, MessageCircle, Home, Layers, Trash2 } from 'lucide-react'
 
 export interface BailSummary {
   bail_id: string
@@ -47,6 +47,7 @@ interface LocataireCardItemProps {
   isSelected: boolean
   onToggleSelect: (id: string) => void
   onEdit: (loc: LocataireItem) => void
+  onDelete?: (id: string, nom: string) => void
 }
 
 export default function LocataireCardItem({
@@ -54,6 +55,7 @@ export default function LocataireCardItem({
   isSelected,
   onToggleSelect,
   onEdit,
+  onDelete,
 }: LocataireCardItemProps) {
   const cleanTel = (locataire.telephone || locataire.whatsapp || '').replace(/\D/g, '')
   const baux = Array.isArray(locataire.baux) ? locataire.baux : []
@@ -232,6 +234,27 @@ export default function LocataireCardItem({
           <Pencil size={13} />
           <span>Fiche & Biens</span>
         </button>
+
+        {onDelete && (
+          <button
+            type="button"
+            onClick={() => onDelete(locataire.id, `${locataire.prenom ? `${locataire.prenom} ` : ''}${locataire.nom}`)}
+            title="Supprimer ou archiver ce locataire"
+            style={{
+              padding: '8px 10px',
+              borderRadius: 6,
+              background: '#FAF8F5',
+              color: '#DC2626',
+              border: '1px solid #FECACA',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
 
         {locataire.telephone && (
           <a

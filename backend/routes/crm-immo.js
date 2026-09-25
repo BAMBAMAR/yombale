@@ -56,7 +56,7 @@ router.get('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), a
              (SELECT COUNT(*) FROM loyers_echeances le JOIN baux_immo bx ON le.bail_id = bx.id WHERE bx.locataire_id = c.id AND le.statut IN ('retard', 'impaye')) AS nb_impayes
       FROM contacts_immo c
       LEFT JOIN utilisateurs u ON c.agent_id = u.id
-      WHERE c.agence_id = $1
+      WHERE c.agence_id = $1 AND COALESCE(c.actif, true) = true AND COALESCE(c.statut_crm, '') != 'archive'
     `;
     const params = [agenceId];
     let pIndex = 2;
@@ -412,6 +412,26 @@ router.post('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), 
 
     if (!nom || nom.trim().length < 2) {
       return res.status(400).json({ success: false, error: 'Le nom du contact est obligatoire.' });
+    }
+
+    // Anti-doublon par numéro de téléphone dans la même agence
+    const cleanPh = telephone ? String(telephone).replace(/\D/g, '') : '';
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+    if (shortPh && !req.body.forcer_doublon) {
+      const { rows: existants } = await pool.query(
+        `SELECT id, nom, prenom, type_contact, telephone 
+         FROM contacts_immo 
+         WHERE agence_id = $1 AND RIGHT(REPLACE(REPLACE(telephone, ' ', ''), '+', ''), 9) = $2 LIMIT 1`,
+        [agenceId, shortPh]
+      );
+      if (existants.length > 0) {
+        return res.status(409).json({
+          success: false,
+          code: 'DUPLICATE_CONTACT',
+          error: `Un contact avec ce numéro de téléphone existe déjà (${existants[0].prenom ? existants[0].prenom + ' ' : ''}${existants[0].nom}, ${existants[0].type_contact}).`,
+          existant: existants[0]
+        });
+      }
     }
 
     const { rows } = await pool.query(
@@ -775,15 +795,23 @@ router.put('/agence/:slugOrId/visites/:visiteId', verifierToken, requireAgenceAc
 router.get('/agence/:slugOrId/proprietaires', verifierToken, requireAgenceAccess(), async (req, res) => {
   try {
     const agenceId = req.agence.id;
-    const { rows } = await pool.query(
-      `SELECT p.*,
-              (SELECT COUNT(*) FROM biens_immo b WHERE b.proprietaire_id = p.id) AS nb_biens_total,
-              (SELECT COUNT(*) FROM biens_immo b WHERE b.proprietaire_id = p.id AND b.statut_occupation = 'loue') AS nb_biens_loues
-       FROM proprietaires_immo p
-       WHERE p.agence_id = $1
-       ORDER BY p.nom ASC`,
-      [agenceId]
-    );
+    const { inclure_inactifs } = req.query;
+
+    let query = `
+      SELECT p.*,
+             (SELECT COUNT(*) FROM biens_immo b WHERE b.proprietaire_id = p.id) AS nb_biens_total,
+             (SELECT COUNT(*) FROM biens_immo b WHERE b.proprietaire_id = p.id AND b.statut_occupation = 'loue') AS nb_biens_loues
+      FROM proprietaires_immo p
+      WHERE p.agence_id = $1
+    `;
+
+    if (inclure_inactifs !== 'true') {
+      query += ` AND COALESCE(p.actif, true) = true`;
+    }
+
+    query += ` ORDER BY p.nom ASC`;
+
+    const { rows } = await pool.query(query, [agenceId]);
 
     res.json({
       success: true,
@@ -803,6 +831,26 @@ router.post('/agence/:slugOrId/proprietaires', verifierToken, requireAgenceAcces
 
     if (!nom || nom.trim().length < 2) {
       return res.status(400).json({ success: false, error: 'Le nom du propriétaire/bailleur est requis.' });
+    }
+
+    // Anti-doublon par numéro de téléphone dans la même agence
+    const cleanPhProp = telephone ? String(telephone).replace(/\D/g, '') : '';
+    const shortPhProp = cleanPhProp.length >= 9 ? cleanPhProp.slice(-9) : cleanPhProp;
+    if (shortPhProp && !req.body.forcer_doublon) {
+      const { rows: existantsProp } = await pool.query(
+        `SELECT id, nom, prenom, telephone 
+         FROM proprietaires_immo 
+         WHERE agence_id = $1 AND RIGHT(REPLACE(REPLACE(telephone, ' ', ''), '+', ''), 9) = $2 LIMIT 1`,
+        [agenceId, shortPhProp]
+      );
+      if (existantsProp.length > 0) {
+        return res.status(409).json({
+          success: false,
+          code: 'DUPLICATE_BAILLEUR',
+          error: `Un propriétaire avec ce numéro de téléphone existe déjà (${existantsProp[0].prenom ? existantsProp[0].prenom + ' ' : ''}${existantsProp[0].nom}).`,
+          existant: existantsProp[0]
+        });
+      }
     }
 
     const { rows } = await pool.query(
@@ -886,22 +934,38 @@ router.put('/agence/:slugOrId/proprietaires/:id', verifierToken, requireAgenceAc
   }
 });
 
-// ── DELETE /api/crm-immo/agence/:slugOrId/proprietaires/:id — Supprimer un bailleur ──
-router.delete('/agence/:slugOrId/proprietaires/:id', verifierToken, requireAgenceAccess('directeur'), async (req, res) => {
+// ── DELETE /api/crm-immo/agence/:slugOrId/proprietaires/:id — Supprimer ou archiver un bailleur ──
+router.delete('/agence/:slugOrId/proprietaires/:id', verifierToken, requireAgenceAccess('agent'), async (req, res) => {
   try {
     const agenceId = req.agence.id;
     const { id } = req.params;
+    const { mode = 'auto' } = req.query; // 'auto', 'archive', 'force'
 
     // Vérifier si des biens sont encore rattachés
     const { rows: biens } = await pool.query(
       `SELECT COUNT(*) AS total FROM biens_immo WHERE proprietaire_id = $1 AND agence_id = $2`,
       [id, agenceId]
     );
+    const nbBiens = parseInt(biens[0]?.total, 10) || 0;
 
-    if (parseInt(biens[0]?.total, 10) > 0) {
-      return res.status(400).json({
-        success: false,
-        error: `Impossible de supprimer ce bailleur : ${biens[0].total} bien(s) lui sont encore rattachés. Réassignez ou archivez d'abord ses biens.`,
+    // Vérifier si des baux sont rattachés
+    const { rows: baux } = await pool.query(
+      `SELECT COUNT(*) AS total FROM baux_immo WHERE proprietaire_id = $1 AND agence_id = $2`,
+      [id, agenceId]
+    );
+    const nbBaux = parseInt(baux[0]?.total, 10) || 0;
+
+    if (nbBiens > 0 || nbBaux > 0 || mode === 'archive') {
+      await pool.query(
+        `UPDATE proprietaires_immo SET actif = false, updated_at = NOW() WHERE id = $1 AND agence_id = $2`,
+        [id, agenceId]
+      );
+      return res.json({
+        success: true,
+        message: `Propriétaire archivé avec succès. Les ${nbBiens} bien(s) et l'historique comptable sont conservés.`,
+        action: 'archived',
+        nbBiens,
+        nbBaux
       });
     }
 
@@ -914,10 +978,38 @@ router.delete('/agence/:slugOrId/proprietaires/:id', verifierToken, requireAgenc
       return res.status(404).json({ success: false, error: 'Propriétaire introuvable.' });
     }
 
-    res.json({ success: true, message: 'Bailleur supprimé avec succès' });
+    res.json({ success: true, message: 'Bailleur supprimé avec succès.', action: 'deleted' });
   } catch (err) {
     console.error('[DELETE /api/crm-immo/agence/:slugOrId/proprietaires/:id]', err.message);
     res.status(500).json({ success: false, error: 'Erreur suppression bailleur' });
+  }
+});
+
+// ── GET /api/crm-immo/agence/:slugOrId/proprietaires/:id/biens — Liste des biens d'un bailleur ──
+router.get('/agence/:slugOrId/proprietaires/:id/biens', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { id } = req.params;
+
+    const { rows } = await pool.query(
+      `SELECT b.id, b.titre, b.type_bien, b.statut_occupation,
+              COALESCE(b.prix_location, 0) AS loyer_mensuel,
+              COALESCE(b.charges, 0) AS charges_mensuelles,
+              b.quartier, b.ville, b.adresse, b.surface_m2, b.nb_pieces,
+              bx.id AS bail_actif_id, bx.loyer_mensuel AS bail_loyer,
+              c.id AS locataire_id, c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_telephone
+       FROM biens_immo b
+       LEFT JOIN baux_immo bx ON bx.bien_id = b.id AND bx.statut = 'actif'
+       LEFT JOIN contacts_immo c ON bx.locataire_id = c.id
+       WHERE b.proprietaire_id = $1 AND b.agence_id = $2
+       ORDER BY b.created_at DESC`,
+      [id, agenceId]
+    );
+
+    res.json({ success: true, biens: rows });
+  } catch (err) {
+    console.error('[GET /proprietaires/:id/biens]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement des biens du bailleur' });
   }
 });
 
@@ -952,6 +1044,148 @@ router.put(
     }
   }
 );
+
+
+// ── DELETE /api/crm-immo/agence/:slugOrId/contacts/:id — Supprimer ou archiver un contact/locataire ──
+router.delete('/agence/:slugOrId/contacts/:id', verifierToken, requireAgenceAccess('agent'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { id } = req.params;
+    const { mode = 'auto' } = req.query; // 'auto', 'archive', 'force'
+
+    // Vérifier si des baux sont rattachés
+    const { rows: baux } = await pool.query(
+      `SELECT COUNT(*) AS total, 
+              COUNT(*) FILTER (WHERE statut = 'actif') AS actifs
+       FROM baux_immo WHERE locataire_id = $1 AND agence_id = $2`,
+      [id, agenceId]
+    );
+
+    const nbBaux = parseInt(baux[0]?.total, 10) || 0;
+    const nbActifs = parseInt(baux[0]?.actifs, 10) || 0;
+
+    // Si le locataire a des baux actifs, interdire la suppression physique
+    if (nbActifs > 0 && mode !== 'archive') {
+      return res.status(400).json({
+        success: false,
+        error: `Impossible de supprimer ce locataire : il possède ${nbActifs} bail(s) actif(s) en cours. Résiliez d'abord ses baux.`,
+        code: 'HAS_ACTIVE_LEASES'
+      });
+    }
+
+    // Si le locataire a un historique de baux passés (même résiliés), basculer en archivé pour préserver l'historique légal et comptable
+    if (nbBaux > 0 || mode === 'archive') {
+      await pool.query(
+        `UPDATE contacts_immo SET actif = false, statut_crm = 'archive', updated_at = NOW() WHERE id = $1 AND agence_id = $2`,
+        [id, agenceId]
+      );
+      return res.json({
+        success: true,
+        message: 'Locataire archivé avec succès. L\'historique contractuel et les quittances sont préservés.',
+        action: 'archived'
+      });
+    }
+
+    // 0 bail rattaché : suppression physique autorisée
+    const { rowCount } = await pool.query(
+      `DELETE FROM contacts_immo WHERE id = $1 AND agence_id = $2`,
+      [id, agenceId]
+    );
+
+    if (rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Contact introuvable.' });
+    }
+
+    res.json({ success: true, message: 'Contact supprimé définitivement avec succès.', action: 'deleted' });
+  } catch (err) {
+    console.error('[DELETE /api/crm-immo/agence/:slugOrId/contacts/:id]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la suppression du contact.' });
+  }
+});
+
+// ── POST /api/crm-immo/agence/:slugOrId/contacts/batch-delete — Suppression ou archivage groupé ──
+router.post('/agence/:slugOrId/contacts/batch-delete', verifierToken, requireAgenceAccess('directeur'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, error: 'Liste d\'identifiants requise.' });
+    }
+
+    let nbSupprimes = 0;
+    let nbArchives = 0;
+
+    for (const cId of ids) {
+      const { rows: baux } = await pool.query(
+        `SELECT COUNT(*) AS total FROM baux_immo WHERE locataire_id = $1 AND agence_id = $2`,
+        [cId, agenceId]
+      );
+      if (parseInt(baux[0]?.total, 10) > 0) {
+        await pool.query(
+          `UPDATE contacts_immo SET actif = false, statut_crm = 'archive', updated_at = NOW() WHERE id = $1 AND agence_id = $2`,
+          [cId, agenceId]
+        );
+        nbArchives++;
+      } else {
+        await pool.query(`DELETE FROM contacts_immo WHERE id = $1 AND agence_id = $2`, [cId, agenceId]);
+        nbSupprimes++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Traitement terminé : ${nbSupprimes} supprimé(s), ${nbArchives} archivé(s).`,
+      nbSupprimes,
+      nbArchives
+    });
+  } catch (err) {
+    console.error('[POST /contacts/batch-delete]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur suppression groupée contacts.' });
+  }
+});
+
+// ── POST /api/crm-immo/agence/:slugOrId/proprietaires/batch-delete — Suppression ou archivage groupé bailleurs ──
+router.post('/agence/:slugOrId/proprietaires/batch-delete', verifierToken, requireAgenceAccess('directeur'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, error: 'Liste d\'identifiants requise.' });
+    }
+
+    let nbSupprimes = 0;
+    let nbArchives = 0;
+
+    for (const pId of ids) {
+      const { rows: biens } = await pool.query(
+        `SELECT COUNT(*) AS total FROM biens_immo WHERE proprietaire_id = $1 AND agence_id = $2`,
+        [pId, agenceId]
+      );
+      if (parseInt(biens[0]?.total, 10) > 0) {
+        await pool.query(
+          `UPDATE proprietaires_immo SET actif = false, updated_at = NOW() WHERE id = $1 AND agence_id = $2`,
+          [pId, agenceId]
+        );
+        nbArchives++;
+      } else {
+        await pool.query(`DELETE FROM proprietaires_immo WHERE id = $1 AND agence_id = $2`, [pId, agenceId]);
+        nbSupprimes++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Traitement terminé : ${nbSupprimes} bailleur(s) supprimé(s), ${nbArchives} archivé(s).`,
+      nbSupprimes,
+      nbArchives
+    });
+  } catch (err) {
+    console.error('[POST /proprietaires/batch-delete]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur suppression groupée bailleurs.' });
+  }
+});
 
 module.exports = router;
 

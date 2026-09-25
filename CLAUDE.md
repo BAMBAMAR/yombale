@@ -23,6 +23,37 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit Exhaustif du Module Immobilier & Éradication Complète des Anomalies (25 septembre 2026)** ⚡🛡️🚀✅ :
+  * **🎯 Objectifs & Périmètre d'Audit** :
+    - Audit approfondi de la chaîne relationnelle immobilière : Agence -> Propriétaire / Bailleur -> Bien -> Bail -> Locataire -> Loyer / Échéance -> Encaissement -> Quittance.
+    - Analyse de la conformité légale et comptable (interdiction de suppression physique en cascade de baux et quittances certifiées sous mandat).
+    - Résolution de l'impossibilité de supprimer ou d'archiver les locataires et les bailleurs.
+  * **🛠️ Correctifs & Évolutions Réalisés** :
+    1. **Architecture & Sécurisation de la Suppression / Archivage (Backend & Frontend)** :
+       - Ajout des colonnes `contacts_immo.actif` (BOOLEAN DEFAULT TRUE) et `proprietaires_immo.actif` (BOOLEAN DEFAULT TRUE) avec index partiels.
+       - Migration inline rétrocompatible (`backend/migrate-inline.js`) et backfill idempotent de `baux_immo.proprietaire_id` depuis `biens_immo.proprietaire_id`.
+       - Remplacement de l'échec de suppression brute par un mécanisme intelligent :
+         - Si 0 bien / 0 bail rattaché : suppression physique définitive (`DELETE`).
+         - Si des biens, baux ou quittances existent : bascule automatique en soft-archivage (`actif = false`), garantissant la conservation légale sur 10 ans des pièces comptables et mandats de gérance.
+       - Implémentation des endpoints backend `DELETE /contacts/:id`, `DELETE /proprietaires/:id`, `POST /contacts/batch-delete`, `POST /proprietaires/batch-delete` dans `backend/routes/crm-immo.js`.
+       - Filtrage automatique des inactifs dans `GET /contacts` et `GET /proprietaires`.
+       - Intégration frontend des boutons de suppression/archivage unitaire et par lot avec modales de confirmation (`LocataireCardItem`, `BailleurCardItem`, `locataires/page.tsx`, `bailleurs/page.tsx`).
+    2. **Dédoublement et Vue Dédiée « Mon Compte » (Bailleur vs Locataire)** :
+       - Résolution automatique de `role_vue: 'bailleur' | 'locataire'` dans `GET /api/locatif-immo/mes-locations`.
+       - Dans `MesLocationsClient.tsx` :
+         - Vue Locataire : Affichage du bail, bouton de paiement Wave pour les loyers dus, téléchargement des quittances certifiées.
+         - Vue Bailleur : En-tête "Mandat de Gestion Bailleur", identification du locataire en place avec coordonnées directes, suivi du recouvrement ("En attente d'encaissement" / "Loyer Impayé"), suppression du bouton de paiement Wave non pertinent, et téléchargement des quittances.
+    3. **Enrichissement de la Fiche Bailleur avec Vue « Biens confiés »** :
+       - Nouvel endpoint `GET /api/crm-immo/agence/:slugOrId/proprietaires/:id/biens` retournant le portefeuille de biens du propriétaire (statut d'occupation, loyer mensuel, charges, locataire en place).
+       - Refonte de `ModalEditerBailleur.tsx` avec système d'onglets ergonomique (*Coordonnées* et *Biens confiés*) et bouton direct de suppression/archivage sécurisé.
+    4. **Prévention des Conflits de Baux & Doublons Téléphoniques** :
+       - Blocage strict de la création d'un 2ème bail actif sur un bien déjà loué dans `POST /api/locatif-immo/agence/:slugOrId/baux` (HTTP 409 `ACTIVE_LEASE_EXISTS`).
+       - Vérification anti-doublon par numéro de téléphone dans l'agence sur `POST /contacts` et `POST /proprietaires` (HTTP 409 `DUPLICATE_CONTACT` / `DUPLICATE_BAILLEUR`).
+  * **🧪 Validation & Tests** :
+    - Exécution du script de validation E2E `scripts/verify-all-audit-fixes.js` : 7/7 scénarios validés avec succès sur PostgreSQL.
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme.
+
 - **Gestion Locative & ERP Agence Immobilière : Multi-biens par Locataire, Visibilité Baux & Accès Mon Compte (25 septembre 2026)** ⚡🛡️🚀✅ :
   * **🎯 Problématiques Résolues & Demandes Utilisateur** :
     1. *Disparition du bien lors de la modification d'un locataire* : L'API CRM (`GET /api/crm-immo/agence/:slugOrId/contacts`) ne joignait pas les baux ni les biens associés, et `ModalEditerLocataire` n'avait aucun affichage des biens rattachés.

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Phone, Mail, Pencil, FileText, MessageCircle } from 'lucide-react'
+import { Phone, Mail, Pencil, FileText, MessageCircle, Trash2 } from 'lucide-react'
 
 export interface ProprietaireItem {
   id: string
@@ -22,6 +22,7 @@ interface BailleurCardItemProps {
   isSelected: boolean
   onToggleSelect: (id: string) => void
   onEdit: (b: ProprietaireItem) => void
+  onDelete?: (id: string, nom: string) => void
 }
 
 export default function BailleurCardItem({
@@ -31,6 +32,7 @@ export default function BailleurCardItem({
   isSelected,
   onToggleSelect,
   onEdit,
+  onDelete,
 }: BailleurCardItemProps) {
   const decomptePdfUrl = `/api/agences/agence/${slug}/documents/decompte-bailleur/${bailleur.id}.pdf${
     token ? `?token=${encodeURIComponent(token)}` : ''
@@ -131,6 +133,27 @@ export default function BailleurCardItem({
         >
           <Pencil size={14} />
         </button>
+
+        {onDelete && (
+          <button
+            type="button"
+            onClick={() => onDelete(bailleur.id, `${bailleur.prenom ? `${bailleur.prenom} ` : ''}${bailleur.nom}`)}
+            title="Supprimer ou archiver ce bailleur"
+            style={{
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: '#FEE2E2',
+              border: '1px solid #FECACA',
+              color: '#DC2626',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
 
         {cleanWa && (
           <a

@@ -9,7 +9,8 @@ import {
   Building2,
   CheckCircle2,
   Download,
-  MessageCircle
+  MessageCircle,
+  Trash2
 } from 'lucide-react'
 import LocataireCardItem from './components/LocataireCardItem'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
@@ -193,6 +194,53 @@ export default function LocatairesPage() {
     setToastMsg(`Discussion ouverte pour ${premier.nom}. ${locs.length - 1} autre(s) locataire(s) sélectionné(s).`)
   }
 
+  async function handleDeleteLocataire(id: string, nom: string) {
+    if (!confirm(`Souhaitez-vous supprimer ou archiver le locataire "${nom}" ?\n\nNote : S'il possède un historique de bail ou de quittance, il sera automatiquement archivé afin de préserver l'intégrité comptable et légale de l'agence.`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/crm-immo/agence/${slug}/contacts/${id}`, {
+        method: 'DELETE',
+        headers: getImmoAuthHeaders(),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        showToast(data.error || 'Erreur lors de la suppression.', 'error', 'Action impossible')
+        return
+      }
+      showToast(data.message || 'Locataire supprimé / archivé avec succès.', 'success', 'Gestion locataires')
+      await chargerLocataires()
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Erreur réseau.', 'error', 'Erreur')
+    }
+  }
+
+  async function handleBatchDeleteLocataires() {
+    if (selectedIds.length === 0) return
+    if (!confirm(`Supprimer ou archiver les ${selectedIds.length} locataire(s) sélectionné(s) ?\nLes locataires avec baux seront archivés, les dossiers vides seront supprimés.`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/crm-immo/agence/${slug}/contacts/batch-delete`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ ids: selectedIds }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        showToast(data.error || 'Erreur lors du traitement groupé.', 'error', 'Erreur')
+        return
+      }
+      showToast(data.message, 'success', 'Traitement groupé')
+      setSelectedIds([])
+      await chargerLocataires()
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Erreur réseau.', 'error', 'Erreur')
+    }
+  }
+
   const batchActions: BatchActionItem[] = [
     {
       id: 'relance_wa',
@@ -206,6 +254,13 @@ export default function LocatairesPage() {
       label: 'Exporter CSV',
       icon: Download,
       onClick: handleBatchExportCsv,
+    },
+    {
+      id: 'batch_delete',
+      label: 'Supprimer / Archiver',
+      icon: Trash2,
+      onClick: handleBatchDeleteLocataires,
+      variant: 'danger',
     },
   ]
 
@@ -317,6 +372,7 @@ export default function LocatairesPage() {
               isSelected={selectedIds.includes(loc.id)}
               onToggleSelect={handleToggleSelect}
               onEdit={setLocataireAEditer}
+              onDelete={handleDeleteLocataire}
             />
           ))}
         </div>

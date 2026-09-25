@@ -14,7 +14,8 @@ import {
   CreditCard,
   ExternalLink,
   MessageCircle,
-  Loader2
+  Loader2,
+  UserCheck,
 } from 'lucide-react'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
@@ -32,6 +33,7 @@ interface Echeance {
 
 interface LocationItem {
   bail_id: string
+  role_vue?: 'bailleur' | 'locataire'
   date_debut: string
   date_fin: string | null
   loyer_mensuel: number
@@ -54,6 +56,17 @@ interface LocationItem {
     telephone: string | null
     whatsapp: string | null
     email: string | null
+  }
+  locataire?: {
+    nom: string
+    prenom?: string | null
+    telephone?: string | null
+    email?: string | null
+  }
+  proprietaire?: {
+    nom: string
+    prenom?: string | null
+    telephone?: string | null
   }
   echeances: Echeance[]
 }
@@ -182,6 +195,7 @@ export default function MesLocationsClient() {
       )}
 
       {locations.map((loc) => {
+        const isBailleur = loc.role_vue === 'bailleur'
         const agenceWa = loc.agence.whatsapp || loc.agence.telephone
         return (
           <div
@@ -209,11 +223,18 @@ export default function MesLocationsClient() {
             >
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--accent, #C75B00)' }}>
-                    Bail Locatif Conforme
+                  <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', color: isBailleur ? 'var(--navy, #1C2B4A)' : 'var(--accent, #C75B00)' }}>
+                    {isBailleur ? 'Mandat de Gestion Bailleur' : 'Bail Locatif Conforme'}
                   </span>
-                  <span style={{ fontSize: 10.5, fontWeight: 800, padding: '2px 8px', borderRadius: 10, background: '#DCFCE7', color: '#166534' }}>
-                    {loc.statut_bail === 'actif' ? 'En cours' : loc.statut_bail}
+                  <span style={{
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: 10,
+                    background: isBailleur ? '#E0E7FF' : '#DCFCE7',
+                    color: isBailleur ? '#3730A3' : '#166534',
+                  }}>
+                    {isBailleur ? 'Espace Propriétaire' : (loc.statut_bail === 'actif' ? 'En cours' : loc.statut_bail)}
                   </span>
                 </div>
                 <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
@@ -222,6 +243,12 @@ export default function MesLocationsClient() {
                 <p style={{ margin: '4px 0 0', fontSize: 12.5, color: '#64748B' }}>
                   {[loc.bien.adresse, loc.bien.quartier, loc.bien.ville].filter(Boolean).join(', ')}
                 </p>
+                {isBailleur && loc.locataire && (
+                  <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--price, #0A5C36)', fontWeight: 700 }}>
+                    Locataire en place : {loc.locataire.prenom ? `${loc.locataire.prenom} ` : ''}{loc.locataire.nom}
+                    {loc.locataire.telephone ? ` (${loc.locataire.telephone})` : ''}
+                  </p>
+                )}
               </div>
 
               <div style={{ textAlign: 'right' }}>
@@ -259,7 +286,7 @@ export default function MesLocationsClient() {
 
               {agenceWa && (
                 <a
-                  href={`https://wa.me/${agenceWa.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${loc.agence.nom}, je vous contacte au sujet de mon bail (${loc.bien.titre}).`)}`}
+                  href={`https://wa.me/${agenceWa.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${loc.agence.nom}, je vous contacte au sujet de ${isBailleur ? 'mon bien' : 'mon bail'} (${loc.bien.titre}).`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -285,7 +312,7 @@ export default function MesLocationsClient() {
             <div style={{ padding: '16px 20px' }}>
               <h5 style={{ margin: '0 0 12px', fontSize: 13.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <FileText size={15} style={{ color: 'var(--accent, #C75B00)' }} />
-                <span>Historique des Loyers &amp; Quittances Officielles</span>
+                <span>{isBailleur ? 'Suivi des Encaissements & Quittances' : 'Historique des Loyers & Quittances Officielles'}</span>
               </h5>
 
               {loc.echeances.length === 0 ? (
@@ -361,6 +388,19 @@ export default function MesLocationsClient() {
                               <Download size={13} />
                               <span>Quittance PDF</span>
                             </a>
+                          ) : isBailleur ? (
+                            <span
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: 6,
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                background: isEnRetard ? '#FEE2E2' : '#FEF3C7',
+                                color: isEnRetard ? '#991B1B' : '#92400E',
+                              }}
+                            >
+                              {isEnRetard ? 'Loyer Impayé' : 'En attente d\'encaissement'}
+                            </span>
                           ) : (
                             <button
                               type="button"

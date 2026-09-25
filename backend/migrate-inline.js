@@ -2311,6 +2311,16 @@ module.exports = async function migrateInline(customConnStr = null) {
       );
       CREATE INDEX IF NOT EXISTS idx_agence_logs_agence ON agence_logs(agence_id);
       CREATE INDEX IF NOT EXISTS idx_agence_logs_date   ON agence_logs(created_at DESC);
+
+      -- Colonnes d'archivage / statut pour contacts et propriétaires
+      ALTER TABLE contacts_immo ADD COLUMN IF NOT EXISTS actif BOOLEAN DEFAULT TRUE;
+      ALTER TABLE proprietaires_immo ADD COLUMN IF NOT EXISTS actif BOOLEAN DEFAULT TRUE;
+
+      -- Réparation de rétrocompatibilité : peupler proprietaire_id sur baux_immo si manquant
+      UPDATE baux_immo bx
+      SET proprietaire_id = b.proprietaire_id
+      FROM biens_immo b
+      WHERE bx.bien_id = b.id AND bx.proprietaire_id IS NULL AND b.proprietaire_id IS NOT NULL;
     `);
 
     console.log('[MIGRATE] ✅ Nopalou Immobilier: 16 tables & colonnes créées avec succès');

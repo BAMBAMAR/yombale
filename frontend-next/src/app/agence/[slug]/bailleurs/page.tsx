@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Download,
   FileText,
+  Trash2,
 } from 'lucide-react'
 import BailleurCardItem from './components/BailleurCardItem'
 import { getImmoAuthHeaders, getImmoAuthToken } from '@/lib/immo-auth'
@@ -178,6 +179,53 @@ export default function BailleursPage() {
     toast.success(`${Math.min(targets.length, 5)} décompte(s) généré(s) en PDF.`)
   }
 
+  async function handleDeleteBailleur(id: string, nom: string) {
+    if (!confirm(`Souhaitez-vous supprimer ou archiver le propriétaire "${nom}" ?\n\nNote : S'il possède des biens confiés ou un historique de gérance, il sera automatiquement archivé afin de préserver les mandats et les pièces comptables.`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/crm-immo/agence/${slug}/proprietaires/${id}`, {
+        method: 'DELETE',
+        headers: getImmoAuthHeaders(),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Erreur lors de la suppression du bailleur.')
+        return
+      }
+      toast.success(data.message || 'Propriétaire supprimé / archivé avec succès.')
+      await chargerBailleurs()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erreur réseau.')
+    }
+  }
+
+  async function handleBatchDeleteBailleurs() {
+    if (selectedIds.length === 0) return
+    if (!confirm(`Supprimer ou archiver les ${selectedIds.length} propriétaire(s) sélectionné(s) ?\nLes propriétaires avec biens ou baux seront archivés, les dossiers vides seront supprimés.`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/crm-immo/agence/${slug}/proprietaires/batch-delete`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ ids: selectedIds }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Erreur lors du traitement groupé.')
+        return
+      }
+      toast.success(data.message)
+      setSelectedIds([])
+      await chargerBailleurs()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erreur réseau.')
+    }
+  }
+
   const batchActions: BatchActionItem[] = [
     {
       id: 'contact_wa',
@@ -197,6 +245,13 @@ export default function BailleursPage() {
       label: 'Exporter CSV',
       icon: Download,
       onClick: handleBatchExportCsv,
+    },
+    {
+      id: 'batch_delete',
+      label: 'Supprimer / Archiver',
+      icon: Trash2,
+      onClick: handleBatchDeleteBailleurs,
+      variant: 'danger',
     },
   ]
 
@@ -308,6 +363,7 @@ export default function BailleursPage() {
               isSelected={selectedIds.includes(p.id)}
               onToggleSelect={handleToggleSelect}
               onEdit={setBailleurAEditer}
+              onDelete={handleDeleteBailleur}
             />
           ))}
         </div>
@@ -349,6 +405,7 @@ export default function BailleursPage() {
             toast.success('Fiche du bailleur mise à jour avec succès.')
             chargerBailleurs()
           }}
+          onDelete={handleDeleteBailleur}
         />
       )}
     </div>
