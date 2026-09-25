@@ -23,6 +23,28 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Résolution Définitive du Problème OTP WhatsApp « Aucun code trouvé ou expiré » (25 septembre 2026)** 🔐🛡️⚡✅ :
+  * **🎯 Symptôme & Cause Racine Analysée** :
+    - L'utilisateur signalait : *« POUR otp ca partle aucun code trouve ou expire a chaque fois »*.
+    - **Course Concurrente (Double-Soumission)** : Sur `PortailOtpCard.tsx`, la saisie du 6ème chiffre déclenchait `onValiderOtp(val)` dans `onChange`. Dès que l'utilisateur appuyait sur Entrée ou cliquait sur le bouton, une deuxième requête HTTP était émise immédiatement. La 1ère requête validait le code et marquait `utilise = TRUE`. La 2nde requête arrivant quelques millisecondes après constatait `utilise = TRUE`, échouait avec `Aucun code trouvé ou expiré` et écrasait l'état avec l'erreur.
+    - **Invalidation Prématurée des Codes Lors des Renvois** : Lorsqu'un utilisateur cliquait sur « Renvoyer le code » après 30-50s, l'ancien code était immédiatement marqué `utilise = TRUE`. Si le 1er message WhatsApp arrivait avec un léger décalage réseau et était saisi par l'utilisateur, il était rejeté.
+    - **Tolérance de Format Téléphonique & d'Action** : `auth_otp_phones` stockait soit `221...` soit le format local. Les requêtes `WHERE telephone = $1` en égalité stricte pouvaient manquer des correspondances si l'indicatif international était omis.
+  * **🛠️ Corrections & Blindage Opérés** :
+    1. **Fenêtre d'Idempotence Anti-Course Concurrente (`backend/services/otp.js`)** :
+       - Ajout d'une colonne `verifie_le TIMESTAMPTZ` dans `auth_otp_phones`.
+       - Si une requête concurrente ou un double-clic valide un code qui a été vérifié avec succès il y a moins de 60 secondes pour ce même numéro, le backend retourne `{ valide: true, dejaValide: true }` de façon transparente sans erreur.
+    2. **Multi-Codes Actifs Récents & Tolérance de Renvoi** :
+       - `genererOtpPhone` ne détruit plus brutalement les codes récents encore dans leur fenêtre de validité de 10 minutes.
+       - `verifierOtpPhone` interroge les codes récents actifs et vérifie si le code saisi correspond à l'un d'eux. Dès qu'un code valide est saisi, celui-ci est validé et tous les autres codes en attente pour ce numéro sont consommés.
+    3. **Normalisation & Tolérance Multi-Actions** :
+       - Recherche élargie par numéro exact OU par les 9 derniers chiffres (`RIGHT(telephone, 9) = RIGHT($1, 9)`).
+       - Tolérance d'action étendue (`locataire_portal`, `login`, `auth`) pour éviter tout blocage d'accès inter-pages.
+    4. **Verrouillage Frontend Anti-Double Soumission (`PortailOtpCard.tsx` & `PortailLocataireClient.tsx`)** :
+       - `isSubmittingRef` et `isVerifyingRef` empêchent toute invocation parallèle ou collision entre l'`onChange` et le `form submit`.
+       - Désactivation immédiate de l'input et du bouton pendant la requête de vérification.
+       - Réinitialisation propre du verrou en cas d'erreur (`useEffect([error])`).
+       - Tests end-to-end automatisés validés à 100% avec succès.
+
 - **Signature Électronique sur Écran/Souris & Dépôt des Pièces Justificatives Locataire (CNI, Bulletins...) (25 septembre 2026)** ✍️📱📑🏛️✅ :
   * **🎯 Demande Utilisateur & Objectif** :
     - « est ce qui est prevu que le locataire verse des document comme sa carte identite et autres? » (Dépôt des pièces d'identité et justificatifs de solvabilité par le locataire).

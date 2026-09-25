@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Phone,
@@ -28,6 +28,7 @@ export default function PortailLocataireClient() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isVerifyingRef = useRef(false)
   const [locataireInfo, setLocataireInfo] = useState<{
     nom: string
     prenom: string
@@ -72,6 +73,8 @@ export default function PortailLocataireClient() {
 
   // Valider le code OTP WhatsApp
   async function handleValiderOtp(code: string) {
+    if (isVerifyingRef.current) return
+    isVerifyingRef.current = true
     setLoading(true)
     setError(null)
 
@@ -99,6 +102,7 @@ export default function PortailLocataireClient() {
       setError(err instanceof Error ? err.message : 'Code incorrect ou expiré')
     } finally {
       setLoading(false)
+      isVerifyingRef.current = false
     }
   }
 

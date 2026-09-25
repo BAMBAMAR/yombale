@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ShieldCheck, MessageCircle, ArrowRight, RotateCcw, AlertCircle, Loader2 } from 'lucide-react'
 
 interface Props {
@@ -24,6 +24,14 @@ export default function PortailOtpCard({
 }: Props) {
   const [code, setCode] = useState('')
   const [countdown, setCountdown] = useState(60)
+  const isSubmittingRef = useRef(false)
+
+  // Réinitialiser le verrou de soumission si une erreur survient
+  useEffect(() => {
+    if (error) {
+      isSubmittingRef.current = false
+    }
+  }, [error])
 
   useEffect(() => {
     if (countdown > 0) {
@@ -32,17 +40,24 @@ export default function PortailOtpCard({
     }
   }, [countdown])
 
+  function doSubmit(val: string) {
+    const clean = val.trim().replace(/\D/g, '')
+    if (clean.length !== 6) return
+    if (loading || isSubmittingRef.current) return
+    isSubmittingRef.current = true
+    onValiderOtp(clean)
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const clean = code.trim().replace(/\D/g, '')
-    if (clean.length === 6) {
-      onValiderOtp(clean)
-    }
+    doSubmit(code)
   }
 
   function handleResend() {
-    if (countdown === 0 && !loading) {
+    if (countdown === 0 && !loading && !isSubmittingRef.current) {
       setCountdown(60)
+      setCode('')
+      isSubmittingRef.current = false
       onRenvoyerOtp()
     }
   }
@@ -142,12 +157,13 @@ export default function PortailOtpCard({
             inputMode="numeric"
             maxLength={6}
             autoFocus
+            disabled={loading}
             value={code}
             onChange={(e) => {
               const val = e.target.value.replace(/\D/g, '').slice(0, 6)
               setCode(val)
               if (val.length === 6) {
-                onValiderOtp(val)
+                doSubmit(val)
               }
             }}
             placeholder="• • • • • •"
@@ -171,7 +187,7 @@ export default function PortailOtpCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <button
             type="submit"
-            disabled={loading || code.length !== 6}
+            disabled={loading || code.length !== 6 || isSubmittingRef.current}
             style={{
               background: code.length === 6 && !loading ? 'var(--navy, #1C2B4A)' : '#CBD5E1',
               color: '#ffffff',
