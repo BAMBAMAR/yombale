@@ -40,6 +40,31 @@ export function TabBiensLocataire({
   })
   const [savingBail, setSavingBail] = useState(false)
   const [errorBail, setErrorBail] = useState<string | null>(null)
+  const [resiliatingBailId, setResiliatingBailId] = useState<string | null>(null)
+
+  async function handleResilierBail(bailId: string, bienTitre: string) {
+    if (!confirm(`Confirmez-vous la fin de contrat / résiliation du bail pour le bien "${bienTitre}" ?\nLe bien sera immédiatement remis en disponibilité.`)) {
+      return
+    }
+
+    try {
+      setResiliatingBailId(bailId)
+      const res = await fetch(`/api/locatif-immo/agence/${slug}/baux/${bailId}/resilier`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ motif: 'Fin de bail / Changement de logement' }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Erreur lors de la résiliation du bail.')
+      }
+      onBailCreated()
+    } catch (err: unknown) {
+      setErrorBail(err instanceof Error ? err.message : 'Erreur lors de la résiliation.')
+    } finally {
+      setResiliatingBailId(null)
+    }
+  }
 
   async function handleAssocierNouveauBien(e: React.FormEvent) {
     e.preventDefault()
@@ -200,58 +225,23 @@ export function TabBiensLocataire({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>
-                  Loyer mensuel (FCFA) *
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={nouveauBail.loyer_mensuel}
-                  onChange={e => setNouveauBail({ ...nouveauBail, loyer_mensuel: e.target.value })}
-                  className="form-input"
-                  style={{ width: '100%', padding: '8px 10px', fontSize: 12.5 }}
-                />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>Loyer mensuel (FCFA) *</label>
+                <input type="number" required value={nouveauBail.loyer_mensuel} onChange={e => setNouveauBail({ ...nouveauBail, loyer_mensuel: e.target.value })} className="form-input" style={{ width: '100%', padding: '8px 10px', fontSize: 12.5 }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>
-                  Charges (FCFA)
-                </label>
-                <input
-                  type="number"
-                  value={nouveauBail.charges}
-                  onChange={e => setNouveauBail({ ...nouveauBail, charges: e.target.value })}
-                  className="form-input"
-                  style={{ width: '100%', padding: '8px 10px', fontSize: 12.5 }}
-                />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>Charges (FCFA)</label>
+                <input type="number" value={nouveauBail.charges} onChange={e => setNouveauBail({ ...nouveauBail, charges: e.target.value })} className="form-input" style={{ width: '100%', padding: '8px 10px', fontSize: 12.5 }} />
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>
-                  Date de début de bail
-                </label>
-                <input
-                  type="date"
-                  value={nouveauBail.date_debut}
-                  onChange={e => setNouveauBail({ ...nouveauBail, date_debut: e.target.value })}
-                  className="form-input"
-                  style={{ width: '100%', padding: '8px 10px', fontSize: 12.5 }}
-                />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>Date de début de bail</label>
+                <input type="date" value={nouveauBail.date_debut} onChange={e => setNouveauBail({ ...nouveauBail, date_debut: e.target.value })} className="form-input" style={{ width: '100%', padding: '8px 10px', fontSize: 12.5 }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>
-                  Jour d&apos;échéance mensuel
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={31}
-                  value={nouveauBail.jour_echeance}
-                  onChange={e => setNouveauBail({ ...nouveauBail, jour_echeance: e.target.value })}
-                  className="form-input"
-                  style={{ width: '100%', padding: '8px 10px', fontSize: 12.5 }}
-                />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 4 }}>Jour d&apos;échéance</label>
+                <input type="number" min={1} max={31} value={nouveauBail.jour_echeance} onChange={e => setNouveauBail({ ...nouveauBail, jour_echeance: e.target.value })} className="form-input" style={{ width: '100%', padding: '8px 10px', fontSize: 12.5 }} />
               </div>
             </div>
 
@@ -363,18 +353,45 @@ export function TabBiensLocataire({
                   )}
                 </div>
 
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: '3px 8px',
-                    borderRadius: 6,
-                    background: bx.statut === 'actif' ? '#DCFCE7' : '#F1F5F9',
-                    color: bx.statut === 'actif' ? '#166534' : '#64748B',
-                  }}
-                >
-                  {bx.statut === 'actif' ? 'Bail actif' : bx.statut}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      background: bx.statut === 'actif' ? '#DCFCE7' : '#F1F5F9',
+                      color: bx.statut === 'actif' ? '#166534' : '#64748B',
+                    }}
+                  >
+                    {bx.statut === 'actif' ? 'Bail actif' : bx.statut}
+                  </span>
+
+                  {bx.statut === 'actif' && (
+                    <button
+                      type="button"
+                      disabled={resiliatingBailId === bx.bail_id}
+                      onClick={() => handleResilierBail(bx.bail_id, bx.bien_titre)}
+                      title="Mettre fin au bail et libérer ce bien"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        background: '#FFF1F2',
+                        color: '#E11D48',
+                        border: '1px solid #FECDD3',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: resiliatingBailId === bx.bail_id ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      <X size={12} />
+                      <span>{resiliatingBailId === bx.bail_id ? 'Libération...' : 'Détacher'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div

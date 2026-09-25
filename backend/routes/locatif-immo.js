@@ -1326,6 +1326,63 @@ router.post(
   }
 );
 
+// ── POST /api/locatif-immo/agence/:slugOrId/baux/:id/resilier — Résiliation unitaire d'un bail ──
+router.post(
+  ['/agence/:slugOrId/baux/:id/resilier', '/:slugOrId/baux/:id/resilier'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { id } = req.params;
+      const { motif = 'Résiliation de bail' } = req.body || {};
+
+      const { rows: baux } = await pool.query(
+        `SELECT id, bien_id FROM baux_immo WHERE id = $1 AND agence_id = $2`,
+        [id, agenceId]
+      );
+
+      if (!baux[0]) {
+        return res.status(404).json({ success: false, error: 'Bail introuvable.' });
+      }
+
+      const bienId = baux[0].bien_id;
+
+      // 1. Mettre fin au bail
+      await pool.query(
+        `UPDATE baux_immo SET statut = 'resilie', date_fin = CURRENT_DATE, updated_at = NOW()
+         WHERE id = $1 AND agence_id = $2`,
+        [id, agenceId]
+      );
+
+      // 2. Libérer le bien associé
+      if (bienId) {
+        await pool.query(
+          `UPDATE biens_immo SET statut_occupation = 'disponible', updated_at = NOW()
+           WHERE id = $1 AND agence_id = $2`,
+          [bienId, agenceId]
+        );
+      }
+
+      // 3. Annuler les échéances de loyer futures
+      await pool.query(
+        `UPDATE loyers_echeances SET statut = 'annule', updated_at = NOW()
+         WHERE bail_id = $1 AND agence_id = $2 AND statut = 'en_attente' AND date_echeance > CURRENT_DATE`,
+        [id, agenceId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Contrat de bail résilié avec succès. Le bien associé a été libéré.',
+        motif
+      });
+    } catch (err) {
+      console.error('[RESILIER_BAIL_ERR]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur lors de la résiliation du bail' });
+    }
+  }
+);
+
 // ── POST /api/locatif-immo/agence/:slugOrId/baux/batch-resilier — Résiliation groupée de baux ──
 router.post(
   ['/agence/:slugOrId/baux/batch-resilier', '/:slugOrId/baux/batch-resilier'],
