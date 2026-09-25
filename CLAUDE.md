@@ -23,6 +23,31 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Critique Visibilité Baux & Contrats dans « Mon Compte » (25 septembre 2026)** ⚡🛡️🚀✅ :
+  * **🎯 Problème Identifié** :
+    - L'utilisateur connecté ne voyait aucun contrat de bail dans `/compte?tab=mes-locations` ("Aucun contrat de location actif"), malgré la présence de baux actifs en base de données.
+    - **Origine du bug (JWT vs Profil DB)** : Dans `auth.js`, le token JWT est signé avec `{ userId: user.id }`. Dans `GET /api/locatif-immo/mes-locations`, le code lisait `req.user.id`, `req.user.email` et `req.user.telephone`. Ces propriétés étaient toutes `undefined`, provoquant une requête SQL avec `$1 = null, $2 = '', $3 = ''` retournant systématiquement 0 résultat pour tous les utilisateurs connectés.
+    - **Absence de téléchargement du contrat de bail côté client** : Le PDF officiel de bail (`CONTRAT DE BAIL À USAGE D'HABITATION` conforme COCC / Décret 2023-442) n'était accessible qu'aux agents d'agence via un endpoint administrateur. Aucun lien client direct n'existait dans l'espace utilisateur pour télécharger son exemplaire de contrat.
+  * **🛠️ Correctifs Réalisés** :
+    1. **Résolution du Profil Utilisateur & Rapprochement Automatique** :
+       - Récupération de l'identifiant via `req.user.userId || req.user.id`.
+       - Lecture en base de données du profil utilisateur complet (`utilisateurs`) pour extraire téléphone et email réels.
+       - Rapprochement automatique et persistant : mise à jour immédiate de `contacts_immo.utilisateur_id` et `proprietaires_immo.utilisateur_id` basée sur les 9 derniers chiffres du numéro de téléphone (`REGEXP_REPLACE`) ou l'adresse email.
+    2. **Génération & Téléchargement du Contrat de Bail Locataire & Propriétaire (PDF)** :
+       - Implémentation de la fonction `genererPdfContratBailStream` dans `backend/routes/locatif-immo.js` (conforme droit sénégalais COCC).
+       - Création de l'endpoint client sécurisé `GET /api/locatif-immo/mes-locations/bail/:bailId.pdf` accessible au locataire, au propriétaire et aux mandataires.
+       - Correction similaire pour l'endpoint `GET /api/locatif-immo/mes-locations/quittance/:loyerId.pdf`.
+       - Ajout du helper `getAuthPdfUrl` avec injection du token dans l'URL pour garantir l'ouverture fluide du PDF sur tous les navigateurs (mobiles, Safari, navigation privée).
+    3. **Refonte Modulaire de l'Interface « Mes Locations & Quittances »** :
+       - Extraction du sous-composant `MesLocationCard.tsx` dans `tabs/components/` (< 250 lignes).
+       - Réduction de `MesLocationsClient.tsx` de 440 à ~160 lignes (respect strict de la règle < 450 lignes).
+       - Ajout d'un bouton dédié et élégant **« Contrat de bail (PDF) »** avec icônes vectorielles `FileText` / `Download`.
+       - Amélioration de l'état vide avec explications didactiques sur le rapprochement par téléphone/email et bouton d'actualisation.
+  * **🧪 Validation & Qualité** :
+    - Test direct PostgreSQL : tous les baux associés au compte sont désormais immédiatement résolus et retournés avec le rôle adéquat (bailleur ou locataire).
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : conforme.
+
 - **Audit Exhaustif du Module Immobilier & Éradication Complète des Anomalies (25 septembre 2026)** ⚡🛡️🚀✅ :
   * **🎯 Objectifs & Périmètre d'Audit** :
     - Audit approfondi de la chaîne relationnelle immobilière : Agence -> Propriétaire / Bailleur -> Bien -> Bail -> Locataire -> Loyer / Échéance -> Encaissement -> Quittance.

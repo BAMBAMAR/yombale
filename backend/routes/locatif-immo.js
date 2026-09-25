@@ -238,7 +238,7 @@ router.post('/agence/:slugOrId/baux/:bailId/resilier', verifierToken, requireAge
     // 4. Audit log
     enregistrerAgenceAuditLog(
       agenceId,
-      req.user?.id,
+      req.user?.userId || req.user?.id,
       null,
       'resiliation_bail',
       `Résiliation du bail ${bailId} pour le bien "${bail.bien_titre}" (Locataire : ${bail.locataire_nom}). Bien remis en disponibilité.`,
@@ -368,7 +368,7 @@ router.post('/agence/:slugOrId/loyers/:loyerId/encaisser', verifierToken, requir
     // Audit log
     enregistrerAgenceAuditLog(
       agenceId,
-      req.user?.id,
+      req.user?.userId || req.user?.id,
       null,
       'loyer_encaisse',
       `Encaissement de loyer : ${quittanceRef} (${montantPayeTotal} FCFA via ${mode_paiement || 'wave'})`,
@@ -471,7 +471,7 @@ router.put('/agence/:slugOrId/loyers/:loyerId', verifierToken, requireAgenceAcce
     // Audit log
     enregistrerAgenceAuditLog(
       agenceId,
-      req.user?.id,
+      req.user?.userId || req.user?.id,
       null,
       'modification_quittance_loyer',
       `Modification de la quittance / échéance ${loy.periode} - Payé: ${loy.montant_paye} FCFA / Dû: ${loy.montant_du} FCFA (${loy.statut})`,
@@ -513,7 +513,7 @@ router.post('/agence/:slugOrId/loyers/:loyerId/relance', verifierToken, requireA
 
     enregistrerAgenceAuditLog(
       agenceId,
-      req.user?.id,
+      req.user?.userId || req.user?.id,
       null,
       'loyer_relance',
       `Relance de paiement de loyer envoyée pour la période ${rows[0].periode}`,
@@ -898,16 +898,183 @@ function genererPdfQuittanceStream(res, d) {
   doc.end();
 }
 
+function genererPdfContratBailStream(res, b) {
+  const bailRef = `BAIL-${b.id.slice(0, 8).toUpperCase()}`;
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="contrat_bail_${bailRef}.pdf"`);
+
+  const doc = new PDFDocument({ margin: 45, size: 'A4' });
+  doc.pipe(res);
+
+  // ── En-tête officiel ──
+  doc.fillColor(PDF_NAVY).fontSize(7.5).font('Helvetica-Bold')
+     .text("RÉPUBLIQUE DU SÉNÉGAL • CODE DES OBLIGATIONS CIVILES ET COMMERCIALES (COCC) • DÉCRET N° 2023-442", 45, 40);
+
+  doc.fillColor(PDF_NAVY).fontSize(16).font('Helvetica-Bold').text(b.agence_nom, 45, 56);
+  doc.fontSize(8.5).font('Helvetica').fillColor(PDF_GRAY)
+     .text(`Mandataire de gestion • Agrément : ${b.numero_agrement || 'En cours'} • ${b.agence_ville || 'Dakar'}`, 45, 75);
+
+  doc.moveTo(45, 90).lineTo(550, 90).strokeColor(PDF_NAVY).lineWidth(1.2).stroke();
+
+  // ── Titre ──
+  doc.fillColor(PDF_NAVY).fontSize(16).font('Helvetica-Bold')
+     .text("CONTRAT DE BAIL À USAGE D'HABITATION", 45, 105, { align: 'center', width: 505 });
+  doc.fillColor(PDF_PRICE_GREEN).fontSize(9).font('Helvetica-Bold')
+     .text(`RÉFÉRENCE OFFICIELLE : ${bailRef}`, 45, 125, { align: 'center', width: 505 });
+
+  let currentY = 145;
+
+  // ── Article 1 : Les Parties ──
+  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 1 - DÉSIGNATION DES PARTIES", 45, currentY);
+  currentY += 14;
+
+  const propNom = [b.bailleur_prenom, b.bailleur_nom].filter(Boolean).join(' ') || 'Le Propriétaire';
+  const locNom = [b.locataire_prenom, b.locataire_nom].filter(Boolean).join(' ');
+
+  doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
+     .text(`1. LE BAILLEUR : Monsieur/Madame ${propNom}, représenté(e) valablement aux fins des présentes par l'Agence ${b.agence_nom}, mandataire de gestion dument habilité.`, 45, currentY, { width: 505, lineGap: 2 });
+  currentY += 28;
+
+  doc.text(`2. LE PRENEUR (LOCATAIRE) : Monsieur/Madame ${locNom}, Téléphone : ${b.locataire_tel || 'Non renseigné'}${b.locataire_profession ? `, Profession : ${b.locataire_profession}` : ''}, Email : ${b.locataire_email || 'Non renseigné'}.`, 45, currentY, { width: 505, lineGap: 2 });
+  currentY += 32;
+
+  // ── Article 2 : Objet du bail & Description ──
+  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 2 - OBJET DU CONTRAT ET DÉSIGNATION DU BIEN", 45, currentY);
+  currentY += 14;
+
+  doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
+     .text("Le Bailleur donne à bail à usage exclusif d'habitation au Preneur qui accepte les locaux désignés ci-après :", 45, currentY, { width: 505 });
+  currentY += 14;
+
+  doc.roundedRect(45, currentY, 505, 52, 4).fillColor('#F8FAFC').strokeColor('#E2E8F0').lineWidth(0.5).fillAndStroke();
+  doc.fillColor(PDF_NAVY).fontSize(9).font('Helvetica-Bold')
+     .text(cleanPdfText(b.bien_titre), 55, currentY + 8)
+     .text(`Type : ${String(b.type_bien || 'Appartement').toUpperCase()} • Surface : ${b.surface_m2 || 'N/A'} m² • Pièces : ${b.nb_pieces || 'N/A'} (Chambres : ${b.nb_chambres || 'N/A'})`, 55, currentY + 22);
+  doc.font('Helvetica').fontSize(8.5).fillColor(PDF_GRAY)
+     .text(`Adresse géographique : ${b.bien_adresse || 'Sise à'} ${b.bien_quartier ? `(${b.bien_quartier})` : ''} - ${b.bien_ville || 'Dakar'} (Réf : ${b.bien_ref || 'BIEN'})`, 55, currentY + 36);
+
+  currentY += 62;
+
+  // ── Article 3 : Durée & Prise d'effet ──
+  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 3 - DURÉE ET RENOUVELLEMENT DU BAIL", 45, currentY);
+  currentY += 14;
+
+  const dateDeb = new Date(b.date_debut).toLocaleDateString('fr-FR');
+  const dateFin = b.date_fin ? new Date(b.date_fin).toLocaleDateString('fr-FR') : 'Indéterminée (Tacite reconduction)';
+
+  doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica')
+     .text(`Le présent contrat est consenti pour une durée ferme de ${b.duree_mois || 12} mois, prenant effet le ${dateDeb} et se terminant le ${dateFin}. Sauf congé délivré par l'une des parties par acte d'huissier ou lettre recommandée avec préavis de 3 mois, le contrat sera reconduit tacitement.`, 45, currentY, { width: 505, lineGap: 2 });
+  currentY += 32;
+
+  // ── Article 4 : Loyer, Charges & Caution ──
+  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 4 - CONDITIONS FINANCIÈRES ET RÈGLEMENT", 45, currentY);
+  currentY += 14;
+
+  const loyer = Number(b.loyer_mensuel || 0);
+  const charges = Number(b.charges || 0);
+  const caution = Number(b.depot_garantie || 0);
+
+  doc.rect(45, currentY, 505, 20).fillColor(PDF_NAVY).fill();
+  doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold')
+     .text('RUBRIQUE FINANCIÈRE', 55, currentY + 5)
+     .text('PERIODICITÉ / MODALITÉ', 280, currentY + 5)
+     .text('MONTANT', 460, currentY + 5, { align: 'right', width: 80 });
+  currentY += 20;
+
+  const addFinRow = (titre, modalite, montant) => {
+    doc.rect(45, currentY, 505, 18).fillColor('#FFFFFF').fill();
+    doc.fillColor('#1F2937').fontSize(8.5).font('Helvetica').text(titre, 55, currentY + 5);
+    doc.fillColor(PDF_GRAY).text(modalite, 280, currentY + 5);
+    doc.fillColor(PDF_NAVY).font('Helvetica-Bold').text(`${fmtPdfNum(montant)} FCFA`, 460, currentY + 5, { align: 'right', width: 80 });
+    doc.moveTo(45, currentY + 18).lineTo(550, currentY + 18).strokeColor('#E2E8F0').lineWidth(0.5).stroke();
+    currentY += 18;
+  };
+
+  addFinRow('Loyer mensuel principal', `Échéance le ${b.jour_echeance || 5} du mois d'avance`, loyer);
+  addFinRow('Provisions sur charges locatives', 'Mensuel avec le loyer', charges);
+  addFinRow('Dépôt de garantie (Caution)', 'Versé à la signature (Max 2 mois)', caution);
+
+  currentY += 10;
+
+  // ── Article 5 : Obligations & Clause résolutoire ──
+  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("ARTICLE 5 - OBLIGATIONS & CLAUSE RÉSOLUTOIRE DE PLEIN DROIT", 45, currentY);
+  currentY += 14;
+  doc.fillColor('#1F2937').fontSize(8).font('Helvetica')
+     .text("Le Preneur s'engage à user des lieux loués paisiblement et conformément à leur destination d'habitation. Il est expressément convenu qu'à défaut de paiement d'un seul terme de loyer ou charges à son échéance exacte, ou en cas d'inexécution d'une clause du bail, le présent contrat sera résilié de plein droit un mois après un commandement de payer demeuré infructueux.", 45, currentY, { width: 505, lineGap: 2 });
+  currentY += 34;
+
+  // ── Signatures ──
+  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text("Fait en trois exemplaires originaux à " + (b.agence_ville || 'Dakar') + ", le " + dateDeb, 45, currentY);
+  currentY += 18;
+
+  // Cadres de signature
+  doc.roundedRect(45, currentY, 240, 75, 4).strokeColor(PDF_NAVY).lineWidth(0.8).stroke();
+  doc.fillColor(PDF_NAVY).fontSize(8.5).font('Helvetica-Bold').text("POUR LE PRENEUR (LE LOCATAIRE)", 55, currentY + 8);
+  doc.fillColor(PDF_GRAY).fontSize(7.5).font('Helvetica')
+     .text("Mention manuscrite 'Lu et approuvé'", 55, currentY + 22)
+     .text(locNom, 55, currentY + 58);
+
+  doc.roundedRect(310, currentY, 240, 75, 4).strokeColor(PDF_PRICE_GREEN).lineWidth(0.8).stroke();
+  doc.fillColor(PDF_PRICE_GREEN).fontSize(8.5).font('Helvetica-Bold').text("POUR LE BAILLEUR / L'AGENCE (MANDATAIRE)", 320, currentY + 8);
+  doc.fillColor(PDF_GRAY).fontSize(7.5).font('Helvetica')
+     .text("Cachet et signature du mandataire habilité", 320, currentY + 22)
+     .text(cleanPdfText(b.agence_nom), 320, currentY + 58);
+
+  doc.end();
+}
+
 // ── GET /api/locatif-immo/mes-locations — Espace Locataire connecté ──
 router.get('/mes-locations', verifierToken, async (req, res) => {
   try {
-    const userId = req.user.id;
-    const userEmail = (req.user.email || '').trim().toLowerCase();
-    const cleanPh = String(req.user.telephone || '').replace(/\D/g, '');
+    const userId = req.user.userId || req.user.id;
+
+    // Récupérer le profil utilisateur complet (email et téléphone essentiels pour le rapprochement)
+    const { rows: uRows } = await pool.query(
+      'SELECT id, email, telephone FROM utilisateurs WHERE id = $1',
+      [userId]
+    );
+    const user = uRows[0] || {};
+    const userEmail = (user.email || '').trim().toLowerCase();
+    const cleanPh = String(user.telephone || '').replace(/\D/g, '');
     const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
 
+    // Rapprochement automatique et persistant dans contacts_immo et proprietaires_immo
+    if (shortPh && shortPh.length >= 9) {
+      await pool.query(
+        `UPDATE contacts_immo
+         SET utilisateur_id = $1
+         WHERE utilisateur_id IS NULL
+           AND RIGHT(REGEXP_REPLACE(telephone, '[^0-9]', '', 'g'), 9) = $2`,
+        [userId, shortPh]
+      );
+      await pool.query(
+        `UPDATE proprietaires_immo
+         SET utilisateur_id = $1
+         WHERE utilisateur_id IS NULL
+           AND RIGHT(REGEXP_REPLACE(telephone, '[^0-9]', '', 'g'), 9) = $2`,
+        [userId, shortPh]
+      );
+    }
+    if (userEmail && !userEmail.includes('@whatsapp.nopalou.com')) {
+      await pool.query(
+        `UPDATE contacts_immo
+         SET utilisateur_id = $1
+         WHERE utilisateur_id IS NULL
+           AND LOWER(TRIM(email)) = $2`,
+        [userId, userEmail]
+      );
+      await pool.query(
+        `UPDATE proprietaires_immo
+         SET utilisateur_id = $1
+         WHERE utilisateur_id IS NULL
+           AND LOWER(TRIM(email)) = $2`,
+        [userId, userEmail]
+      );
+    }
+
     const query = `
-      SELECT bx.id AS bail_id, bx.date_debut, bx.date_fin, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance, bx.statut AS statut_bail,
+      SELECT bx.id AS bail_id, bx.date_debut, bx.date_fin, bx.duree_mois, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance, bx.statut AS statut_bail, bx.document_url,
              b.id AS bien_id, b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville, b.type_bien, b.photos AS bien_photos,
              a.id AS agence_id, a.nom AS agence_nom, a.slug AS agence_slug, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.email_contact AS agence_email,
              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email,
@@ -918,7 +1085,7 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
                  WHERE (
                    pr.utilisateur_id = $1
                    OR ($2 != '' AND LOWER(pr.email) = $2)
-                   OR ($3 != '' AND RIGHT(REPLACE(REPLACE(pr.telephone, ' ', ''), '+', ''), 9) = $3)
+                   OR ($3 != '' AND RIGHT(REGEXP_REPLACE(pr.telephone, '[^0-9]', '', 'g'), 9) = $3)
                  )
                ) THEN 'bailleur'
                ELSE 'locataire'
@@ -931,14 +1098,14 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
       WHERE (
         c.utilisateur_id = $1
         OR ($2 != '' AND LOWER(c.email) = $2)
-        OR ($3 != '' AND RIGHT(REPLACE(REPLACE(c.telephone, ' ', ''), '+', ''), 9) = $3)
+        OR ($3 != '' AND RIGHT(REGEXP_REPLACE(c.telephone, '[^0-9]', '', 'g'), 9) = $3)
         OR (
           COALESCE(bx.proprietaire_id, b.proprietaire_id) IN (
             SELECT pr.id FROM proprietaires_immo pr
             WHERE (
               pr.utilisateur_id = $1
               OR ($2 != '' AND LOWER(pr.email) = $2)
-              OR ($3 != '' AND RIGHT(REPLACE(REPLACE(pr.telephone, ' ', ''), '+', ''), 9) = $3)
+              OR ($3 != '' AND RIGHT(REGEXP_REPLACE(pr.telephone, '[^0-9]', '', 'g'), 9) = $3)
             )
           )
         )
@@ -963,11 +1130,14 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
         role_vue: bail.role_vue,
         date_debut: bail.date_debut,
         date_fin: bail.date_fin,
+        duree_mois: bail.duree_mois,
         loyer_mensuel: Number(bail.loyer_mensuel),
         charges: Number(bail.charges || 0),
         depot_garantie: Number(bail.depot_garantie || 0),
         jour_echeance: bail.jour_echeance,
         statut_bail: bail.statut_bail,
+        contrat_url: `/api/locatif-immo/mes-locations/bail/${bail.bail_id}.pdf`,
+        document_url: bail.document_url || null,
         bien: {
           id: bail.bien_id,
           titre: bail.bien_titre,
@@ -1017,13 +1187,19 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
   }
 });
 
-// ── GET /api/locatif-immo/mes-locations/quittance/:loyerId.pdf — Téléchargement Quittance Locataire ──
+// ── GET /api/locatif-immo/mes-locations/quittance/:loyerId.pdf — Téléchargement Quittance Locataire & Bailleur ──
 router.get('/mes-locations/quittance/:loyerId.pdf', verifierToken, async (req, res) => {
   try {
     const { loyerId } = req.params;
-    const userId = req.user.id;
-    const userEmail = (req.user.email || '').trim().toLowerCase();
-    const cleanPh = String(req.user.telephone || '').replace(/\D/g, '');
+    const userId = req.user.userId || req.user.id;
+
+    const { rows: uRows } = await pool.query(
+      'SELECT id, email, telephone FROM utilisateurs WHERE id = $1',
+      [userId]
+    );
+    const user = uRows[0] || {};
+    const userEmail = (user.email || '').trim().toLowerCase();
+    const cleanPh = String(user.telephone || '').replace(/\D/g, '');
     const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
 
     const { rows } = await pool.query(
@@ -1038,13 +1214,16 @@ router.get('/mes-locations/quittance/:loyerId.pdf', verifierToken, async (req, r
        JOIN baux_immo bx ON le.bail_id = bx.id
        JOIN biens_immo b ON bx.bien_id = b.id
        JOIN contacts_immo c ON bx.locataire_id = c.id
-       LEFT JOIN proprietaires_immo p ON b.proprietaire_id = p.id
+       LEFT JOIN proprietaires_immo p ON COALESCE(bx.proprietaire_id, b.proprietaire_id) = p.id
        JOIN agences_immo a ON le.agence_id = a.id
        WHERE le.id = $1
          AND (
            c.utilisateur_id = $2
            OR ($3 != '' AND LOWER(c.email) = $3)
-           OR ($4 != '' AND RIGHT(REPLACE(REPLACE(c.telephone, ' ', ''), '+', ''), 9) = $4)
+           OR ($4 != '' AND RIGHT(REGEXP_REPLACE(c.telephone, '[^0-9]', '', 'g'), 9) = $4)
+           OR p.utilisateur_id = $2
+           OR ($3 != '' AND LOWER(p.email) = $3)
+           OR ($4 != '' AND RIGHT(REGEXP_REPLACE(p.telephone, '[^0-9]', '', 'g'), 9) = $4)
            OR EXISTS (SELECT 1 FROM agence_membres am WHERE am.agence_id = a.id AND am.utilisateur_id = $2)
          )`,
       [loyerId, userId, userEmail, shortPh]
@@ -1059,6 +1238,61 @@ router.get('/mes-locations/quittance/:loyerId.pdf', verifierToken, async (req, r
   } catch (err) {
     console.error('[GET /api/locatif-immo/mes-locations/quittance/:loyerId.pdf]', err.message);
     res.status(500).json({ success: false, error: 'Erreur génération quittance' });
+  }
+});
+
+// ── GET /api/locatif-immo/mes-locations/bail/:bailId.pdf — Téléchargement Contrat de Bail Locataire & Propriétaire ──
+router.get('/mes-locations/bail/:bailId.pdf', verifierToken, async (req, res) => {
+  try {
+    const { bailId } = req.params;
+    const userId = req.user.userId || req.user.id;
+
+    const { rows: uRows } = await pool.query(
+      'SELECT id, email, telephone FROM utilisateurs WHERE id = $1',
+      [userId]
+    );
+    const user = uRows[0] || {};
+    const userEmail = (user.email || '').trim().toLowerCase();
+    const cleanPh = String(user.telephone || '').replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const { rows } = await pool.query(
+      `SELECT bx.*,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
+              b.ville AS bien_ville, b.type_bien, b.surface_m2, b.nb_pieces, b.nb_chambres, b.reference AS bien_ref,
+              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel,
+              c.email AS locataire_email, c.profession AS locataire_profession,
+              p.nom AS bailleur_nom, p.prenom AS bailleur_prenom, p.telephone AS bailleur_tel,
+              p.adresse AS bailleur_adresse,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.email_contact AS agence_email,
+              a.adresse AS agence_adresse, a.ville AS agence_ville, a.numero_agrement
+       FROM baux_immo bx
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       LEFT JOIN proprietaires_immo p ON COALESCE(bx.proprietaire_id, b.proprietaire_id) = p.id
+       JOIN agences_immo a ON bx.agence_id = a.id
+       WHERE bx.id = $1
+         AND (
+           c.utilisateur_id = $2
+           OR ($3 != '' AND LOWER(c.email) = $3)
+           OR ($4 != '' AND RIGHT(REGEXP_REPLACE(c.telephone, '[^0-9]', '', 'g'), 9) = $4)
+           OR p.utilisateur_id = $2
+           OR ($3 != '' AND LOWER(p.email) = $3)
+           OR ($4 != '' AND RIGHT(REGEXP_REPLACE(p.telephone, '[^0-9]', '', 'g'), 9) = $4)
+           OR EXISTS (SELECT 1 FROM agence_membres am WHERE am.agence_id = a.id AND am.utilisateur_id = $2)
+         )`,
+      [bailId, userId, userEmail, shortPh]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable ou accès non autorisé' });
+    }
+
+    const b = rows[0];
+    genererPdfContratBailStream(res, b);
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/mes-locations/bail/:bailId.pdf]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors du téléchargement du contrat de bail' });
   }
 });
 
