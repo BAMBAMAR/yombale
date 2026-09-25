@@ -19,6 +19,7 @@ import '@/styles/responsive-global.css';
 import '@/styles/responsive-strict.css';
 import '@/styles/homepage.css';
 import '@/styles/annonces.css';
+import '@/styles/immo.css';
 import '@/styles/produit.css';
 import '@/styles/vitrine-publique.css';
 import '@/styles/boutique-dashboard.css';

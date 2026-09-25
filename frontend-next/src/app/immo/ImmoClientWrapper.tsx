@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Search } from 'lucide-react'
 import WizardImmo from './WizardImmo'
 
 export default function ImmoClientWrapper() {
@@ -8,8 +9,13 @@ export default function ImmoClientWrapper() {
 
   return (
     <>
-      <button className="wizard-trigger-btn" onClick={() => setShowWizard(true)}>
-        🏘 Trouver mon bien
+      <button
+        type="button"
+        className="immo-wizard-trigger-btn"
+        onClick={() => setShowWizard(true)}
+      >
+        <Search size={14} />
+        <span>Trouver mon bien</span>
       </button>
       {showWizard && <WizardImmo onClose={() => setShowWizard(false)} />}
     </>

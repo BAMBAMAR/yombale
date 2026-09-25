@@ -68,7 +68,7 @@ export default function PayerLoyerHubPage() {
               lineHeight: 1.25
             }}
           >
-            Espace Locataire &amp; Paiement 1-Clic
+            Espace Locataire {'&'} Paiement 1-Clic
           </h1>
 
           <p

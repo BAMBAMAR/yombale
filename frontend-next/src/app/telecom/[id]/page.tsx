@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import SimilRow from '@/components/SimilRow'
+import { Scale } from 'lucide-react'
 
 interface Forfait {
   id: string
@@ -40,7 +41,7 @@ const OP_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
 }
 
 const OP_ICONS: Record<string, string> = {
-  Orange: '🟠', Free: '', Expresso: '', Wave: '🔵',
+  Orange: '', Free: '', Expresso: '', Wave: '',
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -186,7 +187,7 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
       {proposerMeilleur && meilleurForfait && (
         <Link href={`/telecom/${meilleurForfait.id}`} className="meilleur-choix-banner">
           <div className="meilleur-choix-img">
-            <span>{OP_ICONS[meilleurForfait.operateur] ?? ''}</span>
+            <span style={{ width: 12, height: 12, borderRadius: '50%', background: OP_COLORS[meilleurForfait.operateur]?.badge ?? 'var(--accent)', display: 'inline-block' }} />
           </div>
           <div className="meilleur-choix-info">
             <span className="meilleur-choix-label">Meilleur choix pour vous</span>
@@ -210,7 +211,7 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
             <div className="forfait-fiche-header" style={{ background: colors.bg }}>
               <div className="forfait-fiche-top">
                 <div className="forfait-fiche-op" style={{ color: colors.text }}>
-                  <span className="forfait-fiche-icon">{icon}</span>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: colors.badge, display: 'inline-block' }} />
                   <span className="forfait-fiche-operateur">{f.operateur}</span>
                 </div>
                 <span className="forfait-fiche-type-tag" style={{ background: colors.badge }}>
@@ -251,7 +252,7 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
               {f.validite_jours != null && (
                 <div className="forfait-fiche-spec">
                   <span className="forfait-fiche-spec-val">{f.validite_jours}j</span>
-                  <span className="forfait-fiche-spec-lbl">⏱ Validité</span>
+                  <span className="forfait-fiche-spec-lbl">Validité</span>
                 </div>
               )}
             </div>
@@ -322,12 +323,12 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
             <Link
               href={`/telecom/comparaison?ids=${idsComparaison}`}
               className="sidebar-cta"
-              style={{ background: 'var(--accent)' }}
+              style={{ background: 'var(--accent)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
-              ⚖ Comparaison détaillée côte à côte
+              <Scale size={16} /> Comparaison détaillée côte à côte
             </Link>
             <Link href={`/telecom?operateur=${encodeURIComponent(f.operateur)}`} className="sidebar-link">
-              {icon} Tous les forfaits {f.operateur}
+              Tous les forfaits {f.operateur} →
             </Link>
             <Link href="/telecom" className="sidebar-link">
               ← Retour aux forfaits
@@ -373,7 +374,7 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
                     <SimilRow key={l.id} id={l.id} basePath="/telecom" courant={l.courant}>
                       <td>
                         <div className="simil-produit-cell">
-                          <span style={{ fontSize: 20 }}>{OP_ICONS[l.operateur] ?? ''}</span>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: OP_COLORS[l.operateur]?.badge ?? 'var(--navy)', display: 'inline-block', flexShrink: 0 }} />
                           <div>
                             <span className="simil-nom">{l.nom}</span>
                             <span className="simil-prod-marque" style={{ display: 'block', fontSize: 12, color: OP_COLORS[l.operateur]?.text }}>{l.operateur}</span>

@@ -2143,16 +2143,16 @@ router.post('/public/verifier-otp', async (req, res) => {
         const { rows: newUserRows } = await pool.query(
           `INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie)
            VALUES ($1, $2, $3, $4, true)
-           ON CONFLICT (telephone) DO UPDATE SET nom = EXCLUDED.nom
+           ON CONFLICT (email) DO UPDATE SET telephone = EXCLUDED.telephone, nom = EXCLUDED.nom
            RETURNING id, nom, email, telephone`,
           [userNom, candidateEmail, hash, normPhone]
         );
         user = newUserRows[0];
       } catch (insertErr) {
-        // En cas de conflit sur l'email, récupérer le compte existant associé à cet email
+        // En cas de conflit, récupérer le compte existant associé à cet email ou téléphone
         const { rows: fallbackRows } = await pool.query(
-          'SELECT id, nom, email, telephone FROM utilisateurs WHERE email = $1 LIMIT 1',
-          [candidateEmail]
+          'SELECT id, nom, email, telephone FROM utilisateurs WHERE email = $1 OR telephone = $2 LIMIT 1',
+          [candidateEmail, normPhone]
         );
         if (fallbackRows.length > 0) {
           user = fallbackRows[0];

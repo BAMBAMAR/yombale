@@ -27,7 +27,7 @@ const OP_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
 }
 
 const OP_ICONS: Record<string, string> = {
-  Orange: '🟠', Free: '', Expresso: '', Wave: '🔵',
+  Orange: '', Free: '', Expresso: '', Wave: '',
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -62,21 +62,17 @@ function validiteOrder(label: string): number {
 
 function ForfaitCard({ f, isRecommande }: { f: Forfait; isRecommande: boolean }) {
   const colors = OP_COLORS[f.operateur] ?? { bg: '#F8F5F0', text: '#1C2B4A', badge: '#1C2B4A' }
-  const icon = OP_ICONS[f.operateur] ?? ''
   const typeLabel = TYPE_LABELS[f.type] ?? f.type
 
   return (
-    <div className={`forfait-card${isRecommande ? ' forfait-card--recommande' : ''}`} style={{ position: 'relative' }}>
-      <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 5 }}>
-        <CardActions id={f.id} nom={f.nom} type="telecom" />
-      </div>
-      <Link href={`/telecom/${f.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flex: 1 }}>
+    <div className={`forfait-card${isRecommande ? ' forfait-card--recommande' : ''}`}>
+      <Link href={`/telecom/${f.id}`} className="forfait-card-link">
         {isRecommande && (
           <div className="forfait-recommande-ribbon">Recommandé</div>
         )}
         <div className="forfait-card-header" style={{ background: colors.bg }}>
           <div className="forfait-op-badge" style={{ color: colors.text, borderColor: colors.badge }}>
-            <span>{icon}</span>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors.badge, display: 'inline-block' }} />
             <span>{f.operateur}</span>
           </div>
           <span className="forfait-type-tag" style={{ background: colors.badge }}>
@@ -122,12 +118,17 @@ function ForfaitCard({ f, isRecommande }: { f: Forfait; isRecommande: boolean })
             <p className="forfait-desc">{f.description}</p>
           )}
         </div>
-
-        <div className="forfait-card-footer">
-          <span className="forfait-prix">{fcfa(f.prix)}</span>
-          <span className="forfait-voir-arrow" style={{ color: colors.badge }}>Voir →</span>
-        </div>
       </Link>
+
+      <div className="forfait-card-footer">
+        <span className="forfait-prix">{fcfa(f.prix)}</span>
+        <div className="forfait-footer-right">
+          <CardActions id={f.id} nom={f.nom} type="telecom" />
+          <Link href={`/telecom/${f.id}`} className="forfait-voir-arrow" style={{ color: colors.badge }}>
+            Voir →
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }
@@ -213,7 +214,7 @@ export default function TelecomClient({
             const opSlug = (lower === 'free' || lower === 'yas') ? 'yas' : lower.includes('pro') ? 'promobile' : lower
             return {
               key: `op-${op}`,
-              label: `${OP_ICONS[op] ?? ''} ${op}`,
+              label: op,
               href: `/telecom/${opSlug}`,
               active: currentOperateur.toLowerCase() === opSlug,
             }
@@ -313,10 +314,10 @@ export default function TelecomClient({
           {
             label: 'Par opérateur',
             chips: [
-              { href: '/telecom/orange', emoji: '🟠', label: 'Forfaits Orange' },
-              { href: '/telecom/yas', emoji: '🔵', label: 'Forfaits Yas' },
-              { href: '/telecom/expresso', emoji: '', label: 'Forfaits Expresso' },
-              { href: '/telecom/promobile', emoji: '', label: 'Forfaits ProMobile' },
+              { href: '/telecom/orange', label: 'Forfaits Orange' },
+              { href: '/telecom/yas', label: 'Forfaits Yas' },
+              { href: '/telecom/expresso', label: 'Forfaits Expresso' },
+              { href: '/telecom/promobile', label: 'Forfaits ProMobile' },
             ],
           },
         ]}

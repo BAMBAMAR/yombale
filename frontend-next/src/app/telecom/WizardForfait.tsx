@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { fcfa } from '@/lib/format'
+import { Wifi, Phone, Smartphone, X, Calendar } from 'lucide-react'
 
 interface Forfait {
   id: string
@@ -22,9 +23,9 @@ interface Props {
 }
 
 const PROFILS = [
-  { val: 'internet', label: '📶 Internet', desc: 'Réseaux sociaux, streaming, navigation' },
-  { val: 'appels',  label: 'Appels',   desc: 'Appels nationaux, familiaux' },
-  { val: 'mixte',   label: 'Mixte',    desc: 'Internet + appels équilibrés' },
+  { val: 'internet', label: 'Internet', desc: 'Réseaux sociaux, streaming, navigation', Icon: Wifi },
+  { val: 'appels',  label: 'Appels',   desc: 'Appels nationaux, familiaux', Icon: Phone },
+  { val: 'mixte',   label: 'Mixte',    desc: 'Internet + appels équilibrés', Icon: Smartphone },
 ]
 
 const OP_COLORS: Record<string, string> = {
@@ -87,7 +88,7 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
   return (
     <div className="wizard-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="wizard-panel" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-        <button className="wizard-close" onClick={onClose} aria-label="Fermer">✕</button>
+        <button className="wizard-close" onClick={onClose} aria-label="Fermer"><X size={18} /></button>
 
         {step === 1 ? (
           <>
@@ -118,17 +119,22 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
             <div className="wizard-section">
               <label className="wizard-label">Mon usage principal</label>
               <div className="wizard-profils">
-                {PROFILS.map(p => (
-                  <button
-                    key={p.val}
-                    className={`wizard-profil-btn${profil === p.val ? ' wizard-profil-btn--active' : ''}`}
-                    onClick={() => setProfil(p.val)}
-                  >
-                    <span className="wizard-profil-icon">{p.label.split(' ')[0]}</span>
-                    <span className="wizard-profil-name">{p.label.split(' ').slice(1).join(' ')}</span>
-                    <span className="wizard-profil-desc">{p.desc}</span>
-                  </button>
-                ))}
+                {PROFILS.map(p => {
+                  const Icon = p.Icon
+                  return (
+                    <button
+                      key={p.val}
+                      className={`wizard-profil-btn${profil === p.val ? ' wizard-profil-btn--active' : ''}`}
+                      onClick={() => setProfil(p.val)}
+                    >
+                      <span className="wizard-profil-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon size={20} color={profil === p.val ? 'var(--accent)' : 'var(--navy)'} />
+                      </span>
+                      <span className="wizard-profil-name">{p.label}</span>
+                      <span className="wizard-profil-desc">{p.desc}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -221,9 +227,21 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
                         <span className="wizard-result-nom">{f.nom}</span>
                       </div>
                       <div className="wizard-result-specs">
-                        {f.data_mo != null && <span>📶 {formatData(f.data_mo)}</span>}
-                        {f.minutes != null && <span>{f.minutes === -1 ? '∞' : `${f.minutes} min`}</span>}
-                        {f.validite_jours != null && <span>{f.validite_jours}j</span>}
+                        {f.data_mo != null && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Wifi size={13} /> {formatData(f.data_mo)}
+                          </span>
+                        )}
+                        {f.minutes != null && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Phone size={13} /> {f.minutes === -1 ? '∞' : `${f.minutes} min`}
+                          </span>
+                        )}
+                        {f.validite_jours != null && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Calendar size={13} /> {f.validite_jours}j
+                          </span>
+                        )}
                       </div>
                       <div className="wizard-result-footer">
                         <span className="wizard-result-prix">{fcfa(f.prix)}</span>

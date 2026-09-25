@@ -23,20 +23,50 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
-- **Correction Critique Portail Locataire : Résolution de l'Erreur 500 sur l'Auto-Provisioning OTP (`column "role" of relation "utilisateurs" does not exist`) et Déconnexion Propre (25 septembre 2026)** 🔐🏠⚡✅ :
+- **Correction CSS & Ergonomie Cartes Télécom & Immo : Résolution du Chevauchement des Boutons d'Action (⚖/🤍), Isolation des Liens HTML5 et Refonte Anti-Slop des Assistants (25 septembre 2026)** 📱🏠🎨⚡✅ :
+  * **🎯 Problèmes Signalés par l'Utilisateur (Captures Écran)** :
+    1. **Page `/immo`** : La modale « Trouver mon bien » s'affichait brute et sans aucun style (boutons biseautés HTML natifs, étiquettes de budget collées sans espace `0500 000 FCFA1 000 000 FCFA`, boutons radio déformés, et émojis Unicode `🏘`, `🤝`, `🛏`, `🌿`, `😕`).
+    2. **Page `/telecom` (Capture `media_1790379723219.png`)** : Sur les cartes de forfaits (notamment avec le ruban « Recommandé »), les boutons d'action flottants `[ ⚖ ] [ 🤍 ]` étaient positionnés en `position: absolute; top: 10px; right: 10px;`. Ils coupaient le ruban orange « Recommandé » en deux, chevauchaient et masquaient le badge « INTERNET », créant un rendu visuel cassé et inesthétique.
+  * **🛠️ Solutions Techniques & Corrections Réalisées** :
+    1. **Refonte Ergonomique des Cartes Forfaits Télécom (`TelecomClient.tsx` & `telecom.css`)** :
+       - Suppression du positionnement absolu conflictuel `top: 10, right: 10` qui masquait les badges d'en-tête.
+       - Intégration harmonieuse des boutons d'actions `CardActions` (`⚖` Comparer, `🤍` Favoris) directement dans le pied de carte `.forfait-card-footer`, aux côtés du prix et du bouton `Voir →`.
+       - Découplage strict HTML5 : Le haut de la carte (ruban, badge opérateur, badge de type, titre, specs, description) est enveloppé dans un `<Link className="forfait-card-link">`, tandis que le footer et ses boutons `<button>` sont positionnés à l'extérieur. Ceci élimine toute violation d'imbrication DOM (`<button>` dans `<a>`), prévient tout bug d'hydratation React (#425), et empêche les navigations accidentelles au clic sur les favoris ou la comparaison.
+       - Styles calibrés dans `telecom.css` : `.forfait-footer-right`, `.forfait-card-footer .card-action-btn` (32x32px compact, transitions douces, tokens Nopalou `--accent`, `--price`, `--border`).
+       - Remplacement de l'émoji opérateur `🟠` par une pastille vectorielle calibrée aux couleurs de l'opérateur (`8px borderRadius: 50%`).
+    2. **Création & Import Global du CSS de l'Assistant Immo (`immo.css` & `WizardImmo.tsx`)** :
+       - Création de `frontend-next/src/styles/immo.css` regroupant tous les styles du wizard : overlay flouté (`rgba(28,43,74,.55)`), panneau responsive avec ombre portée, curseur de budget avec graduation claire et lisible, boutons de profils interactifs (`.wizard-profil-btn`), badges de validité et bouton d'action principal `.wizard-cta`.
+       - Import direct de `immo.css` dans le layout racine `frontend-next/src/app/layout.tsx`.
+       - Refonte totale Anti-Slop de `WizardImmo.tsx` : Remplacement de tous les émojis Unicode par les icônes vectorielles SVG `Home`, `Building2`, `Building`, `Bed`, `MapPin`, `Layers`, `Key`, `CheckCircle2`, `X`, `Search` de `lucide-react`.
+    3. **Nettoyage Anti-Slop Global Télécom (`WizardForfait.tsx` & `telecom/[id]/page.tsx`)** :
+       - `WizardForfait.tsx` : Remplacement des émojis `📶` et `✕` par les icônes Lucide `Wifi`, `Phone`, `Smartphone`, `Calendar` et `X`.
+       - `telecom/[id]/page.tsx` : Remplacement des émojis `⚖`, `⏱` par `Scale` et labels textuels épurés ; pastilles d'opérateurs vectorielles dans les bandeaux et tableaux de comparaison.
+    4. **Tests & Validation Qualité** :
+       - `npx tsc --noEmit` : 0 erreur de typage.
+       - `npm run lint:slop` : Validation des règles anti-slop Nopalou.
+
+- **Correction Critique Portail Locataire : Résolution de l'Erreur 500 sur l'Auto-Provisioning OTP (`column "role"` et `ON CONFLICT (email)`), Timeout Proxy et Hydratation React (25 septembre 2026)** 🔐🏠⚡✅ :
   * **🎯 Problème Détecté en Production & Logs** :
-    - Échec lors de la vérification OTP d'un locataire sans compte existant sur la route `POST /api/locatif-immo/public/verifier-otp` : `column "role" of relation "utilisateurs" does not exist` avec retour HTTP 500.
-    - Cause racine : L'instruction d'insertion automatique dans la table `utilisateurs` incluait à tort la colonne `role` avec la valeur `'acheteur'`, alors que la table `utilisateurs` de Nopalou ne possède aucun champ `role` (les rôles sont gérés dans `boutique_utilisateurs`, `admin_utilisateurs`, `agence_membres` ou encodés directement dans le token JWT).
+    - Échec lors de la vérification OTP d'un locataire sans compte existant sur la route `POST /api/locatif-immo/public/verifier-otp` :
+      1. Première erreur : `column "role" of relation "utilisateurs" does not exist`.
+      2. Seconde erreur fatale Postgres `42P10` : `there is no unique or exclusion constraint matching the ON CONFLICT specification` car la table `utilisateurs` ne possède de contrainte UNIQUE que sur la colonne `email` (`utilisateurs_email_key`), et aucune contrainte UNIQUE sur `telephone`.
+      3. Erreurs d'hydratation React côté client (`Minified React error #425, #418, #423`) dues à des entités HTML littérales (`&amp;`, `&apos;`) et à la lecture asynchrone de `useSearchParams()` en SSR.
   * **🛠️ Solutions Techniques & Corrections Réalisées** :
     1. **Correction SQL & Résilience Auto-Provisioning (`backend/routes/locatif-immo.js`)** :
        - Retrait de la colonne inexistante `role` de la requête `INSERT INTO utilisateurs`.
+       - Remplacement de `ON CONFLICT (telephone)` par `ON CONFLICT (email) DO UPDATE SET telephone = EXCLUDED.telephone, nom = EXCLUDED.nom` (conforme à l'unique index réel `utilisateurs_email_key`).
        - Rapprochement préalable via `c.utilisateur_id AS contact_utilisateur_id` si le locataire était déjà rattaché dans `contacts_immo`.
        - Recherche élargie par téléphone normalisé ou email candidat (`contact.locataire_email` ou `${shortPh}@whatsapp.nopalou.com`).
-       - Sécurisation du `INSERT` avec gestion gracieuse des conflits email (`try/catch` de repli pour récupérer le compte existant).
+       - Sécurisation du `INSERT` avec gestion gracieuse des conflits (`try/catch` de repli pour récupérer le compte existant).
        - Liaison automatique `contacts_immo.utilisateur_id` mise à jour de façon persistante.
-    2. **Déconnexion Propre Portails Locataires (`frontend-next/src/app/payer-loyer/components/PortailLocataireClient.tsx`)** :
-       - Ajout du nettoyage explicite de `localStorage.removeItem('token_immo')` et `localStorage.removeItem('token')` dans `handleReset()` lorsqu'un locataire clique sur « Quitter » / change de numéro, assurant une déconnexion client totale sans persistance de session fantôme.
-    3. **Tests & Validation** :
+    2. **Déconnexion Propre & Résolution Mismatch Hydratation (`frontend-next`)** :
+       - `PortailLocataireClient.tsx` : Nettoyage explicite de `token_immo` et `token` dans `localStorage` lors d'un clic sur « Quitter » / changement de numéro.
+       - `PortailLocataireClient.tsx` : Hydratation sécurisée via `useEffect` pour `useSearchParams('tel')` et remplacement de `d&apos;identité` par `d'identité`.
+       - `payer-loyer/page.tsx` : Remplacement de `&amp;` par `{'&'}` dans le `<h1>` éliminant l'erreur React #425.
+       - `backend-fetch.ts` : Extension du timeout réseau de 6s à 15s pour éviter tout abandon prématuré lors des appels WhatsApp Meta Cloud API.
+       - `api/locatif-immo/[...path]/route.ts` : Parsing text/json résilient préservant les codes d'erreurs réels du backend.
+    3. **Tests & Validation Réelle en Base** :
+       - Test d'insertion SQL validé avec succès sur la base de données de production Frankfurt PostgreSQL.
        - Validation syntaxique Node.js (`node -c backend/routes/locatif-immo.js`) : 0 erreur.
        - Validation qualité (`npm run lint:slop`) : Conforme aux règles d'or Nopalou.
 

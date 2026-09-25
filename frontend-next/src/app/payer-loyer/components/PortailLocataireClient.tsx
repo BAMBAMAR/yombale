@@ -18,9 +18,14 @@ import PortailOtpCard from './PortailOtpCard'
 export default function PortailLocataireClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const initialTel = searchParams.get('tel') || ''
+  const [inputVal, setInputVal] = useState('')
 
-  const [inputVal, setInputVal] = useState(initialTel)
+  useEffect(() => {
+    const paramTel = searchParams.get('tel')
+    if (paramTel) {
+      setInputVal(paramTel)
+    }
+  }, [searchParams])
   const [step, setStep] = useState<'tel' | 'otp' | 'verified'>('tel')
   const [telephoneMasque, setTelephoneMasque] = useState('')
   const [verifiedPhone, setVerifiedPhone] = useState('')
@@ -276,7 +281,7 @@ export default function PortailLocataireClient() {
             )}
 
             <p style={{ margin: 0, fontSize: 11.5, color: '#64748B', lineHeight: 1.45 }}>
-              Par mesure de protection de vos données personnelles (contrat de bail et pièces d&apos;identité), un code secret vous sera envoyé gratuitement sur votre compte WhatsApp.
+              Par mesure de protection de vos données personnelles (contrat de bail et pièces d'identité), un code secret vous sera envoyé gratuitement sur votre compte WhatsApp.
             </p>
           </form>
         </div>

@@ -354,13 +354,22 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
+  position: relative;
   transition: box-shadow .18s, transform .18s;
 }
 
 .forfait-card:hover {
   box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
   transform: translateY(-2px);
+}
+
+.forfait-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  cursor: pointer;
 }
 
 .forfait-card-header {
@@ -452,23 +461,85 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-top: 1px solid var(--border);
   background: var(--bg);
+  gap: 10px;
 }
 
 .forfait-prix {
   font-size: 17px;
   font-weight: 800;
   color: var(--price);
+  white-space: nowrap;
+}
+
+.forfait-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.forfait-card-footer .card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.forfait-card-footer .card-action-btn {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .18s ease;
+  padding: 0;
+}
+
+.forfait-card-footer .card-action-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.forfait-card-footer .card-action-btn.active {
+  border-color: var(--accent);
+  color: #fff;
+  background: var(--accent);
+}
+
+.forfait-card-footer .card-action-btn--fav.active {
+  border-color: #E11D48;
+  color: #fff;
+  background: #E11D48;
 }
 
 .forfait-voir-arrow {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: transform .18s ease;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.forfait-card:hover .forfait-voir-arrow { text-decoration: underline; }
+.forfait-card:hover .forfait-voir-arrow {
+  text-decoration: underline;
+  transform: translateX(2px);
+}
 
 @media (max-width: 600px) {
   .telecom-titre { font-size: 22px; }

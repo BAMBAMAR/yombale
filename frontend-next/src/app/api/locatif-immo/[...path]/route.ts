@@ -52,11 +52,18 @@ async function forwardRequest(req: NextRequest, { params }: { params: { path?: s
       })
     }
 
-    const data = await res.json()
+    const text = await res.text()
+    let data: Record<string, unknown>
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = { success: res.ok, error: text || 'Réponse inattendue du serveur' }
+    }
     return NextResponse.json(data, { status: res.status })
-  } catch (err) {
-    console.error(`[API Proxy Route] ${req.method} ${fullPath} error:`, err)
-    return NextResponse.json({ success: false, error: 'Erreur proxy backend' }, { status: 500 })
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Erreur proxy backend'
+    console.error(`[API Proxy Route] ${req.method} ${fullPath} error:`, errorMsg)
+    return NextResponse.json({ success: false, error: errorMsg }, { status: 500 })
   }
 }
 
