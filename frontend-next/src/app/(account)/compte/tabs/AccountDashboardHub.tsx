@@ -26,6 +26,7 @@ export default function AccountDashboardHub({
 }: Props) {
   const [annonces, setAnnonces] = useState<any[]>([])
   const [boutiques, setBoutiques] = useState<any[]>([])
+  const [locations, setLocations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -72,6 +73,15 @@ export default function AccountDashboardHub({
           if (bList.length > 0) {
             setBoutiques(bList)
             localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(bList))
+          }
+        })
+        .catch(() => {}),
+
+      fetch('/api/locatif-immo/mes-locations', { headers })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d?.locations) {
+            setLocations(d.locations)
           }
         })
         .catch(() => {}),
@@ -170,12 +180,13 @@ export default function AccountDashboardHub({
         </div>
       </div>
 
-      {/* 2. Grille de 4 KPIs d'Activité en Direct */}
+      {/* 2. Grille de KPIs d'Activité en Direct */}
       <AccountHubKpis
         hasBoutique={hasBoutique}
         boutiques={boutiques}
         annonces={annonces}
         annoncesActives={annoncesActives}
+        locations={locations}
         onNavigateTab={onNavigateTab}
       />
 

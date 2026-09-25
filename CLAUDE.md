@@ -23,6 +23,29 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Gestion Locative & ERP Agence Immobilière : Multi-biens par Locataire, Visibilité Baux & Accès Mon Compte (25 septembre 2026)** ⚡🛡️🚀✅ :
+  * **🎯 Problématiques Résolues & Demandes Utilisateur** :
+    1. *Disparition du bien lors de la modification d'un locataire* : L'API CRM (`GET /api/crm-immo/agence/:slugOrId/contacts`) ne joignait pas les baux ni les biens associés, et `ModalEditerLocataire` n'avait aucun affichage des biens rattachés.
+    2. *Association de plusieurs biens à un seul locataire* : Bien que le schéma SQL autorisait 1 locataire -> N baux (`baux_immo`), l'interface n'offrait aucun moyen d'associer un 2ème ou 3ème bien directement depuis la fiche du locataire, et la carte n'affichait qu'un seul bien.
+    3. *Gestion des locations invisible dans « Mon Compte »* : La page `/compte?tab=mes-locations` n'était pas affichée sur le tableau de bord d'accueil (`AccountDashboardHub` et `AccountHubKpis`), la rendant difficilement accessible.
+    4. *Gestion des locataires et bailleurs sans compte Nopalou* : Clarification et renforcement du modèle autonome sans mot de passe (liens de paiement WhatsApp Wave/OM, quittances automatiques, et réconciliation instantanée par téléphone/email).
+  * **🛠️ Correctifs & Évolutions Réalisés** :
+    1. **Agrégation SQL des Baux et Impayés CRM** (`backend/routes/crm-immo.js`) :
+       - Enrichissement de la requête contacts avec `json_agg` sur `baux_immo` et `biens_immo` (titre, loyer, quartier, statut de bail, et décompte des impayés).
+       - Rétro-compatibilité assurée sur `bien_titre`, `loyer_mensuel`, `baux`, `nb_baux_actifs` et `nb_impayes`.
+    2. **Fiche Locataire Enrichie & Multi-biens Direct** (`ModalEditerLocataire.tsx` & `TabBiensLocataire.tsx`) :
+       - Ajout d'un système à 2 onglets : *Coordonnées & Contact* et *Biens & Baux rattachés*.
+       - Intégration du bouton contextuel **« + Associer un autre bien »** permettant de sélectionner un bien disponible de l'agence et de créer instantanément le nouveau bail pour ce locataire sans changer de page.
+       - Extraction propre sous la barre des 450 lignes selon le Standard Senior (`TabBiensLocataire.tsx`).
+    3. **Affichage Multi-biens et Cumul des Loyers sur les Cartes** (`LocataireCardItem.tsx`) :
+       - Affichage d'un badge clair `N biens associés` avec la liste synthétique des biens et le loyer total cumulé (`Total: X FCFA/m`), ou du bien unique, ou de l'indicateur *Sans bail actif*.
+    4. **Tuile KPI et Accès Direct sur le Hub Compte** (`AccountHubKpis.tsx` & `AccountDashboardHub.tsx`) :
+       - Ajout de la carte KPI **« Mes Locations »** avec décompte des baux actifs et redirection 1-tap vers `/compte?tab=mes-locations`.
+       - Extension de l'API `/api/locatif-immo/mes-locations` (`backend/routes/locatif-immo.js`) pour reconnaître à la fois les locataires et les **bailleurs** (propriétaires) via leur numéro de téléphone ou leur adresse email.
+  * **🧪 Contrôle Qualité** :
+    - Linter Anti-AI-Slop : 0 monolith, 0 émoji UI, composants modulaires.
+    - TypeScript : 0 erreur (`npx tsc --noEmit` validé).
+
 - **Correction Typographique & Ergonomique des Boutons « Voir... » du Chatbot Web (24 septembre 2026)** ⚡🛡️🚀✅ :
   * **🎯 Symptôme & Causes Racines** :
     - L'utilisateur constatait un « V » manquant ou altéré sur les liens et boutons d'action du chatbot web (`Voir le produit`, `Voir la boutique`, `Voir l'annonce`).

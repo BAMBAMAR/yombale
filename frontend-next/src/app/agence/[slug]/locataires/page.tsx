@@ -14,7 +14,7 @@ import {
 import LocataireCardItem from './components/LocataireCardItem'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 import { ModalNouveauLocataire, BienOption } from './components/ModalNouveauLocataire'
-import { ModalEditerLocataire, LocataireEditData } from './components/ModalEditerLocataire'
+import { ModalEditerLocataire, LocataireEditData, BailData } from './components/ModalEditerLocataire'
 import { AgenceTableToolbar, SortOption } from '../../components/AgenceTableToolbar'
 import { AgenceBatchActionBar, BatchActionItem } from '../../components/AgenceBatchActionBar'
 import { exportDataToCsv } from '@/lib/immo-csv-export'
@@ -38,6 +38,9 @@ interface LocataireItem {
   date_debut?: string
   statut_paiement?: string
   nb_impayes?: number
+  nb_baux?: number
+  nb_baux_actifs?: number
+  baux?: BailData[]
 }
 
 const SORT_OPTIONS: SortOption[] = [
@@ -351,10 +354,11 @@ export default function LocatairesPage() {
           slug={slug}
           isOpen={Boolean(locataireAEditer)}
           locataire={locataireAEditer}
+          biensDispo={biensDispo}
           onClose={() => setLocataireAEditer(null)}
           onSuccess={() => {
             setLocataireAEditer(null)
-            setToastMsg('Coordonnées du locataire mises à jour.')
+            setToastMsg('Fiche locataire et baux mis à jour.')
             chargerLocataires()
             setTimeout(() => setToastMsg(null), 4000)
           }}

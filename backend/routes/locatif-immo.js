@@ -888,15 +888,36 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
       SELECT bx.id AS bail_id, bx.date_debut, bx.date_fin, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance, bx.statut AS statut_bail,
              b.id AS bien_id, b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville, b.type_bien, b.photos AS bien_photos,
              a.id AS agence_id, a.nom AS agence_nom, a.slug AS agence_slug, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.email_contact AS agence_email,
-             c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email
+             c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email,
+             p.nom AS proprietaire_nom, p.prenom AS proprietaire_prenom, p.telephone AS proprietaire_tel,
+             CASE
+               WHEN bx.proprietaire_id IS NOT NULL AND bx.proprietaire_id IN (
+                 SELECT pr.id FROM proprietaires_immo pr
+                 WHERE (
+                   ($2 != '' AND LOWER(pr.email) = $2)
+                   OR ($3 != '' AND RIGHT(REPLACE(REPLACE(pr.telephone, ' ', ''), '+', ''), 9) = $3)
+                 )
+               ) THEN 'bailleur'
+               ELSE 'locataire'
+             END AS role_vue
       FROM baux_immo bx
       JOIN biens_immo b ON bx.bien_id = b.id
       JOIN agences_immo a ON bx.agence_id = a.id
       JOIN contacts_immo c ON bx.locataire_id = c.id
+      LEFT JOIN proprietaires_immo p ON bx.proprietaire_id = p.id
       WHERE (
         c.utilisateur_id = $1
         OR ($2 != '' AND LOWER(c.email) = $2)
         OR ($3 != '' AND RIGHT(REPLACE(REPLACE(c.telephone, ' ', ''), '+', ''), 9) = $3)
+        OR (
+          bx.proprietaire_id IS NOT NULL AND bx.proprietaire_id IN (
+            SELECT pr.id FROM proprietaires_immo pr
+            WHERE (
+              ($2 != '' AND LOWER(pr.email) = $2)
+              OR ($3 != '' AND RIGHT(REPLACE(REPLACE(pr.telephone, ' ', ''), '+', ''), 9) = $3)
+            )
+          )
+        )
       )
       ORDER BY bx.date_debut DESC
     `;
@@ -915,6 +936,7 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
 
       locations.push({
         bail_id: bail.bail_id,
+        role_vue: bail.role_vue,
         date_debut: bail.date_debut,
         date_fin: bail.date_fin,
         loyer_mensuel: Number(bail.loyer_mensuel),
@@ -944,6 +966,11 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
           prenom: bail.locataire_prenom,
           telephone: bail.locataire_tel,
           email: bail.locataire_email,
+        },
+        proprietaire: {
+          nom: bail.proprietaire_nom,
+          prenom: bail.proprietaire_prenom,
+          telephone: bail.proprietaire_tel,
         },
         echeances: echeances.map(e => ({
           id: e.id,

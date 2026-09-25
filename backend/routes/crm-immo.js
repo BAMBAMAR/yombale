@@ -29,7 +29,31 @@ router.get('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), a
     let query = `
       SELECT c.*, u.nom AS agent_nom,
              (SELECT COUNT(*) FROM visites_immo v WHERE v.contact_id = c.id) AS nb_visites,
-             (SELECT COUNT(*) FROM offres_immo o WHERE o.contact_id = c.id) AS nb_offres
+             (SELECT COUNT(*) FROM offres_immo o WHERE o.contact_id = c.id) AS nb_offres,
+             COALESCE(
+               (
+                 SELECT json_agg(json_build_object(
+                   'bail_id', bx.id,
+                   'bien_id', bx.bien_id,
+                   'bien_titre', b.titre,
+                   'type_bien', b.type_bien,
+                   'quartier', b.quartier,
+                   'ville', b.ville,
+                   'loyer_mensuel', bx.loyer_mensuel,
+                   'charges', bx.charges,
+                   'depot_garantie', bx.depot_garantie,
+                   'date_debut', bx.date_debut,
+                   'date_fin', bx.date_fin,
+                   'jour_echeance', bx.jour_echeance,
+                   'statut', bx.statut,
+                   'nb_impayes', (SELECT COUNT(*) FROM loyers_echeances le WHERE le.bail_id = bx.id AND le.statut IN ('retard', 'impaye'))
+                 ) ORDER BY bx.date_debut DESC)
+                 FROM baux_immo bx
+                 JOIN biens_immo b ON bx.bien_id = b.id
+                 WHERE bx.locataire_id = c.id
+               ), '[]'::json
+             ) AS baux,
+             (SELECT COUNT(*) FROM loyers_echeances le JOIN baux_immo bx ON le.bail_id = bx.id WHERE bx.locataire_id = c.id AND le.statut IN ('retard', 'impaye')) AS nb_impayes
       FROM contacts_immo c
       LEFT JOIN utilisateurs u ON c.agent_id = u.id
       WHERE c.agence_id = $1
@@ -59,9 +83,28 @@ router.get('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), a
 
     const { rows } = await pool.query(query, params);
 
+    const contacts = rows.map(c => {
+      const bauxList = Array.isArray(c.baux) ? c.baux : [];
+      const bauxActifs = bauxList.filter(b => b.statut === 'actif');
+      const premierBail = bauxActifs[0] || bauxList[0];
+      return {
+        ...c,
+        baux: bauxList,
+        nb_baux: bauxList.length,
+        nb_baux_actifs: bauxActifs.length,
+        bien_titre: premierBail ? premierBail.bien_titre : null,
+        bien_id: premierBail ? premierBail.bien_id : null,
+        bail_id: premierBail ? premierBail.bail_id : null,
+        loyer_mensuel: premierBail ? Number(premierBail.loyer_mensuel) : null,
+        jour_echeance: premierBail ? premierBail.jour_echeance : null,
+        date_debut: premierBail ? premierBail.date_debut : null,
+        nb_impayes: parseInt(c.nb_impayes, 10) || 0,
+      };
+    });
+
     res.json({
       success: true,
-      contacts: rows
+      contacts
     });
   } catch (err) {
     console.error('[GET /api/crm-immo/agence/:slugOrId/contacts]', err.message);

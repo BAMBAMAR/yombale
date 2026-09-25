@@ -1,7 +1,24 @@
 'use client'
 
 import React from 'react'
-import { AlertTriangle, Building2, Phone, Mail, Pencil, MessageCircle } from 'lucide-react'
+import { AlertTriangle, Building2, Phone, Mail, Pencil, MessageCircle, Home, Layers } from 'lucide-react'
+
+export interface BailSummary {
+  bail_id: string
+  bien_id: string
+  bien_titre: string
+  type_bien?: string
+  quartier?: string
+  ville?: string
+  loyer_mensuel: number
+  charges?: number
+  depot_garantie?: number
+  date_debut?: string
+  date_fin?: string
+  jour_echeance?: number
+  statut: string
+  nb_impayes?: number
+}
 
 export interface LocataireItem {
   id: string
@@ -9,6 +26,7 @@ export interface LocataireItem {
   prenom?: string
   email?: string
   telephone?: string
+  whatsapp?: string
   cni_numero?: string
   profession?: string
   employeur?: string
@@ -16,7 +34,12 @@ export interface LocataireItem {
   bien_titre?: string
   bien_id?: string
   bail_id?: string
+  loyer_mensuel?: number
   nb_impayes?: number
+  nb_baux?: number
+  nb_baux_actifs?: number
+  baux?: BailSummary[]
+  notes?: string
 }
 
 interface LocataireCardItemProps {
@@ -32,7 +55,10 @@ export default function LocataireCardItem({
   onToggleSelect,
   onEdit,
 }: LocataireCardItemProps) {
-  const cleanTel = (locataire.telephone || '').replace(/\D/g, '')
+  const cleanTel = (locataire.telephone || locataire.whatsapp || '').replace(/\D/g, '')
+  const baux = Array.isArray(locataire.baux) ? locataire.baux : []
+  const hasMultipleBaux = baux.length > 1
+  const totalLoyer = baux.reduce((acc, b) => acc + (Number(b.loyer_mensuel) || 0), 0)
 
   return (
     <div
@@ -59,7 +85,7 @@ export default function LocataireCardItem({
             />
             <div>
               <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 15.5 }}>
-                {locataire.nom} {locataire.prenom || ''}
+                {locataire.prenom ? `${locataire.prenom} ` : ''}{locataire.nom}
               </div>
               {locataire.profession && (
                 <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 500 }}>{locataire.profession}</span>
@@ -88,24 +114,85 @@ export default function LocataireCardItem({
           )}
         </div>
 
-        {/* Bien rattaché */}
-        {locataire.bien_titre && (
+        {/* Biens rattachés (Simple ou Multiples) */}
+        {hasMultipleBaux ? (
+          <div
+            style={{
+              background: '#FAF8F5',
+              padding: '8px 10px',
+              borderRadius: 8,
+              marginBottom: 10,
+              border: '1px solid var(--border, #E8DDD2)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                <Layers size={13} color="var(--accent, #C75B00)" />
+                <span>{baux.length} biens associés</span>
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>
+                Total: {Math.round(totalLoyer).toLocaleString('fr-FR')} F/m
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {baux.slice(0, 2).map((b, i) => (
+                <div key={b.bail_id || i} style={{ fontSize: 11.5, color: '#475569', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 170 }}>
+                    • {b.bien_titre}
+                  </span>
+                  <span style={{ fontWeight: 600 }}>{Math.round(Number(b.loyer_mensuel)).toLocaleString('fr-FR')} F</span>
+                </div>
+              ))}
+              {baux.length > 2 && (
+                <span style={{ fontSize: 10.5, color: 'var(--accent, #C75B00)', fontWeight: 600 }}>
+                  + {baux.length - 2} autre(s) bien(s)...
+                </span>
+              )}
+            </div>
+          </div>
+        ) : baux.length === 1 || locataire.bien_titre ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: 12,
+              color: 'var(--navy, #1C2B4A)',
+              fontWeight: 600,
+              background: '#FAF8F5',
+              padding: '6px 10px',
+              borderRadius: 6,
+              marginBottom: 10,
+              border: '1px solid var(--border, #E8DDD2)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <Building2 size={13} color="var(--accent, #C75B00)" style={{ flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {baux[0]?.bien_titre || locataire.bien_titre}
+              </span>
+            </div>
+            <span style={{ fontWeight: 800, color: 'var(--price, #0A5C36)', flexShrink: 0, marginLeft: 8 }}>
+              {Math.round(Number(baux[0]?.loyer_mensuel || locataire.loyer_mensuel || 0)).toLocaleString('fr-FR')} F/m
+            </span>
+          </div>
+        ) : (
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              fontSize: 12,
-              color: 'var(--navy, #1C2B4A)',
-              fontWeight: 600,
-              background: '#FAF8F5',
+              fontSize: 11.5,
+              color: '#94A3B8',
+              fontStyle: 'italic',
+              background: '#F8FAFC',
               padding: '5px 8px',
               borderRadius: 6,
               marginBottom: 10,
             }}
           >
-            <Building2 size={13} color="var(--accent, #C75B00)" />
-            <span>{locataire.bien_titre}</span>
+            <Home size={12} />
+            <span>Aucun bien rattaché</span>
           </div>
         )}
 
@@ -127,7 +214,7 @@ export default function LocataireCardItem({
         <button
           type="button"
           onClick={() => onEdit(locataire)}
-          title="Modifier"
+          title="Modifier & Gérer les baux"
           style={{
             padding: '8px 12px',
             borderRadius: 6,
@@ -135,9 +222,15 @@ export default function LocataireCardItem({
             color: 'var(--navy, #1C2B4A)',
             border: '1px solid var(--border, #E8DDD2)',
             cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            fontSize: 12,
+            fontWeight: 700,
           }}
         >
-          <Pencil size={14} />
+          <Pencil size={13} />
+          <span>Fiche & Biens</span>
         </button>
 
         {locataire.telephone && (
