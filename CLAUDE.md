@@ -48,7 +48,10 @@
        - Refonte de `ModalEditerBailleur.tsx` avec système d'onglets ergonomique (*Coordonnées* et *Biens confiés*) et bouton direct de suppression/archivage sécurisé.
     4. **Prévention des Conflits de Baux & Doublons Téléphoniques** :
        - Blocage strict de la création d'un 2ème bail actif sur un bien déjà loué dans `POST /api/locatif-immo/agence/:slugOrId/baux` (HTTP 409 `ACTIVE_LEASE_EXISTS`).
-       - Vérification anti-doublon par numéro de téléphone dans l'agence sur `POST /contacts` et `POST /proprietaires` (HTTP 409 `DUPLICATE_CONTACT` / `DUPLICATE_BAILLEUR`).
+    5. **Changement de Bien Associé au Locataire & Résiliation Unitaire Instantanée** :
+       - Ajout de l'endpoint backend `POST /api/locatif-immo/agence/:slugOrId/baux/:id/resilier` pour clôturer un bail spécifique, libérer le bien en statut « disponible » et annuler les échéances futures sans altérer les quittances passées.
+       - Intégration dans `TabBiensLocataire.tsx` d'un bouton contextuel **« Détacher »** permettant à l'agent de résilier en 1 clic un bien sous contrat pour ce locataire et d'en associer un nouveau immédiatement avec **« + Associer un autre bien »**.
+
   * **🧪 Validation & Tests** :
     - Exécution du script de validation E2E `scripts/verify-all-audit-fixes.js` : 7/7 scénarios validés avec succès sur PostgreSQL.
     - TypeScript : 0 erreur (`npx tsc --noEmit`).
