@@ -21,8 +21,13 @@ import {
   marquerDetteSyncing,
   supprimerDetteHorsLigne,
   revertDetteSyncing,
+  obtenirCloturesHorsLigne,
+  marquerClotureSyncing,
+  supprimerClotureHorsLigne,
+  revertClotureSyncing,
   type OfflineSale,
   type OfflineDebtTransaction,
+  type OfflineClotureSession,
 } from '@/lib/db-offline'
 
 // ── Verrou global partagé entre toutes les instances du hook ──────────────────
@@ -141,6 +146,53 @@ async function syncDette(
   }
 }
 
+/**
+ * Tente de synchroniser une clôture de session Z avec le serveur.
+ */
+async function syncCloture(
+  cloture: OfflineClotureSession
+): Promise<{ success: boolean; shouldRetry: boolean; error?: string }> {
+  try {
+    const response = await fetch(`/api/boutiques/${cloture.boutique_id}/pos-sessions/cloturer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: cloture.session_id,
+        especesComptees: cloture.especes_comptees,
+        detailBillets: cloture.detail_billets,
+        ventesEspeces: cloture.ventes_especes,
+        ventesWave: cloture.ventes_wave,
+        ventesOrangeMoney: cloture.ventes_orange_money,
+        ventesCarte: cloture.ventes_carte,
+        ventesTotal: cloture.ventes_total,
+        nbVentes: cloture.nb_ventes,
+        caissierNom: cloture.caissier_nom,
+      }),
+    })
+
+    if (response.ok) {
+      return { success: true, shouldRetry: false }
+    }
+
+    if (response.status >= 400 && response.status < 500) {
+      const data = await response.json().catch(() => ({}))
+      return {
+        success: false,
+        shouldRetry: false,
+        error: data.error || `Erreur HTTP ${response.status}`,
+      }
+    }
+
+    return { success: false, shouldRetry: true, error: `Erreur serveur HTTP ${response.status}` }
+  } catch (err) {
+    return {
+      success: false,
+      shouldRetry: true,
+      error: err instanceof Error ? err.message : 'Erreur réseau',
+    }
+  }
+}
+
 export interface SyncResult {
   synced: number
   failed: number
@@ -148,7 +200,7 @@ export interface SyncResult {
 }
 
 /**
- * Synchronise toutes les ventes et transactions de dettes en attente pour une boutique.
+ * Synchronise toutes les ventes, dettes et clôtures de session en attente pour une boutique.
  */
 export async function syncToutBoutique(
   boutiqueId: string,
@@ -233,6 +285,41 @@ export async function syncToutBoutique(
         result.errors.push({ id: dette.id_temporaire, error: lastError })
       }
     }
+
+    // 3. Synchronisation des Clôtures Z hors-ligne
+    const clotures = await obtenirCloturesHorsLigne(boutiqueId)
+    for (const cloture of clotures) {
+      await marquerClotureSyncing(cloture.id_temporaire).catch(() => {})
+      let lastError = ''
+      let success = false
+
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+          const delay = BACKOFF_BASE_MS * Math.pow(2, attempt - 1)
+          await sleep(delay)
+        }
+
+        const resCloture = await syncCloture(cloture)
+        if (resCloture.success) {
+          await supprimerClotureHorsLigne(cloture.id_temporaire).catch(() => {})
+          result.synced++
+          success = true
+          break
+        }
+
+        lastError = resCloture.error || 'Erreur inconnue'
+        if (!resCloture.shouldRetry) {
+          await revertClotureSyncing(cloture.id_temporaire).catch(() => {})
+          break
+        }
+      }
+
+      if (!success) {
+        await revertClotureSyncing(cloture.id_temporaire).catch(() => {})
+        result.failed++
+        result.errors.push({ id: cloture.id_temporaire, error: lastError })
+      }
+    }
   } finally {
     syncLocks.delete(boutiqueId)
   }
@@ -252,6 +339,7 @@ export interface UseSyncOfflineReturn {
   syncPending: boolean
   ventesEnAttente: number
   dettesEnAttente: number
+  cloturesEnAttente: number
   totalEnAttente: number
   lastSyncResult: SyncResult | null
   declencherSync: () => Promise<SyncResult>
@@ -259,7 +347,7 @@ export interface UseSyncOfflineReturn {
 }
 
 /**
- * Hook React pour déclencher et suivre la synchronisation offline d'une boutique (POS & Dettes).
+ * Hook React pour déclencher et suivre la synchronisation offline d'une boutique (POS, Dettes & Clôtures).
  */
 export function useSyncOffline(
   boutiqueId: string,
@@ -268,6 +356,7 @@ export function useSyncOffline(
   const [syncPending, setSyncPending] = useState(false)
   const [ventesEnAttente, setVentesEnAttente] = useState(0)
   const [dettesEnAttente, setDettesEnAttente] = useState(0)
+  const [cloturesEnAttente, setCloturesEnAttente] = useState(0)
   const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null)
   const isMounted = useRef(true)
 
@@ -281,18 +370,21 @@ export function useSyncOffline(
   const rafraichirCompteur = useCallback(async () => {
     if (!boutiqueId || !userId) return
     try {
-      const [ventes, dettes] = await Promise.all([
+      const [ventes, dettes, clotures] = await Promise.all([
         obtenirVentesHorsLigne(boutiqueId, userId).catch(() => []),
         obtenirDettesHorsLigne(boutiqueId, userId).catch(() => []),
+        obtenirCloturesHorsLigne(boutiqueId).catch(() => []),
       ])
       if (isMounted.current) {
         setVentesEnAttente(ventes.length)
         setDettesEnAttente(dettes.length)
+        setCloturesEnAttente(clotures.length)
       }
     } catch {
       if (isMounted.current) {
         setVentesEnAttente(0)
         setDettesEnAttente(0)
+        setCloturesEnAttente(0)
       }
     }
   }, [boutiqueId, userId])
@@ -321,7 +413,8 @@ export function useSyncOffline(
     syncPending,
     ventesEnAttente,
     dettesEnAttente,
-    totalEnAttente: ventesEnAttente + dettesEnAttente,
+    cloturesEnAttente,
+    totalEnAttente: ventesEnAttente + dettesEnAttente + cloturesEnAttente,
     lastSyncResult,
     declencherSync,
     rafraichirCompteur,

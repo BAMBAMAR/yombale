@@ -57,11 +57,17 @@ export default function ComptaBilanView({
         setBilan(data)
         setErrorMessage(null)
         localStorage.setItem(cacheKey, JSON.stringify(data))
-      } else if (data?.error) {
-        setErrorMessage(data.error)
       }
     } catch (e: any) {
-      setErrorMessage(e?.message || 'Erreur de communication avec le serveur')
+      const fallback = localStorage.getItem(`nopalou_bilan_${boutiqueId}_fallback`)
+      if (fallback && !bilan) {
+        try {
+          setBilan(JSON.parse(fallback))
+          setErrorMessage(null)
+        } catch (_) {}
+      } else if (!cached && !fallback) {
+        setErrorMessage(e?.message || 'Erreur de communication avec le serveur')
+      }
     } finally {
       setLoading(false)
     }

@@ -65,7 +65,17 @@ export function useBoutiqueManageNav({
 
   const isTrialActive = Boolean(boutique.is_trial)
   const joursRestantsEssai = boutique.jours_restants_essai ?? 30
-  const effectivePlan = isTrialActive ? 'business' : planActif
+  const effectivePlan: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null = useMemo(() => {
+    if (isTrialActive) return 'business'
+    if (planActif) return planActif
+    if (boutique.plan_actif) return boutique.plan_actif as any
+    if (boutique.plan_souscrit) return boutique.plan_souscrit as any
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('nopalou_plan_actif')
+      if (cached) return cached as any
+    }
+    return null
+  }, [isTrialActive, planActif, boutique.plan_actif, boutique.plan_souscrit])
 
   const isAllowed = useCallback((minPlan?: 'pro' | 'business') => {
     if (isTrialActive) return true

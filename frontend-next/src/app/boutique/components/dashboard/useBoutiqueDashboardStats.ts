@@ -5,13 +5,88 @@ import { getBoutiqueProduits, getDashboard, getCreditsClients } from '../../acti
 import type { Boutique } from '../../types'
 
 export function useBoutiqueDashboardStats(boutique: Boutique) {
-  const [produitsCount, setProduitsCount] = useState<number | null>(null)
-  const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(null)
-  const [caMois, setCaMois] = useState<number | null>(null)
-  const [margeBruteMois, setMargeBruteMois] = useState<number | null>(null)
-  const [tauxMargeMois, setTauxMargeMois] = useState<number | null>(null)
-  const [dettesTotal, setDettesTotal] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
+  const cacheKey = `nopalou_offline_dash_counts_${boutique.id}`
+
+  const getInitialStats = () => {
+    let count: number | null = null
+    let alerts: number | null = null
+    let ca: number | null = null
+    let marge: number | null = null
+    let tauxMarge: number | null = null
+    let dettes: number | null = null
+
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (typeof parsed.count === 'number' && parsed.count > 0) count = parsed.count
+          if (typeof parsed.alerts === 'number') alerts = parsed.alerts
+          if (typeof parsed.ca === 'number' && parsed.ca > 0) ca = parsed.ca
+          if (typeof parsed.marge === 'number') marge = parsed.marge
+          if (typeof parsed.tauxMarge === 'number') tauxMarge = parsed.tauxMarge
+          if (typeof parsed.dettes === 'number') dettes = parsed.dettes
+        }
+      } catch (_) {}
+
+      // Calcul de secours depuis le cache produits
+      try {
+        const cachedProds =
+          localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) ||
+          localStorage.getItem(`nopalou_offline_prods_${boutique.id}`)
+        if (cachedProds) {
+          const prods = JSON.parse(cachedProds)
+          if (Array.isArray(prods) && prods.length > 0) {
+            if (count === null || count === 0) count = prods.length
+            if (alerts === null) {
+              alerts = prods.filter(
+                (p: any) =>
+                  !p.en_stock ||
+                  Number(p.quantite_stock ?? p.stock_quantite ?? p.stock ?? 10) <= 3
+              ).length
+            }
+          }
+        }
+      } catch (_) {}
+
+      // Calcul de secours depuis le cache clients
+      try {
+        const cachedClients = localStorage.getItem(`nopalou_offline_clients_${boutique.id}`)
+        if (cachedClients) {
+          const clients = JSON.parse(cachedClients)
+          if (Array.isArray(clients) && clients.length > 0) {
+            const sumDettes = clients
+              .filter((c: any) => c.solde > 0)
+              .reduce((s: number, c: any) => s + Number(c.solde || 0), 0)
+            if (dettes === null) dettes = sumDettes
+          }
+        }
+      } catch (_) {}
+
+      // Calcul de secours depuis les analytics
+      try {
+        const cachedAnalytics = localStorage.getItem(`nopalou_offline_analytics_${boutique.id}`)
+        if (cachedAnalytics) {
+          const aData = JSON.parse(cachedAnalytics)
+          if (aData?.stats?.ca_total && (ca === null || ca === 0)) {
+            ca = Number(aData.stats.ca_total)
+          }
+        }
+      } catch (_) {}
+    }
+
+    return { count, alerts, ca, marge, tauxMarge, dettes }
+  }
+
+  const initial = getInitialStats()
+
+  const [produitsCount, setProduitsCount] = useState<number | null>(initial.count)
+  const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(initial.alerts)
+  const [caMois, setCaMois] = useState<number | null>(initial.ca)
+  const [margeBruteMois, setMargeBruteMois] = useState<number | null>(initial.marge)
+  const [tauxMargeMois, setTauxMargeMois] = useState<number | null>(initial.tauxMarge)
+  const [dettesTotal, setDettesTotal] = useState<number | null>(initial.dettes)
+  const [loading, setLoading] = useState(initial.count === null && initial.ca === null)
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [onboardingDismissed, setOnboardingDismissed] = useState(false)
   const [modeEssentiel, setModeEssentiel] = useState<boolean>(() => {
@@ -30,22 +105,6 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
 
   useEffect(() => {
     let active = true
-    const cacheKey = `nopalou_offline_dash_counts_${boutique.id}`
-    const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null
-    if (cached) {
-      try {
-        const { count, alerts, ca, dettes, marge, tauxMarge } = JSON.parse(cached)
-        if (typeof count === 'number') setProduitsCount(count)
-        if (typeof alerts === 'number') setStockAlertsCount(alerts)
-        if (typeof ca === 'number') setCaMois(ca)
-        if (typeof marge === 'number') setMargeBruteMois(marge)
-        if (typeof tauxMarge === 'number') setTauxMargeMois(tauxMarge)
-        if (typeof dettes === 'number') setDettesTotal(dettes)
-        setLoading(false)
-      } catch (e) {
-        console.warn('[Nopalou:BoutiqueDashboard]', e)
-      }
-    }
 
     Promise.allSettled([
       getBoutiqueProduits(boutique.id),
@@ -53,39 +112,42 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
       getCreditsClients(boutique.id),
     ]).then(([resProduits, resDash, resCredits]) => {
       if (!active) return
-      let count = produitsCount || 0
-      let alerts = stockAlertsCount || 0
-      let ca = caMois || 0
-      let dettes = dettesTotal || 0
+
+      let hasNewData = false
+      let newCount = produitsCount
+      let newAlerts = stockAlertsCount
+      let newCa = caMois
+      let newMarge = margeBruteMois
+      let newTauxMarge = tauxMargeMois
+      let newDettes = dettesTotal
 
       if (resProduits.status === 'fulfilled' && Array.isArray(resProduits.value)) {
+        hasNewData = true
         const prods = resProduits.value
-        count = prods.length
-        alerts = prods.filter(
+        newCount = prods.length
+        newAlerts = prods.filter(
           (p) =>
             !p.en_stock ||
             ((p.quantite_stock ?? p.stock_quantite) !== null &&
               (p.quantite_stock ?? p.stock_quantite)! <= 3)
         ).length
-        setProduitsCount(count)
-        setStockAlertsCount(alerts)
+        setProduitsCount(newCount)
+        setStockAlertsCount(newAlerts)
       }
 
-      let marge = margeBruteMois || 0
-      let tauxMarge = tauxMargeMois || 0
-
       if (resDash.status === 'fulfilled' && resDash.value) {
+        hasNewData = true
         if (typeof resDash.value.ca_mois === 'number') {
-          ca = resDash.value.ca_mois
-          setCaMois(ca)
+          newCa = resDash.value.ca_mois
+          setCaMois(newCa)
         }
         if (typeof resDash.value.marge_brute_mois === 'number') {
-          marge = resDash.value.marge_brute_mois
-          setMargeBruteMois(marge)
+          newMarge = resDash.value.marge_brute_mois
+          setMargeBruteMois(newMarge)
         }
         if (typeof resDash.value.taux_marge_mois === 'number') {
-          tauxMarge = resDash.value.taux_marge_mois
-          setTauxMargeMois(tauxMarge)
+          newTauxMarge = resDash.value.taux_marge_mois
+          setTauxMargeMois(newTauxMarge)
         }
       }
 
@@ -94,16 +156,31 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
         resCredits.value?.clients &&
         Array.isArray(resCredits.value.clients)
       ) {
-        dettes = resCredits.value.clients
+        hasNewData = true
+        newDettes = resCredits.value.clients
           .filter((c: any) => c.solde > 0)
           .reduce((s: number, c: any) => s + Number(c.solde), 0)
-        setDettesTotal(dettes)
+        setDettesTotal(newDettes)
       }
 
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify({ count, alerts, ca, dettes, marge, tauxMarge }))
-      } catch (err) {
-        console.warn('[Nopalou:BoutiqueDashboard:cache]', err)
+      // UNIQUEMENT mettre à jour le cache si de vraies données serveur ont été reçues
+      // Ne JAMAIS écraser le cache avec des zéros en cas d'échec réseau / offline
+      if (hasNewData) {
+        try {
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              count: newCount,
+              alerts: newAlerts,
+              ca: newCa,
+              dettes: newDettes,
+              marge: newMarge,
+              tauxMarge: newTauxMarge,
+            })
+          )
+        } catch (err) {
+          console.warn('[Nopalou:BoutiqueDashboard:cache]', err)
+        }
       }
       setLoading(false)
     })

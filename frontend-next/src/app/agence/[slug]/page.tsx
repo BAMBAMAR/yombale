@@ -53,21 +53,86 @@ export default function AgenceDashboardPage() {
   const params = useParams()
   const slug = params?.slug as string
 
-  const [stats, setStats] = useState<StatsData | null>(null)
-  const [visitesAujourdhui, setVisitesAujourdhui] = useState<any[]>([])
-  const [compteurs, setCompteurs] = useState<CompteursAlertes>({
-    demandes_visite: 0,
-    loyers_retard: 0,
-    mandats_expirants: 0,
-    baux_expirants: 0,
-    tickets_urgents: 0,
-    total_alertes: 0,
+  const [stats, setStats] = useState<StatsData | null>(() => {
+    if (typeof window !== 'undefined' && slug) {
+      try {
+        const cached = localStorage.getItem(`nopalou_offline_agence_stats_${slug}`)
+        if (cached) return JSON.parse(cached)
+      } catch (_) {}
+    }
+    return null
   })
-  const [loading, setLoading] = useState(true)
+  const [visitesAujourdhui, setVisitesAujourdhui] = useState<any[]>(() => {
+    if (typeof window !== 'undefined' && slug) {
+      try {
+        const cached = localStorage.getItem(`nopalou_offline_agence_visites_${slug}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed)) return parsed
+        }
+      } catch (_) {}
+    }
+    return []
+  })
+  const [compteurs, setCompteurs] = useState<CompteursAlertes>(() => {
+    if (typeof window !== 'undefined' && slug) {
+      try {
+        const cached = localStorage.getItem(`nopalou_offline_agence_notifs_${slug}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (parsed?.compteurs) return parsed.compteurs
+        }
+      } catch (_) {}
+    }
+    return {
+      demandes_visite: 0,
+      loyers_retard: 0,
+      mandats_expirants: 0,
+      baux_expirants: 0,
+      tickets_urgents: 0,
+      total_alertes: 0,
+    }
+  })
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined' && slug) {
+      const cached = localStorage.getItem(`nopalou_offline_agence_stats_${slug}`)
+      if (cached) return false
+    }
+    return true
+  })
 
   async function chargerDonnees() {
+    // 1. Initialisation instantanée depuis le cache hors-ligne
+    const cachedStatsStr = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_offline_agence_stats_${slug}`) : null
+    const cachedNotifsStr = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_offline_agence_notifs_${slug}`) : null
+    const cachedVisitesStr = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_offline_agence_visites_${slug}`) : null
+    let hasCache = Boolean(cachedStatsStr)
+
+    if (cachedStatsStr) {
+      try {
+        const parsed = JSON.parse(cachedStatsStr)
+        if (parsed) {
+          setStats(parsed)
+          hasCache = true
+          setLoading(false)
+        }
+      } catch (_) {}
+    }
+    if (cachedNotifsStr) {
+      try {
+        const parsed = JSON.parse(cachedNotifsStr)
+        if (parsed?.compteurs) setCompteurs(parsed.compteurs)
+      } catch (_) {}
+    }
+    if (cachedVisitesStr) {
+      try {
+        const parsed = JSON.parse(cachedVisitesStr)
+        if (Array.isArray(parsed)) setVisitesAujourdhui(parsed)
+      } catch (_) {}
+    }
+
     try {
-      setLoading(true)
+      if (!hasCache) setLoading(true)
       const headers = getImmoAuthHeaders()
 
       const [resStats, resNotifs, resVisites] = await Promise.all([
@@ -82,13 +147,26 @@ export default function AgenceDashboardPage() {
         resVisites.json(),
       ])
 
-      if (dataStats.success) setStats(dataStats.stats)
-      if (dataNotifs.success && dataNotifs.compteurs) setCompteurs(dataNotifs.compteurs)
+      if (dataStats.success && dataStats.stats) {
+        setStats(dataStats.stats)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`nopalou_offline_agence_stats_${slug}`, JSON.stringify(dataStats.stats))
+        }
+      }
+      if (dataNotifs.success && dataNotifs.compteurs) {
+        setCompteurs(dataNotifs.compteurs)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`nopalou_offline_agence_notifs_${slug}`, JSON.stringify(dataNotifs))
+        }
+      }
       if (dataVisites.success && Array.isArray(dataVisites.visites)) {
         setVisitesAujourdhui(dataVisites.visites)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`nopalou_offline_agence_visites_${slug}`, JSON.stringify(dataVisites.visites))
+        }
       }
     } catch (err) {
-      console.error('[LOAD_DASHBOARD_DATA_ERR]', err)
+      console.warn('[LOAD_DASHBOARD_DATA_ERR] (mode hors-ligne actif)', err)
     } finally {
       setLoading(false)
     }

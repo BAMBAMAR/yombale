@@ -43,24 +43,60 @@ export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientPr
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
+  // 1. Initialisation depuis le cache hors-ligne
+  useEffect(() => {
+    const cached = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_suivi_commandes') : null
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCommandes(parsed)
+        }
+      } catch (_) {}
+    }
+  }, [])
+
   const executeSearch = useCallback(async (queryTerm: string) => {
     const term = queryTerm.trim()
     if (!term) return
 
     setLoading(true)
     setError(null)
-    setCommandes([])
 
     try {
       const res = await fetch(`${backendUrl}/api/boutiques/commandes/suivi?q=${encodeURIComponent(term)}&ref=${encodeURIComponent(term)}&tel=${encodeURIComponent(term)}`)
       const data = await res.json()
 
       if (!res.ok) {
+        const cached = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_suivi_commandes') : null
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setCommandes(parsed)
+              return
+            }
+          } catch (_) {}
+        }
         setError(data.error || t('account.trackOrderNotFound'))
       } else {
-        setCommandes(data.commandes || [])
+        const list = data.commandes || []
+        setCommandes(list)
+        if (typeof window !== 'undefined' && list.length > 0) {
+          localStorage.setItem('nopalou_offline_suivi_commandes', JSON.stringify(list))
+        }
       }
     } catch {
+      const cached = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_suivi_commandes') : null
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCommandes(parsed)
+            return
+          }
+        } catch (_) {}
+      }
       setError(t('errors.networkError'))
     } finally {
       setLoading(false)

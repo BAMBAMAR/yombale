@@ -31,12 +31,17 @@ interface CarnetDettesProps {
     telephone?: string | null
     whatsapp?: string | null
     currency?: string
+    utilisateur_id?: string
+    user_id?: string
   }
   planActif?: string | null
+  userId?: string
 }
 
-export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps) {
+export default function CarnetDettes({ boutique, planActif, userId }: CarnetDettesProps) {
   const { t, isRtl } = useTranslation() as { t: any; isRtl: boolean }
+
+  const effectiveUserId = userId || boutique?.utilisateur_id || boutique?.user_id || 'commercant'
 
   // Sync Offline
   const {
@@ -44,7 +49,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     totalEnAttente: totalOfflineCount,
     declencherSync: declencherSyncCarnet,
     rafraichirCompteur: rafraichirCompteurCarnet,
-  } = useSyncOffline(boutique?.id || '', 'commercant')
+  } = useSyncOffline(boutique?.id || '', effectiveUserId)
 
   // Données & Clients
   const {
@@ -114,6 +119,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     handleValiderTransaction,
   } = useCarnetTransactions({
     boutique,
+    userId: effectiveUserId,
     clients,
     setClients,
     clientSelectionne,

@@ -58,8 +58,40 @@ export default function AgenceWorkspaceLayout({
 
   const isVitrineRoute = pathname?.endsWith('/vitrine') || pathname?.includes('/vitrine/')
 
-  const [agence, setAgence] = useState<AgenceData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [agence, setAgence] = useState<AgenceData | null>(() => {
+    if (typeof window !== 'undefined' && slug) {
+      try {
+        const cachedAgenceStr = localStorage.getItem(`nopalou_offline_agence_${slug}`)
+        if (cachedAgenceStr) {
+          const parsed = JSON.parse(cachedAgenceStr)
+          if (parsed?.id) return parsed
+        }
+        const allMineStr = localStorage.getItem('nopalou_offline_agences_mine')
+        if (allMineStr) {
+          const list = JSON.parse(allMineStr)
+          if (Array.isArray(list)) {
+            const found = list.find((a: any) => a.slug === slug || a.id === slug)
+            if (found) return found
+          }
+        }
+      } catch (_) {}
+    }
+    return null
+  })
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined' && slug) {
+      const cachedAgenceStr = localStorage.getItem(`nopalou_offline_agence_${slug}`)
+      if (cachedAgenceStr) return false
+      const allMineStr = localStorage.getItem('nopalou_offline_agences_mine')
+      if (allMineStr) {
+        try {
+          const list = JSON.parse(allMineStr)
+          if (Array.isArray(list) && list.some((a: any) => a.slug === slug || a.id === slug)) return false
+        } catch (_) {}
+      }
+    }
+    return true
+  })
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [quickActionsOpen, setQuickActionsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
@@ -73,6 +105,15 @@ export default function AgenceWorkspaceLayout({
   const [showNotifCenter, setShowNotifCenter] = useState(false)
 
   async function chargerNotifications() {
+    const cachedNotifsStr = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_offline_agence_notifs_${slug}`) : null
+    if (cachedNotifsStr) {
+      try {
+        const parsed = JSON.parse(cachedNotifsStr)
+        if (Array.isArray(parsed?.notifications)) setNotifications(parsed.notifications)
+        if (parsed?.compteurs) setCompteurs(parsed.compteurs)
+      } catch (_) {}
+    }
+
     try {
       const res = await fetch(`/api/agences/agence/${slug}/notifications`, {
         headers: getImmoAuthHeaders(),
@@ -81,32 +122,64 @@ export default function AgenceWorkspaceLayout({
       if (data.success) {
         setNotifications(data.notifications || [])
         if (data.compteurs) setCompteurs(data.compteurs)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`nopalou_offline_agence_notifs_${slug}`, JSON.stringify(data))
+        }
       }
     } catch (err) {
-      console.error('[LOAD_NOTIFS_ERR]', err)
+      console.warn('[LOAD_NOTIFS_ERR] (mode hors-ligne)', err)
     }
   }
 
   async function chargerAgence() {
+    // 1. Initialisation instantanée depuis le cache hors-ligne
+    let cachedAgenceStr = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_offline_agence_${slug}`) : null
+    let hasCache = false
+    if (!cachedAgenceStr && typeof window !== 'undefined') {
+      const allMineStr = localStorage.getItem('nopalou_offline_agences_mine')
+      if (allMineStr) {
+        try {
+          const list = JSON.parse(allMineStr)
+          if (Array.isArray(list)) {
+            const found = list.find((a: any) => a.slug === slug || a.id === slug)
+            if (found) cachedAgenceStr = JSON.stringify(found)
+          }
+        } catch (_) {}
+      }
+    }
+    if (cachedAgenceStr) {
+      try {
+        const parsed = JSON.parse(cachedAgenceStr)
+        if (parsed?.id) {
+          setAgence(parsed)
+          hasCache = true
+          setLoading(false)
+        }
+      } catch (_) {}
+    }
+
     try {
-      setLoading(true)
+      if (!hasCache) setLoading(true)
       const res = await fetch(`/api/agences/${slug}`, {
         headers: getImmoAuthHeaders(),
       })
       if (res.status === 401) {
-        router.push(`/connexion?redirect=/agence/${slug}`)
+        if (!hasCache) router.push(`/connexion?redirect=/agence/${slug}`)
         return
       }
       if (res.status === 403 || res.status === 404) {
-        router.push('/agence')
+        if (!hasCache) router.push('/agence')
         return
       }
       const data = await res.json()
-      if (data.success) {
+      if (data.success && data.agence) {
         setAgence(data.agence)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`nopalou_offline_agence_${slug}`, JSON.stringify(data.agence))
+        }
       }
     } catch (err) {
-      console.error('[LOAD_AGENCE_ERR]', err)
+      console.warn('[LOAD_AGENCE_ERR] (mode hors-ligne actif)', err)
     } finally {
       setLoading(false)
     }

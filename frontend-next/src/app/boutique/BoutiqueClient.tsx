@@ -60,7 +60,19 @@ export default function BoutiqueClient({
   const [sponsorError] = useState<string | null>(null)
   const router = useRouter()
 
-  const [boutiquesList, setBoutiquesList] = useState<Boutique[]>(boutiques)
+  const [boutiquesList, setBoutiquesList] = useState<Boutique[]>(() => {
+    if (boutiques && boutiques.length > 0) return boutiques
+    if (typeof window !== 'undefined') {
+      const cachedStr = localStorage.getItem('nopalou_pos_user_boutiques')
+      if (cachedStr) {
+        try {
+          const cached = JSON.parse(cachedStr)
+          if (Array.isArray(cached) && cached.length > 0) return cached
+        } catch (_) {}
+      }
+    }
+    return []
+  })
 
   const isReallyOnline = useOnlineStatus()
   const [dashboardOffline, setDashboardOffline] = useState(false)
@@ -74,7 +86,7 @@ export default function BoutiqueClient({
     if (typeof window !== 'undefined') {
       try {
         const tourDone = localStorage.getItem('nopalou_merchant_tour_done')
-        if (!tourDone && boutiques.length > 0) {
+        if (!tourDone && (boutiques.length > 0 || boutiquesList.length > 0)) {
           const timer = setTimeout(() => setShowProductTour(true), 1200)
           return () => clearTimeout(timer)
         }
@@ -82,14 +94,24 @@ export default function BoutiqueClient({
         console.warn('[Nopalou:BoutiqueClient:tour]', e)
       }
     }
-  }, [boutiques.length])
+  }, [boutiques.length, boutiquesList.length])
 
-  // Plan actif : persistance offline
+  // Plan actif : persistance offline sans purge destructrice
   const [planActifEffectif, setPlanActifEffectif] = useState<'pro' | 'business' | 'decouverte' | 'taf_taf' | null>(() => {
     if (planActif) return planActif as any
     if (typeof window !== 'undefined') {
       const cached = localStorage.getItem('nopalou_plan_actif')
       if (cached) return cached as any
+      const cachedBoutiquesStr = localStorage.getItem('nopalou_pos_user_boutiques')
+      if (cachedBoutiquesStr) {
+        try {
+          const parsed = JSON.parse(cachedBoutiquesStr)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const bPlan = parsed[0]?.plan_actif || parsed[0]?.plan_souscrit
+            if (bPlan) return bPlan
+          }
+        } catch (_) {}
+      }
     }
     return null
   })
@@ -101,12 +123,19 @@ export default function BoutiqueClient({
         localStorage.setItem('nopalou_plan_actif', planActif)
       }
     } else {
-      setPlanActifEffectif(null)
+      // En mode hors-ligne ou si le serveur renvoie null temporairement,
+      // NE PAS PURGER nopalou_plan_actif ! Conserver le plan souscrit en local ou celui de la boutique.
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('nopalou_plan_actif')
+        const cached = localStorage.getItem('nopalou_plan_actif')
+        if (cached) {
+          setPlanActifEffectif(cached as any)
+        } else if (boutiquesList.length > 0) {
+          const bPlan = boutiquesList[0]?.plan_actif || boutiquesList[0]?.plan_souscrit
+          if (bPlan) setPlanActifEffectif(bPlan as any)
+        }
       }
     }
-  }, [planActif])
+  }, [planActif, boutiquesList])
 
   useEffect(() => {
     if (boutiques && boutiques.length > 0) {
@@ -217,7 +246,7 @@ export default function BoutiqueClient({
       <BoutiqueManage
         boutique={mode.managing}
         boutiques={boutiquesList}
-        planActif={planActifEffectif ?? null}
+        planActif={planActifEffectif || mode.managing.plan_actif || (mode.managing.plan_souscrit as any) || null}
         initialTab={tabParam ?? undefined}
         hasMultipleBoutiques={boutiquesList.length > 1}
         onSelectBoutique={(b) => {

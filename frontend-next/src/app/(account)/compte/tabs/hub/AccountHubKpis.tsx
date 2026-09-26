@@ -10,6 +10,7 @@ interface AccountHubKpisProps {
   annonces: any[]
   annoncesActives: number
   locations?: any[]
+  agences?: any[]
   onNavigateTab: (tabKey: string) => void
 }
 
@@ -19,6 +20,7 @@ export default function AccountHubKpis({
   annonces,
   annoncesActives,
   locations = [],
+  agences = [],
   onNavigateTab,
 }: AccountHubKpisProps) {
   return (
@@ -233,6 +235,47 @@ export default function AccountHubKpis({
           <ArrowRight size={12} />
         </span>
       </Link>
+
+      {/* KPI 6 : Mon Agence Immobilière & Gestion Locative */}
+      {agences && agences.length > 0 && (
+        <Link
+          href={`/agence/${agences[0].slug || ''}`}
+          style={{
+            background: '#ffffff',
+            borderRadius: 14,
+            padding: '14px 16px',
+            border: '1px solid var(--border, #E8DDD2)',
+            textDecoration: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            minHeight: 114,
+            boxShadow: '0 2px 6px rgba(26,22,18,0.02)',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Mon Agence
+            </span>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EFF6FF', color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Building2 size={15} />
+            </div>
+          </div>
+          <div style={{ margin: '8px 0 4px' }}>
+            <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+              {agences.length}
+            </span>
+            <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>
+              {agences.length > 1 ? 'agences immo' : (agences[0].nom || 'agence active')}
+            </span>
+          </div>
+          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent, #C75B00)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span>Tableau de bord agence</span>
+            <ArrowRight size={12} />
+          </span>
+        </Link>
+      )}
     </div>
   )
 }

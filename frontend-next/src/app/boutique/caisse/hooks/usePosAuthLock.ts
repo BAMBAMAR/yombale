@@ -30,7 +30,33 @@ export function usePosAuthLock({
 
   useEffect(() => {
     if (!verrouille || codePinSaisi.length < 4) return
-    const match = caissiersList.find((c) => c.actif !== false && c.code_pin === codePinSaisi)
+
+    let activeList = caissiersList
+    if (!activeList || activeList.length === 0) {
+      try {
+        if (typeof window !== 'undefined') {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            if (key && key.startsWith('nopalou_pos_caissiers_')) {
+              const val = localStorage.getItem(key)
+              if (val) {
+                const parsed = JSON.parse(val)
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  activeList = parsed
+                  break
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[usePosAuthLock] Erreur lecture localStorage caissiers:', e)
+      }
+    }
+
+    const match = (activeList || []).find(
+      (c) => c.actif !== false && String(c.code_pin).trim() === String(codePinSaisi).trim()
+    )
     if (match) {
       setCaissierSelectionneId(match.id)
       const realNom = `${match.prenom || ''} ${match.nom || ''}`.trim() || match.nom

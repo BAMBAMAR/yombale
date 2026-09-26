@@ -31,15 +31,35 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
   const { t } = useTranslation()
 
   const loadAlertes = async () => {
+    const cacheKey = `nopalou_offline_alertes_${userId}`
+    const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null
+    let hasCache = false
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAlertes(parsed)
+          hasCache = true
+          setLoading(false)
+        }
+      } catch (_) {}
+    }
+
     try {
-      setLoading(true)
+      if (!hasCache) setLoading(true)
       const result = await fetchUserAlertes(userId)
       if (!result.ok) {
-        throw new Error(result.error || t('errors.serverError') || 'Erreur chargement')
+        if (!hasCache) throw new Error(result.error || t('errors.serverError') || 'Erreur chargement')
+      } else {
+        setAlertes(result.alertes || [])
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(cacheKey, JSON.stringify(result.alertes || []))
+        }
       }
-      setAlertes(result.alertes || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : (t('errors.serverError') || 'Erreur inconnue'))
+      if (!hasCache) {
+        setError(err instanceof Error ? err.message : (t('errors.serverError') || 'Erreur inconnue'))
+      }
     } finally {
       setLoading(false)
     }

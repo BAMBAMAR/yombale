@@ -10,7 +10,7 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v26';
+const CACHE_VERSION = 'v28';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
@@ -29,36 +29,164 @@ const FALLBACK_HTML = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Hors-Ligne — Nopalou Sénégal</title>
 <style>
-  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0f172a; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #f8fafc; text-align: center; padding: 24px; box-sizing: border-box; }
-  .box { max-width: 440px; background: #1e293b; border-radius: 24px; padding: 36px 28px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-  .badge { display: inline-block; background: rgba(199, 91, 0, 0.2); color: #fed7aa; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(199, 91, 0, 0.3); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
-  h1 { font-size: 22px; font-weight: 900; margin: 0 0 10px; color: #ffffff; }
-  p { font-size: 14px; line-height: 1.6; color: #94a3b8; margin: 0 0 24px; }
-  .btn-group { display: flex; flex-direction: column; gap: 12px; }
-  button, a.btn { background: #C75B00; color: #ffffff; border: none; border-radius: 12px; padding: 12px 20px; font-size: 14px; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(199,91,0,0.3); }
-  a.btn-sec { background: #334155; color: #e2e8f0; box-shadow: none; }
+  :root {
+    --navy: #1C2B4A;
+    --navy-light: #2A3F66;
+    --accent: #C75B00;
+    --accent-hover: #A34A00;
+    --bg: #F8F5F0;
+    --card: #FFFFFF;
+    --text: #1E293B;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0F172A;
+      --card: #1E293B;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border: #334155;
+      --navy: #1C2B4A;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    text-align: center;
+    padding: 20px;
+  }
+  .box {
+    max-width: 440px;
+    width: 100%;
+    background: var(--card);
+    border-radius: 20px;
+    padding: 32px 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(199, 91, 0, 0.1);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    border: 1px solid rgba(199, 91, 0, 0.2);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(199, 91, 0, 0.12);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+  h1 { font-size: 20px; font-weight: 800; margin: 0 0 10px; color: var(--text); }
+  p { font-size: 13.5px; line-height: 1.55; color: var(--text-muted); margin: 0 0 24px; }
+  .btn-group { display: flex; flex-direction: column; gap: 10px; }
+  button, a.btn {
+    background: var(--accent);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s ease;
+  }
+  button:hover, a.btn:hover { background: var(--accent-hover); }
+  a.btn-sec {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  a.btn-sec:hover { background: rgba(0, 0, 0, 0.04); }
+  @media (prefers-color-scheme: dark) {
+    a.btn-sec:hover { background: rgba(255, 255, 255, 0.06); }
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #EAB308;
+    display: inline-block;
+  }
 </style>
 </head>
 <body>
   <div class="box">
-    <div class="badge">📡 NOPALOU PWA OFFLINE</div>
-    <div style="font-size: 48px; margin-bottom: 12px;">⚡</div>
-    <h1>Vous êtes actuellement Hors-Ligne</h1>
-    <p>Votre connexion Internet mobile est momentanément interrompue. Les données précédemment consultées restent disponibles en cache local.</p>
+    <div class="badge"><span class="status-dot"></span> Nopalou Mode Hors-Ligne</div>
+    <div class="icon-wrap">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+      </svg>
+    </div>
+    <h1>Connexion Internet Interrompue</h1>
+    <p>Votre terminal n'a pas accès au réseau. Vos outils commerçants (Caisse POS et Carnet de dettes) restent pleinement opérationnels hors-ligne avec enregistrement local instantané.</p>
     <div class="btn-group">
-      <button onclick="location.reload()">🔄 Réessayer la connexion</button>
-      <button onclick="window.history.back()" class="btn btn-sec">🔙 Revenir à la page précédente</button>
-      <a href="/boutique/caisse" class="btn btn-sec">🛒 Retourner à la Caisse POS</a>
-      <a href="/compte" class="btn btn-sec">👤 Retourner à mon compte</a>
-      <a href="/" class="btn btn-sec">🏠 Consulter l'Accueil (Cache)</a>
+      <button onclick="location.reload()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        Réessayer la connexion
+      </button>
+      <a href="/boutique/caisse" class="btn btn-sec">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        Ouvrir la Caisse POS
+      </a>
+      <a href="/boutique/carnet" class="btn btn-sec">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        Ouvrir le Carnet de Dettes
+      </a>
+      <a href="/" class="btn btn-sec">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Consulter l'Accueil (Cache)
+      </a>
     </div>
   </div>
   <script>
     window.addEventListener('online', function() { location.reload(); });
-    if (window.history.length <= 1) {
-      const backBtn = document.querySelector('button[onclick="window.history.back()"]');
-      if (backBtn) backBtn.style.display = 'none';
-    }
   </script>
 </body>
 </html>`;
@@ -101,7 +229,7 @@ const serwist = new Serwist({
       matcher: ({ url }) => isExternalTrackerOrSocialMedia(url),
       handler: new NetworkOnly(),
     },
-    // 1. Endpoints sensibles, authentification, paiement, admin, boutiques, CRM immo, et TOUTES les navigations privées / authentifiées — NetworkOnly STRICT (jamais mis en cache)
+    // 1. Endpoints sensibles, mutations, authentification, paiement, admin — NetworkOnly STRICT
     {
       matcher: ({ url, request }) =>
         url.pathname === '/api/ping' ||
@@ -110,44 +238,29 @@ const serwist = new Serwist({
         url.pathname.startsWith('/api/admin') ||
         url.pathname.startsWith('/api/paiement') ||
         url.pathname.startsWith('/api/paiement-sequestre') ||
-        url.pathname.startsWith('/api/boutiques') ||
-        url.pathname.startsWith('/api/annonces/mine') ||
-        url.pathname.startsWith('/api/immo/mine') ||
-        url.pathname.startsWith('/api/utilisateurs') ||
-        url.pathname.startsWith('/api/credits-clients') ||
-        url.pathname.startsWith('/api/crm-immo') ||
-        (url.pathname.startsWith('/api/agences') && !url.pathname.startsWith('/api/agences/public')) ||
-        (url.pathname.startsWith('/api/biens') && !url.pathname.startsWith('/api/biens/public')) ||
-        // Navigation HTML / Pages privées et formulaires (Zéro mise en cache pour éviter les ruptures d'hydratation et les Server Action IDs obsolètes)
-        url.pathname.startsWith('/compte') ||
-        url.pathname.startsWith('/mes-annonces') ||
-        url.pathname.startsWith('/mes-annonces-immo') ||
-        url.pathname.startsWith('/deposer-annonce') ||
-        url.pathname.startsWith('/deposer-immo') ||
         url.pathname.startsWith('/connexion') ||
         url.pathname.startsWith('/inscription') ||
         url.pathname.startsWith('/mot-de-passe-oublie') ||
-        url.pathname.startsWith('/admin') ||
-        (url.pathname.startsWith('/boutique') && !url.pathname.startsWith('/boutique/caisse')),
+        url.pathname.startsWith('/admin'),
       handler: new NetworkOnly(),
     },
-    // 2. Navigation HTML — NetworkFirst avec timeout 6s (sécurise le SSR et les réseaux mobiles)
+    // 2. Navigation HTML — NetworkFirst avec timeout réactif de 1s (évite les blocages et freezes de 12s offline)
     {
       matcher: ({ request }) =>
         request.mode === "navigate" ||
         (request.method === "GET" && request.headers.get("accept")?.includes("text/html") === true),
       handler: new NetworkFirst({
         cacheName: `nopalou-html-cache-${CACHE_VERSION}`,
-        networkTimeoutSeconds: 6,
+        networkTimeoutSeconds: 1,
         plugins: [
           new ExpirationPlugin({
-            maxEntries: 50,
+            maxEntries: 60,
             maxAgeSeconds: 24 * 60 * 60 * 7,
           }),
         ],
       }),
     },
-    // 3. Requêtes RSC (_rsc=... ou en-tête RSC: 1 / text/x-component) — NetworkFirst
+    // 3. Requêtes RSC (_rsc=... ou en-tête RSC: 1 / text/x-component) — NetworkFirst avec timeout 1s
     {
       matcher: ({ url, request }) =>
         url.searchParams.has("_rsc") ||
@@ -155,16 +268,16 @@ const serwist = new Serwist({
         request.headers.get("accept")?.includes("text/x-component") === true,
       handler: new NetworkFirst({
         cacheName: `nopalou-rsc-cache-${CACHE_VERSION}`,
-        networkTimeoutSeconds: 6,
+        networkTimeoutSeconds: 1,
         plugins: [
           new ExpirationPlugin({
-            maxEntries: 80,
+            maxEntries: 100,
             maxAgeSeconds: 24 * 60 * 60 * 3,
           }),
         ],
       }),
     },
-    // 4. Routes API publiques lecture seule (/api/immo, /api/agences/public, /api/biens/public, /api/annonces) — NetworkFirst (visites terrain hors-ligne)
+    // 4. Routes API lecture seule (/api/...) — NetworkFirst avec timeout 1s (disponibilité intégrale hors-ligne)
     {
       matcher: ({ url, request }) =>
         request.method === "GET" &&
@@ -173,20 +286,14 @@ const serwist = new Serwist({
         !url.pathname.startsWith('/api/auth') &&
         !url.pathname.startsWith('/api/admin') &&
         !url.pathname.startsWith('/api/paiement') &&
-        !url.pathname.startsWith('/api/paiement-sequestre') &&
-        !url.pathname.startsWith('/api/boutiques') &&
-        !url.pathname.startsWith('/api/utilisateurs') &&
-        !url.pathname.startsWith('/api/credits-clients') &&
-        !url.pathname.startsWith('/api/crm-immo') &&
-        (!url.pathname.startsWith('/api/agences') || url.pathname.startsWith('/api/agences/public')) &&
-        (!url.pathname.startsWith('/api/biens') || url.pathname.startsWith('/api/biens/public')),
+        !url.pathname.startsWith('/api/paiement-sequestre'),
       handler: new NetworkFirst({
         cacheName: `nopalou-api-cache-${CACHE_VERSION}`,
-        networkTimeoutSeconds: 2,
+        networkTimeoutSeconds: 1,
         plugins: [
           new ExpirationPlugin({
-            maxEntries: 150,
-            maxAgeSeconds: 24 * 60 * 60 * 2, // 48h pour les visites terrain
+            maxEntries: 250,
+            maxAgeSeconds: 24 * 60 * 60 * 3, // 72h
           }),
         ],
       }),

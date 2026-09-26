@@ -33,7 +33,7 @@ export function useCaissePanier({
 
   const cartLoadedRef = useRef<string | null>(null)
 
-  // 1. Restauration automatique du panier sauvegardé
+  // 1. Restauration automatique du panier sauvegardé & tickets en attente
   useEffect(() => {
     if (!boutiqueActiveId || typeof window === 'undefined') return
     if (cartLoadedRef.current === boutiqueActiveId) return
@@ -46,8 +46,15 @@ export function useCaissePanier({
           setPanier(parsed)
         }
       }
+      const savedTickets = localStorage.getItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`)
+      if (savedTickets) {
+        const parsedTickets = JSON.parse(savedTickets)
+        if (Array.isArray(parsedTickets) && parsedTickets.length > 0) {
+          setTicketsEnAttente(parsedTickets)
+        }
+      }
     } catch (e) {
-      console.warn('[POS CAISSE] Erreur restauration panier local:', e)
+      console.warn('[POS CAISSE] Erreur restauration panier/tickets local:', e)
     }
   }, [boutiqueActiveId])
 
@@ -65,6 +72,21 @@ export function useCaissePanier({
       console.warn('[POS CAISSE] Erreur sync panier local:', e)
     }
   }, [panier, boutiqueActiveId])
+
+  // 2b. Synchronisation des tickets en attente dans localStorage
+  useEffect(() => {
+    if (!boutiqueActiveId || typeof window === 'undefined') return
+    if (cartLoadedRef.current !== boutiqueActiveId) return
+    try {
+      if (ticketsEnAttente.length > 0) {
+        localStorage.setItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`, JSON.stringify(ticketsEnAttente))
+      } else {
+        localStorage.removeItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`)
+      }
+    } catch (e) {
+      console.warn('[POS CAISSE] Erreur sync tickets en attente:', e)
+    }
+  }, [ticketsEnAttente, boutiqueActiveId])
 
   function genererLabelClientUnique(ticketsExistants: TicketEnAttente[]): string {
     const labelsOccupes = ticketsExistants.map((t) => t.clientLabel)

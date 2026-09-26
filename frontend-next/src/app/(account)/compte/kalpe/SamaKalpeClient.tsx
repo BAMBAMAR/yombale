@@ -80,7 +80,27 @@ export function SamaKalpeClient({
   const [nouvelObjCible, setNouvelObjCible] = useState('')
 
   const chargerDonnees = useCallback(async () => {
-    setLoading(true)
+    // 1. Initialisation instantanée depuis l'instantané hors-ligne
+    const cachedStr = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_kalpe_snapshot') : null
+    let hasSnapshot = false
+    if (cachedStr) {
+      try {
+        const cached = JSON.parse(cachedStr)
+        if (cached.etat) setEtat(cached.etat)
+        if (cached.synthese) setSynthese(cached.synthese)
+        if (Array.isArray(cached.objectifs)) setObjectifs(cached.objectifs)
+        if (Array.isArray(cached.dettes)) setDettes(cached.dettes)
+        if (Array.isArray(cached.operations)) {
+          setOperations(cached.operations)
+          setOperationsTotal(cached.operationsTotal || cached.operations.length)
+        }
+        hasSnapshot = true
+        setLoading(false)
+      } catch (_) {}
+    }
+
+    if (!hasSnapshot) setLoading(true)
+
     try {
       const [resEtat, resSynthese, resObjectifs, resDettes, resOps] = await Promise.all([
         getKalpeEtat(),
@@ -100,9 +120,22 @@ export function SamaKalpeClient({
       setDettes(resDettes)
       setOperations(resOps.operations)
       setOperationsTotal(resOps.total)
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nopalou_offline_kalpe_snapshot', JSON.stringify({
+          etat: resEtat,
+          synthese: resSynthese,
+          objectifs: resObjectifs,
+          dettes: resDettes,
+          operations: resOps.operations,
+          operationsTotal: resOps.total,
+        }))
+      }
     } catch (err) {
-      console.error('Erreur chargement Sama Xaalis:', err)
-      toast.error('Erreur lors du chargement des données')
+      console.warn('Erreur chargement Sama Xaalis (mode hors-ligne):', err)
+      if (!hasSnapshot) {
+        toast.error('Mode hors-ligne : données du kalpé indisponibles')
+      }
     } finally {
       setLoading(false)
     }

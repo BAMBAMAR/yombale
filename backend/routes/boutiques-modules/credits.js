@@ -314,7 +314,7 @@ async function ensureCreditRefCol() {
   if (_creditRefMigrated) return;
   try {
     await pool.query(`ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS reference VARCHAR(128)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_credit_hist_ref ON caisse_credit_historique(boutique_id, reference)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_hist_bq_ref_uniq ON caisse_credit_historique(boutique_id, reference) WHERE reference IS NOT NULL`);
     _creditRefMigrated = true;
   } catch {
     _creditRefMigrated = true;
@@ -359,6 +359,17 @@ router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (
     try {
       await client.query('BEGIN');
 
+      if (idempotencyKey) {
+        const txCheck = await client.query(
+          `SELECT id, montant, type FROM caisse_credit_historique WHERE boutique_id = $1 AND reference = $2 LIMIT 1`,
+          [bqId, idempotencyKey]
+        );
+        if (txCheck.rows[0]) {
+          await client.query('ROLLBACK');
+          return res.json({ success: true, duplicate: true, transaction: txCheck.rows[0] });
+        }
+      }
+
       const c = await client.query('SELECT * FROM caisse_clients_credits WHERE id=$1 AND boutique_id=$2 FOR UPDATE', [clientId, bqId]);
       if (!c.rows[0]) {
         await client.query('ROLLBACK');
@@ -390,11 +401,24 @@ router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (
       await client.query('UPDATE caisse_clients_credits SET solde=$1 WHERE id=$2', [nouveauSolde, clientId]);
 
       const autoRelance = relance_auto_whatsapp !== false;
-      const hist = await client.query(
-        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp, reference)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-        [clientId, bqId, type, numMontant, mode_paiement || 'credit', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance, idempotencyKey]
-      );
+      let hist;
+      try {
+        hist = await client.query(
+          `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp, reference)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+          [clientId, bqId, type, numMontant, mode_paiement || 'credit', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance, idempotencyKey]
+        );
+      } catch (insertErr) {
+        if (insertErr.code === '23505' && idempotencyKey) { // unique violation
+          await client.query('ROLLBACK');
+          const existing = await pool.query(
+            `SELECT id, montant, type FROM caisse_credit_historique WHERE boutique_id = $1 AND reference = $2 LIMIT 1`,
+            [bqId, idempotencyKey]
+          );
+          return res.json({ success: true, duplicate: true, transaction: existing.rows[0] });
+        }
+        throw insertErr;
+      }
 
       if (type === 'vente_credit') {
         const clientNom = c.rows[0].nom || 'Client Carnet';

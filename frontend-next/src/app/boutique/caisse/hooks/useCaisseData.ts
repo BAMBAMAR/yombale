@@ -7,6 +7,10 @@ import {
   obtenirProduitsLocaux,
   sauvegarderClientsLocaux,
   obtenirClientsLocaux,
+  sauvegarderCaissiersLocaux,
+  obtenirCaissiersLocaux,
+  sauvegarderBoutiquesLocales,
+  obtenirBoutiquesLocales,
 } from '@/lib/db-offline'
 import type { ProduitCaisse } from '../components/PosCatalogueSection'
 import type { BoutiquePOS, SessionCaisse } from '../types'
@@ -130,6 +134,8 @@ export function useCaisseData({
           const actifs = data.caissiers.filter((c: any) => c.actif !== false)
           if (actifs.length > 0) {
             setCaissiersList(actifs)
+            localStorage.setItem(`nopalou_pos_caissiers_${bId}`, JSON.stringify(actifs))
+            sauvegarderCaissiersLocaux(actifs, bId, userId).catch(() => {})
             setCaissierSelectionneId((prev) => {
               if (prev && actifs.some((c: any) => c.id === prev)) return prev
               const defCaissier = actifs.find((c: any) => c.role === 'caissier') || actifs[0]
@@ -144,6 +150,19 @@ export function useCaisseData({
               onOpenConfigObligatoire()
             }
           }
+        }
+      } else {
+        // Fallback hors-ligne
+        const localCached = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_pos_caissiers_${bId}`) : null
+        let actifs = localCached ? JSON.parse(localCached) : null
+        if (!actifs || actifs.length === 0) {
+          actifs = await obtenirCaissiersLocaux(bId, userId).catch(() => [])
+        }
+        if (actifs && actifs.length > 0) {
+          setCaissiersList(actifs)
+          const defCaissier = actifs.find((c: any) => c.role === 'caissier') || actifs[0]
+          setCaissierSelectionneId((prev) => prev || defCaissier.id)
+          setCaissierNom((prev) => (prev && prev !== 'Caissier 1 (Bamba)') ? prev : (`${defCaissier.prenom || ''} ${defCaissier.nom || ''}`.trim() || defCaissier.nom))
         }
       }
 
@@ -321,8 +340,29 @@ export function useCaisseData({
         try {
           const mine = await getBoutiquesMine()
           merchantBoutiques = mine || []
+          if (merchantBoutiques.length > 0) {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(`nopalou_pos_merchant_boutiques_${userId}`, JSON.stringify(merchantBoutiques))
+            }
+            sauvegarderBoutiquesLocales(merchantBoutiques, userId).catch(() => {})
+          }
         } catch (e) {
           console.warn('[POS DATA] Reseau indisponible getBoutiquesMine', e)
+        }
+
+        if (merchantBoutiques.length === 0) {
+          // Secours Hors-Ligne: restauration depuis le cache local
+          try {
+            const cachedBqsStr = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_pos_merchant_boutiques_${userId}`) : null
+            if (cachedBqsStr) {
+              merchantBoutiques = JSON.parse(cachedBqsStr) || []
+            }
+            if (merchantBoutiques.length === 0) {
+              merchantBoutiques = await obtenirBoutiquesLocales(userId).catch(() => [])
+            }
+          } catch (eCache) {
+            console.warn('[POS DATA] Erreur lecture cache boutiques:', eCache)
+          }
         }
 
         if (merchantBoutiques.length > 0) {

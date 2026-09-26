@@ -8,6 +8,7 @@ import PosBilanRapportXModal from './PosBilanRapportXModal'
 import PosChangerCaissierModal from './PosChangerCaissierModal'
 import PosHistoriqueModal from './PosHistoriqueModal'
 import PosTicketPrintView from './PosTicketPrintView'
+import { ajouterClotureHorsLigne } from '@/lib/db-offline'
 
 export interface PosSessionModalsProps {
   modalSessionOuverture: boolean
@@ -141,27 +142,51 @@ export default function PosSessionModals(props: PosSessionModalsProps) {
           onClose={() => setModalClotureZ(false)}
           onValiderCloture={async (especesCompteesVal, detailBillets) => {
             exporterCloturePDF()
+            const payloadCloture = {
+              sessionId: session.id,
+              especesComptees: especesCompteesVal,
+              detailBillets,
+              ventesEspeces: session.ventes.especes,
+              ventesWave: session.ventes.wave,
+              ventesOrangeMoney: session.ventes.orangeMoney,
+              ventesCarte: session.ventes.carte,
+              ventesTotal: session.ventes.total,
+              nbVentes: session.ventes.nbVentes,
+              caissierNom: session.caissierNom,
+            }
+
             try {
-              await fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/cloturer`, {
+              const res = await fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/cloturer`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  sessionId: session.id,
-                  especesComptees: especesCompteesVal,
-                  detailBillets,
-                  ventesEspeces: session.ventes.especes,
-                  ventesWave: session.ventes.wave,
-                  ventesOrangeMoney: session.ventes.orangeMoney,
-                  ventesCarte: session.ventes.carte,
-                  ventesTotal: session.ventes.total,
-                  nbVentes: session.ventes.nbVentes,
-                  caissierNom: session.caissierNom,
-                }),
+                body: JSON.stringify(payloadCloture),
               })
+              if (!res.ok) throw new Error(`HTTP ${res.status}`)
+              showToast('Session de caisse fermée avec succès ! Rapport Z imprimé.', 'success')
             } catch (e) {
-              console.error('Erreur cloture backend:', e)
+              console.warn('[PosSessionModals] Mode offline, mise en file d\'attente de la clôture:', e)
+              try {
+                await ajouterClotureHorsLigne({
+                  id_temporaire: `CLOS-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+                  boutique_id: boutiqueActiveId,
+                  session_id: session.id,
+                  especes_comptees: especesCompteesVal,
+                  detail_billets: detailBillets,
+                  ventes_especes: session.ventes.especes,
+                  ventes_wave: session.ventes.wave,
+                  ventes_orange_money: session.ventes.orangeMoney,
+                  ventes_carte: session.ventes.carte,
+                  ventes_total: session.ventes.total,
+                  nb_ventes: session.ventes.nbVentes,
+                  caissier_nom: session.caissierNom,
+                  date: new Date().toISOString(),
+                  status: 'pending',
+                })
+                showToast('Session fermée localement (Mode Hors-Ligne). Rapport Z archivé pour synchronisation.', 'warning')
+              } catch (eQueue) {
+                console.error('Erreur stockage clôture offline:', eQueue)
+              }
             }
-            showToast('Session de caisse fermée avec succès ! Rapport Z imprimé.', 'success')
             setSession(null)
             setEspecesComptees('')
             setModalClotureZ(false)

@@ -11,9 +11,26 @@ import { useToast } from '@/context/ToastContext'
 export function useCommandesData(boutiqueId: string, t: any) {
   const { toast } = useToast()
   const [subTab, setSubTab] = useState<'commandes' | 'zones'>('commandes')
-  const [commandes, setCommandes] = useState<Commande[]>([])
+  const [commandes, setCommandes] = useState<Commande[]>(() => {
+    if (typeof window !== 'undefined' && boutiqueId) {
+      try {
+        const cached = localStorage.getItem(`nopalou_offline_commandes_${boutiqueId}_`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch (_) {}
+    }
+    return []
+  })
   const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined' && boutiqueId) {
+      const cached = localStorage.getItem(`nopalou_offline_commandes_${boutiqueId}_`)
+      if (cached) return false
+    }
+    return true
+  })
   const [filtre, setFiltre] = useState('')
   const [filtreCanal, setFiltreCanal] = useState<'tous' | 'web' | 'caisse'>('tous')
 
@@ -21,7 +38,7 @@ export function useCommandesData(boutiqueId: string, t: any) {
 
   const load = useCallback(async () => {
     const cacheKey = `nopalou_offline_commandes_${boutiqueId}_${filtre}`
-    const cached = localStorage.getItem(cacheKey)
+    const cached = localStorage.getItem(cacheKey) || (filtre === '' ? localStorage.getItem(`nopalou_offline_commandes_${boutiqueId}_`) : null)
     if (cached) {
       try {
         const parsed = JSON.parse(cached)
@@ -31,7 +48,6 @@ export function useCommandesData(boutiqueId: string, t: any) {
         console.warn('[Nopalou:useCommandesData]', e)
       }
     }
-    if (!cached) setLoading(true)
 
     if (filtre === 'abandonne') {
       try {
@@ -46,18 +62,29 @@ export function useCommandesData(boutiqueId: string, t: any) {
         } else {
           data = await res.json()
         }
-        setPaniersAbandonnes(data.paniers || [])
-        localStorage.setItem(cacheKey, JSON.stringify(data.paniers || []))
+        if (data?.paniers) {
+          setPaniersAbandonnes(data.paniers)
+          localStorage.setItem(cacheKey, JSON.stringify(data.paniers))
+        }
       } catch {
-        if (!cached) setPaniersAbandonnes([])
+        // En mode hors-ligne, conserver le cache existant
       }
     } else {
       try {
         const data = await listCommandes(boutiqueId, filtre)
-        setCommandes(data || [])
-        localStorage.setItem(cacheKey, JSON.stringify(data || []))
+        if (Array.isArray(data)) {
+          setCommandes(data)
+          localStorage.setItem(cacheKey, JSON.stringify(data))
+        }
       } catch (err) {
-        if (!cached) setCommandes([])
+        // En mode hors-ligne, conserver les commandes en mémoire ou restaurer du cache
+        const fallback = localStorage.getItem(`nopalou_offline_commandes_${boutiqueId}_`)
+        if (fallback) {
+          try {
+            const parsed = JSON.parse(fallback)
+            if (Array.isArray(parsed)) setCommandes(parsed)
+          } catch (_) {}
+        }
       }
     }
     setLoading(false)

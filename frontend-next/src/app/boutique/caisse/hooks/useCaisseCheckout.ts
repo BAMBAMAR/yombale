@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { creerPosVente, creerBoutiqueDocument } from '../../actions'
-import { ajouterVenteHorsLigne, ajouterDetteHorsLigne } from '@/lib/db-offline'
+import { ajouterVenteHorsLigne, ajouterDetteHorsLigne, ajusterStockProduitLocal } from '@/lib/db-offline'
 import { showToast } from '@/context/ToastContext'
 
 export function useCaisseCheckout({
@@ -327,6 +327,33 @@ export function useCaisseCheckout({
             },
           }
         })
+
+        // Décrémentation instantanée du stock local (IndexedDB + localStorage)
+        try {
+          panier.forEach((i) => {
+            if (i.produit?.id) {
+              ajusterStockProduitLocal(boutiqueActiveId, userId, i.produit.id, i.quantite).catch(() => {})
+            }
+          })
+          if (typeof window !== 'undefined') {
+            const cachedProds = localStorage.getItem(`nopalou_pos_produits_${boutiqueActiveId}`)
+            if (cachedProds) {
+              const parsed = JSON.parse(cachedProds)
+              if (Array.isArray(parsed)) {
+                const updated = parsed.map((p: any) => {
+                  const cartItem = panier.find((i) => i.produit?.id === p.id)
+                  if (cartItem && typeof p.stock === 'number') {
+                    return { ...p, stock: Math.max(0, p.stock - cartItem.quantite) }
+                  }
+                  return p
+                })
+                localStorage.setItem(`nopalou_pos_produits_${boutiqueActiveId}`, JSON.stringify(updated))
+              }
+            }
+          }
+        } catch (eStock) {
+          console.warn('[POS CHECKOUT] Erreur décrémentation stock local:', eStock)
+        }
       }
 
       const venteFinale = {

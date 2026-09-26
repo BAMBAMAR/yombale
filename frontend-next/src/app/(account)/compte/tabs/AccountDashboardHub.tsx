@@ -27,10 +27,11 @@ export default function AccountDashboardHub({
   const [annonces, setAnnonces] = useState<any[]>([])
   const [boutiques, setBoutiques] = useState<any[]>([])
   const [locations, setLocations] = useState<any[]>([])
+  const [agences, setAgences] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 1. Récupération des annonces depuis cache ou API
+    // 1. Récupération des annonces depuis cache
     const cacheAnnoncesKey = `nopalou_offline_annonces_${userId}`
     const cachedAnnonces = typeof window !== 'undefined' ? localStorage.getItem(cacheAnnoncesKey) : null
     if (cachedAnnonces) {
@@ -41,13 +42,33 @@ export default function AccountDashboardHub({
       }
     }
 
-    // 2. Récupération des boutiques depuis cache ou API
+    // 2. Récupération des boutiques depuis cache
     const cachedBoutiques = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_user_boutiques') : null
     if (cachedBoutiques) {
       try {
         setBoutiques(JSON.parse(cachedBoutiques))
       } catch (err) {
         console.warn('[Nopalou:AccountDashboardHub:cachedBoutiques]', err)
+      }
+    }
+
+    // 3. Récupération des locations depuis cache
+    const cachedLocations = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_mes_locations') : null
+    if (cachedLocations) {
+      try {
+        setLocations(JSON.parse(cachedLocations))
+      } catch (err) {
+        console.warn('[Nopalou:AccountDashboardHub:cachedLocations]', err)
+      }
+    }
+
+    // 4. Récupération des agences depuis cache
+    const cachedAgences = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_agences_mine') : null
+    if (cachedAgences) {
+      try {
+        setAgences(JSON.parse(cachedAgences))
+      } catch (err) {
+        console.warn('[Nopalou:AccountDashboardHub:cachedAgences]', err)
       }
     }
 
@@ -80,8 +101,20 @@ export default function AccountDashboardHub({
       fetch('/api/locatif-immo/mes-locations', { headers })
         .then(r => (r.ok ? r.json() : null))
         .then(d => {
-          if (d?.locations) {
+          if (Array.isArray(d?.locations)) {
             setLocations(d.locations)
+            localStorage.setItem('nopalou_offline_mes_locations', JSON.stringify(d.locations))
+          }
+        })
+        .catch(() => {}),
+
+      fetch('/api/agences/mine', { headers })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          const aList = d?.agences || (Array.isArray(d) ? d : [])
+          if (aList.length > 0) {
+            setAgences(aList)
+            localStorage.setItem('nopalou_offline_agences_mine', JSON.stringify(aList))
           }
         })
         .catch(() => {}),
@@ -187,6 +220,7 @@ export default function AccountDashboardHub({
         annonces={annonces}
         annoncesActives={annoncesActives}
         locations={locations}
+        agences={agences}
         onNavigateTab={onNavigateTab}
       />
 

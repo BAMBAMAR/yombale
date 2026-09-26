@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { listCommandes, updateStatutCommande } from '../../actions'
 import { fcfa } from '@/lib/format'
 import { useToast } from '@/context/ToastContext'
+import { sauvegarderClientsLocaux, obtenirClientsLocaux } from '@/lib/db-offline'
 import type { ClientCredit, TransactionCredit, ProduitBoutique, BoutiqueCarnetInfo } from '../types'
 
 interface UseCarnetClientsProps {
@@ -12,9 +13,39 @@ interface UseCarnetClientsProps {
 
 export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
   const { toast, confirmModal } = useToast()
-  const [clients, setClients] = useState<ClientCredit[]>([])
-  const [produits, setProduits] = useState<ProduitBoutique[]>([])
-  const [loading, setLoading] = useState(true)
+  const [clients, setClients] = useState<ClientCredit[]>(() => {
+    if (typeof window !== 'undefined' && boutique?.id) {
+      try {
+        const cached = localStorage.getItem(`nopalou_offline_clients_${boutique.id}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch (_) {}
+    }
+    return []
+  })
+  const [produits, setProduits] = useState<ProduitBoutique[]>(() => {
+    if (typeof window !== 'undefined' && boutique?.id) {
+      try {
+        const cached =
+          localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) ||
+          localStorage.getItem(`nopalou_offline_prods_${boutique.id}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch (_) {}
+    }
+    return []
+  })
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined' && boutique?.id) {
+      const cached = localStorage.getItem(`nopalou_offline_clients_${boutique.id}`)
+      if (cached) return false
+    }
+    return true
+  })
   const [recherche, setRecherche] = useState('')
   const [filtreStatus, setFiltreStatus] = useState<'tous' | 'retard' | 'credits'>('tous')
   const [clientSelectionne, setClientSelectionne] = useState<ClientCredit | null>(null)
@@ -24,12 +55,23 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
 
   const chargerDonnees = useCallback(async () => {
     if (!boutique?.id) return
-    setLoading(true)
     try {
       const resClients = await fetch(`/api/boutiques/${boutique.id}/credits-clients`)
       if (resClients.ok) {
         const dataC = await resClients.json()
-        if (dataC.clients) setClients(dataC.clients)
+        if (dataC.clients && Array.isArray(dataC.clients)) {
+          setClients(dataC.clients)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`nopalou_offline_clients_${boutique.id}`, JSON.stringify(dataC.clients))
+          }
+          sauvegarderClientsLocaux(dataC.clients, boutique.id, (boutique as any)?.user_id || 'owner').catch(() => {})
+        }
+      } else {
+        // Fallback local
+        const cached = localStorage.getItem(`nopalou_offline_clients_${boutique.id}`)
+        if (cached) {
+          try { setClients(JSON.parse(cached)) } catch (_) {}
+        }
       }
 
       const resProds = await fetch(`/api/boutiques/${boutique.id}/produits`)
@@ -37,6 +79,16 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
         const dataP = await resProds.json()
         const prodsList = dataP.produits || dataP.data || (Array.isArray(dataP) ? dataP : [])
         setProduits(prodsList)
+        if (typeof window !== 'undefined' && prodsList.length > 0) {
+          localStorage.setItem(`nopalou_pos_produits_${boutique.id}`, JSON.stringify(prodsList))
+        }
+      } else {
+        const cachedProds =
+          localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) ||
+          localStorage.getItem(`nopalou_offline_prods_${boutique.id}`)
+        if (cachedProds) {
+          try { setProduits(JSON.parse(cachedProds)) } catch (_) {}
+        }
       }
 
       try {
@@ -52,11 +104,25 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
         console.warn('[Nopalou:useCarnetClients:cmdCredit]', eCmd)
       }
     } catch (err) {
-      console.error('Erreur chargement carnet:', err)
+      console.warn('Erreur chargement carnet (mode hors-ligne):', err)
+      const cached = localStorage.getItem(`nopalou_offline_clients_${boutique.id}`)
+      if (cached) {
+        try { setClients(JSON.parse(cached)) } catch (_) {}
+      } else {
+        obtenirClientsLocaux(boutique.id, (boutique as any)?.user_id || 'owner')
+          .then((local) => { if (local && local.length > 0) setClients(local) })
+          .catch(() => {})
+      }
+      const cachedProds =
+        localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) ||
+        localStorage.getItem(`nopalou_offline_prods_${boutique.id}`)
+      if (cachedProds) {
+        try { setProduits(JSON.parse(cachedProds)) } catch (_) {}
+      }
     } finally {
       setLoading(false)
     }
-  }, [boutique?.id])
+  }, [boutique?.id, (boutique as any)?.user_id])
 
   useEffect(() => {
     if (boutique?.id) {

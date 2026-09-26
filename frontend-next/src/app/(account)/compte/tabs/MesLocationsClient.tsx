@@ -20,19 +20,34 @@ export default function MesLocationsClient() {
   const [paySuccessMsg, setPaySuccessMsg] = useState<string | null>(null)
 
   async function chargerLocations() {
+    // 1. Initialisation instantanée depuis le cache hors-ligne
+    const cached = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_mes_locations') : null
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLocations(parsed)
+          setLoading(false)
+        }
+      } catch (_) {}
+    }
+
     try {
-      setLoading(true)
+      if (!cached) setLoading(true)
       const res = await fetch('/api/locatif-immo/mes-locations', {
         headers: getImmoAuthHeaders(),
       })
       if (res.ok) {
         const data = await res.json()
-        if (data.success) {
-          setLocations(data.locations || [])
+        if (data.success && Array.isArray(data.locations)) {
+          setLocations(data.locations)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('nopalou_offline_mes_locations', JSON.stringify(data.locations))
+          }
         }
       }
     } catch (err) {
-      console.warn('[MesLocationsClient] Erreur chargement locations :', err)
+      console.warn('[MesLocationsClient] Erreur chargement locations (mode hors-ligne actif) :', err)
     } finally {
       setLoading(false)
     }

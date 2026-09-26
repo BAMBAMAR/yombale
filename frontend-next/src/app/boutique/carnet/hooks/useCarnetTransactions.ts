@@ -6,7 +6,8 @@ import { ajouterDetteHorsLigne } from '@/lib/db-offline'
 import type { ClientCredit } from '../types'
 
 interface UseCarnetTransactionsParams {
-  boutique: { id: string; nom: string }
+  boutique: { id: string; nom: string; utilisateur_id?: string; user_id?: string }
+  userId?: string
   clients: ClientCredit[]
   setClients: React.Dispatch<React.SetStateAction<ClientCredit[]>>
   clientSelectionne: ClientCredit | null
@@ -19,6 +20,7 @@ interface UseCarnetTransactionsParams {
 
 export function useCarnetTransactions({
   boutique,
+  userId,
   clients,
   setClients,
   clientSelectionne,
@@ -92,10 +94,11 @@ export function useCarnetTransactions({
       } catch (e) {
         console.warn('[Carnet Dettes] Mode Hors-Ligne:', e)
         try {
+          const effectiveUserId = userId || boutique.utilisateur_id || boutique.user_id || 'commercant'
           await ajouterDetteHorsLigne({
             id_temporaire: txIdempotency,
             boutique_id: boutique.id,
-            user_id: 'commercant',
+            user_id: effectiveUserId,
             client_id: params.client.id,
             type: params.type,
             montant: params.montant,

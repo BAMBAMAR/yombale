@@ -78,7 +78,19 @@ function CatalogueProduits({
     toggleSelectAll,
   } = useCatalogueProduitsData({ boutique, userId, filtreInitial })
 
-  if (!planActif && !boutique.is_trial) {
+  const effectivePlanResolved =
+    planActif ||
+    boutique.plan_actif ||
+    boutique.plan_souscrit ||
+    (typeof window !== 'undefined' ? localStorage.getItem('nopalou_plan_actif') : null)
+
+  const hasLocalProducts =
+    produits.length > 0 ||
+    (typeof window !== 'undefined' &&
+      (Boolean(localStorage.getItem(`nopalou_pos_produits_${boutique.id}`)) ||
+        Boolean(localStorage.getItem(`nopalou_offline_prods_${boutique.id}`))))
+
+  if (!effectivePlanResolved && !boutique.is_trial && !hasLocalProducts) {
     return <CataloguePlanGate prixPro={prixPro} />
   }
 

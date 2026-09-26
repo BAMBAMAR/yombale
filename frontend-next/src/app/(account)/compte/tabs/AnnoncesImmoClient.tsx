@@ -41,15 +41,15 @@ function getPropertyIcon(type: string | null) {
   return <Building2 size={32} color="#FFFFFF" opacity={0.85} />
 }
 
-export default function AnnoncesImmoClient({ created, updated }: { created?: boolean; updated?: boolean }) {
+export default function AnnoncesImmoClient({ created, updated, userId }: { created?: boolean; updated?: boolean; userId?: string }) {
   const [annonces, setAnnonces] = useState<AnnonceImmo[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(false)
   const { t } = useTranslation()
 
   useEffect(() => {
-    const cacheKey = 'nopalou_offline_immo_mine'
-    const cached = localStorage.getItem(cacheKey)
+    const cacheKey = userId ? `nopalou_offline_immo_mine_${userId}` : 'nopalou_offline_immo_mine'
+    const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null
     if (cached) {
       try {
         const parsed = JSON.parse(cached)

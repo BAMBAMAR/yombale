@@ -345,7 +345,10 @@ export default async function RootLayout({
                   + Publier
                 </a>
                 {session ? (
-                  <NavbarActions nom={session.nom?.trim() || session.email?.trim() || 'Mon compte'} />
+                  <NavbarActions
+                    nom={session.nom?.trim() || session.email?.trim() || 'Mon compte'}
+                    userId={session.userId || (session as any).id}
+                  />
                 ) : (
                   <>
                     <a href="/connexion" className="navbar-link">Connexion</a>

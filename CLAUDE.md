@@ -23,6 +23,32 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Stabilisation Intégrale du Mode Hors-Ligne & Moteur Universel de Préchargement Compte/Boutiques/Agences (26 septembre 2026)** 📶🛡️💾⚡✅ :
+  * **🎯 Contexte & Anomalies Utilisateur** :
+    - Lors de la coupure de la connexion Internet, l'interface bloquait l'accès au catalogue avec une fausse modale paywall *"Catalogue disponible en Boutique Pro — 5 000 FCFA/mois"* alors que le compte dispose d'un abonnement Business actif.
+    - Le tableau de bord de la boutique réinitialisait brutalement tous les compteurs et indicateurs à 0 (0 FCFA CA, 0 commandes, 0 alertes stock, 0 art. catalogue).
+    - Les onglets Catalogue, Commandes, Carnet de dettes, Bilan compta et Agences immobilières restaient bloqués sur des spinners ou des listes vides en attendant l'expiration de timeouts réseau.
+  * **🛠️ Solutions Techniques & Correctifs Appliqués** :
+    1. **Suppression de l'Éviction Destructive du Plan Actif (`BoutiqueClient.tsx`, `useBoutiqueManageNav.ts`, `CatalogueProduits.tsx`)** :
+       - Élimination de `localStorage.removeItem('nopalou_plan_actif')` qui écrasait le plan souscrit dès qu'une requête échouait sans réseau.
+       - Résolution en cascade résiliente : `planActif || boutique.plan_actif || boutique.plan_souscrit || cachedPlan`.
+       - Règle de protection du catalogue : si des produits existent déjà en cache local (`hasLocalProducts`), aucun paywall ne peut bloquer le commerçant.
+    2. **Anti-Écrasement à Zéro des Statistiques (`useBoutiqueDashboardStats.ts`)** :
+       - Suppression du comportement qui réécrivait `{ count: 0, alerts: 0, ca: 0, dettes: 0 }` en cache quand les requêtes réseau étaient rejetées (`hasNewData` guard).
+       - Restauration synchrone frame 0 depuis le cache existant et calcul de secours autonome à partir des produits locaux (`nopalou_pos_produits_${boutiqueId}`) et clients locaux (`nopalou_offline_clients_${boutiqueId}`).
+    3. **Affichage Synchrone Immédiat Frame 0 (Zéro Écran Blanc / Zéro Spinner Gelé)** :
+       - Initialisation synchrone directe depuis le cache local (localStorage & IndexedDB) dans `useCatalogueProduitsData.ts`, `useCommandesData.ts`, `useCarnetClients.ts`, `ComptaBilanView.tsx`.
+       - Prise en charge hors-ligne immédiate des agences immobilières dans `agence/[slug]/layout.tsx`, `agence/[slug]/page.tsx` et `agence/page.tsx` via `nopalou_offline_agence_${slug}` et `nopalou_offline_agences_mine`.
+    4. **Moteur Universel de Préchargement (`CompteClient.tsx` & `useBoutiqueOfflinePreloader.ts`)** :
+       - Dès la connexion ou l'accès au hub `/compte`, préchargement exhaustif et silencieux en arrière-plan : plan d'abonnement, métriques globales, catalogue produits et stocks de chaque boutique, clients et dettes, commandes et ventes récentes, bilan comptable et dépenses, agences immobilières et quotas.
+    5. **Résilience Caisse & Authentification Hors-Ligne (`usePosAuthLock.ts`, `PosSessionModals.tsx`, `credits.js`)** :
+       - Rétablissement du fallback d'authentification caisse sur les codes PIN enregistrés localement en cas de perte de connectivité.
+       - Validation stricte des écritures de crédits/dettes côté backend.
+  * **🧪 Validation & Déploiement** :
+    - Build de production `npm run build` dans `frontend-next` complété avec succès (code de retour 0, Service Worker serwist généré).
+    - Validation qualité `npm run lint:slop` conforme aux 5 règles d'or Nopalou.
+    - Serveur backend et frontend testés avec succès (HTTP 200).
+
 - **Remédiation Exhaustive des Anomalies Critiques & Majeures de l'Audit Forensique de Sécurité (26 septembre 2026)** 🛡️🔐💳⚡✅ :
   * **🎯 Contexte** : Suite à un audit forensique en exécution réelle (base isolée `nopalou_qa`, 92 tests T-001→T-131, 40 anomalies confirmées, zéro écriture production), correction intégrale des failles critiques et majeures selon l'ordre de priorité validé par l'utilisateur.
   * **🔴 T-067/070/071 — Crash 500 sur mise à jour de statut de commande (`backend/routes/comptabilite.js`)** :

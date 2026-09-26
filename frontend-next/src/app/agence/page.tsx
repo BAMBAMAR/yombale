@@ -26,9 +26,34 @@ interface QuotaData {
 
 export default function AgencesHubPage() {
   const router = useRouter()
-  const [agences, setAgences] = useState<AgenceItem[]>([])
-  const [quotas, setQuotas] = useState<QuotaData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [agences, setAgences] = useState<AgenceItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('nopalou_offline_agences_mine')
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch (_) {}
+    }
+    return []
+  })
+  const [quotas, setQuotas] = useState<QuotaData | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('nopalou_offline_agences_quotas')
+        if (cached) return JSON.parse(cached)
+      } catch (_) {}
+    }
+    return null
+  })
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('nopalou_offline_agences_mine')
+      if (cached) return false
+    }
+    return true
+  })
   const [isUnauthenticated, setIsUnauthenticated] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [showMultiModal, setShowMultiModal] = useState(false)
@@ -45,23 +70,51 @@ export default function AgencesHubPage() {
   })
 
   async function chargerAgences() {
+    // 1. Initialisation instantanée depuis le cache local hors-ligne
+    const cachedAgences = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_agences_mine') : null
+    let hasCache = false
+    if (cachedAgences) {
+      try {
+        const parsed = JSON.parse(cachedAgences)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAgences(parsed)
+          hasCache = true
+          setLoading(false)
+        }
+      } catch (_) {}
+    }
+    const cachedQuotas = typeof window !== 'undefined' ? localStorage.getItem('nopalou_offline_agences_quotas') : null
+    if (cachedQuotas) {
+      try {
+        setQuotas(JSON.parse(cachedQuotas))
+      } catch (_) {}
+    }
+
     try {
-      setLoading(true)
+      if (!hasCache) setLoading(true)
       const headers = getImmoAuthHeaders()
       const res = await fetch('/api/agences/mine', {
         headers,
       })
       if (res.status === 401) {
-        setIsUnauthenticated(true)
-        setLoading(false)
+        if (!hasCache) {
+          setIsUnauthenticated(true)
+          setLoading(false)
+        }
         return
       }
       const data = await res.json()
       if (data.success) {
         const agencesList = data.agences || []
         setAgences(agencesList)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('nopalou_offline_agences_mine', JSON.stringify(agencesList))
+        }
         if (data.quotas) {
           setQuotas(data.quotas)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('nopalou_offline_agences_quotas', JSON.stringify(data.quotas))
+          }
         }
         // Si l'utilisateur possède une agence unique, redirection fluide directe vers son dashboard
         if (agencesList.length === 1 && typeof window !== 'undefined' && !window.location.search.includes('hub=true')) {
@@ -70,7 +123,7 @@ export default function AgencesHubPage() {
         }
       }
     } catch (err) {
-      console.error('[CHARGER_AGENCES_ERR]', err)
+      console.warn('[CHARGER_AGENCES_ERR] (mode hors-ligne)', err)
     } finally {
       setLoading(false)
     }
