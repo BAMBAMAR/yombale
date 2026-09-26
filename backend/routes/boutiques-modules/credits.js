@@ -333,7 +333,9 @@ router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (
 
     const { type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp, idempotency_key } = req.body;
     const numMontant = Number(montant);
-    if (!type || !numMontant || numMontant <= 0) {
+    // T-094 : liste blanche stricte des types (évite les lignes d'historique fantômes avec delta 0).
+    const TYPES_TRANSACTION_VALIDES = ['vente_credit', 'remboursement', 'depot_avance'];
+    if (!type || !TYPES_TRANSACTION_VALIDES.includes(type) || !numMontant || numMontant <= 0) {
       return res.status(400).json({ error: 'Type de transaction et montant valide (> 0) requis' });
     }
 
@@ -370,11 +372,19 @@ router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (
         deltaSolde = -numMontant;
       }
 
-      const nouveauSolde = Number(c.rows[0].solde) + deltaSolde;
+      const soldeCourant = Number(c.rows[0].solde);
+      const nouveauSolde = soldeCourant + deltaSolde;
 
       if (type === 'vente_credit' && nouveauSolde > Number(c.rows[0].plafond_max)) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: `Plafond de crédit dépassé (${c.rows[0].plafond_max} FCFA max)` });
+      }
+
+      // T-095/098 : un remboursement ne peut pas dépasser la dette due (borne solde ≥ 0).
+      // Un versement d'avance client (depot_avance) peut, lui, créer un solde négatif légitime.
+      if (type === 'remboursement' && numMontant > soldeCourant) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `Le remboursement (${new Intl.NumberFormat('fr-FR').format(numMontant)} FCFA) dépasse la dette due (${new Intl.NumberFormat('fr-FR').format(soldeCourant)} FCFA). Utilisez « dépôt / avance » pour un trop-perçu.` });
       }
 
       await client.query('UPDATE caisse_clients_credits SET solde=$1 WHERE id=$2', [nouveauSolde, clientId]);

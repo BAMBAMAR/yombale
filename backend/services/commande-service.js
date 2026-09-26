@@ -174,6 +174,23 @@ async function creerCommandeBoutique({
     }];
   }
 
+  // T-064 : imposition du prix catalogue côté serveur (anti-falsification de prix).
+  // Pour tout article rattaché à un produit réel du catalogue, on écrase le prix
+  // envoyé par le client par le prix officiel enregistré en base.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  for (const it of normalizedItems) {
+    if (it.produit_id && UUID_RE.test(String(it.produit_id))) {
+      const { rows: [p] } = await pool.query(
+        'SELECT nom, prix FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
+        [it.produit_id, actualBoutiqueId]
+      ).catch(() => ({ rows: [] }));
+      if (p && p.prix != null) {
+        it.prix_unitaire = Number(p.prix);
+        if (!it.nom_produit || it.nom_produit === 'Produit') it.nom_produit = p.nom;
+      }
+    }
+  }
+
   // Vérification si le client est blacklisté pour les achats à crédit
   if (methodePaiement === 'credit') {
     const cleanTel = String(clientTelephone || '').replace(/\D/g, '');
@@ -200,7 +217,35 @@ async function creerCommandeBoutique({
 
   const sousTotal = normalizedItems.reduce((acc, it) => acc + (it.prix_unitaire * it.quantite), 0);
   const totalQuantite = normalizedItems.reduce((acc, it) => acc + it.quantite, 0);
-  const reductionVal = Math.max(0, Number(montantReduction) || 0);
+
+  // T-065 : la réduction n'est JAMAIS celle envoyée par le client. Elle est recalculée
+  // côté serveur après validation stricte du code promo (existence, actif, date, quota, min achat).
+  let reductionVal = 0;
+  let promoValidee = null;
+  if (codePromo && String(codePromo).trim()) {
+    const codeUp = String(codePromo).trim().toUpperCase();
+    const { rows: [promo] } = await pool.query(
+      `SELECT * FROM boutique_promotions WHERE boutique_id = $1 AND UPPER(code) = $2 AND actif = true`,
+      [actualBoutiqueId, codeUp]
+    ).catch(() => ({ rows: [] }));
+    if (promo) {
+      const expiree = promo.fin && new Date(promo.fin) < new Date();
+      const quotaAtteint = promo.limite_utilisation !== null && promo.limite_utilisation !== undefined && Number(promo.fois_utilise || 0) >= Number(promo.limite_utilisation);
+      const minAchatOk = !promo.min_achat || sousTotal >= Number(promo.min_achat);
+      if (!expiree && !quotaAtteint && minAchatOk) {
+        if (promo.type_remise === 'pourcentage') {
+          reductionVal = Math.round((sousTotal * Number(promo.valeur)) / 100);
+        } else if (promo.type_remise === 'fixe') {
+          reductionVal = Math.min(sousTotal, Number(promo.valeur));
+        } else if (promo.type_remise === 'livraison_offerte') {
+          reductionVal = Math.min(fraisLivraison, Number(promo.valeur) || fraisLivraison);
+        }
+        reductionVal = Math.max(0, Math.round(reductionVal));
+        if (reductionVal > 0) promoValidee = promo;
+      }
+    }
+  }
+
   const montantTotal = Math.max(0, sousTotal + fraisLivraison - reductionVal);
   const nomProduitGlobal = normalizedItems.map(it => `${it.quantite}x ${it.nom_produit}${it.details_variante ? ` (${it.details_variante})` : ''}`).join(', ');
   const ref = genRefCommande();
@@ -211,16 +256,16 @@ async function creerCommandeBoutique({
     const echelonNote = `[Échelonnement: Apport ${apportFmt}, ${formuleEchelonnement.nb_echeances || 3}x (${formuleEchelonnement.frequence || 'mensuel'})]`;
     finalNote = finalNote ? `${finalNote} | ${echelonNote}` : echelonNote;
   }
-  if (codePromo && String(codePromo).trim()) {
-    const promoNote = `[Code Promo: ${String(codePromo).trim().toUpperCase()}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
+  // T-065 : la note et l'incrément du compteur ne s'appliquent que si le code promo
+  // a été réellement validé et a produit une réduction côté serveur.
+  if (promoValidee) {
+    const promoNote = `[Code Promo: ${String(promoValidee.code).toUpperCase()} (-${reductionVal} FCFA)]`;
     finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
 
-    // Incrémentation du compteur d'utilisation
+    // Incrémentation du compteur d'utilisation (par id de la promo validée)
     await pool.query(
-      `UPDATE boutique_promotions 
-       SET fois_utilise = fois_utilise + 1 
-       WHERE boutique_id = $1 AND UPPER(code) = $2`,
-      [actualBoutiqueId, String(codePromo).trim().toUpperCase()]
+      `UPDATE boutique_promotions SET fois_utilise = fois_utilise + 1 WHERE id = $1`,
+      [promoValidee.id]
     ).catch(() => {});
   }
 

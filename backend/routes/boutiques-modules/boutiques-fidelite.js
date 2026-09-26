@@ -42,7 +42,7 @@ router.get('/:id/fidelite/rechercher', tokenOptional, async (req, res) => {
     }
     if (!accessGranted) {
       const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
-      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+      if (tokenToTest && boutique.caisse_token && boutique.caisse_token === tokenToTest) {
         accessGranted = true;
       }
     }
@@ -111,7 +111,7 @@ router.post('/:id/fidelite/enroler', tokenOptional, async (req, res) => {
     }
     if (!accessGranted) {
       const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
-      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+      if (tokenToTest && boutique.caisse_token && boutique.caisse_token === tokenToTest) {
         accessGranted = true;
       }
     }
@@ -185,7 +185,7 @@ router.post('/:id/avoirs/creer', tokenOptional, async (req, res) => {
     }
     if (!accessGranted) {
       const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
-      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+      if (tokenToTest && boutique.caisse_token && boutique.caisse_token === tokenToTest) {
         accessGranted = true;
       }
     }

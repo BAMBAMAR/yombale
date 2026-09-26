@@ -200,6 +200,11 @@ router.post('/public/lead', limiterEcriture, async (req, res) => {
       else cibleAgenceId = null;
     }
 
+    // T-100 : déclarations hissées AVANT la branche orpheline (étaient déclarées après,
+    // provoquant une ReferenceError zone morte temporelle → 500 et perte du lead).
+    const cleanTel = String(contactTel || '').replace(/\D/g, '');
+    const cleanNom = String(nom || (cleanTel ? `Prospect ${cleanTel.slice(-4)}` : 'Prospect Web')).trim();
+
     if (!cibleAgenceId) {
       // 1. Repli sur la première agence active enregistrée
       const { rows: defaultAg } = await pool.query(
@@ -226,9 +231,6 @@ router.post('/public/lead', limiterEcriture, async (req, res) => {
         return res.json({ success: true, message: 'Votre demande a bien été transmise à nos conseillers immobiliers.' });
       }
     }
-
-    const cleanTel = String(contactTel || '').replace(/\D/g, '');
-    const cleanNom = String(nom || (cleanTel ? `Prospect ${cleanTel.slice(-4)}` : 'Prospect Web')).trim();
 
     // Vérifier si ce contact existe déjà dans l'agence (déduplication par téléphone)
     let contactId = null;

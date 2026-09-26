@@ -430,7 +430,7 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
       if (clientRef) {
         // Idempotence : vérifier si le paiement a déjà été validé
         const existingCheck = await pool.query(
-          `SELECT paiement_recu FROM commandes_boutique WHERE reference = $1`,
+          `SELECT paiement_recu, montant_total FROM commandes_boutique WHERE reference = $1`,
           [clientRef]
         ).catch(() => ({ rows: [] }));
         const alreadyPaid = existingCheck.rows[0]?.paiement_recu === true;
@@ -438,6 +438,28 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
         if (alreadyPaid) {
           console.log(`[WAVE WEBHOOK] ℹ️ Commande ${clientRef} déjà validée (événement idempotent, notification doublon évitée)`);
           return res.sendStatus(200);
+        }
+
+        // T-120 : Validation stricte du montant encaissé vs montant attendu.
+        // On ne marque JAMAIS payé si Wave notifie un montant différent de la commande.
+        const commandeConnue = existingCheck.rows[0];
+        if (commandeConnue && commandeConnue.montant_total != null) {
+          const montantWave = Math.round(Number(data?.amount));
+          const montantAttendu = Math.round(Number(commandeConnue.montant_total));
+          if (!Number.isFinite(montantWave) || montantWave !== montantAttendu) {
+            console.error(`[WAVE WEBHOOK] 🚨 FRAUDE MONTANT — Réf ${clientRef} : reçu ${data?.amount} XOF, attendu ${montantAttendu} XOF. Paiement NON validé.`);
+            try {
+              const { alerterAdmin } = require('../services/admin-alerts');
+              alerterAdmin({
+                type: 'webhook_wave_montant_incoherent',
+                priorite: 'CRITIQUE',
+                titre: 'Montant Wave incohérent (fraude possible)',
+                message: `Commande ${clientRef} : montant Wave ${data?.amount} XOF ≠ montant attendu ${montantAttendu} XOF.`,
+              }).catch(() => {});
+            } catch (_) { /* admin-alerts optionnel */ }
+            // 200 pour stopper les retries Wave, mais commande laissée impayée pour revue manuelle.
+            return res.sendStatus(200);
+          }
         }
 
         const cmdRes = await pool.query(

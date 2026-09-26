@@ -1438,7 +1438,10 @@ module.exports = async function migrateInline(customConnStr = null) {
 
       -- Caisse POS Terminal Token & Audit Log
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS caisse_token VARCHAR(100);
-      UPDATE boutiques SET caisse_token = uuid_generate_v4()::text WHERE caisse_token IS NULL;
+      -- T-080 : régénère un jeton dédié pour toute boutique sans jeton OU dont le jeton
+      -- vaut l'UUID/slug public (sinon l'identifiant public suffirait à ouvrir la caisse).
+      UPDATE boutiques SET caisse_token = uuid_generate_v4()::text
+        WHERE caisse_token IS NULL OR caisse_token = id::text OR caisse_token = slug;
 
       -- Colonnes comptabilité & performances caissiers
       ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_achat NUMERIC(12,2) DEFAULT NULL;

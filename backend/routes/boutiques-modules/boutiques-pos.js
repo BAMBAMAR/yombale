@@ -103,7 +103,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     }
     if (!accessGranted) {
       const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
-      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+      if (tokenToTest && boutique.caisse_token && boutique.caisse_token === tokenToTest) {
         accessGranted = true;
       }
     }
@@ -166,7 +166,23 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     }
 
     const refVente = idempotencyKey || `POS-${Date.now().toString().slice(-6)}`;
-    
+
+    // T-082/064 : imposer le prix catalogue serveur pour tout article référencé.
+    // L'accès par jeton permettait d'envoyer un prix client falsifié (ex: "1").
+    // Les articles libres/hors-catalogue (sans id UUID valide) conservent leur prix saisi.
+    for (const it of saleItems) {
+      const itemId = it.id || it.produit_id;
+      if (itemId && /^[0-9a-f-]{36}$/i.test(String(itemId))) {
+        const pRes = await pool.query(
+          'SELECT prix FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
+          [itemId, boutiqueId]
+        );
+        if (pRes.rows[0] && pRes.rows[0].prix != null) {
+          it.prix = Number(pRes.rows[0].prix);
+        }
+      }
+    }
+
     // Calcul fiscalité globale
     const calculation = calculerFiscaliteDocument(boutique, client, saleItems);
 
@@ -500,7 +516,7 @@ router.post('/:id/pos-incident', tokenOptional, async (req, res) => {
     }
     if (!accessGranted) {
       const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
-      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+      if (tokenToTest && boutique.caisse_token && boutique.caisse_token === tokenToTest) {
         accessGranted = true;
       }
     }
@@ -551,7 +567,7 @@ router.get('/:id/pos-historique', tokenOptional, param('id').isUUID(), async (re
     }
     if (!accessGranted) {
       const tokenToTest = req.headers['x-terminal-token'] || req.query.terminal_token || req.query.token;
-      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+      if (tokenToTest && boutique.caisse_token && boutique.caisse_token === tokenToTest) {
         accessGranted = true;
       }
     }
@@ -997,7 +1013,7 @@ router.post('/:id/pos-sessions/rapport-x/log', tokenOptional, async (req, res) =
     }
     if (!accessGranted) {
       const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
-      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+      if (tokenToTest && boutique.caisse_token && boutique.caisse_token === tokenToTest) {
         accessGranted = true;
       }
     }
@@ -1088,9 +1104,11 @@ router.get('/caisse-terminal/:token', async (req, res) => {
     const { token } = req.params;
     if (!token) return res.status(400).json({ error: 'Jeton requis' });
 
+    // T-080/110 : le terminal ne s'amorce QUE via le jeton de caisse dédié (caisse_token),
+    // jamais via l'UUID public ni le slug de la boutique (tous deux exposés publiquement).
     const bRes = await pool.query(
       `SELECT id, nom, logo_url, telephone, adresse, ville, caisse_token, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut, COALESCE(actif, true) AS actif
-       FROM boutiques WHERE COALESCE(caisse_token, id::text) = $1 OR id::text = $1 OR slug = $1`,
+       FROM boutiques WHERE caisse_token = $1`,
       [token]
     );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Terminal caisse introuvable' });

@@ -1233,10 +1233,12 @@ router.patch(
       }
 
       // Notifier le client du changement de statut sur WhatsApp avec garantie 24H Meta
+      // T-067/070/071 : montantFmt hissé au niveau du handler (était scopé au bloc client_telephone,
+      // mais référencé plus bas dans le bloc vendeur → ReferenceError → 500 après mutation).
+      const montantFmt = new Intl.NumberFormat('fr-FR').format(commande.montant_total);
       if (commande.client_telephone) {
         const { sendWhatsAppNotification } = require('../services/whatsapp');
         const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
-        const montantFmt = new Intl.NumberFormat('fr-FR').format(commande.montant_total);
         let wavePayUrl = `${SITE}/checkout-express?produit=${commande.produit_id || ''}&boutique=${commande.boutique_id}&phone=${commande.client_telephone}&pay=wave&auto=1`;
 
         let msgConfirmee;

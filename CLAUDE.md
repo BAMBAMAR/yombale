@@ -23,6 +23,33 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Remédiation Exhaustive des Anomalies Critiques & Majeures de l'Audit Forensique de Sécurité (26 septembre 2026)** 🛡️🔐💳⚡✅ :
+  * **🎯 Contexte** : Suite à un audit forensique en exécution réelle (base isolée `nopalou_qa`, 92 tests T-001→T-131, 40 anomalies confirmées, zéro écriture production), correction intégrale des failles critiques et majeures selon l'ordre de priorité validé par l'utilisateur.
+  * **🔴 T-067/070/071 — Crash 500 sur mise à jour de statut de commande (`backend/routes/comptabilite.js`)** :
+    - Cause racine : `montantFmt` était déclaré dans le bloc `if (commande.client_telephone)` mais référencé plus bas dans le bloc `if (vendeurMobile)`, provoquant un `ReferenceError` → HTTP 500 à chaque notification vendeur.
+    - Correctif : hissage de `const montantFmt = new Intl.NumberFormat('fr-FR').format(...)` au niveau du handler, avant les deux blocs de notification.
+  * **🔴 T-120 — Absence de validation du montant encaissé sur le Webhook Wave (`backend/routes/paiement.js`)** :
+    - Cause racine : le webhook `/wave/webhook` marquait `paiement_recu = true` sans jamais comparer `data.amount` au `montant_total` réel de la commande (risque de fraude par sous-paiement).
+    - Correctif : extension du `SELECT` d'idempotence pour récupérer `montant_total`, puis comparaison stricte `Math.round(data.amount) === Math.round(montant_total)`. En cas d'incohérence : alerte administrateur `CRITIQUE` (`alerterAdmin`), commande laissée impayée pour revue manuelle, et retour HTTP 200 pour stopper les retries Wave.
+  * **🔴 T-080/082/110/111 — Fuite du jeton de caisse (`caisse_token`) via l'endpoint public & sécurisation multi-tenant POS** :
+    - `backend/migrate-inline.js` : backfill étendu attribuant un `uuid_generate_v4()` réel et distinct à toute boutique dont `caisse_token` était `NULL`, égal à l'`id` ou au `slug`.
+    - `backend/routes/boutiques-modules/boutiques-crud.js` : retrait de `caisse_token` de l'endpoint PUBLIC `GET /:id` (conservé uniquement dans `GET /mine` authentifié).
+    - `backend/routes/boutiques-modules/boutiques-pos.js` & `boutiques-fidelite.js` : durcissement des contrôles d'accès terminal (`boutique.caisse_token && boutique.caisse_token === tokenToTest`, plus jamais `boutique.id === tokenToTest`) et restriction de `/caisse-terminal/:token` à `WHERE caisse_token = $1`.
+    - `frontend-next/src/app/boutique/BoutiqueCaissiers.tsx` : récupération du `caisse_token` depuis `/api/boutiques/mine` (authentifié) au lieu de l'endpoint public désormais assaini.
+  * **🔴 T-011/012/013 — Jetons non-session acceptés comme session valide (`backend/middlewares/auth.js`)** :
+    - Cause racine : les JWT de type `verify`, `reset`, `2fa_pending` et `magic` étaient acceptés par `verifierToken`/`tokenOptional` comme des sessions complètes.
+    - Correctif : ensemble `TYPES_JETON_NON_SESSION` rejeté avec HTTP 401 dans `verifierToken` et ignoré dans `tokenOptional`.
+  * **🟠 T-064/065 — Falsification de prix et de réduction promo à la commande (`backend/services/commande-service.js`)** :
+    - T-064 : imposition systématique du prix catalogue côté serveur pour tout article `items[]` rattaché à un produit réel (écrasement du `prix_unitaire` envoyé par le client via `SELECT prix FROM boutique_produits`).
+    - T-065 : recalcul intégral de la réduction promo côté serveur (validation existence/actif/expiration/quota/min-achat sur `boutique_promotions`) au lieu de faire confiance au `montantReduction` client ; incrément du compteur `fois_utilise` uniquement si la promo est réellement validée.
+  * **🟠 T-094/095/098 — Remboursement créant un solde négatif (`backend/routes/boutiques-modules/credits.js`)** :
+    - Validation stricte des types de transaction (`vente_credit`, `remboursement`, `depot_avance`) et rejet HTTP 400 d'un remboursement dépassant la dette due sur `/transaction` ; les endpoints dédiés `/encaisser` et `/solder-anticipe` bornaient déjà le solde à ≥ 0 (`Math.max(0, ...)`).
+  * **🟠 T-100 — Perte de lead CRM immo orphelin (`backend/routes/crm-immo.js`)** :
+    - Normalisation défensive de `cleanTel`/`cleanNom` avant la branche d'agence cible pour éviter la perte de prospects web sans agence assignée.
+  * **🟠 T-040/042 — Fuite de PII agent sur endpoints publics immo (`backend/routes/immo.js`)** :
+    - Retrait de `agent_telephone`/`agent_email` des requêtes SELECT publiques et des objets `agent` retournés (conservation id/nom uniquement).
+  * **🧪 Validation** : `node -c` sur les 11 fichiers backend modifiés (**0 erreur**), `npx tsc --noEmit` frontend (**0 erreur**). Aucun `git push` exécuté (conformément à la règle stricte, en attente d'ordre explicite).
+
 - **Correction CSS & Ergonomie Cartes Télécom & Immo : Résolution du Chevauchement des Boutons d'Action (⚖/🤍), Isolation des Liens HTML5 et Refonte Anti-Slop des Assistants (25 septembre 2026)** 📱🏠🎨⚡✅ :
   * **🎯 Problèmes Signalés par l'Utilisateur (Captures Écran)** :
     1. **Page `/immo`** : La modale « Trouver mon bien » s'affichait brute et sans aucun style (boutons biseautés HTML natifs, étiquettes de budget collées sans espace `0500 000 FCFA1 000 000 FCFA`, boutons radio déformés, et émojis Unicode `🏘`, `🤝`, `🛏`, `🌿`, `😕`).

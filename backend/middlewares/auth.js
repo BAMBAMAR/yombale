@@ -2,6 +2,11 @@ const jwt    = require('jsonwebtoken');
 const crypto = require('crypto');
 const { pool } = require('../models/db');
 
+// T-011/012/013 : jetons à usage unique (lien e-mail, reset, 2FA en attente, lien magique)
+// qui ne doivent JAMAIS servir de jeton de session pour lire/muter des ressources.
+// Les vraies sessions sont signées { userId } sans champ `type`.
+const TYPES_JETON_NON_SESSION = new Set(['verify', 'reset', '2fa_pending', 'magic']);
+
 function secretsMatch(a, b) {
   const bufA = Buffer.from(String(a || ''));
   const bufB = Buffer.from(String(b || ''));
@@ -32,7 +37,11 @@ function verifierToken(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Token manquant' });
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded && TYPES_JETON_NON_SESSION.has(decoded.type)) {
+      return res.status(401).json({ error: 'Ce jeton ne peut pas être utilisé comme session' });
+    }
+    req.user = decoded;
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError')
@@ -60,7 +69,10 @@ function tokenOptional(req, res, next) {
   }
 
   if (token) {
-    try { req.user = jwt.verify(token, process.env.JWT_SECRET); } catch {}
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (!(decoded && TYPES_JETON_NON_SESSION.has(decoded.type))) req.user = decoded;
+    } catch {}
   }
   next();
 }

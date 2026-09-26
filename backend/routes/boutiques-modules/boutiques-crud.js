@@ -493,7 +493,6 @@ router.get('/:id', async (req, res) => {
               COALESCE(b.fidelite_taux_cashback, 3.00) AS fidelite_taux_cashback,
               COALESCE(b.fidelite_tampons_max, 10) AS fidelite_tampons_max,
               COALESCE(b.fidelite_seuil_tampon, 2000) AS fidelite_seuil_tampon,
-              COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               COALESCE(a.plan, b.plan_actif, 'pro') AS plan_actif
        FROM boutiques b
        LEFT JOIN LATERAL (

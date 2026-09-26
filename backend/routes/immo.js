@@ -358,9 +358,7 @@ router.get('/:id', async (req, res) => {
               ag.numero_agrement AS agence_numero_agrement,
               (ag.sponsorise = true AND ag.sponsor_jusqu_au > NOW()) AS agence_sponsorisee,
               u.id AS agent_id,
-              u.nom AS agent_nom,
-              u.telephone AS agent_telephone,
-              u.email AS agent_email
+              u.nom AS agent_nom
        FROM annonces_immo ai
        LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
        LEFT JOIN biens_immo b ON ai.bien_id = b.id
@@ -387,9 +385,7 @@ router.get('/:id', async (req, res) => {
                 ag.numero_agrement AS agence_numero_agrement,
                 (ag.sponsorise = true AND ag.sponsor_jusqu_au > NOW()) AS agence_sponsorisee,
                 u.id AS agent_id,
-                u.nom AS agent_nom,
-                u.telephone AS agent_telephone,
-                u.email AS agent_email
+                u.nom AS agent_nom
          FROM biens_immo b
          LEFT JOIN agences_immo ag ON b.agence_id = ag.id
          LEFT JOIN utilisateurs u ON b.agent_id = u.id
@@ -414,11 +410,10 @@ router.get('/:id', async (req, res) => {
           numero_agrement: b.agence_numero_agrement,
           sponsorise: !!b.agence_sponsorisee
         } : null;
+        // T-040/042 : e-mail/téléphone du compte déposant NON exposés publiquement.
         const agent = b.agent_id ? {
           id: b.agent_id,
-          nom: b.agent_nom,
-          telephone: b.agent_telephone,
-          email: b.agent_email
+          nom: b.agent_nom
         } : null;
         const photos = Array.isArray(b.photos) ? b.photos : (b.photos ? [b.photos] : []);
         const videos = Array.isArray(b.videos) ? b.videos : [];
@@ -451,11 +446,10 @@ router.get('/:id', async (req, res) => {
       sponsorise: !!row.agence_sponsorisee
     } : null;
 
+    // T-040/042 : e-mail/téléphone du compte déposant NON exposés publiquement.
     const agent = row.agent_id ? {
       id: row.agent_id,
-      nom: row.agent_nom,
-      telephone: row.agent_telephone,
-      email: row.agent_email
+      nom: row.agent_nom
     } : null;
 
     const photos = (Array.isArray(row.photos) && row.photos.length > 0)

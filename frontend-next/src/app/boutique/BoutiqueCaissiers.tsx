@@ -80,13 +80,16 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
 
   useEffect(() => {
     if (!boutiqueId) return
-    fetch(`/api/boutiques/${boutiqueId}`)
+    // T-080 : le caisse_token n'est plus exposé par l'endpoint public /:id.
+    // On le récupère depuis /mine (authentifié, réservé au propriétaire).
+    fetch('/api/boutiques/mine')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        const token = data?.caisse_token || data?.boutique?.caisse_token || boutiqueId
-        setCaisseToken(token)
+        const list = Array.isArray(data) ? data : (data?.boutiques || [])
+        const bq = list.find((b: any) => String(b.id) === String(boutiqueId))
+        if (bq?.caisse_token) setCaisseToken(bq.caisse_token)
       })
-      .catch(() => setCaisseToken(boutiqueId))
+      .catch(() => {})
   }, [boutiqueId])
 
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
