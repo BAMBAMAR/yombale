@@ -23,6 +23,18 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction et Optimisation du Défilement Galerie Produit (`GalerieClient.tsx`) (26 septembre 2026)** 🖼️⚡🖱️📱✅ :
+  * **🎯 Contexte & Anomalie Utilisateur** :
+    - Sur la fiche produit publique (`/boutiques/:id/produits/:produitId`), le défilement des photos avec les flèches était inopérant ou bloqué.
+  * **🛠️ Solutions Techniques & Correctifs Appliqués** :
+    1. **Support Clavier Natif (`ArrowLeft` / `ArrowRight`)** : Ajout d'un écouteur d'événements `keydown` permettant de faire défiler les photos directement avec les touches fléchées gauche et droite du clavier sur ordinateur/portable.
+    2. **Refonte des Boutons Flèches & Fiabilisation des Clics** :
+       - Remplacement des caractères texte Unicode (`‹` et `›`) par les icônes SVG vectorielles `ChevronLeft` et `ChevronRight` de `lucide-react` calibrées (taille 20, épaisseur 2.5) dans un cercle tactile agrandi (42px × 42px) avec fond flouté (`backdropFilter: 'blur(4px)'`).
+       - Ajout explicite de `type="button"`, `e.preventDefault()` et `e.stopPropagation()` sur les boutons pour éliminer tout conflit de propagation d'événement.
+       - Passage du conteneur en `aspectRatio: '1 / 1'` moderne au lieu de `paddingTop: '100%'` (hauteur 0px), rétablissant un hit-testing fiable sur tous les navigateurs.
+       - Désactivation du drag natif de l'image centrale via `pointerEvents: 'none'` et `draggable={false}` pour empêcher le glisser-déposer fantôme du navigateur d'intercepter les clics sur les boutons.
+    3. **Support du Défilement Tactile (Swipe Mobile)** : Prise en charge des gestes tactiles (`onTouchStart`, `onTouchMove`, `onTouchEnd`) avec seuil de détection pour faire défiler les photos du bout des doigts sur smartphone et tablette.
+
 - **Stabilisation Intégrale du Mode Hors-Ligne & Moteur Universel de Préchargement Compte/Boutiques/Agences (26 septembre 2026)** 📶🛡️💾⚡✅ :
   * **🎯 Contexte & Anomalies Utilisateur** :
     - Lors de la coupure de la connexion Internet, l'interface bloquait l'accès au catalogue avec une fausse modale paywall *"Catalogue disponible en Boutique Pro — 5 000 FCFA/mois"* alors que le compte dispose d'un abonnement Business actif.
