@@ -130,7 +130,13 @@ app.use(compression());
 const BAD_USER_AGENTS = /scrapy|python-requests|go-http-client|java\/|libwww-perl|wget\/|httrack|aiohttp|httpx|curl\//i;
 
 const botBlockerMiddleware = (req, res, next) => {
-  if (req.path.includes('/webhook')) return next();
+  // Exempter les environnements de test / dev locaux
+  if (process.env.NODE_ENV !== 'production') return next();
+  // Exempter les webhooks et les sondes de santé
+  if (req.path.includes('/webhook') || req.path.includes('/health')) return next();
+  // Exempter les requêtes authentifiées ou internes SSR
+  if (req.headers['authorization'] || (process.env.SSR_SECRET && req.headers['x-ssr-token'] === process.env.SSR_SECRET)) return next();
+
   const ua = req.headers['user-agent'] || '';
   if (BAD_USER_AGENTS.test(ua)) {
     return res.status(403).json({ error: 'Accès refusé : requête automatisée détectée (Anti-Scraping Nopalou)' });

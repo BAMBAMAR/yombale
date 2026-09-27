@@ -176,3 +176,17 @@ export function localBusinessSchema(props: {
   };
 }
 
+export function websiteSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Nopalou',
+    url: 'https://nopalou.com',
+    description: 'Premier comparateur de prix et plateforme e-commerce multi-marchands au Sénégal',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://nopalou.com/recherche?q={search_term_string}',
+      'query-input': 'required name=search_term_string',
+    },
+  };
+}

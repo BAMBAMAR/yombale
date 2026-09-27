@@ -3,6 +3,7 @@ const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly } = require('../middlewares/auth');
 const { blockScraperUA, limiterRecherche, limiterBulk } = require('../middlewares/rateLimit');
 const { recordSearch, getTopTendances, FALLBACK_TENDANCES } = require('../lib/searchLogger');
+const { cacheGet, cacheSet, cacheInvalidatePattern } = require('../services/redis-cache');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function checkUUID(req, res, next) {
@@ -14,7 +15,14 @@ function checkUUID(req, res, next) {
 router.get('/tendances', async (req, res) => {
   try {
     const limit = Math.min(Math.max(parseInt(req.query.limit) || 4, 1), 10);
+    const cacheKey = `prod:tendances:${limit}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120');
+      return res.json(cached);
+    }
     const tendances = await getTopTendances(limit);
+    await cacheSet(cacheKey, tendances, 180);
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120');
     res.json(tendances);
   } catch (err) {
@@ -65,6 +73,12 @@ router.get('/instantanee', async (req, res) => {
 // GET /api/produits/categories-actives
 router.get('/categories-actives', async (req, res) => {
   try {
+    const cacheKey = 'prod:categories_actives';
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const { rows } = await pool.query(`
       SELECT DISTINCT c.slug
       FROM categories c 
@@ -90,6 +104,7 @@ router.get('/categories-actives', async (req, res) => {
     if (annonces.rows.length > 0) activeSlugs.push('annonces');
     if (telecom.rows.length > 0) activeSlugs.push('telecom');
     
+    await cacheSet(cacheKey, activeSlugs, 600); // 10 minutes
     res.json(activeSlugs);
   } catch (err) {
     console.error('[GET /api/produits/categories-actives]', err.message);
@@ -104,6 +119,13 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     if (q && String(q).trim().length >= 2) {
       recordSearch(String(q).trim());
     }
+
+    const cacheKey = `prod:catalog:${(q || '').trim()}:${categorie || ''}:${sousType || ''}:${limit}:${page}:${tri || ''}:${prixMax || ''}:${prixMin || ''}:${etat || ''}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const offset = (page - 1) * limit;
 
     // Défaut = meilleur prix d'abord (demande produit, 17/07/2026). L'ancien défaut
@@ -352,12 +374,14 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     }
 
     const total = parseInt(result.rows[0]?.total_count || 0, 10);
-    res.json({
+    const responsePayload = {
       success: true,
       produits: result.rows,
       page: +page, limit: +limit,
       total, pages: Math.ceil(total / limit) || 1
-    });
+    };
+    await cacheSet(cacheKey, responsePayload, 180); // 3 minutes TTL
+    res.json(responsePayload);
   } catch (err) {
     console.error('[GET /api/produits]', err.message);
     res.status(500).json({ error: err.message });
@@ -398,6 +422,7 @@ router.put('/admin/:id/sponsoring', adminSecretOnly, async (req, res) => {
       [Boolean(sponsorise), sponsor_jusqu_au || null, req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Produit introuvable' });
+    await cacheInvalidatePattern('prod:');
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -405,6 +430,10 @@ router.put('/admin/:id/sponsoring', adminSecretOnly, async (req, res) => {
 // GET /api/produits/:id — détail d'un produit
 router.get('/:id', checkUUID, async (req, res) => {
   try {
+    const cacheKey = `prod:detail:${req.params.id}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     const { rows } = await pool.query(`
       SELECT p.*, c.nom AS categorie_nom,
              MIN(o.prix) AS prix_min,
@@ -429,7 +458,7 @@ router.get('/:id', checkUUID, async (req, res) => {
       if (!bp.rows.length) return res.status(404).json({ error: 'Produit introuvable' });
       
       const p = bp.rows[0];
-      return res.json({
+      const payload = {
         id: p.id,
         nom: p.nom,
         description: p.description,
@@ -440,8 +469,11 @@ router.get('/:id', checkUUID, async (req, res) => {
         boutique_slug: p.boutique_slug,
         boutique_id: p.boutique_id,
         is_boutique: true
-      });
+      };
+      await cacheSet(cacheKey, payload, 300);
+      return res.json(payload);
     }
+    await cacheSet(cacheKey, rows[0], 300);
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -449,6 +481,10 @@ router.get('/:id', checkUUID, async (req, res) => {
 // GET /api/produits/:id/offres — triées par prix croissant
 router.get('/:id/offres', checkUUID, async (req, res) => {
   try {
+    const cacheKey = `prod:offres:${req.params.id}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     const { rows } = await pool.query(`
       SELECT o.*,
              m.nom AS marchand_nom, m.site_url,
@@ -472,7 +508,7 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
       );
       if (bp.rows.length > 0) {
         const p = bp.rows[0];
-        return res.json([{
+        const resOffre = [{
           id: p.id,
           prix: p.prix,
           marchand_nom: p.boutique_nom,
@@ -481,7 +517,9 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
           produit_nom: p.nom,
           url_achat: `/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}`,
           titre_affiche: p.nom
-        }]);
+        }];
+        await cacheSet(cacheKey, resOffre, 180);
+        return res.json(resOffre);
       }
     }
 
@@ -516,6 +554,7 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
       }
     });
 
+    await cacheSet(cacheKey, rows, 180);
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -677,6 +716,7 @@ router.post('/', adminSecretOnly, async (req, res) => {
       'INSERT INTO produits (nom,marque,categorie_id,ean,image_url) VALUES ($1,$2,$3,$4,$5) RETURNING *',
       [nom, marque, categorie_id, ean, image_url]
     );
+    await cacheInvalidatePattern('prod:');
     res.status(201).json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

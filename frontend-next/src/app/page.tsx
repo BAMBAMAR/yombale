@@ -12,6 +12,8 @@ import ProduitsListe from './ProduitsListe'
 import RecentlyViewed from './RecentlyViewed'
 import CompareFilterBanner from '@/components/CompareFilterBanner'
 import { apiFetch } from '@/lib/api'
+import JsonLd from '@/components/JsonLd'
+import { organizationSchema, websiteSchema } from '@/lib/schema-org'
 
 import HeroWhatsAppCarousel from './HeroWhatsAppCarousel'
 import HomeDualTrackContainer from './HomeDualTrackContainer'
@@ -223,9 +225,12 @@ export default async function HomePage({
   });
 
   return (
-    <HomeDualTrackContainer
-      prixTafTaf={prixTafTaf}
-      searchBarSlot={<SearchBar defaultValue={q} />}
+    <>
+      <JsonLd schema={organizationSchema()} />
+      <JsonLd schema={websiteSchema()} />
+      <HomeDualTrackContainer
+        prixTafTaf={prixTafTaf}
+        searchBarSlot={<SearchBar defaultValue={q} />}
       categoriesSlot={
         <div className="hero-split-categories">
           {CATEGORIES.map((c) => {
@@ -602,5 +607,6 @@ export default async function HomePage({
         </>
       }
     />
+    </>
   )
 }

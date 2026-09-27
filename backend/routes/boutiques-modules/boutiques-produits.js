@@ -215,6 +215,8 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     }
 
     res.status(201).json({ success: true, produit: newProduit });
+    cacheInvalidatePattern(`cat:${id}`);
+    cacheInvalidatePattern('prod:');
     // Audit Log Creation
     enregistrerAuditLog(id, req.user.userId, req.user.nom || 'Marchand', 'produit_cree', `Création du produit "${r.rows[0].nom}"`, { produit_id: r.rows[0].id, prix: r.rows[0].prix, stock_quantite: r.rows[0].stock_quantite }, req);
 
@@ -329,6 +331,8 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     }
 
     res.json({ success: true, produit: r.rows[0] });
+    cacheInvalidatePattern(`cat:${id}`);
+    cacheInvalidatePattern('prod:');
     
     // Audit Log Modification
     enregistrerAuditLog(id, req.user.userId, req.user.nom || 'Marchand', 'produit_modifie', `Modification du produit "${r.rows[0].nom}"`, { produit_id: prodId, stock_quantite: r.rows[0].stock_quantite }, req);
@@ -363,6 +367,8 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
     pool.query('SELECT whatsapp_catalog_id FROM boutiques WHERE id=$1', [id])
       .then(b => deleteProduit(prodId, b.rows[0]?.whatsapp_catalog_id))
       .catch(() => {});
+    cacheInvalidatePattern(`cat:${id}`);
+    cacheInvalidatePattern('prod:');
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
@@ -408,6 +414,8 @@ router.post('/:id/produits/:prodId/dupliquer', verifierToken, param('id').isUUID
     );
 
     res.status(201).json({ success: true, produit: r.rows[0] });
+    cacheInvalidatePattern(`cat:${id}`);
+    cacheInvalidatePattern('prod:');
 
     // Déclencher la synchronisation WhatsApp pour le produit dupliqué
     const produitDuplique = r.rows[0];
@@ -561,6 +569,8 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
         return res.status(400).json({ error: 'Aucun produit valide à importer. Les produits doivent avoir un nom non-vide.', count: 0 });
       }
       await client.query('COMMIT');
+      cacheInvalidatePattern(`cat:${id}`);
+      cacheInvalidatePattern('prod:');
       res.status(201).json({ success: true, count: insere.length, produits: insere });
       
       // Sync WhatsApp en arrière-plan
