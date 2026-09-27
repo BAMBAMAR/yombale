@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { Plus, DollarSign, CheckCircle2, Download, CheckCheck, MessageCircle } from 'lucide-react'
 
 import LocatifModals from './components/LocatifModals'
@@ -28,13 +28,22 @@ function LocatifPageContent() {
   const slug = params?.slug as string
   const tabParam = searchParams?.get('tab')
 
-  const [tab, setTab] = useState<'loyers' | 'baux'>('loyers')
+  const router = useRouter()
+  const [tab, setTab] = useState<'loyers' | 'baux'>(tabParam === 'baux' ? 'baux' : 'loyers')
 
   useEffect(() => {
-    if (tabParam === 'baux' || tabParam === 'loyers') {
-      setTab(tabParam)
+    if (tabParam === 'baux') {
+      setTab('baux')
+    } else {
+      setTab('loyers')
     }
   }, [tabParam])
+
+  function handleTabChange(nextTab: 'loyers' | 'baux') {
+    setTab(nextTab)
+    const targetUrl = nextTab === 'baux' ? `/agence/${slug}/locatif?tab=baux` : `/agence/${slug}/locatif`
+    router.replace(targetUrl, { scroll: false })
+  }
 
   const [baux, setBaux] = useState<BailItem[]>([])
   const [loyers, setLoyers] = useState<LoyerEcheance[]>([])
@@ -273,7 +282,7 @@ function LocatifPageContent() {
           <button
             key={t}
             type="button"
-            onClick={() => setTab(t)}
+            onClick={() => handleTabChange(t)}
             style={{
               padding: '8px 18px',
               borderRadius: 8,

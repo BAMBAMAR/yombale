@@ -1,5 +1,28 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Navigation Espace Agence : Résolution de l'Indicateur Actif « Loyers & Quittances » au lieu de « Contrats de Bail » (`AgenceSidebarNav.tsx`, `layout.tsx`, `AgenceMobileDrawer.tsx`, `locatif/page.tsx`) (26 septembre 2026)** 🏠📑⚡✅ :
+  * **🎯 Contexte & Anomalie Utilisateur** :
+    - Dans l'espace Agence immobilière, lors de la consultation des contrats de bail (`/agence/[slug]/locatif?tab=baux` ou bascule sur l'onglet « Baux Sous Gestion »), le lien « Loyers & Quittances » restait erronément surligné en orange/actif dans la sidebar de gauche, tandis que « Contrats de Bail » restait inactif.
+  * **🔍 Cause Racine Identifiée** :
+    1. Dans `layout.tsx` et `AgenceMobileDrawer.tsx`, la fonction `isLinkActive` vérifiait uniquement `pathname.startsWith(item.href)` via `usePathname()`. En Next.js App Router, `usePathname()` ne contient jamais la chaîne de requête (`searchParams`).
+    2. Pour « Loyers & Quittances » (`/agence/[slug]/locatif`), la condition était toujours vraie même sur `?tab=baux`. Pour « Contrats de Bail » (`/agence/[slug]/locatif?tab=baux`), la comparaison échouait systématiquement (`/locatif` ne commençant pas par `/locatif?tab=baux`).
+    3. Au sein de la page `locatif/page.tsx`, le basculement d'onglet modifiait uniquement le state React sans synchroniser l'URL du navigateur avec `?tab=baux`.
+  * **🛠️ Solutions Techniques & Corrections Réalisées** :
+    1. **Extraction & Découplage Modulaire (`AgenceSidebarNav.tsx`)** :
+       - Création de `frontend-next/src/app/agence/[slug]/components/AgenceSidebarNav.tsx` intégrant l'analyse fine de `useSearchParams().get('tab')`.
+       - Allègement substantiel de `layout.tsx` (de 475 à 358 lignes), respectant scrupuleusement le plafond de 450 lignes (Règle d'or #2 Anti-Slop).
+       - Enveloppe `<Suspense>` pour isoler la lecture dynamique des search params conformément aux exigences du compilateur Next.js 14.
+       - Logique d'activation précise : « Contrats de Bail » est actif si et seulement si `tab === 'baux'`. « Loyers & Quittances » est actif par défaut sur la route locative quand aucun onglet spécifique n'est actif ou quand `tab === 'loyers'`.
+    2. **Mise à Niveau du Drawer Mobile (`AgenceMobileDrawer.tsx`)** :
+       - Application de la même logique de détection de query string `tab` et pastille badge dynamique sur les baux.
+    3. **Synchronisation URL Bidirectionnelle et Fluide (`locatif/page.tsx`)** :
+       - Ajout de `handleTabChange` utilisant `router.replace(targetUrl, { scroll: false })` pour synchroniser dynamiquement l'URL lors du clic sur les puces « Échéances & Encaissements » et « Baux Sous Gestion ».
+       - `useEffect` réactif qui garantit que cliquer sur le menu latéral bascule automatiquement l'onglet affiché à l'écran.
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 100% conforme aux règles d'or Nopalou.
+    - `npm test` : 69/69 tests unitaires validés avec succès.
+
 - **Correction et Optimisation du Défilement Galerie Produit (`GalerieClient.tsx`) (26 septembre 2026)** 🖼️⚡🖱️📱✅ :
   * **🎯 Contexte & Anomalie Utilisateur** :
     - Sur la fiche produit publique (`/boutiques/:id/produits/:produitId`), le défilement des photos avec les flèches était inopérant ou bloqué.

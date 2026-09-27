@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import {
   X,
   ArrowLeft,
@@ -64,6 +64,8 @@ export function AgenceMobileDrawer({
   compteurs = { demandes_visite: 0, loyers_retard: 0, mandats_expirants: 0, baux_expirants: 0, tickets_urgents: 0 },
 }: AgenceMobileDrawerProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentTab = searchParams?.get('tab')
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -96,7 +98,7 @@ export function AgenceMobileDrawer({
       titre: 'Gestion Locative',
       items: [
         { href: `/agence/${slug}/locatif`, label: 'Loyers & Quittances', icon: Key, badge: compteurs.loyers_retard },
-        { href: `/agence/${slug}/locatif?tab=baux`, label: 'Contrats de Bail', icon: FileSignature },
+        { href: `/agence/${slug}/locatif?tab=baux`, label: 'Contrats de Bail', icon: FileSignature, badge: compteurs.baux_expirants },
         { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
         { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs Propriétaires', icon: Building2 },
         { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench, badge: compteurs.tickets_urgents },
@@ -132,7 +134,20 @@ export function AgenceMobileDrawer({
   ]
 
   function isActive(href: string) {
-    return pathname === href || pathname.startsWith(href + '/')
+    const [baseHref, queryString] = href.split('?')
+    const itemParams = new URLSearchParams(queryString || '')
+    const itemTab = itemParams.get('tab')
+
+    const pathMatches = pathname === baseHref || (pathname.startsWith(baseHref + '/') && baseHref !== `/agence/${slug}`)
+    if (!pathMatches) return false
+
+    if (itemTab) {
+      return currentTab === itemTab
+    }
+    if (baseHref.endsWith('/locatif')) {
+      return !currentTab || currentTab === 'loyers'
+    }
+    return true
   }
 
   return (
