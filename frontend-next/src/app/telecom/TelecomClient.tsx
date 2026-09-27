@@ -320,6 +320,15 @@ export default function TelecomClient({
               { href: '/telecom/promobile', label: 'Forfaits ProMobile' },
             ],
           },
+          {
+            label: 'Smartphones compatibles 4G / 5G',
+            chips: [
+              { href: '/categorie/smartphones', label: 'Tous les smartphones au Sénégal' },
+              { href: '/categorie/smartphones/iphone', label: 'iPhone au meilleur prix' },
+              { href: '/categorie/smartphones/samsung', label: 'Samsung au meilleur prix' },
+              { href: '/categorie/smartphones/xiaomi-redmi', label: 'Xiaomi & Redmi' },
+            ],
+          },
         ]}
         foot="Prix et forfaits comparés selon les grilles tarifaires publiques des opérateurs"
       />

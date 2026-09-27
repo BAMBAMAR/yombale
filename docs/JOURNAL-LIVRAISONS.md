@@ -1,5 +1,27 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Optimisation SEO Réelle, Suppression des Redirections 308 Destructrices & Correction Canonical Global (27 septembre 2026)** 🔍🚀📈🌐✅ :
+  * **🎯 Problèmes Résolus (Audit SEO Visibilité Réelle Google)** :
+    1. **Déverrouillage des Landing Pages B2B (`frontend-next/next.config.js`, `sitemap.ts`)** :
+       - *Problème* : Les pages spécialisées ultra-ciblées `/creer-boutique-en-ligne` et `/alternative-shopify-senegal` subissaient des redirections HTTP 308 vers `/marchands` et `/pourquoi-nopalou`, entraînant leur désindexation par Google et la perte du trafic sur ces requêtes transactionnelles précises ("créer boutique en ligne sénégal", "shopify wave sénégal").
+       - *Correction* : Suppression des redirections 308 dans `next.config.js`, réactivation des routes directes, et inscription avec priorité maximale (0.98 et 0.95) dans `sitemap.ts`.
+    2. **Suppression du Piège Canonical Hérité (`frontend-next/src/app/layout.tsx`)** :
+       - *Problème* : Le layout racine injectait un canonical fixe `https://nopalou.com` que toutes les sous-pages sans canonical explicite (ex: `/comparer`, `/aide`, etc.) héritaient, signalant faussement à Google qu'elles étaient des doublons de la page d'accueil.
+       - *Correction* : Retrait de `alternates.canonical` du layout racine (la page d'accueil conserve son canonical propre dans `generateMetadata` de `page.tsx`). Ajout du support de vérification Google Search Console via `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`.
+    3. **Sécurisation de la Redirection Comparer (`/comparer`, `next.config.js`)** :
+       - *Problème* : `/comparer` servait un squelette 200 vide sans H1 ni contenu avant de rediriger dynamiquement côté client vers `/comparaison`.
+       - *Correction* : Redirection 308 instantanée au niveau du serveur dans `next.config.js` et ajout des métadonnées `robots: { index: false, follow: false }` sur `src/app/comparer/page.tsx`.
+    4. **Repositionnement Sémantique "Cahier Bor" (`gestion-stock-carnet-dettes/page.tsx`)** :
+       - *Problème* : L'expression "carnet de dettes sénégal" était parasitée à 90% sur Google par les résultats macroéconomiques liés à la dette publique de l'État sénégalais.
+       - *Correction* : Repositionnement chirurgical du Title, du H1 et de la méta-description sur le lexique commerçant local : *"Cahier Bor & Carnet de Dettes Commerçant au Sénégal (2026)"*, ciblant *"cahier bor"*, *"crédit client"* et *"gestion de dettes boutique"*.
+    5. **Maillage Interne & Complétude du Sitemap XML (`sitemap.ts`, `layout.tsx`, `telecom/TelecomClient.tsx`)** :
+       - Alignement des ancres de liens du footer global sur les URLs réelles.
+       - Ajout des pages légales et guides (`/guide-utilisation`, `/cgu`, `/confidentialite`, `/mentions-legales`) dans le sitemap.
+       - Ajout de liens contextuels croisés depuis le comparateur télécom (positionné Top 1 sur Google) vers le catalogue de smartphones 4G/5G.
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 0 violation bloquante.
+
 - **Résolution Définitive des Onglets Vides : Social Shop, Saisie Express & Statistiques Analytics avec Cache Synchrone 0ms & Préchargement 10 min (27 septembre 2026)** 📱⚡📊🔄✅ :
   * **🎯 Problèmes Résolus (Captures Utilisateur & Navigation)** :
     1. **Social Shop & Vidéos Interactives (`tab=social`, `SocialShopManager.tsx`, `useBoutiqueOfflinePreloader.ts`)** :

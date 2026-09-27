@@ -27,7 +27,7 @@
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 ### 📌 Dernière Version Déployée (27 septembre 2026) :
-- **Social Shop, Saisie Express & Statistiques Ad-Hoc 0ms** : Résolution des bugs de header d'authentification invalide, du proxy de paramètres d'analyse et d'initialisation synchrone du catalogue POS depuis le cache local.
-- **Cycle Automatique 10 min & Offline Global** : Préchargement automatique en tâche de fond de l'ensemble des modules marchands toutes les 10 minutes avec protection stricte contre l'empoisonnement de cache par des tableaux vides.
-- **Auto-création Dépôt Principal** : Garantie de présence d'au moins un site de stockage actif par boutique.
+- **Optimisation SEO Réelle & Déverrouillage Landing Pages B2B** : Suppression des redirections 308 destructrices sur `/creer-boutique-en-ligne` et `/alternative-shopify-senegal` ; élimination du piège de canonical hérité dans `layout.tsx` ; correction noindex sur `/comparer`.
+- **Repositionnement Sémantique Cahier Bor & Maillage Télécom** : Alignement de `/gestion-stock-carnet-dettes` sur les requêtes locales sénégalaises ("Cahier Bor", "Crédit Client") et maillage interne depuis le comparateur télécom vers le catalogue smartphones.
+- **Enrichissement Sitemap & Footer SEO** : Ajout dans `sitemap.ts` et maillage footer des pages B2B restaurées et des pages d'information légales.
 

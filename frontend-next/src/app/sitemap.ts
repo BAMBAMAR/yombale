@@ -54,9 +54,8 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   // Annuaire des Boutiques et Vendeurs vérifiés
   { url: `${BASE}/boutiques`,                 changeFrequency: 'daily',   priority: 0.95 },
   // Silos B2B Solutions Marchands & "Problème → Solution" SEO
-  // Note : /creer-boutique-en-ligne et /alternative-shopify-senegal font l'objet de
-  // redirections 301 dans next.config.js → on référence directement les destinations
-  // pour éviter toute incohérence de crawl budget et de signal SEO.
+  { url: `${BASE}/creer-boutique-en-ligne`,     changeFrequency: 'weekly', priority: 0.98 },
+  { url: `${BASE}/alternative-shopify-senegal`, changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/marchands`,                   changeFrequency: 'weekly', priority: 0.98 },
   { url: `${BASE}/logiciel-caisse-senegal`,     changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/pourquoi-nopalou`,            changeFrequency: 'monthly', priority: 0.90 },
@@ -73,13 +72,18 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/guide-creer-boutique`, changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/guide-sourcing-revente`, changeFrequency: 'monthly', priority: 0.85 },
   // Guides
-  { url: `${BASE}/guide-prix`,    changeFrequency: 'monthly', priority: 0.6 },
-  { url: `${BASE}/guide-achat`,   changeFrequency: 'monthly', priority: 0.6 },
-  { url: `${BASE}/guide-immo`,    changeFrequency: 'monthly', priority: 0.6 },
-  { url: `${BASE}/guide-forfait`, changeFrequency: 'monthly', priority: 0.6 },
-  { url: `${BASE}/guide-emploi`,  changeFrequency: 'monthly', priority: 0.5 },
-  { url: `${BASE}/assistant-whatsapp`, changeFrequency: 'monthly', priority: 0.5 },
-  { url: `${BASE}/demo`, changeFrequency: 'monthly', priority: 0.8 },
+  { url: `${BASE}/guide-prix`,           changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/guide-achat`,          changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/guide-immo`,           changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/guide-forfait`,        changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/guide-emploi`,         changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${BASE}/guide-utilisation`,    changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${BASE}/assistant-whatsapp`,   changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${BASE}/demo`,                 changeFrequency: 'monthly', priority: 0.8 },
+  // Informations légales & conformité
+  { url: `${BASE}/cgu`,                  changeFrequency: 'yearly',  priority: 0.3 },
+  { url: `${BASE}/confidentialite`,      changeFrequency: 'yearly',  priority: 0.3 },
+  { url: `${BASE}/mentions-legales`,     changeFrequency: 'yearly',  priority: 0.3 },
 ]
 
 interface Produit {

@@ -3,6 +3,10 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Paiement non abouti',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 type PayType = 'commande-express' | 'commande-boutique' | 'annonce' | 'immo-sponsoring' | 'boutique-sponsoring' | 'abonnement' | string

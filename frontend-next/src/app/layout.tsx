@@ -97,8 +97,8 @@ export const metadata: Metadata = {
     'immobilier', 'forfait télécom', 'Nopalou',
   ],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'),
-  alternates: {
-    canonical: process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com',
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
   },
   authors: [{ name: 'Nopalou' }],
   publisher: 'Nopalou',
@@ -500,13 +500,13 @@ export default async function RootLayout({
           <div className="footer-seo-links" style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Solutions Commerçants &amp; E-Commerce Sénégal</p>
             <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13, marginBottom: 12 }}>
-              <a href="/marchands" style={{ color: '#fed7aa', fontWeight: 700 }}>Créer une boutique en ligne Sénégal</a>
-              <a href="/pourquoi-nopalou" style={{ color: '#fed7aa', fontWeight: 700 }}>Alternative Shopify Sénégal</a>
+              <a href="/creer-boutique-en-ligne" style={{ color: '#fed7aa', fontWeight: 700 }}>Créer une boutique en ligne Sénégal</a>
+              <a href="/alternative-shopify-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Alternative Shopify Sénégal</a>
               <a href="/logiciel-caisse-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Logiciel de caisse Sénégal</a>
               <a href="/vendre-sur-whatsapp" style={{ color: '#fed7aa', fontWeight: 700 }}>Vendre sur WhatsApp Sénégal</a>
               <a href="/sama-xaalis" style={{ color: '#fed7aa', fontWeight: 700 }}>Gestion budget Sama Xaalis</a>
               <a href="/paiement-en-ligne-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Paiement Wave boutique en ligne</a>
-              <a href="/gestion-stock-carnet-dettes" style={{ color: '#fed7aa', fontWeight: 700 }}>Carnet de dettes commerçant</a>
+              <a href="/gestion-stock-carnet-dettes" style={{ color: '#fed7aa', fontWeight: 700 }}>Cahier Bor &amp; Carnet de dettes</a>
               <a href="/logiciel-gestion-locative-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Logiciel gestion locative Dakar</a>
             </div>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires &amp; Comparatifs d&apos;achats</p>

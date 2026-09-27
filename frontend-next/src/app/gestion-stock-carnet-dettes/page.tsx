@@ -8,24 +8,26 @@ import {
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
-  title: 'Carnet de Dettes & Gestion de Stock au Sénégal (2026) | Nopalou',
-  description: 'Digitalisez votre carnet de crédit et de dettes commerçant ("Bor") à Dakar. Suivi des stocks en temps réel, alertes d\'impayés et relances WhatsApp en 1 clic avec lien Wave.',
+  title: 'Cahier Bor & Carnet de Dettes Commerçant au Sénégal (2026) | Nopalou',
+  description: 'Digitalisez votre cahier de dettes commerçant ("Bor") et vos stocks au Sénégal. Suivi des crédits clients en temps réel, alertes d\'impayés et relances WhatsApp avec lien Wave.',
   keywords: [
+    'cahier bor sénégal',
+    'cahier de dettes boutique dakar',
     'carnet de dettes commerçant sénégal',
+    'gestion crédit client dakar',
     'gestion de stock sénégal',
-    'logiciel gestion stock dakar',
+    'logiciel gestion stock boutique dakar',
     'suivi dettes clients dakar',
     'carnet de crédit bor sénégal',
     'relance dette whatsapp dakar',
-    'gestion commerciale petit commerce sénégal',
-    'cahier de dettes boutique dakar'
+    'gestion commerciale petit commerce sénégal'
   ],
   alternates: {
     canonical: `${BASE}/gestion-stock-carnet-dettes`,
   },
   openGraph: {
-    title: 'Carnet de Dettes & Gestion de Stock au Sénégal | Nopalou',
-    description: 'Ne perdez plus jamais un franc dans vos dettes clients. Relances WhatsApp et gestion de stock.',
+    title: 'Cahier Bor & Carnet de Dettes Commerçant au Sénégal | Nopalou',
+    description: 'Ne perdez plus jamais un franc dans vos dettes clients. Gestion du Bor, relances WhatsApp et stocks en temps réel.',
     url: `${BASE}/gestion-stock-carnet-dettes`,
     type: 'website',
   },
@@ -101,7 +103,7 @@ export default function GestionStockCarnetDettesPage() {
               lineHeight: 1.15,
               letterSpacing: '-0.03em'
             }}>
-              Carnet de dettes & gestion de stock pour <span style={{ color: '#fed7aa' }}>commerçants au Sénégal</span>
+              Cahier Bor, carnet de dettes & gestion de stock pour <span style={{ color: '#fed7aa' }}>commerçants au Sénégal</span>
             </h1>
 
             <p style={{

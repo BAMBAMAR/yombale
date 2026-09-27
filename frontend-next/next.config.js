@@ -72,13 +72,8 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/creer-boutique-en-ligne',
-        destination: '/marchands',
-        permanent: true,
-      },
-      {
-        source: '/alternative-shopify-senegal',
-        destination: '/pourquoi-nopalou',
+        source: '/comparer',
+        destination: '/comparaison',
         permanent: true,
       },
       {

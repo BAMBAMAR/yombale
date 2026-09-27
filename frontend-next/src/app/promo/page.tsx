@@ -1,8 +1,13 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
-// Page Promotionnelle B2B (Landing Page hautement animée)
-// Accessible via /promo
-// Remplace le besoin d'une vidéo en créant une expérience visuelle dynamique.
+export const metadata: Metadata = {
+  title: 'Offre Spéciale Vendeurs & Boutiques au Sénégal | Nopalou',
+  description: 'Lancez votre boutique en ligne et votre caisse tactile au Sénégal. 30 jours offerts, 0% de commission, paiements Wave et Orange Money.',
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/promo`,
+  },
+}
 
 export default async function PromoPage() {
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'

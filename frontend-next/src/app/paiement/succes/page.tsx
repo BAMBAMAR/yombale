@@ -4,6 +4,10 @@ import { ConfirmerSuccesEffect } from './ConfirmerSuccesEffect'
 
 export const metadata: Metadata = {
   title: 'Paiement réussi',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 type PayType =
