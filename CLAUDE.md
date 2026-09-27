@@ -26,7 +26,20 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (27 septembre 2026 - Nuit - Assainissement Réassurance, Vérité des Données & Conformité Légale) :
+### 📌 Dernière Version Locale (27 septembre 2026 - Nuit - Audit & Remédiations Écosystème Conversationnel Web & WhatsApp) :
+- **Audit Empirique des 16 Scénarios Conversationnels** :
+  - Exécution en conditions réelles contre la base PostgreSQL de production/staging pour tous les flux : recherche produit, recherche boutique, comparaison multi-marchands, panier, tunnel de commande, suivi de commande, immobilier, annonces classifiées, compte marchand/PIN, FAQ, robustesse/erreurs, stateless vs connecté, données inexistantes, vérification des prix au franc près, disponibilité/ruptures et tickets support/rappel.
+  - Validation de l'étanchéité anti-BOLA/IDOR sur le suivi de commande WhatsApp (`ORDER_REF`) : interdiction stricte de lecture des commandes appartenant à des tiers.
+- **Correction Collision Mot-Clé FAQ Achat vs Suivi (`backend/lib/faq.js`)** :
+  - **Diagnostic** : Le mot-clé générique `'commande'` dans `FAQ_WEB` interceptait n'importe quelle intention d'achat (ex: *"Je veux commander un ASICS KAYANO 14"*), provoquant une fausse réponse de suivi de colis et bloquant l'acte d'achat.
+  - **Correction** : Remplacement par des expressions d'intention explicites (`'suivi commande'`, `'suivre ma commande'`, `'suivi de commande'`, `'mon colis'`, `'ou est ma commande'`).
+- **Cloisonnement Multi-Tenant des Boutiques Inactives (`backend/services/whatsapp-chatbot.js`)** :
+  - **Diagnostic** : La fonction `searchContentIlike` ne filtrait pas sur `b.actif = true`, exposant ainsi les produits de boutiques fermées ou suspendues dans la recherche conversationnelle.
+  - **Correction** : Ajout strict de `AND b.actif = true` dans la clause WHERE du `JOIN boutiques`.
+- **Harmonisation Tests Unitaires & Recette (`tests/unit/chat-api.test.js`)** :
+  - Alignement du label d'action `'Voir la boutique'`. 100% des tests unitaires et d'intégration conversationnels (`chat-api`, `whatsapp-comparator-and-cart`, `immo-chatbot`, `whatsapp-chatbot`, `whatsapp-chatbot-p0`) passent avec succès.
+
+### 📌 Version Précédente (27 septembre 2026 - Nuit - Assainissement Réassurance, Vérité des Données & Conformité Légale) :
 - **Éradication de la Fausse Note 5.0/5 sur l'Annuaire des Boutiques** :
   - **Diagnostic** : Dans `boutiques/page.tsx`, l'évaluation utilisait `{Number(b.note_moyenne || 5.0).toFixed(1)} / 5`. Comme la colonne `note_moyenne` n'existait pas sur la table SQL `boutiques`, 100% des commerces affichaient artificiellement une note dorée de « 5.0 / 5 » sans aucun avis client.
   - **Correction** : Affichage conditionnel strict. Seules les boutiques ayant un `total_avis > 0` et une note réelle affichent désormais leur note et leurs étoiles. Les autres affichent en toute transparence le badge neutre « Nouveau commerçant ».

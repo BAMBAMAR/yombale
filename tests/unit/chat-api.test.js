@@ -124,7 +124,7 @@ describe('POST /api/chat/message — API Chatbot Web Nopalou', () => {
     expect(res.body.items).toHaveLength(1);
     expect(res.body.items[0].type).toBe('boutique');
     expect(res.body.items[0].url).toBe('/boutiques/tech-dakar');
-    expect(res.body.items[0].actions[0].label).toBe('Visiter la boutique');
+    expect(res.body.items[0].actions[0].label).toBe('Voir la boutique');
   });
 
   test('détecte l\'intention agence et renvoie les agences partenaires', async () => {

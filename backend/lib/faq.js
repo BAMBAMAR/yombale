@@ -112,7 +112,7 @@ const FAQ_WEB = [
     actionUrl: '/agences',
   },
   {
-    motsCles: ['commande', 'suivi', 'colis', 'ou est ma commande', 'etat commande', 'statut commande', 'livreur'],
+    motsCles: ['suivi commande', 'suivre ma commande', 'suivi de commande', 'suivi', 'colis', 'mon colis', 'ou est ma commande', 'etat commande', 'statut commande', 'livreur'],
     titre: 'Suivi de Commande en Direct',
     reponse: 'Pour suivre votre commande en direct, munissez-vous de votre référence de commande ou numéro de téléphone sur notre page dédiée au suivi.',
     actionLabel: 'Suivre ma commande',

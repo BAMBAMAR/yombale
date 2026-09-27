@@ -1429,7 +1429,8 @@ async function searchContentIlike(query) {
                NULL::text AS ville, p.boutique_id::text AS boutique_id
         FROM boutique_produits p
         JOIN boutiques b ON b.id = p.boutique_id
-        WHERE p.nom ILIKE $1 OR COALESCE(p.description, '') ILIKE $1
+        WHERE (p.nom ILIKE $1 OR COALESCE(p.description, '') ILIKE $1)
+          AND b.actif = true
         LIMIT 3
       )
       UNION ALL
