@@ -127,6 +127,15 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
       return res.status(403).json({ error: 'Accès refusé : session marchand ou jeton de caisse terminal requis.' });
     }
 
+    // SÉCURITÉ P0 : Vérification d'abonnement actif (ou essai gratuit en cours) pour encaisser au POS
+    const planAbo = await verifierAbonnementCaisse(boutiqueId);
+    if (!planAbo || planAbo === 'gratuit') {
+      return res.status(403).json({
+        error: 'Abonnement Pro ou Business actif requis pour enregistrer des encaissements en caisse.',
+        code: 'ABONNEMENT_POS_REQUIS',
+      });
+    }
+
     console.log('[POS VENTE] ▶ Requête reçue:', { idParam, nbItems: saleItems.length, caissier, caissier_id, session_id, modePaiement, fidelite_client_id, hasIdempotency: !!idempotency_key });
     console.log('[POS VENTE] ✓ Boutique trouvée:', boutiqueId);
     const idempotencyKey = typeof idempotency_key === 'string' && idempotency_key.length > 0 && idempotency_key.length <= 128
@@ -747,17 +756,21 @@ router.get('/:id/pos-sessions/:sessionId', verifierToken, async (req, res) => {
   }
 });
 
-// Helper pour vérifier si la boutique a un abonnement Pro/Business actif
+// Helper pour vérifier si la boutique a un abonnement Pro/Business actif (ou essai gratuit en cours)
 async function verifierAbonnementCaisse(boutiqueId) {
   const { rows } = await pool.query(
-    `SELECT a.plan
+    `SELECT a.plan, a.statut, a.fin, COALESCE(a.is_trial, false) AS is_trial
      FROM abonnements a
      JOIN boutiques b ON b.utilisateur_id = a.utilisateur_id
      WHERE b.id = $1 AND a.statut = 'actif' AND a.fin > NOW()
+     ORDER BY a.fin DESC
      LIMIT 1`,
     [boutiqueId]
   );
-  return rows[0]?.plan || null;
+  if (!rows[0]) return null;
+  // Pendant l'essai gratuit actif, équivalent Business VIP
+  if (rows[0].is_trial) return 'business';
+  return rows[0].plan;
 }
 
 // POST /api/boutiques/:id/pos-sessions/ouvrir
@@ -1120,7 +1133,7 @@ router.get('/caisse-terminal/:token', async (req, res) => {
     }
 
     const plan = await verifierAbonnementCaisse(boutique.id);
-    boutique.plan_actif = plan || 'pro';
+    boutique.plan_actif = plan || 'gratuit';
 
     // SÉCURITÉ P0 : Exclusion absolue du code_pin dans la liste des caissiers transmise au client
     let cRes = await pool.query(
@@ -1151,7 +1164,7 @@ router.get('/caisse-terminal/:token', async (req, res) => {
     res.json({
       success: true,
       boutique,
-      planActif: plan || 'pro',
+      planActif: plan || 'gratuit',
       caissiers,
       produits: pRes.rows
     });

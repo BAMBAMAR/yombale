@@ -46,7 +46,7 @@ router.get('/:id/admins', verifierToken, async (req, res) => {
   }
 });
 
-router.post('/:id/admins', verifierToken, body('email').isEmail(), async (req, res) => {
+router.post('/:id/admins', verifierToken, checkAbonnement, requireBusiness, body('email').isEmail(), async (req, res) => {
   const errs = validationResult(req);
   if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
   try {

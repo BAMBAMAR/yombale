@@ -23,7 +23,7 @@ const {
   slugify,
   uniqueSlug,
 } = require('./helpers');
-router.get('/:id/documents', verifierToken, param('id').isUUID(), async (req, res) => {
+router.get('/:id/documents', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const idParam = req.params.id;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);
@@ -56,7 +56,7 @@ router.get('/:id/documents', verifierToken, param('id').isUUID(), async (req, re
 });
 
 // ── POST /api/boutiques/:id/documents — Créer un document (devis, proforma, facture)
-router.post('/:id/documents', verifierToken, param('id').isUUID(), async (req, res) => {
+router.post('/:id/documents', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const idParam = req.params.id;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);
@@ -146,7 +146,7 @@ router.post('/:id/documents', verifierToken, param('id').isUUID(), async (req, r
 });
 
 // ── PUT /api/boutiques/:id/documents/:docId — Modifier ou valider
-router.put('/:id/documents/:docId', verifierToken, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
+router.put('/:id/documents/:docId', verifierToken, param('id').isUUID(), param('docId').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const { id: idParam, docId } = req.params;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);
@@ -244,7 +244,7 @@ router.put('/:id/documents/:docId', verifierToken, param('id').isUUID(), param('
 });
 
 // ── DELETE /api/boutiques/:id/documents/:docId — Annuler/Supprimer
-router.delete('/:id/documents/:docId', verifierToken, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
+router.delete('/:id/documents/:docId', verifierToken, param('id').isUUID(), param('docId').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const { id: idParam, docId } = req.params;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);

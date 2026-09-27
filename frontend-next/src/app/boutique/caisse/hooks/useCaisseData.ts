@@ -320,7 +320,7 @@ export function useCaisseData({
           if (data?.boutique) {
             const bqObj: BoutiquePOS = {
               ...data.boutique,
-              plan_actif: data.planActif || data.boutique?.plan_actif || 'pro',
+              plan_actif: data.planActif || data.boutique?.plan_actif || 'gratuit',
             }
             setBoutiques([bqObj])
             setBoutiqueActiveId(bqObj.id)

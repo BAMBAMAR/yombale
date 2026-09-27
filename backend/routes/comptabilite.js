@@ -6,6 +6,7 @@ const axios = require('axios');
 const multer = require('multer');
 const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly } = require('../middlewares/auth');
+const { checkAbonnement, requireAbonnement } = require('../middlewares/checkAbonnement');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const { uploadBuffer } = require('../services/cloudinary');
@@ -257,7 +258,7 @@ router.get('/:boutiqueId/ventes', verifierToken, param('boutiqueId').isUUID(), a
 });
 
 // GET /api/comptabilite/:boutiqueId/ventes/export.csv
-router.get('/:boutiqueId/ventes/export.csv', verifierToken, param('boutiqueId').isUUID(), async (req, res) => {
+router.get('/:boutiqueId/ventes/export.csv', verifierToken, param('boutiqueId').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
     if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
@@ -630,6 +631,8 @@ router.get(
   '/:boutiqueId/export/syscohada',
   verifierToken,
   param('boutiqueId').isUUID(),
+  checkAbonnement,
+  requireAbonnement,
   async (req, res) => {
     try {
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId, req.user.role);
@@ -1452,7 +1455,7 @@ router.get('/:boutiqueId/dashboard', verifierToken, param('boutiqueId').isUUID()
 
 // ── 📊 Bilan Financier Consolidé Périodique & Multi-Critères ───────────────────
 // GET /api/comptabilite/:boutiqueId/bilan
-router.get('/:boutiqueId/bilan', verifierToken, async (req, res) => {
+router.get('/:boutiqueId/bilan', verifierToken, checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const boutique = await ownsBoutique(req.params.boutiqueId, req.user?.userId, req.user?.role);
     if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
@@ -1619,7 +1622,7 @@ router.get('/:boutiqueId/bilan', verifierToken, async (req, res) => {
 
 // ── 📦 Inventaire Détaillé & Valorisation du Stock ─────────────────────────────
 // GET /api/comptabilite/:boutiqueId/inventaire
-router.get('/:boutiqueId/inventaire', verifierToken, async (req, res) => {
+router.get('/:boutiqueId/inventaire', verifierToken, checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const boutique = await ownsBoutique(req.params.boutiqueId, req.user?.userId, req.user?.role);
     if (!boutique) return res.status(403).json({ error: 'Accès refusé' });

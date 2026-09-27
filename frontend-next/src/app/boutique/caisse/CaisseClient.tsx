@@ -21,6 +21,7 @@ import PosCenterDock from './components/PosCenterDock'
 import PosPanierSidebar from './components/PosPanierSidebar'
 import { PosMobileTabs, PosMobileStickyBottom } from './components/PosMobileNavBars'
 import PosLockScreen from './components/PosLockScreen'
+import PosNonAutoriseScreen from './components/PosNonAutoriseScreen'
 import PosModalGestionPins from './components/PosModalGestionPins'
 import PosModalsHost from './components/PosModalsHost'
 import PosToast from './components/PosToast'
@@ -214,6 +215,26 @@ export default function CaisseClient({
     () => panier.reduce((sum, item) => sum + item.quantite, 0),
     [panier]
   )
+
+  // ── Vérification Abonnement Caisse POS ──
+  const estBoutiqueAutorisee = useMemo(() => {
+    if (!activeBoutiqueObj) return true // En cours de chargement initial
+    if (activeBoutiqueObj.is_trial) return true
+    const plan = activeBoutiqueObj.plan_actif || terminalPlan || planActifProp
+    return plan === 'pro' || plan === 'business'
+  }, [activeBoutiqueObj, terminalPlan, planActifProp])
+
+  if (!loadingProduits && activeBoutiqueObj && !estBoutiqueAutorisee) {
+    return (
+      <PosNonAutoriseScreen
+        boutiques={boutiques}
+        activeBoutiqueNom={activeBoutiqueObj.nom}
+        boutiqueActiveId={boutiqueActiveId}
+        initialToken={initialToken}
+        onChangerBoutique={changerBoutiqueActive}
+      />
+    )
+  }
 
   // ── Écran Verrouillé ──
   if (authLock.verrouille) {

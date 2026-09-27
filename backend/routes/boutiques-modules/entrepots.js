@@ -4,6 +4,7 @@ const router = require('express').Router();
 const { body, param } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken } = require('../../middlewares/auth');
+const { checkAbonnement, requireAbonnement } = require('../../middlewares/checkAbonnement');
 const { checkBoutiqueAccess } = require('../../middlewares/tenantSecurity');
 
 // GET /api/boutiques/:id/entrepots — Lister les entrepôts de la boutique
@@ -49,6 +50,8 @@ router.post(
   '/:id/entrepots',
   verifierToken,
   param('id').isUUID(),
+  checkAbonnement,
+  requireAbonnement,
   body('nom').trim().notEmpty().withMessage('Le nom de l’entrepôt est requis'),
   async (req, res) => {
     try {
@@ -85,6 +88,8 @@ router.put(
   verifierToken,
   param('id').isUUID(),
   param('entrepotId').isUUID(),
+  checkAbonnement,
+  requireAbonnement,
   async (req, res) => {
     try {
       const { id, entrepotId } = req.params;
@@ -129,6 +134,8 @@ router.post(
   '/:id/entrepots/stocks',
   verifierToken,
   param('id').isUUID(),
+  checkAbonnement,
+  requireAbonnement,
   body('produit_id').isUUID(),
   body('entrepot_id').isUUID(),
   body('quantite').isInt({ min: 0 }),

@@ -3,11 +3,12 @@ const router = require('express').Router();
 const { param, validationResult } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken } = require('../../middlewares/auth');
+const { checkAbonnement, requireAbonnement } = require('../../middlewares/checkAbonnement');
 const { syncProduit } = require('../../services/whatsapp-catalog');
 const { enregistrerAuditLog } = require('../../lib/auditLogger');
 const { checkBoutiqueAccess } = require('./helpers');
 
-router.get('/:id/fournisseurs', verifierToken, param('id').isUUID(), async (req, res) => {
+router.get('/:id/fournisseurs', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const idParam = req.params.id;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);
@@ -21,7 +22,7 @@ router.get('/:id/fournisseurs', verifierToken, param('id').isUUID(), async (req,
   }
 });
 
-router.post('/:id/fournisseurs', verifierToken, param('id').isUUID(), async (req, res) => {
+router.post('/:id/fournisseurs', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const idParam = req.params.id;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);
@@ -43,7 +44,7 @@ router.post('/:id/fournisseurs', verifierToken, param('id').isUUID(), async (req
   }
 });
 
-router.put('/:id/fournisseurs/:fId', verifierToken, param('id').isUUID(), param('fId').isUUID(), async (req, res) => {
+router.put('/:id/fournisseurs/:fId', verifierToken, param('id').isUUID(), param('fId').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const idParam = req.params.id;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);
@@ -84,7 +85,7 @@ router.delete('/:id/fournisseurs/:fId', verifierToken, param('id').isUUID(), par
 });
 
 // ── CRUD Commandes Fournisseurs
-router.get('/:id/commandes-fournisseurs', verifierToken, param('id').isUUID(), async (req, res) => {
+router.get('/:id/commandes-fournisseurs', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const idParam = req.params.id;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);
@@ -104,7 +105,7 @@ router.get('/:id/commandes-fournisseurs', verifierToken, param('id').isUUID(), a
   }
 });
 
-router.post('/:id/commandes-fournisseurs', verifierToken, param('id').isUUID(), async (req, res) => {
+router.post('/:id/commandes-fournisseurs', verifierToken, param('id').isUUID(), checkAbonnement, requireAbonnement, async (req, res) => {
   try {
     const idParam = req.params.id;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);

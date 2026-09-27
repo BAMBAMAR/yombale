@@ -26,7 +26,34 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (27 septembre 2026 - Nuit - Audit Exhaustif & Remédiations Écosystème Conversationnel Web & WhatsApp) :
+### 📌 Dernière Version Locale (27 septembre 2026 - Nuit - Colmatage Paywall POS & Moteur de Conversion des Essais Gratuits) :
+- **Colmatage Intégral des Fuites de Paywall POS & Caisse Enregistreuse** :
+  - **Diagnostic** : La route `GET /api/boutiques/caisse-terminal/:token` et le hook client `useCaisseData.ts` possédaient un fallback forcé `plan || 'pro'`, attribuant automatiquement les droits Pro à tout appareil tactile ouvrant la caisse, y compris des mois après l'expiration de l'essai gratuit. De plus, `POST /:id/pos-vente` n'effectuait aucune vérification d'abonnement actif, permettant des encaissements illimités ad vitam æternam sans payer.
+  - **Correction Backend (`boutiques-pos.js`)** :
+    - `verifierAbonnementCaisse(boutiqueId)` vérifie désormais rigoureusement `a.statut = 'actif' AND a.fin > NOW()`. Les essais gratuits actifs sont assimilés à Business VIP ; toute boutique expirée retourne `null`.
+    - Remplacement des fallbacks `'pro'` par `'gratuit'`.
+    - Sécurisation de `POST /:id/pos-vente` : rejet strict avec code HTTP `403 ABONNEMENT_POS_REQUIS` si la boutique n'a pas d'abonnement Pro/Business actif ou d'essai gratuit en cours.
+  - **Correction Frontend (`CaisseClient.tsx`)** :
+    - Intégration de l'écran de blocage élégant `PosNonAutoriseScreen` lorsque `!estBoutiqueAutorisee` (`!is_trial && plan !== 'pro' && plan !== 'business'`).
+    - Proposition directe d'activation d'abonnement (`/boutique/abonnement`) ou de bascule vers une autre boutique autorisée du compte.
+- **Sécurisation Multi-Tenant des Routes Métier Backend (Anti-Bypass de Paywall)** :
+  - Ajout des middlewares `checkAbonnement, requireAbonnement` ou `requireBusiness` sur les routes qui n'étaient auparavant protégées que visuellement côté frontend :
+    - Documents & Factures : `GET, POST, PUT, DELETE /api/boutiques/:id/documents` (`boutiques-documents.js`).
+    - Comptabilité & Fiscalité : `/:boutiqueId/bilan`, `/:boutiqueId/inventaire`, `/:boutiqueId/ventes/export.csv`, `/:boutiqueId/export/syscohada` (`comptabilite.js`).
+    - Entrepôts & Multi-stocks : `POST/PUT /:id/entrepots`, `POST /:id/entrepots/stocks` (`entrepots.js`).
+    - Fournisseurs & Commandes d'achat : `GET/POST/PUT /:id/fournisseurs`, `GET/POST /:id/commandes-fournisseurs` (`boutiques-fournisseurs.js`).
+    - Gestion d'équipe & Administrateurs délégués : `POST /:id/admins` protégé avec `requireBusiness` (`boutiques-equipe.js`).
+- **Calibrage de la Période d'Essai Gratuit à 14 Jours** :
+  - Passage de 30 jours à 14 jours dans la table PostgreSQL `settings` (`abonnement_essai_jours = '14'`), dans `backend/lib/settingsCache.js` et dans `backend/routes/boutiques-modules/boutiques-crud.js`. 14 jours créent l'urgence commerciale nécessaire à la conversion avant la perte d'engagement du marchand.
+- **Moteur de Relances & Conversion WhatsApp (`cron-relances-marchands.js`)** :
+  - Déploiement d'une séquence de conversion ciblée en 3 étapes :
+    - **J-3** : Alerte expiration imminente dans 3 jours, incitation avec formules dès 2 500 FCFA/mois et remise annuelle -25%.
+    - **J-1** : Alerte d'urgence « Dernier jour d'essai », avertissant que l'encaissement POS et la vitrine seront suspendus demain.
+    - **J+1 Expiré** : Message rassurant attestant que toutes les données (produits, historique, dettes clients) sont conservées en sécurité, avec lien de réactivation en 1 clic.
+- **Validation Tests Fonctionnels & Non-Régression** :
+  - 100% des tests de cycle de vie (`scratch/test_economic_lifecycle.js`) et 100% des tests de paywall et guards backend (`scratch/test_paywall_verification.js`) validés avec succès (8/8 PASS).
+
+### 📌 Version Précédente (27 septembre 2026 - Nuit - Audit Exhaustif & Remédiations Écosystème Conversationnel Web & WhatsApp) :
 - **Audit Empirique des 16 Scénarios Conversationnels (100% Conformes - 0 Anomalie)** :
   - Exécution en conditions réelles contre la base PostgreSQL de production/staging pour tous les flux : recherche produit, recherche boutique, comparaison multi-marchands, panier, tunnel de commande, suivi de commande, immobilier, annonces classifiées, compte marchand/PIN, FAQ, robustesse/erreurs, stateless vs connecté, données inexistantes, vérification des prix au franc près, disponibilité/ruptures, tickets support/rappel et isolation multi-tenant.
 - **Sécurisation Anti-IDOR / Anti-BOLA Espace Marchand WhatsApp (`whatsapp-chatbot.js`)** :

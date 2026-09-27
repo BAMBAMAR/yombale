@@ -125,47 +125,47 @@ async function traiterRelancesMarchands() {
       }
     }
 
-    // ── 3. Relance J+25 : Expiration Essai & Offre Annuelle -25% Wave ──────────
-    const qJ25 = `
+    // ── 3. Relance J-3 : Expiration Essai Imminente (Fin dans 3 jours) ────────
+    const qJMoins3 = `
       SELECT a.id, a.fin, b.nom, b.slug, COALESCE(b.whatsapp, b.telephone, u.telephone) AS telephone
       FROM abonnements a
       JOIN utilisateurs u ON u.id = a.utilisateur_id
       JOIN boutiques b ON b.utilisateur_id = u.id
-      WHERE a.statut = 'actif'
-        AND a.fin::date = (CURRENT_DATE + INTERVAL '5 days')::date
+      WHERE a.statut = 'actif' AND a.is_trial = true
+        AND a.fin::date = (CURRENT_DATE + INTERVAL '3 days')::date
         AND NOT EXISTS (
           SELECT 1 FROM prospection_messages_log 
           WHERE destinataire = COALESCE(b.whatsapp, b.telephone, u.telephone) 
-            AND message_envoye LIKE '%Offre Exclusive%'
+            AND message_envoye LIKE '%Fin dans 3 jours%'
         )
     `;
-    const resJ25 = await pool.query(qJ25);
+    const resJMoins3 = await pool.query(qJMoins3);
 
-    for (const a of resJ25.rows) {
+    for (const a of resJMoins3.rows) {
       if (!a.telephone) continue;
       if (estDesinscrit && (await estDesinscrit(a.telephone))) continue;
 
       const msg =
         `Salam ${a.nom} ! ⏳\n\n` +
-        `Vos 30 jours d'essai gratuit sur Nopalou se terminent dans 5 jours.\n\n` +
-        `🎁 *Offre Exclusive de Renouvellement :*\n` +
-        `Profitez de *-25% (3 mois offerts)* sur l'abonnement annuel avec paiement Wave direct !\n\n` +
-        `👉 Renouvelez en 1 clic ici : ${SITE}/tarifs-boutique\n\n` +
-        `_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
+        `Votre période d'essai gratuit sur Nopalou se termine dans 3 jours.\n\n` +
+        `Pour continuer à encaisser vos clients sur votre caisse POS et garder votre vitrine active sans interruption, choisissez votre formule à partir de 2 500 FCFA/mois :\n` +
+        `👉 ${SITE}/tarifs-boutique\n\n` +
+        `🎁 Remise annuelle : -25% (3 mois offerts) si vous réglez par an !\n\n` +
+        `_Pour ne plus recevoir de rappel, répondez STOP._`;
 
       if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
         try {
           const res = await sendWhatsAppNotification(a.telephone, {
             textMessage: msg,
-            title: `⏳ Fin d'essai dans 5 jours — ${a.nom}`.slice(0, 60),
-            montant: '-25% Wave',
-            detail: `Profitez de -25% (3 mois offerts) sur l'abonnement annuel avec Wave : ${SITE}/tarifs-boutique`,
+            title: `⏳ Fin dans 3 jours — ${a.nom}`.slice(0, 60),
+            montant: 'Dès 2 500 F',
+            detail: `Votre essai se termine dans 3 jours. Choisissez votre plan pour continuer : ${SITE}/tarifs-boutique`,
             url: `${SITE}/tarifs-boutique`,
             buttonParam: 'tarifs-boutique',
             type: 'service',
           });
           const isSent = !!(res && res.messages?.[0]?.id);
-          stats.j25++;
+          stats.jMoins3 = (stats.jMoins3 || 0) + 1;
           stats.total++;
           await pool.query(
             `INSERT INTO prospection_messages_log (canal, destinataire, message_envoye, statut)
@@ -173,12 +173,120 @@ async function traiterRelancesMarchands() {
             [a.telephone, msg, isSent ? 'envoye' : 'echec']
           );
         } catch (e) {
-          stats.erreurs.push({ bq: a.nom, type: 'J+25', err: e.message });
+          stats.erreurs.push({ bq: a.nom, type: 'J-3', err: e.message });
         }
       }
     }
 
-    console.log(`[CRON RELANCES MARCHANDS] ✅ Traité : ${stats.total} envois (J+1: ${stats.j1}, J+7: ${stats.j7}, J+25: ${stats.j25})`);
+    // ── 4. Relance J-1 : Alerte Clôture Caisse Demain ──────────────────────────
+    const qJMoins1 = `
+      SELECT a.id, a.fin, b.nom, b.slug, COALESCE(b.whatsapp, b.telephone, u.telephone) AS telephone
+      FROM abonnements a
+      JOIN utilisateurs u ON u.id = a.utilisateur_id
+      JOIN boutiques b ON b.utilisateur_id = u.id
+      WHERE a.statut = 'actif' AND a.is_trial = true
+        AND a.fin::date = (CURRENT_DATE + INTERVAL '1 day')::date
+        AND NOT EXISTS (
+          SELECT 1 FROM prospection_messages_log 
+          WHERE destinataire = COALESCE(b.whatsapp, b.telephone, u.telephone) 
+            AND message_envoye LIKE '%Dernier jour%'
+        )
+    `;
+    const resJMoins1 = await pool.query(qJMoins1);
+
+    for (const a of resJMoins1.rows) {
+      if (!a.telephone) continue;
+      if (estDesinscrit && (await estDesinscrit(a.telephone))) continue;
+
+      const msg =
+        `Salam ${a.nom} ! ⚠️ *Dernier jour d'essai gratuit sur Nopalou !*\n\n` +
+        `Dès demain, l'encaissement sur votre Caisse POS et votre catalogue seront suspendus.\n\n` +
+        `Ne perdez pas vos habitudes : activez votre abonnement Pro (5 000 FCFA/mois) en 1 clic pour continuer à vendre sereinement :\n` +
+        `👉 ${SITE}/boutique/abonnement\n\n` +
+        `_Pour ne plus recevoir de rappel, répondez STOP._`;
+
+      if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
+        try {
+          const res = await sendWhatsAppNotification(a.telephone, {
+            textMessage: msg,
+            title: `⚠️ Dernier jour d'essai — ${a.nom}`.slice(0, 60),
+            montant: 'Plan Pro',
+            detail: `Dès demain la caisse sera suspendue. Activez votre plan en 1 clic : ${SITE}/boutique/abonnement`,
+            url: `${SITE}/boutique/abonnement`,
+            buttonParam: 'boutique/abonnement',
+            type: 'service',
+          });
+          const isSent = !!(res && res.messages?.[0]?.id);
+          stats.jMoins1 = (stats.jMoins1 || 0) + 1;
+          stats.total++;
+          await pool.query(
+            `INSERT INTO prospection_messages_log (canal, destinataire, message_envoye, statut)
+             VALUES ('whatsapp', $1, $2, $3)`,
+            [a.telephone, msg, isSent ? 'envoye' : 'echec']
+          );
+        } catch (e) {
+          stats.erreurs.push({ bq: a.nom, type: 'J-1', err: e.message });
+        }
+      }
+    }
+
+    // ── 5. Relance J+1 Expiré : Réactivation Immédiate sans Perte ─────────────
+    const qJPlus1 = `
+      SELECT a.id, a.fin, b.nom, b.slug, COALESCE(b.whatsapp, b.telephone, u.telephone) AS telephone
+      FROM abonnements a
+      JOIN utilisateurs u ON u.id = a.utilisateur_id
+      JOIN boutiques b ON b.utilisateur_id = u.id
+      WHERE a.fin::date = (CURRENT_DATE - INTERVAL '1 day')::date
+        AND NOT EXISTS (
+          SELECT 1 FROM abonnements a2
+          WHERE a2.utilisateur_id = u.id AND a2.statut = 'actif' AND a2.fin > NOW()
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM prospection_messages_log 
+          WHERE destinataire = COALESCE(b.whatsapp, b.telephone, u.telephone) 
+            AND message_envoye LIKE '%Réactivez votre boutique%'
+        )
+    `;
+    const resJPlus1 = await pool.query(qJPlus1);
+
+    for (const a of resJPlus1.rows) {
+      if (!a.telephone) continue;
+      if (estDesinscrit && (await estDesinscrit(a.telephone))) continue;
+
+      const msg =
+        `Salam ${a.nom} ! 👋\n\n` +
+        `Votre période d'essai gratuit Nopalou est arrivée à son terme.\n\n` +
+        `🔒 *Rassurez-vous :* Toutes vos données (articles, historique des ventes, carnet de dettes clients) sont conservées en toute sécurité.\n\n` +
+        `👉 Réactivez votre boutique et votre caisse en 1 clic pour reprendre vos encaissements :\n` +
+        `👉 ${SITE}/boutique/abonnement\n\n` +
+        `_Besoin d'aide ou d'un conseil ? Répondez directement à ce message WhatsApp._`;
+
+      if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
+        try {
+          const res = await sendWhatsAppNotification(a.telephone, {
+            textMessage: msg,
+            title: `🔒 Réactivez votre boutique — ${a.nom}`.slice(0, 60),
+            montant: 'Réactivation',
+            detail: `Vos données sont conservées en sécurité. Réactivez votre boutique : ${SITE}/boutique/abonnement`,
+            url: `${SITE}/boutique/abonnement`,
+            buttonParam: 'boutique/abonnement',
+            type: 'service',
+          });
+          const isSent = !!(res && res.messages?.[0]?.id);
+          stats.jPlus1 = (stats.jPlus1 || 0) + 1;
+          stats.total++;
+          await pool.query(
+            `INSERT INTO prospection_messages_log (canal, destinataire, message_envoye, statut)
+             VALUES ('whatsapp', $1, $2, $3)`,
+            [a.telephone, msg, isSent ? 'envoye' : 'echec']
+          );
+        } catch (e) {
+          stats.erreurs.push({ bq: a.nom, type: 'J+1_exp', err: e.message });
+        }
+      }
+    }
+
+    console.log(`[CRON RELANCES MARCHANDS] ✅ Traité : ${stats.total} envois (J+1: ${stats.j1}, J+7: ${stats.j7}, J-3: ${stats.jMoins3 || 0}, J-1: ${stats.jMoins1 || 0}, J+1_exp: ${stats.jPlus1 || 0})`);
     return { succes: true, stats };
   } catch (err) {
     console.error('[CRON RELANCES MARCHANDS FAIL]', err);

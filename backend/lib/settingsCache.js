@@ -16,7 +16,7 @@ const DEFAULTS = {
   plan_pro_prix:       '5000',
   plan_business_prix:  '10000',
   plan_decouverte_label: 'Boutique Taf Taf',
-  abonnement_essai_jours: '30',
+  abonnement_essai_jours: '14',
   plan_pro_label:      'Boutique Pro',
   plan_business_label: 'Boutique Business',
   kalpe_prix_mensuel:   '1000',

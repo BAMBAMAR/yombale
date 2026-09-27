@@ -179,7 +179,7 @@ router.post('/taf-taf', async (req, res) => {
     const prix = planChoisi === 'business' ? prixBusiness : planChoisi === 'pro' ? prixPro : prixDecouverte;
 
     // 3. Activer le plan choisi (Taf Taf Découverte 1 mois offert par défaut)
-    const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
+    const essaiJours = await cfg.getNum('abonnement_essai_jours') || 14;
     
     await pool.query(
       `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
@@ -718,7 +718,7 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
 
     // Activer le plan découverte (1 mois gratuit avec accès total VIP) par défaut
     try {
-      const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
+      const essaiJours = await cfg.getNum('abonnement_essai_jours') || 14;
       await pool.query(
         `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, is_trial)
          VALUES ($1, 'decouverte', 'actif', 2500, NOW() + INTERVAL '1 day' * $2, TRUE)`,

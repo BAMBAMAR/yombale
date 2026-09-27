@@ -1,5 +1,30 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Colmatage Intégral du Paywall POS, Sécurisation Backend & Moteur de Conversion des Essais Gratuits (27 septembre 2026 - Nuit)** 🔒💳⚡📈🎯✅ :
+  * **🎯 Problèmes Résolus & Améliorations Apportées** :
+    1. **Colmatage des Fuites de Paywall POS (`boutiques-pos.js`, `CaisseClient.tsx`, `useCaisseData.ts`)** :
+       - *Problème* : La route `GET /api/boutiques/caisse-terminal/:token` et le hook client `useCaisseData` renvoyaient systématiquement un fallback `plan || 'pro'`, attribuant automatiquement les privilèges Pro à tout appareil tactile ouvrant la caisse, y compris des mois après l'expiration de l'essai gratuit. De plus, `POST /:id/pos-vente` n'effectuait aucune vérification d'abonnement actif, permettant des encaissements illimités ad vitam æternam sans payer.
+       - *Correction* : `verifierAbonnementCaisse(boutiqueId)` vérifie désormais rigoureusement `a.statut = 'actif' AND a.fin > NOW()`. Les essais gratuits actifs sont assimilés à Business VIP ; toute boutique expirée retourne `null` et est basculée sur `'gratuit'`. Sécurisation de `POST /:id/pos-vente` avec rejet strict en HTTP `403 ABONNEMENT_POS_REQUIS` si la boutique n'a pas d'abonnement Pro/Business actif ou d'essai en cours. Côté interface, `CaisseClient.tsx` affiche l'écran dédié `PosNonAutoriseScreen`.
+    2. **Sécurisation Multi-Tenant des Routes Métier Backend (Anti-Bypass de Paywall)** :
+       - *Correction* : Ajout des middlewares `checkAbonnement, requireAbonnement` ou `requireBusiness` sur les routes jusqu'alors protégées uniquement côté frontend :
+         - Documents & Factures : `GET, POST, PUT, DELETE /api/boutiques/:id/documents` (`boutiques-documents.js`).
+         - Comptabilité & Fiscalité : `/:boutiqueId/bilan`, `/:boutiqueId/inventaire`, `/:boutiqueId/ventes/export.csv`, `/:boutiqueId/export/syscohada` (`comptabilite.js`).
+         - Entrepôts & Multi-stocks : `POST/PUT /:id/entrepots`, `POST /:id/entrepots/stocks` (`entrepots.js`).
+         - Fournisseurs & Commandes d'achat : `GET/POST/PUT /:id/fournisseurs`, `GET/POST /:id/commandes-fournisseurs` (`boutiques-fournisseurs.js`).
+         - Gestion d'équipe & Administrateurs délégués : `POST /:id/admins` protégé avec `requireBusiness` (`boutiques-equipe.js`).
+    3. **Calibrage de la Période d'Essai Gratuit à 14 Jours** :
+       - *Correction* : Passage de 30 jours à 14 jours dans la table PostgreSQL `settings` (`abonnement_essai_jours = '14'`), dans `backend/lib/settingsCache.js` et dans `backend/routes/boutiques-modules/boutiques-crud.js` afin d'accélérer l'engagement et la conversion marchande.
+    4. **Moteur de Relances & Conversion WhatsApp (`cron-relances-marchands.js`)** :
+       - *Correction* : Déploiement d'une séquence ciblée en 3 étapes :
+         - **J-3** : Alerte expiration imminente dans 3 jours, incitation avec formules dès 2 500 FCFA/mois et remise annuelle -25%.
+         - **J-1** : Alerte d'urgence « Dernier jour d'essai », avertissant que l'encaissement POS et la vitrine seront suspendus demain.
+         - **J+1 Expiré** : Message rassurant attestant que toutes les données (produits, historique, dettes clients) sont conservées en sécurité, avec lien de réactivation en 1 clic.
+  * **🧪 Validation & Qualité** :
+    - 383/383 tests unitaires Jest (`npm run test:unit`) validés avec 0 régression.
+    - 10/10 tests du cycle économique (`scratch/test_economic_lifecycle.js`) passés avec succès.
+    - 8/8 tests de paywall et guards backend (`scratch/test_paywall_verification.js`) validés.
+    - 0 violation bloquante `npm run lint:slop` et `npx tsc --noEmit` validé.
+
 - **Optimisation Catalogue Haute Performance (< 10ms), Déverrouillage Bot Blocker & Enrichissement Schema.org (27 septembre 2026 - Soir)** ⚡🚀🛡️📊📦✅ :
   * **🎯 Problèmes Résolus & Améliorations Apportées** :
     1. **Mise en Cache Redis & In-Memory du Catalogue (`backend/routes/produits.js`)** :
