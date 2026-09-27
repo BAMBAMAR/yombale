@@ -134,6 +134,8 @@ export function AgenceMobileDrawer({
   ]
 
   function isActive(href: string) {
+    if (!pathname) return false
+
     const [baseHref, queryString] = href.split('?')
     const itemParams = new URLSearchParams(queryString || '')
     const itemTab = itemParams.get('tab')

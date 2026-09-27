@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import {
@@ -283,9 +283,7 @@ export default function AgenceWorkspaceLayout({
         </div>
 
         {/* Menu Navigation avec Rubriques Thématiques */}
-        <Suspense fallback={<nav className="workspace-sidebar-nav" style={{ padding: '16px', color: '#64748B', fontSize: 13 }}>Chargement menu...</nav>}>
-          <AgenceSidebarNav slug={slug} compteurs={compteurs} />
-        </Suspense>
+        <AgenceSidebarNav slug={slug} compteurs={compteurs} />
 
         {/* Pied de sidebar */}
         <div style={{ padding: '16px', borderTop: '1px solid var(--border, #E8DDD2)' }}>
@@ -332,15 +330,13 @@ export default function AgenceWorkspaceLayout({
       />
 
       {/* ── Tiroir Latéral Navigation Complète Mobile ── */}
-      <Suspense fallback={null}>
-        <AgenceMobileDrawer
-          slug={slug}
-          nom={agence?.nom || 'Agence'}
-          isOpen={mobileDrawerOpen}
-          onClose={() => setMobileDrawerOpen(false)}
-          compteurs={compteurs}
-        />
-      </Suspense>
+      <AgenceMobileDrawer
+        slug={slug}
+        nom={agence?.nom || 'Agence'}
+        isOpen={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        compteurs={compteurs}
+      />
 
       {/* ── Centre de Notifications Déroulant ── */}
       {showNotifCenter && (

@@ -155,6 +155,8 @@ export function AgenceSidebarNav({
   ]
 
   function isLinkActive(item: NavItem) {
+    if (!pathname) return false
+
     const [baseHref, queryString] = item.href.split('?')
     const itemParams = new URLSearchParams(queryString || '')
     const itemTab = itemParams.get('tab')

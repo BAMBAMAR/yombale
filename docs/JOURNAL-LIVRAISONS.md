@@ -1,20 +1,23 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
-- **Correction Navigation Espace Agence : Résolution de l'Indicateur Actif « Loyers & Quittances » au lieu de « Contrats de Bail » (`AgenceSidebarNav.tsx`, `layout.tsx`, `AgenceMobileDrawer.tsx`, `locatif/page.tsx`) (26 septembre 2026)** 🏠📑⚡✅ :
+- **Correction Navigation Espace Agence : Résolution de l'Indicateur Actif « Loyers & Quittances » au lieu de « Contrats de Bail » et Sécurisation SSR/Hydration (`AgenceSidebarNav.tsx`, `layout.tsx`, `AgenceMobileDrawer.tsx`, `locatif/page.tsx`) (27 septembre 2026)** 🏠📑⚡✅ :
   * **🎯 Contexte & Anomalie Utilisateur** :
     - Dans l'espace Agence immobilière, lors de la consultation des contrats de bail (`/agence/[slug]/locatif?tab=baux` ou bascule sur l'onglet « Baux Sous Gestion »), le lien « Loyers & Quittances » restait erronément surligné en orange/actif dans la sidebar de gauche, tandis que « Contrats de Bail » restait inactif.
+    - Erreurs d'hydratation console (`React error #425, #418, #423` et crash SSR Server Components) causées par un fallback textuel `<Suspense>` (`Chargement menu...`) divergeant du DOM client et par l'accès à `pathname.startsWith` sans vérification préalable de nullité lors du rendu serveur.
   * **🔍 Cause Racine Identifiée** :
     1. Dans `layout.tsx` et `AgenceMobileDrawer.tsx`, la fonction `isLinkActive` vérifiait uniquement `pathname.startsWith(item.href)` via `usePathname()`. En Next.js App Router, `usePathname()` ne contient jamais la chaîne de requête (`searchParams`).
-    2. Pour « Loyers & Quittances » (`/agence/[slug]/locatif`), la condition était toujours vraie même sur `?tab=baux`. Pour « Contrats de Bail » (`/agence/[slug]/locatif?tab=baux`), la comparaison échouait systématiquement (`/locatif` ne commençant pas par `/locatif?tab=baux`).
+    2. Pour « Loyers & Quittances » (`/agence/[slug]/locatif`), la condition était toujours vraie même sur `?tab=baux`. Pour « Contrats de Bail » (`/agence/[slug]/locatif?tab=baux`), la comparaison échouait systématiquement.
     3. Au sein de la page `locatif/page.tsx`, le basculement d'onglet modifiait uniquement le state React sans synchroniser l'URL du navigateur avec `?tab=baux`.
+    4. Lors du rendu SSR, `usePathname()` peut retourner `null` ; appeler directement `pathname.startsWith` provoquait un `TypeError: Cannot read properties of null (reading 'startsWith')`. De plus, le fallback textuel sous `<Suspense>` provoquait une divergence de texte brut entre SSR et client (React #425).
   * **🛠️ Solutions Techniques & Corrections Réalisées** :
     1. **Extraction & Découplage Modulaire (`AgenceSidebarNav.tsx`)** :
        - Création de `frontend-next/src/app/agence/[slug]/components/AgenceSidebarNav.tsx` intégrant l'analyse fine de `useSearchParams().get('tab')`.
-       - Allègement substantiel de `layout.tsx` (de 475 à 358 lignes), respectant scrupuleusement le plafond de 450 lignes (Règle d'or #2 Anti-Slop).
-       - Enveloppe `<Suspense>` pour isoler la lecture dynamique des search params conformément aux exigences du compilateur Next.js 14.
+       - Allègement substantiel de `layout.tsx` (de 475 à 354 lignes), respectant scrupuleusement le plafond de 450 lignes (Règle d'or #2 Anti-Slop).
+       - Sécurisation absolue de `pathname` avec garde `if (!pathname) return false` éliminant tout crash au runtime SSR.
+       - Suppression des fallbacks textuels `<Suspense>` superflus garantissant une parité HTML 100% conforme entre SSR et hydratation client (zéro erreur 425/418/423).
        - Logique d'activation précise : « Contrats de Bail » est actif si et seulement si `tab === 'baux'`. « Loyers & Quittances » est actif par défaut sur la route locative quand aucun onglet spécifique n'est actif ou quand `tab === 'loyers'`.
     2. **Mise à Niveau du Drawer Mobile (`AgenceMobileDrawer.tsx`)** :
-       - Application de la même logique de détection de query string `tab` et pastille badge dynamique sur les baux.
+       - Application de la même logique de détection de query string `tab`, pastille badge dynamique sur les baux et garde `if (!pathname) return false`.
     3. **Synchronisation URL Bidirectionnelle et Fluide (`locatif/page.tsx`)** :
        - Ajout de `handleTabChange` utilisant `router.replace(targetUrl, { scroll: false })` pour synchroniser dynamiquement l'URL lors du clic sur les puces « Échéances & Encaissements » et « Baux Sous Gestion ».
        - `useEffect` réactif qui garantit que cliquer sur le menu latéral bascule automatiquement l'onglet affiché à l'écran.
@@ -22,6 +25,7 @@
     - `npx tsc --noEmit` : 0 erreur TypeScript.
     - `npm run lint:slop` : 100% conforme aux règles d'or Nopalou.
     - `npm test` : 69/69 tests unitaires validés avec succès.
+    - `npm run build` : Compilation Next.js SSR + Client 100% validée.
 
 - **Correction et Optimisation du Défilement Galerie Produit (`GalerieClient.tsx`) (26 septembre 2026)** 🖼️⚡🖱️📱✅ :
   * **🎯 Contexte & Anomalie Utilisateur** :
