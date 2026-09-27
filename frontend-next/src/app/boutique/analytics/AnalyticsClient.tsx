@@ -98,7 +98,7 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
     if (prod) params.set('produit_id', prod)
 
     const cacheKey = `nopalou_analytics_${boutiqueId}_${start}_${end}_${prod}`
-    const cached = localStorage.getItem(cacheKey)
+    const cached = localStorage.getItem(cacheKey) || (!prod && start === dateDebut ? localStorage.getItem(`nopalou_offline_analytics_${boutiqueId}`) : null)
     if (cached) {
       try {
         const data = JSON.parse(cached)
@@ -112,14 +112,22 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
     if (!cached) setLoading(true)
     setErreur(null)
 
-    fetch(`/api/analytics/boutique/${boutiqueId}?${params.toString()}`)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('nopalou_token') : null
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
+    fetch(`/api/analytics/boutique/${boutiqueId}?${params.toString()}`, { headers })
       .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error || r.status)).catch(() => Promise.reject(r.statusText)))
       .then(data => {
-        setStats(data.stats)
-        setHistorique(data.historique ?? [])
-        setAttribution(data.attribution_sociale ?? [])
-        setTopProduits(data.top_produits ?? [])
-        localStorage.setItem(cacheKey, JSON.stringify(data))
+        if (data && data.stats) {
+          setStats(data.stats)
+          setHistorique(data.historique ?? [])
+          setAttribution(data.attribution_sociale ?? [])
+          setTopProduits(data.top_produits ?? [])
+          localStorage.setItem(cacheKey, JSON.stringify(data))
+          if (!prod) {
+            localStorage.setItem(`nopalou_offline_analytics_${boutiqueId}`, JSON.stringify(data))
+          }
+        }
       })
       .catch((msg) => {
         if (!cached) setErreur(typeof msg === 'string' ? msg : 'Impossible de charger les statistiques.')
@@ -242,6 +250,15 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
       {erreur && (
         <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '14px 18px', color: '#dc2626', marginBottom: 16 }}>
           {erreur}
+        </div>
+      )}
+
+      {!stats && !loading && !erreur && (
+        <div style={{ background: '#FFFFFF', border: '1px solid var(--border, #E8DDD2)', borderRadius: 12, padding: '32px 20px', textAlign: 'center', color: '#6B5E52', marginBottom: 16 }}>
+          <p style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600 }}>Aucune statistique disponible pour cette sélection.</p>
+          <button type="button" onClick={() => chargerDonnees()} style={{ padding: '8px 16px', fontSize: 13, background: 'var(--navy, #1C2B4A)', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+            Actualiser les statistiques
+          </button>
         </div>
       )}
 

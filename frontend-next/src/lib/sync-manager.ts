@@ -25,9 +25,20 @@ import {
   marquerClotureSyncing,
   supprimerClotureHorsLigne,
   revertClotureSyncing,
+  obtenirDepensesHorsLigne,
+  marquerDepenseSyncing,
+  supprimerDepenseHorsLigne,
+  revertDepenseSyncing,
+  obtenirNouveauxClientsHorsLigne,
+  marquerNouveauClientSyncing,
+  supprimerNouveauClientHorsLigne,
+  revertNouveauClientSyncing,
+  obtenirBoutiquesLocales,
   type OfflineSale,
   type OfflineDebtTransaction,
   type OfflineClotureSession,
+  type OfflineExpense,
+  type OfflineNewClient,
 } from '@/lib/db-offline'
 
 // ── Verrou global partagé entre toutes les instances du hook ──────────────────
@@ -193,6 +204,106 @@ async function syncCloture(
   }
 }
 
+/**
+ * Tente de synchroniser une dépense avec le serveur (Comptabilité / POS).
+ */
+async function syncDepense(
+  depense: OfflineExpense
+): Promise<{ success: boolean; shouldRetry: boolean; error?: string }> {
+  try {
+    const response = await fetch(`/api/comptabilite/${depense.boutique_id}/depenses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        idempotency_key: depense.id_temporaire,
+        montant: depense.montant,
+        categorie: depense.categorie,
+        description: depense.description || undefined,
+        date_depense: depense.date_depense || undefined,
+      }),
+    })
+
+    if (response.ok) {
+      const data = await response.json().catch(() => ({}))
+      if (data.id || data.success || data.duplicate) {
+        return { success: true, shouldRetry: false }
+      }
+      return {
+        success: false,
+        shouldRetry: false,
+        error: data.error || 'Erreur enregistrement dépense',
+      }
+    }
+
+    if (response.status >= 400 && response.status < 500) {
+      const data = await response.json().catch(() => ({}))
+      return {
+        success: false,
+        shouldRetry: false,
+        error: data.error || `Erreur HTTP ${response.status}`,
+      }
+    }
+
+    return { success: false, shouldRetry: true, error: `Erreur serveur HTTP ${response.status}` }
+  } catch (err) {
+    return {
+      success: false,
+      shouldRetry: true,
+      error: err instanceof Error ? err.message : 'Erreur réseau',
+    }
+  }
+}
+
+/**
+ * Tente de synchroniser un nouveau profil client créé hors-ligne avec le serveur.
+ */
+async function syncNouveauClient(
+  client: OfflineNewClient
+): Promise<{ success: boolean; shouldRetry: boolean; error?: string }> {
+  try {
+    const response = await fetch(`/api/boutiques/${client.boutique_id}/credits-clients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nom: client.nom,
+        telephone: client.telephone,
+        adresse: client.adresse || undefined,
+        plafond_max: client.plafond_max || undefined,
+        note_client: client.note_client || undefined,
+      }),
+    })
+
+    if (response.ok) {
+      const data = await response.json().catch(() => ({}))
+      if (data.client || data.success || data.duplicate) {
+        return { success: true, shouldRetry: false }
+      }
+      return {
+        success: false,
+        shouldRetry: false,
+        error: data.error || 'Erreur enregistrement client',
+      }
+    }
+
+    if (response.status >= 400 && response.status < 500) {
+      const data = await response.json().catch(() => ({}))
+      return {
+        success: false,
+        shouldRetry: false,
+        error: data.error || `Erreur HTTP ${response.status}`,
+      }
+    }
+
+    return { success: false, shouldRetry: true, error: `Erreur serveur HTTP ${response.status}` }
+  } catch (err) {
+    return {
+      success: false,
+      shouldRetry: true,
+      error: err instanceof Error ? err.message : 'Erreur réseau',
+    }
+  }
+}
+
 export interface SyncResult {
   synced: number
   failed: number
@@ -200,7 +311,7 @@ export interface SyncResult {
 }
 
 /**
- * Synchronise toutes les ventes, dettes et clôtures de session en attente pour une boutique.
+ * Synchronise tous les nouveaux clients, ventes, dettes, clôtures de session et dépenses en attente pour une boutique.
  */
 export async function syncToutBoutique(
   boutiqueId: string,
@@ -216,6 +327,41 @@ export async function syncToutBoutique(
   const result: SyncResult = { synced: 0, failed: 0, errors: [] }
 
   try {
+    // 0. Synchronisation des nouveaux clients créés hors-ligne (AVANT les dettes et ventes)
+    const nouveauxClients = await obtenirNouveauxClientsHorsLigne(boutiqueId, userId)
+    for (const client of nouveauxClients) {
+      await marquerNouveauClientSyncing(client.id_temporaire).catch(() => {})
+      let lastError = ''
+      let success = false
+
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+          const delay = BACKOFF_BASE_MS * Math.pow(2, attempt - 1)
+          await sleep(delay)
+        }
+
+        const resCli = await syncNouveauClient(client)
+        if (resCli.success) {
+          await supprimerNouveauClientHorsLigne(client.id_temporaire).catch(() => {})
+          result.synced++
+          success = true
+          break
+        }
+
+        lastError = resCli.error || 'Erreur inconnue'
+        if (!resCli.shouldRetry) {
+          await revertNouveauClientSyncing(client.id_temporaire).catch(() => {})
+          break
+        }
+      }
+
+      if (!success) {
+        await revertNouveauClientSyncing(client.id_temporaire).catch(() => {})
+        result.failed++
+        result.errors.push({ id: client.id_temporaire, error: lastError })
+      }
+    }
+
     // 1. Synchronisation des ventes POS
     const ventes = await obtenirVentesHorsLigne(boutiqueId, userId)
     for (const vente of ventes) {
@@ -320,11 +466,101 @@ export async function syncToutBoutique(
         result.errors.push({ id: cloture.id_temporaire, error: lastError })
       }
     }
+
+    // 4. Synchronisation des Dépenses hors-ligne
+    const depenses = await obtenirDepensesHorsLigne(boutiqueId, userId)
+    for (const depense of depenses) {
+      await marquerDepenseSyncing(depense.id_temporaire).catch(() => {})
+      let lastError = ''
+      let success = false
+
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+          const delay = BACKOFF_BASE_MS * Math.pow(2, attempt - 1)
+          await sleep(delay)
+        }
+
+        const resDepense = await syncDepense(depense)
+        if (resDepense.success) {
+          await supprimerDepenseHorsLigne(depense.id_temporaire).catch(() => {})
+          result.synced++
+          success = true
+          break
+        }
+
+        lastError = resDepense.error || 'Erreur inconnue'
+        if (!resDepense.shouldRetry) {
+          await revertDepenseSyncing(depense.id_temporaire).catch(() => {})
+          break
+        }
+      }
+
+      if (!success) {
+        await revertDepenseSyncing(depense.id_temporaire).catch(() => {})
+        result.failed++
+        result.errors.push({ id: depense.id_temporaire, error: lastError })
+      }
+    }
   } finally {
     syncLocks.delete(boutiqueId)
   }
 
   return result
+}
+
+/**
+ * Scanne toutes les boutiques de l'utilisateur (depuis le cache IndexedDB et toutes les files d'attente)
+ * et exécute une synchronisation complète pour chacune d'elles.
+ * Dispatch l'événement 'nopalou:sync-complete' pour chaque boutique ayant des éléments synchronisés.
+ */
+export async function syncToutesLesBoutiquesEnAttente(
+  userId: string
+): Promise<Record<string, SyncResult>> {
+  if (!userId) return {}
+
+  const results: Record<string, SyncResult> = {}
+  const boutiqueIdsSet = new Set<string>()
+
+  try {
+    // 1. Récupérer les boutiques enregistrées en local
+    const boutiquesLocales = await obtenirBoutiquesLocales(userId).catch(() => [])
+    boutiquesLocales.forEach((b) => {
+      if (b?.id) boutiqueIdsSet.add(b.id)
+    })
+
+    // 2. Récupérer également toute boutique ayant des éléments dans l'une des files d'attente
+    const [allVentes, allDettes, allClotures, allDepenses, allNouveauxClients] = await Promise.all([
+      obtenirVentesHorsLigne(undefined, userId).catch(() => []),
+      obtenirDettesHorsLigne(undefined, userId).catch(() => []),
+      obtenirCloturesHorsLigne().catch(() => []),
+      obtenirDepensesHorsLigne(undefined, userId).catch(() => []),
+      obtenirNouveauxClientsHorsLigne(undefined, userId).catch(() => []),
+    ])
+
+    allVentes.forEach((v) => v?.boutique_id && boutiqueIdsSet.add(v.boutique_id))
+    allDettes.forEach((d) => d?.boutique_id && boutiqueIdsSet.add(d.boutique_id))
+    allClotures.forEach((c) => c?.boutique_id && boutiqueIdsSet.add(c.boutique_id))
+    allDepenses.forEach((dp) => dp?.boutique_id && boutiqueIdsSet.add(dp.boutique_id))
+    allNouveauxClients.forEach((nc) => nc?.boutique_id && boutiqueIdsSet.add(nc.boutique_id))
+
+    // 3. Synchroniser chaque boutique séquentiellement avec isolation
+    for (const bId of boutiqueIdsSet) {
+      const res = await syncToutBoutique(bId, userId)
+      results[bId] = res
+
+      if (typeof window !== 'undefined' && res.synced > 0) {
+        window.dispatchEvent(
+          new CustomEvent('nopalou:sync-complete', {
+            detail: { boutiqueId: bId, result: res },
+          })
+        )
+      }
+    }
+  } catch (err) {
+    console.error('[SyncManager] Erreur synchronisation globale multi-boutiques:', err)
+  }
+
+  return results
 }
 
 // Rétrocompatibilité : syncVentesBoutique appelle syncToutBoutique
@@ -340,6 +576,8 @@ export interface UseSyncOfflineReturn {
   ventesEnAttente: number
   dettesEnAttente: number
   cloturesEnAttente: number
+  depensesEnAttente: number
+  nouveauxClientsEnAttente: number
   totalEnAttente: number
   lastSyncResult: SyncResult | null
   declencherSync: () => Promise<SyncResult>
@@ -347,7 +585,7 @@ export interface UseSyncOfflineReturn {
 }
 
 /**
- * Hook React pour déclencher et suivre la synchronisation offline d'une boutique (POS, Dettes & Clôtures).
+ * Hook React pour déclencher et suivre la synchronisation offline d'une boutique (Clients, POS, Dettes, Clôtures & Dépenses).
  */
 export function useSyncOffline(
   boutiqueId: string,
@@ -357,6 +595,8 @@ export function useSyncOffline(
   const [ventesEnAttente, setVentesEnAttente] = useState(0)
   const [dettesEnAttente, setDettesEnAttente] = useState(0)
   const [cloturesEnAttente, setCloturesEnAttente] = useState(0)
+  const [depensesEnAttente, setDepensesEnAttente] = useState(0)
+  const [nouveauxClientsEnAttente, setNouveauxClientsEnAttente] = useState(0)
   const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null)
   const isMounted = useRef(true)
 
@@ -370,21 +610,27 @@ export function useSyncOffline(
   const rafraichirCompteur = useCallback(async () => {
     if (!boutiqueId || !userId) return
     try {
-      const [ventes, dettes, clotures] = await Promise.all([
+      const [ventes, dettes, clotures, depenses, nouveauxClients] = await Promise.all([
         obtenirVentesHorsLigne(boutiqueId, userId).catch(() => []),
         obtenirDettesHorsLigne(boutiqueId, userId).catch(() => []),
         obtenirCloturesHorsLigne(boutiqueId).catch(() => []),
+        obtenirDepensesHorsLigne(boutiqueId, userId).catch(() => []),
+        obtenirNouveauxClientsHorsLigne(boutiqueId, userId).catch(() => []),
       ])
       if (isMounted.current) {
         setVentesEnAttente(ventes.length)
         setDettesEnAttente(dettes.length)
         setCloturesEnAttente(clotures.length)
+        setDepensesEnAttente(depenses.length)
+        setNouveauxClientsEnAttente(nouveauxClients.length)
       }
     } catch {
       if (isMounted.current) {
         setVentesEnAttente(0)
         setDettesEnAttente(0)
         setCloturesEnAttente(0)
+        setDepensesEnAttente(0)
+        setNouveauxClientsEnAttente(0)
       }
     }
   }, [boutiqueId, userId])
@@ -414,7 +660,9 @@ export function useSyncOffline(
     ventesEnAttente,
     dettesEnAttente,
     cloturesEnAttente,
-    totalEnAttente: ventesEnAttente + dettesEnAttente + cloturesEnAttente,
+    depensesEnAttente,
+    nouveauxClientsEnAttente,
+    totalEnAttente: ventesEnAttente + dettesEnAttente + cloturesEnAttente + depensesEnAttente + nouveauxClientsEnAttente,
     lastSyncResult,
     declencherSync,
     rafraichirCompteur,

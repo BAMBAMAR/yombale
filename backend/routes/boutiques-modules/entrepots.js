@@ -15,10 +15,27 @@ router.get('/:id/entrepots', verifierToken, param('id').isUUID(), async (req, re
       return res.status(403).json({ error: 'Accès refusé' });
     }
 
-    const { rows } = await pool.query(
+    let rows = (await pool.query(
       `SELECT * FROM boutique_entrepots WHERE boutique_id = $1 ORDER BY est_defaut DESC, nom ASC`,
       [id]
-    );
+    )).rows;
+
+    if (rows.length === 0) {
+      try {
+        const bRes = await pool.query('SELECT nom, adresse, ville, telephone FROM boutiques WHERE id=$1', [id]);
+        const b = bRes.rows[0];
+        const depotNom = b?.nom ? `Dépôt Principal (${b.nom})` : 'Dépôt Principal';
+        const defDepot = await pool.query(
+          `INSERT INTO boutique_entrepots (boutique_id, nom, adresse, ville, telephone, est_defaut)
+           VALUES ($1, $2, $3, $4, $5, TRUE)
+           RETURNING *`,
+          [id, depotNom, b?.adresse || null, b?.ville || 'Dakar', b?.telephone || null]
+        );
+        rows = defDepot.rows;
+      } catch (eSeed) {
+        console.warn('[ENTREPOTS SEED DEFAULT WARN]', eSeed);
+      }
+    }
 
     res.json({ success: true, entrepots: rows });
   } catch (err) {

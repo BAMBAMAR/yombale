@@ -47,11 +47,23 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   const [caisseToken, setCaisseToken] = useState<string | null>(null)
   const [copie, setCopie] = useState(false)
 
+  function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+    const headers: Record<string, string> = { ...extraHeaders }
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token') || localStorage.getItem('nopalou_token')
+      if (token) headers['Authorization'] = `Bearer ${token}`
+    }
+    return headers
+  }
+
   async function fetchCaissiers() {
     const cached = localStorage.getItem(`nopalou_offline_caissiers_${boutiqueId}`)
     if (cached) {
       try {
-        setCaissiers(JSON.parse(cached))
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCaissiers(parsed)
+        }
       } catch (e) {
         console.warn('[Nopalou:BoutiqueCaissiers]', e)
       }
@@ -59,14 +71,20 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
     if (!cached) setLoading(true)
 
     try {
-      const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers`)
+      const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers`, {
+        headers: getAuthHeaders(),
+      })
       if (!res.ok) throw new Error(t('errors.genericError') || 'Erreur de chargement')
       const data = await res.json()
-      setCaissiers(data.caissiers || [])
-      localStorage.setItem(
-        `nopalou_offline_caissiers_${boutiqueId}`,
-        JSON.stringify(data.caissiers || [])
-      )
+      if (Array.isArray(data.caissiers)) {
+        setCaissiers(data.caissiers)
+        if (data.caissiers.length > 0 || !cached) {
+          localStorage.setItem(
+            `nopalou_offline_caissiers_${boutiqueId}`,
+            JSON.stringify(data.caissiers)
+          )
+        }
+      }
     } catch (err: any) {
       if (!cached) setError(err.message)
     } finally {
@@ -116,7 +134,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           nom: newNom.trim(),
           prenom: newPrenom.trim(),
@@ -153,6 +171,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers/${caissierId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -171,7 +190,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers/${caissier.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ actif: !caissier.actif }),
       })
       if (!res.ok) {
@@ -202,7 +221,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers/${caissierId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ code_pin: pinNettoye }),
       })
       if (!res.ok) {

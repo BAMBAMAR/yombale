@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { listCommandes, updateStatutCommande } from '../../actions'
 import { fcfa } from '@/lib/format'
 import { useToast } from '@/context/ToastContext'
-import { sauvegarderClientsLocaux, obtenirClientsLocaux } from '@/lib/db-offline'
+import { sauvegarderClientsLocaux, obtenirClientsLocaux, ajouterNouveauClientHorsLigne } from '@/lib/db-offline'
 import type { ClientCredit, TransactionCredit, ProduitBoutique, BoutiqueCarnetInfo } from '../types'
 
 interface UseCarnetClientsProps {
@@ -56,31 +56,46 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
   const chargerDonnees = useCallback(async () => {
     if (!boutique?.id) return
     try {
-      const resClients = await fetch(`/api/boutiques/${boutique.id}/credits-clients`)
+      const clientToken = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('nopalou_token') || '') : ''
+      const fetchHeaders: Record<string, string> = {}
+      if (clientToken) fetchHeaders['Authorization'] = `Bearer ${clientToken}`
+
+      const resClients = await fetch(`/api/boutiques/${boutique.id}/credits-clients`, { headers: fetchHeaders })
       if (resClients.ok) {
         const dataC = await resClients.json()
         if (dataC.clients && Array.isArray(dataC.clients)) {
-          setClients(dataC.clients)
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`nopalou_offline_clients_${boutique.id}`, JSON.stringify(dataC.clients))
+          const cachedStr = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_offline_clients_${boutique.id}`) : null
+          let localCount = 0
+          if (cachedStr) try { localCount = JSON.parse(cachedStr)?.length || 0 } catch (_) {}
+          if (dataC.clients.length > 0 || localCount === 0) {
+            setClients(dataC.clients)
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(`nopalou_offline_clients_${boutique.id}`, JSON.stringify(dataC.clients))
+            }
+            sauvegarderClientsLocaux(dataC.clients, boutique.id, (boutique as any)?.user_id || 'owner').catch(() => {})
           }
-          sauvegarderClientsLocaux(dataC.clients, boutique.id, (boutique as any)?.user_id || 'owner').catch(() => {})
         }
       } else {
         // Fallback local
         const cached = localStorage.getItem(`nopalou_offline_clients_${boutique.id}`)
         if (cached) {
           try { setClients(JSON.parse(cached)) } catch (_) {}
+        } else {
+          obtenirClientsLocaux(boutique.id, (boutique as any)?.user_id || 'owner')
+            .then((local) => { if (local && local.length > 0) setClients(local) })
+            .catch(() => {})
         }
       }
 
-      const resProds = await fetch(`/api/boutiques/${boutique.id}/produits`)
+      const resProds = await fetch(`/api/boutiques/${boutique.id}/produits`, { headers: fetchHeaders })
       if (resProds.ok) {
         const dataP = await resProds.json()
         const prodsList = dataP.produits || dataP.data || (Array.isArray(dataP) ? dataP : [])
-        setProduits(prodsList)
-        if (typeof window !== 'undefined' && prodsList.length > 0) {
-          localStorage.setItem(`nopalou_pos_produits_${boutique.id}`, JSON.stringify(prodsList))
+        if (prodsList.length > 0) {
+          setProduits(prodsList)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`nopalou_pos_produits_${boutique.id}`, JSON.stringify(prodsList))
+          }
         }
       } else {
         const cachedProds =
@@ -134,14 +149,30 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
     async (clientId: string) => {
       if (!boutique?.id) return
       setLoadingHist(true)
+      const cacheKey = `nopalou_offline_carnet_hist_${boutique.id}_${clientId}`
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached)
+            if (Array.isArray(parsed)) setHistorique(parsed)
+          } catch (_) {}
+        }
+      }
       try {
         const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${clientId}/historique`)
         if (res.ok) {
           const data = await res.json()
-          setHistorique(data.historique || [])
+          const hist = data.historique || []
+          setHistorique(hist)
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(hist))
+            } catch (_) {}
+          }
         }
       } catch (e) {
-        console.error('Erreur chargement historique client:', e)
+        console.warn('Mode hors-ligne: historique client chargé depuis le cache local:', e)
       } finally {
         setLoadingHist(false)
       }
@@ -159,33 +190,75 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
 
   const handleCreerClient = useCallback(
     async (clientData: { nom: string; telephone: string; adresse?: string; plafond_max?: number; note_client?: string }) => {
-      try {
-        const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(clientData),
-        })
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
+      let res: any = null
 
-        if (res.ok) {
-          const data = await res.json()
-          await chargerDonnees()
-          if (data.client) {
-            ouvrirFicheClient(data.client)
+      if (!isOffline) {
+        try {
+          res = await fetch(`/api/boutiques/${boutique.id}/credits-clients`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(clientData),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            await chargerDonnees()
+            if (data.client) {
+              ouvrirFicheClient(data.client)
+            }
+            toast.success(`Client "${data.client.nom}" créé avec succès !`)
+            return { ok: true, client: data.client }
           }
-          toast.success(`Client "${data.client.nom}" créé avec succès !`)
-          return { ok: true, client: data.client }
-        } else {
-          const err = await res.json()
-          toast.error(err.error || 'Erreur lors de la création du profil client.')
-          return { ok: false, error: err.error }
+        } catch (errNet) {
+          console.warn('[Carnet Dettes] Échec réseau création client, passage en mode hors-ligne:', errNet)
         }
-      } catch (err) {
-        console.error('Erreur création client carnet:', err)
-        toast.error('Erreur réseau')
-        return { ok: false, error: 'Erreur réseau' }
       }
+
+      // Mode Hors-ligne / Fallback
+      const tempId = `cli_temp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+      const userId = (typeof window !== 'undefined' && localStorage.getItem('nopalou_user_id')) || (boutique as any)?.utilisateur_id || (boutique as any)?.user_id || 'commercant'
+
+      const nouveauClientLocal: ClientCredit = {
+        id: tempId,
+        boutique_id: boutique.id,
+        nom: clientData.nom.trim(),
+        telephone: clientData.telephone.trim(),
+        adresse: clientData.adresse?.trim() || null,
+        plafond_max: Number(clientData.plafond_max || 200000),
+        note_client: clientData.note_client?.trim() || null,
+        solde: 0,
+        statut: 'actif',
+        created_at: new Date().toISOString(),
+      } as any
+
+      await ajouterNouveauClientHorsLigne({
+        id_temporaire: tempId,
+        boutique_id: boutique.id,
+        user_id: userId,
+        nom: clientData.nom.trim(),
+        telephone: clientData.telephone.trim(),
+        adresse: clientData.adresse?.trim() || null,
+        plafond_max: Number(clientData.plafond_max || 200000),
+        note_client: clientData.note_client?.trim() || null,
+        date: new Date().toISOString(),
+      }).catch((e) => console.warn('[Carnet] Erreur IDB nouveau client:', e))
+
+      setClients((prev) => {
+        const next = [nouveauClientLocal, ...prev]
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(`nopalou_offline_clients_${boutique.id}`, JSON.stringify(next))
+          } catch (_) {}
+        }
+        sauvegarderClientsLocaux(next, boutique.id, userId).catch(() => {})
+        return next
+      })
+
+      ouvrirFicheClient(nouveauClientLocal)
+      toast.info(`Client "${nouveauClientLocal.nom}" créé hors-ligne. Il sera synchronisé dès la reconnexion.`, 'Mode Hors-Ligne')
+      return { ok: true, client: nouveauClientLocal }
     },
-    [boutique.id, chargerDonnees, ouvrirFicheClient, toast]
+    [boutique.id, (boutique as any)?.utilisateur_id, (boutique as any)?.user_id, chargerDonnees, ouvrirFicheClient, toast]
   )
 
   const handleEnregistrerEditClient = useCallback(

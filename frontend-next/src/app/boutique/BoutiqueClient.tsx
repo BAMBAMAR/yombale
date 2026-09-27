@@ -14,6 +14,7 @@ import BoutiqueManage from './components/BoutiqueManage'
 import BoutiqueListHeader from './components/BoutiqueListHeader'
 import ProductTourModal from './ProductTourModal'
 import { useBoutiqueOfflinePreloader } from './hooks/useBoutiqueOfflinePreloader'
+import { sauvegarderBoutiquesLocales, obtenirBoutiquesLocales } from '@/lib/db-offline'
 
 // Re-exports pour compatibilité avec d'autres modules
 import ProduitForm from './ProduitForm'
@@ -143,6 +144,7 @@ export default function BoutiqueClient({
       if (typeof window !== 'undefined') {
         localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(boutiques))
       }
+      sauvegarderBoutiquesLocales(boutiques, userId).catch(() => {})
     } else {
       const cachedStr = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_user_boutiques') : null
       if (cachedStr) {
@@ -150,13 +152,17 @@ export default function BoutiqueClient({
           const cached = JSON.parse(cachedStr)
           if (cached && Array.isArray(cached) && cached.length > 0) {
             setBoutiquesList(cached)
+            return
           }
         } catch (e) {
           console.warn('[Nopalou:BoutiqueClient:cache]', e)
         }
       }
+      obtenirBoutiquesLocales(userId).then((bqs) => {
+        if (bqs && bqs.length > 0) setBoutiquesList(bqs)
+      }).catch(() => {})
     }
-  }, [boutiques])
+  }, [boutiques, userId])
 
   const searchParams = useSearchParams()
   const manageId = searchParams.get('manage') || searchParams.get('id') || searchParams.get('b') || searchParams.get('boutique')

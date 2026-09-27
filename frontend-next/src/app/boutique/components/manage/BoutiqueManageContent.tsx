@@ -165,14 +165,14 @@ export default function BoutiqueManageContent({
         <BlogArticlesManager
           boutiqueId={boutique.id}
           boutiqueSlug={boutique.slug || undefined}
-          token={typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}
+          token={typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('nopalou_token') || '' : ''}
         />
       )}
       {tab === 'abonnements' && (
         <AbonnementsManager
           boutiqueId={boutique.id}
           boutiqueNom={boutique.nom}
-          token={typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}
+          token={typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('nopalou_token') || '' : ''}
         />
       )}
     </>

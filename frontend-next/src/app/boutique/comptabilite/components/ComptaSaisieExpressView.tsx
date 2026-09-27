@@ -13,6 +13,7 @@ import { ComptaSaisieExpressVenteForm } from './ComptaSaisieExpressVenteForm'
 import { ComptaSaisieExpressDepenseForm } from './ComptaSaisieExpressDepenseForm'
 import { ComptaSaisieExpressQuickSheet } from './ComptaSaisieExpressQuickSheet'
 import { showToast } from '@/context/ToastContext'
+import { ajouterDepenseHorsLigne } from '@/lib/db-offline'
 
 interface ComptaSaisieExpressViewProps {
   boutiqueId: string
@@ -21,7 +22,20 @@ interface ComptaSaisieExpressViewProps {
 export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewProps) {
   const { t } = useTranslation()
   const [mode, setMode] = useState<'vente' | 'depense'>('vente')
-  const [produits, setProduits] = useState<Produit[]>([])
+  const [produits, setProduits] = useState<Produit[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached =
+        localStorage.getItem(`nopalou_pos_produits_${boutiqueId}`) ||
+        localStorage.getItem(`nopalou_offline_prods_${boutiqueId}`)
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        } catch (_) {}
+      }
+    }
+    return []
+  })
   const [showQuickSheet, setShowQuickSheet] = useState(false)
   const [showVoiceModal, setShowVoiceModal] = useState(false)
 
@@ -50,7 +64,42 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
   const [msgSuccess, setMsgSuccess] = useState('')
 
   useEffect(() => {
-    getBoutiqueProduits(boutiqueId).then(p => setProduits(p || [])).catch(() => {})
+    // 1. Charger depuis le cache local immédiatement si non déjà chargé
+    if (typeof window !== 'undefined') {
+      const cached =
+        localStorage.getItem(`nopalou_pos_produits_${boutiqueId}`) ||
+        localStorage.getItem(`nopalou_offline_prods_${boutiqueId}`)
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) setProduits(parsed)
+        } catch (_) {}
+      }
+    }
+
+    // 2. Fetcher et rafraîchir en ligne avec fallback API route
+    getBoutiqueProduits(boutiqueId)
+      .then(async (p) => {
+        let list = p
+        if (!Array.isArray(list) || list.length === 0) {
+          try {
+            const token = localStorage.getItem('token') || localStorage.getItem('nopalou_token')
+            const res = await fetch(`/api/boutiques/${boutiqueId}/produits`, {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            })
+            if (res.ok) {
+              const d = await res.json()
+              if (Array.isArray(d.produits) && d.produits.length > 0) list = d.produits
+            }
+          } catch (_) {}
+        }
+        if (Array.isArray(list) && list.length > 0) {
+          setProduits(list)
+          localStorage.setItem(`nopalou_pos_produits_${boutiqueId}`, JSON.stringify(list))
+          localStorage.setItem(`nopalou_offline_prods_${boutiqueId}`, JSON.stringify(list))
+        }
+      })
+      .catch(() => {})
   }, [boutiqueId])
 
   // Synchronisation avec barre de navigation basse et événements globaux
@@ -187,11 +236,59 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
     }
 
     setLoading(true)
-    const res = await addDepense(boutiqueId, {
-      montant: mNum,
-      categorie: catDepense,
-      description: descDepense.trim() || undefined,
-    })
+    let isOffline = typeof navigator !== 'undefined' && !navigator.onLine
+    let res: any = null
+
+    if (!isOffline) {
+      res = await addDepense(boutiqueId, {
+        montant: mNum,
+        categorie: catDepense,
+        description: descDepense.trim() || undefined,
+      })
+      if (res?.error && (res.error.includes('connexion') || res.error.includes('fetch') || res.error.includes('réseau'))) {
+        isOffline = true
+      }
+    }
+
+    if (isOffline || (res && res.error && (res.error.includes('connexion') || res.error.includes('fetch') || res.error.includes('réseau')))) {
+      const idTemp = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `dep_${Date.now()}`
+      const userId = (typeof window !== 'undefined' && localStorage.getItem('nopalou_user_id')) || 'commercant'
+
+      await ajouterDepenseHorsLigne({
+        id_temporaire: idTemp,
+        boutique_id: boutiqueId,
+        user_id: userId,
+        montant: mNum,
+        categorie: catDepense,
+        description: descDepense.trim() || null,
+        date: new Date().toISOString(),
+      }).catch((err) => console.warn('[ComptaSaisieExpress] Erreur IDB depense:', err))
+
+      // Mise à jour du cache local des dépenses
+      try {
+        const cacheKey = `nopalou_offline_compta_depenses_${boutiqueId}`
+        const cached = localStorage.getItem(cacheKey)
+        const currentList = cached ? JSON.parse(cached) : []
+        const nextList = [{
+          id: idTemp,
+          boutique_id: boutiqueId,
+          montant: mNum,
+          categorie: catDepense,
+          description: descDepense.trim() || null,
+          date_depense: new Date().toISOString().slice(0, 10),
+          created_at: new Date().toISOString(),
+        }, ...currentList]
+        localStorage.setItem(cacheKey, JSON.stringify(nextList))
+      } catch {}
+
+      setLoading(false)
+      showToast('Dépense enregistrée hors-ligne (sera synchronisée à la reconnexion)', 'info', 'Dépense')
+      setMsgSuccess('Dépense enregistrée hors-ligne !')
+      setMontantDepense('')
+      setDescDepense('')
+      setTimeout(() => setMsgSuccess(''), 3000)
+      return
+    }
 
     setLoading(false)
     if (res.success) {

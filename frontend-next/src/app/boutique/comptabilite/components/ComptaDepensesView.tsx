@@ -9,6 +9,7 @@ import { capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper
 import { useTranslation } from '@/i18n/context'
 import { useToast } from '@/context/ToastContext'
 import { ComptaDepenseCard } from './ComptaDepenseCard'
+import { ajouterDepenseHorsLigne } from '@/lib/db-offline'
 
 interface ComptaDepensesViewProps {
   boutiqueId: string
@@ -133,7 +134,57 @@ export function ComptaDepensesView({ boutiqueId }: ComptaDepensesViewProps) {
     if (!montant || Number(montant) <= 0) { setError(t('errors.invalidAmount') || 'Montant invalide'); return }
     setError(null)
     startTransition(async () => {
-      const res = await addDepense(boutiqueId, { montant: Number(montant), categorie, description: description || undefined, date_depense: date })
+      let isOffline = typeof navigator !== 'undefined' && !navigator.onLine
+      let res: any = null
+
+      if (!isOffline) {
+        res = await addDepense(boutiqueId, { montant: Number(montant), categorie, description: description || undefined, date_depense: date })
+        if (res?.error && (res.error.includes('connexion') || res.error.includes('fetch') || res.error.includes('réseau'))) {
+          isOffline = true
+        }
+      }
+
+      if (isOffline || (res && res.error && (res.error.includes('connexion') || res.error.includes('fetch') || res.error.includes('réseau')))) {
+        const idTemp = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `dep_${Date.now()}`
+        const userId = (typeof window !== 'undefined' && localStorage.getItem('nopalou_user_id')) || 'commercant'
+
+        await ajouterDepenseHorsLigne({
+          id_temporaire: idTemp,
+          boutique_id: boutiqueId,
+          user_id: userId,
+          montant: Number(montant),
+          categorie,
+          description: description || null,
+          date_depense: date,
+          date: new Date().toISOString(),
+        }).catch((e) => console.warn('[ComptaDepenses] Erreur stockage IDB dépense:', e))
+
+        const newDep: Depense = {
+          id: idTemp,
+          boutique_id: boutiqueId,
+          montant: Number(montant),
+          categorie,
+          description: description || null,
+          date_depense: date,
+          created_at: new Date().toISOString(),
+        } as any
+
+        setDepenses((prev) => {
+          const next = [newDep, ...prev]
+          try {
+            localStorage.setItem(`nopalou_offline_compta_depenses_${boutiqueId}`, JSON.stringify(next))
+          } catch {}
+          return next
+        })
+
+        toast.info('Dépense enregistrée hors-ligne. Elle sera synchronisée dès la reconnexion.')
+        setMontant('')
+        setDescription('')
+        setFichier(null)
+        setShowForm(false)
+        return
+      }
+
       if (res.error) { setError(res.error); return }
       if (fichier && res.id) {
         setUploading(true)
@@ -142,6 +193,7 @@ export function ComptaDepensesView({ boutiqueId }: ComptaDepensesViewProps) {
         await fetch(`/api/compta-proxy/${boutiqueId}/depenses/${res.id}/justificatif`, { method: 'POST', body: form }).catch(() => null)
         setUploading(false)
       }
+      toast.success('Dépense enregistrée avec succès')
       setMontant(''); setDescription(''); setFichier(null); setShowForm(false)
       load()
     })

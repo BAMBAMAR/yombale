@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from 'react'
 import { logout } from '@/app/actions/auth'
 import { LogOut } from 'lucide-react'
 import { purgerCacheUtilisateur } from '@/lib/db-offline'
@@ -9,6 +10,16 @@ interface Props {
 }
 
 export default function NavbarActions({ nom, userId }: Props) {
+  useEffect(() => {
+    if (userId && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nopalou_user_id', userId)
+      } catch (e) {
+        console.warn('[NavbarActions] Erreur sauvegarde userId:', e)
+      }
+    }
+  }, [userId])
+
   return (
     <div className="navbar-actions-compte" style={{ alignItems: 'center', gap: '6px', flexShrink: 0 }}>
       <a
@@ -46,6 +57,7 @@ export default function NavbarActions({ nom, userId }: Props) {
             }
             if (typeof window !== 'undefined') {
               try {
+                localStorage.removeItem('nopalou_user_id')
                 localStorage.removeItem('nopalou_pos_active_boutique_id')
                 localStorage.removeItem('nopalou_plan_actif')
                 const toRemove: string[] = []

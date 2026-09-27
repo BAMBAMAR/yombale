@@ -2,11 +2,13 @@ import 'server-only'
 import { SignJWT } from 'jose'
 import { getOptionalSession } from './dal'
 
-const API = (
+const RAW_API = (
   process.env.NEXT_PUBLIC_BACKEND_URL ||
   process.env.BACKEND_URL ||
-  'https://yombale.onrender.com'
+  'http://127.0.0.1:3000'
 ).replace(/\/$/, '')
+// Map localhost to 127.0.0.1 directement pour les appels serveur-à-serveur (évite la latence IPv6 Windows)
+const API = RAW_API.replace('http://localhost:', 'http://127.0.0.1:')
 const SSR_SECRET = process.env.SSR_SECRET || ''
 
 export interface ActionState {
@@ -35,6 +37,25 @@ export async function backendFetch(
         .sign(key)
       headers.set('Authorization', `Bearer ${token}`)
     }
+  } else if (!headers.has('Authorization')) {
+    // Si pas de session DAL, propager le token d'autorisation de la requête cliente entrante
+    try {
+      const { headers: nextHeaders, cookies: nextCookies } = await import('next/headers')
+      const h = await nextHeaders()
+      const auth = h.get('authorization')
+      if (auth && auth.startsWith('Bearer ')) {
+        headers.set('Authorization', auth)
+      } else {
+        const c = await nextCookies()
+        const rawToken =
+          c.get('token')?.value ||
+          c.get('auth_token')?.value ||
+          c.get('nopalou_token')?.value
+        if (rawToken) {
+          headers.set('Authorization', `Bearer ${rawToken}`)
+        }
+      }
+    } catch {}
   }
 
   if (SSR_SECRET) {

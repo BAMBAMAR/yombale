@@ -9,13 +9,14 @@ export async function GET(
   try {
     const res = await backendFetch(`/api/boutiques/${params.id}/admins`)
     if (!res.ok) {
-      return NextResponse.json({ admins: [] }, { status: 200 })
+      const d = await res.json().catch(() => ({}))
+      return NextResponse.json({ error: d.error || 'Erreur chargement administrateurs' }, { status: res.status })
     }
     const data = await res.json().catch(() => ({ admins: [] }))
     return NextResponse.json(data)
   } catch (err) {
     console.error('[API Route] /boutiques/[id]/admins GET error:', err)
-    return NextResponse.json({ admins: [] }, { status: 200 })
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
 

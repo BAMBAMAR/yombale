@@ -20,6 +20,8 @@ export function usePosSyncNotifications(
     syncPending: syncingOffline,
     ventesEnAttente: ventesHorsLigneCount,
     dettesEnAttente: dettesHorsLigneCount,
+    cloturesEnAttente: cloturesHorsLigneCount,
+    depensesEnAttente: depensesHorsLigneCount,
     totalEnAttente: totalHorsLigneCount,
     declencherSync: declencherSyncOffline,
     rafraichirCompteur: rafraichirCompteurOffline,
@@ -32,11 +34,27 @@ export function usePosSyncNotifications(
     if (!newOffline) {
       declencherSyncOffline()
         .then((res) => {
-          if (res.synced > 0) showToast(`${res.synced} vente(s) synchronisée(s)`, 'success')
+          if (res.synced > 0) showToast(`${res.synced} élément(s) synchronisé(s)`, 'success')
         })
         .catch(() => {})
     }
   }, [isReallyOnline, boutiqueActiveId, declencherSyncOffline, showToast])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleSyncComplete = (e: any) => {
+      if (e.detail?.boutiqueId === boutiqueActiveId) {
+        rafraichirCompteurOffline()
+        if (e.detail?.result?.synced > 0) {
+          showToast(`${e.detail.result.synced} élément(s) synchronisé(s) avec le serveur`, 'success')
+        }
+      }
+    }
+    window.addEventListener('nopalou:sync-complete', handleSyncComplete)
+    return () => {
+      window.removeEventListener('nopalou:sync-complete', handleSyncComplete)
+    }
+  }, [boutiqueActiveId, rafraichirCompteurOffline, showToast])
 
   return {
     offlineModeActive,
@@ -45,6 +63,8 @@ export function usePosSyncNotifications(
     syncingOffline,
     ventesHorsLigneCount,
     dettesHorsLigneCount,
+    cloturesHorsLigneCount,
+    depensesHorsLigneCount,
     totalHorsLigneCount,
     declencherSyncOffline,
     rafraichirCompteurOffline,

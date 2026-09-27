@@ -79,6 +79,8 @@ export default function CaisseClient({
   // ── Lock & PIN ──
   const authLock = usePosAuthLock({
     caissiersList,
+    boutiqueId: boutiqueActiveId,
+    userId,
     pinSuperviseur: modals.pinSuperviseur,
     session,
     setCaissierNom,

@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { backendFetch } from '@/lib/backend-fetch'
 
-// Proxy générique pour toutes les sous-routes dynamiques /api/boutiques/[id]/*
+// Proxy générique pour toutes les sous-routes dynamiques /api/comptabilite/[boutiqueId]/*
 async function proxy(req: NextRequest, boutiqueId: string, pathSegments: string[]) {
   try {
     const subpath = pathSegments.join('/')
     const search = req.nextUrl.search || ''
-    const url = (subpath === 'commandes' || subpath.startsWith('commandes/'))
-      ? `/api/comptabilite/${boutiqueId}/${subpath}${search}`
-      : `/api/boutiques/${boutiqueId}/${subpath}${search}`
-    
+    const url = `/api/comptabilite/${boutiqueId}/${subpath}${search}`
+
     const contentType = req.headers.get('content-type') || ''
     let body: BodyInit | undefined = undefined
 
@@ -51,27 +49,27 @@ async function proxy(req: NextRequest, boutiqueId: string, pathSegments: string[
       return new NextResponse(text, { status: res.status })
     }
   } catch (err) {
-    console.error(`[API Route] Proxy error on /boutiques/${boutiqueId}/${pathSegments.join('/')}:`, err)
+    console.error(`[API Route] Proxy error on /comptabilite/${boutiqueId}/${pathSegments.join('/')}:`, err)
     return NextResponse.json({ error: 'Erreur proxy serveur' }, { status: 500 })
   }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string; path: string[] } }) {
-  return proxy(req, params.id, params.path || [])
+export async function GET(req: NextRequest, { params }: { params: { boutiqueId: string; path: string[] } }) {
+  return proxy(req, params.boutiqueId, params.path || [])
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string; path: string[] } }) {
-  return proxy(req, params.id, params.path || [])
+export async function POST(req: NextRequest, { params }: { params: { boutiqueId: string; path: string[] } }) {
+  return proxy(req, params.boutiqueId, params.path || [])
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string; path: string[] } }) {
-  return proxy(req, params.id, params.path || [])
+export async function PUT(req: NextRequest, { params }: { params: { boutiqueId: string; path: string[] } }) {
+  return proxy(req, params.boutiqueId, params.path || [])
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string; path: string[] } }) {
-  return proxy(req, params.id, params.path || [])
+export async function PATCH(req: NextRequest, { params }: { params: { boutiqueId: string; path: string[] } }) {
+  return proxy(req, params.boutiqueId, params.path || [])
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string; path: string[] } }) {
-  return proxy(req, params.id, params.path || [])
+export async function DELETE(req: NextRequest, { params }: { params: { boutiqueId: string; path: string[] } }) {
+  return proxy(req, params.boutiqueId, params.path || [])
 }

@@ -1267,6 +1267,8 @@ module.exports = async function migrateInline(customConnStr = null) {
     `);
     await pool.query(`ALTER TABLE depenses ADD COLUMN IF NOT EXISTS justificatif_url TEXT`);
     await pool.query(`ALTER TABLE depenses ADD COLUMN IF NOT EXISTS archivee BOOLEAN DEFAULT false`);
+    await pool.query(`ALTER TABLE depenses ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(100)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_depenses_idempotency ON depenses(boutique_id, idempotency_key) WHERE idempotency_key IS NOT NULL`);
     console.log('[MIGRATE] ✅ Table depenses OK');
   } catch (e) { console.warn('[MIGRATE] depenses:', e.message); }
 

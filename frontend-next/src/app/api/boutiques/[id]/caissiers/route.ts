@@ -9,13 +9,17 @@ export async function GET(
   try {
     const res = await backendFetch(`/api/boutiques/${params.id}/caissiers`)
     if (!res.ok) {
-      return NextResponse.json({ caissiers: [] }, { status: 200 })
+      const errData = await res.json().catch(() => ({}))
+      return NextResponse.json(
+        { error: errData.error || 'Erreur lors du chargement des caissiers' },
+        { status: res.status }
+      )
     }
     const data = await res.json().catch(() => ({ caissiers: [] }))
     return NextResponse.json(data)
   } catch (err) {
     console.error('[API Route] /boutiques/[id]/caissiers GET error:', err)
-    return NextResponse.json({ caissiers: [] }, { status: 200 })
+    return NextResponse.json({ error: 'Erreur proxy serveur caissiers' }, { status: 500 })
   }
 }
 

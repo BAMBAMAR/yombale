@@ -51,8 +51,10 @@ export default function MarketingBoutique({
     getBoutiqueProduits(boutique.id)
       .then((produits) => {
         if (annule) return
-        setTotalProduits(produits.length)
-        setNbJamaisPartages(produits.filter((p) => !p.partage_le).length)
+        if (produits && Array.isArray(produits)) {
+          setTotalProduits(produits.length)
+          setNbJamaisPartages(produits.filter((p) => !p.partage_le).length)
+        }
       })
       .catch(() => {
         if (!annule) {

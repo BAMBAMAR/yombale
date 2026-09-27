@@ -9,12 +9,13 @@ export async function GET(
   try {
     const res = await backendFetch(`/api/boutiques/${params.id}/produits`)
     if (!res.ok) {
-      return NextResponse.json({ produits: [] }, { status: 200 })
+      const errData = await res.json().catch(() => ({}))
+      return NextResponse.json({ error: errData.error || 'Erreur backend', produits: [] }, { status: res.status })
     }
     const data = await res.json().catch(() => ({ produits: [] }))
     return NextResponse.json(data)
-  } catch (err) {
-    console.error('[API Route] /boutiques/[id]/produits error:', err)
-    return NextResponse.json({ produits: [] }, { status: 200 })
+  } catch (err: any) {
+    console.error('[API Route] /boutiques/[id]/produits error:', err?.message)
+    return NextResponse.json({ error: 'Erreur réseau proxy', produits: [] }, { status: 502 })
   }
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { logout } from '@/app/actions/auth'
 import { Store, ShoppingCart, LogOut, Building2, Wallet } from 'lucide-react'
+import { purgerCacheUtilisateur } from '@/lib/db-offline'
 
 interface MobileNavUserCardProps {
   displayName: string
@@ -84,6 +85,25 @@ export default function MobileNavUserCard({ displayName, initiale, onClose }: Mo
           <button
             type="submit"
             onClick={() => {
+              if (typeof window !== 'undefined') {
+                try {
+                  const uid = localStorage.getItem('nopalou_user_id')
+                  if (uid) purgerCacheUtilisateur(uid).catch(() => {})
+                  localStorage.removeItem('nopalou_user_id')
+                  localStorage.removeItem('nopalou_pos_active_boutique_id')
+                  localStorage.removeItem('nopalou_plan_actif')
+                  const toRemove: string[] = []
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i)
+                    if (key && (key.includes(uid || '') || key.startsWith('nopalou_offline_immo_mine'))) {
+                      toRemove.push(key)
+                    }
+                  }
+                  toRemove.forEach((k) => localStorage.removeItem(k))
+                } catch (e) {
+                  console.warn('[Mobile Logout purge]', e)
+                }
+              }
               if (typeof document !== 'undefined') {
                 document.cookie = 'nopalou_locale=fr; path=/; max-age=31536000; SameSite=Lax'
                 document.documentElement.lang = 'fr'

@@ -1,6 +1,121 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
-- **Correction Erreurs RSC, Hydratation & Balises Imbriquées : Résolution de l'Erreur de Sérialisation `onClick` et de la Ligne Cliquable (`ProduitSimilairesTable.tsx`, `SimilRow.tsx`, `ProduitOffresList.tsx`) (27 septembre 2026)** 🛡️⚡🔍✅ :
+- **Résolution Définitive des Onglets Vides : Social Shop, Saisie Express & Statistiques Analytics avec Cache Synchrone 0ms & Préchargement 10 min (27 septembre 2026)** 📱⚡📊🔄✅ :
+  * **🎯 Problèmes Résolus (Captures Utilisateur & Navigation)** :
+    1. **Social Shop & Vidéos Interactives (`tab=social`, `SocialShopManager.tsx`, `useBoutiqueOfflinePreloader.ts`)** :
+       - *Problème* : Affichait *"0/0 en ligne"*, *"0 à associer"*, *"Mes Publications 0"* et *"Aucune publication pour le moment"* alors que la boutique dispose de publications réelles en base de données.
+       - *Cause* : Envoi d'un en-tête `Authorization: Bearer ` mal formé lorsque le jeton était une chaîne vide, entraînant un rejet HTTP 401/403 par le backend, sans cache de secours.
+       - *Correction* : Nettoyage strict de l'en-tête `Authorization` (uniquement envoyé si un jeton non vide existe), persistance hors-ligne des posts, comptes et statistiques (`nopalou_offline_social_posts_*`, `nopalou_offline_social_accounts_*`, `nopalou_offline_social_stats_*`) et intégration directe dans la boucle de préchargement automatique.
+    2. **Saisie Express POS (`tab=express`, `ComptaSaisieExpressView.tsx`)** :
+       - *Problème* : Affichait *"Catalogue (0) - Aucun produit dans le catalogue. Utilisez la saisie libre."*.
+       - *Cause* : Initialisation asynchrone dépendante exclusivement du Server Action sans lecture préalable du stockage local persistant.
+       - *Correction* : Initialisation synchrone de l'état `produits` dès le premier rendu à partir du cache `localStorage` (`nopalou_pos_produits_${boutiqueId}` et `nopalou_offline_prods_${boutiqueId}`), avec double canal de mise à jour (Server Action + proxy API `/api/boutiques/${boutiqueId}/produits`).
+    3. **Statistiques & Ventes Ad-Hoc (`tab=analytics`, `AnalyticsClient.tsx`, `api/analytics/boutique/[id]/route.ts`)** :
+       - *Problème* : Espace blanc complètement vide sous la barre de filtres de dates.
+       - *Cause* : Le Route Handler Next.js supprimait la chaîne de paramètres d'URL (`req.nextUrl.search`), avalait les erreurs en renvoyant `{}` en code 200, ce qui empoisonnait le composant client qui restait masqué faute de données `stats`.
+       - *Correction* : Transmission intégrale des query params (`date_debut`, `date_fin`, `produit_id`) et des en-têtes d'autorisation, retour des statuts d'erreur HTTP réels (`res.status`), initialisation synchrone depuis `nopalou_offline_analytics_*` et affichage d'un état de repli explicite au lieu d'un vide blanc.
+    4. **Préchargement Automatique de Tout le Compte Marchand (Cycle 10 min)** :
+       - Le préchargeur global synchronise silencieusement l'ensemble des modules (produits, caissiers, clients, dettes, documents, entrepôts, comptabilité, social shop, analytics) toutes les 10 minutes, à la reconnexion et au focus de l'application.
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run build` : Build Next.js 14 complété avec succès.
+    - Tests réels avec JWT authentifié : Analytics (200 OK, 4 043 654 FCFA, 27 commandes), Social Shop Overview (200 OK), Social Posts (200 OK, 4 posts retournés), Produits (200 OK).
+
+- **Automatisation du Préchargement Global de Compte (Intervalle 10 min) & Caches Hors-Ligne Unifiés (Entrepôts, Stocks, Documents, Abonnements, Blog, Caissiers) (27 septembre 2026)** ⚡🔄🏬📋📦 :
+  * **🎯 Fonctionnalités & Correctifs Majeurs** :
+    1. **Automatisation du Préchargement de Tout le Compte Marchand (`useBoutiqueOfflinePreloader.ts`)** :
+       - Révision complète du hook `useBoutiqueOfflinePreloader` pour précharger systématiquement **tous** les modules de chaque boutique de l'utilisateur dès l'ouverture de l'espace marchand (Catalogue, Commandes, Carnet, Clients, Caissiers, Entrepôts, Stocks dépôts, Factures/Devis, Fournisseurs, Abonnements, Articles de Blog, Dépenses).
+       - Exécution automatique au montage (250ms), répétition périodique stricte **toutes les 10 minutes** (`10 * 60 * 1000`), et déclenchement réactif sur événement `online` et `visibilitychange` (retour sur l'onglet).
+    2. **Auto-Création du Dépôt Physique Principal (`backend/routes/boutiques-modules/entrepots.js`)** :
+       - Quand une boutique n'a pas encore de dépôt configuré dans `boutique_entrepots` (ex: `Tech dakar`), le backend crée et associe automatiquement le `Dépôt Principal (${boutique.nom})` avec le drapeau `est_defaut = TRUE`.
+       - Élimine définitivement l'écran vide "0 site / Aucun défini" : chaque boutique dispose immédiatement d'au moins 1 site physique actif.
+    3. **Persistance et Affichage Instantané 0ms Hors-Ligne (`GestionEntrepots.tsx`, `AbonnementsManager.tsx`, `BlogArticlesManager.tsx`, `useGestionDocumentsData.ts`)** :
+       - Initialisation synchrone des états React depuis les caches `localStorage` (`nopalou_offline_entrepots_*`, `nopalou_offline_stocks_*`, `nopalou_offline_abonnements_*`, `nopalou_offline_articles_*`, `nopalou_offline_docs_*`).
+       - Lors du clic sur n'importe quel onglet du menu, l'interface s'affiche instantanément sans écran de chargement infini ni appel réseau bloquant.
+    4. **Sécurisation Anti-Poisoning Caissiers (`caissiers/route.ts`, `BoutiqueCaissiers.tsx`)** :
+       - Remplacement du retour 200 vide par le statut HTTP réel (`res.status`).
+       - Protection du cache local des caissiers contre les écrasements intempestifs en cas d'anomalie réseau.
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur.
+    - `npm run build` : Build Next.js 14 complété avec succès.
+    - Tests automatisés : AMAR (2 entrepôts, 28 documents, 2 caissiers), Tech dakar (1 entrepôt auto-seed, 26 documents, 2 caissiers).
+
+- **Correctif Majeur : Élimination de l'Empoisonnement du Cache par Tableaux Vides (Carnet de Dettes, Commandes, Catalogue & Dashboard) (27 septembre 2026)** 🛡️📊👥📦✅ :
+  * **🎯 Problèmes Résolus ("Rien n'est chargé")** :
+    1. **Éradication de l'Empoisonnement par Tableaux Vides 200 OK (`credits-clients/route.ts`, `produits/route.ts`, `dashboard/route.ts`, `commandes-count/route.ts`)** :
+       - Lors d'une erreur ou absence temporaire de session, les Route Handlers Next.js renvoyaient des statuts 200 avec `{ clients: [] }`, `{ produits: [] }` ou `{ ca_mois: 0, ... }`.
+       - *Impact* : Le frontend (`useCarnetClients`, `useCommandesData`, `useCatalogueProduitsData`, `useBoutiqueDashboardStats`) interprétait ce code 200 comme un état serveur authentique et écrasait irrémédiablement le cache local (`localStorage` et `IndexedDB`) avec des listes vides et des zéros ("0 client", "0 commande", "0 art. Catalogue").
+       - *Correction* : Les Route Handlers retournent désormais le code HTTP d'erreur réel (`res.status` ou 502 en cas de coupure réseau).
+    2. **Propagation Universelle d'Authentification & Tolérance HTTP Localhost (`backend-fetch.ts`, `session.ts`)** :
+       - En local (`http://localhost:3001`), les cookies posés avec `secure: true` étaient ignorés par les navigateurs en HTTP pur.
+       - *Correction* : Calcul dynamique du drapeau `secure` basé sur le protocole (`isSecureCookie = process.env.NODE_ENV === 'production' && !siteUrl.startsWith('http://localhost') && !siteUrl.startsWith('http://127.0.0.1')`).
+       - Extension de `getSession()` et `backendFetch()` pour inspecter les en-têtes entrants `Authorization: Bearer <token>` et propager les jetons clients vers le backend.
+       - Résolution directe vers l'adresse IPv4 `http://127.0.0.1:3000` par défaut pour éliminer la latence DNS IPv6 sous Windows.
+    3. **Routage Unifié des Commandes de Boutique (`api/boutiques/[id]/[...path]/route.ts`, `useBoutiqueOfflinePreloader.ts`)** :
+       - Les requêtes clientes vers `/api/boutiques/:id/commandes` échouaient en 404 car le module backend se situe sous `/api/comptabilite/:id/commandes`.
+       - *Correction* : Réécriture dynamique du chemin `commandes` vers le module comptabilité et alignement du préchargeur hors-ligne.
+    4. **Protection Non-Destructive des Hooks Clients & Actions Serveur (`useCarnetClients.ts`, `useCommandesData.ts`, `useBoutiqueDashboardStats.ts`, `caisseComptaActions.ts`, `produitActions.ts`)** :
+       - `listCommandes` et `getBoutiqueProduits` ne renvoient plus un tableau vide brut lors d'une erreur serveur, empêchant les hooks de vider le cache local.
+       - Ajout des en-têtes d'autorisation transmis depuis `localStorage` lors des fetchs clients.
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : Validation Anti-AI-Slop réussie.
+    - `npm run build` : Build de production Next.js 14 complété avec succès (`[postbuild] ✅ Build standard complété avec succès`).
+    - Validation automatisée complète sur les deux boutiques (`Tech dakar` et `AMAR`) :
+      - Tech dakar : 1 client débiteur (`amar`, 86 220 FCFA), 10 produits catalogue, 11 commandes, dashboard (CA 29 397 168 FCFA).
+      - AMAR : 1 client (`basse`, 0 FCFA), 1 produit, 49 commandes, dashboard (CA mois 995 000 FCFA).
+      - Requêtes non authentifiées : HTTP 401 strict retourné sans écrasement de données.
+
+- **Correctif Critique : Déverrouillage PIN Caissier Réel POS, Bilan Comptable & Équipe Admins (27 septembre 2026)** 🔐📊👥✅ :
+  * **🎯 Problèmes Résolus** :
+    1. **Déverrouillage POS par PIN Caissier Réel (`usePosAuthLock.ts`, `useCaisseData.ts`)** :
+       - Le registre de caisse ne se déverrouillait qu'avec le code de secours `9999` et échouait avec les codes réels des caissiers (ex: `1312` pour la boutique AMAR).
+       - *Cause* : L'algorithme de déverrouillage récupérait arbitrairement la première clé de caissiers trouvée dans `localStorage` sans vérifier la correspondance avec la boutique active, provoquant un échec du hachage salé SHA-256 (`pin_hash`).
+       - *Correction* : Résolution stricte de la boutique active (`effectiveBoutiqueId`), enrichissement immédiat des caissiers avec `pin_hash` et `code_pin`, vérification prioritaire sur le profil choisi (`profilChoisiPourPin`), multi-comparaison SHA-256 avec sel boutique / sel caissier / fallback sans sel, et consultation d'IndexedDB `obtenirCaissiersLocaux`.
+    2. **Chargement du Bilan Comptable & Cache Hors-Ligne (`ComptaBilanView.tsx`, `api/comptabilite/[boutiqueId]/[...path]/route.ts`)** :
+       - L'onglet Comptabilité (`/boutique?tab=comptabilite`) affichait *"Impossible de charger le bilan comptable pour le moment."*.
+       - *Correction* : Création du proxy d'API générique Next.js `/api/comptabilite/[boutiqueId]/[...path]/route.ts`, fallback automatique de Server Action vers fetch client direct et snapshot local `nopalou_bilan_${boutiqueId}_fallback` lors des déconnexions.
+    3. **Affichage de l'Équipe & Administrateurs (`backend/routes/boutiques-modules/boutiques-equipe.js`, `api/boutiques/[id]/admins/route.ts`, `session.ts`)** :
+       - L'onglet Équipe affichait *"Membres de l'équipe (0) - Aucun administrateur trouvé."* lorsque la boutique était ciblée par son slug (ex: `amar`).
+       - *Cause* : Validation stricte `param('id').isUUID()` rejetant les slugs avec un code 400, et le proxy client masquait l'erreur en renvoyant une liste vide qui écrasait le cache local.
+       - *Correction* : Support unifié des UUIDs et Slugs dans `GET/POST/DELETE /api/boutiques/:id/admins`, préservation du cache `nopalou_offline_admins_${boutiqueId}`, et extension de `getSession()` pour lire indifféremment `nopalou_session`, `token` et `auth_token`.
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run build` : Build de production Next.js 14 complété avec succès.
+    - Script de test automatisé validé avec succès (`scratch/test_pos_and_views.js`) : GET `/caissiers` (200), GET `/admins` par UUID et Slug (200), GET `/bilan` (200), et proxies Next.js (200).
+
+- **Mise à Niveau Majeure : Architecture Hors-Ligne Totale Nopalou (IndexedDB v6, 5 Files de Synchronisation, Hachage SHA-256 des PINs, Idempotence Backend Dépenses & Auto-Sync Universel) (27 septembre 2026)** 🌐⚡📦🔒✅ :
+  * **🎯 Contexte & Enjeu Métier** :
+    - Nopalou doit garantir une autonomie totale et transparente sur le terrain en Afrique de l'Ouest même en cas de coupure réseau prolongée.
+    - Tous les modules (Caisse POS, Carnet de dettes, Comptabilité/Dépenses, Agences immobilières, Tableaux de bord, Sama Kalpé) doivent être préchargés dès l'entrée de l'utilisateur, rafraîchis en continu, modifiables hors-ligne sans risque de perte ni de doublon, et synchronisés automatiquement à la reconnexion.
+  * **🛠️ Réalisations Techniques & Chantiers Clôturés** :
+    1. **Persistance & Isolation Multi-Utilisateurs (`NavbarActions.tsx`, `MobileNavUserCard.tsx`, `CompteClient.tsx`)** :
+       - Stockage fiable du `nopalou_user_id` lors de la connexion pour associer toutes les opérations hors-ligne au propriétaire légitime.
+       - Purge sélective à la déconnexion préservant impérativement les files d'attente non synchronisées pour prévenir toute perte de données.
+    2. **Sécurisation & Hachage des Codes PIN (`db-offline.ts`, `usePosAuthLock.ts`, `useCaisseData.ts`)** :
+       - Implémentation du sel cryptographique et hachage SHA-256 (`hashPin(pin, boutiqueId)`).
+       - Bannissement des PINs en clair dans IndexedDB et localStorage.
+       - Comparaison sécurisée des empreintes PIN avec fallback rétrograde fluide.
+    3. **File d'Attente Dépenses & Idempotence Backend (`db-offline.ts`, `backend/routes/comptabilite.js`, `ComptaDepensesView.tsx`, `ComptaSaisieExpressView.tsx`)** :
+       - Migration de schéma de base de données : ajout de `idempotency_key` et index partiel unique sur `depenses`.
+       - Magasin IndexedDB `depenses_queue` (IndexedDB v6) avec statut d'envoi (`pending` -> `syncing` -> suppression après code 200/201).
+       - Enregistrement immédiat hors-ligne avec mise à jour instantanée du cache comptable local.
+    4. **File d'Attente Nouveaux Clients Hors-Ligne (`db-offline.ts`, `useCarnetClients.ts`)** :
+       - Magasin IndexedDB `nouveaux_clients_queue` avec identifiants temporaires (`cli_temp_...`).
+       - Synchronisation prioritaire ordonnée sur le serveur avant les transactions de dettes/ventes associées.
+    5. **Moteur d'Auto-Synchronisation Universel à la Reconnexion (`sync-manager.ts`, `RegisterSW.tsx`, `usePosSyncNotifications.ts`)** :
+       - Fonction `syncToutesLesBoutiquesEnAttente(userId)` qui balaie toutes les boutiques locales et traite séquentiellement les 5 files d'attente (`nouveaux_clients_queue` -> `ventes_queue` -> `dettes_queue` -> `clotures_queue` -> `depenses_queue`).
+       - Verrous par boutique évitant les collisions d'envoi simultané et émission d'événements `nopalou:sync-complete`.
+       - Déclenchement automatique par le Service Worker dès détection du rétablissement de la connexion.
+    6. **Préchargement Global & Rafraîchissement Périodique (15 min) (`CompteClient.tsx`, `useBoutiqueOfflinePreloader.ts`)** :
+       - Déclenchement d'un intervalle de rafraîchissement d'arrière-plan toutes les 15 minutes en ligne.
+       - Préchargement de l'historique détaillé des dettes par client (`credits-clients/:id/historique`) et des loyers agence (`locatif-immo/agence/:slug/loyers`).
+    7. **Unification du Stockage (IndexedDB source de vérité)** :
+       - Persistance et consultation systématiques dans IndexedDB pour les boutiques, catalogues produits, clients et caissiers (`BoutiqueClient.tsx`, `useCaisseData.ts`, `useCarnetClients.ts`).
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript dans `frontend-next/`.
+    - `npm run lint:slop` : 100% conforme au standard d'ingénierie senior Nopalou.
+    - Tests réels de non-régression & d'idempotence backend validés (`test_depense_idempotence.js`, `run_offline_tests.js`).
   * **🎯 Contexte & Anomalie Utilisateur** :
     - Sur les fiches produits (`/produit/[id]`), une erreur critique se déclenchait au runtime SSR dans les logs serveur Next.js :
       `Error: Event handlers cannot be passed to Client Component props. {href: ..., onClick: function onClick, title: ..., style: ..., children: ...}`

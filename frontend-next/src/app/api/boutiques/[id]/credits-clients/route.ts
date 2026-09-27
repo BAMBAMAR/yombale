@@ -11,13 +11,14 @@ export async function GET(
     const queryString = searchParams.toString() ? `?${searchParams.toString()}` : ''
     const res = await backendFetch(`/api/boutiques/${params.id}/credits-clients${queryString}`)
     if (!res.ok) {
-      return NextResponse.json({ clients: [] }, { status: 200 })
+      const errData = await res.json().catch(() => ({}))
+      return NextResponse.json({ error: errData.error || 'Erreur backend', clients: [] }, { status: res.status })
     }
     const data = await res.json().catch(() => ({ clients: [] }))
     return NextResponse.json(data)
-  } catch (err) {
-    console.error('[API Route] GET /boutiques/[id]/credits-clients error:', err)
-    return NextResponse.json({ clients: [] }, { status: 200 })
+  } catch (err: any) {
+    console.error('[API Route] GET /boutiques/[id]/credits-clients error:', err?.message)
+    return NextResponse.json({ error: 'Erreur réseau proxy', clients: [] }, { status: 502 })
   }
 }
 

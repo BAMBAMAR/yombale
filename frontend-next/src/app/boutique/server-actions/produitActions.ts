@@ -124,14 +124,17 @@ export async function updateStock(boutiqueId: string, produitId: string, stock_q
   }
 }
 
-export async function getBoutiqueProduits(boutiqueId: string): Promise<any[]> {
+export async function getBoutiqueProduits(boutiqueId: string): Promise<any[] | null> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/produits`)
-    if (!res.ok) return []
+    if (!res.ok) {
+      console.warn(`[getBoutiqueProduits] Erreur HTTP ${res.status} boutique ${boutiqueId}`)
+      return null
+    }
     const data = await res.json()
-    return data.produits ?? []
+    return data.produits ?? null
   } catch (err) {
     console.error('[GET_BOUTIQUE_PRODUITS_ERR]', err)
-    return []
+    return null
   }
 }

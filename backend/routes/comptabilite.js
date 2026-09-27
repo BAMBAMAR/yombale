@@ -1680,17 +1680,29 @@ router.post(
   body('categorie').trim().isLength({ min: 1, max: 50 }),
   body('description').optional().trim().isLength({ max: 300 }),
   body('date_depense').optional().isDate(),
+  body('idempotency_key').optional().trim().isLength({ max: 100 }),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
     try {
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
-      const { montant, categorie, description, date_depense } = req.body;
+      const { montant, categorie, description, date_depense, idempotency_key } = req.body;
+
+      if (idempotency_key) {
+        const existing = await pool.query(
+          `SELECT * FROM depenses WHERE boutique_id = $1 AND idempotency_key = $2`,
+          [req.params.boutiqueId, idempotency_key]
+        );
+        if (existing.rows.length > 0) {
+          return res.status(200).json({ success: true, duplicate: true, ...existing.rows[0] });
+        }
+      }
+
       const { rows } = await pool.query(
-        `INSERT INTO depenses (boutique_id, montant, categorie, description, date_depense)
-         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-        [req.params.boutiqueId, montant, categorie, description || null, date_depense || new Date().toISOString().slice(0,10)]
+        `INSERT INTO depenses (boutique_id, montant, categorie, description, date_depense, idempotency_key)
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [req.params.boutiqueId, montant, categorie, description || null, date_depense || new Date().toISOString().slice(0,10), idempotency_key || null]
       );
 
       enregistrerAuditLog(req.params.boutiqueId, req.user?.userId || null, req.user?.nom || null, 'depense_creee', `Saisie d'une dépense de ${montant} FCFA (${categorie})`, { montant, categorie, description }, req);

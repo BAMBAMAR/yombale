@@ -36,37 +36,76 @@ export default function ComptaBilanView({
     setLoading(true)
     setErrorMessage(null)
     const cacheKey = `nopalou_bilan_${boutiqueId}_${preset}_${activeRange.from}_${activeRange.to}_${selectedCaissier}_${selectedMode}`
-    const cached = localStorage.getItem(cacheKey)
-    if (cached) {
-      try {
-        setBilan(JSON.parse(cached))
-        setLoading(false)
-      } catch (e) {
-        console.warn('[Nopalou:Comptabilite:BilanView:Cache]', e)
+    let hasLocalCache = false
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(cacheKey) || localStorage.getItem(`nopalou_bilan_${boutiqueId}_fallback`)
+      if (cached) {
+        try {
+          setBilan(JSON.parse(cached))
+          hasLocalCache = true
+          setLoading(false)
+        } catch (e) {
+          console.warn('[Nopalou:Comptabilite:BilanView:Cache]', e)
+        }
       }
     }
 
     try {
-      const data = await getBilanComptable(boutiqueId, {
+      let data = await getBilanComptable(boutiqueId, {
         from: activeRange.from || undefined,
         to: activeRange.to || undefined,
         caissier: selectedCaissier || undefined,
         mode_paiement: selectedMode || undefined,
       })
+
+      // Si l'action serveur a échoué (SSR cookie mismatch ou offline), tenter fetch client direct
+      if (!data || data.error) {
+        const params = new URLSearchParams()
+        if (activeRange.from) params.set('from', activeRange.from)
+        if (activeRange.to) params.set('to', activeRange.to)
+        if (selectedCaissier) params.set('caissier', selectedCaissier)
+        if (selectedMode) params.set('mode_paiement', selectedMode)
+        const qStr = params.toString() ? `?${params.toString()}` : ''
+
+        try {
+          const res = await fetch(`/api/comptabilite/${boutiqueId}/bilan${qStr}`)
+          if (res.ok) {
+            data = await res.json()
+          }
+        } catch {}
+      }
+
       if (data && !data.error) {
         setBilan(data)
         setErrorMessage(null)
-        localStorage.setItem(cacheKey, JSON.stringify(data))
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(data))
+            localStorage.setItem(`nopalou_bilan_${boutiqueId}_fallback`, JSON.stringify(data))
+          } catch {}
+        }
+      } else if (!hasLocalCache) {
+        const fallback = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_bilan_${boutiqueId}_fallback`) : null
+        if (fallback) {
+          try {
+            setBilan(JSON.parse(fallback))
+            setErrorMessage(null)
+          } catch {}
+        } else {
+          setErrorMessage(data?.error || 'Impossible de charger le bilan comptable pour le moment.')
+        }
       }
     } catch (e: any) {
-      const fallback = localStorage.getItem(`nopalou_bilan_${boutiqueId}_fallback`)
-      if (fallback && !bilan) {
-        try {
-          setBilan(JSON.parse(fallback))
-          setErrorMessage(null)
-        } catch (_) {}
-      } else if (!cached && !fallback) {
-        setErrorMessage(e?.message || 'Erreur de communication avec le serveur')
+      if (!hasLocalCache) {
+        const fallback = typeof window !== 'undefined' ? localStorage.getItem(`nopalou_bilan_${boutiqueId}_fallback`) : null
+        if (fallback) {
+          try {
+            setBilan(JSON.parse(fallback))
+            setErrorMessage(null)
+          } catch (_) {}
+        } else {
+          setErrorMessage(e?.message || 'Erreur de communication avec le serveur')
+        }
       }
     } finally {
       setLoading(false)

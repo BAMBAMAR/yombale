@@ -122,20 +122,22 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
       let newDettes = dettesTotal
 
       if (resProduits.status === 'fulfilled' && Array.isArray(resProduits.value)) {
-        hasNewData = true
         const prods = resProduits.value
-        newCount = prods.length
-        newAlerts = prods.filter(
-          (p) =>
-            !p.en_stock ||
-            ((p.quantite_stock ?? p.stock_quantite) !== null &&
-              (p.quantite_stock ?? p.stock_quantite)! <= 3)
-        ).length
-        setProduitsCount(newCount)
-        setStockAlertsCount(newAlerts)
+        if (prods.length > 0 || initial.count === null) {
+          hasNewData = true
+          newCount = prods.length
+          newAlerts = prods.filter(
+            (p) =>
+              !p.en_stock ||
+              ((p.quantite_stock ?? p.stock_quantite) !== null &&
+                (p.quantite_stock ?? p.stock_quantite)! <= 3)
+          ).length
+          setProduitsCount(newCount)
+          setStockAlertsCount(newAlerts)
+        }
       }
 
-      if (resDash.status === 'fulfilled' && resDash.value) {
+      if (resDash.status === 'fulfilled' && resDash.value && !resDash.value.error) {
         hasNewData = true
         if (typeof resDash.value.ca_mois === 'number') {
           newCa = resDash.value.ca_mois
@@ -156,11 +158,13 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
         resCredits.value?.clients &&
         Array.isArray(resCredits.value.clients)
       ) {
-        hasNewData = true
-        newDettes = resCredits.value.clients
-          .filter((c: any) => c.solde > 0)
-          .reduce((s: number, c: any) => s + Number(c.solde), 0)
-        setDettesTotal(newDettes)
+        if (resCredits.value.clients.length > 0 || initial.dettes === null) {
+          hasNewData = true
+          newDettes = resCredits.value.clients
+            .filter((c: any) => Number(c.solde) > 0)
+            .reduce((s: number, c: any) => s + Number(c.solde), 0)
+          setDettesTotal(newDettes)
+        }
       }
 
       // UNIQUEMENT mettre à jour le cache si de vraies données serveur ont été reçues

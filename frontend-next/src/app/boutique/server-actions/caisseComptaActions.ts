@@ -202,10 +202,15 @@ export async function listCommandes(boutiqueId: string, statut?: string) {
   try {
     const qs = statut ? `?statut=${statut}` : ''
     const res = await backendFetch(`/api/comptabilite/${boutiqueId}/commandes${qs}`)
-    if (!res.ok) return []
-    return await res.json()
-  } catch {
-    return []
+    if (!res.ok) {
+      console.warn(`[listCommandes] Erreur HTTP ${res.status} boutique ${boutiqueId}`)
+      return { error: `Erreur ${res.status}`, commandes: [] }
+    }
+    const data = await res.json()
+    return Array.isArray(data) ? data : (data.commandes || [])
+  } catch (err: any) {
+    console.warn(`[listCommandes] Erreur réseau boutique ${boutiqueId}:`, err?.message)
+    return { error: err?.message || 'Erreur réseau', commandes: [] }
   }
 }
 

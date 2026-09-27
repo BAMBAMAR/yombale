@@ -165,6 +165,22 @@ export default function RegisterSW() {
       setShowOfflineToast(false)
       setWasOffline(false)
 
+      // Déclencher la synchronisation automatique de toutes les opérations hors-ligne en attente
+      if (typeof window !== 'undefined') {
+        try {
+          const userId = localStorage.getItem('nopalou_user_id')
+          if (userId) {
+            import('@/lib/sync-manager').then(({ syncToutesLesBoutiquesEnAttente }) => {
+              syncToutesLesBoutiquesEnAttente(userId).catch((err) => {
+                console.warn('[RegisterSW] Échec auto-sync à la reconnexion:', err)
+              })
+            }).catch(() => {})
+          }
+        } catch (e) {
+          console.warn('[RegisterSW] Erreur lecture userId pour auto-sync:', e)
+        }
+      }
+
       // Mettre à jour le SW en arrière-plan
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((reg) => {

@@ -23,8 +23,19 @@ interface BlogArticlesManagerProps {
 }
 
 export default function BlogArticlesManager({ boutiqueId, boutiqueSlug, token }: BlogArticlesManagerProps) {
-  const [articles, setArticles] = useState<Article[]>([])
-  const [loading, setLoading] = useState(true)
+  const [articles, setArticles] = useState<Article[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`nopalou_offline_articles_${boutiqueId}`)
+      if (cached) try { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed } catch (_) {}
+    }
+    return []
+  })
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem(`nopalou_offline_articles_${boutiqueId}`)
+    }
+    return true
+  })
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
@@ -39,30 +50,44 @@ export default function BlogArticlesManager({ boutiqueId, boutiqueSlug, token }:
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+  const getHeaders = useCallback((extra: Record<string, string> = {}) => {
+    const headers: Record<string, string> = { ...extra }
+    const effectiveToken =
+      token ||
+      (typeof window !== 'undefined'
+        ? localStorage.getItem('token') || localStorage.getItem('nopalou_token') || ''
+        : '')
+    if (effectiveToken) {
+      headers['Authorization'] = `Bearer ${effectiveToken}`
+    }
+    return headers
+  }, [token])
 
   const fetchArticles = useCallback(async () => {
     try {
-      setLoading(true)
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/articles?tous=true`, {
-        headers: { Authorization: `Bearer ${token}` }
+      if (articles.length === 0) setLoading(true)
+      const res = await fetch(`/api/boutiques/${boutiqueId}/articles?tous=true`, {
+        headers: getHeaders()
       })
       const data = await res.json()
-      if (res.ok && data.articles) {
+      if (res.ok && data.articles && Array.isArray(data.articles)) {
         setArticles(data.articles)
+        localStorage.setItem(`nopalou_offline_articles_${boutiqueId}`, JSON.stringify(data.articles))
       }
     } catch (err) {
       console.warn('[BLOG ARTICLES FETCH ERR]', err)
     } finally {
       setLoading(false)
     }
-  }, [backendUrl, boutiqueId, token])
+  }, [boutiqueId, getHeaders, articles.length])
 
   useEffect(() => {
-    if (boutiqueId && token) {
+    if (boutiqueId) {
       fetchArticles()
+    } else {
+      setLoading(false)
     }
-  }, [boutiqueId, token, fetchArticles])
+  }, [boutiqueId, fetchArticles])
 
   const openCreateModal = () => {
     setEditingArticle(null)
@@ -114,16 +139,13 @@ export default function BlogArticlesManager({ boutiqueId, boutiqueSlug, token }:
 
     try {
       const url = editingArticle
-        ? `${backendUrl}/api/boutiques/${boutiqueId}/articles/${editingArticle.id}`
-        : `${backendUrl}/api/boutiques/${boutiqueId}/articles`
+        ? `/api/boutiques/${boutiqueId}/articles/${editingArticle.id}`
+        : `/api/boutiques/${boutiqueId}/articles`
       const method = editingArticle ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: getHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload)
       })
 
@@ -146,9 +168,9 @@ export default function BlogArticlesManager({ boutiqueId, boutiqueSlug, token }:
     if (!confirm('Supprimer définitivement cet article ?')) return
 
     try {
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/articles/${artId}`, {
+      const res = await fetch(`/api/boutiques/${boutiqueId}/articles/${artId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: getHeaders()
       })
       if (res.ok) {
         setArticles(prev => prev.filter(a => a.id !== artId))

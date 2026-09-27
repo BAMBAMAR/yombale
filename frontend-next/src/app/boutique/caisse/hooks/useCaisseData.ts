@@ -11,6 +11,7 @@ import {
   obtenirCaissiersLocaux,
   sauvegarderBoutiquesLocales,
   obtenirBoutiquesLocales,
+  hashPin,
 } from '@/lib/db-offline'
 import type { ProduitCaisse } from '../components/PosCatalogueSection'
 import type { BoutiquePOS, SessionCaisse } from '../types'
@@ -133,20 +134,30 @@ export function useCaisseData({
         if (data.caissiers && Array.isArray(data.caissiers)) {
           const actifs = data.caissiers.filter((c: any) => c.actif !== false)
           if (actifs.length > 0) {
-            setCaissiersList(actifs)
-            localStorage.setItem(`nopalou_pos_caissiers_${bId}`, JSON.stringify(actifs))
-            sauvegarderCaissiersLocaux(actifs, bId, userId).catch(() => {})
+            const enriched = await Promise.all(actifs.map(async (c: any) => {
+              let pin_hash = c.pin_hash
+              if (!pin_hash && c.code_pin) {
+                pin_hash = await hashPin(String(c.code_pin), bId)
+              }
+              return { ...c, pin_hash, boutique_id: c.boutique_id || bId }
+            }))
+            setCaissiersList(enriched)
+            try {
+              localStorage.setItem(`nopalou_pos_caissiers_${bId}`, JSON.stringify(enriched))
+              localStorage.setItem(`nopalou_pos_active_boutique_id`, bId)
+            } catch {}
+            sauvegarderCaissiersLocaux(enriched, bId, userId).catch(() => {})
             setCaissierSelectionneId((prev) => {
-              if (prev && actifs.some((c: any) => c.id === prev)) return prev
-              const defCaissier = actifs.find((c: any) => c.role === 'caissier') || actifs[0]
+              if (prev && enriched.some((c: any) => c.id === prev)) return prev
+              const defCaissier = enriched.find((c: any) => c.role === 'caissier') || enriched[0]
               return defCaissier.id
             })
             setCaissierNom((prev) => {
               if (prev && prev !== 'Caissier 1 (Bamba)') return prev
-              const defCaissier = actifs.find((c: any) => c.role === 'caissier') || actifs[0]
+              const defCaissier = enriched.find((c: any) => c.role === 'caissier') || enriched[0]
               return `${defCaissier.prenom || ''} ${defCaissier.nom || ''}`.trim() || defCaissier.nom
             })
-            if (verifierSiConfigObligatoire(actifs, bId) && onOpenConfigObligatoire) {
+            if (verifierSiConfigObligatoire(enriched, bId) && onOpenConfigObligatoire) {
               onOpenConfigObligatoire()
             }
           }

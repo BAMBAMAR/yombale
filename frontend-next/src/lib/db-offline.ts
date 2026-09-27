@@ -9,7 +9,36 @@
  */
 
 const DB_NAME = 'nopalou_pos_offline';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
+
+/**
+ * Hache un code PIN à l'aide de SHA-256 avec l'ID de la boutique comme sel.
+ * Garantit qu'aucun code PIN en clair n'est stocké dans IndexedDB ou localStorage.
+ */
+export async function hashPin(pin: string, boutiqueId: string): Promise<string> {
+  if (!pin) return '';
+  try {
+    const cleanPin = String(pin).trim();
+    const cleanSalt = String(boutiqueId || '').trim();
+    if (typeof crypto === 'undefined' || !crypto.subtle) {
+      // Fallback si WebCrypto n'est pas dispo (SSR / environnement très restreint)
+      let hash = 0;
+      const str = `${cleanSalt}:${cleanPin}`;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return 'fb_' + Math.abs(hash).toString(16);
+    }
+    const msgUint8 = new TextEncoder().encode(`${cleanSalt}:${cleanPin}`);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch (err) {
+    console.warn('[hashPin] Erreur hachage:', err);
+    return '';
+  }
+}
 
 export interface OfflineSale {
   id_temporaire: string;    // UUID unique généré côté client — utilisé comme idempotency_key
@@ -47,6 +76,31 @@ export interface OfflineDebtTransaction {
   status: 'pending' | 'syncing' | 'done';
 }
 
+export interface OfflineExpense {
+  id_temporaire: string;    // UUID unique d'idempotence
+  boutique_id: string;
+  user_id: string;
+  montant: number;
+  categorie: string;
+  description?: string | null;
+  date_depense?: string | null;
+  date: string;
+  status: 'pending' | 'syncing' | 'done';
+}
+
+export interface OfflineNewClient {
+  id_temporaire: string;    // UUID / ID temporaire unique
+  boutique_id: string;
+  user_id: string;
+  nom: string;
+  telephone: string;
+  adresse?: string | null;
+  plafond_max?: number | null;
+  note_client?: string | null;
+  date: string;
+  status: 'pending' | 'syncing' | 'done';
+}
+
 export interface OfflineClotureSession {
   id_temporaire: string;
   boutique_id: string;
@@ -73,7 +127,7 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
     const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
-      console.error("❌ 💾 [IndexedDB v5] Erreur d'ouverture d'IndexedDB:", request.error);
+      console.error("❌ 💾 [IndexedDB v6] Erreur d'ouverture d'IndexedDB:", request.error);
       reject(request.error);
     };
 
@@ -123,6 +177,20 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('marchand_boutiques')) {
         const mbStore = db.createObjectStore('marchand_boutiques', { keyPath: 'cache_key' });
         mbStore.createIndex('by_user', 'user_id', { unique: false });
+      }
+
+      // Store v6 : File d'attente des dépenses hors-ligne (comptabilité / caisse)
+      if (!db.objectStoreNames.contains('depenses_queue')) {
+        const depensesStore = db.createObjectStore('depenses_queue', { keyPath: 'id_temporaire' });
+        depensesStore.createIndex('by_boutique_status', ['boutique_id', 'status'], { unique: false });
+        depensesStore.createIndex('by_user_boutique', ['user_id', 'boutique_id'], { unique: false });
+      }
+
+      // Store v6 : File d'attente des nouveaux clients créés hors-ligne
+      if (!db.objectStoreNames.contains('nouveaux_clients_queue')) {
+        const ncStore = db.createObjectStore('nouveaux_clients_queue', { keyPath: 'id_temporaire' });
+        ncStore.createIndex('by_boutique_status', ['boutique_id', 'status'], { unique: false });
+        ncStore.createIndex('by_user_boutique', ['user_id', 'boutique_id'], { unique: false });
       }
     };
   });
@@ -459,6 +527,22 @@ export async function sauvegarderCaissiersLocaux(
 ): Promise<void> {
   if (!boutiqueId || !userId) return;
   const db = await initialiserBaseLocale();
+
+  // Hachage sécurisé SHA-256 avec sel boutiqueId pour protéger les PINs en local
+  const caissiersHaches = await Promise.all(
+    caissiers.map(async (c) => {
+      let pin_hash = c.pin_hash;
+      if (!pin_hash && c.code_pin) {
+        pin_hash = await hashPin(String(c.code_pin), boutiqueId);
+      }
+      const { code_pin: _plainPin, ...rest } = c;
+      return {
+        ...rest,
+        pin_hash,
+      };
+    })
+  );
+
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('caissiers', 'readwrite');
     const store = tx.objectStore('caissiers');
@@ -473,12 +557,12 @@ export async function sauvegarderCaissiersLocaux(
         cursor.delete();
         cursor.continue();
       } else {
-        caissiers.forEach((c) => {
+        caissiersHaches.forEach((c) => {
           store.put({
             ...c,
             user_id: userId,
             boutique_id: boutiqueId,
-            cache_key: `${userId}:${boutiqueId}:${c.id || c.code_pin}`,
+            cache_key: `${userId}:${boutiqueId}:${c.id || c.pin_hash || Math.random()}`,
           });
         });
       }
@@ -486,7 +570,7 @@ export async function sauvegarderCaissiersLocaux(
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => {
-      console.error(`💾 [IndexedDB v5] ❌ Erreur sauvegarde caissiers:`, tx.error);
+      console.error(`💾 [IndexedDB v6] ❌ Erreur sauvegarde caissiers:`, tx.error);
       reject(tx.error);
     };
   });
@@ -589,6 +673,188 @@ export async function revertClotureSyncing(id_temporaire: string): Promise<void>
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction('clotures_queue', 'readwrite');
     const store = tx.objectStore('clotures_queue');
+    const getReq = store.get(id_temporaire);
+
+    getReq.onsuccess = () => {
+      if (getReq.result && getReq.result.status === 'syncing') {
+        store.put({ ...getReq.result, status: 'pending' });
+      }
+    };
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// --- SYNCHRONISATION DES DÉPENSES HORS-LIGNE ---
+
+export async function ajouterDepenseHorsLigne(depense: Omit<OfflineExpense, 'status'>): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('depenses_queue', 'readwrite');
+    const store = tx.objectStore('depenses_queue');
+    const payload = { ...depense, status: 'pending' as const };
+    store.put(payload);
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => {
+      console.error(`💾 [IndexedDB v6] ❌ Erreur ajout dépense hors-ligne:`, tx.error);
+      reject(tx.error);
+    };
+  });
+}
+
+export async function obtenirDepensesHorsLigne(
+  boutiqueId?: string,
+  userId?: string
+): Promise<OfflineExpense[]> {
+  const db = await initialiserBaseLocale();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('depenses_queue', 'readonly');
+    const store = tx.objectStore('depenses_queue');
+
+    const request = store.getAll();
+    request.onsuccess = () => {
+      let list: OfflineExpense[] = request.result || [];
+      if (boutiqueId) {
+        list = list.filter((v) => {
+          if (v.boutique_id !== boutiqueId) return false;
+          if (userId && v.user_id && v.user_id !== userId && v.user_id !== 'commercant') return false;
+          return true;
+        });
+      }
+      resolve(list.filter((v) => v.status === 'pending'));
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function marquerDepenseSyncing(id_temporaire: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('depenses_queue', 'readwrite');
+    const store = tx.objectStore('depenses_queue');
+    const getReq = store.get(id_temporaire);
+
+    getReq.onsuccess = () => {
+      if (getReq.result) {
+        store.put({ ...getReq.result, status: 'syncing' });
+      }
+    };
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function supprimerDepenseHorsLigne(id_temporaire: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('depenses_queue', 'readwrite');
+    const store = tx.objectStore('depenses_queue');
+    store.delete(id_temporaire);
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function revertDepenseSyncing(id_temporaire: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('depenses_queue', 'readwrite');
+    const store = tx.objectStore('depenses_queue');
+    const getReq = store.get(id_temporaire);
+
+    getReq.onsuccess = () => {
+      if (getReq.result && getReq.result.status === 'syncing') {
+        store.put({ ...getReq.result, status: 'pending' });
+      }
+    };
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// --- SYNCHRONISATION DES NOUVEAUX CLIENTS HORS-LIGNE ---
+
+export async function ajouterNouveauClientHorsLigne(client: Omit<OfflineNewClient, 'status'>): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('nouveaux_clients_queue', 'readwrite');
+    const store = tx.objectStore('nouveaux_clients_queue');
+    const payload = { ...client, status: 'pending' as const };
+    store.put(payload);
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => {
+      console.error(`💾 [IndexedDB v6] ❌ Erreur ajout nouveau client hors-ligne:`, tx.error);
+      reject(tx.error);
+    };
+  });
+}
+
+export async function obtenirNouveauxClientsHorsLigne(
+  boutiqueId?: string,
+  userId?: string
+): Promise<OfflineNewClient[]> {
+  const db = await initialiserBaseLocale();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('nouveaux_clients_queue', 'readonly');
+    const store = tx.objectStore('nouveaux_clients_queue');
+
+    const request = store.getAll();
+    request.onsuccess = () => {
+      let list: OfflineNewClient[] = request.result || [];
+      if (boutiqueId) {
+        list = list.filter((v) => {
+          if (v.boutique_id !== boutiqueId) return false;
+          if (userId && v.user_id && v.user_id !== userId && v.user_id !== 'commercant') return false;
+          return true;
+        });
+      }
+      resolve(list.filter((v) => v.status === 'pending'));
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function marquerNouveauClientSyncing(id_temporaire: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('nouveaux_clients_queue', 'readwrite');
+    const store = tx.objectStore('nouveaux_clients_queue');
+    const getReq = store.get(id_temporaire);
+
+    getReq.onsuccess = () => {
+      if (getReq.result) {
+        store.put({ ...getReq.result, status: 'syncing' });
+      }
+    };
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function supprimerNouveauClientHorsLigne(id_temporaire: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('nouveaux_clients_queue', 'readwrite');
+    const store = tx.objectStore('nouveaux_clients_queue');
+    store.delete(id_temporaire);
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function revertNouveauClientSyncing(id_temporaire: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('nouveaux_clients_queue', 'readwrite');
+    const store = tx.objectStore('nouveaux_clients_queue');
     const getReq = store.get(id_temporaire);
 
     getReq.onsuccess = () => {

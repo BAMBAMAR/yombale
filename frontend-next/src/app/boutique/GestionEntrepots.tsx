@@ -38,10 +38,33 @@ interface ProduitSimple {
 }
 
 export default function GestionEntrepots({ boutiqueId }: { boutiqueId: string }) {
-  const [entrepots, setEntrepots] = useState<Entrepot[]>([])
-  const [stocks, setStocks] = useState<StockEntrepot[]>([])
-  const [produits, setProduits] = useState<ProduitSimple[]>([])
-  const [loading, setLoading] = useState(true)
+  const [entrepots, setEntrepots] = useState<Entrepot[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`nopalou_offline_entrepots_${boutiqueId}`)
+      if (cached) try { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed } catch (_) {}
+    }
+    return []
+  })
+  const [stocks, setStocks] = useState<StockEntrepot[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`nopalou_offline_stocks_${boutiqueId}`)
+      if (cached) try { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed } catch (_) {}
+    }
+    return []
+  })
+  const [produits, setProduits] = useState<ProduitSimple[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`nopalou_offline_prods_${boutiqueId}`) || localStorage.getItem(`nopalou_pos_produits_${boutiqueId}`)
+      if (cached) try { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed } catch (_) {}
+    }
+    return []
+  })
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem(`nopalou_offline_entrepots_${boutiqueId}`)
+    }
+    return true
+  })
   const [error, setError] = useState<string | null>(null)
 
   // Modale Ajout / Édition
@@ -65,12 +88,12 @@ export default function GestionEntrepots({ boutiqueId }: { boutiqueId: string })
 
   const token =
     typeof window !== 'undefined'
-      ? localStorage.getItem('token') || sessionStorage.getItem('token')
+      ? localStorage.getItem('token') || sessionStorage.getItem('token') || localStorage.getItem('nopalou_token')
       : null
 
   const chargerDonnees = useCallback(async () => {
     try {
-      setLoading(true)
+      if (entrepots.length === 0) setLoading(true)
       setError(null)
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
 
@@ -82,15 +105,24 @@ export default function GestionEntrepots({ boutiqueId }: { boutiqueId: string })
 
       if (resE.ok) {
         const dataE = await resE.json()
-        setEntrepots(dataE.entrepots || [])
+        if (Array.isArray(dataE.entrepots)) {
+          setEntrepots(dataE.entrepots)
+          localStorage.setItem(`nopalou_offline_entrepots_${boutiqueId}`, JSON.stringify(dataE.entrepots))
+        }
       }
       if (resS.ok) {
         const dataS = await resS.json()
-        setStocks(dataS.stocks || [])
+        if (Array.isArray(dataS.stocks)) {
+          setStocks(dataS.stocks)
+          localStorage.setItem(`nopalou_offline_stocks_${boutiqueId}`, JSON.stringify(dataS.stocks))
+        }
       }
       if (resP.ok) {
         const dataP = await resP.json()
-        setProduits(dataP.produits || [])
+        if (Array.isArray(dataP.produits)) {
+          setProduits(dataP.produits)
+          localStorage.setItem(`nopalou_offline_prods_${boutiqueId}`, JSON.stringify(dataP.produits))
+        }
       }
     } catch (err: any) {
       console.warn('[GestionEntrepots:chargerDonnees]', err)

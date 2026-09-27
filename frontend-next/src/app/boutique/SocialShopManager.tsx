@@ -33,9 +33,27 @@ export default function SocialShopManager({
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('posts')
 
-  const [posts, setPosts] = useState<SocialPostAdmin[]>([])
-  const [accounts, setAccounts] = useState<SocialAccountAdmin[]>([])
-  const [stats, setStats] = useState<SocialStats>({})
+  const [posts, setPosts] = useState<SocialPostAdmin[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`nopalou_offline_social_posts_${boutiqueId}`)
+      if (cached) try { const p = JSON.parse(cached); if (Array.isArray(p)) return p } catch (_) {}
+    }
+    return []
+  })
+  const [accounts, setAccounts] = useState<SocialAccountAdmin[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`nopalou_offline_social_accounts_${boutiqueId}`)
+      if (cached) try { const p = JSON.parse(cached); if (Array.isArray(p)) return p } catch (_) {}
+    }
+    return []
+  })
+  const [stats, setStats] = useState<SocialStats>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`nopalou_offline_social_stats_${boutiqueId}`)
+      if (cached) try { const p = JSON.parse(cached); if (p) return p } catch (_) {}
+    }
+    return {}
+  })
   const [analytics, setAnalytics] = useState<SocialAnalytics>({})
   const [catalogue, setCatalogue] = useState<ProduitCatalogue[]>([])
   const [healthReport, setHealthReport] = useState<SocialHealthReport | null>(null)
@@ -47,35 +65,36 @@ export default function SocialShopManager({
   // Chargement des données d'administration
   async function loadAdminData() {
     try {
-      setLoading(true)
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
-      const token = localStorage.getItem('nopalou_token') || ''
+      if (posts.length === 0) setLoading(true)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('nopalou_token') || '' : ''
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
 
       const [overviewRes, postsRes, prodsRes, healthRes] = await Promise.all([
-        authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/overview`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/health`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        authFetch(`/api/boutiques/${boutiqueId}/social/admin/overview`, { headers }),
+        authFetch(`/api/boutiques/${boutiqueId}/social/admin/posts`, { headers }),
+        authFetch(`/api/boutiques/${boutiqueId}/produits`, { headers }),
+        authFetch(`/api/boutiques/${boutiqueId}/social/admin/health`, { headers }),
       ])
 
       if (overviewRes.ok && (overviewRes.headers.get('content-type') || '').includes('application/json')) {
         const d = await overviewRes.json()
-        setAccounts(d.comptes || [])
-        setStats(d.stats || {})
-        setAnalytics(d.analytics_30j || {})
+        if (Array.isArray(d.comptes)) {
+          setAccounts(d.comptes)
+          localStorage.setItem(`nopalou_offline_social_accounts_${boutiqueId}`, JSON.stringify(d.comptes))
+        }
+        if (d.stats) {
+          setStats(d.stats)
+          localStorage.setItem(`nopalou_offline_social_stats_${boutiqueId}`, JSON.stringify(d.stats))
+        }
+        if (d.analytics_30j) setAnalytics(d.analytics_30j)
       }
 
       if (postsRes.ok && (postsRes.headers.get('content-type') || '').includes('application/json')) {
         const d = await postsRes.json()
-        setPosts(d.posts || [])
+        if (Array.isArray(d.posts)) {
+          setPosts(d.posts)
+          localStorage.setItem(`nopalou_offline_social_posts_${boutiqueId}`, JSON.stringify(d.posts))
+        }
       }
 
       if (prodsRes.ok && (prodsRes.headers.get('content-type') || '').includes('application/json')) {

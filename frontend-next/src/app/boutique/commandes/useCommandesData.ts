@@ -73,8 +73,22 @@ export function useCommandesData(boutiqueId: string, t: any) {
       try {
         const data = await listCommandes(boutiqueId, filtre)
         if (Array.isArray(data)) {
-          setCommandes(data)
-          localStorage.setItem(cacheKey, JSON.stringify(data))
+          const cachedStr = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null
+          let localCount = 0
+          if (cachedStr) try { localCount = JSON.parse(cachedStr)?.length || 0 } catch (_) {}
+          if (data.length > 0 || localCount === 0) {
+            setCommandes(data)
+            localStorage.setItem(cacheKey, JSON.stringify(data))
+          }
+        } else {
+          // Erreur serveur : restaurer depuis le cache local sans écraser par du vide
+          const fallback = localStorage.getItem(`nopalou_offline_commandes_${boutiqueId}_`)
+          if (fallback) {
+            try {
+              const parsed = JSON.parse(fallback)
+              if (Array.isArray(parsed) && parsed.length > 0) setCommandes(parsed)
+            } catch (_) {}
+          }
         }
       } catch (err) {
         // En mode hors-ligne, conserver les commandes en mémoire ou restaurer du cache

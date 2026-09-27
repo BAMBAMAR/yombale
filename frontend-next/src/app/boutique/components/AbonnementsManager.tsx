@@ -26,8 +26,19 @@ interface AbonnementsManagerProps {
 }
 
 export default function AbonnementsManager({ boutiqueId, boutiqueNom = 'Ma Boutique', token }: AbonnementsManagerProps) {
-  const [abonnements, setAbonnements] = useState<Abonnement[]>([])
-  const [loading, setLoading] = useState(true)
+  const [abonnements, setAbonnements] = useState<Abonnement[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`nopalou_offline_abonnements_${boutiqueId}`)
+      if (cached) try { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed } catch (_) {}
+    }
+    return []
+  })
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem(`nopalou_offline_abonnements_${boutiqueId}`)
+    }
+    return true
+  })
   const [filterStatut, setFilterStatut] = useState<string>('')
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -43,30 +54,44 @@ export default function AbonnementsManager({ boutiqueId, boutiqueNom = 'Ma Bouti
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+  const getHeaders = useCallback((extra: Record<string, string> = {}) => {
+    const headers: Record<string, string> = { ...extra }
+    const effectiveToken =
+      token ||
+      (typeof window !== 'undefined'
+        ? localStorage.getItem('token') || localStorage.getItem('nopalou_token') || ''
+        : '')
+    if (effectiveToken) {
+      headers['Authorization'] = `Bearer ${effectiveToken}`
+    }
+    return headers
+  }, [token])
 
   const fetchAbonnements = useCallback(async () => {
     try {
-      setLoading(true)
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/abonnements`, {
-        headers: { Authorization: `Bearer ${token}` }
+      if (abonnements.length === 0) setLoading(true)
+      const res = await fetch(`/api/boutiques/${boutiqueId}/abonnements`, {
+        headers: getHeaders()
       })
       const data = await res.json()
-      if (res.ok && data.abonnements) {
+      if (res.ok && data.abonnements && Array.isArray(data.abonnements)) {
         setAbonnements(data.abonnements)
+        localStorage.setItem(`nopalou_offline_abonnements_${boutiqueId}`, JSON.stringify(data.abonnements))
       }
     } catch (err) {
       console.warn('[ABONNEMENTS FETCH ERR]', err)
     } finally {
       setLoading(false)
     }
-  }, [backendUrl, boutiqueId, token])
+  }, [boutiqueId, getHeaders, abonnements.length])
 
   useEffect(() => {
-    if (boutiqueId && token) {
+    if (boutiqueId) {
       fetchAbonnements()
+    } else {
+      setLoading(false)
     }
-  }, [boutiqueId, token, fetchAbonnements])
+  }, [boutiqueId, fetchAbonnements])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,12 +114,9 @@ export default function AbonnementsManager({ boutiqueId, boutiqueNom = 'Ma Bouti
     }
 
     try {
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/abonnements`, {
+      const res = await fetch(`/api/boutiques/${boutiqueId}/abonnements`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: getHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload)
       })
       const data = await res.json()
@@ -120,12 +142,9 @@ export default function AbonnementsManager({ boutiqueId, boutiqueNom = 'Ma Bouti
   const handleUpdateStatut = async (aboId: string, newStatut: 'actif' | 'pause' | 'annule') => {
     try {
       setActionLoadingId(aboId)
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/abonnements/${aboId}/statut`, {
+      const res = await fetch(`/api/boutiques/${boutiqueId}/abonnements/${aboId}/statut`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: getHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ statut: newStatut })
       })
       if (res.ok) {
@@ -141,9 +160,9 @@ export default function AbonnementsManager({ boutiqueId, boutiqueNom = 'Ma Bouti
   const handleGenererCommande = async (abo: Abonnement) => {
     try {
       setActionLoadingId(abo.id)
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/abonnements/${abo.id}/generer-commande`, {
+      const res = await fetch(`/api/boutiques/${boutiqueId}/abonnements/${abo.id}/generer-commande`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: getHeaders()
       })
       const data = await res.json()
       if (res.ok && data.commande) {

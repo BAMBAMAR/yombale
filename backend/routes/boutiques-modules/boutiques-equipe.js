@@ -22,9 +22,7 @@ const {
   slugify,
   uniqueSlug,
 } = require('./helpers');
-router.get('/:id/admins', verifierToken, param('id').isUUID(), async (req, res) => {
-  const errs = validationResult(req);
-  if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
+router.get('/:id/admins', verifierToken, async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
@@ -48,7 +46,7 @@ router.get('/:id/admins', verifierToken, param('id').isUUID(), async (req, res) 
   }
 });
 
-router.post('/:id/admins', verifierToken, param('id').isUUID(), body('email').isEmail(), async (req, res) => {
+router.post('/:id/admins', verifierToken, body('email').isEmail(), async (req, res) => {
   const errs = validationResult(req);
   if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
   try {
@@ -65,11 +63,11 @@ router.post('/:id/admins', verifierToken, param('id').isUUID(), body('email').is
 
     await pool.query(
       'INSERT INTO boutique_utilisateurs (boutique_id, utilisateur_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [req.params.id, targetUserId]
+      [bq.id, targetUserId]
     );
 
     // Audit log
-    enregistrerAuditLog(req.params.id, req.user.userId, req.user.nom || 'Marchand', 'admin_ajoute', `Ajout d'un administrateur web (${email})`, { target_user_id: targetUserId, email }, req);
+    enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'admin_ajoute', `Ajout d'un administrateur web (${email})`, { target_user_id: targetUserId, email }, req);
 
     res.status(201).json({ success: true });
   } catch (err) {
@@ -78,7 +76,7 @@ router.post('/:id/admins', verifierToken, param('id').isUUID(), body('email').is
   }
 });
 
-router.delete('/:id/admins/:userId', verifierToken, param('id').isUUID(), param('userId').isUUID(), async (req, res) => {
+router.delete('/:id/admins/:userId', verifierToken, param('userId').isUUID(), async (req, res) => {
   const errs = validationResult(req);
   if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
   try {
@@ -90,11 +88,11 @@ router.delete('/:id/admins/:userId', verifierToken, param('id').isUUID(), param(
 
     await pool.query(
       'DELETE FROM boutique_utilisateurs WHERE boutique_id = $1 AND utilisateur_id = $2',
-      [req.params.id, req.params.userId]
+      [bq.id, req.params.userId]
     );
 
     // Audit log
-    enregistrerAuditLog(req.params.id, req.user.userId, req.user.nom || 'Marchand', 'admin_supprime', `Retrait d'un administrateur web (${req.params.userId})`, { target_user_id: req.params.userId }, req);
+    enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'admin_supprime', `Retrait d'un administrateur web (${req.params.userId})`, { target_user_id: req.params.userId }, req);
 
     res.json({ success: true });
   } catch (err) {

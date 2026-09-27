@@ -52,14 +52,18 @@ export default function CompteClient({
 
   // Préchargement global universel (Boutiques, Agences, Tableaux de bord, Menus & Tabs)
   // Permet une autonomie complète sans internet avec les dernières données chargées
+  // Rafraîchi automatiquement toutes les 15 minutes en arrière-plan
   useEffect(() => {
     if (!isOnline) {
       return
     }
 
-    const preloadTimer = setTimeout(() => {
+    const executerPrechargement = () => {
       const fetchLow = (url: string) => fetch(url, { priority: 'low' } as any)
       const currentUid = session?.userId || (session as any)?.id || ''
+      if (currentUid && typeof window !== 'undefined') {
+        try { localStorage.setItem('nopalou_user_id', currentUid) } catch {}
+      }
 
       // 1. Précharge les annonces classifiées
       fetchLow('/api/annonces/mine')
@@ -146,7 +150,7 @@ export default function CompteClient({
               })
               .catch(() => {})
 
-            // 4c. Clients & Crédits / Carnet de dettes (localStorage + IndexedDB)
+            // 4c. Clients & Crédits / Carnet de dettes (localStorage + IndexedDB + Historique transactions)
             fetchLow(`/api/boutiques/${b.id}/credits-clients`)
               .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
               .then(cData => {
@@ -155,6 +159,19 @@ export default function CompteClient({
                   import('@/lib/db-offline').then(({ sauvegarderClientsLocaux }) => {
                     sauvegarderClientsLocaux(cData.clients, b.id, currentUid).catch(() => {})
                   }).catch(() => {})
+
+                  // Précharge l'historique des dettes pour chaque client
+                  cData.clients.slice(0, 50).forEach((client: any) => {
+                    if (!client?.id) return
+                    fetchLow(`/api/boutiques/${b.id}/credits-clients/${client.id}/historique`)
+                      .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+                      .then(histData => {
+                        if (histData?.transactions && Array.isArray(histData.transactions)) {
+                          localStorage.setItem(`nopalou_offline_carnet_hist_${b.id}_${client.id}`, JSON.stringify(histData.transactions))
+                        }
+                      })
+                      .catch(() => {})
+                  })
 
                   try {
                     const dettes = cData.clients
@@ -371,6 +388,17 @@ export default function CompteClient({
                 if (Array.isArray(data?.contacts)) localStorage.setItem(`nopalou_offline_agence_contacts_${a.slug}`, JSON.stringify(data.contacts))
               })
               .catch(() => {})
+
+            // 5h. Loyers de l'agence
+            fetchLow(`/api/locatif-immo/agence/${a.slug}/loyers`)
+              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+              .then(data => {
+                const list = data?.loyers || data?.rows || (Array.isArray(data) ? data : [])
+                if (list.length > 0) {
+                  localStorage.setItem(`nopalou_offline_agence_loyers_${a.slug}`, JSON.stringify(list))
+                }
+              })
+              .catch(() => {})
           })
         })
         .catch(() => {})
@@ -432,9 +460,15 @@ export default function CompteClient({
           } catch (_) {}
         }).catch(() => {})
       }
-    }, 1200)
+    }
 
-    return () => clearTimeout(preloadTimer)
+    const preloadTimer = setTimeout(executerPrechargement, 1200)
+    const preloadInterval = setInterval(executerPrechargement, 15 * 60 * 1000)
+
+    return () => {
+      clearTimeout(preloadTimer)
+      clearInterval(preloadInterval)
+    }
   }, [isOnline, session?.userId, telephone])
 
   const userId = session?.userId || ''
