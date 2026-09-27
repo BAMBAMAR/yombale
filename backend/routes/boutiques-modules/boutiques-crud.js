@@ -192,6 +192,19 @@ router.post('/taf-taf', async (req, res) => {
       [user.id, planChoisi, prix, essaiJours]
     );
 
+    // 3.5 Initialiser 2 articles modèles pour que la caisse POS et la vitrine soient immédiatement opérationnelles
+    try {
+      await pool.query(
+        `INSERT INTO boutique_produits (boutique_id, nom, prix, stock_quantite, en_stock, description, categorie, slug)
+         VALUES 
+          ($1, 'Article Exemple 1', 5000, 10, true, 'Exemple d''article personnalisable. Prêt pour test de vente et ticket.', $2, 'article-exemple-1-' || SUBSTRING(MD5(RANDOM()::text), 1, 6)),
+          ($1, 'Article Exemple 2', 10000, 5, true, 'Exemple d''article personnalisable. Modifiez le nom et le prix à tout moment.', $2, 'article-exemple-2-' || SUBSTRING(MD5(RANDOM()::text), 1, 6))`,
+        [boutiqueId, categorie || 'Divers']
+      );
+    } catch (errProd) {
+      console.warn('[BOUTIQUE SEED STARTER PRODUCTS TAF TAF]:', errProd.message);
+    }
+
     // 4. Générer le token de session
     const jwt = require('jsonwebtoken');
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -257,7 +270,7 @@ router.get('/', async (req, res) => {
       pool.query(
         `SELECT b.id, b.slug, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
                 b.logo_url, b.cover_url, b.horaires, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
-                COALESCE(a.plan, b.plan_actif, 'pro') AS plan_actif,
+                COALESCE(a.plan, 'gratuit') AS plan_actif,
                 COALESCE(ROUND(av.note_avg::numeric, 1), 5.0) AS note_moyenne,
                 COALESCE(av.total_cnt, 0) AS total_avis
          FROM boutiques b
@@ -329,8 +342,7 @@ router.get('/mine', verifierToken, async (req, res) => {
                   WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
                   ORDER BY a.fin DESC LIMIT 1
                 ),
-                b.plan_actif,
-                'pro'
+                'gratuit'
               ) AS plan_actif,
               (
                 SELECT a.plan
@@ -344,12 +356,24 @@ router.get('/mine', verifierToken, async (req, res) => {
                 WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
                 ORDER BY a.fin DESC LIMIT 1
               ) AS is_trial,
+              COALESCE(
+                (
+                  SELECT GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.fin - NOW())) / 86400))::int
+                  FROM abonnements a
+                  WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
+                  ORDER BY a.fin DESC LIMIT 1
+                ),
+                0
+              ) AS jours_restants_essai,
               (
-                SELECT GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.fin - NOW())) / 86400))::int
-                FROM abonnements a
-                WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
-                ORDER BY a.fin DESC LIMIT 1
-              ) AS jours_restants_essai
+                EXISTS (
+                  SELECT 1 FROM abonnements a
+                  WHERE a.utilisateur_id = b.utilisateur_id AND a.fin <= NOW()
+                ) AND NOT EXISTS (
+                  SELECT 1 FROM abonnements a2
+                  WHERE a2.utilisateur_id = b.utilisateur_id AND a2.statut = 'actif' AND a2.fin > NOW()
+                )
+              ) AS abo_expire
        FROM boutiques b
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
        WHERE b.utilisateur_id = $1 OR bu.utilisateur_id = $1
@@ -493,7 +517,7 @@ router.get('/:id', async (req, res) => {
               COALESCE(b.fidelite_taux_cashback, 3.00) AS fidelite_taux_cashback,
               COALESCE(b.fidelite_tampons_max, 10) AS fidelite_tampons_max,
               COALESCE(b.fidelite_seuil_tampon, 2000) AS fidelite_seuil_tampon,
-              COALESCE(a.plan, b.plan_actif, 'pro') AS plan_actif
+              COALESCE(a.plan, 'gratuit') AS plan_actif
        FROM boutiques b
        LEFT JOIN LATERAL (
          SELECT plan FROM abonnements
@@ -702,6 +726,19 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
       );
     } catch (errAbo) {
       console.error('[BOUTIQUES POST] Erreur création abonnement:', errAbo.message);
+    }
+
+    // Initialiser 2 articles modèles pour que la caisse POS et la vitrine soient immédiatement opérationnelles
+    try {
+      await pool.query(
+        `INSERT INTO boutique_produits (boutique_id, nom, prix, stock_quantite, en_stock, description, categorie, slug)
+         VALUES 
+          ($1, 'Article Exemple 1', 5000, 10, true, 'Exemple d''article personnalisable. Prêt pour test de vente et ticket.', $2, 'article-exemple-1-' || SUBSTRING(MD5(RANDOM()::text), 1, 6)),
+          ($1, 'Article Exemple 2', 10000, 5, true, 'Exemple d''article personnalisable. Modifiez le nom et le prix à tout moment.', $2, 'article-exemple-2-' || SUBSTRING(MD5(RANDOM()::text), 1, 6))`,
+        [newId, req.body.categorie || 'Divers']
+      );
+    } catch (errProd) {
+      console.warn('[BOUTIQUES POST SEED PRODS]:', errProd.message);
     }
 
     res.status(201).json({ success: true, id: newId, boutique: { id: newId, slug } });

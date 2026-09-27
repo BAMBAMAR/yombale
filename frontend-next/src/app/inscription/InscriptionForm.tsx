@@ -56,6 +56,8 @@ export default function InscriptionForm() {
   const [isDegraded, setIsDegraded] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [redirectUrl, setRedirectUrl] = useState('')
+  const [selectedPlan, setSelectedPlan] = useState('')
+  const [selectedDuree, setSelectedDuree] = useState('1')
 
   const router = useRouter()
 
@@ -69,6 +71,14 @@ export default function InscriptionForm() {
       const redir = params.get('redirect')
       if (redir && redir.startsWith('/') && !redir.startsWith('//')) {
         setRedirectUrl(redir)
+      }
+      const plan = params.get('plan')
+      if (plan) {
+        setSelectedPlan(plan)
+      }
+      const duree = params.get('duree')
+      if (duree) {
+        setSelectedDuree(duree)
       }
     }
   }, [])
@@ -171,8 +181,12 @@ export default function InscriptionForm() {
       
       if (data.token) {
         await setAuthCookieAction(data.token)
-        const target = redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/compte'
-        router.push(target)
+        if (selectedPlan && ['pro', 'business', 'decouverte', 'immo_pro', 'immo_multi_agence'].includes(selectedPlan)) {
+          router.push(`/boutique/abonnement?plan=${encodeURIComponent(selectedPlan)}&duree=${encodeURIComponent(selectedDuree)}${redirectUrl ? `&redirect=${encodeURIComponent(redirectUrl)}` : ''}`)
+        } else {
+          const target = redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/compte'
+          router.push(target)
+        }
       }
     } catch (err: any) {
       setErrorWa(err.message)
@@ -304,6 +318,8 @@ export default function InscriptionForm() {
       {signupMethod === 'email' ? (
         <form ref={formRef} action={action} onSubmit={handleSubmit} className="auth-form">
           {redirectUrl && <input type="hidden" name="redirect" value={redirectUrl} />}
+          {selectedPlan && <input type="hidden" name="plan" value={selectedPlan} />}
+          {selectedDuree && <input type="hidden" name="duree" value={selectedDuree} />}
           {displayError && (
             <div className="auth-error" role="alert">
               <span className="auth-error-icon"><AlertCircle size={16} /></span>

@@ -26,11 +26,13 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Déployée (27 septembre 2026 - Soir) :
-- **Optimisation Catalogue Haute Performance (< 10ms)** : Implémentation du cache Redis / In-Memory sur `GET /api/produits`, `/tendances`, `/categories-actives`, `/:id` et `/:id/offres` dans `backend/routes/produits.js`, faisant chuter le temps de réponse de 6 219 ms à **8 ms** (accélération x777) et le temps de rendu SSR de la page d'accueil de 12s à **78 ms**.
-- **Invalidation Instantanée Multi-Canaux** : Invalidation réactive du cache catalogue lors des ajouts, modifications, suppressions, duplications et imports batch de produits marchands (`boutiques-produits.js`).
-- **Déverrouillage Bot Blocker & SSR Dev** : Adaptation de `botBlockerMiddleware` (`backend/app.js`) pour autoriser les environnements hors-production, les requêtes authentifiées et les jetons SSR internes sans blocage 403.
-- **Enrichissement Schema.org JSON-LD Home** : Injection des schémas structurés Schema.org `Organization` et `WebSite` avec SearchAction sur la page d'accueil (`frontend-next/src/app/page.tsx`).
-- **Validation E2E 100% Réelle sur les 5 Parcours Utilisateur** : Exécution et validation sans faille des 5 personas (Visiteur, Acheteur avec commande et décrémentation atomique de stock, Commerçant avec création boutique/produit/POS, Professionnel Immobilier avec agence/bien/lead, Utilisateur d'annonce avec publication et boost).
+### 📌 Dernière Version Déployée (27 septembre 2026 - Soir - Audit & Conversion) :
+- **Décompte Intégral du Catalogue (10 570 produits réels)** : Restructuration de la requête mixte par défaut (`backend/routes/produits.js`) en 3 paliers sans élision (`sort_group 1` = top smartphones/électro + boutiques locales, `sort_group 2` = catalogue général ≥ 20k, `sort_group 3` = accessoires < 20k). Les 3 370 produits accessoires sont désormais pleinement comptabilisés dans le catalogue disponible (10 570 articles) sans polluer la vitrine d'accueil.
+- **Badge Dynamique Page d'Accueil** : Remplacement du badge statique 6800+ par le décompte exact en temps réel (`{total}+ produits · mis à jour en temps réel`) dans `frontend-next/src/app/page.tsx`.
+- **Fermeture de la Fuite de Paywall (Plafond Gratuit Strict)** : Correction de `GET /api/boutiques/mine` et `GET /api/boutiques/:id` (`boutiques-crud.js`) qui retournaient `'pro'` par défaut même pour les essais expirés. Retourne désormais `'gratuit'`, `abo_expire: true` et `jours_restants_essai: 0`, déclenchant les barrières de paiement et incitations à l'abonnement.
+- **Réparation du Tunnel Tarifs → Inscription** : Prise en charge des paramètres `plan` et `duree` dans le Server Action `signup` (`auth.ts`) et dans l'inscription WhatsApp OTP (`InscriptionForm.tsx`). Tout visiteur choisissant un plan payant sur `/tarifs-boutique` est désormais redirigé directement vers le paiement d'abonnement au lieu d'être relégué sur un compte gratuit mort.
+- **Éradication du Syndrome de la Boutique Fantôme** : Auto-génération de 2 articles de démonstration personnalisables lors de la création d'une boutique (`/taf-taf` et `POST /api/boutiques`) pour que la caisse POS et la vitrine soient opérationnelles immédiatement.
+- **Mode POS Express (Vente Libre)** : Création du composant modulaire `PosVenteLibreWidget.tsx` intégré dans `PosCatalogueSection.tsx`, permettant l'encaissement d'un montant direct (avec paliers rapides 1k, 2k, 5k, 10k FCFA) sans aucun produit pré-enregistré.
+- **Alerte Immédiate Paiement Manuel & Boucle WhatsApp** : Envoi d'alertes instantanées aux administrateurs lors d'une déclaration de paiement (`backend/routes/paiement.js`) et bouton 1-clic de confirmation WhatsApp pré-rempli dans `ModalPaiementManuel.tsx`.
 
 

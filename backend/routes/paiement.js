@@ -1015,6 +1015,20 @@ router.post('/manuel/declarer', verifierToken, limiterEcriture, upload.single('p
       [userId, reference, montant, methode, telephone_expediteur, transaction_id_client || null, preuveUrl]
     );
 
+    // Alerte immédiate Admin pour validation ultra-rapide
+    alerterAdmin(
+      `💰 Nouveau Paiement Manuel Déclaré (${methode.toUpperCase()}) : ${Number(montant).toLocaleString('fr-FR')} FCFA par le tél. ${telephone_expediteur} (Réf: ${reference}). Validation requise dans le panel admin.`
+    ).catch(e => console.warn('[ALERTE ADMIN PAIEMENT MANUEL]:', e.message));
+
+    await enregistrerAdminLog({
+      action: 'paiement_manuel_declare',
+      cibleType: 'paiement_manuel',
+      cibleId: rows[0].id,
+      description: `Déclaration de paiement manuel ${methode.toUpperCase()} : ${montant} FCFA (Réf: ${reference})`,
+      nouvelleValeur: { reference, montant, methode, telephone_expediteur },
+      req,
+    }).catch(e => console.warn('[ADMIN LOG ERR]:', e.message));
+
     res.json({ ok: true, id: rows[0].id });
   } catch (err) {
     console.error('[PAIEMENT MANUEL DECLARER]', err.message);

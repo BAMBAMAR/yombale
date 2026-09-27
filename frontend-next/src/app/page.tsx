@@ -480,7 +480,7 @@ export default async function HomePage({
               {/* En-tête de section épuré */}
               <div style={{ textAlign: 'center', marginBottom: 28 }}>
                 <span style={{ display: 'inline-block', background: '#fff7ed', color: '#9a3412', padding: '6px 16px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 12, border: '1px solid #fed7aa' }}>
-                  6800+ produits · mis à jour toutes les 6h
+                  {total > 0 ? `${total.toLocaleString('fr-FR')}+` : '10 500+'} produits · mis à jour en temps réel
                 </span>
                 <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: 0, lineHeight: 1.2 }}>
                   L&apos;écosystème de commerce digital N°1 au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>

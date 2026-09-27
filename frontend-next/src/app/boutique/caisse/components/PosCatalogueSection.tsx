@@ -6,6 +6,7 @@ import { CATEGORIES } from '@/lib/categories'
 import { fcfa } from '@/lib/format'
 import PosVoiceInput from './PosVoiceInput'
 import PosProductCard from './PosProductCard'
+import PosVenteLibreWidget from './PosVenteLibreWidget'
 
 export interface ProduitCaisse {
   id: string
@@ -308,26 +309,30 @@ export default function PosCatalogueSection({
             background: 'var(--pos-surface)',
             border: '1px dashed var(--pos-border)',
             borderRadius: 16,
-            padding: 40,
+            padding: '24px 20px',
             textAlign: 'center',
           }}
         >
-          <Store size={44} style={{ color: 'var(--pos-primary)', margin: '0 auto 8px' }} />
+          <Store size={36} style={{ color: 'var(--pos-primary)', margin: '0 auto 8px' }} />
           <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: 'var(--pos-text)' }}>
-            Aucun produit dans le catalogue de cette boutique
+            Catalogue vide ou aucun résultat
           </h3>
           <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--pos-text2)' }}>
-            Importez des articles modèles ou créez vos produits dans votre catalogue.
+            Encaissez immédiatement un montant libre ou importez vos articles modèles.
           </p>
+
+          {/* Vente Libre Express */}
+          <PosVenteLibreWidget onAjouter={ajouterAuPanier} />
+
           {roleActif === 'superviseur' && (
             <button
               onClick={() => setModalImportBatch(true)}
               style={{
-                background: 'var(--pos-primary)',
-                color: '#fff',
-                border: 'none',
+                background: 'transparent',
+                color: 'var(--pos-primary)',
+                border: '1px solid var(--pos-primary)',
                 borderRadius: 8,
-                padding: '10px 20px',
+                padding: '9px 18px',
                 fontWeight: 800,
                 fontSize: 13,
                 cursor: 'pointer',

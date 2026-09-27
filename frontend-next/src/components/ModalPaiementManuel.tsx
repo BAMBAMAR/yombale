@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { CheckCircle2, MessageCircle } from 'lucide-react'
 import { declarerPaiementManuel } from '@/app/actions/paiement'
 
 interface Props {
@@ -39,16 +40,60 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
     else setErreur(res.error ?? 'Erreur lors de l\'envoi')
   }
 
+  const waMsg = encodeURIComponent(
+    `Bonjour Nopalou, je viens d'effectuer un dépôt de ${montant.toLocaleString('fr-FR')} FCFA par ${methode.toUpperCase()} pour mon compte (Réf: ${reference}, Mon numéro: ${telephone}${transactionId ? `, TxID: ${transactionId}` : ''}). Merci d'activer mon abonnement.`
+  )
+  const waUrl = `https://wa.me/221777202086?text=${waMsg}`
+
   if (envoye) {
     return (
       <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420, padding: 24, textAlign: 'center' }}>
-          <p style={{ fontSize: 32 }}></p>
-          <p style={{ fontWeight: 600 }}>Déclaration reçue</p>
-          <p style={{ color: '#6b7280', fontSize: 14 }}>
-            Votre paiement sera vérifié et activé sous peu. Vous serez contacté si besoin.
+        <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 440, padding: '32px 24px', textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: '50%', background: '#F0FDF4', color: '#16A34A', marginBottom: 16 }}>
+            <CheckCircle2 size={36} />
+          </div>
+          <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--navy)' }}>Déclaration enregistrée !</h3>
+          <p style={{ color: 'var(--text-subtle, #5A4E42)', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>
+            Pour une activation accélérée sous 10 minutes, vous pouvez envoyer votre confirmation directement sur le WhatsApp officiel.
           </p>
-          <button onClick={onSuccess} style={{ marginTop: 16, padding: '10px 24px', borderRadius: 8, border: 'none', background: 'var(--navy)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              width: '100%',
+              padding: '12px 16px',
+              borderRadius: 10,
+              background: '#25D366',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: 14,
+              textDecoration: 'none',
+              marginBottom: 10,
+              boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)',
+            }}
+          >
+            <MessageCircle size={18} />
+            <span>Confirmer sur WhatsApp (Activation rapide)</span>
+          </a>
+          <button
+            onClick={onSuccess}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              borderRadius: 10,
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--text-subtle, #5A4E42)',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
             Fermer
           </button>
         </div>
@@ -75,7 +120,7 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
             onClick={() => setMethode('orange')}
             style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: methode === 'orange' ? '2px solid #ff6600' : '1px solid #d1d5db', background: methode === 'orange' ? '#fff2e6' : '#fff', fontWeight: 600, cursor: 'pointer' }}
           >
-            🟠 Orange Money
+            Orange Money
           </button>
         </div>
 

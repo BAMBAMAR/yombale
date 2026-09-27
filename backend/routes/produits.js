@@ -266,9 +266,10 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       return `($1::text IS NULL OR (${clauses.join(' ' + operator + ' ')}))`;
     }
 
-    // Prix plancher par défaut (hors accessoires) — seulement quand l'utilisateur n'a
-    // fourni ni tri ni catégorie ni prixMin/prixMax ni q ni etat explicite.
-    const prixMinDefautMixe = defautMixe && !prixMin && !prixMax && !q && !etat ? 20000 : null;
+    // Organisation par paliers par défaut :
+    // Top produits (smartphones/électro 50k-150k) et boutiques locales en tête (sort_group 1),
+    // catalogue général ≥ 20 000 FCFA (sort_group 2), accessoires < 20 000 FCFA (sort_group 3).
+    // Tous les produits sont ainsi comptabilisés dans le total général.
 
     function buildSQL(qCondScraped, qCondBoutique) {
       const baseScraped = `
@@ -293,8 +294,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
               ))
           ${sousTypeCondition}
         GROUP BY p.id, c.nom, p.created_at, p.sponsorise, p.sponsor_jusqu_au
-        HAVING (COUNT(o.id) = 0 OR MIN(o.prix) >= 500)
-          ${prixMinDefautMixe ? `AND MIN(o.prix) >= ${prixMinDefautMixe}` : ''}`;
+        HAVING (COUNT(o.id) = 0 OR MIN(o.prix) >= 500)`;
 
       const baseBoutique = `
         SELECT p.id, p.nom::text, p.description, p.images[1] AS image_url,
@@ -340,7 +340,10 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
                SELECT t.*, 1 AS source_type FROM scraped t WHERE t.agg_nb_offres >= 2 AND t.agg_prix_min BETWEEN 50000 AND 150000
              ),
              scraped_others AS (
-               SELECT t.*, 1 AS source_type FROM scraped t WHERE NOT (t.agg_nb_offres >= 2 AND t.agg_prix_min BETWEEN 50000 AND 150000)
+               SELECT t.*, 1 AS source_type FROM scraped t WHERE t.agg_prix_min >= 20000 AND NOT (t.agg_nb_offres >= 2 AND t.agg_prix_min BETWEEN 50000 AND 150000)
+             ),
+             scraped_accessoires AS (
+               SELECT t.*, 1 AS source_type FROM scraped t WHERE t.agg_prix_min < 20000
              ),
              boutiques_all AS (
                SELECT t.*, 2 AS source_type FROM boutiques t
@@ -353,8 +356,12 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
                SELECT *, 2 AS sort_group, ROW_NUMBER() OVER(ORDER BY created_at DESC) as mix_rank 
                FROM scraped_others
              ),
+             accessoires AS (
+               SELECT *, 3 AS sort_group, ROW_NUMBER() OVER(ORDER BY agg_prix_min DESC) as mix_rank 
+               FROM scraped_accessoires
+             ),
              combined AS (
-               SELECT * FROM mixed_top UNION ALL SELECT * FROM others
+               SELECT * FROM mixed_top UNION ALL SELECT * FROM others UNION ALL SELECT * FROM accessoires
              )
         SELECT ${colonnesFinales}, COUNT(*) OVER() AS total_count
         FROM combined t

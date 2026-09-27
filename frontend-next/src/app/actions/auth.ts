@@ -67,7 +67,14 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
     return { error: 'Erreur de connexion au serveur' }
   }
 
+  const plan = formData.get('plan')?.toString().trim()
+  const duree = formData.get('duree')?.toString().trim() || '1'
   const redirectTargetSignup = formData.get('redirect')?.toString().trim()
+
+  if (plan && ['pro', 'business', 'decouverte', 'immo_pro', 'immo_multi_agence'].includes(plan)) {
+    redirect(`/boutique/abonnement?plan=${encodeURIComponent(plan)}&duree=${encodeURIComponent(duree)}${redirectTargetSignup ? `&redirect=${encodeURIComponent(redirectTargetSignup)}` : ''}`)
+  }
+
   redirect(redirectTargetSignup && redirectTargetSignup.startsWith('/') ? redirectTargetSignup : '/compte')
 }
 

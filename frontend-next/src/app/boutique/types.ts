@@ -43,11 +43,11 @@ export interface Boutique {
   message_accueil?: string | null
   disposition_catalogue?: string | null
   horaires?: Record<string, string> | null
-  created_at: string
-  plan_actif?: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
+  plan_actif?: 'pro' | 'business' | 'decouverte' | 'taf_taf' | 'gratuit' | null
   plan_souscrit?: string | null
   is_trial?: boolean
   jours_restants_essai?: number
+  abo_expire?: boolean
 }
 
 export interface Variante {
