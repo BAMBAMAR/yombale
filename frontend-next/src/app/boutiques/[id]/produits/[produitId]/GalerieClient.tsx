@@ -68,7 +68,7 @@ export default function GalerieClient({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0, width: '100%' }}>
       {/* Image principale */}
       <div
         tabIndex={0}
@@ -79,6 +79,7 @@ export default function GalerieClient({
         onTouchEnd={onTouchEnd}
         style={{
           width: '100%',
+          maxWidth: '100%',
           aspectRatio: '1 / 1',
           position: 'relative',
           background: '#f8fafc',
@@ -216,7 +217,7 @@ export default function GalerieClient({
 
       {/* Miniatures */}
       {imgs.length > 1 && (
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, maxWidth: '100%', minWidth: 0, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}>
           {imgs.map((src, i) => (
             <button
               type="button"

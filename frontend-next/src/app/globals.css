@@ -3571,3 +3571,26 @@ button:focus-visible,
   outline-offset: 2px;
 }
 
+/* ── Fiche Produit Boutique Responsiveness & Anti-Overflow ── */
+.boutique-produit-page {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.boutique-produit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+  width: 100%;
+}
+.boutique-produit-layout > * {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 860px) {
+  .boutique-produit-page { padding: 16px 14px 32px; }
+  .boutique-produit-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+}

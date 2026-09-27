@@ -220,7 +220,7 @@ export default async function FicheProduitPage(
         <GalerieClient images={p.images} nom={p.nom} enStock={isEnStock} />
 
         {/* ── Infos produit ──────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, width: '100%' }}>
 
           {/* En-tête */}
           <div>
@@ -267,9 +267,44 @@ export default async function FicheProduitPage(
             )}
           </div>
 
+          {/* CTA Prioritaire au-dessus du pli (Commander / Ajouter au panier / Options) */}
+          <ProduitCTA
+            boutiqueId={id}
+            boutiqueNom={p.boutique_nom}
+            produit={{ id: p.id, nom: p.nom, prix: p.prix, images: p.images, prix_barre: p.prix_barre }}
+            enStock={isEnStock}
+            waUrl={waUrl}
+            telUrl={telUrl}
+            variantes={p.variantes ?? []}
+            variantesSkus={p.variantes_skus ?? []}
+            uniteVente={p.unite_vente}
+          />
+
+          {/* Sceau de confiance Nopalou Pay Safe & Partage */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+            <BadgePaySafe type="produit" />
+            <BoutonPartager
+              lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}
+              message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}
+              lienVisuel={`/assets/produit-boutique/${produitId}/story?boutiqueId=${id}`}
+            />
+          </div>
+
+          {/* Description */}
+          {p.description && (
+            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                Description
+              </p>
+              <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.8, margin: 0, whiteSpace: 'pre-line' }}>
+                {p.description}
+              </p>
+            </div>
+          )}
+
           {/* Caractéristiques */}
           {caracEntries.length > 0 && (
-            <div style={{ background: '#f8fafc', borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ background: '#f8fafc', borderRadius: 12, padding: '16px 18px', border: '1px solid #e2e8f0' }}>
               <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
                 Caractéristiques
               </p>
@@ -290,18 +325,6 @@ export default async function FicheProduitPage(
             </div>
           )}
 
-          {/* Description */}
-          {p.description && (
-            <div>
-              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                Description
-              </p>
-              <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.8, margin: 0, whiteSpace: 'pre-line' }}>
-                {p.description}
-              </p>
-            </div>
-          )}
-
           {/* Boutique vendeur */}
           <Link
             href={`/boutiques/${id}`}
@@ -309,6 +332,7 @@ export default async function FicheProduitPage(
               display: 'flex', alignItems: 'center', gap: 12,
               background: '#f8fafc', border: '1px solid #e2e8f0',
               borderRadius: 12, padding: '12px 16px', textDecoration: 'none',
+              marginTop: 4,
             }}
           >
             <div style={{ width: 40, height: 40, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -323,30 +347,6 @@ export default async function FicheProduitPage(
               <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>{p.boutique_ville} · Voir la boutique →</p>
             </div>
           </Link>
-
-          {/* CTA */}
-          <ProduitCTA
-            boutiqueId={id}
-            boutiqueNom={p.boutique_nom}
-            produit={{ id: p.id, nom: p.nom, prix: p.prix, images: p.images, prix_barre: p.prix_barre }}
-            enStock={isEnStock}
-            waUrl={waUrl}
-            telUrl={telUrl}
-            variantes={p.variantes ?? []}
-            variantesSkus={p.variantes_skus ?? []}
-            uniteVente={p.unite_vente}
-          />
-
-          {/* Sceau de confiance Nopalou Pay Safe */}
-          <div style={{ marginTop: 12 }}>
-            <BadgePaySafe type="produit" />
-          </div>
-
-          <BoutonPartager
-            lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}
-            message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}
-            lienVisuel={`/assets/produit-boutique/${produitId}/story?boutiqueId=${id}`}
-          />
 
         </div>
       </div>
