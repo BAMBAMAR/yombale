@@ -2289,7 +2289,7 @@ async function handleIncomingInternal(msg) {
   // Read receipt + indicateur de frappe pendant le traitement
   await sendReadReceipt(msg.id, true).catch(() => {});
 
-  const { state, context } = await getSession(phone);
+  let { state, context } = await getSession(phone);
   const text = (msg.text?.body || msg.image?.caption || '').trim();
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
   const mediaId = msg.type === 'image' ? msg.image?.id : null;
@@ -3316,12 +3316,15 @@ async function handleIncomingInternal(msg) {
   const estIdInterne = /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom|ajout_prod|ajouter_produit|creer_boutique|partager)/.test(text) ||
     /^boutique_(recherche|categorie|contact|quitter|choisie_|produits_tous|next|secteur_liste|recherche_nom|ajout_prod|ajouter_produit|creer_boutique|partager)/.test(interactiveId);
   const matchBoutique = !estIdInterne &&
-    (text.match(/^boutique_(.+)$/i) || interactiveId.match(/^boutique_(.+)$/i));
+    (text.match(/^boutique[_\s:]+(.+)$/i) || interactiveId.match(/^boutique_(.+)$/i));
   if (matchBoutique) {
-    const slug = matchBoutique[1].trim();
+    const slugOuNom = matchBoutique[1].trim();
     const r = await pool.query(
-      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE slug=$1 AND actif=true',
-      [slug]
+      `SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp 
+       FROM boutiques 
+       WHERE (slug = $1 OR slug ILIKE $1 OR nom ILIKE $1) AND actif=true
+       LIMIT 1`,
+      [slugOuNom]
     );
     if (!r.rows[0]) {
       await sendWhatsAppText(phone, '😕 Cette boutique est introuvable ou n\'est plus active.');
@@ -3418,15 +3421,29 @@ async function handleIncomingInternal(msg) {
     }
   }
 
-  // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
+  // ── IDLE → présentation puis menu ou recherche directe ───────────────────────
   if (state === 'IDLE') {
+    const SALUTATIONS_IDLE = [
+      'bonjour', 'bonsoir', 'salut', 'salam', 'salamalekum', 'salam alaykoum',
+      'hello', 'hi', 'coucou', 'start', 'menu', 'aide', 'yo', 'rebonjour', 'wesh', 'nopalou', 'info'
+    ];
+    const isPureGreeting = !text || SALUTATIONS_IDLE.includes(normTxtLower) || normTxtLower.length < 3;
+    if (isPureGreeting) {
+      await sendWhatsAppText(
+        phone,
+        '👋 Bienvenue sur *Nopalou* !\n\nJe suis votre assistant shopping & commerce. Je vous aide à dénicher les meilleurs prix, commander auprès de nos boutiques partenaires, suivre vos colis, ou gérer et développer votre activité marchande. 100% gratuit, disponible 24h/24.'
+      );
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+    // Si l'utilisateur envoie directement un nom de produit ou une requête en IDLE
     await sendWhatsAppText(
       phone,
-      '👋 Bienvenue sur *Nopalou* !\n\nJe suis votre assistant shopping & commerce. Je vous aide à dénicher les meilleurs prix, commander auprès de nos boutiques partenaires, suivre vos colis, ou gérer et développer votre activité marchande. 100% gratuit, disponible 24h/24.'
-    );
+      `👋 Bienvenue sur *Nopalou* !\nRecherche en direct pour : *${text.trim()}*...`
+    ).catch(() => {});
     await setSession(phone, 'MENU', {});
-    await sendMenu(phone);
-    return;
+    state = 'MENU';
   }
 
   // ── Actions directes Agent Immobilier Pro (visites, prospects, loyers, biens) ──
@@ -3455,49 +3472,80 @@ async function handleIncomingInternal(msg) {
     'tableau de bord', 'dashboard', 'mon commerce'
   ];
   if (interactiveId === 'menu_marchand' || DECLENCHEURS_MENU_MARCHAND.includes(normTxtLower)) {
-    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    const bq = await trouverBoutiqueMarchand(phone);
     if (bq) {
       await envoyerMenuMarchand(phone, bq);
+      return;
+    } else {
+      const buttons = [
+        { id: 'creer_boutique', title: '🚀 Créer ma boutique' },
+        { id: 'menu_general', title: '🌐 Menu Principal' },
+      ];
+      await sendWhatsAppButtons3(
+        phone,
+        `🏪 *Espace Marchand Nopalou*\n\nAucune boutique n'est associée à ce numéro WhatsApp (+${phone}).\n\nSouhaitez-vous créer votre boutique en ligne gratuitement en 2 minutes ?`,
+        buttons
+      ).catch(async () => {
+        await sendWhatsAppText(
+          phone,
+          `🏪 *Espace Marchand Nopalou*\n\nAucune boutique n'est associée à ce numéro WhatsApp (+${phone}).\nTapez *creer* pour ouvrir votre boutique en ligne gratuitement, ou *menu* pour revenir au menu principal.`
+        );
+      });
       return;
     }
   }
 
   if (interactiveId === 'marchand_commandes' || normTxtLower === 'mes commandes' || normTxtLower === 'commandes') {
-    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    const bq = await trouverBoutiqueMarchand(phone);
     if (bq) {
       await envoyerCommandesMarchand(phone, bq);
+      return;
+    } else {
+      await sendWhatsAppText(phone, `⚠️ Aucune boutique marchande n'est associée à ce numéro (+${phone}). Tapez *menu* pour le menu principal.`);
       return;
     }
   }
 
   if (interactiveId === 'marchand_stock' || normTxtLower === 'mes produits' || normTxtLower === 'mon stock') {
-    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    const bq = await trouverBoutiqueMarchand(phone);
     if (bq) {
       await envoyerStockMarchand(phone, bq);
+      return;
+    } else {
+      await sendWhatsAppText(phone, `⚠️ Aucune boutique marchande n'est associée à ce numéro (+${phone}). Tapez *menu* pour le menu principal.`);
       return;
     }
   }
 
   if (interactiveId === 'marchand_caisse' || normTxtLower === 'bilan caisse' || normTxtLower === 'caisse') {
-    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    const bq = await trouverBoutiqueMarchand(phone);
     if (bq) {
       await envoyerBilanCaisseMarchand(phone, bq);
+      return;
+    } else {
+      await sendWhatsAppText(phone, `⚠️ Aucune boutique marchande n'est associée à ce numéro (+${phone}). Tapez *menu* pour le menu principal.`);
       return;
     }
   }
 
   if (interactiveId === 'marchand_dettes' || normTxtLower === 'carnet dettes' || normTxtLower === 'bor') {
-    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    const bq = await trouverBoutiqueMarchand(phone);
     if (bq) {
       await envoyerCarnetDettesMarchand(phone, bq);
+      return;
+    } else {
+      await sendWhatsAppText(phone, `⚠️ Aucune boutique marchande n'est associée à ce numéro (+${phone}). Tapez *menu* pour le menu principal.`);
       return;
     }
   }
 
   if (interactiveId === 'marchand_vitrine' || normTxtLower === 'statut whatsapp') {
-    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    const bq = await trouverBoutiqueMarchand(phone);
     if (bq) {
       await envoyerVitrineStatutMarchand(phone, bq);
+      return;
+    } else {
+      await sendWhatsAppText(phone, `⚠️ Aucune boutique marchande n'est associée à ce numéro (+${phone}). Tapez *menu* pour le menu principal.`);
       return;
     }
   }
@@ -6513,5 +6561,7 @@ module.exports = {
   distanceLevenshtein,
   corrigerRequeteFuzzy,
   searchContentIlike,
+  setSession,
+  getSession,
 };
 

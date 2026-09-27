@@ -41,13 +41,29 @@ async function searchImmoIlike(rawText) {
   const QUARTIERS = [
     'almadies', 'ngor', 'ouakam', 'mermoz', 'fann', 'plateau', 'point e',
     'yoff', 'nord foire', 'sud foire', 'sacre coeur', 'maristes', 'liberte',
-    'vdn', 'saly', 'somone', 'ngaparou', 'thies', 'dakar', 'guediawaye', 'pikine', 'rufisque'
+    'vdn', 'saly', 'somone', 'ngaparou', 'thies', 'dakar', 'guediawaye', 'pikine', 'rufisque',
+    'mamelles', 'virage', 'hann', 'keur massar', 'medina', 'grand yoff', 'scat urbam', 'sicap',
+    'parcelles assainies', 'fann hock', 'cite damel', 'cite biagui', 'cite mixta', 'diamniadio',
+    'sebikotane', 'bargny', 'touba', 'saint-louis', 'mbour'
   ];
   let quartier = null;
   for (const q of QUARTIERS) {
     if (t.includes(q)) {
       quartier = q;
       break;
+    }
+  }
+
+  // Si aucun quartier dans la liste prédéfinie, extraire les mots significatifs résiduels
+  if (!quartier) {
+    const motsResiduels = t
+      .replace(/\b(location|louer|bail|loyer|vente|vendre|achat|acheter|appartement|appartements|appart|apparts|villa|villas|studio|studios|terrain|terrains|parcelle|parcelles|bureau|bureaux|chambre|chambres|immeuble|immeubles|a|de|du|des|pour|dans|un|une|le|la|les|cherche|recherche|offres?|immobilier|immobiliere|biens?)\b/gi, ' ')
+      .replace(/[^a-z0-9\s-]/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(w => w.length >= 3);
+    if (motsResiduels.length > 0) {
+      quartier = motsResiduels[0];
     }
   }
 
