@@ -90,7 +90,7 @@ export default function ProduitOffresList({
                     </div>
                   )}
                 {tempsRelatif(o.scraped_at) && (
-                  <p className="offre-fraicheur">Mis à jour {tempsRelatif(o.scraped_at)}</p>
+                  <p className="offre-fraicheur" suppressHydrationWarning>Mis à jour {tempsRelatif(o.scraped_at)}</p>
                 )}
                 {ecart > 0 && <p className="offre-ecart">+{fcfa(ecart)} de plus que le moins cher</p>}
               </div>

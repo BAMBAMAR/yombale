@@ -1,5 +1,27 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Erreurs RSC, Hydratation & Balises Imbriquées : Résolution de l'Erreur de Sérialisation `onClick` et de la Ligne Cliquable (`ProduitSimilairesTable.tsx`, `SimilRow.tsx`, `ProduitOffresList.tsx`) (27 septembre 2026)** 🛡️⚡🔍✅ :
+  * **🎯 Contexte & Anomalie Utilisateur** :
+    - Sur les fiches produits (`/produit/[id]`), une erreur critique se déclenchait au runtime SSR dans les logs serveur Next.js :
+      `Error: Event handlers cannot be passed to Client Component props. {href: ..., onClick: function onClick, title: ..., style: ..., children: ...}`
+    - Cette défaillance entraînait en cascade des erreurs d'hydratation côté client dans la console du navigateur (`Minified React error #425, #418, #423`, `An error occurred in the Server Components render` et `Cannot read properties of null (reading 'parentNode')`).
+  * **🔍 Cause Racine Identifiée** :
+    1. **Frontière RSC non respectée** : Le composant `ProduitSimilairesTable.tsx` était un Server Component (absence de la directive `'use client'`), mais il transmettait un élément `<Link onClick={(e) => e.stopPropagation()} ...>vs ce modèle</Link>` en tant que prop `children` vers le Client Component `<SimilRow>`. Le sérialiseur RSC de Next.js lève une exception fatale dès qu'une closure/fonction JS (`onClick`) est transmise à travers la frontière serveur → client.
+    2. **HTML5 invalide par imbrication de liens `<a>`** : L'implémentation de `SimilRow.tsx` utilisait `React.Children.map` pour envelopper le contenu de chaque `<td>` dans une balise `<Link className="simil-td-link">`. Comme la dernière cellule contenait déjà un `<Link>` (« vs ce modèle »), le DOM générait un `<a>` imbriqué dans un `<a>`. Le parser HTML du navigateur casse cette hiérarchie invalide, provoquant un désalignement DOM / Virtual DOM et le crash de l'hydratation React.
+    3. **Risque de dérive d'horodatage relatif** : L'affichage dynamique `tempsRelatif(o.scraped_at)` dans `ProduitOffresList.tsx` pouvait créer de légers écarts entre le rendu initial serveur et l'hydratation client.
+  * **🛠️ Solutions Techniques & Corrections Réalisées** :
+    1. **Directive `'use client'` sur `ProduitSimilairesTable.tsx`** : Le composant opère désormais en Client Component complet ; ses props reçues du serveur (`produit`, `prixMin`, `valides`, `proches`) sont des objets JSON sérialisables, et les gestionnaires d'événements `onClick` s'exécutent côté client sans restriction de sérialisation RSC.
+    2. **Refonte Moderne et Accessible de `SimilRow.tsx`** :
+       - Élimination intégrale du wrapping `<Link>` cellule par cellule (zéro balise `<a>` imbriquée).
+       - Navigation de ligne propre via `useRouter().push(href)` sur la balise `<tr className="simil-row simil-row--cliquable">`.
+       - Respect des interactions internes : le clic de ligne est ignoré (`target.closest('a, button...')`) si l'utilisateur clique sur le lien interne « vs ce modèle ».
+       - Accessibilité clavier complète : `tabIndex={0}`, `role="link"` et navigation via `Enter` / `Espace`.
+    3. **Sécurisation Hydratation `ProduitOffresList.tsx`** : Ajout de `suppressHydrationWarning` sur le paragraphe de fraîcheur d'offre pour prévenir toute divergence temporelle.
+  * **🧪 Validation & Qualité** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm test` : 69/69 tests unitaires validés avec succès.
+    - `npm run build` : Compilation Next.js SSR + Client (route `/produit/[id]` et 80+ routes) validée sans aucune erreur.
+
 - **Correction Navigation Espace Agence : Résolution de l'Indicateur Actif « Loyers & Quittances » au lieu de « Contrats de Bail » et Sécurisation SSR/Hydration (`AgenceSidebarNav.tsx`, `layout.tsx`, `AgenceMobileDrawer.tsx`, `locatif/page.tsx`) (27 septembre 2026)** 🏠📑⚡✅ :
   * **🎯 Contexte & Anomalie Utilisateur** :
     - Dans l'espace Agence immobilière, lors de la consultation des contrats de bail (`/agence/[slug]/locatif?tab=baux` ou bascule sur l'onglet « Baux Sous Gestion »), le lien « Loyers & Quittances » restait erronément surligné en orange/actif dans la sidebar de gauche, tandis que « Contrats de Bail » restait inactif.
