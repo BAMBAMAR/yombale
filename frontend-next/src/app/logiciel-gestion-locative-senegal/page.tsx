@@ -60,7 +60,7 @@ const IMMO_FAQ = [
   },
   {
     q: "Combien coûte le logiciel de gestion locative Nopalou au Sénégal ?",
-    a: "La formule Starter est 100% offerte jusqu'à 3 baux actifs. Pour les agences et gestionnaires ayant un parc plus important, les formules Pro et Business démarrent dès 9 900 FCFA/mois sans engagement de durée."
+    a: "La formule Agence Essentiel est 100% offerte sans engagement. Pour les cabinets et gestionnaires locatifs gérant les relances automatiques et les encaissements directs Wave/OM, la formule Agence Pro est à 10 000 FCFA/mois avec le premier mois 100% offert."
   }
 ]
 

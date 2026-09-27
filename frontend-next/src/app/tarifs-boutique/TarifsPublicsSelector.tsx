@@ -30,20 +30,6 @@ interface TarifsPublicsSelectorProps {
 
 const FALLBACK_PLANS: DynamicPlan[] = [
   {
-    id: 'gratuit',
-    slug: 'gratuit',
-    label: 'Boutique Gratuite',
-    prix_mensuel: 0,
-    badge: 'Départ',
-    couleur: '#64748b',
-    avantages: ['Page boutique vitrine visible sur Nopalou', 'Coordonnées et contact WhatsApp direct', 'Jusqu\'à 2 annonces classées incluses'],
-    limites: { max_produits: 10, max_caissiers: 1 },
-    ordre: 0,
-    actif: true,
-    description: 'Pour lancer sa visibilité sur internet sans frais.',
-    categorie: 'boutique'
-  },
-  {
     id: 'decouverte',
     slug: 'decouverte',
     label: 'Boutique Taf Taf',

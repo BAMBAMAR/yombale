@@ -40,7 +40,7 @@ const WA_FAQ = [
   },
   {
     q: "Est-ce que je dois ressaisir les informations manuellement ?",
-    a: "Non, tout est automatisé ! Dès que le client vous envoie son message WhatsApp, votre stock Nopalou est mis à jour et vous pouvez générer son reçu ou ticket de caisse en un clic."
+    a: "Non ! Le message WhatsApp que vous recevez contient déjà la référence exacte du panier et les coordonnées du client. Il vous suffit d'un clic pour valider la vente dans votre caisse Nopalou, ce qui décompte immédiatement le stock et génère le reçu numérique."
   },
   {
     q: "Puis-je relancer mes clients qui ont des dettes par WhatsApp ?",

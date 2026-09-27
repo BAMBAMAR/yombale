@@ -10,7 +10,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
   title: 'Logiciel de Caisse Enregistreuse au Sénégal (2026) | Nopalou POS Dakar',
-  description: 'Le logiciel de caisse enregistreuse tactile n°1 au Sénégal pour boutique et magasin. Fonctionne 100% hors-ligne sans Internet, encaisse Wave & OM, dès 2 500 FCFA/mois.',
+  description: 'Le logiciel de caisse enregistreuse tactile n°1 au Sénégal pour boutique et magasin. Fonctionne 100% hors-ligne sans Internet, encaisse Wave & OM, dès 5 000 FCFA/mois (30 jours offerts).',
   keywords: [
     'logiciel de caisse sénégal',
     'caisse enregistreuse dakar',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Logiciel de Caisse Enregistreuse au Sénégal | Nopalou POS',
-    description: 'La solution de caisse enregistreuse tactile pour commerces au Sénégal. Fonctionne hors-ligne dès 2 500 FCFA/mois.',
+    description: 'La solution de caisse enregistreuse tactile pour commerces au Sénégal. Fonctionne hors-ligne dès 5 000 FCFA/mois avec 30 jours offerts.',
     url: `${BASE}/logiciel-caisse-senegal`,
     type: 'website',
   },
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 const POS_FAQ = [
   {
     q: "Quel est le prix d'un logiciel de caisse enregistreuse au Sénégal ?",
-    a: "Alors qu'un équipement de caisse tactile traditionnel coûte entre 350 000 et 900 000 FCFA à Dakar, Nopalou POS ne requiert aucun matériel propriétaire coûteux. L'abonnement débute à seulement 2 500 FCFA/mois (avec 30 jours 100% offerts) et fonctionne directement sur votre smartphone, tablette ou ordinateur."
+    a: "Alors qu'un équipement de caisse tactile traditionnel coûte entre 350 000 et 900 000 FCFA à Dakar, Nopalou POS ne requiert aucun matériel propriétaire coûteux. La formule Boutique Pro avec caisse tactile POS, tickets et scanner débute à 5 000 FCFA/mois (avec 30 jours 100% offerts) et fonctionne directement sur votre smartphone, tablette ou ordinateur."
   },
   {
     q: "La caisse fonctionne-t-elle si la connexion Internet coupe à Dakar ?",

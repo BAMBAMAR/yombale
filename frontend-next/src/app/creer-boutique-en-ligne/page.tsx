@@ -70,11 +70,6 @@ const JSON_LD_SOFTWARE = {
     priceValidUntil: '2027-12-31',
     description: 'Abonnement mensuel commerçant au Sénégal avec 30 jours offerts et 0% de commission.',
   },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    reviewCount: '340',
-  },
 }
 
 const JSON_LD_FAQ = {

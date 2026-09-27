@@ -146,7 +146,7 @@ export default function SamaXaalisLandingPage() {
 
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link
-              href="/compte?tab=kalpe"
+              href="/inscription?role=particulier&redirect=/compte?tab=kalpe"
               style={{
                 background: '#C75B00', color: '#ffffff',
                 padding: '16px 32px', borderRadius: 30, fontSize: 16, fontWeight: 800,
@@ -268,7 +268,7 @@ export default function SamaXaalisLandingPage() {
             Activez votre Kalpé en 30 secondes avec votre numéro de téléphone et profitez de 30 jours complets d&apos;essai gratuit.
           </p>
           <Link
-            href="/compte?tab=kalpe"
+            href="/inscription?role=particulier&redirect=/compte?tab=kalpe"
             style={{
               background: '#C75B00', color: '#ffffff',
               padding: '16px 36px', borderRadius: 30, fontSize: 16, fontWeight: 800,

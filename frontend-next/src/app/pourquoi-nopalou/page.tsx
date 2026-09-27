@@ -70,7 +70,7 @@ const COMPARATIFS = [
     nopalou: [
       "Dès 2 500 FCFA/mois, payable directement par Wave ou Orange Money",
       "0% de commission sur vos ventes",
-      "Commandes WhatsApp et Caisse POS magasin incluses",
+      "Commandes WhatsApp et carnet de dettes inclus (Caisse POS magasin avec formule Pro)",
       "Zéro carte bancaire internationale requise"
     ],
     autre: [
