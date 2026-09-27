@@ -26,7 +26,28 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (27 septembre 2026 - Soir - Correction Affichage Fiche Produit & CTA) :
+### 📌 Dernière Version Locale (27 septembre 2026 - Nuit - Assainissement Réassurance, Vérité des Données & Conformité Légale) :
+- **Éradication de la Fausse Note 5.0/5 sur l'Annuaire des Boutiques** :
+  - **Diagnostic** : Dans `boutiques/page.tsx`, l'évaluation utilisait `{Number(b.note_moyenne || 5.0).toFixed(1)} / 5`. Comme la colonne `note_moyenne` n'existait pas sur la table SQL `boutiques`, 100% des commerces affichaient artificiellement une note dorée de « 5.0 / 5 » sans aucun avis client.
+  - **Correction** : Affichage conditionnel strict. Seules les boutiques ayant un `total_avis > 0` et une note réelle affichent désormais leur note et leurs étoiles. Les autres affichent en toute transparence le badge neutre « Nouveau commerçant ».
+  - **Composant `AvisClients.tsx`** : Suppression du fallback `5.0`. Si `totalAvis === 0`, affiche explicitement « Aucune évaluation pour le moment » au lieu d'afficher 5 étoiles fictives.
+  - **Composant `AvisProduitSection.tsx`** : Remplacement de l'allégation non sourcée « Avis Clients Vérifiés » par « Avis Clients » sans label d'huissier ou de certification fictive.
+- **Purge Base de Données des Avis de Bancs d'Essai Automatisés** :
+  - Suppression de 50 faux avis de test dans la table `boutique_avis` créés lors des tests automatisés (`"Testeur Automatique"` et `"Client Test"` avec commentaires type *"Test banc d’essai automatisé réussi"*). Seuls les avis réels organiques subsistent.
+- **Conformité & Transparence Légale (Mentions Légales & Cookies)** :
+  - **Harmonisation des Contacts** : Résolution de la contradiction entre le standard officiel `+221 70 871 79 42` (Service client & WhatsApp, Lun-Sam 8h-20h) et la ligne administrative `+221 77 720 20 86` (Siège administratif), tous deux clairement explicités dans `/mentions-legales`.
+  - **Identification Précise des Hébergeurs** : Ajout des raisons sociales et sièges complets de Vercel Inc. (Frontend Edge, Covina CA) et Render Services Inc. (Backend API & Base de données, San Francisco CA).
+  - **Mise en Conformité Politique de Confidentialité** : Suppression de la fausse déclaration « Aucun cookie ou tracking tiers n'est utilisé » dans `/confidentialite`. Clarification honnête sur l'utilisation de Google Analytics 4 (`G-3KGE1YBMVJ`) pour la seule mesure d'audience statistique anonymisée, sans revente de données personnelles ni profilage publicitaire.
+- **Assainissement des Promesses Marketing & Fraîcheur des Données** :
+  - **Page d'Accueil (`page.tsx`)** : Remplacement du slogan non prouvé « L'écosystème N°1 au Sénégal » par « L'écosystème de commerce digital & comparateur au Sénégal ».
+  - **Vérité de la Fraîcheur des Prix** : Remplacement du badge rigide et inexact « Prix vérifiés toutes les 6h » par « Prix actualisés régulièrement » dans le footer et « Prix relevés et synchronisés régulièrement auprès des marchands et boutiques du Sénégal » sur la homepage, en parfaite adéquation avec le rythme réel des scrapes marchands.
+  - **Composant `SocialProof.tsx`** : Suppression des chiffres simulés codés en dur (2847 comparaisons, 89 boutiques). Le composant ne s'affiche désormais que si des métriques réelles prouvées lui sont fournies.
+  - **Clarté du Footer & Navigation** :
+    - Distinction nette : renommage du lien footer « Programme Partenaires » en « Programme Apporteurs (20%) » pour éviter la confusion avec les marchands.
+    - Ajout du quartier du siège social réel (« +221 70 871 79 42 • Yoff, Dakar ») dans le bandeau de contact rapide du footer.
+    - Schema.org Navigation : alignement de « Boutiques Partenaires » vers « Boutiques & Marchands ».
+
+### 📌 Version Précédente (27 septembre 2026 - Soir - Correction Affichage Fiche Produit & CTA) :
 - **Résolution Débordement Grille & Image Sur-Zoomée (Fiche Produit Boutique)** :
   - **Diagnostic Technique Précis** : Sur les fiches produits comportant un grand nombre de photos (ex: 14 photos sur *"Foulards Prix"*), le conteneur de miniatures (14 x 72px + gaps = 1112px) forçait une largeur minimale intrinsèque (`min-content`) de 1112px. Comme `.boutique-produit-layout` utilisait `grid-template-columns: 1fr 1fr` avec `min-width: auto` par défaut, la colonne de gauche explosait à 1112px. L'image principale (`aspect-ratio: 1/1`) atteignait donc 1110px x 1110px, donnant l'impression d'un zoom démesuré, expulsant la colonne de droite hors écran et masquant complètement les contrôles de commande.
   - **Correction CSS Grid Robuste** : Utilisation de `grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr)` avec `min-width: 0` et `max-width: 100%` sur les enfants directs dans `produit.css` et `globals.css`.

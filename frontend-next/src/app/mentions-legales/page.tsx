@@ -9,20 +9,25 @@ export default function MentionsLegalesPage() {
   return (
     <div className="legal-page">
       <h1 className="legal-titre">Mentions légales</h1>
-      <p className="legal-update">Dernière mise à jour : Juin 2026</p>
+      <p className="legal-update">Dernière mise à jour : Septembre 2026</p>
 
       <section className="legal-section">
         <h2>Éditeur du site</h2>
         <p>Le site <strong>Nopalou</strong> (nopalou.com), plateforme de commerce digital (comparateur de prix, marketplace de boutiques et solutions de caisse POS opérant au Sénégal), est édité par <strong>SKYROAD SARL</strong>.</p>
         <p>N.I.N.E.A. : 011847714</p>
         <p>Siège social : Cité Khandar Ouest, T Foirelot 10 N°106, Yoff, Dakar, Sénégal</p>
-        <p>Téléphone : <a href="tel:+221777202086">+221 77 720 20 86</a></p>
-        <p>Email : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a></p>
+        <p>Service client &amp; WhatsApp : <a href="tel:+221708717942">+221 70 871 79 42</a> (Lun-Sam 8h-20h)</p>
+        <p>Siège administratif : <a href="tel:+221777202086">+221 77 720 20 86</a></p>
+        <p>Email officiel : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a></p>
       </section>
 
       <section className="legal-section">
         <h2>Hébergement</h2>
-        <p>Le site est hébergé par <strong>Render</strong> (backend) et <strong>Vercel</strong> (frontend).</p>
+        <p>Le site est hébergé par des prestataires d&apos;infrastructure sécurisée :</p>
+        <ul>
+          <li><strong>Frontend &amp; CDN Edge :</strong> Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis.</li>
+          <li><strong>Backend API &amp; Base de données :</strong> Render Services, Inc., 525 Brannan St Suite 300, San Francisco, CA 94107, États-Unis.</li>
+        </ul>
       </section>
 
       <section className="legal-section">

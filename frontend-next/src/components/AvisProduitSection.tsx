@@ -97,10 +97,10 @@ export default function AvisProduitSection({ boutiqueId, produitId }: AvisProdui
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 16, fontWeight: 700, color: '#1C2B4A', margin: 0 }}>
-            Avis Clients Vérifiés
+            Avis Clients
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>
-            {totalAvis > 0 ? `${totalAvis} avis d'acheteurs certifiés` : 'Soyez le premier à donner votre avis !'}
+            {totalAvis > 0 ? `${totalAvis} avis client${totalAvis > 1 ? 's' : ''}` : 'Soyez le premier à donner votre avis !'}
           </p>
         </div>
 

@@ -248,8 +248,8 @@ const SITE_NAV_JSON_LD = {
     {
       '@type': 'SiteNavigationElement',
       position: 7,
-      name: 'Boutiques Partenaires',
-      description: 'Découvrez les boutiques certifiées et vendeurs pro au Sénégal',
+      name: 'Boutiques & Marchands',
+      description: 'Découvrez les boutiques vérifiées et vendeurs pro au Sénégal',
       url: 'https://nopalou.com/boutiques',
     },
   ],
@@ -423,7 +423,7 @@ export default async function RootLayout({
                 <a href="/logiciel-caisse-senegal">Caisse Enregistreuse POS (Offline)</a>
                 <a href="/vendre-sur-whatsapp">Vendre sur WhatsApp</a>
                 <a href="/sama-xaalis">Sama Xaalis (Budget &amp; Dépenses)</a>
-                <a href="/partenaires">Programme Partenaires</a>
+                <a href="/partenaires">Programme Apporteurs (20%)</a>
                 <a href="/migration">Migration Shopify &amp; Excel</a>
                 <a href="/pourquoi-nopalou">Pourquoi Choisir Nopalou ?</a>
                 <a href="/tarifs-boutique">Tarifs Forfaits Vendeurs</a>
@@ -491,7 +491,7 @@ export default async function RootLayout({
                 <span className="footer-support-sep">&bull;</span>
                 <a href="mailto:contact@nopalou.com" style={{ fontWeight: 700 }}>contact@nopalou.com</a>
                 <span className="footer-support-sep">&bull;</span>
-                <span style={{ color: 'rgba(255,255,255,.85)' }}>+221 70 871 79 42 &bull; Dakar</span>
+                <span style={{ color: 'rgba(255,255,255,.85)' }}>+221 70 871 79 42 &bull; Yoff, Dakar</span>
               </div>
             </div>
           </div>
@@ -534,7 +534,7 @@ export default async function RootLayout({
             </div>
             <div className="footer-trust-item">
               <CheckCircle2 size={16} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-              <span>Prix vérifiés <strong>toutes les 6h</strong></span>
+              <span>Prix actualisés <strong>régulièrement</strong></span>
             </div>
             <div className="footer-trust-item">
               <MapPin size={16} style={{ color: 'var(--price, #0A5C36)', flexShrink: 0 }} />

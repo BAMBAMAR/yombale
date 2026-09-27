@@ -481,12 +481,20 @@ export default async function BoutiquesPage({
                       <ExternalImg src={b.logo_url} alt={b.nom} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fffbeb', padding: '3px 9px', borderRadius: 12, border: '1px solid #fef3c7' }}>
-                      <Star size={12} style={{ color: '#d97706', fill: '#d97706' }} />
-                      <span style={{ fontSize: 11, fontWeight: 800, color: '#92400e' }}>
-                        {Number(b.note_moyenne || 5.0).toFixed(1)} / 5 {b.total_avis && b.total_avis > 0 ? `(${b.total_avis})` : ''}
-                      </span>
-                    </div>
+                    {b.total_avis && b.total_avis > 0 && b.note_moyenne ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fffbeb', padding: '3px 9px', borderRadius: 12, border: '1px solid #fef3c7' }}>
+                        <Star size={12} style={{ color: '#d97706', fill: '#d97706' }} />
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#92400e' }}>
+                          {Number(b.note_moyenne).toFixed(1)} / 5 ({b.total_avis})
+                        </span>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#f8fafc', padding: '3px 9px', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b' }}>
+                          Nouveau commerçant
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: '#111827', lineHeight: 1.3 }}>

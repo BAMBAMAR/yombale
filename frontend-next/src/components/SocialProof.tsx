@@ -10,43 +10,51 @@ export interface SocialProofProps {
 }
 
 export default function SocialProof({
-  comparaisonsAujourdhui = 2847,
-  personnesFollowent = 1543,
-  boutiquesPartenaires = 89,
+  comparaisonsAujourdhui,
+  personnesFollowent,
+  boutiquesPartenaires,
 }: SocialProofProps) {
   const { t, locale } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Optionnel : rafraîchir les compteurs toutes les 5 min
-    const interval = setInterval(() => {
-      // TODO: fetch /api/stats/public pour les vrais chiffres
-      setMounted(true);
-    }, 5 * 60 * 1000);
-    return () => clearInterval(interval);
   }, []);
 
   if (!mounted) return null; // Évite hydration mismatch
+  // Interdiction de fabriquer des preuves sociales : ne rien afficher sans données réelles transmises
+  if (!comparaisonsAujourdhui && !boutiquesPartenaires && !personnesFollowent) {
+    return null;
+  }
 
   const numberLocale = locale === 'ar' ? 'ar-EG-u-nu-arab' : locale === 'en' ? 'en-US' : 'fr-SN';
 
   return (
     <div className="social-proof-strip">
-      <div className="social-proof-item">
-        <span className="social-proof-number">{comparaisonsAujourdhui.toLocaleString(numberLocale)}</span>
-        <span className="social-proof-label">{t('common.todayComparisons')}</span>
-      </div>
-      <div className="social-proof-separator">·</div>
-      <div className="social-proof-item">
-        <span className="social-proof-number">{boutiquesPartenaires.toLocaleString(numberLocale)}</span>
-        <span className="social-proof-label">{t('common.partnerShops')}</span>
-      </div>
-      <div className="social-proof-separator">·</div>
-      <div className="social-proof-item">
-        <span className="social-proof-number">{personnesFollowent.toLocaleString(numberLocale)}</span>
-        <span className="social-proof-label">{t('common.activeUsers')}</span>
-      </div>
+      {typeof comparaisonsAujourdhui === 'number' && (
+        <div className="social-proof-item">
+          <span className="social-proof-number">{comparaisonsAujourdhui.toLocaleString(numberLocale)}</span>
+          <span className="social-proof-label">{t('common.todayComparisons')}</span>
+        </div>
+      )}
+      {typeof comparaisonsAujourdhui === 'number' && typeof boutiquesPartenaires === 'number' && (
+        <div className="social-proof-separator">·</div>
+      )}
+      {typeof boutiquesPartenaires === 'number' && (
+        <div className="social-proof-item">
+          <span className="social-proof-number">{boutiquesPartenaires.toLocaleString(numberLocale)}</span>
+          <span className="social-proof-label">{t('common.partnerShops')}</span>
+        </div>
+      )}
+      {typeof boutiquesPartenaires === 'number' && typeof personnesFollowent === 'number' && (
+        <div className="social-proof-separator">·</div>
+      )}
+      {typeof personnesFollowent === 'number' && (
+        <div className="social-proof-item">
+          <span className="social-proof-number">{personnesFollowent.toLocaleString(numberLocale)}</span>
+          <span className="social-proof-label">{t('common.activeUsers')}</span>
+        </div>
+      )}
     </div>
   );
 }

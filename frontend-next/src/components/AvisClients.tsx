@@ -21,7 +21,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
   const avisRef = searchParams?.get('avis_ref')
 
   const [avisList, setAvisList] = useState<Avis[]>([])
-  const [noteMoyenne, setNoteMoyenne] = useState<string>('5.0')
+  const [noteMoyenne, setNoteMoyenne] = useState<string>('0.0')
   const [totalAvis, setTotalAvis] = useState<number>(0)
   const [loading, setLoading] = useState<boolean>(true)
   const [modalAvis, setModalAvis] = useState<boolean>(false)
@@ -43,7 +43,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
       .then((data) => {
         if (data.success) {
           setAvisList(data.avis || [])
-          setNoteMoyenne(data.note_moyenne || '5.0')
+          setNoteMoyenne(data.note_moyenne ? String(data.note_moyenne) : '0.0')
           setTotalAvis(data.total_avis || 0)
         }
       })
@@ -118,13 +118,21 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
             <MessageSquare size={18} color="var(--accent, #C75B00)" />
             {t('shop.reviewsAndRatingsTitle')} ({formatNumber(totalAvis)})
           </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#f59e0b' }}>{formatNumber(noteMoyenne)}</span>
-            {renderStars(Number(noteMoyenne), 5, 16)}
-            <span style={{ fontSize: 12, color: '#6b7280' }}>
-              ({formatNumber(totalAvis)} {t('shop.evaluationsCount')})
-            </span>
-          </div>
+          {totalAvis > 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <span style={{ fontSize: 20, fontWeight: 900, color: '#f59e0b' }}>{formatNumber(noteMoyenne)}</span>
+              {renderStars(Number(noteMoyenne), 5, 16)}
+              <span style={{ fontSize: 12, color: '#6b7280' }}>
+                ({formatNumber(totalAvis)} {t('shop.evaluationsCount')})
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <span style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>
+                Aucune évaluation pour le moment
+              </span>
+            </div>
+          )}
         </div>
 
         <button

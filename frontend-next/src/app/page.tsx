@@ -483,7 +483,7 @@ export default async function HomePage({
                   {total > 0 ? `${total.toLocaleString('fr-FR')}+` : '10 500+'} produits · mis à jour en temps réel
                 </span>
                 <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: 0, lineHeight: 1.2 }}>
-                  L&apos;écosystème de commerce digital N°1 au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
+                  L&apos;écosystème de commerce digital &amp; comparateur au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
                 </h2>
               </div>
 
@@ -600,7 +600,7 @@ export default async function HomePage({
 
                 <div style={{ textAlign: 'center', marginTop: 30, padding: 16, background: 'var(--surface-muted, #FAF8F5)', borderRadius: 12, color: 'var(--text-subtle, #5A4E42)', fontSize: 13, border: '1px solid var(--border-light, #DDD5CB)' }}>
                   <span style={{ display: 'inline-block', width: 8, height: 8, background: '#10b981', borderRadius: '50%', marginRight: 8 }} />
-                  Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais
+                  Prix relevés et synchronisés régulièrement auprès des marchands et boutiques du Sénégal
                 </div>
             </section>
           )}

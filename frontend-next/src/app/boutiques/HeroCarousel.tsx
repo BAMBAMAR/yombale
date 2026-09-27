@@ -82,7 +82,7 @@ const SLIDES = [
     features: [
       'Identité du vendeur confirmée',
       'Boutiques physiques vérifiées',
-      'Avis clients authentiques'
+      'Avis clients post-commande'
     ],
     ctaText: 'Voir les Vendeurs Pro →',
     ctaLink: '/boutiques?plan=pro',

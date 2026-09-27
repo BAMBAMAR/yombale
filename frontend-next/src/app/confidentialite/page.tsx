@@ -40,13 +40,13 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="legal-section">
-        <h2>Cookies et stockage local</h2>
-        <p>Nopalou utilise :</p>
+        <h2>Cookies et traceurs</h2>
+        <p>Nopalou utilise exclusivement les traceurs nécessaires au fonctionnement de la plateforme et à la mesure d&apos;audience anonyme :</p>
         <ul>
-          <li><strong>Cookie de session</strong> (<code>nopalou_session</code>) : sécurisé, httpOnly, nécessaire à l&apos;authentification.</li>
-          <li><strong>localStorage</strong> : stockage local de vos favoris et sélection de comparaison (aucune donnée envoyée à nos serveurs).</li>
+          <li><strong>Cookie de session</strong> (<code>nopalou_session</code>) : sécurisé, httpOnly, strictement nécessaire à l&apos;authentification de votre compte.</li>
+          <li><strong>Stockage local (localStorage)</strong> : conservation locale de vos favoris et de votre sélection de comparaison directement dans votre navigateur (aucune donnée n&apos;est transmise à nos serveurs).</li>
+          <li><strong>Mesure d&apos;audience (Google Analytics 4)</strong> : recueil de statistiques globales et anonymisées de consultation afin d&apos;améliorer l&apos;ergonomie et les temps de réponse du site. Aucune donnée nominative n&apos;est transmise à des régies publicitaires tierces.</li>
         </ul>
-        <p>Aucun cookie publicitaire ou de tracking tiers n&apos;est utilisé.</p>
       </section>
 
       <section className="legal-section" id="suppression-donnees">
