@@ -29,7 +29,7 @@ export default function ABTestVitrineHeader({
   useEffect(() => {
     if (!boutiqueId || typeof window === 'undefined') return
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.nopalou.com'
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || ''
     const storageKey = `nopalou_ab_${boutiqueId}`
 
     // 1. Vérifier si un variant a déjà été attribué dans cette session
@@ -47,8 +47,9 @@ export default function ABTestVitrineHeader({
 
     // 2. Récupérer le split A/B actif depuis l'API publique
     fetch(`${backendUrl}/api/boutiques/${boutiqueId}/ab-test`)
-      .then(res => res.json())
+      .then(res => (res.ok ? res.json() : null))
       .then(data => {
+        if (!data) return
         if (data.success && data.active && data.testId) {
           const resolvedTitre = data.titre || nomInitial
           const resolvedSlogan = data.slogan !== undefined ? data.slogan : sloganInitial

@@ -20,13 +20,56 @@ const RESERVED_ROUTES = new Set([
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+function respond404(request: NextRequest) {
+  const accept = request.headers.get('accept') || ''
+  if (accept.includes('application/json')) {
+    return NextResponse.json(
+      { success: false, error: 'Page introuvable', code: 'NOT_FOUND' },
+      { status: 404 }
+    )
+  }
+
+  const notFoundHtml = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>404 — Page introuvable | Nopalou</title>
+<style>
+  :root { --navy: #1C2B4A; --accent: #C75B00; --bg: #F8F5F0; --card: #FFFFFF; --text: #1E293B; --muted: #64748B; --border: #E2E8F0; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0F172A; --card: #1E293B; --text: #F8FAFC; --muted: #94A3B8; --border: #334155; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); font-family: system-ui, -apple-system, sans-serif; color: var(--text); text-align: center; padding: 20px; }
+  .box { max-width: 440px; width: 100%; background: var(--card); border-radius: 20px; padding: 36px 24px; border: 1px solid var(--border); box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08); }
+  .code { font-size: 64px; font-weight: 900; color: var(--accent); margin: 0 0 8px; line-height: 1; }
+  h1 { font-size: 20px; font-weight: 800; margin: 0 0 10px; color: var(--text); }
+  p { font-size: 14px; color: var(--muted); margin: 0 0 24px; line-height: 1.5; }
+  a.btn { background: var(--accent); color: #fff; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="code">404</div>
+    <h1>Page introuvable</h1>
+    <p>Cette page n'existe pas ou a été déplacée.</p>
+    <a href="/" class="btn">Retour à l'accueil</a>
+  </div>
+</body>
+</html>`
+
+  return new NextResponse(notFoundHtml, {
+    status: 404,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  })
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params
   if (!slug) {
-    return new NextResponse(null, { status: 404 })
+    return respond404(request)
   }
 
   const proto = request.headers.get('x-forwarded-proto') || 'https'
@@ -59,12 +102,12 @@ export async function GET(
     if (hadMetaPlaceholder) {
       return NextResponse.redirect(new URL(`/${cleanSlug}${queryString}`, baseUrl), 301)
     }
-    return new NextResponse(null, { status: 404 })
+    return respond404(request)
   }
 
   // Ignorer les fichiers statiques
   if (cleanSlug.includes('.')) {
-    return new NextResponse(null, { status: 404 })
+    return respond404(request)
   }
 
   const isUuid = UUID_RE.test(cleanSlug)
@@ -130,5 +173,5 @@ export async function GET(
     } catch {}
   }
 
-  return new NextResponse(null, { status: 404 })
+  return respond404(request)
 }

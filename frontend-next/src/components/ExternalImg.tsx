@@ -53,7 +53,7 @@ export default function ExternalImg({
   const isProxied = cleanSrc?.startsWith('https://wsrv.nl/')
 
   if (!cleanSrc || attempt >= (isProxied ? 1 : 2)) {
-    if (typeof fallback === 'string') {
+    if (fallback && typeof fallback === 'string') {
       return (
         <span
           className={fallbackClassName}
@@ -64,7 +64,34 @@ export default function ExternalImg({
         </span>
       )
     }
-    return <>{fallback}</>
+    if (fallback) {
+      return <>{fallback}</>
+    }
+
+    // Fallback par défaut : icône vectorielle SVG sobre et harmonieuse (design system Nopalou, zéro emoji)
+    return (
+      <span
+        className={fallbackClassName}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          background: 'rgba(28, 43, 74, 0.04)',
+          color: '#94a3b8',
+          borderRadius: 'inherit',
+          ...style,
+        }}
+        aria-label={alt}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+          <circle cx="9" cy="9" r="2" />
+          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+        </svg>
+      </span>
+    )
   }
 
   const currentSrc = (attempt === 1 && !isProxied)

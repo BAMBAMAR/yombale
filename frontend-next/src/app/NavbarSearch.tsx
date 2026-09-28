@@ -246,6 +246,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
                     <Link
                       key={b.id}
                       href={`/boutiques/${b.slug || b.id}`}
+                      prefetch={false}
                       onClick={() => { setOpen(false); setQuery('') }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px',
@@ -272,6 +273,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
                     <Link
                       key={p.id}
                       href={`/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}`}
+                      prefetch={false}
                       onClick={() => { setOpen(false); setQuery('') }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px',

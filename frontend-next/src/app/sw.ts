@@ -10,7 +10,7 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v28';
+const CACHE_VERSION = 'v29';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
@@ -218,8 +218,15 @@ function isExternalTrackerOrSocialMedia(url: URL): boolean {
   );
 }
 
+// Filtrer le manifest pour exclure les chunks d'administration volumineux non nécessaires pour le fonctionnement PWA hors-ligne
+const precacheManifest = (self.__SW_MANIFEST || []).filter((entry) => {
+  const url = typeof entry === 'string' ? entry : entry.url;
+  if (url.includes('chunks/app/admin/')) return false;
+  return true;
+});
+
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  precacheEntries: precacheManifest,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: false,
@@ -251,7 +258,7 @@ const serwist = new Serwist({
         (request.method === "GET" && request.headers.get("accept")?.includes("text/html") === true),
       handler: new NetworkFirst({
         cacheName: `nopalou-html-cache-${CACHE_VERSION}`,
-        networkTimeoutSeconds: 1,
+        networkTimeoutSeconds: 3,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 60,
@@ -260,7 +267,7 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 3. Requêtes RSC (_rsc=... ou en-tête RSC: 1 / text/x-component) — NetworkFirst avec timeout 1s
+    // 3. Requêtes RSC (_rsc=... ou en-tête RSC: 1 / text/x-component) — NetworkFirst avec timeout réactif de 4s
     {
       matcher: ({ url, request }) =>
         url.searchParams.has("_rsc") ||
@@ -268,7 +275,7 @@ const serwist = new Serwist({
         request.headers.get("accept")?.includes("text/x-component") === true,
       handler: new NetworkFirst({
         cacheName: `nopalou-rsc-cache-${CACHE_VERSION}`,
-        networkTimeoutSeconds: 1,
+        networkTimeoutSeconds: 4,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 100,
@@ -459,6 +466,12 @@ serwist.setCatchHandler(async ({ request }: any) => {
   ) {
     const cachedRsc = await caches.match(request, { ignoreSearch: false });
     if (cachedRsc) return cachedRsc;
+    // Hors-ligne sans RSC en cache : renvoyer 204 No Content pour signaler l'absence de payload sans lever de TypeError
+    return new Response(null, {
+      status: 204,
+      statusText: "No Content",
+      headers: { "Content-Type": "text/x-component; charset=utf-8" },
+    });
   }
 
   // 4. Assets statiques (JS, CSS, fonts)

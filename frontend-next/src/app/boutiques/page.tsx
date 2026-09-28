@@ -365,6 +365,7 @@ export default async function BoutiquesPage({
               <Link
                 key={c.slug || 'toutes'}
                 href={buildLink({ cat: c.slug, page: '1' })}
+                prefetch={false}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '9px 16px', borderRadius: 30, fontSize: 13, fontWeight: isSelected ? 800 : 600,
@@ -498,7 +499,7 @@ export default async function BoutiquesPage({
                   </div>
 
                   <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: '#111827', lineHeight: 1.3 }}>
-                    <Link href={`/boutiques/${b.slug || b.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                    <Link href={`/boutiques/${b.slug || b.id}`} prefetch={false} style={{ color: 'inherit', textDecoration: 'none' }}>
                       {b.nom}
                     </Link>
                   </h3>
@@ -528,6 +529,7 @@ export default async function BoutiquesPage({
                   <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: whatsappNumber ? '1fr auto' : '1fr', gap: 8 }}>
                     <Link
                       href={`/boutiques/${b.slug || b.id}`}
+                      prefetch={false}
                       style={{
                         textAlign: 'center', background: '#C75B00', color: '#fff',
                         padding: '9px 14px', borderRadius: 10, textDecoration: 'none',
@@ -565,13 +567,13 @@ export default async function BoutiquesPage({
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 32 }}>
           {currentPage > 1 && (
-            <Link href={buildLink({ page: String(currentPage - 1) })} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700, color: '#374151' }}>
+            <Link href={buildLink({ page: String(currentPage - 1) })} prefetch={false} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700, color: '#374151' }}>
               ← Précédent
             </Link>
           )}
           <span style={{ fontSize: 13, fontWeight: 700, color: '#6b7280' }}>Page {currentPage} / {totalPages}</span>
           {currentPage < totalPages && (
-            <Link href={buildLink({ page: String(currentPage + 1) })} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700, color: '#374151' }}>
+            <Link href={buildLink({ page: String(currentPage + 1) })} prefetch={false} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700, color: '#374151' }}>
               Suivant →
             </Link>
           )}

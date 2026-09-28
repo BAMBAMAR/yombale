@@ -37,17 +37,22 @@ export default function RegisterSW() {
     }
 
     // =====================================================================
-    // FORCE-UPDATE v18 : Purge automatique des caches pour renouveler les bundles
-    // et éliminer les mismatches d'hydratation entre les anciens caches SW et le nouveau SSR.
-    // Chaque incrémentation de FORCE_VERSION déclenche la purge chez TOUS les utilisateurs.
     // =====================================================================
-    const FORCE_VERSION = '19'
+    // FORCE-UPDATE v20 : Purge automatique des caches pour renouveler les bundles
+    // et éliminer les mismatches d'hydratation entre les anciens caches SW et le nouveau SSR.
+    // Incrémenté uniquement pour les utilisateurs disposant d'un ancien cache.
+    // Un premier visiteur (currentForce === null) n'est JAMAIS forcé à recharger.
+    // =====================================================================
+    const FORCE_VERSION = '20'
     const FORCE_KEY = 'nopalou_force_v'
 
     try {
       const currentForce = localStorage.getItem(FORCE_KEY)
-      if (currentForce !== FORCE_VERSION) {
-        console.log(`[PWA Force-Update] v${currentForce || '?'} → v${FORCE_VERSION} — Purge complète des caches icônes/assets...`)
+      if (!currentForce) {
+        // Premier chargement de l'utilisateur : marquer la version actuelle sans recharger
+        localStorage.setItem(FORCE_KEY, FORCE_VERSION)
+      } else if (currentForce !== FORCE_VERSION) {
+        console.log(`[PWA Force-Update] v${currentForce} → v${FORCE_VERSION} — Purge des caches obsolètes...`)
 
         // 1. Purger tous les caches liés aux icônes, manifest, assets et PWA metadata
         caches.keys().then(async (names) => {
@@ -87,9 +92,11 @@ export default function RegisterSW() {
     // =====================================================================
 
     // Écouter l'activation du nouveau SW (controllerchange) pour recharger proprement
+    // Uniquement si la page était déjà contrôlée par un ancien SW (mise à jour réelle)
     let refreshing = false
+    const hadControllerOnLoad = !!navigator.serviceWorker.controller
     const handleControllerChange = () => {
-      if (!refreshing) {
+      if (hadControllerOnLoad && !refreshing) {
         refreshing = true
         window.location.reload()
       }

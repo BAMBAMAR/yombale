@@ -35,6 +35,22 @@ export function sanitizeImgUrl(url: string | null | undefined): string | null {
     return `https://wsrv.nl/?url=${encodeURIComponent(cleaned)}`
   }
 
+  // 4c. Détection des URLs Facebook/Instagram CDN expirées (paramètre hexadécimal oe=... dépassé)
+  // Évite les erreurs 403 Forbidden systématiques sur les images scrapées aux tokens périmés
+  if (cleaned.includes('fbcdn.net') || cleaned.includes('cdninstagram.com')) {
+    const oeMatch = cleaned.match(/[?&]oe=([0-9a-fA-F]+)/)
+    if (oeMatch) {
+      try {
+        const expiresAtSec = parseInt(oeMatch[1], 16)
+        if (!isNaN(expiresAtSec) && expiresAtSec * 1000 < Date.now()) {
+          return null
+        }
+      } catch {
+        // ignorer
+      }
+    }
+  }
+
   // 5. URLs absolues avec https://, data:, blob:
   if (cleaned.startsWith('https://') || cleaned.startsWith('data:') || cleaned.startsWith('blob:')) {
     return cleaned
