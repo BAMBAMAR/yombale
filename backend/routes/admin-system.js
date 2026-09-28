@@ -429,5 +429,43 @@ router.get('/incidents', requireAdminAuth, requireAdminRole('super_admin'), asyn
   }
 });
 
+// ── POST /api/admin/system/test-alertes — Envoi d'une alerte test multi-canale (WhatsApp + Telegram + Email)
+router.post('/test-alertes', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
+  try {
+    const { canal = 'tous' } = req.body || {};
+    const { alerterAdmin } = require('../services/admin-alerts');
+    const adminPhone = await cfg.get('admin_notification_phone') || '221777202086';
+
+    const testResult = await alerterAdmin({
+      type: `test_admin_alert_${Date.now()}`,
+      priorite: 'INFO',
+      titre: 'Test du Système d\'Alerte Admin Nopalou',
+      message: `Ceci est un message de test envoyé depuis l'administration Nopalou vers votre téléphone (${adminPhone}). Le système multi-canal (WhatsApp + Telegram + Email) est 100% opérationnel !`,
+      details: `Canal testé : ${canal}\nNuméro WhatsApp : ${adminPhone}\nHeure : ${new Date().toLocaleTimeString('fr-FR', { timeZone: 'Africa/Dakar' })} (Dakar)`,
+      lienAction: 'https://nopalou.com/admin',
+      texteAction: 'Accéder au Panel Admin',
+      force: true,
+      cooldownMs: 0,
+    });
+
+    await enregistrerAdminLog({
+      action: 'test_alertes_declenche',
+      cibleType: 'systeme',
+      description: `Test d'alerte multi-canal envoyé vers ${adminPhone}`,
+      req,
+    }).catch(() => {});
+
+    res.json({
+      success: true,
+      message: `Alerte test envoyée avec succès vers WhatsApp (${adminPhone}) et les canaux configurés.`,
+      result: testResult,
+      phone: adminPhone,
+    });
+  } catch (err) {
+    console.error('[TEST ALERTES ERR]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
 

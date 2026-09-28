@@ -9,7 +9,7 @@ const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rba
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const cfg = require('../lib/settingsCache');
 const wave = require('../services/wave');
-const { alerterAdmin } = require('../services/admin-alerts');
+const { alerterAdmin, alerterPaiementManuel, alerterAbonnement } = require('../services/admin-alerts');
 const multer = require('multer');
 const { uploadBuffer } = require('../services/cloudinary');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
@@ -319,6 +319,31 @@ async function appliquerPaiementReussi(reference, montant, methode) {
           );
         }
         if (abonnementRow.rows[0]) {
+          // Alerte multi-canale immédiate admin (WhatsApp 777202086 + Telegram + Email)
+          (async () => {
+            try {
+              const uInfo = await pool.query(
+                `SELECT u.nom, u.telephone, b.nom AS boutique_nom 
+                 FROM utilisateurs u 
+                 LEFT JOIN boutiques b ON b.utilisateur_id = u.id 
+                 WHERE u.id = $1 LIMIT 1`,
+                [userId]
+              );
+              const bNom = uInfo.rows[0]?.boutique_nom || 'Boutique Marchande';
+              const uNom = uInfo.rows[0]?.nom;
+              const uTel = uInfo.rows[0]?.telephone;
+              await alerterAbonnement({
+                boutiqueNom: bNom,
+                plan,
+                montant: prixMensuel,
+                fin,
+                utilisateurNom: uNom,
+                utilisateurTel: uTel,
+              });
+            } catch (errA) {
+              console.warn('[ALERTE ABONNEMENT ERR]:', errA.message);
+            }
+          })();
           try {
             const apporteurActif = await cfg.getBool('apporteur_actif');
             if (apporteurActif) {
@@ -1015,10 +1040,24 @@ router.post('/manuel/declarer', verifierToken, limiterEcriture, upload.single('p
       [userId, reference, montant, methode, telephone_expediteur, transaction_id_client || null, preuveUrl]
     );
 
-    // Alerte immédiate Admin pour validation ultra-rapide
-    alerterAdmin(
-      `💰 Nouveau Paiement Manuel Déclaré (${methode.toUpperCase()}) : ${Number(montant).toLocaleString('fr-FR')} FCFA par le tél. ${telephone_expediteur} (Réf: ${reference}). Validation requise dans le panel admin.`
-    ).catch(e => console.warn('[ALERTE ADMIN PAIEMENT MANUEL]:', e.message));
+    // Alerte immédiate multi-canal (WhatsApp 777202086 + Telegram + Email)
+    (async () => {
+      try {
+        const uRes = await pool.query('SELECT nom, email, telephone FROM utilisateurs WHERE id=$1', [userId]);
+        const clientNom = uRes.rows[0]?.nom;
+        await alerterPaiementManuel({
+          id: rows[0].id,
+          reference,
+          montant,
+          methode,
+          telephone_expediteur,
+          clientNom,
+          preuveUrl,
+        });
+      } catch (errPm) {
+        console.warn('[ALERTE ADMIN PAIEMENT MANUEL]:', errPm.message);
+      }
+    })();
 
     await enregistrerAdminLog({
       action: 'paiement_manuel_declare',

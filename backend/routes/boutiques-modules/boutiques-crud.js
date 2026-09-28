@@ -598,7 +598,32 @@ router.post('/:id/avis', async (req, res) => {
       [b.rows[0].id, produit_id || null, nom_client.trim(), Math.min(5, Math.max(1, Number(note))), commentaire || null]
     );
 
+    // Alerte automatique modération si note négative (<= 2 étoiles) (WhatsApp 777202086 + Telegram + Email)
+    if (Number(note) <= 2) {
+      (async () => {
+        try {
+          const { alerterAvisNegatif } = require('../../services/admin-alerts');
+          let pNom = null;
+          if (produit_id) {
+            const pInfo = await pool.query('SELECT nom FROM boutique_produits WHERE id=$1', [produit_id]);
+            pNom = pInfo.rows[0]?.nom;
+          }
+          await alerterAvisNegatif({
+            boutiqueNom: b.rows[0]?.nom || 'Boutique',
+            note: Number(note),
+            commentaire: (commentaire || '').trim(),
+            clientNom: nom_client.trim(),
+            produitNom: pNom,
+            avisId: r.rows[0]?.id,
+          });
+        } catch (errAv) {
+          console.warn('[ALERTE AVIS NEGATIF CRUD ERR]:', errAv.message);
+        }
+      })();
+    }
+
     res.status(201).json({ success: true, avis: r.rows[0] });
+
   } catch (err) {
     console.error('[BOUTIQUE AVIS POST]', err);
     res.status(500).json({ error: 'Erreur serveur' });

@@ -703,11 +703,37 @@ router.post('/:id/produits/:prodId/avis', async (req, res) => {
       [targetBoutiqueId, prodId, authorName, authorName, Number(note), commentaire.trim(), commande_ref || null]
     );
 
+    // Alerte automatique modération si note négative (<= 2 étoiles) (WhatsApp 777202086 + Telegram + Email)
+    if (Number(note) <= 2) {
+      (async () => {
+        try {
+          const { alerterAvisNegatif } = require('../../services/admin-alerts');
+          const bInfo = await pool.query('SELECT nom FROM boutiques WHERE id=$1', [targetBoutiqueId]);
+          let pNom = null;
+          if (prodId) {
+            const pInfo = await pool.query('SELECT nom FROM boutique_produits WHERE id=$1', [prodId]);
+            pNom = pInfo.rows[0]?.nom;
+          }
+          await alerterAvisNegatif({
+            boutiqueNom: bInfo.rows[0]?.nom || 'Boutique',
+            note: Number(note),
+            commentaire: commentaire.trim(),
+            clientNom: authorName,
+            produitNom: pNom,
+            avisId: r.rows[0]?.id,
+          });
+        } catch (errAv) {
+          console.warn('[ALERTE AVIS NEGATIF ERR]:', errAv.message);
+        }
+      })();
+    }
+
     res.status(201).json({
       success: true,
       message: 'Votre avis a été publié avec succès ! Merci pour votre retour.',
       avis: r.rows[0]
     });
+
   } catch (err) {
     console.error('[POST AVIS ERR]', err);
     res.status(500).json({ error: 'Erreur lors de la publication de l\'avis' });

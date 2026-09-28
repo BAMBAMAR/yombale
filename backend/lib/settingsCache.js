@@ -66,6 +66,11 @@ const DEFAULTS = {
   system_banner_active:               'false',
   system_banner_text:                 '',
   system_banner_level:                'info',
+  admin_notification_phone:           '221777202086',
+  admin_whatsapp_alerts_actives:      'true',
+  telegram_bot_token:                 '',
+  telegram_chat_id:                   '',
+  telegram_notifications_actives:     'true',
   nopalou_social_links: JSON.stringify([
     { id: 'tiktok', name: 'TikTok Officiel', handle: '@nopalou.com', url: 'https://www.tiktok.com/@nopalou.com', code: 'TT', bg: '#000000', color: '#ffffff', actif: true, ordre: 1, description: 'Vidéos démos & astuces commerçants' },
     { id: 'whatsapp_channel', name: 'Canal WhatsApp', handle: 'Canal Nopalou.com', url: 'https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33', code: 'WA', bg: '#25D366', color: '#ffffff', actif: true, ordre: 2, description: 'Canal officiel des alertes et bons plans' },

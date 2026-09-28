@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { adminHeaders } from '@/app/actions/admin/admin-common'
 import SystemIncidentsCard from './components/SystemIncidentsCard'
+import SystemAlertsCard from './components/SystemAlertsCard'
 
 interface SystemData {
   status: string
@@ -292,9 +293,14 @@ export default function AdminSystemClient({
           </div>
         </div>
       </div>
+      
+      {/* BLOC ALERTES MULTI-CANALES WHATSAPP & TELEGRAM */}
+      <SystemAlertsCard secret={secret} />
+
 
       {/* BLOC EXPORTS CSV / EXCEL */}
       <div style={{ background: '#fff', borderRadius: 14, padding: 22, border: '1px solid #e2e8f0', marginBottom: 28, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+
         <h2 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
           <FileSpreadsheet size={18} color="#16a34a" /> Centre d'Exportation Données (CSV / Excel)
         </h2>

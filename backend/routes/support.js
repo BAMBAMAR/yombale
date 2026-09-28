@@ -8,7 +8,7 @@ const { tokenOptional, verifierToken } = require('../middlewares/auth');
 const rateLimit = require('express-rate-limit');
 const cfg = require('../lib/settingsCache');
 const { sendWhatsAppText, normalisePhone } = require('../services/whatsapp');
-const { alerterAdmin } = require('../services/admin-alerts');
+const { alerterAdmin, alerterSignalement, alerterSupportTicket } = require('../services/admin-alerts');
 const { envoyerEmail } = require('../services/email');
 
 // Limiteur de requêtes pour prévenir le spam de tickets et signalements
@@ -164,29 +164,17 @@ router.post('/tickets', supportLimiter, tokenOptional, async (req, res) => {
     );
     const newTicket = insertRes?.rows || [];
 
-    // Notification de l'administrateur
+    // Notification de l'administrateur multi-canale (WhatsApp 777202086 + Telegram + Email)
     try {
-      const adminTel = await cfg.get('admin_notification_phone');
-      if (adminTel) {
-        const notifAdmin =
-          `🎫 *Nouveau Ticket Support Nopalou (${numeroTicket})*\n\n` +
-          `📌 Sujet : *${rawSujet}*\n` +
-          `👤 Demandeur : *${contactNom || 'Anonyme'}* (${contactTel || 'N/A'})\n` +
-          `⚡ Priorité : *${priorite.toUpperCase()}*\n` +
-          (cmdRefAffichee ? `📦 Réf Commande : ${cmdRefAffichee}\n` : '') +
-          `\n👉 Traiter dans le Helpdesk : https://nopalou.com/admin/support`;
-        sendWhatsAppText(normalisePhone(adminTel), notifAdmin).catch(() => {});
-      }
-
-      if (priorite === 'urgente') {
-        alerterAdmin({
-          type: 'support_ticket_urgent',
-          titre: `Ticket d'urgence reçu : ${numeroTicket}`,
-          message: `Nouveau ticket prioritaire créé par ${contactNom || 'Client'} : "${rawSujet}"`,
-          details: rawMessage,
-          priorite: 'CRITIQUE',
-        }).catch(() => {});
-      }
+      alerterSupportTicket({
+        numeroTicket,
+        sujet: rawSujet,
+        priorite,
+        contactNom,
+        contactTel,
+        message: rawMessage,
+        cmdRef: cmdRefAffichee,
+      }).catch(e => console.warn('[ALERTE SUPPORT TICKET]:', e.message));
     } catch (_) {}
 
     // Confirmation automatique par email si email disponible
@@ -482,15 +470,16 @@ router.post('/signalements', supportLimiter, tokenOptional, async (req, res) => 
       ]
     );
 
-    // Alerter l'équipe de modération si motif grave
-    if (/arnaque|fraude|faux|escroquerie|usurpation/i.test(motif)) {
-      alerterAdmin({
-        type: 'signalement_fraude',
-        titre: `Signalement d'abus prioritaire : ${motif}`,
-        message: `Signalement déposé sur ${effectiveType} #${effectiveCibleId} : "${description || motif}"`,
-        priorite: 'ATTENTION',
-      }).catch(() => {});
-    }
+    // Alerte immédiate de modération multi-canale (WhatsApp 777202086 + Telegram + Email)
+    alerterSignalement({
+      id: rows[0]?.id,
+      type_cible: effectiveType,
+      cible_id: effectiveCibleId,
+      motif,
+      description,
+      auteurTel: authorTel,
+      auteurEmail: authorEmail,
+    }).catch(e => console.warn('[ALERTE SIGNALEMENT]:', e.message));
 
     res.status(201).json({
       success: true,

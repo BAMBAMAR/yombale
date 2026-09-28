@@ -26,7 +26,31 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Gestion Dynamique des Réseaux Sociaux dans Kit Com & Profils Sociaux) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Système d'Alertes Administratives Multi-Canales WhatsApp 777202086 + Telegram + Email) :
+- **Système Centralisé d'Alertes Immédiates Multi-Canales (`backend/services/admin-alerts.js`)** :
+  - **Diagnostic** : Les alertes critiques étaient restreintes aux incidents techniques DB/WhatsApp sans prévenir l'administrateur en direct sur son smartphone pour les flux métier vitaux (dépôts Wave/OM, abonnements, signalements de fraude, avis 1-2 étoiles, litiges support).
+  - **Moteur Multi-Canal Enrichi** :
+    - **Canal WhatsApp officiel** : Envoi direct et garanti 24h/24 vers le numéro de l'administrateur **`+221 77 720 20 86`** (`admin_notification_phone`) via l'API Meta Cloud (`sendWhatsAppNotification` avec template certifié + fallback SMS).
+    - **Canal Telegram interactif** : Prise en charge des boutons cliquables *Inline Keyboard* (`reply_markup`) reliant directement à l'écran admin adéquat ou au contact WhatsApp.
+    - **Canal Email de traçabilité** vers `admin@nopalou.com`.
+    - **Sanitisation PII** : Masquage automatique des numéros, emails et secrets dans les logs et notifications.
+    - **Helpers dédiés de haut niveau** : `alerterPaiementManuel`, `alerterAbonnement`, `alerterSignalement`, `alerterAvisNegatif`, `alerterSupportTicket`.
+  - **Câblage Intégral des 5 Domaines Opérationnels Majeurs** :
+    1. *Paiements Manuels (`backend/routes/paiement.js`)* : Alerte P0 à chaque déclaration Wave / Orange Money avec montant FCFA, expéditeur, référence et lien direct vers le reçu et le bouton de validation.
+    2. *Abonnements Marchands (`backend/routes/paiement.js`)* : Alerte lors de toute souscription ou renouvellement de forfait (nom de boutique, formule, montant, date de fin).
+    3. *Signalements d'Abus & Sécurité (`backend/routes/support.js`)* : Alerte immédiate sur tout signalement d'abus (produit contrefait, boutique suspecte, escroquerie) avec priorisation P0/P1.
+    4. *Modération Avis Clients (`boutiques-produits.js` & `boutiques-crud.js`)* : Détection et alerte automatique pour toute note négative (1 ou 2 étoiles) afin d'intervenir sans délai.
+    5. *Helpdesk & Support Client (`backend/routes/support.js`)* : Alerte avec lien direct de prise en charge admin et lien direct WhatsApp vers le client (`https://wa.me/221...`).
+  - **Supervision & Test Direct dans le Panel Admin (`SystemAlertsCard.tsx` & `admin-system.js`)** :
+    - Nouvelle carte dédiée dans l'écran Santé Système ([`/admin/system`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/admin/(protected)/system/page.tsx)) récapitulant les canaux actifs et les 5 catégories supervisées.
+    - Endpoint `POST /api/admin/system/test-alertes` avec bouton interactif « Tester WhatsApp & Telegram » permettant de valider la bonne réception en direct sur le smartphone.
+  - **Contrôle Qualité & Résilience** :
+    - Tests unitaires Jest 100% PASS (`tests/unit/admin-alerts-and-health.test.js`).
+    - Linter Anti-AI-Slop 100% conforme (icônes `lucide-react`, zéro émoji UI, tokens CSS Nopalou).
+    - Validation TypeScript `tsc --noEmit` 100% PASS (0 erreur).
+
+### 📌 Version Précédente (28 septembre 2026 - Gestion Dynamique des Réseaux Sociaux dans Kit Com & Profils Sociaux) :
+
 - **Gestion Dynamique et Actions Complètes sur les Réseaux Sociaux Nopalou (`/admin/communication`)** :
   - **Diagnostic** : L'onglet "Kit Com & Profils Sociaux" affichait jusqu'ici une liste statique codée en dur de profils sociaux (TikTok, WhatsApp Channel, Facebook, etc.) sans possibilité d'ajouter de nouveaux canaux, d'éditer les URL, d'activer/masquer des profils ou d'interagir dynamiquement.
   - **Architecture de Stockage Dynamique (`backend/lib/settingsCache.js` & `backend/routes/settings.js`)** :
