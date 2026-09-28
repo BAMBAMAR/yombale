@@ -18,6 +18,7 @@ import {
   Square,
   X,
   AlertCircle,
+  AlertTriangle,
 } from 'lucide-react'
 
 interface CatalogueProductCardProps {
@@ -303,6 +304,37 @@ export default function CatalogueProductCard({
               >
                 <AlertCircle size={11} />
                 <span>Nom à préciser</span>
+              </span>
+            )}
+
+            {/* Badge Suspension Modération Admin avec Motif */}
+            {((p as any).statut_moderation === 'suspendu' || ((p as any).en_stock === false && (p as any).motif_moderation)) && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(p)
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  background: '#fef2f2',
+                  color: '#991b1b',
+                  border: '1px solid #fecaca',
+                  borderRadius: 20,
+                  padding: '2px 8px',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Produit suspendu par l'administration. Cliquez pour le corriger."
+              >
+                <AlertTriangle size={11} style={{ color: '#b91c1c' }} />
+                <span>
+                  {(p as any).motif_moderation
+                    ? `Modération : ${(p as any).motif_moderation}`
+                    : 'Modéré par l\'administration'}
+                </span>
               </span>
             )}
           </div>

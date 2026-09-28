@@ -1025,6 +1025,18 @@ module.exports = async function migrateInline(customConnStr = null) {
     console.log('[MIGRATE] ✅ Colonnes boutique_produits (variantes, unite_vente, has_variants, date_expiration) OK');
   } catch (e) { console.warn('[MIGRATE] bp_variantes:', e.message); }
 
+  // Modération administrative des produits marchands (statut, motif, modérateur)
+  try {
+    await pool.query(`
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS statut_moderation VARCHAR(30) DEFAULT 'actif';
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS motif_moderation TEXT;
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS modere_le TIMESTAMPTZ;
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS modere_par VARCHAR(150);
+      CREATE INDEX IF NOT EXISTS idx_bp_statut_moderation ON boutique_produits(statut_moderation);
+    `);
+    console.log('[MIGRATE] ✅ Colonnes modération boutique_produits OK');
+  } catch (e) { console.warn('[MIGRATE] bp_moderation:', e.message); }
+
   // Table Matrice de Variantes & SKUs (Prix, stock et code-barres par variante)
   try {
     await pool.query(`

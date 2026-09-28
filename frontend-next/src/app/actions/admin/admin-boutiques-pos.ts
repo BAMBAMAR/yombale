@@ -234,10 +234,26 @@ export async function executerCronRelanceCatalogueAction(): Promise<{
 }
 
 // ── Modération Produits Marchands & POS ─────────────────────────
+export interface AdminModererProduitPayload {
+  action?: 'desactiver' | 'reactiver' | 'modifier' | 'supprimer'
+  actif?: boolean
+  en_stock?: boolean
+  statut_moderation?: string
+  motif?: string
+  message_personnalise?: string
+  notifier_marchand?: boolean
+  canal?: 'whatsapp_et_email' | 'whatsapp' | 'email' | 'aucun'
+  prix?: number
+  prix_barre?: number
+  stock_quantite?: number
+  nom?: string
+  categorie?: string
+}
+
 export async function adminModererProduit(
   id: string,
-  payload: { actif?: boolean; prix?: number; stock?: number }
-): Promise<{ success?: boolean; produit?: any; error?: string }> {
+  payload: AdminModererProduitPayload
+): Promise<{ success?: boolean; produit?: any; notification?: any; error?: string }> {
   const token = await getAdminToken()
   if (!token) return { error: 'Non authentifié' }
 
@@ -250,6 +266,70 @@ export async function adminModererProduit(
     })
     const data = await r.json()
     if (!r.ok) return { error: data.error || 'Erreur modération produit' }
+    revalidatePath('/admin/produits')
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+export async function adminEnvoyerMessageMarchandProduit(
+  id: string,
+  payload: { message: string; canal?: 'whatsapp_et_email' | 'whatsapp' | 'email'; objet?: string }
+): Promise<{ success?: boolean; whatsapp_envoye?: boolean; email_envoye?: boolean; whatsapp_direct_url?: string | null; error?: string }> {
+  const token = await getAdminToken()
+  if (!token) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/admin/produits/${id}/message-marchand`, {
+      method: 'POST',
+      headers: adminHeaders(token),
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur envoi message' }
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+export async function adminGetProduitDetail(
+  id: string
+): Promise<{ success?: boolean; produit?: any; variantes?: any[]; stocksEntrepots?: any[]; avis?: any[]; auditLogs?: any[]; error?: string }> {
+  const token = await getAdminToken()
+  if (!token) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/admin/produits/${id}`, {
+      headers: adminHeaders(token),
+      cache: 'no-store',
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur chargement produit' }
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+export async function adminSupprimerProduit(
+  id: string,
+  payload?: { motif?: string; message_personnalise?: string; notifier_marchand?: boolean }
+): Promise<{ success?: boolean; error?: string }> {
+  const token = await getAdminToken()
+  if (!token) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/admin/produits/${id}/moderation`, {
+      method: 'PUT',
+      headers: adminHeaders(token),
+      body: JSON.stringify({ action: 'supprimer', ...payload }),
+      cache: 'no-store',
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur suppression produit' }
     revalidatePath('/admin/produits')
     return data
   } catch (err: any) {

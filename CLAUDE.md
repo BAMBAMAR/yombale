@@ -26,7 +26,31 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Nuit - Filtrage Photos Accueil & Assainissement Données de Test) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Modération Produits Admin Enrichie & Communication Marchand Pédagogique) :
+- **Supervision & Modération Complète du Catalogue Marchand (`/admin/produits`)** :
+  - **Diagnostic** : L'interface d'administration disposait uniquement d'un commutateur binaire masquant/activant le produit (`en_stock`) sans possibilité d'indiquer la raison du rejet au commerçant, sans historique ni canaux de communication intégrés.
+  - **Modération & Suspension avec Motifs Pédagogiques** :
+    - Modale de modération administrative (`ModalModererProduit.tsx`) avec sélection rapide de motifs fréquents (*Photos floues ou non conformes*, *Prix manifestement erroné ou abusif*, *Description incomplète ou trompeuse*, *Rupture de stock prolongée*, *Contrefaçon présumée*, *Non-respect des CGU*) ou saisie libre de motif personnalisé.
+    - Saisie d'instructions complémentaires spécifiques et prévisualisation instantanée du message envoyé au commerçant.
+    - Levée de suspension et réactivation en 1 clic avec message de félicitations/validation.
+  - **Communication Directe Multi-Canale avec le Marchand** :
+    - Notification automatique par **WhatsApp** (`sendWhatsAppNotification`) et **Email** stylisé Nopalou (`envoyerEmail`) à chaque suspension ou réactivation.
+    - Génération côté serveur d'un lien **WhatsApp direct 1-clic** (`https://wa.me/221...`) pré-rempli pour ouvrir une conversation instantanée depuis l'ordinateur ou le mobile du modérateur.
+    - Modale dédiée de messagerie instantanée (`ModalMessageMarchand.tsx`) pour échanger avec le commerçant sans désactiver le produit (modèles de messages rapides : vérification stock, amélioration photo, précision tarifaire).
+  - **Fiche d'Inspection Produit 360° & Édition Rapide** :
+    - Panneau d'inspection détaillée (`ModalDetailProduit.tsx`) : galerie complète de photos, variantes, stocks, coordonnées complètes de la boutique et du propriétaire, historique des logs de modération.
+    - Modale d'édition rapide (`ModalEditionRapideProduit.tsx`) pour corriger immédiatement le titre, prix, prix barré, stock ou catégorie.
+    - Modale de suppression sécurisée (`ModalSupprimerProduit.tsx`) avec motif d'audit et notification marchand.
+  - **Transparence Côté Marchand (`CatalogueProductCard.tsx`)** :
+    - Affichage d'un badge d'alerte visible dans l'espace marchand : *"Modération : [Motif]"* avec raccourci immédiat pour corriger et republier l'article sans incompréhension.
+  - **Persistance Base de Données (`backend/migrate-inline.js`)** :
+    - Colonnes `statut_moderation VARCHAR(30) DEFAULT 'actif'`, `motif_moderation TEXT`, `modere_le TIMESTAMPTZ`, `modere_par VARCHAR(150)` ajoutées à `boutique_produits` avec index de performance `idx_bp_statut_moderation`.
+    - Traçabilité totale des décisions dans `admin_audit_logs`.
+  - **Validation & Anti-IA-Slop** :
+    - Zéro émoji dans l'interface UI (icônes vectorielles `lucide-react` uniquement), respect strict des tokens CSS Nopalou, respect du plafond de taille modulaire (< 450 lignes).
+    - Validation `node --check` backend et build Next.js 14 en production 100% PASS.
+
+### 📌 Version Précédente (28 septembre 2026 - Nuit - Filtrage Photos Accueil & Assainissement Données de Test) :
 - **Masquage Strict des Produits Sans Photo sur la Page Accueil** :
   - **Diagnostic** : Des articles sans image ou avec des vignettes cassées polluaient les grilles de comparaison et de recherche d'accueil.
   - **Correction Backend** (`backend/routes/produits.js`) :

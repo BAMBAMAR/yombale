@@ -1,0 +1,5 @@
+export { default as ModalModererProduit } from './ModalModererProduit'
+export { default as ModalMessageMarchand } from './ModalMessageMarchand'
+export { default as ModalDetailProduit } from './ModalDetailProduit'
+export { default as ModalEditionRapideProduit } from './ModalEditionRapideProduit'
+export { default as ModalSupprimerProduit } from './ModalSupprimerProduit'

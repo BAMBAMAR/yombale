@@ -42,6 +42,7 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
               p.unite_vente, p.has_variants, p.date_expiration,
               p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le,
               p.meta_title, p.meta_description, p.slug,
+              COALESCE(p.statut_moderation, 'actif') AS statut_moderation, p.motif_moderation, p.modere_le,
               COALESCE(
                 (SELECT json_agg(json_build_object(
                   'id', v.id, 'sku', v.sku, 'code_barre', v.code_barre, 'attributs', v.attributs,
@@ -77,6 +78,7 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
               p.stock_quantite, p.code_barre,
               p.unite_vente, p.has_variants, p.date_expiration,
               p.categorie, p.caracteristiques, p.variantes, p.ordre, p.created_at,
+              COALESCE(p.statut_moderation, 'actif') AS statut_moderation, p.motif_moderation, p.modere_le,
               b.nom AS boutique_nom,
               COALESCE(NULLIF(TRIM(b.telephone), ''), NULLIF(TRIM(b.whatsapp), ''), NULLIF(TRIM(u.telephone), '')) AS boutique_telephone,
               COALESCE(NULLIF(TRIM(b.whatsapp), ''), NULLIF(TRIM(b.telephone), ''), NULLIF(TRIM(u.telephone), '')) AS boutique_whatsapp,
