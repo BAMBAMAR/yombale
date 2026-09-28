@@ -178,5 +178,13 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
 - **Mode POS Express (Vente Libre)** : Création du composant modulaire `PosVenteLibreWidget.tsx` intégré dans `PosCatalogueSection.tsx`, permettant l'encaissement d'un montant direct (avec paliers rapides 1k, 2k, 5k, 10k FCFA) sans aucun produit pré-enregistré.
 - **Alerte Immédiate Paiement Manuel & Boucle WhatsApp** : Envoi d'alertes instantanées aux administrateurs lors d'une déclaration de paiement (`backend/routes/paiement.js`) et bouton 1-clic de confirmation WhatsApp pré-rempli dans `ModalPaiementManuel.tsx`.
 
-
-
+### 📌 Version Actuelle (28 septembre 2026 - Nuit - Correction Routage WhatsApp Boutiques & Fallback Orphelins) :
+- **Attribution du Numéro Marchand à la Boutique "D'accord"** : Mise à jour en base de données de la boutique `d-accord` (ID `ec55971a-ad31-4c35-8c9a-203c7adb6806`) avec le numéro réel de son propriétaire SAMACOM Innovation (`whatsapp = '221708274472'`, `telephone = '708274472'`), stoppant la fuite des commandes vers le numéro administrateur.
+- **Réparation Massive des Contacts Boutiques Orphelines** :
+  - Synchronisation automatique de 62 boutiques ayant un téléphone renseigné mais un champ `whatsapp` à `NULL`.
+  - Rétablissement de 6 boutiques ayant les deux champs vides en récupérant le numéro du compte créateur depuis la table `utilisateurs`.
+- **Résolution du Bug de Transmission dans ProduitCTA & CommanderModal** :
+  - Détection et correction d'un oubli majeur dans `ProduitCTA.tsx` où `CommanderModal` était invoqué sans passer `nomBoutique` ni `whatsapp`, forçant le texte à afficher *"Bonjour vendeur !"* et déclenchant systématiquement le fallback vers le numéro administrateur sur toutes les fiches produits individuelles (`/boutiques/[id]/produits/[produitId]`).
+  - Transmission propre de `whatsapp` et `nomBoutique` dans `ProduitCTA.tsx` et `page.tsx`.
+- **Sécurisation Backend Anti-Orphelins (Auto-Healing)** :
+  - Dans `GET /api/boutiques/:id/produits/:prodId` (`boutiques-produits.js`) et `GET /api/boutiques/:id` (`boutiques-crud.js`), ajout d'une jointure `LEFT JOIN utilisateurs u ON b.utilisateur_id = u.id` avec un `COALESCE` hiérarchique : `COALESCE(b.whatsapp, b.telephone, u.telephone)` pour garantir qu'aucune boutique ne renvoie de contact vide si son propriétaire possède un numéro de téléphone enregistré.

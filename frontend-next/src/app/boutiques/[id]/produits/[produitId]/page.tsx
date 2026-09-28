@@ -273,6 +273,7 @@ export default async function FicheProduitPage(
             boutiqueNom={p.boutique_nom}
             produit={{ id: p.id, nom: p.nom, prix: p.prix, images: p.images, prix_barre: p.prix_barre }}
             enStock={isEnStock}
+            whatsapp={waContact}
             waUrl={waUrl}
             telUrl={telUrl}
             variantes={p.variantes ?? []}

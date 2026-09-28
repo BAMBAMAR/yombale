@@ -492,8 +492,12 @@ router.get('/:id', async (req, res) => {
     const param = req.params.id;
     // Recherche universelle par UUID ou par slug (toujours accessible via lien direct ou QR Code)
     const r = await pool.query(
-      `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
-              b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram, b.tiktok, b.youtube,
+      `SELECT b.id, b.nom, b.description, b.categorie,
+              COALESCE(NULLIF(TRIM(b.telephone), ''), NULLIF(TRIM(b.whatsapp), ''), NULLIF(TRIM(u.telephone), '')) AS telephone,
+              b.adresse, b.ville,
+              b.logo_url, b.cover_url,
+              COALESCE(NULLIF(TRIM(b.whatsapp), ''), NULLIF(TRIM(b.telephone), ''), NULLIF(TRIM(u.telephone), '')) AS whatsapp,
+              b.site_web, b.facebook, b.instagram, b.tiktok, b.youtube,
               b.horaires, b.slug, b.utilisateur_id, b.created_at, b.actif, b.couleur_theme,
               b.slogan, COALESCE(b.theme_style, 'moderne') AS theme_style, COALESCE(b.couleur_secondaire, '#F8F5F0') AS couleur_secondaire,
               COALESCE(b.forme_boutons, 'squircle') AS forme_boutons, b.bandeau_promo, COALESCE(b.bandeau_promo_actif, false) AS bandeau_promo_actif,
@@ -515,6 +519,7 @@ router.get('/:id', async (req, res) => {
               COALESCE(b.fidelite_seuil_tampon, 2000) AS fidelite_seuil_tampon,
               COALESCE(a.plan, 'gratuit') AS plan_actif
        FROM boutiques b
+       LEFT JOIN utilisateurs u ON b.utilisateur_id = u.id
        LEFT JOIN LATERAL (
          SELECT plan FROM abonnements
          WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()

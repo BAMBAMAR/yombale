@@ -77,8 +77,10 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
               p.stock_quantite, p.code_barre,
               p.unite_vente, p.has_variants, p.date_expiration,
               p.categorie, p.caracteristiques, p.variantes, p.ordre, p.created_at,
-              b.nom AS boutique_nom, b.telephone AS boutique_telephone,
-              b.whatsapp AS boutique_whatsapp, b.ville AS boutique_ville,
+              b.nom AS boutique_nom,
+              COALESCE(NULLIF(TRIM(b.telephone), ''), NULLIF(TRIM(b.whatsapp), ''), NULLIF(TRIM(u.telephone), '')) AS boutique_telephone,
+              COALESCE(NULLIF(TRIM(b.whatsapp), ''), NULLIF(TRIM(b.telephone), ''), NULLIF(TRIM(u.telephone), '')) AS boutique_whatsapp,
+              b.ville AS boutique_ville,
               b.logo_url AS boutique_logo, b.actif AS boutique_actif,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               COALESCE(
@@ -93,6 +95,7 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
+       LEFT JOIN utilisateurs u ON b.utilisateur_id = u.id
        WHERE p.id=$1 AND ${boutiqueCondition}`,
       [req.params.prodId, idParam]
     );

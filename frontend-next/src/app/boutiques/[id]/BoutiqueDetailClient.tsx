@@ -384,7 +384,7 @@ export default function BoutiqueDetailClient({
         <CommanderModal
           boutiqueId={boutique.id}
           produit={commanderProduit}
-          whatsapp={boutique.whatsapp}
+          whatsapp={boutique.whatsapp || boutique.telephone}
           nomBoutique={boutique.nom}
           onClose={() => setCommanderProduit(null)}
         />

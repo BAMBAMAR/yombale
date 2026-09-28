@@ -27,6 +27,7 @@ interface Props {
   boutiqueNom?: string
   produit: { id: string; nom: string; prix: number | null; images?: string[]; prix_barre?: number | null }
   enStock: boolean
+  whatsapp?: string | null
   waUrl: string | null
   telUrl: string | null
   variantes: Variante[]
@@ -39,6 +40,7 @@ export default function ProduitCTA({
   boutiqueNom = 'Boutique',
   produit,
   enStock,
+  whatsapp,
   waUrl,
   telUrl,
   variantes,
@@ -109,6 +111,8 @@ export default function ProduitCTA({
       {showModal && (
         <CommanderModal
           boutiqueId={boutiqueId}
+          nomBoutique={boutiqueNom}
+          whatsapp={whatsapp || (waUrl ? waUrl.replace(/.*wa\.me\//, '').split('?')[0] : null)}
           produit={{
             id: produit.id,
             nom: produit.nom,
