@@ -7,6 +7,7 @@ const { requireAdminAuth } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const { envoyerEmail } = require('../services/email');
 const { sendWhatsAppNotification, normalisePhone } = require('../services/whatsapp');
+const { cacheInvalidatePattern } = require('../services/redis-cache');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 
@@ -199,6 +200,11 @@ router.put('/:id/moderation', async (req, res) => {
     // ── 1. Action Suppression Définitive ─────────────────────────
     if (action === 'supprimer') {
       await pool.query('DELETE FROM boutique_produits WHERE id = $1', [id]);
+      await Promise.all([
+        cacheInvalidatePattern('prod:catalog:').catch(() => null),
+        cacheInvalidatePattern('prod:').catch(() => null),
+        cacheInvalidatePattern('cat:').catch(() => null),
+      ]);
 
       await enregistrerAdminLog({
         action: 'produit_marchand_supprime',
@@ -321,6 +327,13 @@ router.put('/:id/moderation', async (req, res) => {
       values
     );
     const updatedProduit = rows[0];
+
+    // Purge immédiate des caches catalogue public et recherche
+    await Promise.all([
+      cacheInvalidatePattern('prod:catalog:').catch(() => null),
+      cacheInvalidatePattern('prod:').catch(() => null),
+      cacheInvalidatePattern('cat:').catch(() => null),
+    ]);
 
     // Enregistrement Audit Log
     await enregistrerAdminLog({

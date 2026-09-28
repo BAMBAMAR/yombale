@@ -63,6 +63,7 @@ router.get('/', limiterRecherche, async (req, res) => {
          FROM boutique_produits bp
          JOIN boutiques b ON b.id = bp.boutique_id
          WHERE b.actif = true AND bp.en_stock = true
+           AND (bp.statut_moderation IS NULL OR bp.statut_moderation = 'actif')
            AND (bp.nom ILIKE ANY($1::text[]) OR bp.description ILIKE ANY($1::text[]))
          ORDER BY type, prix ASC NULLS LAST
          LIMIT $2`,

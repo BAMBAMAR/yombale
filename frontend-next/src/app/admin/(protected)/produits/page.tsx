@@ -24,7 +24,7 @@ export default async function AdminProduitsPage() {
   let data: any = { produits: [], total: 0, stats: {} }
 
   try {
-    const res = await fetch(`${BACKEND}/api/admin/produits?limit=40`, { headers, cache: 'no-store' })
+    const res = await fetch(`${BACKEND}/api/admin/produits?limit=500`, { headers, cache: 'no-store' })
     if (res.ok) {
       data = await res.json()
     }

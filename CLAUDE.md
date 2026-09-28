@@ -26,7 +26,17 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Aplatissement Hero Mobile en Rectangle & Refonte Annuaire Boutiques & Agences) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Modération Produits & Exclusion Catalogue Accueil) :
+- **Supervision & Modération Produits Complète (`/admin/produits`)** :
+  - **Correction du bridage d'affichage** : Dans `frontend-next/src/app/admin/(protected)/produits/page.tsx`, remplacement de `?limit=40` par `?limit=500` permettant de charger l'intégralité du catalogue des boutiques (168 articles) et d'inclure les produits suspendus situés au-delà des 40 plus récents.
+  - **Compteurs dynamiques synchronisés** : Dans `ProduitsSupervisionClient.tsx`, synchronisation des onglets avec les données réelles (`Tous (168)`, `En vente (150)`, `Suspendus / Modérés (1)`, `Ruptures de stock (17)`) avec réactivité temps réel sur les cartes KPI lors des actions de modération.
+- **Sécurisation & Exclusion Stricte des Produits Suspendus (Accueil `/`, Recherche & Fiches)** :
+  - **Exclusion du catalogue public (`backend/routes/produits.js`)** : Ajout systématique du filtre `AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')` sur la requête d'accueil `baseBoutique`, la recherche instantanée `/instantanee`, les catégories actives `/categories-actives`, ainsi que sur le détail produit (`/:id`) et les offres (`/:id/offres`).
+  - **Recherche globale multi-entités (`backend/routes/search.js`)** : Filtrage strict sur `produit_boutique` pour masquer tout article modéré.
+  - **Invalidation immédiate du cache Redis (`backend/routes/admin-produits.js`)** : Purge automatique des clés `prod:catalog:*`, `prod:*` et `cat:*` dès qu'un admin suspend, réactive ou supprime un article.
+  - **Assainissement des données** : Verrouillage de l'article suspendu "Longrich SOD" (`en_stock = false`) et purge du cache, éliminant sa remontée en première place sur l'accueil due à son prix anomal (6 FCFA).
+
+### 📌 Version Précédente (28 septembre 2026 - Aplatissement Hero Mobile en Rectangle & Refonte Annuaire Boutiques & Agences) :
 - **Aplatissement du Hero Mobile en Rectangle Épuré (Modèle Page d'Accueil `/`) (`/boutiques` & `/agences`)** :
   - **Diagnostic** : Sur mobile (`<= 768px`), la section Hero formait une tour verticale de plus de 700px repoussant le contenu sous la ligne de flottaison à cause du carrousel bento et des colonnes empilées.
   - **Aplatissement Rectangulaire (~130px)** :

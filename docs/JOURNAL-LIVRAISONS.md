@@ -1,5 +1,28 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Modération Produits Catalogue & Sécurisation Filtrage Public Accueil (28 septembre 2026)** :
+  * **Problèmes Résolus & Améliorations Apportées** :
+    1. **Correction du Bridage d'Affichage dans l'Admin (`/admin/produits`)** :
+       - *Diagnostic* : Dans `src/app/admin/(protected)/produits/page.tsx`, l'appel backend était limité en dur à `limit=40`. Seuls les 40 produits les plus récents étaient chargés alors que la base en contient 168.
+       - *Conséquence* : L'onglet affichait « Tous (40) » et l'onglet « Suspendus / Modérés » affichait « Aucun article » car l'unique produit suspendu de la base (*"Longrich SOD"*) se situait au-delà de la 40ᵉ position.
+       - *Correction* : Passage du paramètre initial à `limit=500` pour charger l'intégralité du catalogue. Compteurs dynamiques ajoutés sur chaque onglet (`Tous (168)`, `En vente (150)`, `Suspendus / Modérés (1)`, `Ruptures de stock (17)`) avec réactivité temps réel lors des modérations.
+    2. **Exclusion Stricte des Produits Suspendus sur la Page d'Accueil (`/`) & Recherche** :
+       - *Diagnostic* : La sous-requête SQL `baseBoutique` dans `backend/routes/produits.js` sélectionnant les articles pour l'accueil filtrait uniquement avec `WHERE b.actif = true AND p.en_stock = true` sans vérifier `statut_moderation`. De plus, le produit suspendu avait son `en_stock = true` et un prix anormal de 6 FCFA, le propulsant tout en haut de l'accueil avec le tri par meilleur prix croissant (`ORDER BY agg_prix_min ASC`).
+       - *Correction* : Ajout systématique du filtre `AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')` dans :
+         - La requête du catalogue d'accueil `baseBoutique` (`backend/routes/produits.js`)
+         - La recherche instantanée typeahead `/instantanee` (2 occurrences)
+         - Les catégories actives `/categories-actives`
+         - Les fiches produits et offres détaillées (`/:id` et `/:id/offres`)
+         - La recherche globale multi-entités (`backend/routes/search.js`)
+    3. **Invalidation Immédiate du Cache Redis à la Modération (`backend/routes/admin-produits.js`)** :
+       - Dès qu'un administrateur suspend, réactive ou supprime un produit, purge automatique des motifs de cache Redis `prod:catalog:*`, `prod:*` et `cat:*` pour refléter instantanément la décision sur le site public.
+    4. **Remise en Conformité des Données** :
+       - Verrouillage du produit suspendu *"Longrich SOD"* avec `en_stock = false` et purge du cache pour disparition immédiate de l'accueil.
+  * **Validation & Qualité** :
+    - `npx tsc --noEmit` : 100% PASS (0 erreur TypeScript).
+    - `npm run lint:slop` : 100% PASS.
+    - Test SQL unitaire validé : 0 produit suspendu retourné sur le catalogue de l'accueil.
+
 - **Aplatissement Hero Mobile en Rectangle & Refonte Ergonomique Annuaire Boutiques & Agences (28 septembre 2026)** :
   * **Problèmes Résolus & Améliorations Apportées** :
     1. **Aplatissement du Hero Mobile en Rectangle Épuré (Modèle Page d'Accueil `/`) (`/boutiques` & `/agences`)** :

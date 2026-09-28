@@ -84,6 +84,18 @@ export default function ProduitsSupervisionClient({ initialData }: ProduitsSuper
     return true
   })
 
+  const countTous = produits.length
+  const countStock = produits.filter((p) => {
+    const isSusp = p.statut_moderation === 'suspendu' || (p.en_stock === false && p.motif_moderation)
+    return p.en_stock && !isSusp
+  }).length
+  const countSuspendus = produits.filter((p) => {
+    return p.statut_moderation === 'suspendu' || (p.en_stock === false && p.motif_moderation)
+  }).length
+  const countRuptures = produits.filter((p) => {
+    return !p.en_stock || (p.stock_quantite !== null && p.stock_quantite <= 0)
+  }).length
+
   const stats = initialData.stats || {}
 
   return (
@@ -114,7 +126,7 @@ export default function ProduitsSupervisionClient({ initialData }: ProduitsSuper
         <div className="admin-stat-card" style={{ background: '#ffffff', padding: 16, borderRadius: 10, border: '1px solid var(--border)' }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Articles Référencés</span>
           <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--navy)', margin: '6px 0 2px' }}>
-            {stats.total_produits || initialData.total || 0}
+            {countTous || stats.total_produits || initialData.total || 0}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text2)' }}>
             Catalogue global des boutiques
@@ -124,7 +136,7 @@ export default function ProduitsSupervisionClient({ initialData }: ProduitsSuper
         <div className="admin-stat-card" style={{ background: '#ffffff', padding: 16, borderRadius: 10, border: '1px solid var(--border)' }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>En Vente Active</span>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#047857', margin: '6px 0 2px' }}>
-            {stats.en_stock || 0}
+            {countStock}
           </div>
           <div style={{ fontSize: 12, color: '#047857', display: 'flex', alignItems: 'center', gap: 4 }}>
             <CheckCircle2 size={13} />
@@ -134,10 +146,10 @@ export default function ProduitsSupervisionClient({ initialData }: ProduitsSuper
 
         <div className="admin-stat-card" style={{ background: '#ffffff', padding: 16, borderRadius: 10, border: '1px solid var(--border)' }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Articles Suspendus</span>
-          <div style={{ fontSize: 24, fontWeight: 800, color: stats.nb_suspendus > 0 ? '#b91c1c' : 'var(--navy)', margin: '6px 0 2px' }}>
-            {stats.nb_suspendus || 0}
+          <div style={{ fontSize: 24, fontWeight: 800, color: countSuspendus > 0 ? '#b91c1c' : 'var(--navy)', margin: '6px 0 2px' }}>
+            {countSuspendus}
           </div>
-          <div style={{ fontSize: 12, color: stats.nb_suspendus > 0 ? '#b91c1c' : 'var(--text3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ fontSize: 12, color: countSuspendus > 0 ? '#b91c1c' : 'var(--text3)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <ShieldAlert size={13} />
             <span>Modérés avec motif</span>
           </div>
@@ -145,8 +157,8 @@ export default function ProduitsSupervisionClient({ initialData }: ProduitsSuper
 
         <div className="admin-stat-card" style={{ background: '#ffffff', padding: 16, borderRadius: 10, border: '1px solid var(--border)' }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Ruptures de Stock</span>
-          <div style={{ fontSize: 24, fontWeight: 800, color: stats.en_rupture > 0 ? '#ea580c' : 'var(--navy)', margin: '6px 0 2px' }}>
-            {stats.en_rupture || 0}
+          <div style={{ fontSize: 24, fontWeight: 800, color: countRuptures > 0 ? '#ea580c' : 'var(--navy)', margin: '6px 0 2px' }}>
+            {countRuptures}
           </div>
           <div style={{ fontSize: 12, color: '#ea580c', display: 'flex', alignItems: 'center', gap: 4 }}>
             <AlertTriangle size={13} />
@@ -159,10 +171,10 @@ export default function ProduitsSupervisionClient({ initialData }: ProduitsSuper
       <div style={{ background: '#ffffff', padding: 14, borderRadius: 10, border: '1px solid var(--border)', marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
-            { id: 'tous', label: `Tous (${produits.length})` },
-            { id: 'stock', label: 'En vente' },
-            { id: 'suspendu', label: 'Suspendus / Modérés' },
-            { id: 'rupture', label: 'Ruptures de stock' },
+            { id: 'tous', label: `Tous (${countTous})` },
+            { id: 'stock', label: `En vente (${countStock})` },
+            { id: 'suspendu', label: `Suspendus / Modérés (${countSuspendus})` },
+            { id: 'rupture', label: `Ruptures de stock (${countRuptures})` },
           ].map((tab) => (
             <button
               key={tab.id}

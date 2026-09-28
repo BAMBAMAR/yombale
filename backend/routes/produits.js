@@ -52,6 +52,7 @@ router.get('/instantanee', async (req, res) => {
        WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) 
          AND b.actif = true 
          AND p.en_stock = true
+         AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')
          AND p.images IS NOT NULL 
          AND array_length(p.images, 1) > 0 
          AND p.images[1] IS NOT NULL 
@@ -105,6 +106,7 @@ router.get('/categories-actives', async (req, res) => {
       FROM boutique_produits bp
       JOIN boutiques b ON b.id = bp.boutique_id
       WHERE bp.en_stock = true AND b.actif = true
+        AND (bp.statut_moderation IS NULL OR bp.statut_moderation = 'actif')
     `);
     const activeSlugs = rows.map(r => r.slug).filter(Boolean);
     
@@ -325,6 +327,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
         FROM boutique_produits p
         JOIN boutiques b ON b.id = p.boutique_id
         WHERE b.actif = true AND p.en_stock = true
+          AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')
           AND p.images IS NOT NULL 
           AND array_length(p.images, 1) > 0 
           AND p.images[1] IS NOT NULL 
@@ -480,7 +483,8 @@ router.get('/:id', checkUUID, async (req, res) => {
                b.id AS boutique_id
         FROM boutique_produits p
         JOIN boutiques b ON b.id = p.boutique_id
-        WHERE p.id = $1 AND b.actif = true`,
+        WHERE p.id = $1 AND b.actif = true
+          AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')`,
         [req.params.id]
       );
       if (!bp.rows.length) return res.status(404).json({ error: 'Produit introuvable' });
@@ -531,7 +535,8 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
         SELECT p.id, p.nom, p.prix, p.en_stock, b.nom AS boutique_nom, b.slug AS boutique_slug, b.id AS boutique_id
         FROM boutique_produits p
         JOIN boutiques b ON b.id = p.boutique_id
-        WHERE p.id = $1 AND b.actif = true`,
+        WHERE p.id = $1 AND b.actif = true
+          AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')`,
         [req.params.id]
       );
       if (bp.rows.length > 0) {
@@ -767,6 +772,7 @@ router.get('/instantanee', async (req, res) => {
        WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) 
          AND b.actif = true 
          AND p.en_stock = true
+         AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')
          AND p.images IS NOT NULL 
          AND array_length(p.images, 1) > 0 
          AND p.images[1] IS NOT NULL 
