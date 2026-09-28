@@ -324,7 +324,8 @@ export default async function CommunicationPage() {
   let initialSocialLinks: any[] | undefined = undefined
 
   try {
-    const { adminHeaders, DEFAULT_SOCIAL_LINKS } = require('@/app/actions/admin')
+    const { adminHeaders } = require('@/app/actions/admin/admin-common')
+    const { DEFAULT_SOCIAL_LINKS } = require('./components/types')
     const r = await fetch(`${BACKEND}/api/settings`, { headers: adminHeaders(token), cache: 'no-store' })
     if (r.ok) {
       const s = await r.json()

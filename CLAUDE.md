@@ -55,7 +55,10 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
     - Liens directs 1-clic d'ouverture WhatsApp (`wa.me/221...`) pour dialoguer avec le commerçant.
     - Modale de confirmation sécurisée avant exécution du virement pour éviter tout clic accidentel.
     - Zéro émoji UI (icônes vectorielles SVG `lucide-react` uniquement), tokens du Design System Nopalou (`--navy`, `--accent`, `--border`).
+  - **Correction Build Production Server Actions (`admin-communication.ts` & `types.ts`)** :
+    - Élimination de l'erreur Render `Error: A "use server" file can only export async functions, found object` en déplaçant la constante `DEFAULT_SOCIAL_LINKS` hors du fichier Server Action vers `components/types.ts`.
   - **Contrôle Qualité & Résilience** :
+    - `npm run build` production : 100% PASS (134 pages générées sans erreur).
     - `npm --prefix frontend-next exec tsc -- -p frontend-next --noEmit` : 100% PASS (0 erreur).
     - `npm --prefix frontend-next run lint:slop` : 100% PASS (advisory clean).
     - `node --check` backend : 100% PASS.

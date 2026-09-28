@@ -28,6 +28,8 @@
        - Liens directs 1-clic d'ouverture WhatsApp (`wa.me/221...`) pour dialoguer avec le commerçant.
        - Modale de confirmation sécurisée avant exécution du virement pour éviter tout clic accidentel.
        - Zéro émoji UI (icônes vectorielles SVG `lucide-react` uniquement), tokens du Design System Nopalou (`--navy`, `--accent`, `--border`).
+    7. **Correction Build Production Server Actions (`admin-communication.ts` & `types.ts`)** :
+       - Résolution de l'erreur Render `Error: A "use server" file can only export async functions, found object` en externalisant la constante `DEFAULT_SOCIAL_LINKS` dans `components/types.ts`.
   * **Validation & Qualité** :
     - `npm --prefix frontend-next exec tsc -- -p frontend-next --noEmit` : 100% PASS (0 erreur).
     - `npm --prefix frontend-next run lint:slop` : 100% PASS (advisory clean).
