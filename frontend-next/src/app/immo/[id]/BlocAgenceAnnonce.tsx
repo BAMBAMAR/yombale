@@ -82,6 +82,39 @@ export default function BlocAgenceAnnonce({
 
   const waUrl = `https://wa.me/${cleanWa}?text=${waText}`;
 
+  // Conciergerie Chasseur Immo Nopalou pour les annonces sans contact direct
+  const chasseurTel = '221777202086';
+  const chasseurText = encodeURIComponent(
+    `Bonjour Nopalou Chasseur Immo,\n\nJe suis intéressé(e) par ce bien vu sur votre portail :\n*${titre}*${prix ? ` — ${fcfa(prix)}` : ''}\n📍 ${[quartier, ville].filter(Boolean).join(', ')}\n🔗 https://nopalou.com/immo/${annonceId}\n\nPouvez-vous vérifier la disponibilité de ce bien et m'aider à organiser une visite ?`
+  );
+  const chasseurWaUrl = `https://wa.me/${chasseurTel}?text=${chasseurText}`;
+
+  function handleChasseurClick() {
+    let visitorTel: string | null = null;
+    let visitorNom = 'Prospect Chasseur Immo';
+    try {
+      const savedTel = localStorage.getItem('nopalou_client_tel');
+      const savedNom = localStorage.getItem('nopalou_client_nom');
+      if (savedTel?.trim()) visitorTel = savedTel.trim();
+      if (savedNom?.trim()) visitorNom = savedNom.trim();
+    } catch {}
+
+    fetch('/api/crm-immo/public/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        annonce_id: annonceId,
+        telephone: visitorTel || '221000000000',
+        nom: visitorNom,
+        type_action: 'chasseur_immo_click',
+        type_operation: transaction || 'location',
+        budget: prix,
+        quartier,
+        ville,
+      }),
+    }).catch(() => {});
+  }
+
   // Ingestion automatique du prospect dans le CRM de l'agence lors du clic WhatsApp
   function handleWhatsAppClick() {
     if (agence?.id) {
@@ -293,21 +326,49 @@ export default function BlocAgenceAnnonce({
           </a>
         )}
 
-        {/* Message d'information si aucun numéro direct disponible */}
+        {/* Conciergerie Chasseur Nopalou si aucun numéro direct disponible */}
         {!cleanWa && !isAgence && (
           <div
             style={{
-              padding: '11px 14px',
-              borderRadius: 10,
+              padding: '13px 14px',
+              borderRadius: 12,
               background: 'var(--bg, #F8F5F0)',
-              border: '1px solid var(--border, #E8DDD2)',
-              fontSize: '0.82rem',
-              color: '#64748B',
-              textAlign: 'center',
-              lineHeight: '1.45',
+              border: '1.5px solid var(--border, #E8DDD2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
             }}
           >
-            Coordonnées directes non publiées. Consultez la source originale ci-dessous pour contacter l&apos;annonceur.
+            <div style={{ fontSize: '0.84rem', color: 'var(--navy, #1C2B4A)', fontWeight: 750, lineHeight: '1.35' }}>
+              Coordonnées directes masquées sur la source
+            </div>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748B', lineHeight: '1.4' }}>
+              Confiez ce bien au <strong>Chasseur Immo Nopalou</strong> : nous contactons le propriétaire et organisons votre visite sans frais.
+            </p>
+            <a
+              href={chasseurWaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleChasseurClick}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '11px 14px',
+                borderRadius: 10,
+                background: '#25D366',
+                color: '#ffffff',
+                fontSize: 13,
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: '0 3px 10px rgba(37,211,102,0.25)',
+                marginTop: 4,
+              }}
+            >
+              <MessageCircle size={16} />
+              <span>Demander au Chasseur Nopalou</span>
+            </a>
           </div>
         )}
 

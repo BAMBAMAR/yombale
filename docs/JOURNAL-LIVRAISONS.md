@@ -1,5 +1,29 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit Transversal Conversion & Corrections Opérationnelles Validées (28 septembre 2026 - Nuit)** :
+  * **Problèmes Résolus & Améliorations Apportées** :
+    1. **Déblocage Immédiat de la Création de Boutique Standard (`ERR-COM-01` / P0)** :
+       - *Problème* : Le middleware `requireEmailVerifie` sur `POST /api/boutiques` bloquait avec HTTP 403 tout commerçant inscrit par e-mail n'ayant pas validé son lien avant de créer sa boutique.
+       - *Correction* : Aligné sur la route `taf-taf` en levant le blocage e-mail sur `POST /api/boutiques` pour autoriser la création de la boutique d'essai immédiate.
+    2. **Initialisation Automatique de `caisse_token` sur Taf-Taf & Standard (`ERR-TECH-02` / P1)** :
+       - *Problème* : `POST /api/boutiques/taf-taf` et `POST /` omettaient la colonne `caisse_token`, laissant le jeton à `NULL` et provoquant une 404 lors de l'accès au terminal autonome de caisse `/api/boutiques/caisse-terminal/:token`.
+       - *Correction* : Génération systématique d'un jeton cryptographique (`crypto.randomBytes(24).toString('hex')`) à l'insertion et renvoi dans la charge utile de réponse ; backfill exécuté en base sur les boutiques existantes (`0 jeton restant à NULL`).
+    3. **Garde-Fou d'Intégrité Téléphonique Marchand (`ERR-TECH-07` / P3)** :
+       - *Problème* : Le formulaire standard autorisait la création d'une boutique sans téléphone, risquant de créer une vitrine sans contact direct.
+       - *Correction* : Obligation d'un numéro de téléphone/WhatsApp direct sur `POST /api/boutiques` (HTTP 400 clair si manquant) avec rétro-synchronisation automatique sur `utilisateurs.telephone`.
+    4. **Conversion des Annonces Immobilières Orphelines vers Chasseur Immo Nopalou (`ERR-COM-03` / P1)** :
+       - *Problème* : 2 933 annonces immobilières scrapées (72,5%) n'avaient aucun contact téléphonique direct et affichaient un bouton sortant externe menant chez les concurrents.
+       - *Correction* : Implémentation d'une carte Conciergerie Chasseur Immo Nopalou (`BlocAgenceAnnonce.tsx`) avec contact WhatsApp direct (`221777202086`) et capture automatique de lead dans `contacts_immo` (`POST /api/crm-immo/public/lead` avec `type_action: 'chasseur_immo_click'`). Le lien externe sortant (`FicheImmoSidebar.tsx`) a été basculé en lien secondaire discret outline.
+    5. **Traitement & Relance Automatisée des Paniers Abandonnés (`ERR-COM-05` / P2)** :
+       - *Problème* : 44 sessions de paniers abandonnés avec téléphones clients dormaient en base (`paniers_abandonnes`) sans relance automatisée.
+       - *Correction* : Extension de `backend/services/relance-panier.js` pour extraire et relancer automatiquement par WhatsApp les paniers abandonnés éligibles (> 45 min), sous protection stricte des heures ouvrées (9h-21h GMT).
+    6. **Élimination de l'Erreur 404 sur `/comparateur` & `/comparer` (`ERR-SEO-06` / P2)** :
+       - *Problème* : Taper `/comparateur` ou `/comparer` générait une erreur 404 sur le frontend et le backend.
+       - *Correction* : Redirection 301 dans `frontend-next/next.config.js`, Route Handler App Router `frontend-next/src/app/comparateur/route.ts` (avec préservation des requêtes `?q=`) et redirection permanente dans `backend/app.js`.
+  * **Validation & Qualité** :
+    - Tests d'API et de persistance exécutés et validés (`scratch/test_fixes_lot1.js`, `scratch/test_relance_paniers.js`, `scratch/test_immo_chasseur.js`).
+    - Linter anti-slop exécuté avec succès (`npm run lint:slop`).
+
 - **Remédiation Complète de la Rétention & Parcours Notification-Action Commerçant (28 septembre 2026 - Nuit)** 🚀🔑📦💳📊🛡️✅ :
   * **🎯 Problèmes Résolus & Améliorations Apportées** :
     1. **Suppression du Mur de Connexion (Système de Magic Links HMAC)** :

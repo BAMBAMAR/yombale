@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Scale } from 'lucide-react'
+import { Scale, ExternalLink } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import BlocAgenceAnnonce, { AgenceInfo, AgentInfo } from './BlocAgenceAnnonce'
 import SponsoringImmoBtn from './SponsoringImmoBtn'
@@ -161,25 +161,31 @@ export default function FicheImmoSidebar({
           Pour retirer ce bien ou votre numéro : envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#25d366', fontWeight: 600, textDecoration: 'underline' }}>WhatsApp</a> ou <a href="/cgu#suppression-donnees" style={{ color: 'var(--navy, #1C2B4A)', textDecoration: 'underline' }}>consultez les CGU</a>.
         </div>
 
-        {/* Lien source */}
+        {/* Lien source secondaire */}
         {annonce.url_source && (
           <a
             href={annonce.url_source}
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              display: 'block',
-              textAlign: 'center',
-              background: 'var(--blue)',
-              color: '#fff',
-              padding: '10px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              background: 'transparent',
+              color: '#64748B',
+              border: '1px solid var(--border, #E8DDD2)',
+              padding: '9px 14px',
               borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 600,
-              marginTop: 16,
+              fontSize: '12.5px',
+              fontWeight: 650,
+              marginTop: 12,
+              textDecoration: 'none',
+              transition: 'background 0.2s',
             }}
           >
-            Voir l&apos;annonce originale →
+            <span>Consulter la publication d&apos;origine</span>
+            <ExternalLink size={13} />
           </a>
         )}
 

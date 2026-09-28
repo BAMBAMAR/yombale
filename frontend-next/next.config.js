@@ -77,6 +77,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/comparateur',
+        destination: '/',
+        permanent: true,
+      },
+      {
         source: '/pos',
         destination: '/logiciel-caisse-senegal',
         permanent: true,

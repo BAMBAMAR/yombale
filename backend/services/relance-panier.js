@@ -97,6 +97,62 @@ _Pour ne plus recevoir de rappel, répondez simplement STOP._`;
       }
     }
 
+    // 2. Traitement des sessions de paniers abandonnés en ligne (table paniers_abandonnes)
+    const { rows: paniersRows } = await pool.query(`
+      SELECT p.id, p.client_nom, p.client_tel, p.articles, p.total, p.boutique_id,
+             b.nom as boutique_nom, b.slug as boutique_slug
+      FROM paniers_abandonnes p
+      LEFT JOIN boutiques b ON b.id = p.boutique_id
+      WHERE (p.relance_envoyee IS NOT TRUE)
+        AND p.client_tel IS NOT NULL
+        AND length(trim(p.client_tel)) >= 9
+        AND p.created_at <= NOW() - INTERVAL '45 minutes'
+      LIMIT 15
+    `);
+
+    for (const p of paniersRows) {
+      try {
+        const phone = normalisePhone(p.client_tel);
+        if (await estDesinscrit(phone)) {
+          await pool.query('UPDATE paniers_abandonnes SET relance_envoyee = TRUE WHERE id = $1', [p.id]);
+          continue;
+        }
+
+        const prenom = p.client_nom ? p.client_nom.split(' ')[0] : 'Bonjour';
+        const totalFmt = new Intl.NumberFormat('fr-FR').format(p.total || 0);
+        const nomBoutique = p.boutique_nom || 'Nopalou Sénégal';
+        const boutiqueUrl = `${SITE}/boutiques/${p.boutique_slug || p.boutique_id}`;
+
+        let articlesList = '';
+        if (Array.isArray(p.articles) && p.articles.length > 0) {
+          articlesList = p.articles.map(a => `• ${a.quantite || 1}x ${a.nom || 'Article'}`).slice(0, 3).join('\n');
+        }
+
+        const msgPanier = 
+`👋 *${prenom}, avez-vous oublié vos articles chez ${nomBoutique} ?*
+
+Vos articles sont toujours mis de côté pour vous :
+${articlesList ? articlesList + '\n' : ''}Total panier : *${totalFmt} FCFA*
+
+⚡ *Pour finaliser votre commande directement avec le vendeur :*
+👉 ${boutiqueUrl}
+
+_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
+
+        await sendWhatsAppText(phone, msgPanier);
+
+        await pool.query(`
+          UPDATE paniers_abandonnes
+          SET relance_envoyee = TRUE
+          WHERE id = $1
+        `, [p.id]);
+
+        relancesEnvoyees++;
+      } catch (errP) {
+        console.warn(`[RELANCE PANIER ABANDONNE] Erreur pour panier ${p.id}:`, errP.message);
+      }
+    }
+
     return { count: relancesEnvoyees, message: `${relancesEnvoyees} relances envoyées avec succès` };
   } catch (err) {
     console.error('[RELANCE PANIER CRON ERR]:', err.message);

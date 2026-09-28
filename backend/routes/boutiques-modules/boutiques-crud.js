@@ -146,10 +146,12 @@ router.post('/taf-taf', async (req, res) => {
     }
 
     // 2. Créer la boutique
+    const crypto = require('crypto');
+    const caisseToken = crypto.randomBytes(24).toString('hex');
     const insertBoutique = await pool.query(
-      `INSERT INTO boutiques (utilisateur_id, nom, telephone, ville, categorie, couleur_theme, apporteur_id, actif)
-       VALUES ($1, $2, $3, 'Dakar', $4, $5, $6, true) RETURNING id`,
-      [user.id, nom, telephone, categorie || 'Divers', couleur_theme || couleur || '#25D366', apporteurId]
+      `INSERT INTO boutiques (utilisateur_id, nom, telephone, ville, categorie, couleur_theme, apporteur_id, caisse_token, actif)
+       VALUES ($1, $2, $3, 'Dakar', $4, $5, $6, $7, true) RETURNING id, caisse_token`,
+      [user.id, nom, telephone, categorie || 'Divers', couleur_theme || couleur || '#25D366', apporteurId, caisseToken]
     );
     const boutiqueId = insertBoutique.rows[0].id;
 
@@ -205,7 +207,7 @@ router.post('/taf-taf', async (req, res) => {
     const jwt = require('jsonwebtoken');
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ success: true, boutiqueId, token });
+    res.json({ success: true, boutiqueId, boutique: { id: boutiqueId, caisse_token: caisseToken }, caisse_token: caisseToken, token });
   } catch (err) {
     console.error('[TAF TAF]', err);
     res.status(500).json({ error: err.message });
@@ -638,7 +640,7 @@ router.get('/:id/produits/:prodId/recommandations', async (req, res) => {
 });
 
 // ── POST /api/boutiques/:id/paniers-abandonnes — Enregistrer un panier non finalisé
-router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'cover', maxCount: 1 }]), [
+router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'cover', maxCount: 1 }]), [
   body('nom').trim().notEmpty().withMessage('Nom de boutique requis').isLength({ max: 200 }),
   body('telephone').optional({ checkFalsy: true }).isString(),
   body('ville').optional({ checkFalsy: true }).isString(),
@@ -654,8 +656,18 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
     // Quotas configurables (Admin)
     const userRes = await pool.query('SELECT email, telephone FROM utilisateurs WHERE id=$1', [userId]);
     const currentUser = userRes.rows[0] || {};
-    const inputTelRaw = telephone?.trim() || currentUser.telephone?.trim() || '';
+    const inputTelRaw = telephone?.trim() || whatsapp?.trim() || currentUser.telephone?.trim() || '';
     const userEmailRaw = (currentUser.email || '').trim().toLowerCase();
+
+    // Garde-fou d'intégrité : un numéro de contact direct est obligatoire
+    if (!inputTelRaw) {
+      return res.status(400).json({ error: 'Un numéro de téléphone ou WhatsApp est obligatoire pour recevoir vos commandes' });
+    }
+
+    // Si le profil utilisateur n'avait pas encore de téléphone, le synchroniser automatiquement
+    if (!currentUser.telephone && inputTelRaw) {
+      pool.query('UPDATE utilisateurs SET telephone=$1 WHERE id=$2', [inputTelRaw, userId]).catch(() => {});
+    }
 
     const quotaCheck = await checkBoutiqueQuotas(userId, inputTelRaw, userEmailRaw);
     if (!quotaCheck.allowed) {
@@ -686,18 +698,22 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
       if (apporteurRow.rows[0]) apporteurId = apporteurRow.rows[0].id;
     }
 
-    // INSERT avec colonnes de base (toujours présentes)
+    // Générer un caisse_token unique dès la création
+    const crypto = require('crypto');
+    const caisseToken = crypto.randomBytes(24).toString('hex');
+
+    // INSERT avec colonnes de base
     const r = await pool.query(
-      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville, logo_url, apporteur_id, actif)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, true) RETURNING id`,
-      [userId, nom.trim(), description||null, categorie||null, telephone||null,
-       adresse||null, ville||'Dakar', logo_url, apporteurId]
+      `INSERT INTO boutiques (utilisateur_id, nom, description, categorie, telephone, adresse, ville, logo_url, apporteur_id, caisse_token, actif)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, true) RETURNING id, caisse_token`,
+      [userId, nom.trim(), description||null, categorie||null, inputTelRaw,
+       adresse||null, ville||'Dakar', logo_url, apporteurId, caisseToken]
     );
     const newId = r.rows[0].id;
 
     // Hook automatique de conversion CRM prospection
-    if (telephone) {
-      const normTel = String(telephone).replace(/\D/g, '').slice(-9);
+    if (inputTelRaw) {
+      const normTel = String(inputTelRaw).replace(/\D/g, '').slice(-9);
       if (normTel.length === 9) {
         pool.query(
           `UPDATE prospection_leads SET statut = 'converti', derniere_action_at = NOW(), updated_at = NOW()
@@ -710,10 +726,11 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
     // UPDATE des colonnes avancées (ajoutées par migration — best-effort)
     try {
       const mode = ['hybride_pos', 'pure_player'].includes(req.body.mode_fonctionnement) ? req.body.mode_fonctionnement : 'hybride_pos';
+      const finalWhatsapp = whatsapp?.trim() || inputTelRaw;
       await pool.query(
         `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4, instagram=$5, slug=$6, mode_fonctionnement=$7
          WHERE id=$8`,
-        [cover_url||null, whatsapp||null, site_web||null, facebook||null, instagram||null, slug, mode, newId]
+        [cover_url||null, finalWhatsapp, site_web||null, facebook||null, instagram||null, slug, mode, newId]
       );
     } catch (_) { /* colonnes pas encore migrées — ignoré */ }
 

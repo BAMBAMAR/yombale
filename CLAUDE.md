@@ -26,7 +26,27 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Nuit - Audit Réel Mobile & Réseau Extrême & Corrections 100% Validées) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Nuit - Audit Transversal Conversion & Corrections Opérationnelles Validées) :
+- **Déblocage Immédiat de la Création de Boutique Standard (`ERR-COM-01` / P0)** :
+  - **Diagnostic** : Le middleware `requireEmailVerifie` sur `POST /api/boutiques` bloquait avec HTTP 403 tout commerçant inscrit par e-mail n'ayant pas validé son lien avant de créer sa boutique.
+  - **Correction** : Aligné sur la route `taf-taf` en levant le blocage e-mail sur `POST /api/boutiques` pour autoriser la création de la boutique d'essai immédiate.
+- **Initialisation Automatique de `caisse_token` sur Taf-Taf & Standard (`ERR-TECH-02` / P1)** :
+  - **Diagnostic** : `POST /api/boutiques/taf-taf` et `POST /` omettaient la colonne `caisse_token`, laissant le jeton à `NULL` et provoquant une 404 lors de l'accès au terminal autonome de caisse `/api/boutiques/caisse-terminal/:token`.
+  - **Correction** : Génération systématique d'un jeton cryptographique (`crypto.randomBytes(24).toString('hex')`) à l'insertion et renvoi dans la charge utile de réponse ; backfill exécuté en base sur les boutiques existantes.
+- **Garde-Fou d'Intégrité Téléphonique Marchand (`ERR-TECH-07` / P3)** :
+  - **Diagnostic** : Le formulaire standard autorisait la création d'une boutique sans téléphone, risquant de créer une vitrine sans contact direct.
+  - **Correction** : Obligation d'un numéro de téléphone/WhatsApp direct sur `POST /api/boutiques` (HTTP 400 clair si manquant) avec rétro-synchronisation automatique sur `utilisateurs.telephone`.
+- **Conversion des Annonces Immobilières Orphelines vers Chasseur Immo Nopalou (`ERR-COM-03` / P1)** :
+  - **Diagnostic** : 2 933 annonces immobilières scrapées (72,5%) n'avaient aucun contact téléphonique direct et affichaient un bouton sortant externe bleu menant chez les concurrents.
+  - **Correction** : Implémentation d'une carte Conciergerie Chasseur Immo Nopalou (`BlocAgenceAnnonce.tsx`) avec contact WhatsApp direct (`221777202086`) et capture automatique de lead dans `contacts_immo` (`POST /api/crm-immo/public/lead` avec `type_action: 'chasseur_immo_click'`). Le lien externe sortant (`FicheImmoSidebar.tsx`) a été basculé en lien secondaire discret outline.
+- **Traitement & Relance Automatisée des Paniers Abandonnés (`ERR-COM-05` / P2)** :
+  - **Diagnostic** : 44 sessions de paniers abandonnés avec téléphones clients dormaient en base (`paniers_abandonnes`) sans relance automatisée.
+  - **Correction** : Extension de `backend/services/relance-panier.js` pour extraire et relancer automatiquement par WhatsApp les paniers abandonnés éligibles (> 45 min), sous protection stricte des heures ouvrées (9h-21h GMT).
+- **Élimination de l'Erreur 404 sur `/comparateur` & `/comparer` (`ERR-SEO-06` / P2)** :
+  - **Diagnostic** : Taper `/comparateur` ou `/comparer` générait une erreur 404 sur le frontend et le backend.
+  - **Correction** : Redirection 301 dans `frontend-next/next.config.js`, Route Handler App Router `frontend-next/src/app/comparateur/route.ts` (avec préservation des requêtes `?q=`) et redirection permanente dans `backend/app.js`.
+
+### 📌 Version Précédente (28 septembre 2026 - Nuit - Audit Réel Mobile & Réseau Extrême & Corrections 100% Validées) :
 - **Éradication de la Boucle de Hard Reload Premier Visiteur (`RegisterSW.tsx`)** :
   - **Diagnostic** : Quand `currentForce` était `null` (premier arrivant sur le site), l'évaluation `currentForce !== FORCE_VERSION` renvoyait `true`, supprimait tous les caches, désenregistrait le Service Worker et appelait `window.location.reload()`, avortant brutalement les requêtes RSC Next.js en vol (`Failed to fetch RSC payload`).
   - **Correction** : Si `!currentForce`, enregistrement direct de la clé dans le localStorage sans rechargement. Le rechargement sur changement de contrôleur SW n'intervient que si la page était déjà contrôlée au chargement initial.

@@ -412,6 +412,11 @@ app.all('/api/*', (req, res) => {
   });
 });
 
+// ── Redirection permanente pour /comparateur & /comparer ────────
+app.get(['/comparateur', '/comparer'], (req, res) => {
+  res.redirect(301, '/');
+});
+
 // ── Catch-all 404 JSON (API pure) ─────────────────────────────
 app.all('*', (req, res) => {
   res.status(404).json({
