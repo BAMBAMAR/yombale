@@ -26,7 +26,25 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Nuit - Audit Transversal Conversion & Corrections Opérationnelles Validées) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Nuit - Filtrage Photos Accueil & Assainissement Données de Test) :
+- **Masquage Strict des Produits Sans Photo sur la Page Accueil** :
+  - **Diagnostic** : Des articles sans image ou avec des vignettes cassées polluaient les grilles de comparaison et de recherche d'accueil.
+  - **Correction Backend** (`backend/routes/produits.js`) :
+    - Dans `baseScraped` : ajout du prédicat `AND p.image_url IS NOT NULL AND TRIM(p.image_url) != '' AND p.image_url NOT ILIKE '%placeholder%'`.
+    - Dans `baseBoutique` : ajout du prédicat `AND p.images IS NOT NULL AND array_length(p.images, 1) > 0 AND p.images[1] IS NOT NULL AND TRIM(p.images[1]) != '' AND p.images[1] NOT ILIKE '%placeholder%'`.
+    - Dans `/instantanee` (Typeahead) : vérification de la présence d'images valides sur les produits retournés.
+  - **Correction Frontend** (`frontend-next/src/app/page.tsx` & `ProduitsListe.tsx`) :
+    - Double validation `isValidPhoto` appliquée sur le rendu initial SSR, les rechargements et la pagination client (`voirPlus`).
+- **Verrouillage & Masquage des Produits de Boutiques Inactives** :
+  - Condition `b.actif = true AND p.en_stock = true` verrouillée sur toutes les requêtes du catalogue et de l'auto-complétion.
+- **Désactivation Intégrale des Boutiques, Produits & Annonces de Test** :
+  - **Boutiques** : 22 boutiques de test (`actif = false`) désactivées en base (boutiques d'audit générées et compte admin BAMBA `dieteltouba@gmail.com`). 70 boutiques réelles et vérifiées restent actives.
+  - **Produits Marchands** : 71 produits rattachés aux boutiques inactives ou portant des mentions de test désactivés (`en_stock = false`).
+  - **Annonces** : Annonces associées à des comptes de test désactivées (`actif = false`), annonces réelles d'utilisateurs préservées.
+  - **Cache** : Invalidation globale du cache Redis/mémoire (`prod:*`).
+- **Validation** : 100% PASS sur le banc de test automatisé (0 produit sans photo, 0 boutique inactive exposée).
+
+### 📌 Version Précédente (28 septembre 2026 - Nuit - Audit Transversal Conversion & Corrections Opérationnelles Validées) :
 - **Déblocage Immédiat de la Création de Boutique Standard (`ERR-COM-01` / P0)** :
   - **Diagnostic** : Le middleware `requireEmailVerifie` sur `POST /api/boutiques` bloquait avec HTTP 403 tout commerçant inscrit par e-mail n'ayant pas validé son lien avant de créer sa boutique.
   - **Correction** : Aligné sur la route `taf-taf` en levant le blocage e-mail sur `POST /api/boutiques` pour autoriser la création de la boutique d'essai immédiate.

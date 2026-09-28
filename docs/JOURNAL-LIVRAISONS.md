@@ -1,5 +1,18 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Filtrage Photos Accueil & Assainissement Données de Test (28 septembre 2026 - Nuit)** :
+  * **Problèmes Résolus & Améliorations Apportées** :
+    1. **Masquage Strict des Produits Sans Photo sur la Page d'Accueil** :
+       - *Problème* : Des produits sans visuel ou avec URL vide dégradaient l'expérience utilisateur et la conversion sur l'accueil.
+       - *Correction* : Ajout de filtres stricts SQL sur `baseScraped` (`p.image_url IS NOT NULL AND TRIM(p.image_url) != '' AND p.image_url NOT ILIKE '%placeholder%'`) et `baseBoutique` (`p.images IS NOT NULL AND array_length(p.images, 1) > 0 AND p.images[1] IS NOT NULL AND TRIM(p.images[1]) != '' AND p.images[1] NOT ILIKE '%placeholder%'`) dans `backend/routes/produits.js`. Double garde-fou côté client et SSR dans `frontend-next/src/app/page.tsx` et `ProduitsListe.tsx`.
+    2. **Verrouillage des Boutiques Inactives** :
+       - *Correction* : Condition `b.actif = true AND p.en_stock = true` verrouillée sur toutes les requêtes du catalogue et de l'auto-complétion (`/instantanee`).
+    3. **Désactivation des Boutiques, Produits et Annonces de Test** :
+       - *Correction* : Désactivation de 22 boutiques de test (`actif = false`), de 71 produits marchands rattachés (`en_stock = false`), et des annonces associées aux comptes de test. 70 boutiques réelles et vérifiées restent actives.
+       - *Cache* : Invalidation complète du cache Redis/mémoire (`prod:*`).
+  * **Validation & Qualité** :
+    - Test automatisé de validation exécuté avec succès (`scratch/test_homepage_photo_and_shops.js` : 0 produit sans photo, 0 boutique inactive exposée).
+
 - **Audit Transversal Conversion & Corrections Opérationnelles Validées (28 septembre 2026 - Nuit)** :
   * **Problèmes Résolus & Améliorations Apportées** :
     1. **Déblocage Immédiat de la Création de Boutique Standard (`ERR-COM-01` / P0)** :

@@ -158,13 +158,16 @@ export default async function HomePage({
     if (tri)       params.set('tri',       tri)
     if (sousType)  params.set('sousType',  sousType)
 
+    const isValidPhoto = (url?: string | null) => Boolean(url && url.trim() !== '' && !url.toLowerCase().includes('placeholder'))
+
     const data = await apiFetch<ApiResponse | Produit[]>(`/produits?${params}`)
     if (Array.isArray(data)) {
-      produits = data
+      produits = data.filter(p => isValidPhoto(p.image_url))
       total    = data.length
     } else {
-      produits = data.produits ?? data.data ?? []
-      total    = data.total ?? produits.length
+      const rawProds = data.produits ?? data.data ?? []
+      produits = rawProds.filter(p => isValidPhoto(p.image_url))
+      total    = data.total ?? rawProds.length
     }
   } catch (e) {
     erreur = e instanceof Error ? e.message : 'Erreur inconnue'

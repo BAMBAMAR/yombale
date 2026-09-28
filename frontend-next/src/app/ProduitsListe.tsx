@@ -33,6 +33,8 @@ interface Props {
   erreur?: string | null
 }
 
+const isValidPhoto = (url?: string | null) => Boolean(url && url.trim() !== '' && !url.toLowerCase().includes('placeholder'))
+
 export default function ProduitsListe({
   initialProduits,
   total,
@@ -45,7 +47,7 @@ export default function ProduitsListe({
   sousType = '',
   erreur = null
 }: Props) {
-  const [produits, setProduits] = useState<Produit[]>(initialProduits)
+  const [produits, setProduits] = useState<Produit[]>(() => initialProduits.filter(p => isValidPhoto(p.image_url)))
   const [currentTotal, setCurrentTotal] = useState<number>(total)
   const [loading, setLoading]   = useState(false)
   const [page, setPage]         = useState(1)
@@ -53,7 +55,7 @@ export default function ProduitsListe({
   const hasFiltre = Boolean(q || categorie || prixMin || prixMax || etat || sousType)
 
   useEffect(() => {
-    setProduits(initialProduits)
+    setProduits(initialProduits.filter(p => isValidPhoto(p.image_url)))
     setCurrentTotal(total)
     setPage(1)
 
@@ -74,7 +76,7 @@ export default function ProduitsListe({
         .then(r => r.json())
         .then(data => {
           if (!isMounted) return
-          const prods = data.produits ?? data.data ?? []
+          const prods = (data.produits ?? data.data ?? []).filter((p: Produit) => isValidPhoto(p.image_url))
           if (prods.length > 0) {
             setProduits(prods)
             setCurrentTotal(data.total ?? prods.length)
@@ -102,7 +104,7 @@ export default function ProduitsListe({
 
       const r = await fetch(`/api/produits?${params}`)
       const data = await r.json()
-      const prods = data.produits ?? data.data ?? []
+      const prods = (data.produits ?? data.data ?? []).filter((p: Produit) => isValidPhoto(p.image_url))
       setProduits(prods)
       setCurrentTotal(data.total ?? prods.length)
       setPage(1)
@@ -127,7 +129,7 @@ export default function ProduitsListe({
 
       const r    = await fetch(`/api/produits?${params}`)
       const data = await r.json()
-      const next: Produit[] = data.produits ?? data.data ?? []
+      const next: Produit[] = (data.produits ?? data.data ?? []).filter((p: Produit) => isValidPhoto(p.image_url))
       setProduits(prev => [...prev, ...next])
       if (data.total != null) setCurrentTotal(data.total)
       setPage(nextPage)
@@ -144,7 +146,7 @@ export default function ProduitsListe({
       )}
 
       <div className="grid-produits">
-        {(() => { let promoIdx = 0; return produits.map((p) => {
+        {(() => { let promoIdx = 0; return produits.filter(p => isValidPhoto(p.image_url)).map((p) => {
           const ecartConstate = !!(p.prix_min && p.prix_max && p.prix_max > p.prix_min * 1.1);
           const pctEcart = ecartConstate && p.prix_min && p.prix_max ? Math.round((1 - p.prix_min / p.prix_max) * 100) : 0;
           const ticketClass = ecartConstate

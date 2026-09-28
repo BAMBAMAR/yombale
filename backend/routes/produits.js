@@ -49,7 +49,14 @@ router.get('/instantanee', async (req, res) => {
       `SELECT p.id, p.nom, p.prix, p.images, p.categorie, p.boutique_id, b.nom as boutique_nom, b.slug as boutique_slug
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
-       WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) AND b.actif = true
+       WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) 
+         AND b.actif = true 
+         AND p.en_stock = true
+         AND p.images IS NOT NULL 
+         AND array_length(p.images, 1) > 0 
+         AND p.images[1] IS NOT NULL 
+         AND TRIM(p.images[1]) != '' 
+         AND p.images[1] NOT ILIKE '%placeholder%'
        ORDER BY p.created_at DESC LIMIT 5`,
       [term]
     );
@@ -286,6 +293,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
         LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true AND o.quarantinee = false
         WHERE ${qCondScraped}
           AND ${catCondition}
+          AND p.image_url IS NOT NULL AND TRIM(p.image_url) != '' AND p.image_url NOT ILIKE '%placeholder%'
           AND ($3::numeric IS NULL OR o.prix <= $3::numeric)
           AND ($4::numeric IS NULL OR o.prix >= $4::numeric)
           AND ($7::text IS NULL OR EXISTS (
@@ -309,6 +317,11 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
         FROM boutique_produits p
         JOIN boutiques b ON b.id = p.boutique_id
         WHERE b.actif = true AND p.en_stock = true
+          AND p.images IS NOT NULL 
+          AND array_length(p.images, 1) > 0 
+          AND p.images[1] IS NOT NULL 
+          AND TRIM(p.images[1]) != '' 
+          AND p.images[1] NOT ILIKE '%placeholder%'
           AND ${qCondBoutique}
           AND ($2::text IS NULL OR p.categorie = $2)
           AND ($3::numeric IS NULL OR p.prix <= $3::numeric)
@@ -743,7 +756,14 @@ router.get('/instantanee', async (req, res) => {
       `SELECT p.id, p.nom, p.prix, p.images, p.categorie, p.boutique_id, b.nom as boutique_nom, b.slug as boutique_slug
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
-       WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) AND b.actif = true
+       WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) 
+         AND b.actif = true 
+         AND p.en_stock = true
+         AND p.images IS NOT NULL 
+         AND array_length(p.images, 1) > 0 
+         AND p.images[1] IS NOT NULL 
+         AND TRIM(p.images[1]) != '' 
+         AND p.images[1] NOT ILIKE '%placeholder%'
        ORDER BY p.created_at DESC LIMIT 5`,
       [term]
     );
