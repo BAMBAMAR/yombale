@@ -1,5 +1,38 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Reversements Marchands Wave 1-Clic Opérationnels & Supervision Financière (28 septembre 2026)** :
+  * **Problèmes Résolus & Améliorations Apportées** :
+    1. **Moteur de Payout Wave Résilient (`backend/services/wave.js`)** :
+       - Récupération dynamique des clés d'API Wave (`wave_api_key`, `wave_signing_secret`) depuis `settingsCache` en complément des variables d'environnement.
+       - Résilience des routes API Wave : prise en charge automatique de l'endpoint standard `https://api.wave.com/v1/payouts` avec repli automatique sur `/v1/payout` en cas de 404.
+    2. **Supervision & Calculs Financiers Précis (`backend/routes/comptabilite.js`)** :
+       - Élargissement de la requête SQL `GET /api/comptabilite/admin/reversements-dus` :
+         `WHERE (c.paiement_recu = true OR c.statut IN ('payee', 'livree')) AND c.statut != 'reverse' AND (c.methode_paiement ILIKE '%wave%' OR c.methode_paiement = 'pay_wave')` afin d'intégrer toutes les commandes livrées/payées en ligne éligibles à un virement.
+       - Déduction automatique de la commission Nopalou et des frais de transaction Wave (2%) pour déterminer le net exact à reverser.
+       - Accès sécurisé étendu aux rôles `'super_admin'`, `'finance'` et `'admin_operationnel'`.
+    3. **Double Mode d'Exécution & Zéro Risque de Doublon (`POST /api/comptabilite/admin/reversements/:commandeId/payer`)** :
+       - *Mode API Wave Direct (`mode: 'wave_api'`)* : Exécution immédiate du virement bancaire Wave vers le compte du commerçant avec verrouillage transactionnel SQL immédiat (`statut = 'reverse'`, `payout_ref`, `payout_date`).
+       - *Mode Manuel / Hors-Ligne (`mode: 'manuel'`)* : Possibilité de marquer le reversement comme effectué sans appel API (en cas de virement externe ou règlement en espèces).
+       - Traçabilité complète dans `admin_audit_logs`.
+    4. **Notifications Automatisées Multi-Canales Instantanées** :
+       - *Notification WhatsApp Commerçant* : Message de confirmation immédiat avec référence commande et montant net crédité envoyé sur le numéro WhatsApp de la boutique.
+       - *Notification Admin Directe* : Alerte instantanée sur le smartphone de l'administrateur (**WhatsApp `+221 77 720 20 86`** et bot **Telegram**) avec récapitulatif du reversement.
+    5. **Intégration Complète 1-Clic dans la Gestion des Commandes (`/admin/commandes`)** :
+       - Ajout du bouton d'action directe « Reversement Wave 1-Clic » dans la modale d'inspection de commande pour toute commande livrée encaissée par Wave.
+       - Prise en charge du statut visuel « Reversée » (`statut === 'reverse'`) dans les filtres et tableaux.
+    6. **Interface Refondue & Standard Anti-IA-Slop (`ReversementsClient.tsx` & composants dédiés)** :
+       - Modularisation rigoureuse en sous-composants dédiés sous `components/` (`ReversementsKpiCards.tsx`, `ReversementsTable.tsx`, `ModalConfirmerReversement.tsx`) garantissant tous < 450 lignes.
+       - 3 Cartes KPI synthétiques : *Total Net à Reverser (FCFA)*, *Commandes en Attente*, *Commissions Retenues*.
+       - Export groupé Wave Bulk Payout aux formats Excel (.xls) et CSV.
+       - Recherche instantanée par nom de boutique, téléphone ou référence commande.
+       - Liens directs 1-clic d'ouverture WhatsApp (`wa.me/221...`) pour dialoguer avec le commerçant.
+       - Modale de confirmation sécurisée avant exécution du virement pour éviter tout clic accidentel.
+       - Zéro émoji UI (icônes vectorielles SVG `lucide-react` uniquement), tokens du Design System Nopalou (`--navy`, `--accent`, `--border`).
+  * **Validation & Qualité** :
+    - `npm --prefix frontend-next exec tsc -- -p frontend-next --noEmit` : 100% PASS (0 erreur).
+    - `npm --prefix frontend-next run lint:slop` : 100% PASS (advisory clean).
+    - `node --check` backend : 100% PASS.
+
 - **Filtrage Photos Accueil & Assainissement Données de Test (28 septembre 2026 - Nuit)** :
   * **Problèmes Résolus & Améliorations Apportées** :
     1. **Masquage Strict des Produits Sans Photo sur la Page d'Accueil** :
