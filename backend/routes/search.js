@@ -45,7 +45,17 @@ router.get('/', limiterRecherche, async (req, res) => {
                 b.ville, b.logo_url AS image, b.slug,
                 NULL::numeric AS prix
          FROM boutiques b
-         WHERE b.actif = true AND (b.nom ILIKE ANY($1::text[]) OR b.description ILIKE ANY($1::text[]) OR b.categorie ILIKE ANY($1::text[]))
+         WHERE b.actif = true AND (
+           b.nom ILIKE ANY($1::text[]) 
+           OR b.description ILIKE ANY($1::text[]) 
+           OR b.categorie ILIKE ANY($1::text[])
+           OR EXISTS (
+             SELECT 1 FROM boutique_produits bp_ex
+             WHERE bp_ex.boutique_id = b.id AND bp_ex.en_stock = true
+               AND (bp_ex.statut_moderation IS NULL OR bp_ex.statut_moderation = 'actif')
+               AND (bp_ex.nom ILIKE ANY($1::text[]) OR bp_ex.description ILIKE ANY($1::text[]) OR bp_ex.categorie ILIKE ANY($1::text[]))
+           )
+         )
          UNION ALL
          SELECT 'produit_boutique' AS type, bp.id, bp.nom, bp.description, bp.categorie,
                 b.ville, bp.images[1] AS image, b.slug || '/produits/' || bp.id::text AS slug,

@@ -26,7 +26,29 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Reversements Marchands Wave 1-Clic & Supervision Financière Complète) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Aplatissement Hero Mobile en Rectangle & Refonte Annuaire Boutiques & Agences) :
+- **Aplatissement du Hero Mobile en Rectangle Épuré (Modèle Page d'Accueil `/`) (`/boutiques` & `/agences`)** :
+  - **Diagnostic** : Sur mobile (`<= 768px`), la section Hero formait une tour verticale de plus de 700px repoussant le contenu sous la ligne de flottaison à cause du carrousel bento et des colonnes empilées.
+  - **Aplatissement Rectangulaire (~130px)** :
+    - Masquage automatique du carrousel de droite (`.hero-right-block`) et des 3 bento-items desktop (`.hero-trust-bento`) sur mobile.
+    - Transformation du bloc en bandeau rectangulaire compact (`border-radius: 14px`, `padding: 12px 14px`).
+    - Chips d'assurance réorganisées en ruban horizontal enveloppant sur 2 sous-lignes propres (`✓ 0% commission`, `✓ Catalogues directs`, `✓ WhatsApp direct`, `🏪 71 boutiques`, `🛡️ 100% vérifiés`).
+    - Élimination absolue du décalage et de la troncature à gauche via application stricte de `width: 100%; min-width: 0; box-sizing: border-box;` sur tous les conteneurs parents et flex-items.
+    - Boutons d'action compacts (`Explorer les boutiques/agences ↓` et `Ouvrir ma boutique` / `Payer mon loyer`).
+- **Suppression Complète du Vide Web & Bento Confiance Desktop (`/boutiques` & `/agences`)** :
+  - Réduction de la hauteur de `HeroCarousel.tsx` et `ImmoHeroCarousel.tsx` (`minHeight: 175px`, padding compacts).
+  - 3 cartes Bento de réassurance interactive avec micro-animations au hover (Commerçants Vérifiés / Agréments Contrôlés, WhatsApp Direct / Quittances Wave-OM, Livraison Express / Mandats Exclusifs).
+  - Alignement centré équilibré (`align-items: center`) comblant l'intégralité du vide horizontal.
+- **Refonte Bouton de Recherche & CSS Filtres Mobile (`BoutiquesSearch`, `AgencesSearch`, `BoutiquesFilterBar`, `AgenceFilterBar`)** :
+  - **Bouton Recherche Mobile** : Remplacement du bouton textuel encombrant par un bouton icône circulaire 34px avec icône `Search` vectorielle de `lucide-react`. Le placeholder dispose de 100% de la largeur sans troncature.
+  - **Zéro Troncature des Menus Déroulants** : Paddings internes ajustés (`padding: 0 17px 0 20px !important`), typographie 11px semi-bold et `letter-spacing: -0.25px`. "Toutes les villes" et "Tous les prix" s'affichent intégralement.
+  - **Ligne de Tri & Badges** : Ligne de tri occupant 100% de la largeur en ligne 2, et badges filtres avec défilement horizontal fluide.
+- **Pépites & Nouveautés en Rail Horizontal Compact (12 articles)** :
+  - Carrousel horizontal swipeable (scroll-snap) avec contrôles `‹ ›` sans allonger la page.
+  - Cartes compactes 180px (desktop) / 155px (mobile) avec prix FCFA et badges état.
+- **Règles d'Or Respectées** : Zéro émoji UI (icônes `lucide-react`), respect strict des tokens (`--navy`, `--accent`), modularisation < 450 lignes, zéro push automatique.
+
+### 📌 Version Précédente (28 septembre 2026 - Reversements Marchands Wave 1-Clic & Supervision Financière Complète) :
 - **Reversements Marchands Wave 1-Clic Opérationnels & Résilients (`/admin/reversements` & `/admin/commandes`)** :
   - **Diagnostic** : L'écran de reversements marchands (`/admin/reversements`) pouvait afficher une liste vide ou échouer en raison d'une clause SQL trop restrictive (`paiement_recu = true`), d'une extraction fragile du cookie JWT, ou de l'absence de déclenchement direct du payout Wave depuis la modale d'inspection de commande.
   - **Résilience Moteur Wave Payout (`backend/services/wave.js`)** :

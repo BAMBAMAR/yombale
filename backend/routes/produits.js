@@ -64,8 +64,16 @@ router.get('/instantanee', async (req, res) => {
     // 2. Boutiques marchandes
     const bqRes = await pool.query(
       `SELECT id, nom, logo_url, ville, slug, categorie
-       FROM boutiques
-       WHERE (nom ILIKE $1 OR description ILIKE $1 OR ville ILIKE $1) AND actif = true
+       FROM boutiques b
+       WHERE actif = true AND (
+         nom ILIKE $1 OR description ILIKE $1 OR ville ILIKE $1 OR categorie ILIKE $1
+         OR EXISTS (
+           SELECT 1 FROM boutique_produits bp_ex
+           WHERE bp_ex.boutique_id = b.id AND bp_ex.en_stock = true
+             AND (bp_ex.statut_moderation IS NULL OR bp_ex.statut_moderation = 'actif')
+             AND (bp_ex.nom ILIKE $1 OR bp_ex.description ILIKE $1 OR bp_ex.categorie ILIKE $1)
+         )
+       )
        LIMIT 3`,
       [term]
     );

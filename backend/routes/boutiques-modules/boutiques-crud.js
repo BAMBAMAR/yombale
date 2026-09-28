@@ -230,47 +230,238 @@ router.post('/magic-import', limiterImport, async (req, res) => {
   }
 });
 
+// GET /api/boutiques/top-produits — Pépites du moment et produits en vedette des boutiques (Discover)
+router.get('/top-produits', async (req, res) => {
+  try {
+    const { limit = 12, categorie } = req.query;
+    const lim = Math.min(30, Math.max(1, parseInt(limit) || 12));
+    const conds = [
+      'b.actif = true',
+      'bp.en_stock = true',
+      "(bp.statut_moderation IS NULL OR bp.statut_moderation = 'actif')",
+      'bp.images IS NOT NULL',
+      'array_length(bp.images, 1) > 0',
+      "bp.images[1] IS NOT NULL AND TRIM(bp.images[1]) != '' AND bp.images[1] NOT ILIKE '%placeholder%'"
+    ];
+    const vals = [];
+
+    if (categorie) {
+      vals.push(`%${categorie.trim()}%`);
+      conds.push(`(bp.categorie ILIKE $${vals.length} OR b.categorie ILIKE $${vals.length})`);
+    }
+
+    const where = 'WHERE ' + conds.join(' AND ');
+    vals.push(lim);
+    const query = `
+      SELECT bp.id, bp.nom, bp.prix, bp.prix_barre, bp.images[1] AS image, bp.categorie,
+             b.id AS boutique_id, b.nom AS boutique_nom, b.slug AS boutique_slug,
+             b.logo_url AS boutique_logo, b.ville AS boutique_ville, b.whatsapp AS boutique_whatsapp,
+             b.telephone AS boutique_telephone
+      FROM boutique_produits bp
+      JOIN boutiques b ON b.id = bp.boutique_id
+      ${where}
+      ORDER BY bp.created_at DESC
+      LIMIT $${vals.length}
+    `;
+
+    const { rows } = await pool.query(query, vals);
+    res.json({ success: true, produits: rows });
+  } catch (err) {
+    console.error('[TOP PRODUITS BOUTIQUES ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
+});
+
 // GET /api/boutiques - Liste publique (recherche, tri, filtres)
 router.get('/', async (req, res) => {
   try {
-    const { ville, q, cat, categorie, tri, limit = 20, page = 1 } = req.query;
+    const { ville, q, cat, categorie, tri, limit = 20, page = 1, avec_prods, vedette, budget, promo, note_min, prix_min, prix_max, whatsapp, certifie } = req.query;
     const catQuery = (categorie || cat || '').trim().toLowerCase();
     const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
     const lim = Math.min(50, parseInt(limit));
-    const conds = ['actif=true'];
+    const conds = ['b.actif=true'];
     const vals = [];
 
-    if (ville) { vals.push(ville); conds.push(`ville ILIKE $${vals.length}`); }
-    if (q) { vals.push(`%${q}%`); conds.push(`(nom ILIKE $${vals.length} OR description ILIKE $${vals.length})`); }
+    if (ville) { vals.push(ville); conds.push(`b.ville ILIKE $${vals.length}`); }
+    let qParamIndex = 0;
+    if (q) {
+      vals.push(`%${q}%`);
+      qParamIndex = vals.length;
+      conds.push(`(
+        b.nom ILIKE $${qParamIndex} 
+        OR b.description ILIKE $${qParamIndex} 
+        OR b.categorie ILIKE $${qParamIndex}
+        OR EXISTS (
+          SELECT 1 FROM boutique_produits bp_q
+          WHERE bp_q.boutique_id = b.id
+            AND bp_q.en_stock = true
+            AND (bp_q.statut_moderation IS NULL OR bp_q.statut_moderation = 'actif')
+            AND (bp_q.nom ILIKE $${qParamIndex} OR bp_q.description ILIKE $${qParamIndex} OR bp_q.categorie ILIKE $${qParamIndex})
+        )
+      )`);
+    }
     if (catQuery) {
       if (catQuery === 'mode') {
         vals.push('%mode%', '%beaute%', '%vetement%');
         const i1 = vals.length - 2, i2 = vals.length - 1, i3 = vals.length;
-        conds.push(`(categorie ILIKE $${i1} OR categorie ILIKE $${i2} OR categorie ILIKE $${i3})`);
+        conds.push(`(b.categorie ILIKE $${i1} OR b.categorie ILIKE $${i2} OR b.categorie ILIKE $${i3})`);
       } else if (catQuery === 'smartphones') {
         vals.push('%smartphone%', '%phone%', '%tech%', '%telephone%');
         const i1 = vals.length - 3, i2 = vals.length - 2, i3 = vals.length - 1, i4 = vals.length;
-        conds.push(`(categorie ILIKE $${i1} OR categorie ILIKE $${i2} OR categorie ILIKE $${i3} OR categorie ILIKE $${i4})`);
+        conds.push(`(b.categorie ILIKE $${i1} OR b.categorie ILIKE $${i2} OR b.categorie ILIKE $${i3} OR b.categorie ILIKE $${i4})`);
       } else {
         vals.push(`%${catQuery}%`);
-        conds.push(`categorie ILIKE $${vals.length}`);
+        conds.push(`b.categorie ILIKE $${vals.length}`);
       }
+    }
+    if (avec_prods === '1' || avec_prods === 'true') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM boutique_produits bp_cnt
+        WHERE bp_cnt.boutique_id = b.id AND bp_cnt.en_stock = true
+          AND (bp_cnt.statut_moderation IS NULL OR bp_cnt.statut_moderation = 'actif')
+      )`);
+    }
+    if (vedette === '1' || vedette === 'true') {
+      conds.push(`(b.sponsorise = true AND (b.sponsor_jusqu_au IS NULL OR b.sponsor_jusqu_au > NOW()))`);
+    }
+    if (promo === '1' || promo === 'true') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM boutique_produits bp_p
+        WHERE bp_p.boutique_id = b.id AND bp_p.en_stock = true
+          AND bp_p.prix_barre IS NOT NULL AND bp_p.prix_barre > bp_p.prix
+          AND (bp_p.statut_moderation IS NULL OR bp_p.statut_moderation = 'actif')
+      )`);
+    }
+    if (whatsapp === '1' || whatsapp === 'true') {
+      conds.push(`(b.whatsapp IS NOT NULL AND TRIM(b.whatsapp) != '')`);
+    }
+    if (certifie === '1' || certifie === 'true') {
+      conds.push(`(a.plan IN ('pro', 'business') OR (b.rccm IS NOT NULL AND TRIM(b.rccm) != '') OR (b.ninea IS NOT NULL AND TRIM(b.ninea) != ''))`);
+    }
+
+    // Filtres de Budget & Prix personnalisés
+    if (prix_min || prix_max) {
+      const minP = parseFloat(prix_min) || 0;
+      const maxP = parseFloat(prix_max) || 0;
+      if (minP > 0 && maxP > 0) {
+        vals.push(minP, maxP);
+        const i1 = vals.length - 1, i2 = vals.length;
+        conds.push(`EXISTS (
+          SELECT 1 FROM boutique_produits bp_prm
+          WHERE bp_prm.boutique_id = b.id AND bp_prm.en_stock = true
+            AND bp_prm.prix >= $${i1} AND bp_prm.prix <= $${i2}
+            AND (bp_prm.statut_moderation IS NULL OR bp_prm.statut_moderation = 'actif')
+        )`);
+      } else if (maxP > 0) {
+        vals.push(maxP);
+        conds.push(`EXISTS (
+          SELECT 1 FROM boutique_produits bp_prm
+          WHERE bp_prm.boutique_id = b.id AND bp_prm.en_stock = true
+            AND bp_prm.prix <= $${vals.length}
+            AND (bp_prm.statut_moderation IS NULL OR bp_prm.statut_moderation = 'actif')
+        )`);
+      } else if (minP > 0) {
+        vals.push(minP);
+        conds.push(`EXISTS (
+          SELECT 1 FROM boutique_produits bp_prm
+          WHERE bp_prm.boutique_id = b.id AND bp_prm.en_stock = true
+            AND bp_prm.prix >= $${vals.length}
+            AND (bp_prm.statut_moderation IS NULL OR bp_prm.statut_moderation = 'actif')
+        )`);
+      }
+    } else if (budget === 'moins_5k') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM boutique_produits bp_b
+        WHERE bp_b.boutique_id = b.id AND bp_b.en_stock = true
+          AND bp_b.prix <= 5000
+          AND (bp_b.statut_moderation IS NULL OR bp_b.statut_moderation = 'actif')
+      )`);
+    } else if (budget === '5k_15k') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM boutique_produits bp_b
+        WHERE bp_b.boutique_id = b.id AND bp_b.en_stock = true
+          AND bp_b.prix > 5000 AND bp_b.prix <= 15000
+          AND (bp_b.statut_moderation IS NULL OR bp_b.statut_moderation = 'actif')
+      )`);
+    } else if (budget === '15k_50k') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM boutique_produits bp_b
+        WHERE bp_b.boutique_id = b.id AND bp_b.en_stock = true
+          AND bp_b.prix > 15000 AND bp_b.prix <= 50000
+          AND (bp_b.statut_moderation IS NULL OR bp_b.statut_moderation = 'actif')
+      )`);
+    } else if (budget === 'moins_10k') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM boutique_produits bp_b
+        WHERE bp_b.boutique_id = b.id AND bp_b.en_stock = true
+          AND bp_b.prix <= 10000
+          AND (bp_b.statut_moderation IS NULL OR bp_b.statut_moderation = 'actif')
+      )`);
+    } else if (budget === '10k_50k') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM boutique_produits bp_b
+        WHERE bp_b.boutique_id = b.id AND bp_b.en_stock = true
+          AND bp_b.prix > 10000 AND bp_b.prix <= 50000
+          AND (bp_b.statut_moderation IS NULL OR bp_b.statut_moderation = 'actif')
+      )`);
+    } else if (budget === 'plus_50k') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM boutique_produits bp_b
+        WHERE bp_b.boutique_id = b.id AND bp_b.en_stock = true
+          AND bp_b.prix > 50000
+          AND (bp_b.statut_moderation IS NULL OR bp_b.statut_moderation = 'actif')
+      )`);
+    }
+    if (note_min === '4') {
+      conds.push(`COALESCE(av.note_avg, 5.0) >= 4.0 AND av.total_cnt > 0`);
     }
 
     const orderBy = tri === 'recent'  ? 'b.created_at DESC'
                   : tri === 'nom_asc' ? 'b.nom ASC'
+                  : tri === 'prix_asc' ? `(SELECT MIN(bp_min.prix) FROM boutique_produits bp_min WHERE bp_min.boutique_id = b.id AND bp_min.en_stock = true AND (bp_min.statut_moderation IS NULL OR bp_min.statut_moderation = 'actif')) ASC NULLS LAST, b.created_at DESC`
+                  : tri === 'prix_desc' ? `(SELECT MAX(bp_max.prix) FROM boutique_produits bp_max WHERE bp_max.boutique_id = b.id AND bp_max.en_stock = true AND (bp_max.statut_moderation IS NULL OR bp_max.statut_moderation = 'actif')) DESC NULLS LAST, b.created_at DESC`
                   : `CASE a.plan WHEN 'business' THEN 0 WHEN 'pro' THEN 1 ELSE 2 END ASC,
                      (b.sponsorise = true AND (b.sponsor_jusqu_au IS NULL OR b.sponsor_jusqu_au > NOW())) DESC,
+                     (EXISTS (SELECT 1 FROM boutique_produits bp_ex WHERE bp_ex.boutique_id = b.id AND bp_ex.en_stock = true AND (bp_ex.statut_moderation IS NULL OR bp_ex.statut_moderation = 'actif'))) DESC,
                      b.created_at DESC`;
 
     const where = 'WHERE ' + conds.join(' AND ');
+
+    // Priorisation des produits prévisualisés selon les filtres actifs
+    let productOrderClauses = [];
+    if (qParamIndex > 0) {
+      productOrderClauses.push(`CASE WHEN (bp.nom ILIKE $${qParamIndex} OR bp.description ILIKE $${qParamIndex} OR bp.categorie ILIKE $${qParamIndex}) THEN 0 ELSE 1 END`);
+    }
+    if (promo === '1' || promo === 'true') {
+      productOrderClauses.push(`CASE WHEN (bp.prix_barre IS NOT NULL AND bp.prix_barre > bp.prix) THEN 0 ELSE 1 END`);
+    }
+    if (budget === 'moins_5k') {
+      productOrderClauses.push(`CASE WHEN bp.prix <= 5000 THEN 0 ELSE 1 END`);
+    } else if (budget === '5k_15k') {
+      productOrderClauses.push(`CASE WHEN (bp.prix > 5000 AND bp.prix <= 15000) THEN 0 ELSE 1 END`);
+    } else if (budget === '15k_50k' || budget === '10k_50k') {
+      productOrderClauses.push(`CASE WHEN (bp.prix > 10000 AND bp.prix <= 50000) THEN 0 ELSE 1 END`);
+    } else if (budget === 'plus_50k') {
+      productOrderClauses.push(`CASE WHEN bp.prix > 50000 THEN 0 ELSE 1 END`);
+    }
+    if (tri === 'prix_asc') {
+      productOrderClauses.push('bp.prix ASC');
+    } else if (tri === 'prix_desc') {
+      productOrderClauses.push('bp.prix DESC');
+    }
+    productOrderClauses.push('bp.ordre ASC', 'bp.created_at DESC');
+
+    const productOrderClause = productOrderClauses.join(', ');
+
     const [rows, cnt, villesRes, catsRes] = await Promise.all([
       pool.query(
         `SELECT b.id, b.slug, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
                 b.logo_url, b.cover_url, b.horaires, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
                 COALESCE(a.plan, 'gratuit') AS plan_actif,
                 COALESCE(ROUND(av.note_avg::numeric, 1), 5.0) AS note_moyenne,
-                COALESCE(av.total_cnt, 0) AS total_avis
+                COALESCE(av.total_cnt, 0) AS total_avis,
+                COALESCE(p_agg.total_produits, 0)::int AS total_produits,
+                COALESCE(p_agg.produits_apercu, '[]'::json) AS produits_apercu
          FROM boutiques b
          LEFT JOIN LATERAL (
            SELECT plan FROM abonnements
@@ -280,12 +471,38 @@ router.get('/', async (req, res) => {
          LEFT JOIN LATERAL (
            SELECT AVG(note) as note_avg, COUNT(*) as total_cnt FROM boutique_avis WHERE boutique_id = b.id
          ) av ON true
+         LEFT JOIN LATERAL (
+           SELECT 
+             COUNT(bp_all.id) as total_produits,
+             COALESCE(
+               (
+                 SELECT json_agg(p_sub)
+                 FROM (
+                   SELECT bp.id, bp.nom, bp.prix, bp.prix_barre,
+                          COALESCE(bp.images[1], '') AS image,
+                          bp.slug
+                   FROM boutique_produits bp
+                   WHERE bp.boutique_id = b.id
+                     AND bp.en_stock = true
+                     AND (bp.statut_moderation IS NULL OR bp.statut_moderation = 'actif')
+                   ORDER BY
+                     ${productOrderClause}
+                   LIMIT 4
+                 ) p_sub
+               ),
+               '[]'::json
+             ) AS produits_apercu
+           FROM boutique_produits bp_all
+           WHERE bp_all.boutique_id = b.id
+             AND bp_all.en_stock = true
+             AND (bp_all.statut_moderation IS NULL OR bp_all.statut_moderation = 'actif')
+         ) p_agg ON true
          ${where}
          ORDER BY ${orderBy}
          LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
         [...vals, lim, offset]
       ),
-      pool.query(`SELECT COUNT(*) FROM boutiques ${where}`, vals),
+      pool.query(`SELECT COUNT(*) FROM boutiques b ${where}`, vals),
       pool.query(`SELECT DISTINCT ville FROM boutiques WHERE actif=true AND ville IS NOT NULL AND ville != '' ORDER BY ville ASC`),
       pool.query(`SELECT DISTINCT categorie FROM boutiques WHERE actif=true AND categorie IS NOT NULL AND categorie != '' ORDER BY categorie ASC`),
     ]);

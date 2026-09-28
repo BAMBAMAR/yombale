@@ -121,15 +121,15 @@ export default function HeroCarousel() {
       <div 
         style={{ 
           background: slide.bg, 
-          padding: '16px 18px 12px 18px', 
-          borderRadius: 20, 
+          padding: '12px 14px 10px 14px', 
+          borderRadius: 18, 
           color: slide.color, 
           border: slide.border, 
-          boxShadow: '0 6px 20px rgba(0,0,0,0.06)', 
+          boxShadow: '0 4px 14px rgba(0,0,0,0.05)', 
           display: 'flex', 
           flexDirection: 'column',
           transition: 'all 0.4s ease-in-out',
-          minHeight: 225,
+          minHeight: 175,
           position: 'relative',
           overflow: 'hidden'
         }}
@@ -137,37 +137,37 @@ export default function HeroCarousel() {
         {/* Navigation Buttons */}
         <button 
           onClick={prevSlide}
-          style={{ position: 'absolute', top: '50%', left: 4, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, color: slide.color }}
+          style={{ position: 'absolute', top: '50%', left: 4, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, color: slide.color }}
           aria-label="Previous"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={15} />
         </button>
         <button 
           onClick={nextSlide}
-          style={{ position: 'absolute', top: '50%', right: 4, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, color: slide.color }}
+          style={{ position: 'absolute', top: '50%', right: 4, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, color: slide.color }}
           aria-label="Next"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={15} />
         </button>
 
-        <div style={{ marginLeft: 12, marginRight: 12, display: 'flex', flexDirection: 'column', height: '100%', flex: 1 }}>
+        <div style={{ marginLeft: 10, marginRight: 10, display: 'flex', flexDirection: 'column', height: '100%', flex: 1 }}>
           <div>
-            <span style={{ display: 'inline-block', background: slide.badgeBg, color: slide.badgeColor, padding: '3px 8px', borderRadius: 10, fontSize: 10, fontWeight: 800, marginBottom: 6, border: slide.badgeBorder }}>
+            <span style={{ display: 'inline-block', background: slide.badgeBg, color: slide.badgeColor, padding: '2px 7px', borderRadius: 8, fontSize: 9.5, fontWeight: 800, marginBottom: 4, border: slide.badgeBorder }}>
               {slide.badgeText}
             </span>
           </div>
           
-          <h3 style={{ fontSize: 16, fontWeight: 900, marginBottom: 4, color: slide.color, transition: 'color 0.3s' }}>
+          <h3 style={{ fontSize: 14.5, fontWeight: 900, marginBottom: 2, color: slide.color, transition: 'color 0.3s' }}>
             {slide.title}
           </h3>
           
-          <p style={{ fontSize: 12, opacity: 0.88, margin: '0 0 10px', lineHeight: 1.4 }}>
+          <p style={{ fontSize: 11.5, opacity: 0.88, margin: '0 0 6px', lineHeight: 1.35 }}>
             {slide.desc}
           </p>
           
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
             {slide.features.map((feat, idx) => (
-              <li key={idx} style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <li key={idx} style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ color: slide.ctaBg, fontWeight: 'bold' }}>✓</span> {feat}
               </li>
             ))}
@@ -181,12 +181,12 @@ export default function HeroCarousel() {
               background: slide.ctaBg, 
               color: slide.ctaColor, 
               fontWeight: 800, 
-              fontSize: 13, 
-              padding: '9px 12px', 
-              borderRadius: 10, 
+              fontSize: 12, 
+              padding: '7px 10px', 
+              borderRadius: 9, 
               textDecoration: 'none', 
-              marginTop: 10, 
-              boxShadow: `0 3px 10px ${slide.ctaBg}40`, 
+              marginTop: 8, 
+              boxShadow: `0 2px 8px ${slide.ctaBg}35`, 
               transition: 'transform 0.2s, opacity 0.2s',
             }}
           >
@@ -195,7 +195,7 @@ export default function HeroCarousel() {
         </div>
 
         {/* Carousel Indicators */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginTop: 8 }}>
           {SLIDES.map((_, idx) => (
             <button
               key={idx}

@@ -4,15 +4,13 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 
-export default function BoutiquesSearch({
+export default function AgencesSearch({
   currentQ,
   currentVille,
-  currentCat,
   extraParams = {},
 }: {
   currentQ: string
   currentVille: string
-  currentCat?: string
   extraParams?: Record<string, string>
 }) {
   const [q, setQ] = useState(currentQ)
@@ -25,10 +23,9 @@ export default function BoutiquesSearch({
       if (v) p.set(k, v)
     })
     if (currentVille) p.set('ville', currentVille)
-    if (currentCat) p.set('cat', currentCat)
-    if (q.trim()) p.set('q', q.trim())
+    if (q.trim()) p.set('recherche', q.trim())
     p.set('page', '1')
-    router.push(`/boutiques?${p.toString()}#resultats`)
+    router.push(`/agences?${p.toString()}#resultats`)
   }
 
   function handleClear() {
@@ -38,9 +35,8 @@ export default function BoutiquesSearch({
       if (v) p.set(k, v)
     })
     if (currentVille) p.set('ville', currentVille)
-    if (currentCat) p.set('cat', currentCat)
     p.set('page', '1')
-    router.push(`/boutiques?${p.toString()}#resultats`)
+    router.push(`/agences?${p.toString()}#resultats`)
   }
 
   return (
@@ -53,29 +49,53 @@ export default function BoutiquesSearch({
         alignItems: 'center',
       }}
     >
+      <div
+        style={{
+          position: 'absolute',
+          left: 14,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          color: '#64748b',
+          display: 'flex',
+          alignItems: 'center',
+          pointerEvents: 'none',
+          zIndex: 2,
+        }}
+      >
+        <Search size={18} strokeWidth={2.5} />
+      </div>
+
       <style>{`
-        .boutiques-search-btn-text {
+        .agences-search-btn-text {
           display: inline-block;
         }
-        .boutiques-search-input {
-          padding-right: 118px;
+        .agences-search-btn-icon {
+          display: none;
         }
-        .boutiques-search-clear {
-          right: 110px;
+        .agences-search-input {
+          padding-right: 114px;
+        }
+        .agences-search-clear {
+          right: 108px;
         }
         @media (max-width: 768px) {
-          .boutiques-search-btn-text {
+          .agences-search-btn-text {
             display: none !important;
           }
-          .boutiques-search-input {
+          .agences-search-btn-icon {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+          }
+          .agences-search-input {
             padding-right: 44px !important;
             padding-left: 36px !important;
             font-size: 13px !important;
           }
-          .boutiques-search-clear {
+          .agences-search-clear {
             right: 42px !important;
           }
-          .boutiques-search-submit {
+          .agences-search-submit {
             padding: 0 !important;
             width: 34px !important;
             height: 34px !important;
@@ -87,28 +107,12 @@ export default function BoutiquesSearch({
         }
       `}</style>
 
-      <div
-        style={{
-          position: 'absolute',
-          left: 13,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          color: '#64748b',
-          display: 'flex',
-          alignItems: 'center',
-          pointerEvents: 'none',
-          zIndex: 2,
-        }}
-      >
-        <Search size={17} strokeWidth={2.5} />
-      </div>
-
       <input
         type="text"
         value={q}
         onChange={e => setQ(e.target.value)}
-        placeholder="Rechercher une boutique, produit..."
-        className="boutiques-search-input"
+        placeholder="Rechercher une agence, bien..."
+        className="agences-search-input"
         style={{
           width: '100%',
           maxWidth: '100%',
@@ -124,11 +128,11 @@ export default function BoutiquesSearch({
           backgroundColor: '#ffffff',
           color: '#0f172a',
         }}
-        onFocus={(e) => {
-          e.currentTarget.style.boxShadow = '0 4px 14px rgba(199,91,0,0.12)'
-          e.currentTarget.style.borderColor = '#fdba74'
+        onFocus={e => {
+          e.currentTarget.style.boxShadow = '0 4px 14px rgba(28,43,74,0.12)'
+          e.currentTarget.style.borderColor = '#1C2B4A'
         }}
-        onBlur={(e) => {
+        onBlur={e => {
           e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'
           e.currentTarget.style.borderColor = '#e2e8f0'
         }}
@@ -138,7 +142,7 @@ export default function BoutiquesSearch({
         <button
           type="button"
           onClick={handleClear}
-          className="boutiques-search-clear"
+          className="agences-search-clear"
           style={{
             position: 'absolute',
             top: '50%',
@@ -164,14 +168,14 @@ export default function BoutiquesSearch({
 
       <button
         type="submit"
-        className="boutiques-search-submit"
+        className="agences-search-submit"
         style={{
           position: 'absolute',
-          right: 4,
-          top: 4,
-          bottom: 4,
+          right: 3,
+          top: 3,
+          bottom: 3,
           borderRadius: 18,
-          background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)',
+          background: 'linear-gradient(135deg, #1C2B4A 0%, #2b4270 100%)',
           color: '#fff',
           border: 'none',
           fontWeight: 800,
@@ -181,16 +185,14 @@ export default function BoutiquesSearch({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 6,
-          boxShadow: '0 2px 6px rgba(199,91,0,0.2)',
-          transition: 'all 0.2s ease',
-          zIndex: 3,
+          gap: 5,
+          boxShadow: '0 2px 6px rgba(28,43,74,0.2)',
+          zIndex: 2,
         }}
-        title="Lancer la recherche"
-        aria-label="Rechercher"
+        title="Rechercher"
       >
-        <Search size={15} strokeWidth={2.5} />
-        <span className="boutiques-search-btn-text">Rechercher</span>
+        <span className="agences-search-btn-text">Rechercher</span>
+        <span className="agences-search-btn-icon"><Search size={15} strokeWidth={2.5} /></span>
       </button>
     </form>
   )

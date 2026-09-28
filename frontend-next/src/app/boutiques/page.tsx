@@ -2,43 +2,26 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import BoutiquesSearch from './BoutiquesSearch'
-import {
-  Store, ShieldCheck, MapPin, Sparkles, Star, MessageCircle, ArrowRight,
-  Building2, CheckCircle2, Smartphone, Laptop, Tv, Shirt, Home, Car,
-  Gamepad2, Utensils, Watch, Hammer, Wrench, Layers
-} from 'lucide-react'
-import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import HeroCarousel from './HeroCarousel'
-import ExternalImg from '@/components/ExternalImg'
+import BoutiqueCard, { BoutiqueItem } from './components/BoutiqueCard'
+import DiscoverTrendingProducts, { TrendingProduct } from './components/DiscoverTrendingProducts'
+import BoutiquesFilterBar from './components/BoutiquesFilterBar'
+import BoutiquesDirectoryList from './components/BoutiquesDirectoryList'
+import {
+  Store, ShieldCheck, Sparkles, CheckCircle2,
+  Smartphone, Laptop, Tv, Shirt, Home, Car,
+  Gamepad2, Utensils, Watch, Hammer, Wrench, Layers,
+  Clock, Camera, Award, Tag, Star, DollarSign, MessageCircle,
+  ArrowDown, Truck
+} from 'lucide-react'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
-export const revalidate = 300
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'Boutiques Partenaires & Vendeurs Vérifiés au Sénégal — Nopalou',
   description: `Découvrez les meilleures boutiques et vendeurs professionnels au Sénégal : smartphones, mode, électroménager, univers maison, contact direct et livraison.`,
   alternates: { canonical: `${BASE}/boutiques` },
-}
-
-interface Boutique {
-  id: string
-  slug: string | null
-  nom: string
-  description: string | null
-  categorie: string | null
-  telephone: string | null
-  whatsapp: string | null
-  adresse: string | null
-  ville: string
-  logo_url: string | null
-  cover_url: string | null
-  horaires: Record<string, string> | null
-  sponsorise: boolean
-  sponsor_jusqu_au: string | null
-  plan_actif: 'pro' | 'business' | null
-  note_moyenne?: number | string
-  total_avis?: number
-  created_at: string
 }
 
 function getCategoryIcon(slug: string) {
@@ -77,45 +60,71 @@ const CATEGORIES_BOUTIQUE = [
   { slug: 'mixte', label: 'Généraliste' },
 ]
 
-const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Mbour']
+const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Mbour', 'Kaolack', 'Ziguinchor']
 
-const TRIS = [
-  { val: '', label: 'Recommandé' },
-  { val: 'recent', label: 'Plus récents' },
-  { val: 'nom_asc', label: 'Nom A-Z' },
+const BUDGETS = [
+  { val: '', label: 'Tous les prix' },
+  { val: 'moins_5k', label: '< 5 000 F' },
+  { val: '5k_15k', label: '5 000 - 15 000 F' },
+  { val: '15k_50k', label: '15 000 - 50 000 F' },
+  { val: 'plus_50k', label: '> 50 000 F' },
 ]
 
-function estOuvertActuellement(horaires?: Record<string, string> | null): { ouverte: boolean; label: string } {
-  if (!horaires || Object.keys(horaires).length === 0) {
-    return { ouverte: true, label: 'Ouvert 7j/7' }
-  }
+function estOuvertActuellement(horaires?: Record<string, string> | null): boolean {
+  if (!horaires || Object.keys(horaires).length === 0) return true
   const joursKeys = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
   const now = new Date()
   const jourActuel = joursKeys[now.getDay()]
   const plage = horaires[jourActuel]
-
-  if (!plage || plage.toLowerCase().includes('fermé')) {
-    return { ouverte: false, label: 'Fermé' }
-  }
-
+  if (!plage || plage.toLowerCase().includes('fermé')) return false
   const match = plage.match(/(\d{1,2})[:h](\d{2})?\s*-\s*(\d{1,2})[:h](\d{2})?/)
   if (match) {
     const startHour = parseInt(match[1], 10)
     const endHour = parseInt(match[3], 10)
     const currentHour = now.getHours()
-    if (currentHour >= startHour && currentHour < endHour) {
-      return { ouverte: true, label: `Ouvert jusqu'à ${endHour}h` }
-    } else {
-      return { ouverte: false, label: `Fermé (Ouvre à ${startHour}h)` }
-    }
+    return currentHour >= startHour && currentHour < endHour
   }
-  return { ouverte: true, label: 'Ouvert' }
+  return true
 }
 
 export default async function BoutiquesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ville?: string; q?: string; cat?: string; page?: string; tri?: string; plan?: string }> | { ville?: string; q?: string; cat?: string; page?: string; tri?: string; plan?: string }
+  searchParams: Promise<{
+    ville?: string
+    q?: string
+    cat?: string
+    page?: string
+    tri?: string
+    plan?: string
+    avec_prods?: string
+    ouvert?: string
+    vedette?: string
+    budget?: string
+    promo?: string
+    note_min?: string
+    whatsapp?: string
+    certifie?: string
+    prix_min?: string
+    prix_max?: string
+  }> | {
+    ville?: string
+    q?: string
+    cat?: string
+    page?: string
+    tri?: string
+    plan?: string
+    avec_prods?: string
+    ouvert?: string
+    vedette?: string
+    budget?: string
+    promo?: string
+    note_min?: string
+    whatsapp?: string
+    certifie?: string
+    prix_min?: string
+    prix_max?: string
+  }
 }) {
   const sp = await Promise.resolve(searchParams)
   const ville = sp?.ville ?? ''
@@ -124,40 +133,67 @@ export default async function BoutiquesPage({
   const page = sp?.page ?? '1'
   const tri = sp?.tri ?? ''
   const plan = sp?.plan ?? ''
+  const avecProds = sp?.avec_prods ?? ''
+  const ouvert = sp?.ouvert ?? ''
+  const vedette = sp?.vedette ?? ''
+  const budget = sp?.budget ?? ''
+  const promo = sp?.promo ?? ''
+  const noteMin = sp?.note_min ?? ''
+  const whatsapp = sp?.whatsapp ?? ''
+  const certifie = sp?.certifie ?? ''
+  const prixMin = sp?.prix_min ?? ''
+  const prixMax = sp?.prix_max ?? ''
 
   const qs = new URLSearchParams({ limit: '24', page })
   if (ville) qs.set('ville', ville)
   if (q) qs.set('q', q)
   if (cat) qs.set('categorie', cat)
   if (tri) qs.set('tri', tri)
+  if (avecProds) qs.set('avec_prods', '1')
+  if (vedette) qs.set('vedette', '1')
+  if (budget) qs.set('budget', budget)
+  if (promo) qs.set('promo', '1')
+  if (noteMin) qs.set('note_min', noteMin)
+  if (whatsapp) qs.set('whatsapp', '1')
+  if (certifie) qs.set('certifie', '1')
+  if (prixMin) qs.set('prix_min', prixMin)
+  if (prixMax) qs.set('prix_max', prixMax)
 
-  let boutiques: Boutique[] = []
+  let boutiques: BoutiqueItem[] = []
   let total = 0
   let villesDisponibles: string[] = []
-  let categoriesActivesSlugs: string[] = []
+  let topProduits: TrendingProduct[] = []
 
   try {
-    const data = await apiFetch<{ boutiques: Boutique[]; total: number; villes?: string[]; categories?: string[] }>(`/boutiques?${qs}`)
-    boutiques = data?.boutiques ?? []
-    total = data?.total ?? 0
-    villesDisponibles = data?.villes ?? []
-    categoriesActivesSlugs = data?.categories ?? []
-  } catch (err) { console.warn('[Nopalou:page:L122]', err); }
+    const [dataBoutiques, dataTop] = await Promise.all([
+      apiFetch<{ boutiques: BoutiqueItem[]; total: number; villes?: string[]; categories?: string[] }>(`/boutiques?${qs}`),
+      apiFetch<{ success: boolean; produits: TrendingProduct[] }>(`/boutiques/top-produits?limit=12${cat ? `&categorie=${encodeURIComponent(cat)}` : ''}`).catch(() => ({ success: false, produits: [] }))
+    ])
+    boutiques = dataBoutiques?.boutiques ?? []
+    total = dataBoutiques?.total ?? 0
+    villesDisponibles = dataBoutiques?.villes ?? []
+    topProduits = dataTop?.produits ?? []
+  } catch (err) {
+    console.warn('[Nopalou:boutiques:page]', err)
+  }
 
   const villesAffichage = villesDisponibles.length > 0 ? villesDisponibles : VILLES
-
-  // Conserver les pilules de catégories actives et principales pour un filtrage fluide
   const categoriesAffichage = CATEGORIES_BOUTIQUE
 
+  // Filtres côté client / SSR pour plans & ouverture
   let boutiquesFiltrees = boutiques
   if (plan === 'business') {
     boutiquesFiltrees = boutiquesFiltrees.filter(b => b.plan_actif === 'business')
   } else if (plan === 'pro') {
     boutiquesFiltrees = boutiquesFiltrees.filter(b => b.plan_actif === 'pro')
   }
+  if (ouvert === '1') {
+    boutiquesFiltrees = boutiquesFiltrees.filter(b => estOuvertActuellement(b.horaires))
+  }
 
   const totalPages = Math.ceil(total / 24)
   const currentPage = Number(page)
+  const estEnModeRecherche = Boolean(q.trim())
 
   function buildLink(params: Record<string, string>) {
     const p = new URLSearchParams()
@@ -166,26 +202,42 @@ export default async function BoutiquesPage({
     if (cat) p.set('cat', cat)
     if (tri) p.set('tri', tri)
     if (plan) p.set('plan', plan)
+    if (avecProds) p.set('avec_prods', avecProds)
+    if (ouvert) p.set('ouvert', ouvert)
+    if (vedette) p.set('vedette', vedette)
+    if (budget) p.set('budget', budget)
+    if (promo) p.set('promo', promo)
+    if (noteMin) p.set('note_min', noteMin)
+    if (whatsapp) p.set('whatsapp', whatsapp)
+    if (certifie) p.set('certifie', certifie)
+    if (prixMin) p.set('prix_min', prixMin)
+    if (prixMax) p.set('prix_max', prixMax)
 
     Object.entries(params).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)))
     const s = p.toString()
     return `/boutiques${s ? `?${s}` : ''}`
   }
 
+  const aDesFiltresActifs = Boolean(estEnModeRecherche || avecProds || ouvert || vedette || budget || promo || noteMin || plan || ville || whatsapp || certifie || (tri && tri !== 'recommande'))
+
   return (
     <div className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '4rem' }}>
-      {/* HERO BANNER BOUTIQUES — HARMONIE NOPALOU (ORANGE AMBRE & ARDOISE) */}
-      <div style={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
-        borderRadius: 24,
-        padding: '24px 28px',
-        color: '#0f172a',
-        marginBottom: 24,
-        position: 'relative',
-        overflow: 'hidden',
-        border: '1px solid #fed7aa',
-        boxShadow: '0 8px 24px rgba(199, 91, 0, 0.05)',
-      }}>
+      
+      {/* ── HERO BANNER BENTO (COMPACT, MONOLIGNE & SANS ÉTIREMENT) ── */}
+      <div 
+        className="hero-banner-container"
+        style={{
+          background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
+          borderRadius: 20,
+          padding: '18px 22px',
+          color: '#0f172a',
+          marginBottom: 20,
+          position: 'relative',
+          overflow: 'hidden',
+          border: '1px solid #fed7aa',
+          boxShadow: '0 4px 18px rgba(199, 91, 0, 0.04)',
+        }}
+      >
         <div style={{
           position: 'absolute', right: -60, top: -60, width: 280, height: 280, borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(199,91,0,0.08) 0%, transparent 70%)',
@@ -193,170 +245,358 @@ export default async function BoutiquesPage({
         }} />
 
         <style>{`
+          .hero-banner-container {
+            width: 100%;
+            box-sizing: border-box;
+          }
           .hero-bento-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 380px;
-            gap: 20px;
-            align-items: stretch;
+            grid-template-columns: minmax(0, 1fr) 350px;
+            gap: 24px;
+            align-items: center;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
           }
           .hero-left-column {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            gap: 14px;
+            gap: 12px;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
           }
-
+          .hero-trust-bento {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 2px;
+          }
+          .hero-trust-item {
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            border-radius: 12px;
+            padding: 9px 11px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            transition: all 0.22s ease;
+          }
+          .hero-trust-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(199, 91, 0, 0.08);
+            border-color: #fdba74;
+          }
+          .hero-actions-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 2px;
+            flex-wrap: wrap;
+            width: 100%;
+            box-sizing: border-box;
+          }
+          .hero-btn-explore {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1C2B4A;
+            color: #ffffff !important;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(28, 43, 74, 0.16);
+          }
+          .hero-btn-explore:hover {
+            background: #283d66;
+            transform: translateY(-1px);
+          }
+          .hero-btn-create {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            color: #C75B00 !important;
+            border: 1.5px solid #fed7aa;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 7px 14px;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+          }
+          .hero-btn-create:hover {
+            background: #fff7ed;
+            border-color: #C75B00;
+            transform: translateY(-1px);
+          }
           @media (max-width: 1023px) {
             .hero-bento-grid {
               display: flex;
               flex-direction: column;
-              gap: 20px;
+              gap: 14px;
+            }
+          }
+          @media (max-width: 768px) {
+            .hero-banner-container {
+              border-radius: 14px !important;
+              padding: 12px 14px !important;
+              margin-bottom: 14px !important;
+            }
+            .hero-bento-grid {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 8px !important;
+            }
+            .hero-left-column {
+              gap: 8px !important;
+            }
+            .hero-right-block {
+              display: none !important;
+            }
+            .hero-trust-bento {
+              display: none !important;
+            }
+            .hero-badge-pill {
+              font-size: 10px !important;
+              padding: 2.5px 8px !important;
+              margin-bottom: 4px !important;
+            }
+            .hero-main-title {
+              font-size: 17px !important;
+              line-height: 1.25 !important;
+              margin: 0 0 3px !important;
+            }
+            .hero-subtitle {
+              font-size: 11.5px !important;
+              line-height: 1.35 !important;
+              margin: 0 0 6px !important;
+            }
+            .hero-values-strip {
+              display: flex !important;
+              flex-wrap: wrap !important;
+              gap: 5px !important;
+              width: 100% !important;
+              box-sizing: border-box !important;
+            }
+            .hero-values-chip {
+              background: rgba(255, 255, 255, 0.85) !important;
+              padding: 2.5px 7px !important;
+              border-radius: 6px !important;
+              border: 1px solid rgba(226, 232, 240, 0.9) !important;
+              font-size: 10.5px !important;
+              font-weight: 700 !important;
+              color: #334155 !important;
+              display: inline-flex !important;
+              align-items: center !important;
+              gap: 4px !important;
+            }
+            .hero-actions-row {
+              gap: 8px !important;
+              margin-top: 2px !important;
+              padding-top: 6px !important;
+              border-top: 1px solid rgba(254, 215, 170, 0.4) !important;
+              justify-content: flex-start !important;
+            }
+            .hero-btn-explore,
+            .hero-btn-create {
+              font-size: 11px !important;
+              padding: 5px 11px !important;
+              border-radius: 14px !important;
+            }
+            .hero-hint-text {
+              display: none !important;
             }
           }
         `}</style>
+
         <div className="hero-bento-grid" style={{ position: 'relative', zIndex: 2 }}>
           
-          {/* LEFT COLUMN (Text + Search) */}
+          {/* COLONNE GAUCHE (Textes + Mini-Bento Confiance + Actions Directes) */}
           <div className="hero-left-column">
             
-            {/* TEXT BLOCK */}
-            <div className="hero-text-block" style={{ maxWidth: 680 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5', width: 'fit-content' }}>
+            {/* Accroche & Valeurs */}
+            <div>
+              <div className="hero-badge-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5', width: 'fit-content' }}>
                 <Sparkles size={13} style={{ color: '#C75B00' }} />
-                <span>Hub officiel des vendeurs vérifiés Nopalou</span>
+                <span>Hub officiel des commerçants vérifiés</span>
               </div>
 
-              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 25, fontWeight: 900, margin: '0 0 8px', lineHeight: 1.15, color: '#0f172a' }}>
+              <h1 className="hero-main-title" style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 23, fontWeight: 900, margin: '0 0 5px', lineHeight: 1.15, color: '#0f172a' }}>
                 Boutiques & Vendeurs Pro au <span style={{ color: '#C75B00' }}>Sénégal</span>
               </h1>
 
-              <p style={{ fontSize: 13.5, color: '#475569', margin: '0 0 10px', lineHeight: 1.45 }}>
-                L'annuaire de référence pour trouver des commerçants de confiance, grossistes et artisans. Parcourez leurs catalogues et contactez-les directement sans intermédiaire.
+              <p className="hero-subtitle" style={{ fontSize: 13, color: '#475569', margin: '0 0 8px', lineHeight: 1.4 }}>
+                L'annuaire de référence pour trouver des commerçants de confiance. Parcourez les catalogues en direct et commandez sans intermédiaire.
               </p>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12.5, color: '#334155' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <CheckCircle2 size={13} style={{ color: '#10b981' }} /> <b>0% commission</b>
+              <div className="hero-values-strip" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 11.5, color: '#334155' }}>
+                <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <CheckCircle2 size={12} style={{ color: '#10b981' }} /> <b>0% commission</b>
                 </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <CheckCircle2 size={13} style={{ color: '#10b981' }} /> <b>100% Vendeurs vérifiés</b>
+                <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <CheckCircle2 size={12} style={{ color: '#10b981' }} /> <b>Catalogues directs</b>
                 </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <CheckCircle2 size={13} style={{ color: '#10b981' }} /> <b>Contact WhatsApp direct</b>
+                <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <CheckCircle2 size={12} style={{ color: '#10b981' }} /> <b>WhatsApp direct</b>
+                </span>
+                <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Store size={12} style={{ color: '#C75B00' }} /> <b>{total > 0 ? total : '70+'} boutiques</b>
+                </span>
+                <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <ShieldCheck size={12} style={{ color: '#16a34a' }} /> <b>100% vérifiés</b>
                 </span>
               </div>
             </div>
 
-            {/* SEARCH BLOCK */}
-            <div className="hero-search-block" style={{ background: '#ffffff', borderRadius: 18, padding: '14px 18px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <BoutiquesSearch currentQ={q} currentVille={ville} currentCat={cat} />
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {/* Row 1: Villes & Badges */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ville :</span>
-                  {villesAffichage.slice(0, 5).map(v => (
-                    <Link
-                      key={v}
-                      href={buildLink({ ville: ville === v ? '' : v, page: '1' })}
-                      style={{
-                        padding: '3px 9px', borderRadius: 14, fontSize: 11.5, fontWeight: 700, textDecoration: 'none',
-                        background: ville === v ? '#fff7f0' : '#f8fafc',
-                        color: ville === v ? '#C75B00' : '#4b5563',
-                        border: ville === v ? '1.5px solid #C75B00' : '1px solid #e2e8f0',
-                      }}
-                    >
-                      {v}
-                    </Link>
-                  ))}
-
-                  <div style={{ width: 1, height: 16, background: '#e2e8f0', margin: '0 2px' }} />
-
-                  <Link
-                    href={buildLink({ plan: plan === 'business' ? '' : 'business', page: '1' })}
-                    style={{
-                      padding: '3px 9px', borderRadius: 14, fontSize: 11.5, fontWeight: 700, textDecoration: 'none',
-                      background: plan === 'business' ? '#1e3a5f' : '#f1f5f9',
-                      color: plan === 'business' ? '#fff' : '#1e3a5f',
-                      border: '1px solid #cbd5e1',
-                    }}
-                  >
-                    Business
-                  </Link>
-                  <Link
-                    href={buildLink({ plan: plan === 'pro' ? '' : 'pro', page: '1' })}
-                    style={{
-                      padding: '3px 9px', borderRadius: 14, fontSize: 11.5, fontWeight: 700, textDecoration: 'none',
-                      background: plan === 'pro' ? '#C75B00' : '#f1f5f9',
-                      color: plan === 'pro' ? '#fff' : '#C75B00',
-                      border: '1px solid #cbd5e1',
-                    }}
-                  >
-                    Vendeur Pro
-                  </Link>
+            {/* ── 3 PILIERS CONFIANCE BENTO (VERSION DESKTOP) ── */}
+            <div className="hero-trust-bento">
+              <div className="hero-trust-item">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ShieldCheck size={14} style={{ color: '#10b981', flexShrink: 0 }} />
+                  <span style={{ fontSize: 11.5, fontWeight: 800, color: '#0f172a' }}>Commerçants Vérifiés</span>
                 </div>
-
-                {/* Row 2: Trier par */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', paddingTop: 6, borderTop: '1px dashed #f1f5f9' }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trier :</span>
-                  <Link href={buildLink({ tri: 'recommande', page: '1' })} style={{ padding: '3px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'recommande' || !tri ? '#1e293b' : '#f8fafc', color: tri === 'recommande' || !tri ? '#fff' : '#4b5563', border: tri === 'recommande' || !tri ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Recommandé</Link>
-                  <Link href={buildLink({ tri: 'recent', page: '1' })} style={{ padding: '3px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'recent' ? '#1e293b' : '#f8fafc', color: tri === 'recent' ? '#fff' : '#4b5563', border: tri === 'recent' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Plus récents</Link>
-                  <Link href={buildLink({ tri: 'nom', page: '1' })} style={{ padding: '3px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, textDecoration: 'none', background: tri === 'nom' ? '#1e293b' : '#f8fafc', color: tri === 'nom' ? '#fff' : '#4b5563', border: tri === 'nom' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>Nom A-Z</Link>
-                </div>
+                <span style={{ fontSize: 10.5, color: '#64748b', lineHeight: 1.25 }}>Boutique physique & identité validée</span>
               </div>
+
+              <div className="hero-trust-item">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <MessageCircle size={14} style={{ color: '#C75B00', flexShrink: 0 }} />
+                  <span style={{ fontSize: 11.5, fontWeight: 800, color: '#0f172a' }}>WhatsApp Direct</span>
+                </div>
+                <span style={{ fontSize: 10.5, color: '#64748b', lineHeight: 1.25 }}>Commandes & négociation en direct</span>
+              </div>
+
+              <div className="hero-trust-item">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Truck size={14} style={{ color: '#1C2B4A', flexShrink: 0 }} />
+                  <span style={{ fontSize: 11.5, fontWeight: 800, color: '#0f172a' }}>Livraison Express</span>
+                </div>
+                <span style={{ fontSize: 10.5, color: '#64748b', lineHeight: 1.25 }}>Expédition Dakar & 14 régions</span>
+              </div>
+            </div>
+
+            {/* ── ACTIONS & NAVIGATION RAPIDE ── */}
+            <div className="hero-actions-row">
+              <a href="#resultats" className="hero-btn-explore">
+                <span>Explorer les boutiques</span>
+                <ArrowDown size={13} />
+              </a>
+              <Link href="/creer-boutique" className="hero-btn-create">
+                <Store size={13} />
+                <span>Ouvrir ma boutique</span>
+              </Link>
+              <span className="hero-hint-text" style={{ fontSize: 11, color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
+                Sélectionnez vos critères ci-dessous ↓
+              </span>
             </div>
 
           </div>
 
-          {/* RIGHT BLOCK (Carousel + Stats) */}
-          <div className="hero-right-block" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* COLONNE DROITE (CARROUSEL ANIMÉ + COMPTEURS STATS) - DESKTOP ONLY */}
+          <div className="hero-right-block" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             
-            {/* Widget Carrousel */}
+            {/* Widget Carrousel Animé (Auto-slide 4.5s) */}
             <div style={{ width: '100%' }}>
               <HeroCarousel />
             </div>
 
             {/* Widgets Statistiques */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ background: '#fff7ed', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, flexShrink: 0 }}>
-                  <Store size={18} style={{ color: '#C75B00' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div style={{ background: '#ffffff', padding: '9px 12px', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: 9 }}>
+                <div style={{ background: '#fff7ed', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7, flexShrink: 0 }}>
+                  <Store size={16} style={{ color: '#C75B00' }} />
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>{total > 0 ? total : '100+'}</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b', fontWeight: 600 }}>Boutiques actives</p>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>{total > 0 ? total : '70+'}</p>
+                  <p style={{ margin: '1px 0 0', fontSize: 10.5, color: '#64748b', fontWeight: 600 }}>Boutiques actives</p>
                 </div>
               </div>
 
-              <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ background: '#f0fdf4', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, flexShrink: 0 }}>
-                  <ShieldCheck size={18} style={{ color: '#16a34a' }} />
+              <div style={{ background: '#ffffff', padding: '9px 12px', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: 9 }}>
+                <div style={{ background: '#f0fdf4', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7, flexShrink: 0 }}>
+                  <ShieldCheck size={16} style={{ color: '#16a34a' }} />
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>100%</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b', fontWeight: 600 }}>Vendeurs vérifiés</p>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>100%</p>
+                  <p style={{ margin: '1px 0 0', fontSize: 10.5, color: '#64748b', fontWeight: 600 }}>Vendeurs vérifiés</p>
                 </div>
               </div>
             </div>
 
           </div>
+
         </div>
       </div>
 
-      {/* CATEGORIES */}
-      <div id="resultats" style={{ marginBottom: 32 }}>
+      {/* ── SÉLECTION DISCOVER : PÉPITES & PRODUITS DU MOMENT (12 ARTICLES EN CARROUSEL COMPACT) ── */}
+      {!estEnModeRecherche && topProduits.length > 0 && (
+        <DiscoverTrendingProducts produits={topProduits} />
+      )}
+
+      {/* ── SECTION RÉSULTATS DE L'ANNUAIRE DES BOUTIQUES ── */}
+      <div id="resultats" style={{ marginBottom: 24 }}>
+        
+        {/* ── BLOC RECHERCHE & FILTRES DIRECTEMENT COLLÉ À L'ANNUAIRE ── */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: 18,
+          padding: '12px 16px',
+          boxShadow: '0 2px 10px rgba(199, 91, 0, 0.03)',
+          border: '1px solid #fed7aa',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+          marginBottom: 16,
+        }}>
+          <BoutiquesSearch
+            currentQ={q}
+            currentVille={ville}
+            currentCat={cat}
+            extraParams={{
+              tri,
+              budget,
+              promo,
+              avec_prods: avecProds,
+              whatsapp,
+              certifie,
+              ouvert,
+              note_min: noteMin,
+              vedette,
+              plan,
+            }}
+          />
+
+          <BoutiquesFilterBar
+            ville={ville}
+            villes={villesAffichage}
+            budget={budget}
+            budgets={BUDGETS}
+            tri={tri}
+            promo={promo}
+            avecProds={avecProds}
+            whatsapp={whatsapp}
+            certifie={certifie}
+            ouvert={ouvert}
+            noteMin={noteMin}
+            vedette={vedette}
+            plan={plan}
+            q={q}
+            cat={cat}
+          />
+        </div>
+
+        {/* Barre de catégories défilante */}
         <div
           className="hero-categories-scroll"
           style={{
-            display: 'flex',
-            gap: 8,
-            overflowX: 'auto',
-            paddingBottom: 8,
-            paddingLeft: 4,
-            paddingRight: 16,
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-            justifyContent: 'flex-start',
+            display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, paddingLeft: 4, paddingRight: 16,
+            scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', justifyContent: 'flex-start',
+            marginBottom: 16,
           }}
         >
           {categoriesAffichage.map(c => {
@@ -368,12 +608,12 @@ export default async function BoutiquesPage({
                 prefetch={false}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '9px 16px', borderRadius: 30, fontSize: 13, fontWeight: isSelected ? 800 : 600,
+                  padding: '8px 14px', borderRadius: 24, fontSize: 12.5, fontWeight: isSelected ? 800 : 600,
                   whiteSpace: 'nowrap', textDecoration: 'none',
-                  background: isSelected ? '#C75B00' : '#fff',
+                  background: isSelected ? 'var(--accent, #C75B00)' : '#fff',
                   color: isSelected ? '#fff' : '#374151',
-                  border: isSelected ? '1px solid #C75B00' : '1px solid #e5e7eb',
-                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : 'none',
+                  border: isSelected ? '1px solid var(--accent, #C75B00)' : '1px solid #e5e7eb',
+                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.2)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -383,187 +623,28 @@ export default async function BoutiquesPage({
             )
           })}
         </div>
+
+        {/* Résumé de recherche ou de filtre actif */}
+        {aDesFiltresActifs && (
+          <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', padding: '10px 16px', borderRadius: 12, border: '1px solid #fed7aa' }}>
+            <p style={{ margin: 0, fontSize: 13, color: '#334155' }}>
+              {estEnModeRecherche ? (
+                <>Résultats pour <b>« {q} »</b> ({boutiquesFiltrees.length} boutique{boutiquesFiltrees.length > 1 ? 's' : ''} correspondante{boutiquesFiltrees.length > 1 ? 's' : ''})</>
+              ) : (
+                <>Filtres appliqués : <b>{boutiquesFiltrees.length}</b> boutique{boutiquesFiltrees.length > 1 ? 's' : ''} trouvée{boutiquesFiltrees.length > 1 ? 's' : ''}</>
+              )}
+            </p>
+            <Link href="/boutiques" style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent, #C75B00)', textDecoration: 'none' }}>
+              Tout réinitialiser
+            </Link>
+          </div>
+        )}
+
+        {/* ── LISTE / CARROUSEL DES BOUTIQUES PARTENAIRES ── */}
+        <BoutiquesDirectoryList boutiques={boutiquesFiltrees} searchQuery={q} />
       </div>
 
-      {/* GRILLE DES BOUTIQUES */}
-      {boutiquesFiltrees.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb' }}>
-          <span style={{ fontSize: 52, display: 'block', marginBottom: 12 }}></span>
-          <h3 style={{ margin: '0 0 6px', fontSize: 18, color: '#111827' }}>Aucune boutique ne correspond à votre recherche</h3>
-          <p style={{ margin: '0 0 16px', fontSize: 14, color: '#6b7280' }}>Essayez de modifier votre recherche ou vos filtres de ville/catégorie.</p>
-          <Link href="/boutiques" style={{ display: 'inline-block', background: '#C75B00', color: '#fff', padding: '10px 20px', borderRadius: 10, textDecoration: 'none', fontWeight: 700 }}>
-            Voir toutes les boutiques
-          </Link>
-        </div>
-      ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
-          gap: 22,
-        }}>
-          {boutiquesFiltrees.map(b => {
-            const sponsorActif = b.sponsorise && (!b.sponsor_jusqu_au || new Date(b.sponsor_jusqu_au) > new Date())
-            const estPro = b.plan_actif === 'pro'
-            const estBusiness = b.plan_actif === 'business'
-            const statutOuverture = estOuvertActuellement(b.horaires)
-            const whatsappNumber = b.whatsapp || b.telephone
-            const estMisEnAvant = estBusiness || estPro || sponsorActif
-
-            // Photo de couverture HD par défaut sélectionnée selon la catégorie & hash déterministe
-            const coverImageSrc = b.cover_url || getCategoryCoverPhoto(b.nom, b.categorie)
-
-            // Initiales pour le logo par défaut
-            const words = b.nom.trim().split(/\s+/)
-            const initials = words.length >= 2 ? (words[0][0] + words[1][0]).toUpperCase() : b.nom.slice(0, 2).toUpperCase()
-
-            return (
-              <div
-                key={b.id}
-                style={{
-                  background: '#fff',
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  border: estMisEnAvant ? '1px solid #fde68a' : '1px solid #e5e7eb',
-                  boxShadow: estMisEnAvant ? '0 10px 25px -4px rgba(245, 158, 11, 0.15)' : '0 4px 16px rgba(0,0,0,0.05)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s ease, boxShadow 0.2s ease',
-                  position: 'relative',
-                }}
-              >
-                {/* Couverture Header HD */}
-                <div style={{
-                  width: '100%', height: 110, background: '#f1f5f9',
-                  position: 'relative', overflow: 'hidden',
-                }}>
-                  <ExternalImg src={coverImageSrc} alt={b.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.4) 100%)' }} />
-
-                  <div style={{
-                    position: 'absolute', top: 10, right: 10, zIndex: 2,
-                    background: 'rgba(255, 255, 255, 0.92)',
-                    color: '#0f172a', backdropFilter: 'blur(8px)',
-                    padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800,
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    border: '1px solid rgba(255, 255, 255, 0.8)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
-                  }}>
-                    <span style={{
-                      width: 7, height: 7, borderRadius: '50%',
-                      background: statutOuverture.ouverte ? '#16a34a' : '#94a3b8',
-                      boxShadow: statutOuverture.ouverte ? '0 0 6px rgba(22,163,74,0.5)' : 'none'
-                    }} />
-                    <span>{statutOuverture.label}</span>
-                  </div>
-
-                  {estBusiness && (
-                    <div style={{ position: 'absolute', top: 10, left: 10, background: '#0f172a', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                      Business
-                    </div>
-                  )}
-                  {estPro && !estBusiness && (
-                    <div style={{ position: 'absolute', top: 10, left: 10, background: '#C75B00', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                      Vendeur Pro
-                    </div>
-                  )}
-                </div>
-
-                {/* Logo & Corps */}
-                <div style={{ padding: '0 16px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: -32, marginBottom: 10, position: 'relative', zIndex: 3 }}>
-                    <div style={{
-                      width: 64, height: 64, borderRadius: 14, overflow: 'hidden',
-                      border: '3px solid #fff', background: b.logo_url ? '#fff' : '#fff7ed',
-                      boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <ExternalImg src={b.logo_url} alt={b.nom} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-
-                    {b.total_avis && b.total_avis > 0 && b.note_moyenne ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fffbeb', padding: '3px 9px', borderRadius: 12, border: '1px solid #fef3c7' }}>
-                        <Star size={12} style={{ color: '#d97706', fill: '#d97706' }} />
-                        <span style={{ fontSize: 11, fontWeight: 800, color: '#92400e' }}>
-                          {Number(b.note_moyenne).toFixed(1)} / 5 ({b.total_avis})
-                        </span>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#f8fafc', padding: '3px 9px', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b' }}>
-                          Nouveau commerçant
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: '#111827', lineHeight: 1.3 }}>
-                    <Link href={`/boutiques/${b.slug || b.id}`} prefetch={false} style={{ color: 'inherit', textDecoration: 'none' }}>
-                      {b.nom}
-                    </Link>
-                  </h3>
-
-                  {b.description && (
-                    <p style={{
-                      margin: '0 0 12px', fontSize: 12, color: '#6b7280', lineHeight: 1.4,
-                      overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                    }}>
-                      {b.description}
-                    </p>
-                  )}
-
-                  <div style={{ marginTop: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12, color: '#4b5563', paddingTop: 8, borderTop: '1px solid #f3f4f6' }}>
-                    {b.ville && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f8fafc', padding: '3px 8px', borderRadius: 6, fontWeight: 600 }}>
-                        <MapPin size={12} style={{ color: '#C75B00' }} /> {b.ville}
-                      </span>
-                    )}
-                    {b.categorie && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f8fafc', padding: '3px 8px', borderRadius: 6, fontWeight: 600 }}>
-                        <Building2 size={12} style={{ color: '#475569' }} /> {b.categorie}
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: whatsappNumber ? '1fr auto' : '1fr', gap: 8 }}>
-                    <Link
-                      href={`/boutiques/${b.slug || b.id}`}
-                      prefetch={false}
-                      style={{
-                        textAlign: 'center', background: '#C75B00', color: '#fff',
-                        padding: '9px 14px', borderRadius: 10, textDecoration: 'none',
-                        fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        boxShadow: '0 2px 8px rgba(199,91,0,0.22)',
-                      }}
-                    >
-                      <span>Visiter la boutique</span>
-                      <ArrowRight size={14} />
-                    </Link>
-
-                    {whatsappNumber && (
-                      <a
-                        href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${b.nom}, j'ai vu votre boutique sur Nopalou !`)}`}
-                        target="_blank" rel="noopener noreferrer"
-                        style={{
-                          background: '#25d366', color: '#fff', padding: '9px 12px',
-                          borderRadius: 10, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          boxShadow: '0 2px 6px rgba(37,211,102,0.2)',
-                        }}
-                        title="Contacter sur WhatsApp"
-                      >
-                        <MessageCircle size={16} />
-                      </a>
-                    )}
-                  </div>
-
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
+      {/* ── PAGINATION ── */}
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 32 }}>
           {currentPage > 1 && (

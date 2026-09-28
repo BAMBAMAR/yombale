@@ -1,5 +1,27 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Aplatissement Hero Mobile en Rectangle & Refonte Ergonomique Annuaire Boutiques & Agences (28 septembre 2026)** :
+  * **Problèmes Résolus & Améliorations Apportées** :
+    1. **Aplatissement du Hero Mobile en Rectangle Épuré (Modèle Page d'Accueil `/`) (`/boutiques` & `/agences`)** :
+       - *Diagnostic* : Sur smartphone (`<= 768px`), la section Hero formait une tour verticale de plus de 700px repoussant tout le catalogue sous la ligne de flottaison en raison de la superposition de colonnes et du carrousel bento.
+       - *Correction* : Masquage automatique du carrousel de droite (`.hero-right-block`) et des 3 bento-items desktop (`.hero-trust-bento`) sur mobile. Transformation en un bandeau rectangulaire ultra-compact (~130px de hauteur, `border-radius: 14px`, `padding: 12px 14px`), avec ruban de chips réassurance enveloppé sur 2 sous-lignes nettes (`✓ 0% commission`, `✓ Catalogues directs`, `✓ WhatsApp direct`, `🏪 71 boutiques`, `🛡️ 100% vérifiés`) et boutons d'action d'accès direct compacts.
+       - *Élimination de la Troncature Gauche* : Application stricte de `width: 100%; min-width: 0; box-sizing: border-box;` sur tous les conteneurs et items flex pour éradiquer tout débordement ou décalage horizontal.
+    2. **Suppression Complète du Vide Web & Enrichissement Bento Confiance Desktop (`/boutiques` & `/agences`)** :
+       - *Diagnostic* : Sur desktop, le retrait de la recherche du Hero laissait un grand espace blanc de ~180px dans la colonne gauche car la colonne droite (`HeroCarousel` + statistiques) dépassait 320px de hauteur avec `align-items: stretch`.
+       - *Correction* : Réduction calibrée de la hauteur de `HeroCarousel.tsx` et `ImmoHeroCarousel.tsx` (`minHeight: 175px`, paddings compacts), passage à `align-items: center` pour un centrage équilibré, et ajout dans la colonne gauche de 3 mini-cartes Bento de réassurance (Commerçants Vérifiés / Agréments Contrôlés, WhatsApp Direct / Quittances Wave-OM, Livraison Express / Mandats Exclusifs) dotées de micro-animations au hover + raccourcis d'action directe (« Explorer les boutiques/agences ↓ » avec ancre fluide, « Ouvrir ma boutique » / « Payer mon loyer »).
+    3. **Refonte Bouton de Recherche Mobile (`BoutiquesSearch` & `AgencesSearch`)** :
+       - *Diagnostic* : Le bouton avec le libellé « Rechercher » occupait ~110px sur smartphone, écrasant le champ de saisie et tronquant le texte du placeholder à « Rechercher une boutiq ».
+       - *Correction* : Remplacement sur mobile (`@media (max-width: 768px)`) par un bouton icône circulaire 34px avec icône `Search` vectorielle de `lucide-react`, placeholder condensé « Rechercher une boutique, produit... » ou « Rechercher une agence, bien... » offrant 100% de lisibilité.
+    4. **Éradication de la Troncature des Menus Déroulants (`BoutiquesFilterBar` & `AgenceFilterBar`)** :
+       - *Diagnostic* : Le libellé « Toutes les villes » était coupé à « Toutes les v » à cause d'un padding horizontal cumulé de 52px sur les balises `<select>` natives.
+       - *Correction* : Calibrage précis des paddings (`padding: 0 17px 0 20px !important`), typographie 11px semi-bold et `letter-spacing: -0.25px`. « Toutes les villes » et « Tous les prix » s'affichent intégralement sans coupure.
+    5. **Défilement Horizontal Pépites & Nouveautés (12 articles)** :
+       - Défilement swipeable (`scroll-snap-type: x mandatory`) avec boutons de défilement `‹ ›` sans allonger la page.
+  * **Validation & Qualité** :
+    - `npx tsc --noEmit` : 100% PASS (0 erreur).
+    - Captures visuelles Chromium headless validées sur résolutions desktop (1440x900) et mobile (390x844).
+    - Respect des 5 Règles d'Or Anti-IA-Slop (SVG Lucide, tokens de couleur, composants < 450 lignes).
+
 - **Audit Réel Mobile & Réseau Extrême & Corrections 100% Validées (28 septembre 2026)** :
   * **Problèmes Résolus & Améliorations Apportées** :
     1. **Éradication de la Boucle de Hard Reload Premier Visiteur (`RegisterSW.tsx`)** :

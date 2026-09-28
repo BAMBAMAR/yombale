@@ -301,40 +301,230 @@ router.post('/', verifierToken, async (req, res) => {
   }
 });
 
-// ── GET /api/agences/public — Annuaire public des agences immobilières ──
+// ── GET /api/agences/top-biens — Biens phares du moment pour la vitrine agences ──
+router.get('/top-biens', async (req, res) => {
+  try {
+    const limit = Math.min(12, parseInt(req.query.limit) || 6);
+    const { ville } = req.query;
+    const conds = ["b.statut = 'actif'", "a.statut = 'actif'", "(b.statut_occupation = 'disponible' OR b.statut_occupation IS NULL)"];
+    const params = [];
+    if (ville) {
+      params.push(`%${ville}%`);
+      conds.push(`(b.ville ILIKE $${params.length} OR a.ville ILIKE $${params.length})`);
+    }
+    params.push(limit);
+
+    const query = `
+      SELECT b.id, b.titre, b.type_bien, b.prix_location, b.prix_vente, b.ville, b.quartier,
+             b.surface_m2, b.nb_chambres, b.nb_sdb, b.meuble, b.photos, b.videos,
+             a.id as agence_id, a.nom as agence_nom, a.slug as agence_slug, a.logo_url as agence_logo,
+             a.telephone as agence_tel, a.whatsapp as agence_whatsapp, a.numero_agrement
+      FROM biens_immo b
+      JOIN agences_immo a ON a.id = b.agence_id
+      WHERE ${conds.join(' AND ')}
+      ORDER BY (a.sponsorise = true AND (a.sponsor_jusqu_au IS NULL OR a.sponsor_jusqu_au > NOW())) DESC,
+               (CASE WHEN b.photos IS NOT NULL AND jsonb_array_length(b.photos) > 0 THEN 0 ELSE 1 END) ASC,
+               b.created_at DESC
+      LIMIT $${params.length}
+    `;
+
+    const { rows } = await pool.query(query, params);
+    res.json({ success: true, biens: rows });
+  } catch (err) {
+    console.error('[GET /api/agences/top-biens]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement top biens' });
+  }
+});
+
+// ── GET /api/agences/public — Annuaire public des agences immobilières (avec previews des biens) ──
 router.get('/public', async (req, res) => {
   try {
-    const { ville, recherche } = req.query;
-    let query = `
+    const {
+      ville,
+      recherche,
+      q,
+      budget,
+      transaction,
+      avec_biens,
+      agree,
+      whatsapp,
+      meuble,
+      tri
+    } = req.query;
+
+    const searchTerm = (recherche || q || '').trim();
+    const conds = ["a.statut = 'actif'"];
+    const params = [];
+
+    if (ville) {
+      params.push(`%${ville}%`);
+      conds.push(`a.ville ILIKE $${params.length}`);
+    }
+
+    let qIdx = 0;
+    if (searchTerm) {
+      params.push(`%${searchTerm}%`);
+      qIdx = params.length;
+      conds.push(`(
+        a.nom ILIKE $${qIdx}
+        OR a.description ILIKE $${qIdx}
+        OR a.quartier ILIKE $${qIdx}
+        OR a.ville ILIKE $${qIdx}
+        OR EXISTS (
+          SELECT 1 FROM biens_immo bq
+          WHERE bq.agence_id = a.id
+            AND bq.statut = 'actif'
+            AND (bq.titre ILIKE $${qIdx} OR bq.type_bien ILIKE $${qIdx} OR bq.quartier ILIKE $${qIdx} OR bq.ville ILIKE $${qIdx})
+        )
+      )`);
+    }
+
+    if (avec_biens === '1' || avec_biens === 'true') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM biens_immo b_ab
+        WHERE b_ab.agence_id = a.id
+          AND b_ab.statut = 'actif'
+          AND (b_ab.statut_occupation = 'disponible' OR b_ab.statut_occupation IS NULL)
+      )`);
+    }
+
+    if (agree === '1' || agree === 'true') {
+      conds.push(`(a.numero_agrement IS NOT NULL AND TRIM(a.numero_agrement) != '')`);
+    }
+
+    if (whatsapp === '1' || whatsapp === 'true') {
+      conds.push(`(a.whatsapp IS NOT NULL AND TRIM(a.whatsapp) != '')`);
+    }
+
+    if (meuble === '1' || meuble === 'true') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM biens_immo bm
+        WHERE bm.agence_id = a.id AND bm.statut = 'actif' AND bm.meuble = true
+      )`);
+    }
+
+    if (transaction === 'location') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM biens_immo bl
+        WHERE bl.agence_id = a.id AND bl.statut = 'actif' AND bl.prix_location IS NOT NULL AND bl.prix_location > 0
+      )`);
+    } else if (transaction === 'vente') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM biens_immo bv
+        WHERE bv.agence_id = a.id AND bv.statut = 'actif' AND bv.prix_vente IS NOT NULL AND bv.prix_vente > 0
+      )`);
+    }
+
+    if (budget === 'moins_200k') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM biens_immo b_bg
+        WHERE b_bg.agence_id = a.id AND b_bg.statut = 'actif'
+          AND b_bg.prix_location IS NOT NULL AND b_bg.prix_location <= 200000
+      )`);
+    } else if (budget === '200k_500k') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM biens_immo b_bg
+        WHERE b_bg.agence_id = a.id AND b_bg.statut = 'actif'
+          AND b_bg.prix_location > 200000 AND b_bg.prix_location <= 500000
+      )`);
+    } else if (budget === '500k_1m') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM biens_immo b_bg
+        WHERE b_bg.agence_id = a.id AND b_bg.statut = 'actif'
+          AND b_bg.prix_location > 500000 AND b_bg.prix_location <= 1000000
+      )`);
+    } else if (budget === 'plus_1m') {
+      conds.push(`EXISTS (
+        SELECT 1 FROM biens_immo b_bg
+        WHERE b_bg.agence_id = a.id AND b_bg.statut = 'actif'
+          AND b_bg.prix_location > 1000000
+      )`);
+    }
+
+    let orderBy = `(a.sponsorise = true AND (a.sponsor_jusqu_au IS NULL OR a.sponsor_jusqu_au > NOW())) DESC,
+                   (EXISTS (SELECT 1 FROM biens_immo b_has WHERE b_has.agence_id = a.id AND b_has.statut = 'actif' AND (b_has.statut_occupation = 'disponible' OR b_has.statut_occupation IS NULL))) DESC,
+                   nb_biens_disponibles DESC, a.created_at DESC`;
+
+    if (tri === 'prix_asc') {
+      orderBy = `(SELECT MIN(COALESCE(bp.prix_location, bp.prix_vente)) FROM biens_immo bp WHERE bp.agence_id = a.id AND bp.statut = 'actif' AND (bp.statut_occupation = 'disponible' OR bp.statut_occupation IS NULL)) ASC NULLS LAST, a.created_at DESC`;
+    } else if (tri === 'prix_desc') {
+      orderBy = `(SELECT MAX(COALESCE(bp.prix_location, bp.prix_vente)) FROM biens_immo bp WHERE bp.agence_id = a.id AND bp.statut = 'actif' AND (bp.statut_occupation = 'disponible' OR bp.statut_occupation IS NULL)) DESC NULLS LAST, a.created_at DESC`;
+    } else if (tri === 'biens_desc') {
+      orderBy = `nb_biens_disponibles DESC, a.created_at DESC`;
+    } else if (tri === 'nom_asc') {
+      orderBy = `a.nom ASC`;
+    } else if (tri === 'recent') {
+      orderBy = `a.created_at DESC`;
+    }
+
+    const where = 'WHERE ' + conds.join(' AND ');
+
+    let bienOrderClauses = [];
+    if (qIdx > 0) {
+      bienOrderClauses.push(`CASE WHEN (b_sub.titre ILIKE $${qIdx} OR b_sub.type_bien ILIKE $${qIdx} OR b_sub.quartier ILIKE $${qIdx}) THEN 0 ELSE 1 END`);
+    }
+    if (budget === 'moins_200k') {
+      bienOrderClauses.push(`CASE WHEN (b_sub.prix_location <= 200000) THEN 0 ELSE 1 END`);
+    } else if (budget === '200k_500k') {
+      bienOrderClauses.push(`CASE WHEN (b_sub.prix_location > 200000 AND b_sub.prix_location <= 500000) THEN 0 ELSE 1 END`);
+    } else if (budget === '500k_1m') {
+      bienOrderClauses.push(`CASE WHEN (b_sub.prix_location > 500000 AND b_sub.prix_location <= 1000000) THEN 0 ELSE 1 END`);
+    } else if (budget === 'plus_1m') {
+      bienOrderClauses.push(`CASE WHEN (b_sub.prix_location > 1000000) THEN 0 ELSE 1 END`);
+    }
+    bienOrderClauses.push(`(CASE WHEN b_sub.photos IS NOT NULL AND jsonb_array_length(b_sub.photos) > 0 THEN 0 ELSE 1 END)`);
+    bienOrderClauses.push('b_sub.created_at DESC');
+
+    const bienOrder = bienOrderClauses.join(', ');
+
+    const mainQuery = `
       SELECT a.id, a.nom, a.slug, a.description, a.logo_url, a.adresse, a.ville, a.quartier,
              a.telephone, a.whatsapp, a.email_contact, a.site_web, a.numero_agrement,
              a.parametres, a.statut, a.created_at,
              a.sponsorise, a.sponsor_jusqu_au,
              (a.sponsorise = true AND (a.sponsor_jusqu_au IS NULL OR a.sponsor_jusqu_au > NOW())) AS est_sponsorise_actif,
-             (SELECT COUNT(*) FROM biens_immo b WHERE b.agence_id = a.id AND b.statut = 'actif' AND b.statut_occupation = 'disponible') AS nb_biens_disponibles
+             COALESCE(p_agg.total_biens, 0)::int AS total_biens,
+             COALESCE(p_agg.nb_biens_disponibles, 0)::int AS nb_biens_disponibles,
+             COALESCE(p_agg.biens_apercu, '[]'::json) AS biens_apercu
       FROM agences_immo a
-      WHERE a.statut = 'actif'
+      LEFT JOIN LATERAL (
+        SELECT 
+          COUNT(b_all.id) as total_biens,
+          COUNT(b_all.id) FILTER (WHERE b_all.statut_occupation = 'disponible' OR b_all.statut_occupation IS NULL) as nb_biens_disponibles,
+          COALESCE(
+            (
+              SELECT json_agg(sub)
+              FROM (
+                SELECT b_sub.id, b_sub.titre, b_sub.type_bien, b_sub.prix_location, b_sub.prix_vente,
+                       b_sub.quartier, b_sub.ville, b_sub.meuble, b_sub.surface_m2, b_sub.nb_chambres,
+                       COALESCE(b_sub.photos->>0, '') AS photo_principale
+                FROM biens_immo b_sub
+                WHERE b_sub.agence_id = a.id
+                  AND b_sub.statut = 'actif'
+                  AND (b_sub.statut_occupation = 'disponible' OR b_sub.statut_occupation IS NULL)
+                ORDER BY ${bienOrder}
+                LIMIT 4
+              ) sub
+            ),
+            '[]'::json
+          ) AS biens_apercu
+        FROM biens_immo b_all
+        WHERE b_all.agence_id = a.id AND b_all.statut = 'actif'
+      ) p_agg ON true
+      ${where}
+      ORDER BY ${orderBy}
     `;
-    const params = [];
-    let pIdx = 1;
 
-    if (ville) {
-      query += ` AND a.ville ILIKE $${pIdx++}`;
-      params.push(`%${ville}%`);
-    }
-    if (recherche) {
-      query += ` AND (a.nom ILIKE $${pIdx} OR a.description ILIKE $${pIdx} OR a.quartier ILIKE $${pIdx})`;
-      params.push(`%${recherche}%`);
-      pIdx++;
-    }
-
-    query += ` ORDER BY (a.sponsorise = true AND (a.sponsor_jusqu_au IS NULL OR a.sponsor_jusqu_au > NOW())) DESC, nb_biens_disponibles DESC, a.created_at DESC`;
-
-    const { rows } = await pool.query(query, params);
+    const [agencesRes, villesRes] = await Promise.all([
+      pool.query(mainQuery, params),
+      pool.query("SELECT DISTINCT ville FROM agences_immo WHERE statut = 'actif' AND ville IS NOT NULL AND ville != '' ORDER BY ville ASC")
+    ]);
 
     res.json({
       success: true,
-      agences: rows
+      agences: agencesRes.rows,
+      total: agencesRes.rows.length,
+      villes: villesRes.rows.map(r => r.ville)
     });
   } catch (err) {
     console.error('[GET /api/agences/public]', err.message);
