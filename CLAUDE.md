@@ -26,7 +26,23 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Correction Structurelle Déduplication & Idempotence Scraper) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Audit Fraîcheur Réelle des Données Scrapées & Correctifs Détection/Purge) :
+- **Audit Forensic de la Fraîcheur Réelle des Données Scrapées** :
+  - **Diagnostic** : Confrontation directe de 66 URLs réelles (Jumia, CoinAfrique, Expat-Dakar, Auchan, Kanje) à la base PostgreSQL de Nopalou :
+    - 32 % des éléments testés présentaient des anomalies majeures de fraîcheur (18 % de ruptures de stock non détectées, 11 % d'annonces 404 non purgées, 6 % de prix modifiés non actualisés).
+    - 0 % des offres en base étaient marquées `stock = false` (12 643 sur 12 643 marquées en stock), en raison d'un court-circuit logique dans `offreEstMorte` avec `validateStatus: null` qui traitait les 404 comme des succès et retournait systématiquement `false`.
+    - 75,1 % des annonces immobilières CoinAfrique (1 893 / 2 522) et 95 % des annonces Expat-Dakar n'avaient jamais été mises à jour depuis leur collecte initiale il y a 111 jours.
+- **Correctifs Appliqués** :
+  - **`offreEstMorte` fiabilisée (`backend/services/scraper.js`)** : Détection explicite des codes HTTP 404/410, des délistages avec redirection vers catalogue/accueil (`jumia.sn/catalog/`, etc.) et des mentions d'expiration/rupture dans le corps HTML sans bloquer sur les challenges Cloudflare (403). Taux de réussite unitaire : 100 % (4/4).
+  - **Nettoyeur d'annonces immobilières mortes (`nettoyerAnnoncesImmoExpirees`)** : Fonction périodique parcourant les annonces immobilières scrapées et marquant `actif = false, supprimee = true, updated_at = NOW()` sur les URLs mortes.
+  - **Planification Cron Immobilier (`lancerScrapingImmo`)** : Intégration du scraping immobilier (`scraper-immo-expat` et `scraper-immo-coinafrique`) tous les 2 jours à 02h00 (`0 2 */2 * *`) dans `demarrerScraping()`, et passage du nettoyeur immo chaque nuit à 04h30.
+  - **Filtrage Strict Affichage Public (`backend/routes/immo.js` & `backend/routes/produits.js`)** :
+    - Ajout de `AND (ai.supprimee IS NULL OR ai.supprimee = false)` dans `GET /api/immo`.
+    - Remplacement de `HAVING (COUNT(o.id) = 0 OR MIN(o.prix) >= 500)` par `HAVING COUNT(o.id) > 0 AND MIN(o.prix) >= 500` dans `GET /api/produits` pour ne plus servir de fiches scrapées vides d'offres en stock.
+  - **Routes d'Administration Dédiées (`backend/routes/scraper.js`)** : Ajout de `POST /api/scraper/nettoyer-immo-mortes` et `POST /api/scraper/lancer-immo`.
+  - **Assainissement Immédiat en DB** : Désactivation et marquage immédiat en `supprimee = true, actif = false` des 7 annonces 404 identifiées lors de l'audit.
+
+### 📌 Version Précédente (28 septembre 2026 - Correction Structurelle Déduplication & Idempotence Scraper) :
 - **Audit et Résolution du Gonflement Artificiel du Catalogue (`produits`)** :
   - **Diagnostic** : Identification de 42 160 fiches orphelines (79,1 % de la table `produits`) sans aucune offre, générées par un clash d'upsert à deux têtes (`idx_offres_marchand_url` vs `ON CONFLICT (produit_id, marchand_id)`) lors des re-scrapings quotidiens.
   - **Idempotence Stricte dans `backend/services/scraper.js` (`sauvegarderProduits`)** :

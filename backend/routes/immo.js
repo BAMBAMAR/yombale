@@ -63,6 +63,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       FROM annonces_immo ai
       LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
       WHERE ai.actif = true
+        AND (ai.supprimee IS NULL OR ai.supprimee = false)
         AND (ai.prix IS NULL OR ai.prix >= 10000)
         AND ($1::text IS NULL OR ai.transaction = $1)
         AND ($2::text IS NULL OR ai.ville ILIKE $2)

@@ -312,7 +312,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
               ))
           ${sousTypeCondition}
         GROUP BY p.id, c.nom, p.created_at, p.sponsorise, p.sponsor_jusqu_au
-        HAVING (COUNT(o.id) = 0 OR MIN(o.prix) >= 500)`;
+        HAVING COUNT(o.id) > 0 AND MIN(o.prix) >= 500`;
 
       const baseBoutique = `
         SELECT p.id, p.nom::text, p.description, p.images[1] AS image_url,

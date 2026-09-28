@@ -1357,26 +1357,60 @@ async function envoyerRelancesExpiration() {
 }
 
 async function offreEstMorte(url) {
+  if (!url || typeof url !== 'string' || !url.startsWith('http')) return false;
+
   try {
-    await axios.head(url, {
-      headers: { 'User-Agent': randUA() },
+    const res = await axios.get(url, {
+      headers: {
+        'User-Agent': randUA(),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'fr-FR,fr;q=0.9',
+      },
       timeout: 10000,
       maxRedirects: 5,
-      validateStatus: null,
+      validateStatus: (status) => status < 500, // Ne lève pas d'exception sur 404, 410, 301
     });
-    return false;
-  } catch {
-    try {
-      const r = await axios.get(url, {
-        headers: { 'User-Agent': randUA() },
-        timeout: 10000,
-        maxRedirects: 5,
-        validateStatus: null,
-      });
-      return r.status === 404 || r.status === 410;
-    } catch {
-      return false;
+
+    // 1. Code HTTP 404 Not Found ou 410 Gone = annonce ou produit supprimé
+    if (res.status === 404 || res.status === 410) {
+      return true;
     }
+
+    const finalUrl = res.request?.res?.responseUrl || url;
+
+    // 2. Détection de redirection vers un catalogue, accueil ou recherche (produit délisté)
+    if (url.includes('jumia.sn') && (
+      finalUrl.includes('/catalog/') || 
+      finalUrl === 'https://www.jumia.sn/' || 
+      finalUrl === 'https://www.jumia.sn' || 
+      !finalUrl.includes('.html')
+    )) {
+      return true;
+    }
+
+    // 3. Détection dans le contenu HTML des messages explicites d'expiration/suppression/rupture
+    if (typeof res.data === 'string') {
+      const lower = res.data.toLowerCase();
+      if (
+        lower.includes("ce produit n'est plus disponible") ||
+        lower.includes("cette annonce n'est plus disponible") ||
+        lower.includes("cette annonce a été désactivée") ||
+        lower.includes("annonce introuvable") ||
+        lower.includes("cette annonce n'existe plus") ||
+        lower.includes("cette annonce est expirée") ||
+        lower.includes("page introuvable")
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch (err) {
+    if (err.response?.status === 404 || err.response?.status === 410) {
+      return true;
+    }
+    // Erreur réseau transitoire -> ne pas désactiver arbitrairement
+    return false;
   }
 }
 
@@ -1395,7 +1429,7 @@ async function nettoyerOffresExpirees(limite = 200) {
       produitsModifies.add(o.produit_id);
       mortes++;
     }
-    await sleep(500 + Math.random() * 500);
+    await sleep(400 + Math.random() * 400);
   }
   if (produitsModifies.size > 0) {
     const ids = [...produitsModifies];
@@ -1417,6 +1451,50 @@ async function nettoyerOffresExpirees(limite = 200) {
     );
   }
   return { verifiees: offres.length, mortes };
+}
+
+async function nettoyerAnnoncesImmoExpirees(limite = 200) {
+  const { rows: annonces } = await pool.query(
+    `SELECT id, url_source, source, titre FROM annonces_immo
+     WHERE actif = true AND (supprimee IS NULL OR supprimee = false)
+       AND url_source IS NOT NULL AND url_source != ''
+       AND source IN ('coinafrique', 'expat-dakar')
+     ORDER BY COALESCE(updated_at, created_at) ASC LIMIT $1`,
+    [limite]
+  );
+  let mortes = 0;
+  for (const a of annonces) {
+    if (await offreEstMorte(a.url_source)) {
+      await pool.query(
+        'UPDATE annonces_immo SET actif = false, supprimee = true, updated_at = NOW() WHERE id = $1',
+        [a.id]
+      );
+      mortes++;
+    }
+    await sleep(300 + Math.random() * 300);
+  }
+  return { verifiees: annonces.length, mortes };
+}
+
+async function lancerScrapingImmo() {
+  const stats = { expat: null, coinafrique: null };
+  try {
+    const expat = require('./scraper-immo-expat');
+    if (expat && typeof expat.scraperImmo === 'function') {
+      stats.expat = await expat.scraperImmo({ dryRun: false });
+    }
+  } catch (e) {
+    console.error('[SCRAPER IMMO EXPAT ERR]', e.message);
+  }
+  try {
+    const coin = require('./scraper-immo-coinafrique');
+    if (coin && typeof coin.scraperImmo === 'function') {
+      stats.coinafrique = await coin.scraperImmo({ dryRun: false });
+    }
+  } catch (e) {
+    console.error('[SCRAPER IMMO COINAFRIQUE ERR]', e.message);
+  }
+  return stats;
 }
 
 async function verifierAlertsPrix() {
@@ -1487,7 +1565,14 @@ function demarrerScraping() {
     resetInactiveSessions().catch(err => console.error('[WHATSAPP] reset sessions:', err.message));
   });
   cron.schedule('0 9 * * *', () => envoyerRelancesExpiration().catch(err => console.error('[RELANCE]', err.message)));
-  cron.schedule('30 4 * * *', () => nettoyerOffresExpirees().catch(err => console.error('[NETTOYAGE]', err.message)));
+  cron.schedule('30 4 * * *', () => {
+    nettoyerOffresExpirees().catch(err => console.error('[NETTOYAGE OFFRES]', err.message));
+    nettoyerAnnoncesImmoExpirees().catch(err => console.error('[NETTOYAGE IMMO]', err.message));
+  });
+  // Scraping immobilier régulier (tous les 2 jours à 02h00)
+  cron.schedule('0 2 */2 * *', () => {
+    lancerScrapingImmo().catch(err => console.error('[SCRAPING IMMO]', err.message));
+  });
 
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
   setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);
@@ -1539,6 +1624,7 @@ module.exports = {
   sauvegarderProduits, 
   lancerScraping, 
   lancerScrapingNouveauxSites, 
+  lancerScrapingImmo,
   demarrerScraping, 
   demarrerCronsMetier, 
   diagnosticScraper, 
@@ -1547,6 +1633,8 @@ module.exports = {
   prixPlancher, 
   corrigerPrixParPlancher, 
   nettoyerOffresExpirees, 
+  nettoyerAnnoncesImmoExpirees,
+  offreEstMorte,
   extraireSpecs, 
   verifierAlertsPrix, 
   detecterAnomalies: require('./anomaly-detector').detecterAnomalies, 

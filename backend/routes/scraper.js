@@ -3,7 +3,16 @@ const router  = require('express').Router();
 const fs      = require('fs');
 const path    = require('path');
 const { pool } = require('../models/db');
-const { lancerScraping, lancerScrapingNouveauxSites, diagnosticScraper, diagnosticNouveauSite, corrigerPrixParPlancher, nettoyerOffresExpirees } = require('../services/scraper');
+const { 
+  lancerScraping, 
+  lancerScrapingNouveauxSites, 
+  lancerScrapingImmo,
+  diagnosticScraper, 
+  diagnosticNouveauSite, 
+  corrigerPrixParPlancher, 
+  nettoyerOffresExpirees,
+  nettoyerAnnoncesImmoExpirees
+} = require('../services/scraper');
 const { adminSecretOnly: adminOnly } = require('../middlewares/auth');
 
 // ── GET /api/scraper/facebook/progress ────────────────────────
@@ -236,6 +245,26 @@ router.post('/nettoyer-offres-mortes', adminOnly, async (req, res) => {
     const limite = req.query.limite ? parseInt(req.query.limite) : 200;
     res.json({ message: `Vérification lancée en arrière-plan (limite ${limite})` });
     nettoyerOffresExpirees(limite).catch(console.error);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── POST /api/scraper/nettoyer-immo-mortes ────────────────────
+// Vérifie les annonces immobilières scrapées et désactive (actif=false, supprimee=true)
+// celles dont l'URL source renvoie 404/410 ou est expirée.
+router.post('/nettoyer-immo-mortes', adminOnly, async (req, res) => {
+  try {
+    const limite = req.query.limite ? parseInt(req.query.limite) : 200;
+    res.json({ message: `Vérification des annonces immobilières lancée en arrière-plan (limite ${limite})` });
+    nettoyerAnnoncesImmoExpirees(limite).catch(console.error);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── POST /api/scraper/lancer-immo ─────────────────────────────
+// Déclenche le scraping immobilier complet (Expat-Dakar + CoinAfrique)
+router.post('/lancer-immo', adminOnly, async (req, res) => {
+  try {
+    res.json({ message: 'Scraping immobilier lancé en arrière-plan' });
+    lancerScrapingImmo().catch(console.error);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
