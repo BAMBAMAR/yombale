@@ -33,6 +33,7 @@ export default function KitComClient({
   prixPro,
   prixBusiness,
   tauxApporteur,
+  initialSocialLinks,
 }: KitComProps) {
   const [tab, setTab] = useState<KitComTab>('reseaux')
 
@@ -258,6 +259,7 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
           visuels={visuels}
           textes={textes}
           postTemplates={postTemplates}
+          initialSocialLinks={initialSocialLinks}
           onCopy={copyToClipboard}
           onPublishFb={handlePublierFb}
           publiEnCours={publiEnCours}

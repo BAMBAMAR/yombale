@@ -1,127 +1,33 @@
-import React from 'react'
-import { Copy, ExternalLink, Download, Share2, Send, Check } from 'lucide-react'
-import { VisualItem, SocialItem, PostTemplate } from './types'
+import { Copy, ExternalLink, Download, Send } from 'lucide-react'
+import { VisualItem, SocialItem, PostTemplate, SocialLinkItem } from './types'
+import KitComSocialLinksManager from './KitComSocialLinksManager'
 
 interface KitComTabReseauxProps {
   visuels: VisualItem[]
   textes: SocialItem[]
   postTemplates: PostTemplate[]
+  initialSocialLinks?: SocialLinkItem[]
   onCopy: (txt: string, label: string) => void
   onPublishFb: (texte: string, imageUrl?: string) => void
   publiEnCours: boolean
 }
 
-const SOCIAL_LINKS = [
-  { name: 'TikTok Officiel', handle: '@nopalou.com', url: 'https://www.tiktok.com/@nopalou.com', code: 'TT', bg: '#000000', color: '#ffffff' },
-  { name: 'Canal WhatsApp', handle: 'Canal Nopalou.com', url: 'https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33', code: 'WA', bg: '#25D366', color: '#ffffff' },
-  { name: 'Facebook Page', handle: 'Nopalou Sénégal', url: 'https://www.facebook.com/profile.php?id=61591675701726', code: 'FB', bg: '#1877F2', color: '#ffffff' },
-  { name: 'Instagram', handle: '@nopalousn', url: 'https://www.instagram.com/nopalousn/', code: 'IG', bg: '#E4405F', color: '#ffffff' },
-  { name: 'Twitter / X', handle: '@nopalou_sn', url: 'https://x.com/nopalou_sn', code: 'X', bg: '#0f172a', color: '#ffffff' },
-  { name: 'WhatsApp Support', handle: '+221 70 871 79 42', url: 'https://wa.me/221708717942', code: 'SP', bg: '#128C7E', color: '#ffffff' },
-]
-
 export default function KitComTabReseaux({
   visuels,
   textes,
   postTemplates,
+  initialSocialLinks,
   onCopy,
   onPublishFb,
   publiEnCours,
 }: KitComTabReseauxProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-      {/* Section Liens Officiels Tous Réseaux */}
-      <section>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <Share2 size={18} color="var(--navy, #1C2B4A)" />
-          <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
-            Liens Officiels des Réseaux Nopalou
-          </h2>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
-          {SOCIAL_LINKS.map(s => (
-            <div
-              key={s.name}
-              style={{
-                border: '1px solid var(--border, #E2E8F0)',
-                borderRadius: 12,
-                padding: '16px',
-                background: '#fff',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                    background: s.bg,
-                    color: s.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 14,
-                    fontWeight: 900,
-                    letterSpacing: '0.5px',
-                  }}
-                >
-                  {s.code}
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{s.name}</p>
-                  <p style={{ margin: 0, fontSize: 12, color: '#64748B' }}>{s.handle}</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={() => onCopy(s.url, s.name)}
-                  style={{
-                    flex: 1,
-                    padding: '7px',
-                    background: '#F1F5F9',
-                    border: 'none',
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: 'var(--navy, #1C2B4A)',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <Copy size={12} />
-                  Copier lien
-                </button>
-                <a
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    padding: '7px 12px',
-                    background: s.bg,
-                    color: s.color,
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  Ouvrir <ExternalLink size={12} />
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Gestionnaire Interactif des Réseaux Sociaux Nopalou */}
+      <KitComSocialLinksManager
+        initialLinks={initialSocialLinks}
+        onCopy={onCopy}
+      />
 
       {/* Section Visuels HD à télécharger */}
       <section>

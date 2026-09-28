@@ -321,9 +321,10 @@ export default async function CommunicationPage() {
   let prixBusiness = 10000
   let commissionBusiness = 2
   let tauxApporteur = 20
+  let initialSocialLinks: any[] | undefined = undefined
 
   try {
-    const { adminHeaders } = require('@/app/actions/admin')
+    const { adminHeaders, DEFAULT_SOCIAL_LINKS } = require('@/app/actions/admin')
     const r = await fetch(`${BACKEND}/api/settings`, { headers: adminHeaders(token), cache: 'no-store' })
     if (r.ok) {
       const s = await r.json()
@@ -332,6 +333,16 @@ export default async function CommunicationPage() {
       prixBusiness = Number(s.plan_business_prix) || 10000
       commissionBusiness = Number(s.commission_business) || 2
       tauxApporteur = Number(s.apporteur_taux_commission) || 20
+      if (s.nopalou_social_links) {
+        try {
+          const parsed = typeof s.nopalou_social_links === 'string'
+            ? JSON.parse(s.nopalou_social_links)
+            : s.nopalou_social_links
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            initialSocialLinks = parsed
+          }
+        } catch {}
+      }
     }
   } catch {
     // fallback aux valeurs par défaut
@@ -347,6 +358,7 @@ export default async function CommunicationPage() {
       prixBusiness={prixBusiness}
       commissionBusiness={commissionBusiness}
       tauxApporteur={tauxApporteur}
+      initialSocialLinks={initialSocialLinks}
     />
   )
 }

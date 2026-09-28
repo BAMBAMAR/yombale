@@ -20,6 +20,19 @@ export interface PostTemplate {
   texte: string
 }
 
+export interface SocialLinkItem {
+  id: string
+  name: string
+  handle: string
+  url: string
+  code: string
+  bg: string
+  color: string
+  actif: boolean
+  description?: string
+  ordre?: number
+}
+
 export type KitComTab = 'reseaux' | 'demarchage' | 'battlecard' | 'apporteur' | 'whatsapp' | 'generateur'
 
 export interface KitComProps {
@@ -31,4 +44,5 @@ export interface KitComProps {
   prixBusiness: number
   commissionBusiness: number
   tauxApporteur: number
+  initialSocialLinks?: SocialLinkItem[]
 }

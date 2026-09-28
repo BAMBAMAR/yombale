@@ -17,4 +17,5 @@ export * from './admin/admin-boutiques-pos'
 export * from './admin/admin-finances'
 export * from './admin/admin-equipe'
 export * from './admin/admin-immo'
+export * from './admin/admin-communication'
 

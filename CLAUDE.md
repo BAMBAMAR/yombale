@@ -26,7 +26,30 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Modération Produits Admin Enrichie & Communication Marchand Pédagogique) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Gestion Dynamique des Réseaux Sociaux dans Kit Com & Profils Sociaux) :
+- **Gestion Dynamique et Actions Complètes sur les Réseaux Sociaux Nopalou (`/admin/communication`)** :
+  - **Diagnostic** : L'onglet "Kit Com & Profils Sociaux" affichait jusqu'ici une liste statique codée en dur de profils sociaux (TikTok, WhatsApp Channel, Facebook, etc.) sans possibilité d'ajouter de nouveaux canaux, d'éditer les URL, d'activer/masquer des profils ou d'interagir dynamiquement.
+  - **Architecture de Stockage Dynamique (`backend/lib/settingsCache.js` & `backend/routes/settings.js`)** :
+    - Clé de configuration globale `nopalou_social_links` enregistrée dans `settingsCache.DEFAULTS` avec parsing JSON résilient.
+    - Exposition dans l'endpoint public `GET /api/settings/public` pour réutilisation dans le footer, header et pages publiques, et persistance via `PUT /api/settings` sous authentification admin.
+  - **Server Actions Dédiées (`frontend-next/src/app/actions/admin/admin-communication.ts` & `actions/admin.ts`)** :
+    - `adminGetSocialLinks()` : Récupération des profils configurés avec repli gracieux sur les valeurs par défaut.
+    - `adminSaveSocialLinks(links)` : Enregistrement instantané avec revalidation de cache Next.js (`revalidatePath('/admin/communication')` et `revalidatePath('/')`).
+    - `adminResetSocialLinks()` : Réinitialisation aux réglages d'usine officiels Nopalou en un clic.
+  - **Gestionnaire Interactif Avancé (`KitComSocialLinksManager.tsx` & `ModalEditSocialLink.tsx`)** :
+    - **Actions d'enrichissement & gestion** :
+      - *Ajout / Édition complète* : Titre, identifiant/handle, URL complète, description pédagogique, badge officiel, couleur personnalisée.
+      - *10 Préréglages en 1-clic* : TikTok, WhatsApp Channel, Instagram, Facebook, X (Twitter), YouTube, LinkedIn, Telegram, Threads, WhatsApp Support.
+      - *Statut Actif / Masqué* : Masquer temporairement un réseau sans supprimer ses paramètres.
+      - *Réordonnancement fluide* : Flèches haut/bas pour réorganiser la priorité d'affichage des cartes.
+      - *Actions rapides de diffusion* : Copie directe de l'URL, copie du texte d'invitation formaté pour partage WhatsApp/SMS, ouverture directe dans un nouvel onglet avec `rel="noopener noreferrer"`.
+      - *Suppression sécurisée* avec confirmation préalable et réinitialisation d'usine disponible.
+    - **Interface & Anti-IA-Slop** :
+      - Composants modulaires (< 400 lignes), zéro émoji d'interface (icônes `lucide-react` calibrées 12-16px), respect strict des tokens CSS Nopalou.
+      - Validation TypeScript `tsc --noEmit` 100% PASS.
+
+### 📌 Version Précédente (28 septembre 2026 - Modération Produits Admin Enrichie & Communication Marchand Pédagogique) :
+
 - **Supervision & Modération Complète du Catalogue Marchand (`/admin/produits`)** :
   - **Diagnostic** : L'interface d'administration disposait uniquement d'un commutateur binaire masquant/activant le produit (`en_stock`) sans possibilité d'indiquer la raison du rejet au commerçant, sans historique ni canaux de communication intégrés.
   - **Modération & Suspension avec Motifs Pédagogiques** :
