@@ -375,8 +375,8 @@ export const shop = {
   // Carnet de dettes modales & cartes étendues
   createCustomerModalTitle: 'Créer une nouvelle fiche client',
   editCustomerModalTitle: 'Modifier la fiche client',
-  customerFullNameLabel: 'Nom complet du client',
-  customerFullNamePlaceholder: 'Ex: Fatou Sow, Modou Ndiaye',
+  customerFullNameLabel: 'Nom du client ou entreprise',
+  customerFullNamePlaceholder: 'Ex: Fatou Sow ou SARL Ndiaye & Frères',
   customerPhoneLabel: 'Numéro Téléphone (WhatsApp) *',
   customerPhonePlaceholder: 'Ex: 771234567',
   customerAddressLabel: 'Adresse / Quartier',

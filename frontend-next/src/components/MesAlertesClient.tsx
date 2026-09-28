@@ -159,7 +159,7 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', boxSizing: 'border-box' }}>
       {alertes.map((alerte) => {
         const nomProduit = alerte.produit_nom || `Produit #${alerte.produit_id?.slice(0, 8)}…`
         const dateCreation = alerte.created_at

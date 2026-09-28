@@ -20,7 +20,7 @@ export default async function DeposerImmoPage() {
   const { t } = getServerTranslation()
 
   return (
-    <div>
+    <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       <PageHeader
         breadcrumb={[
           { label: t('account.navMyRealEstate'), href: '/mes-annonces-immo' },

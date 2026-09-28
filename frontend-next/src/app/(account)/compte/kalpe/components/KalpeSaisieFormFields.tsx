@@ -1,26 +1,34 @@
 'use client'
 
 import React from 'react'
+import { User, Building2 } from 'lucide-react'
 import type { KalpeObjectif } from '../types'
 import type { SaisieMode } from './KalpeSaisieModeTabs'
 
 export const CATEGORIES_DEPENSE = [
-  'Alimentation',
-  'Transport',
+  'Alimentation & Marché',
+  'Transport & Déplacement',
+  'Carburant & Essence',
+  'École & Scolarité',
+  'Pressing & Blanchisserie',
+  'Factures (Senelec/Woyofal/Eau)',
   'Loyer & Charges',
-  'Factures (Senelec/Woyofal)',
-  'Santé',
+  'Communication & Forfait',
+  'Santé & Pharmacie',
+  'Habillement & Couture',
   'Famille & Teranga',
-  'Fournisseur / Stock',
+  'Fournisseur & Stock',
+  'Dons & Culte',
   'Autre',
 ]
 
 export const CATEGORIES_REVENU = [
-  'Salaire',
-  'Prestation',
-  'Vente',
-  'Transfert reçu',
+  'Salaire & Emploi',
+  'Prestation & Service',
+  'Vente & Commerce',
+  'Transfert reçu (Wave/OM)',
   'Tontine',
+  'Loyer perçu',
   'Autre',
 ]
 
@@ -28,6 +36,8 @@ interface KalpeSaisieFormFieldsProps {
   mode: SaisieMode
   detteSens: 'a_recevoir' | 'a_payer'
   setDetteSens: (sens: 'a_recevoir' | 'a_payer') => void
+  tiersType?: 'particulier' | 'entreprise'
+  setTiersType?: (val: 'particulier' | 'entreprise') => void
   tiersNom: string
   setTiersNom: (val: string) => void
   tiersTel: string
@@ -47,6 +57,8 @@ export function KalpeSaisieFormFields({
   mode,
   detteSens,
   setDetteSens,
+  tiersType = 'particulier',
+  setTiersType,
   tiersNom,
   setTiersNom,
   tiersTel,
@@ -106,15 +118,68 @@ export function KalpeSaisieFormFields({
             </div>
           </div>
 
+          {/* Type de Tiers : Particulier ou Entreprise / Société / Entité */}
+          <div>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#666', display: 'block', marginBottom: '6px' }}>
+              Type de tiers concerné :
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setTiersType?.('particulier')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  border: tiersType === 'particulier' ? '1.5px solid var(--navy, #1C2B4A)' : '1px solid #E8DDD2',
+                  background: tiersType === 'particulier' ? '#F1F5F9' : '#FFFFFF',
+                  color: tiersType === 'particulier' ? 'var(--navy, #1C2B4A)' : '#64748B',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <User size={14} strokeWidth={2.4} />
+                <span>Particulier (Personne)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTiersType?.('entreprise')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  border: tiersType === 'entreprise' ? '1.5px solid var(--accent, #C75B00)' : '1px solid #E8DDD2',
+                  background: tiersType === 'entreprise' ? '#FFF7ED' : '#FFFFFF',
+                  color: tiersType === 'entreprise' ? 'var(--accent, #C75B00)' : '#64748B',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Building2 size={14} strokeWidth={2.4} />
+                <span>Entreprise / Entité</span>
+              </button>
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
             <div>
               <label style={{ fontSize: '12px', fontWeight: 700, color: '#1C2B4A', display: 'block', marginBottom: '4px' }}>
-                Nom de la personne *
+                {tiersType === 'entreprise' ? "Nom de l'entreprise ou entité *" : "Nom de la personne *"}
               </label>
               <input
                 type="text"
                 required
-                placeholder="Ex: Moussa Diop"
+                placeholder={tiersType === 'entreprise' ? "Ex: École Sainte-Marie, Senelec, Pressing..." : "Ex: Moussa Diop"}
                 value={tiersNom}
                 onChange={(e) => setTiersNom(e.target.value)}
                 style={{
@@ -129,7 +194,7 @@ export function KalpeSaisieFormFields({
             </div>
             <div>
               <label style={{ fontSize: '12px', fontWeight: 700, color: '#1C2B4A', display: 'block', marginBottom: '4px' }}>
-                Téléphone (WhatsApp)
+                {tiersType === 'entreprise' ? "Contact / Téléphone" : "Téléphone (WhatsApp)"}
               </label>
               <input
                 type="tel"

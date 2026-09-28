@@ -190,33 +190,35 @@ export default function FavorisClient() {
   }
 
   return (
-    <div className="favs-grid">
-      {items.map(it => (
-        <div key={`${it.type}-${it.id}`} className="fav-card">
-          <div className="fav-card-img">
-            <ExternalImg src={it.image_url} alt={it.nom} fallbackClassName="fav-img-placeholder" />
+    <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+      <div className="favs-grid">
+        {items.map(it => (
+          <div key={`${it.type}-${it.id}`} className="fav-card">
+            <div className="fav-card-img">
+              <ExternalImg src={it.image_url} alt={it.nom} fallbackClassName="fav-img-placeholder" />
+            </div>
+            <div className="fav-card-body">
+              {it.souscategorie && <span className="fav-marque">{it.souscategorie}</span>}
+              <h3 className="fav-nom">{it.nom}</h3>
+              <p className="fav-prix">
+                {it.prix ? fcfa(it.prix) : '—'}
+              </p>
+            </div>
+            <div className="fav-card-actions">
+              <Link href={it.href} className="fav-btn-voir">
+                {t('account.viewItem')}
+              </Link>
+              <button
+                onClick={() => removeFav(it.id, it.type)}
+                className="fav-btn-remove"
+                title={t('account.removeFavorite')}
+              >
+                {t('account.removeFavorite')}
+              </button>
+            </div>
           </div>
-          <div className="fav-card-body">
-            {it.souscategorie && <span className="fav-marque">{it.souscategorie}</span>}
-            <h3 className="fav-nom">{it.nom}</h3>
-            <p className="fav-prix">
-              {it.prix ? fcfa(it.prix) : '—'}
-            </p>
-          </div>
-          <div className="fav-card-actions">
-            <Link href={it.href} className="fav-btn-voir">
-              {t('account.viewItem')}
-            </Link>
-            <button
-              onClick={() => removeFav(it.id, it.type)}
-              className="fav-btn-remove"
-              title={t('account.removeFavorite')}
-            >
-              {t('account.removeFavorite')}
-            </button>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

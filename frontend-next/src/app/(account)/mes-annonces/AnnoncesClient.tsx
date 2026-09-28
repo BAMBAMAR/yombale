@@ -341,7 +341,7 @@ export default function AnnoncesClient({
   }, [userId])
 
   return (
-    <div>
+    <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {loading && annonces.length === 0 && <p style={{ padding: 20 }}>{t('common.loading')}</p>}
       {created && (
         <div className="annonce-created-banner">

@@ -49,6 +49,7 @@ export interface KalpeDette {
   id: string;
   tiers_nom: string;
   tiers_telephone?: string | null;
+  tiers_type?: 'particulier' | 'entreprise' | string | null;
   montant_initial: number;
   montant_paye: number;
   montant_restant: number;

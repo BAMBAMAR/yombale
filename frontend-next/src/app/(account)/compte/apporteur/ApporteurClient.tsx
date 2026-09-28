@@ -97,7 +97,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
 
   if (!stats) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
         <div>
           <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>{t('account.howItWorks')}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -259,7 +259,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
   const pitchActuel = MATRICE_PITCHS[selectedCat][selectedEquip]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       
       {/* Header & Stats Principales */}
       <div style={{

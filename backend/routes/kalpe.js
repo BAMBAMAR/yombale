@@ -471,6 +471,7 @@ router.post('/dettes', async (req, res) => {
     const {
       tiers_nom,
       tiers_telephone,
+      tiers_type = 'particulier', // 'particulier', 'entreprise'
       montant,
       direction = 'a_recevoir', // 'a_recevoir' (on me doit), 'a_payer' (je dois)
       date_echeance,
@@ -481,7 +482,7 @@ router.post('/dettes', async (req, res) => {
 
     const numMontant = Number(montant);
     if (!tiers_nom || !tiers_nom.trim() || isNaN(numMontant) || numMontant <= 0) {
-      return res.status(400).json({ error: 'Nom de la personne et montant valide (> 0) requis' });
+      return res.status(400).json({ error: 'Nom du tiers (personne, entreprise ou entité) et montant valide (> 0) requis' });
     }
 
     const { rows } = await pool.query(`
@@ -492,12 +493,13 @@ router.post('/dettes', async (req, res) => {
         direction,
         tiers_nom,
         tiers_telephone,
+        tiers_type,
         montant_initial,
         montant_paye,
         montant_restant,
         date_echeance,
         note
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $7, $8, $9)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $8, $9, $10)
       RETURNING *
     `, [
       userId,
@@ -506,6 +508,7 @@ router.post('/dettes', async (req, res) => {
       direction === 'a_payer' ? 'a_payer' : 'a_recevoir',
       tiers_nom.trim(),
       tiers_telephone?.trim() || null,
+      tiers_type === 'entreprise' ? 'entreprise' : 'particulier',
       numMontant,
       date_echeance || null,
       note?.trim() || null,
@@ -630,7 +633,9 @@ router.post('/relance-whatsapp', async (req, res) => {
     const waveUrl = `https://wave.com/send?amount=${dette.montant_restant}`;
     const dateEchFmt = dette.date_echeance ? new Date(dette.date_echeance).toLocaleDateString('fr-FR') : null;
 
-    const message = `Bonjour ${dette.tiers_nom} 🙏\nPetit rappel amical concernant le solde de ${montantFmt} FCFA convenu ensemble${dateEchFmt ? ` (échéance : ${dateEchFmt})` : ''}.\n\nTu peux régler facilement en 1 clic par Wave via ce lien direct :\n${waveUrl}\n\nMerci beaucoup et excellente journée !`;
+    const message = dette.tiers_type === 'entreprise'
+      ? `Bonjour l'équipe ${dette.tiers_nom} 🙏\nRappel concernant le règlement en cours d'un montant de ${montantFmt} FCFA${dateEchFmt ? ` (échéance : ${dateEchFmt})` : ''}.\n\nVous pouvez effectuer le règlement facilement en 1 clic par Wave via ce lien direct :\n${waveUrl}\n\nMerci pour votre diligence et excellente journée !`
+      : `Bonjour ${dette.tiers_nom} 🙏\nPetit rappel amical concernant le solde de ${montantFmt} FCFA convenu ensemble${dateEchFmt ? ` (échéance : ${dateEchFmt})` : ''}.\n\nTu peux régler facilement en 1 clic par Wave via ce lien direct :\n${waveUrl}\n\nMerci beaucoup et excellente journée !`;
 
     const whatsappUrl = `https://wa.me/${cleanTel.startsWith('221') ? cleanTel : '221' + cleanTel}?text=${encodeURIComponent(message)}`;
 

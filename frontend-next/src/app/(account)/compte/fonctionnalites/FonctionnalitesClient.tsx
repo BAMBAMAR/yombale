@@ -71,7 +71,7 @@ export default function FonctionnalitesClient() {
   const RANG_PALIER: Record<string, number> = { gratuit: 0, decouverte: 1, taf_taf: 1, pro: 2, business: 3 }
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '16px 8px 60px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ width: '100%', minWidth: 0, padding: '16px 0 60px', boxSizing: 'border-box', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* ── En-tête de section ── */}
       <div style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto 36px' }}>

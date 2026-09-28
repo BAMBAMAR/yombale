@@ -57,7 +57,7 @@ export default function ProfilClient({ nom, email, telephone }: Props) {
   }
 
   return (
-    <div className="profil-sections">
+    <div className="profil-sections" style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {/* Informations du compte */}
       <div className="profil-section">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>

@@ -124,7 +124,7 @@ export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientPr
   }
 
   return (
-    <div style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A', margin: '0 0 8px' }}>
           {t('account.trackOrderTitle')}

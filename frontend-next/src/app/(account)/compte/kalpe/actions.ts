@@ -134,6 +134,7 @@ export async function getKalpeDettes(params: {
 export async function ajouterKalpeDette(data: {
   tiers_nom: string
   tiers_telephone?: string
+  tiers_type?: 'particulier' | 'entreprise'
   montant: number
   direction?: 'a_recevoir' | 'a_payer'
   date_echeance?: string

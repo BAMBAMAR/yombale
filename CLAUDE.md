@@ -26,7 +26,51 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Audit Utilité Commerciale du Scraping & Assainissement / Déverrouillage des Canaux) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Sama Xaalis : Carte Héro Lumineuse Premium, Gestion Dettes Entités & Catégories Courantes) :
+- **Refonte Héro Card Sama Xaalis (Plus Lumineux, Ultra-Premium)** :
+  - **Transformation Radicale de la Carte Centrale (`KalpeSituationCards.tsx`)** :
+    - Éradication complète du bloc sombre noir/navy opaque (`#1C2B4A` vers `#152238`) qui écrasait l'écran.
+    - Remplacement par une carte exécutive lumineuse en dégradé ivoire noble (`linear-gradient(135deg, #FFFFFF 0%, #FCFBF9 50%, #F6EFE5 100%)`), bordure raffinée `1.5px solid var(--border, #E8DDD2)` et halo d'ambiance discret.
+    - Typographie haute autorité pour le montant disponible en bleu nuit profond (`var(--navy, #1C2B4A)`), accompagné d'un badge de devise ambré chic `FCFA`.
+    - 4 micro-cartes épurées et structurées (Entrées mois, Sorties mois, À recevoir, Épargne totale) avec icônes vectorielles SVG `lucide-react`, fonds pastel ton sur ton et contrastes élevés.
+- **Prise en Compte des Entreprises & Entités dans les Dettes & Créances** :
+  - **Migration Base de Données (`backend/migrate-inline.js`)** : Ajout sécurisé de la colonne `tiers_type VARCHAR(30) DEFAULT 'particulier'` sur la table `kalpe_dettes`.
+  - **Routes Backend (`backend/routes/kalpe.js`)** :
+    - Prise en charge de `tiers_type` ('particulier' ou 'entreprise') dans `POST /api/kalpe/dettes`.
+    - Message WhatsApp de relance adapté et personnalisé selon qu'il s'agit d'une personne physique ou d'une entreprise/société/école (`"Bonjour l'équipe [Nom]..."`).
+  - **Formulaire de Saisie Rapide (`KalpeSaisieFormFields.tsx` & `KalpeSaisieModal.tsx`)** :
+    - Sélecteur à 2 états avec icônes Lucide (`User` pour Particulier, `Building2` pour Entreprise/Entité).
+    - Libellés et placeholders dynamiques (Ex: "Nom de l'entreprise ou entité *", "Ex: École Sainte-Marie, Senelec, Pressing...").
+  - **Gestion & Affichage des Dettes (`KalpeDettesSection.tsx`)** :
+    - Badge visuel distinctif sur chaque dossier : `Entreprise / Entité` (`Building2`) ou `Particulier` (`User`).
+    - Filtres 1-clic rapides en en-tête : **Tous**, **Particuliers**, **Entreprises & Entités** avec compteurs instantanés.
+    - Carnet client boutique (`shop.ts` & `CarnetModalNouveauClient.tsx`) : libellés mis à jour pour expliciter le support client ou entreprise.
+- **Extension des Catégories de Dépenses & Revenus du Quotidien** :
+  - **Ajout de Catégories Usuelles Clés (`KalpeSaisieFormFields.tsx`)** :
+    - `École & Scolarité` (inscriptions, mensualités scolaires, fournitures).
+    - `Pressing & Blanchisserie` (nettoyage, repassage, blanchisserie).
+    - `Carburant & Essence`, `Communication & Forfait`, `Habillement & Couture`, `Dons & Culte`.
+  - **Support Vocal Intelligent (`voice-assistant.ts` & `useKalpeVoice.ts`)** :
+    - Détection automatique par mots-clés vocaux (ex: "école 25000", "scolarité", "mensualité", "pressing", "blanchisserie") et attribution automatique de la bonne catégorie lors de la dictée vocale bilingue.
+- **Validation & Qualité** : 100% des 69 tests unitaires validés, `npx tsc --noEmit` avec 0 erreur, respect strict des 5 règles d'or Anti-IA-Slop.
+
+### 📌 Version Précédente (28 septembre 2026 - Harmonisation Pleine Largeur Espace Compte) :
+- **Harmonisation Pleine Largeur de Tous les Onglets & Pages du Compte** :
+  - **Suppression des Restrictions Artificielles (`maxWidth`)** : Éradication des limites étroites (`maxWidth: 1000px`, `1080px`, `1100px`) et marges centrées parasites sur les sous-pages et onglets :
+    - `AlertesClientTab.tsx` : passage à `width: 100%, minWidth: 0, boxSizing: border-box`, nettoyage des spans emojis vides.
+    - `MesAlertesClient.tsx` : passage à `width: 100%, boxSizing: border-box`.
+    - `SamaKalpeClient.tsx` : suppression de `maxWidth: 1080px; margin: 0 auto;`, pleine largeur 100% sans rognage.
+    - `FonctionnalitesClient.tsx` : suppression de `maxWidth: 1100px; margin: 0 auto;`, pleine largeur 100%.
+  - **Éradication des Vides Blancs à Droite (Règle d'Or #5)** :
+    - `produit.css` (`.favs-grid`) : passage de `repeat(auto-fill, minmax(260px, 1fr))` à `repeat(auto-fit, minmax(min(100%, 280px), 1fr))` avec `width: 100%`, éliminant les espaces vides lorsque peu de favoris sont enregistrés.
+    - `AnnoncesImmoClient.tsx` : passage de `auto-fill` à `auto-fit` (`minmax(min(100%, 300px), 1fr)`) avec `width: 100%`.
+    - `annonces.css` (`.annonces-list`) & `AnnoncesClient.tsx` : verrouillage à `width: 100%, box-sizing: border-box`.
+  - **Conteneurs & Sous-Composants Universels** :
+    - `MesLocationsClient.tsx`, `SuiviCommandeClient.tsx`, `ProfilClient.tsx`, `ApporteurClient.tsx`, `AccountSubHeader.tsx` et les pages `/deposer-annonce` et `/deposer-immo` configurés en `width: 100%, minWidth: 0, boxSizing: border-box`.
+    - `globals.css` : `.account-main` et `.account-client-content` verrouillés en `width: 100%; box-sizing: border-box;`.
+  - **Validation & Qualité** : 100% des tests unitaires (69/69) passés, typecheck TS sans erreur (`tsc --noEmit`), linter anti-slop validé.
+
+### 📌 Version Précédente (28 septembre 2026 - Audit Utilité Commerciale du Scraping & Assainissement / Déverrouillage des Canaux) :
 - **Audit Forensic de l'Utilité Commerciale et de la Qualité du Scraping** :
   - **Constat d'impact commercial nul** : Sur 22 commandes en base, 0 provient du scraping (100% sont des abonnements SaaS ou boosts). 99,6% des liens d'achat étaient bruts sans tracking d'affiliation, générant 0 FCFA sur 10 955 clics sortants.
   - **Comparateur limité** : 87,7% des produits étaient mono-offres. Seuls 886 produits (8,5%) disposaient d'au moins 2 marchands distincts pour une réelle comparaison.

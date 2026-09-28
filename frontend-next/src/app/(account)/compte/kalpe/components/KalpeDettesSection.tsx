@@ -10,6 +10,8 @@ import {
   ArrowRight,
   ExternalLink,
   DollarSign,
+  User,
+  Building2,
 } from 'lucide-react'
 import type { KalpeDette } from '../types'
 import { relancerKalpeDetteWhatsApp } from '../actions'
@@ -26,6 +28,12 @@ function fmt(n: number) {
   return new Intl.NumberFormat('fr-FR').format(n)
 }
 
+function isEntrepriseDette(d: KalpeDette): boolean {
+  if (d.tiers_type === 'entreprise') return true
+  if (d.tiers_type === 'particulier') return false
+  return /sarl|sa|ets|école|ecole|pressing|service|agence|boutique|cabinet|clinique|hopital|societe|société|fournisseur/i.test(d.tiers_nom || '')
+}
+
 export default function KalpeDettesSection({
   dettes,
   loading,
@@ -33,10 +41,20 @@ export default function KalpeDettesSection({
   onRembourser,
 }: KalpeDettesSectionProps) {
   const [activeTab, setActiveTab] = useState<'a_recevoir' | 'a_payer'>('a_recevoir')
+  const [filterType, setFilterType] = useState<'all' | 'particulier' | 'entreprise'>('all')
   const [relanceLoading, setRelanceLoading] = useState<string | null>(null)
 
-  const filteredDettes = dettes.filter((d) => d.direction === activeTab)
+  const directionDettes = dettes.filter((d) => d.direction === activeTab)
+  const filteredDettes = directionDettes.filter((d) => {
+    if (filterType === 'all') return true
+    if (filterType === 'entreprise') return isEntrepriseDette(d)
+    return !isEntrepriseDette(d)
+  })
+
   const totalRestant = filteredDettes.reduce((sum, d) => sum + (d.statut !== 'solde' ? Number(d.montant_restant) : 0), 0)
+
+  const nbEntreprises = directionDettes.filter(isEntrepriseDette).length
+  const nbParticuliers = directionDettes.length - nbEntreprises
 
   const handleRelancer = async (dette: KalpeDette) => {
     setRelanceLoading(dette.id)
@@ -57,7 +75,7 @@ export default function KalpeDettesSection({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Barre d'onglets de direction */}
+      {/* Barre d'onglets de direction & bouton d'action */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F1F5F9', padding: 3, borderRadius: 10 }}>
           <button
@@ -118,6 +136,77 @@ export default function KalpeDettesSection({
         </button>
       </div>
 
+      {/* Filtres par Type de Tiers : Tous, Particuliers, Entreprises / Entités */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          onClick={() => setFilterType('all')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '4px 10px',
+            fontSize: 11.5,
+            fontWeight: 700,
+            borderRadius: 7,
+            border: filterType === 'all' ? '1.5px solid var(--navy, #1C2B4A)' : '1px solid #E8DDD2',
+            background: filterType === 'all' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+            color: filterType === 'all' ? '#FFFFFF' : '#64748B',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span>Tous</span>
+          <span style={{ opacity: 0.8, fontSize: 10 }}>({directionDettes.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilterType('particulier')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '4px 10px',
+            fontSize: 11.5,
+            fontWeight: 700,
+            borderRadius: 7,
+            border: filterType === 'particulier' ? '1.5px solid var(--navy, #1C2B4A)' : '1px solid #E8DDD2',
+            background: filterType === 'particulier' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+            color: filterType === 'particulier' ? '#FFFFFF' : '#64748B',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <User size={12} strokeWidth={2.2} />
+          <span>Particuliers</span>
+          <span style={{ opacity: 0.8, fontSize: 10 }}>({nbParticuliers})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilterType('entreprise')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '4px 10px',
+            fontSize: 11.5,
+            fontWeight: 700,
+            borderRadius: 7,
+            border: filterType === 'entreprise' ? '1.5px solid var(--accent, #C75B00)' : '1px solid #E8DDD2',
+            background: filterType === 'entreprise' ? 'var(--accent, #C75B00)' : '#FFFFFF',
+            color: filterType === 'entreprise' ? '#FFFFFF' : '#64748B',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <Building2 size={12} strokeWidth={2.4} />
+          <span>Entreprises & Entités</span>
+          <span style={{ opacity: 0.8, fontSize: 10 }}>({nbEntreprises})</span>
+        </button>
+      </div>
+
       {/* Résumé de l'encours */}
       <div
         style={{
@@ -163,8 +252,8 @@ export default function KalpeDettesSection({
           </div>
           <div style={{ fontSize: 11.5, color: '#94A3B8' }}>
             {activeTab === 'a_recevoir'
-              ? 'Personne ne vous doit d’argent actuellement. Tranquillité d’esprit totale !'
-              : 'Vous n’avez aucune dette en cours enregistrée.'}
+              ? 'Aucune créance en cours enregistrée dans ce filtre.'
+              : 'Vous n’avez aucune dette en cours enregistrée dans ce filtre.'}
           </div>
         </div>
       ) : (
@@ -172,6 +261,7 @@ export default function KalpeDettesSection({
           {filteredDettes.map((d) => {
             const isSolde = d.statut === 'solde' || d.montant_restant === 0
             const pctPaye = Math.min(100, Math.round((Number(d.montant_paye) / Math.max(Number(d.montant_initial), 1)) * 100))
+            const isEnt = isEntrepriseDette(d)
 
             return (
               <div
@@ -186,14 +276,53 @@ export default function KalpeDettesSection({
                   gap: 10,
                 }}
               >
-                {/* Ligne 1 : Nom du tiers + Statut */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {/* Ligne 1 : Nom du tiers + Badge Entreprise/Particulier + Statut */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
-                      {d.tiers_nom}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 14, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                        {d.tiers_nom}
+                      </span>
+                      {isEnt ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            padding: '2px 7px',
+                            borderRadius: 6,
+                            background: '#EFF6FF',
+                            color: '#1D4ED8',
+                            border: '1px solid #DBEAFE',
+                          }}
+                        >
+                          <Building2 size={12} strokeWidth={2.4} />
+                          <span>Entreprise / Entité</span>
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            fontSize: 10.5,
+                            fontWeight: 600,
+                            padding: '2px 7px',
+                            borderRadius: 6,
+                            background: '#F1F5F9',
+                            color: '#475569',
+                            border: '1px solid #E2E8F0',
+                          }}
+                        >
+                          <User size={12} strokeWidth={2.2} />
+                          <span>Particulier</span>
+                        </span>
+                      )}
                     </div>
                     {d.tiers_telephone && (
-                      <div style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>
+                      <div style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600, marginTop: 2 }}>
                         {d.tiers_telephone}
                       </div>
                     )}

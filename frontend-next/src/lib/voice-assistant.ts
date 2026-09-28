@@ -193,7 +193,7 @@ export function extraireMontantCFA(cleanText: string): number | null {
 export interface SaisieExpressIntent {
   mode: 'depense' | 'vente'
   montant: number | null
-  categorie?: 'loyer' | 'stock' | 'transport' | 'salaires' | 'marketing' | 'fournitures' | 'taxes' | 'autre'
+  categorie?: 'loyer' | 'stock' | 'transport' | 'salaires' | 'marketing' | 'fournitures' | 'taxes' | 'ecole' | 'pressing' | 'autre'
   description?: string
   libelleProduit?: string
 }
@@ -219,6 +219,8 @@ export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente
   const hasMotCleDepense = /\b(depense|depenses|depans|depanse|depanser|depanseur|charge|charges|sortie|sorties|payer|paiement|paiements|facture|factures|frais|perte|pertes|decaissement|decaissements)\b/i.test(clean)
 
   // 2. Détection des catégories typiquement Dépenses même sans le mot "dépense"
+  const isEcole = /\b(ecole|école|scolarite|scolarité|mensualite|mensualité|etudes|études|fournitures scolaires|inscription|daara|creche|crèche|universite|université|college|collège|lycee|lycée)\b/i.test(clean)
+  const isPressing = /\b(pressing|blanchisserie|repassage|lavage|linge|nettoyage vetement|teinturerie)\b/i.test(clean)
   const isTransport = /\b(transport|transports|essence|carburant|gasoil|gazoil|diesel|taxi|taxis|tiak|tiaktiak|clando|peage|autoroute)\b/i.test(clean)
   const isLoyer = /\b(loyer|loyers|magasin|bail|locataire)\b/i.test(clean)
   const isFourniture = /\b(fourniture|fournitures|sachet|sachets|emballage|emballages|carton|cartons|papier|papiers|scotch|etiquette|etiquettes)\b/i.test(clean)
@@ -235,7 +237,7 @@ export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente
   // - Si mot-clé explicite de vente (ex: "Vente...") -> VENTE
   // - Si aucun mot-clé explicite, respecter le mode sélectionné par l'utilisateur (onglet Dépense vs Vente)
   let isDepense = false
-  if (hasMotCleDepense || isTransport || isLoyer || isFourniture || isSalaire || isTaxes || isChargesCourantes || isAchatStock) {
+  if (hasMotCleDepense || isEcole || isPressing || isTransport || isLoyer || isFourniture || isSalaire || isTaxes || isChargesCourantes || isAchatStock) {
     isDepense = true
   } else if (hasMotCleVente) {
     isDepense = false
@@ -249,7 +251,13 @@ export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente
     let cat: SaisieExpressIntent['categorie'] = 'autre'
     let descDefaut = 'Dépense'
 
-    if (isTransport) {
+    if (isEcole) {
+      cat = 'ecole'
+      descDefaut = 'Frais de scolarité / École'
+    } else if (isPressing) {
+      cat = 'pressing'
+      descDefaut = 'Pressing / Blanchisserie'
+    } else if (isTransport) {
       cat = 'transport'
       descDefaut = 'Frais de transport'
     } else if (isLoyer) {

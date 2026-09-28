@@ -268,7 +268,7 @@ export function SamaKalpeClient({
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: '1080px', margin: '0 auto', paddingBottom: '70px' }}>
+    <div style={{ width: '100%', minWidth: 0, paddingBottom: '70px', boxSizing: 'border-box' }}>
       {/* Header */}
       <KalpeHeader
         contexte={contexte}

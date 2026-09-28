@@ -50,6 +50,7 @@ export function KalpeSaisieModal({
   const [libelle, setLibelle] = useState<string>('')
   const [tiersNom, setTiersNom] = useState<string>('')
   const [tiersTel, setTiersTel] = useState<string>('')
+  const [tiersType, setTiersType] = useState<'particulier' | 'entreprise'>('particulier')
   const [dateEcheance, setDateEcheance] = useState<string>('')
   const [detteSens, setDetteSens] = useState<'a_recevoir' | 'a_payer'>(initialDetteSens)
   const [selectedObjectifId, setSelectedObjectifId] = useState<string>('')
@@ -77,6 +78,7 @@ export function KalpeSaisieModal({
       setLibelle('')
       setTiersNom('')
       setTiersTel('')
+      setTiersType('particulier')
       setDateEcheance('')
       setVoiceFeedback(null)
       if (initialMode === 'depense') setCategorie(CATEGORIES_DEPENSE[0])
@@ -104,13 +106,14 @@ export function KalpeSaisieModal({
     try {
       if (mode === 'dette') {
         if (!tiersNom.trim()) {
-          toast.error('Veuillez préciser le nom de la personne')
+          toast.error(tiersType === 'entreprise' ? "Veuillez préciser le nom de l'entreprise ou entité" : 'Veuillez préciser le nom de la personne')
           setLoading(false)
           return
         }
         const res = await ajouterKalpeDette({
           tiers_nom: tiersNom.trim(),
           tiers_telephone: tiersTel.trim() || undefined,
+          tiers_type: tiersType,
           montant: numericMontant,
           direction: detteSens,
           date_echeance: dateEcheance || undefined,
@@ -309,6 +312,8 @@ export function KalpeSaisieModal({
             mode={mode}
             detteSens={detteSens}
             setDetteSens={setDetteSens}
+            tiersType={tiersType}
+            setTiersType={setTiersType}
             tiersNom={tiersNom}
             setTiersNom={setTiersNom}
             tiersTel={tiersTel}

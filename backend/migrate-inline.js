@@ -2420,6 +2420,7 @@ module.exports = async function migrateInline(customConnStr = null) {
       );
       CREATE INDEX IF NOT EXISTS idx_kalpe_dettes_user ON kalpe_dettes(utilisateur_id, statut);
       CREATE INDEX IF NOT EXISTS idx_kalpe_dettes_echeance ON kalpe_dettes(utilisateur_id, date_echeance);
+      ALTER TABLE kalpe_dettes ADD COLUMN IF NOT EXISTS tiers_type VARCHAR(30) DEFAULT 'particulier';
 
       -- 4. Remboursements partiels ou totaux des dettes
       CREATE TABLE IF NOT EXISTS kalpe_dette_remboursements (

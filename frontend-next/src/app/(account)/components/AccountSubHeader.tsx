@@ -34,6 +34,8 @@ export default function AccountSubHeader({
       className="account-sub-header"
       style={{
         marginBottom: 20,
+        width: '100%',
+        boxSizing: 'border-box',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >

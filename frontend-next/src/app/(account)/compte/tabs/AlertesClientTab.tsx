@@ -10,7 +10,7 @@ export default function AlertesClientTab({ userId }: { userId: string }) {
   const { t } = useTranslation()
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
 
       {/* Bannière explicative WhatsApp */}
       <div style={{
@@ -26,6 +26,8 @@ export default function AlertesClientTab({ userId }: { userId: string }) {
         fontSize: 12.5,
         fontWeight: 600,
         lineHeight: 1.4,
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
         <Info size={18} style={{ flexShrink: 0 }} />
         <span>
@@ -39,6 +41,8 @@ export default function AlertesClientTab({ userId }: { userId: string }) {
         gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
         gap: 20,
         alignItems: 'start',
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
         {/* Colonne 1: Formulaire de création */}
         <div className="alertes-tab-card" style={{
@@ -49,7 +53,6 @@ export default function AlertesClientTab({ userId }: { userId: string }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 18 }}></span>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
               {t('account.createAlert') || 'Créer une alerte prix'}
             </h2>
@@ -66,7 +69,6 @@ export default function AlertesClientTab({ userId }: { userId: string }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 18 }}></span>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
               {t('account.myActiveAlerts') || 'Mes alertes actives'}
             </h2>

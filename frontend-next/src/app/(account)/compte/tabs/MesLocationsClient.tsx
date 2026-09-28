@@ -125,6 +125,8 @@ export default function MesLocationsClient() {
           border: '1px solid var(--border, #E8DDD2)',
           padding: '48px 24px',
           textAlign: 'center',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         <div
@@ -217,7 +219,7 @@ export default function MesLocationsClient() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {paySuccessMsg && (
         <div
           style={{

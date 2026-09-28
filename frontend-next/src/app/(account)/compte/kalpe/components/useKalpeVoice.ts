@@ -89,7 +89,14 @@ export function useKalpeVoice({
           if (parsed.montant && parsed.montant > 0) setMontant(String(parsed.montant))
           const desc = parsed.libelleProduit || parsed.description
           if (desc) setLibelle(desc)
-          if (parsed.categorie) setCategorie(parsed.categorie)
+          if (parsed.categorie) {
+            if (parsed.categorie === 'ecole') setCategorie('École & Scolarité')
+            else if (parsed.categorie === 'pressing') setCategorie('Pressing & Blanchisserie')
+            else if (parsed.categorie === 'transport') setCategorie('Transport & Déplacement')
+            else if (parsed.categorie === 'loyer') setCategorie('Loyer & Charges')
+            else if (parsed.categorie === 'stock') setCategorie('Fournisseur & Stock')
+            else setCategorie(parsed.categorie)
+          }
           if (parsed.mode === 'depense') setMode('depense')
           else if (parsed.mode === 'vente') setMode('revenu')
           toast.success(

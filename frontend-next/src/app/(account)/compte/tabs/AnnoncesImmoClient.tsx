@@ -75,7 +75,7 @@ export default function AnnoncesImmoClient({ created, updated, userId }: { creat
   }, [])
 
   return (
-    <div>
+    <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {/* ── En-tête avec compteur et bouton d'action ── */}
       <div
         style={{
@@ -183,8 +183,10 @@ export default function AnnoncesImmoClient({ created, updated, userId }: { creat
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
             gap: 18,
+            width: '100%',
+            boxSizing: 'border-box',
           }}
         >
           {annonces.map(a => {
