@@ -1,5 +1,32 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit Réel Mobile & Réseau Extrême & Corrections 100% Validées (28 septembre 2026)** :
+  * **Problèmes Résolus & Améliorations Apportées** :
+    1. **Éradication de la Boucle de Hard Reload Premier Visiteur (`RegisterSW.tsx`)** :
+       - *Diagnostic* : Quand `currentForce` était `null` (premier arrivant sur le site), l'évaluation `currentForce !== FORCE_VERSION` renvoyait `true`, supprimait tous les caches, désenregistrait le Service Worker et appelait `window.location.reload()`, avortant brutalement les requêtes RSC Next.js en vol (`Failed to fetch RSC payload`).
+       - *Correction* : Si `!currentForce`, enregistrement direct de la clé dans le localStorage sans rechargement. Le rechargement sur changement de contrôleur SW n'intervient que si la page était déjà contrôlée au chargement initial.
+    2. **Re-synchronisation & Décrassage du Service Worker (`sw.ts` & `public/sw.js`)** :
+       - *Diagnostic* : `public/sw.js` embarquait des hashs de chunks webpack obsolètes d'un ancien build (`NZ7OnmIFp18FU4Dt97-xA`), ce qui faisait échouer le pré-cache Serwist avec des 404, maintenant le SW en état perpétuel d'installation (`installing: true`, `hasController: false`).
+       - *Correction* : Filtrage des chunks non-essentiels/admin dans la config Serwist de `sw.ts`, incrément de `CACHE_VERSION = 'v29'`, recompilation avec `npm run build` synchronisant `public/sw.js` sur le build ID actif (`bUafJYZJyczstr4qeq2Mq`).
+    3. **Colmatage de l'Écran Blanc sur URLs Introuvables (`app/[slug]/route.ts`)** :
+       - *Diagnostic* : La route dynamique catch-all de racine renvoyait `new NextResponse(null, { status: 404 })` (corps vide de 0 octet), affichant un écran blanc opaque au visiteur en cas de lien brisé.
+       - *Correction* : Implémentation de `respond404(request)` renvoyant une page HTML 404 stylisée conforme au Design System Nopalou avec bouton de retour à l'accueil pour les navigateurs, et un JSON strict `{ success: false, error: 'Not Found' }` pour les requêtes API/RSC.
+    4. **Assainissement des Images Scrappées Expirées & Mortes (`sanitizeImg.ts` & `ExternalImg.tsx`)** :
+       - *Diagnostic* : Les URLs CDN Facebook/Instagram scrappées avec token hexadécimal expiré (`oe=`) généraient des erreurs HTTP 403 Forbidden dans la console ; un produit présentait une URL kanje.sn morte en 404 (`JBL_GO_5-1.jpg`).
+       - *Correction* : Détection et invalidation préventive des signatures `oe=` expirées dans `sanitizeImg.ts` (évite les requêtes réseau vouées à l'échec) ; fallback élégant SVG vectoriel dans `ExternalImg.tsx` sans espace vide ; réparation de l'URL image en base PostgreSQL.
+    5. **Éradication de l'Appel Externe Hardcodé HTTP 504 sur les Vitrines Marchandes (`ABTestVitrineHeader.tsx`)** :
+       - *Diagnostic* : Le composant de test A/B appelait en dur l'URL externe `https://api.nopalou.com`, causant un timeout 504 intercepté par le fallback du Service Worker lors des navigations offline ou locales sur les vitrines boutiques (`/boutiques/dievo-style`).
+       - *Correction* : Utilisation d'un chemin relatif `/api/boutiques/${boutiqueId}/ab-test` avec gestion d'erreur silencieuse `.catch(() => {})`.
+    6. **Désengorgement du Préchargement Agressif Next.js (`NavbarSearch.tsx`, `boutiques/page.tsx`)** :
+       - *Diagnostic* : Des dizaines de liens de filtres, badges et fiches marchandes préchargeaient agressivement les payloads RSC (`prefetch={true}` par défaut), saturant les connexions mobiles lentes (3G) et générant des requêtes annulées.
+       - *Correction* : Ajout de `prefetch={false}` sur les tags de recherche dynamique et la liste des commerces.
+    7. **Validation Empirique Intégrale de la Chaîne Réseau, Offline & Métier (0 Anomalie)** :
+       - Validation automatisée des 16 scénarios via `scratch/test_real_user_audit.mjs` : TTFB/FCP mobile & desktop ultra-rapides (< 50ms TTFB), 0px de débordement horizontal, 100% des redirections 301/307 conformes, PWA manifest & SW activé contrôlant le scope, résilience 3G lente (7.6s), bandeau offline visible dès la coupure réseau, rechargement F5 offline (200 OK via cache), navigation hors-ligne interceptée avec écran de secours, encaissement POS hors-ligne stocké dans IndexedDB (`nopalou_pos_offline_v6`), et synchronisation serveur vérifiée dans PostgreSQL à la reconnexion avec décrément de stock certifié (-1) et protection anti-doublon d'idempotence.
+  * **Validation & Qualité** :
+    - `scratch/test_real_user_audit.mjs` : 16/16 scénarios conformes (0 anomalie).
+    - `npm --prefix frontend-next run lint:slop` : 100% PASS (advisory clean).
+    - `npm run build` frontend : compilation réussie, SW généré et synchronisé.
+
 - **Reversements Marchands Wave 1-Clic Opérationnels & Supervision Financière (28 septembre 2026)** :
   * **Problèmes Résolus & Améliorations Apportées** :
     1. **Moteur de Payout Wave Résilient (`backend/services/wave.js`)** :
