@@ -272,7 +272,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
                   {results.produits.map(p => (
                     <Link
                       key={p.id}
-                      href={`/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}`}
+                      href={p.boutique_id ? `/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}` : `/produit/${p.id}`}
                       prefetch={false}
                       onClick={() => { setOpen(false); setQuery('') }}
                       style={{

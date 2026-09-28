@@ -1,5 +1,29 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit Forensic d'Utilité Commerciale du Scraping, Assainissement DB & Déverrouillage des Canaux (28 septembre 2026)** :
+  * **Problèmes Résolus & Améliorations Apportées** :
+    1. **Assainissement des Données Immobilières Corrompues (`annonces_immo`)** :
+       - *Diagnostic* : 2 519 annonces CoinAfrique Immo (99,9%) n'avaient aucun contact téléphonique et 2 349 annonces avaient le montant du prix injecté dans la colonne `quartier` (ex: `'1 100 000CFA'`), toutes figées depuis le 9 juin 2026 (> 110 jours sans mise à jour).
+       - *Correction* : Désactivation et rejet de 2 519 annonces CoinAfrique et 414 annonces Expat-Dakar sans numéro de téléphone. Nettoyage SQL des 2 349 quartiers résiduels contenant `'CFA'`.
+       - *Hardening Scraper* : `parseLocalisation` dans `backend/services/scraper-immo-coinafrique.js` filtre désormais les mentions 'CFA' et chiffres dans le quartier, et `upsertAnnonce` n'active que les annonces pourvues d'un téléphone direct valide.
+    2. **Assainissement des Annonces Classifiées Facebook (`annonces_classifiees`)** :
+       - *Diagnostic* : 862 annonces avaient la chaîne `'Voir sur Facebook'` dans `contact_tel` en raison d'une valeur par défaut codée en dur pour contourner une contrainte `NOT NULL`. 3 476 annonces n'avaient aucun prix ou avaient des titres de profils utilisateurs (`Participant(e) anonyme`).
+       - *Correction* : Suppression de la contrainte `NOT NULL` sur `contact_tel`, remplacement de `'Voir sur Facebook'` par `NULL` et désactivation des annonces sans prix ou polluées. Hardening de `backend/routes/scraper.js` pour exclure ce placeholder et valider les annonces avant activation.
+    3. **Déverrouillage de la Recherche Instantanée (Typeahead) (`/api/produits/instantanee` & `NavbarSearch.tsx`)** :
+       - *Diagnostic* : La barre de recherche instantanée n'interrogeait que `boutique_produits`, masquant les 10 388 produits du catalogue comparateur sur des recherches majeures comme *"iPhone"*, *"Samsung"*, *"TV"*, *"Clim"*.
+       - *Correction* : `GET /api/produits/instantanee` combine désormais les boutiques marchandes (priorité 1) et les produits du catalogue comparateur (priorité 2). `NavbarSearch.tsx` prend en charge dynamiquement la navigation vers `/produit/:id` et `/boutiques/:slug/produits/:id`.
+    4. **Comparateur WhatsApp & Nom Réel des Marchands (`backend/services/whatsapp-comparator.js`)** :
+       - Jointure avec `marchands` et `offres` pour afficher le nom réel du marchand partenaire (Jumia, Kanje, Electrolux...) au lieu de `"Marketplace Nopalou"`, avec lien direct de comparaison en ligne.
+    5. **Attribution de Trafic Sortant (`backend/routes/click.js`)** :
+       - Injection automatique des balises UTM (`utm_source=nopalou&utm_medium=comparator&utm_campaign=product_click`) dans toutes les redirections vers les sites marchands tiers.
+    6. **Sitemap SEO (`frontend-next/src/app/sitemap.ts` & `backend/routes/produits.js`)** :
+       - Augmentation des quotas d'indexation jusqu'à 3 000 produits et 1 000 annonces avec paramètre `safeLimit` jusqu'à 5 000 dans l'API backend.
+  * **Validation & Qualité** :
+    - `node -c` sur tous les fichiers backend : 100% PASS.
+    - `tsc --noEmit` sur `frontend-next` : 100% PASS (0 erreur TypeScript).
+    - `npm run lint:slop` : 100% PASS.
+    - Tests de requêtes Typeahead validés en base de données.
+
 - **Modération Produits Catalogue & Sécurisation Filtrage Public Accueil (28 septembre 2026)** :
   * **Problèmes Résolus & Améliorations Apportées** :
     1. **Correction du Bridage d'Affichage dans l'Admin (`/admin/produits`)** :

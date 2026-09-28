@@ -94,7 +94,7 @@ function extractNbPieces(titre) {
 function parseLocalisation(txt) {
   if (!txt) return { ville: 'Dakar', quartier: null };
   const clean = txt.replace(/location_on/gi, '').replace(/,\s*Sénégal/gi, '').trim();
-  if (/cfa/i.test(clean) || /^\d[\d\s]*$/.test(clean)) {
+  if (/cfa/i.test(clean) || /^\d[\d\s]*$/.test(clean) || /\d{3,}/.test(clean)) {
     return { ville: 'Dakar', quartier: null };
   }
   const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Kaolack',
@@ -103,10 +103,12 @@ function parseLocalisation(txt) {
     if (clean.toLowerCase().includes(v.toLowerCase())) {
       const parts = clean.split(',');
       const quartier = parts.length > 1 ? parts[0].trim() : (clean.toLowerCase() === v.toLowerCase() ? null : clean);
-      return { ville: v, quartier: quartier || null };
+      const cleanQuartier = (quartier && !/cfa|\d{3,}/i.test(quartier)) ? quartier : null;
+      return { ville: v, quartier: cleanQuartier };
     }
   }
-  return { ville: 'Dakar', quartier: clean || null };
+  const validQuartier = (!/cfa|\d{3,}/i.test(clean)) ? clean : null;
+  return { ville: 'Dakar', quartier: validQuartier };
 }
 
 async function extraireContactDetail(url) {
@@ -212,12 +214,15 @@ async function scraperPage(url, type_bien_defaut) {
 }
 
 async function upsertAnnonce(a) {
+  const isActif = Boolean(a.contact_tel && a.contact_tel.length >= 7 && a.prix && a.prix > 0);
+  const motifRejet = !isActif ? 'Données scrapées sans contact téléphonique direct ou sans prix' : null;
+
   await pool.query(`
     INSERT INTO annonces_immo
       (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
        ville, quartier, description, photos, url_source, source, ref_externe, meuble,
-       contact_nom, contact_tel)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15,$16,$17)
+       contact_nom, contact_tel, actif, rejete, motif_rejet)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15,$16,$17,$18,$19,$20)
     ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
     DO UPDATE SET
       titre       = EXCLUDED.titre,
@@ -231,13 +236,16 @@ async function upsertAnnonce(a) {
       description = COALESCE(EXCLUDED.description, annonces_immo.description),
       contact_nom = COALESCE(EXCLUDED.contact_nom, annonces_immo.contact_nom),
       contact_tel = COALESCE(EXCLUDED.contact_tel, annonces_immo.contact_tel),
-      actif       = true,
+      actif       = EXCLUDED.actif,
+      rejete      = EXCLUDED.rejete,
+      motif_rejet = EXCLUDED.motif_rejet,
       updated_at  = NOW()
   `, [
     a.titre, a.type_bien, a.transaction, a.prix || null, null,
     a.nb_pieces || null, null, a.ville, a.quartier || null,
     a.description || null, JSON.stringify(a.photos || []), a.url_source, a.source,
     a.ref_externe, a.meuble || false, a.contact_nom || null, a.contact_tel || null,
+    isActif, !isActif, motifRejet
   ]);
 }
 

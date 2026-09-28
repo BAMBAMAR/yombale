@@ -89,36 +89,46 @@ router.post('/sync-annonces', adminOnly, async (req, res) => {
 
     for (const a of annonces) {
       try {
+        const cleanTel = (a.contact_tel && !/facebook|voir/i.test(a.contact_tel)) ? a.contact_tel.trim() : null;
+        const cleanTitre = (a.titre || 'Annonce').trim();
+        const isTitrePollue = !cleanTitre || /participant\(e\)\s*anonyme|suivre\s+\d/i.test(cleanTitre) || cleanTitre.length < 4;
+        const hasPrix = a.prix && Number(a.prix) > 0;
+        const isActif = Boolean(!isTitrePollue && hasPrix && cleanTel);
+
         const query = `
           INSERT INTO annonces_classifiees (
             categorie_slug, titre, description, prix, ville, quartier, photos,
             contact_nom, contact_tel, source, ref_externe, url_source,
-            caracteristiques, actif, payee
+            caracteristiques, actif, payee, rejete
           ) VALUES (
             $1, $2, $3, $4, $5, $6, $7::jsonb,
             $8, $9, $10, $11, $12,
-            $13::jsonb, true, true
+            $13::jsonb, $14, true, $15
           )
           ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
           DO UPDATE SET
             prix = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
+            actif = EXCLUDED.actif,
+            contact_tel = COALESCE(EXCLUDED.contact_tel, annonces_classifiees.contact_tel),
             updated_at = NOW()
           RETURNING id
         `;
         const values = [
           a.categorie_slug || 'divers',
-          a.titre || 'Annonce',
+          cleanTitre,
           a.description || '',
-          a.prix || null,
+          hasPrix ? a.prix : null,
           a.ville || 'Dakar',
           a.quartier || null,
           JSON.stringify(a.photos || []),
           a.contact_nom || null,
-          a.contact_tel || 'Voir sur Facebook',
+          cleanTel,
           a.source || 'facebook',
           a.ref_externe || null,
           a.url_source || null,
           JSON.stringify(a.caracteristiques || {}),
+          isActif,
+          !isActif,
         ];
 
         const resDb = await pool.query(query, values);

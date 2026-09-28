@@ -44,21 +44,55 @@ router.get('/instantanee', async (req, res) => {
 
     const term = `%${q}%`;
 
-    // 1. Produits marchands
+    // 1. Produits marchands locaux + catalogue général comparateur
     const prodsRes = await pool.query(
-      `SELECT p.id, p.nom, p.prix, p.images, p.categorie, p.boutique_id, b.nom as boutique_nom, b.slug as boutique_slug
-       FROM boutique_produits p
-       JOIN boutiques b ON b.id = p.boutique_id
-       WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) 
-         AND b.actif = true 
-         AND p.en_stock = true
-         AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')
-         AND p.images IS NOT NULL 
-         AND array_length(p.images, 1) > 0 
-         AND p.images[1] IS NOT NULL 
-         AND TRIM(p.images[1]) != '' 
-         AND p.images[1] NOT ILIKE '%placeholder%'
-       ORDER BY p.created_at DESC LIMIT 5`,
+      `WITH local_prods AS (
+         SELECT p.id, p.nom, p.prix::numeric, p.images, p.categorie, p.boutique_id, b.nom as boutique_nom, b.slug as boutique_slug, 1 as priority
+         FROM boutique_produits p
+         JOIN boutiques b ON b.id = p.boutique_id
+         WHERE (p.nom ILIKE $1 OR p.categorie ILIKE $1) 
+           AND b.actif = true 
+           AND p.en_stock = true
+           AND (p.statut_moderation IS NULL OR p.statut_moderation = 'actif')
+           AND p.images IS NOT NULL 
+           AND array_length(p.images, 1) > 0 
+           AND p.images[1] IS NOT NULL 
+           AND TRIM(p.images[1]) != '' 
+           AND p.images[1] NOT ILIKE '%placeholder%'
+         LIMIT 4
+       ),
+       catalog_prods AS (
+         SELECT p.id, p.nom, p.prix_min::numeric as prix, ARRAY[p.image_url] as images, c.nom as categorie, 
+                NULL::uuid as boutique_id, 
+                COALESCE((
+                  SELECT m.nom 
+                  FROM offres o 
+                  JOIN marchands m ON m.id = o.marchand_id 
+                  WHERE o.produit_id = p.id AND o.stock = true AND (o.quarantinee IS FALSE OR o.quarantinee IS NULL) 
+                  ORDER BY o.prix ASC LIMIT 1
+                ), 'Marketplace') as boutique_nom,
+                NULL::text as boutique_slug,
+                2 as priority
+         FROM produits p
+         LEFT JOIN categories c ON c.id = p.categorie_id
+         WHERE (p.nom ILIKE $1 OR p.marque ILIKE $1)
+           AND p.prix_min >= 500
+           AND p.image_url IS NOT NULL AND TRIM(p.image_url) != '' AND p.image_url NOT ILIKE '%placeholder%'
+           AND EXISTS (
+             SELECT 1 FROM offres o 
+             WHERE o.produit_id = p.id AND o.stock = true AND (o.quarantinee IS FALSE OR o.quarantinee IS NULL)
+           )
+         ORDER BY p.nb_offres DESC, p.prix_min ASC
+         LIMIT 4
+       )
+       SELECT id, nom, prix, images, categorie, boutique_id, boutique_nom, boutique_slug
+       FROM (
+         SELECT * FROM local_prods
+         UNION ALL
+         SELECT * FROM catalog_prods
+       ) combined
+       ORDER BY priority ASC
+       LIMIT 6`,
       [term]
     );
 
@@ -132,18 +166,20 @@ router.get('/categories-actives', async (req, res) => {
 // GET /api/produits
 router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {
-    const { q, categorie, sousType, limit = 20, page = 1, tri, prixMax, prixMin, etat } = req.query;
+    const { q, categorie, sousType, page = 1, tri, prixMax, prixMin, etat } = req.query;
+    const safeLimit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 5000);
+    const safePage = Math.max(parseInt(page) || 1, 1);
     if (q && String(q).trim().length >= 2) {
       recordSearch(String(q).trim());
     }
 
-    const cacheKey = `prod:catalog:${(q || '').trim()}:${categorie || ''}:${sousType || ''}:${limit}:${page}:${tri || ''}:${prixMax || ''}:${prixMin || ''}:${etat || ''}`;
+    const cacheKey = `prod:catalog:${(q || '').trim()}:${categorie || ''}:${sousType || ''}:${safeLimit}:${safePage}:${tri || ''}:${prixMax || ''}:${prixMin || ''}:${etat || ''}`;
     const cached = await cacheGet(cacheKey);
     if (cached) {
       return res.json(cached);
     }
 
-    const offset = (page - 1) * limit;
+    const offset = (safePage - 1) * safeLimit;
 
     // Défaut = meilleur prix d'abord (demande produit, 17/07/2026). L'ancien défaut
     // "popularité" (nb d'offres) reste accessible via tri=populaire.
@@ -264,7 +300,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     const tokens = [...expandedSet];
     // Les token params viennent après les 7 params de base ($8, $9, ...)
     const tokenParams = tokens.map(t => '%' + t + '%');
-    const baseParams  = [q||null, categorieNorm, prixMax||null, prixMin||null, limit, offset, etat || null];
+    const baseParams  = [q||null, categorieNorm, prixMax||null, prixMin||null, safeLimit, offset, etat || null];
 
     // Construire la condition texte selon le nombre de tokens
     function buildQCond(operator, forBoutique = false) {
@@ -408,8 +444,8 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     const responsePayload = {
       success: true,
       produits: result.rows,
-      page: +page, limit: +limit,
-      total, pages: Math.ceil(total / limit) || 1
+      page: +safePage, limit: +safeLimit,
+      total, pages: Math.ceil(total / safeLimit) || 1
     };
     await cacheSet(cacheKey, responsePayload, 180); // 3 minutes TTL
     res.json(responsePayload);

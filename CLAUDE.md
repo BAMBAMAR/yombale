@@ -26,7 +26,38 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Audit Fraîcheur Réelle des Données Scrapées & Correctifs Détection/Purge) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Audit Utilité Commerciale du Scraping & Assainissement / Déverrouillage des Canaux) :
+- **Audit Forensic de l'Utilité Commerciale et de la Qualité du Scraping** :
+  - **Constat d'impact commercial nul** : Sur 22 commandes en base, 0 provient du scraping (100% sont des abonnements SaaS ou boosts). 99,6% des liens d'achat étaient bruts sans tracking d'affiliation, générant 0 FCFA sur 10 955 clics sortants.
+  - **Comparateur limité** : 87,7% des produits étaient mono-offres. Seuls 886 produits (8,5%) disposaient d'au moins 2 marchands distincts pour une réelle comparaison.
+  - **Données immobilières corrompues & mortes** : 93,1% des annonces CoinAfrique Immo (2 349) avaient le prix injecté dans le champ `quartier` (`'1 100 000CFA'`), 99,9% n'avaient aucun téléphone et étaient figées depuis le 9 juin 2026 (> 110 jours).
+  - **Annonces Facebook inexploitables** : 70,9% sans prix, 862 avec `contact_tel = 'Voir sur Facebook'`, et des centaines de titres pollués par les noms de profils ou `Participant(e) anonyme`.
+  - **Invisibilité dans la recherche instantanée** : `/api/produits/instantanee` n'interrogeait que `boutique_produits`, masquant les 10 000+ produits comparateur de la barre de recherche.
+- **Correctifs Appliqués** :
+  - **Script d'Assainissement Global DB (`scripts/assainir-donnees-scraping.js`)** :
+    - 2 519 annonces CoinAfrique Immo et 414 annonces Expat-Dakar Immo sans contact désactivées (`actif = false, rejete = true`).
+    - 2 349 quartiers corrompus par des montants 'CFA' nettoyés.
+    - Suppression de la contrainte `NOT NULL` sur `annonces_classifiees.contact_tel`.
+    - 862 numéros corrompus `'Voir sur Facebook'` passés à `NULL`.
+    - 3 476 annonces Facebook inexploitables désactivées.
+    - 1 prix aberrant (778M FCFA en Mode) mis en quarantaine et 227 offres sans URL désactivées.
+    - 811 produits resynchronisés avec recalcul de `prix_min` et `nb_offres`.
+  - **Scraper Immo CoinAfrique (`backend/services/scraper-immo-coinafrique.js`)** :
+    - Filtrage renforcé des montants CFA et chiffres dans `parseLocalisation` pour le champ quartier.
+    - `upsertAnnonce` vérifie la présence d'un téléphone direct valide avant d'activer l'annonce.
+  - **Synchronisation Annonces Facebook (`backend/routes/scraper.js`)** :
+    - Suppression du placeholder `'Voir sur Facebook'`, validation stricte (titre non pollué, prix > 0, téléphone valide) pour le statut `actif`.
+  - **Typeahead Instantané Marketplace (`backend/routes/produits.js` & `frontend-next/src/app/NavbarSearch.tsx`)** :
+    - `GET /api/produits/instantanee` enrichi avec les produits phares du catalogue comparateur (priorité 2 après boutiques locales).
+    - `NavbarSearch.tsx` gère dynamiquement la redirection vers `/produit/:id` ou `/boutiques/:slug/produits/:id`.
+  - **Comparateur WhatsApp (`backend/services/whatsapp-comparator.js`)** :
+    - Jointure sur `marchands` pour afficher le nom du marchand réel (Jumia, Kanje, etc.) et ajout du lien web comparateur dans le message WhatsApp.
+  - **Attribution de Trafic (`backend/routes/click.js`)** :
+    - Injection automatique de paramètres UTM (`utm_source=nopalou&utm_medium=comparator&utm_campaign=product_click`) dans les redirections sortantes.
+  - **Sitemap SEO (`frontend-next/src/app/sitemap.ts`)** :
+    - Élargissement des quotas d'indexation (jusqu'à 3 000 produits et 1 000 annonces) avec support de `safeLimit` jusqu'à 5 000 dans l'API backend.
+
+### 📌 Version Précédente (28 septembre 2026 - Audit Fraîcheur Réelle des Données Scrapées & Correctifs Détection/Purge) :
 - **Audit Forensic de la Fraîcheur Réelle des Données Scrapées** :
   - **Diagnostic** : Confrontation directe de 66 URLs réelles (Jumia, CoinAfrique, Expat-Dakar, Auchan, Kanje) à la base PostgreSQL de Nopalou :
     - 32 % des éléments testés présentaient des anomalies majeures de fraîcheur (18 % de ruptures de stock non détectées, 11 % d'annonces 404 non purgées, 6 % de prix modifiés non actualisés).

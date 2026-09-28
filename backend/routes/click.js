@@ -22,14 +22,26 @@ router.get('/:offreId', limiterGeneral, async (req, res) => {
       return res.status(400).json({ error: 'URL de destination invalide' });
     }
 
+    // Attribuer le trafic à Nopalou via paramètres UTM propres si absents
+    let targetUrl = url_achat;
+    try {
+      const parsed = new URL(url_achat);
+      if (!parsed.searchParams.has('utm_source')) {
+        parsed.searchParams.set('utm_source', 'nopalou');
+        parsed.searchParams.set('utm_medium', 'comparator');
+        parsed.searchParams.set('utm_campaign', 'product_click');
+      }
+      targetUrl = parsed.toString();
+    } catch (_) {}
+
     // Log async — ne bloque pas la redirection
     pool.query(
       `INSERT INTO clics_affiliation (offre_id, produit_id, marchand_id, url_cible, user_agent)
        VALUES ($1,$2,$3,$4,$5)`,
-      [offreId, produit_id, marchand_id, url_achat, req.headers['user-agent'] ?? null]
+      [offreId, produit_id, marchand_id, targetUrl, req.headers['user-agent'] ?? null]
     ).catch(() => {});
 
-    res.redirect(302, url_achat);
+    res.redirect(302, targetUrl);
   } catch (err) {
     console.error('[CLICK]', err.message);
     res.status(500).json({ error: 'Erreur serveur' });

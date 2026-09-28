@@ -70,15 +70,17 @@ async function comparerPrixProduits(sujet) {
   }
 
   try {
-    // 2. Offres Marketplace Générale
+    // 2. Offres Marketplace Générale avec nom du marchand réel
     const rMarket = await pool.query(
-      `SELECT p.id, p.nom, p.prix_min as prix, NULL as stock_quantite, p.image_url as photos,
-              'Marketplace Nopalou' as boutique_nom, NULL as boutique_slug, NULL as boutique_id,
-              'marketplace' as source
+      `SELECT p.id, p.nom, o.prix, NULL as stock_quantite, p.image_url as photos,
+              COALESCE(m.nom, 'Marchand partenaire') as boutique_nom, NULL as boutique_slug, NULL as boutique_id,
+              'marketplace' as source, o.url_achat
        FROM produits p
+       JOIN offres o ON o.produit_id = p.id AND o.stock = true AND (o.quarantinee IS FALSE OR o.quarantinee IS NULL)
+       LEFT JOIN marchands m ON m.id = o.marchand_id
        WHERE (p.nom ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%')
-         AND p.prix_min IS NOT NULL AND p.prix_min > 0
-       ORDER BY p.prix_min ASC
+         AND o.prix >= 500
+       ORDER BY o.prix ASC
        LIMIT 5`,
       [sujet]
     );
@@ -132,14 +134,20 @@ function formaterComparatifWhatsApp(resultat, SITE = 'https://nopalou.com') {
     texte += `💡 *Économie constatée : jusqu'à ${economieMax.toLocaleString('fr-FR')} FCFA* d'écart entre marchands !\n\n`;
   }
 
+  texte += `🔗 *Voir toutes les offres en détail :* ${SITE}/recherche?q=${encodeURIComponent(sujet)}\n\n`;
+
   const bestBoutique = offres.find(o => o.source === 'boutique');
   let boutons = [];
   if (bestBoutique) {
-    texte += `👉 Commandez directement l'offre la moins chère ci-dessous :`;
+    texte += `👉 Commandez directement chez notre boutique partenaire ci-dessous :`;
     boutons = [
       { id: `cmd_produit_${bestBoutique.id}`, title: `🛒 Commander (${Number(bestBoutique.prix).toLocaleString('fr-FR')} F)` },
       { id: `prod_${bestBoutique.id}`, title: '🔍 Voir détails' },
       { id: 'menu', title: '🌐 Menu' },
+    ];
+  } else {
+    boutons = [
+      { id: 'menu', title: '🌐 Menu Principal' },
     ];
   }
 

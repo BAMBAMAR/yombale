@@ -110,11 +110,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const [prodRes, immoRes, annonceRes, boutiqueRes, agenceRes] = await Promise.allSettled([
-      fetch(`${BACKEND}/api/produits?limit=500&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/immo?limit=300&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/annonces?limit=200&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/boutiques?limit=200&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/agences/public?limit=200`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/produits?limit=3000&page=1`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/immo?limit=500&page=1`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/annonces?limit=1000&page=1`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/boutiques?limit=500&page=1`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/agences/public?limit=500`, { next: { revalidate: 3600 } }),
     ])
 
     if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
