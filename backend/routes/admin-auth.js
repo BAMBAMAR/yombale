@@ -25,7 +25,7 @@ router.post('/login', async (req, res) => {
         adminRow = {
           id: '00000000-0000-0000-0000-000000000000',
           nom: 'Super Administrateur',
-          email: process.env.ADMIN_EMAIL || 'admin@nopalou.com',
+          email: process.env.ADMIN_EMAIL || 'contact@nopalou.com',
           role: 'super_admin',
         };
       }

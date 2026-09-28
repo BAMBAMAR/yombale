@@ -739,7 +739,7 @@ module.exports = async function migrateInline(customConnStr = null) {
     // Bootstrap du compte Super Admin initial si la table est vide
     const { rows: countAdmins } = await pool.query('SELECT COUNT(*)::int AS count FROM admin_utilisateurs');
     if (countAdmins[0]?.count === 0) {
-      const defaultEmail = process.env.ADMIN_EMAIL || 'admin@nopalou.com';
+      const defaultEmail = process.env.ADMIN_EMAIL || 'contact@nopalou.com';
       const initialPassword = process.env.ADMIN_SECRET || 'NopalouAdmin2026!';
       const hash = await bcrypt.hash(initialPassword, 10);
       await pool.query(

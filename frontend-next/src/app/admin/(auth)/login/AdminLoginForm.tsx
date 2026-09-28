@@ -59,7 +59,7 @@ export default function AdminLoginForm() {
             id="email"
             name="email"
             type="email"
-            placeholder="admin@nopalou.com"
+            placeholder="contact@nopalou.com"
             className="auth-input"
             style={{ paddingLeft: 38 }}
             autoComplete="email"

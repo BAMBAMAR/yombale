@@ -69,7 +69,7 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
   - **Moteur Multi-Canal Enrichi** :
     - **Canal WhatsApp officiel** : Envoi direct et garanti 24h/24 vers le numéro de l'administrateur **`+221 77 720 20 86`** (`admin_notification_phone`) via l'API Meta Cloud (`sendWhatsAppNotification` avec template certifié + fallback SMS).
     - **Canal Telegram interactif** : Prise en charge des boutons cliquables *Inline Keyboard* (`reply_markup`) reliant directement à l'écran admin adéquat ou au contact WhatsApp.
-    - **Canal Email de traçabilité** vers `admin@nopalou.com`.
+    - **Canal Email de traçabilité** vers `contact@nopalou.com`.
     - **Sanitisation PII** : Masquage automatique des numéros, emails et secrets dans les logs et notifications.
     - **Helpers dédiés de haut niveau** : `alerterPaiementManuel`, `alerterAbonnement`, `alerterSignalement`, `alerterAvisNegatif`, `alerterSupportTicket`.
   - **Câblage Intégral des 5 Domaines Opérationnels Majeurs** :

@@ -60,7 +60,7 @@ export async function getAdminSession(): Promise<AdminUserSession | null> {
       return {
         id: 'break-glass-admin',
         nom: 'Super Administrateur',
-        email: 'admin@nopalou.com',
+        email: process.env.ADMIN_EMAIL || 'contact@nopalou.com',
         role: 'super_admin',
         permissions: ['*'],
       }

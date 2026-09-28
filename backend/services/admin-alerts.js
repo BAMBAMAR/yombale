@@ -3,7 +3,7 @@ const axios = require('axios');
 const { envoyerEmail } = require('./email');
 const settingsCache = require('../lib/settingsCache');
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@nopalou.com';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'contact@nopalou.com';
 const DEFAULT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
 const _cooldownCache = new Map();
 
@@ -216,8 +216,14 @@ async function alerterAdmin(optionsOrText) {
       </div>
     `;
 
+    let recipientEmail = ADMIN_EMAIL;
+    try {
+      const dbEmail = await settingsCache.get('admin_email');
+      if (dbEmail && String(dbEmail).trim()) recipientEmail = String(dbEmail).trim();
+    } catch {}
+
     emailPromise = envoyerEmail({
-      to: ADMIN_EMAIL,
+      to: recipientEmail,
       subject: `${icone} [${priorite}] Nopalou : ${titre}`,
       html: htmlEmail,
     }).catch(err => {

@@ -127,7 +127,7 @@ async function requireAdminAuth(req, res, next) {
           req.adminUser = {
             id: decoded.adminId || '00000000-0000-0000-0000-000000000000',
             nom: 'Super Administrateur',
-            email: decoded.email || 'admin@nopalou.com',
+            email: decoded.email || process.env.ADMIN_EMAIL || 'contact@nopalou.com',
             role: 'super_admin',
             permissions: { all: true },
           };
