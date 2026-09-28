@@ -32,6 +32,7 @@ const GestionEntrepots = dynamic(() => import('../../GestionEntrepots'))
 const ABTestingManager = dynamic(() => import('../ABTestingManager'))
 const BlogArticlesManager = dynamic(() => import('../BlogArticlesManager'))
 const AbonnementsManager = dynamic(() => import('../AbonnementsManager'))
+const ParametresNotifications = dynamic(() => import('../../ParametresNotifications'))
 
 
 interface BoutiqueManageContentProps {
@@ -175,6 +176,13 @@ export default function BoutiqueManageContent({
           token={typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('nopalou_token') || '' : ''}
         />
       )}
+      {tab === 'notifications' && (
+        <ParametresNotifications
+          boutique={boutique}
+          onUpdate={onBoutiqueSaved}
+        />
+      )}
     </>
   )
 }
+

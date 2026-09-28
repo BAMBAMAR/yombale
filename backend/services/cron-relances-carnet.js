@@ -15,6 +15,7 @@ try {
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 
 const { normaliserTelephone, estNumeroValide } = require('../lib/phoneNormalizer');
+const { genererCreditToken } = require('../lib/creditPaymentToken');
 
 
 /**
@@ -34,6 +35,13 @@ async function traiterRelancesAutomatiquesWhatsApp(boutiqueId = null) {
       return { succes: false, error: 'Module WhatsApp manquant', relancesEnvoyees: 0 };
     }
 
+    // Garde-fou horaire strict : Fuseau horaire Dakar (UTC+0).
+    const heureDakar = new Date().getUTCHours();
+    if (heureDakar < 9 || heureDakar >= 21) {
+      console.log('[RELANCE AUTO WA] En dehors des heures autorisées (09h-21h GMT). Reporté.');
+      return { succes: false, reporte: true, raison: 'hors_plage_horaire', relancesEnvoyees: 0 };
+    }
+
     // 1. Chercher toutes les créances impayées avec échéance aujourd'hui ou dépassée (relance_auto_whatsapp = true)
     // dont aucune relance n'a été envoyée aujourd'hui.
     // DÉDUPLICATION PAR CLIENT pour éviter de spammer un client ayant plusieurs factures le même jour.
@@ -42,6 +50,9 @@ async function traiterRelancesAutomatiquesWhatsApp(boutiqueId = null) {
     if (boutiqueId) {
       params.push(boutiqueId);
       boutiqueCondition = `AND b.id = $${params.length}`;
+    } else {
+      // En mode automatique périodique : respecter strictement la préférence du marchand
+      boutiqueCondition = `AND COALESCE(b.notif_relance_dettes, false) = true AND b.relances_suspendues IS NOT TRUE`;
     }
 
     const query = `
@@ -94,6 +105,11 @@ async function traiterRelancesAutomatiquesWhatsApp(boutiqueId = null) {
         continue;
       }
 
+      if (typeof whatsappService.estDesinscrit === 'function' && await whatsappService.estDesinscrit(normClientTel)) {
+        console.log(`[RELANCE AUTO WA] Numéro client ${normClientTel} désinscrit (STOP), relance ignorée.`);
+        continue;
+      }
+
       // Éviter l'envoi vers le numéro de la plateforme elle-même (évite l'erreur Meta 100)
       if (normClientTel === telNopalouPlateforme) {
         console.warn(`[RELANCE AUTO WA] Numéro client identique au numéro Nopalou (${normClientTel}), relance ignorée.`);
@@ -104,17 +120,20 @@ async function traiterRelancesAutomatiquesWhatsApp(boutiqueId = null) {
       const contactBq = r.boutique_whatsapp || r.boutique_tel || '';
       const bqParam = r.boutique_slug || r.boutique_id;
       const bqUrl = `${SITE}/boutiques/${bqParam}`;
+      const creditToken = genererCreditToken(r.client_id, r.boutique_id);
+      const lienPaiement = `${SITE}/payer-credit/${creditToken}`;
 
       const textMessage = `Bonjour ${r.client_nom},\n\n` +
         `Rappel amical de *${r.boutique_nom}* concernant votre carnet de crédit.\n` +
         `Montant dû : *${soldeNum.toLocaleString('fr-FR')} FCFA*\n` +
         `Date d'échéance : *${dateEchFmt}*\n\n` +
-        `Merci de bien vouloir passer régler votre solde ou nous contacter.\n` +
-        (contactBq ? `Tel boutique : ${contactBq}\n` : '') +
-        `Lien : ${bqUrl}`;
+        `👉 *Régler directement en 1 clic par Wave ou Orange Money :*\n${lienPaiement}\n\n` +
+        `Ou passer à la boutique : ${bqUrl}` +
+        (contactBq ? ` (Tél: ${contactBq})` : '') + `\n\n` +
+        `_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 
-      const templateTitle = `💳 Rappel de solde — ${r.boutique_nom}`.slice(0, 60);
-      const templateDetail = `Bonjour ${r.client_nom}. Rappel amical de ${r.boutique_nom} : votre solde impayé s'élève à ${soldeNum.toLocaleString('fr-FR')} FCFA (échéance : ${dateEchFmt}). Merci de régulariser.`.slice(0, 1000);
+      const templateTitle = `💳 Rappel — ${r.boutique_nom}`.slice(0, 60);
+      const templateDetail = `Bonjour ${r.client_nom}. Rappel solde ${soldeNum.toLocaleString('fr-FR')} FCFA (${r.boutique_nom}). Réglez en 1 clic : ${lienPaiement}`.slice(0, 1000);
 
       try {
         let sent = false;

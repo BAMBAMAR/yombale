@@ -1,5 +1,6 @@
 // backend/services/cron-relances-marchands.js — Moteur de relances et d'onboarding marchands (J+1, J+7, J+25)
 const { pool } = require('../models/db');
+const { genererMagicToken } = require('../lib/magicAuthToken');
 let sendWhatsAppNotification;
 let estDesinscrit;
 try {
@@ -19,13 +20,23 @@ const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 async function traiterRelancesMarchands() {
   const stats = { j1: 0, j7: 0, j25: 0, total: 0, erreurs: [] };
 
+  // Garde-fou horaire strict : Fuseau horaire Dakar (UTC+0).
+  // Aucun envoi avant 09h00 ou après 20h30.
+  const heureDakar = new Date().getUTCHours();
+  if (heureDakar < 9 || heureDakar >= 21) {
+    console.log('[RELANCES MARCHANDS] En dehors des heures autorisées (09h-21h GMT). Reporté.');
+    return { succes: false, report: true, raison: 'hors_plage_horaire', stats };
+  }
+
   try {
     // ── 1. Relance J+1 : Partage Statut WhatsApp (Créée il y a ~24h) ───────────
     const qJ1 = `
-      SELECT b.id, b.nom, b.slug, COALESCE(b.whatsapp, b.telephone) AS telephone, u.nom AS gerant_nom
+      SELECT b.id, b.nom, b.slug, b.utilisateur_id, COALESCE(b.whatsapp, b.telephone) AS telephone, u.nom AS gerant_nom
       FROM boutiques b
       JOIN utilisateurs u ON u.id = b.utilisateur_id
       WHERE b.actif = true
+        AND b.relances_suspendues IS NOT TRUE
+        AND COALESCE(b.nb_relances_sans_reponse, 0) < 3
         AND b.created_at::date = (CURRENT_DATE - INTERVAL '1 day')::date
         AND NOT EXISTS (
           SELECT 1 FROM prospection_messages_log 
@@ -37,16 +48,30 @@ async function traiterRelancesMarchands() {
 
     for (const b of resJ1.rows) {
       if (!b.telephone) continue;
-      if (estDesinscrit && (await estDesinscrit(b.telephone))) continue;
+      if (estDesinscrit && (await estDesinscrit(b.telephone))) {
+        await pool.query('UPDATE boutiques SET relances_suspendues = true WHERE id = $1', [b.id]);
+        continue;
+      }
+
+      let magicToken = '';
+      if (b.utilisateur_id) {
+        try {
+          magicToken = genererMagicToken({ userId: b.utilisateur_id, boutiqueId: b.id });
+        } catch (_) {}
+      }
+
+      const lienStudio = magicToken
+        ? `${SITE}/api/auth/magic-login?token=${magicToken}&redirect=${encodeURIComponent('/boutique?tab=personnaliser')}`
+        : `${SITE}/boutique?tab=personnaliser`;
 
       const msg =
         `Salam ${b.nom} ! 🎉 Félicitations pour votre 1er jour sur Nopalou.\n\n` +
         `💡 *Astuce N°1 pour faire votre première vente aujourd'hui :*\n` +
         `Partagez le lien de votre vitrine dans votre statut WhatsApp :\n` +
         `👉 ${SITE}/boutiques/${b.slug}\n\n` +
-        `🎨 *Conseil identité :* Personnalisez vos couleurs, votre slogan et votre bannière en 1 clic sur votre Studio :\n` +
-        `👉 ${SITE}/boutique?tab=personnaliser\n\n` +
-        `Vos clients pourront voir l'ensemble de vos articles et commander directement en 1 clic.\n\n` +
+        `🎨 *Conseil identité :* Personnalisez vos couleurs, votre slogan et votre bannière en 1 clic sans mot de passe :\n` +
+        `👉 ${lienStudio}\n\n` +
+        `Vos clients pourront voir l'ensemble de vos articles et commander directement.\n\n` +
         `_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 
       if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
@@ -56,8 +81,8 @@ async function traiterRelancesMarchands() {
             title: `🎉 1er jour sur Nopalou — ${b.nom}`.slice(0, 60),
             montant: 'Gratuit',
             detail: `Partagez votre vitrine sur WhatsApp : ${SITE}/boutiques/${b.slug} pour faire votre 1ère vente !`,
-            url: `${SITE}/boutiques/${b.slug}`,
-            buttonParam: `boutiques/${b.slug}`,
+            url: lienStudio,
+            buttonParam: magicToken ? `api/auth/magic-login?token=${magicToken}` : `boutique?tab=personnaliser`,
             type: 'service',
           });
           const isSent = !!(res && res.messages?.[0]?.id);
@@ -68,6 +93,10 @@ async function traiterRelancesMarchands() {
              VALUES ('whatsapp', $1, $2, $3)`,
             [b.telephone, msg, isSent ? 'envoye' : 'echec']
           );
+          await pool.query(
+            `UPDATE boutiques SET nb_relances_sans_reponse = COALESCE(nb_relances_sans_reponse, 0) + 1 WHERE id = $1`,
+            [b.id]
+          );
         } catch (e) {
           stats.erreurs.push({ bq: b.nom, type: 'J+1', err: e.message });
         }
@@ -76,10 +105,12 @@ async function traiterRelancesMarchands() {
 
     // ── 2. Relance J+7 : Découverte Carnet de Dettes & Caisse POS ──────────────
     const qJ7 = `
-      SELECT b.id, b.nom, b.slug, COALESCE(b.whatsapp, b.telephone) AS telephone, u.nom AS gerant_nom
+      SELECT b.id, b.nom, b.slug, b.utilisateur_id, COALESCE(b.whatsapp, b.telephone) AS telephone, u.nom AS gerant_nom
       FROM boutiques b
       JOIN utilisateurs u ON u.id = b.utilisateur_id
       WHERE b.actif = true
+        AND b.relances_suspendues IS NOT TRUE
+        AND COALESCE(b.nb_relances_sans_reponse, 0) < 3
         AND b.created_at::date = (CURRENT_DATE - INTERVAL '7 days')::date
         AND NOT EXISTS (
           SELECT 1 FROM prospection_messages_log 
@@ -91,13 +122,27 @@ async function traiterRelancesMarchands() {
 
     for (const b of resJ7.rows) {
       if (!b.telephone) continue;
-      if (estDesinscrit && (await estDesinscrit(b.telephone))) continue;
+      if (estDesinscrit && (await estDesinscrit(b.telephone))) {
+        await pool.query('UPDATE boutiques SET relances_suspendues = true WHERE id = $1', [b.id]);
+        continue;
+      }
+
+      let magicToken = '';
+      if (b.utilisateur_id) {
+        try {
+          magicToken = genererMagicToken({ userId: b.utilisateur_id, boutiqueId: b.id });
+        } catch (_) {}
+      }
+
+      const lienCaisse = magicToken
+        ? `${SITE}/api/auth/magic-login?token=${magicToken}&redirect=${encodeURIComponent('/boutique/caisse')}`
+        : `${SITE}/boutique/caisse`;
 
       const msg =
         `Salam ${b.nom} ! 👋\n\n` +
         `Saviez-vous que Nopalou intègre une *Caisse Tactile POS* et un *Carnet de Dettes intelligent* ?\n\n` +
         `📒 Notez les crédits de vos clients et relancez-les poliment sur WhatsApp en 1 seul clic sans effort !\n\n` +
-        `👉 Accédez à votre caisse ici : ${SITE}/boutique/caisse\n\n` +
+        `👉 Accédez directement à votre caisse ici (1-clic) :\n${lienCaisse}\n\n` +
         `_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 
       if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
@@ -107,8 +152,8 @@ async function traiterRelancesMarchands() {
             title: `📒 Caisse & Carnet de Dettes — ${b.nom}`.slice(0, 60),
             montant: 'Inclus',
             detail: `Notez les crédits clients et relancez-les en 1 clic. Accédez à votre caisse : ${SITE}/boutique/caisse`,
-            url: `${SITE}/boutique/caisse`,
-            buttonParam: 'boutique/caisse',
+            url: lienCaisse,
+            buttonParam: magicToken ? `api/auth/magic-login?token=${magicToken}` : 'boutique/caisse',
             type: 'service',
           });
           const isSent = !!(res && res.messages?.[0]?.id);
@@ -118,6 +163,10 @@ async function traiterRelancesMarchands() {
             `INSERT INTO prospection_messages_log (canal, destinataire, message_envoye, statut)
              VALUES ('whatsapp', $1, $2, $3)`,
             [b.telephone, msg, isSent ? 'envoye' : 'echec']
+          );
+          await pool.query(
+            `UPDATE boutiques SET nb_relances_sans_reponse = COALESCE(nb_relances_sans_reponse, 0) + 1 WHERE id = $1`,
+            [b.id]
           );
         } catch (e) {
           stats.erreurs.push({ bq: b.nom, type: 'J+7', err: e.message });

@@ -1339,7 +1339,8 @@ function demarrerScraping() {
 function demarrerCronsMetier() {
   const { executerTacheCron } = require('../lib/cronLogger');
 
-  cron.schedule('*/15 * * * *', () => {
+  // Alertes de baisse de prix : vérification quotidienne à 08h00 au lieu de toutes les 15 min
+  cron.schedule('0 8 * * *', () => {
     executerTacheCron('verifier_alertes_prix', () => verifierAlertsPrix()).catch(err => console.error('[ALERTES]', err.message));
   });
 

@@ -1,5 +1,26 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Remédiation Complète de la Rétention & Parcours Notification-Action Commerçant (28 septembre 2026 - Nuit)** 🚀🔑📦💳📊🛡️✅ :
+  * **🎯 Problèmes Résolus & Améliorations Apportées** :
+    1. **Suppression du Mur de Connexion (Système de Magic Links HMAC)** :
+       - *Problème* : 100% des commerçants relancés par WhatsApp arrivaient dans une WebView mobile sans cookies de session et se heurtaient à la barrière `/connexion`, abandonnant instantanément car leur mot de passe avait été généré automatiquement par le bot WhatsApp.
+       - *Correction* : Création de `backend/lib/magicAuthToken.js` (génération/validation HMAC-SHA256, expiration 48h), endpoint `POST /api/auth/magic-verify` (`backend/routes/auth.js`) et Route Handler Next.js `frontend-next/src/app/api/auth/magic-login/route.ts` posant le cookie HTTP-only `nopalou_session` pour une connexion transparente sans mot de passe.
+    2. **Pack de Démarrage Automatique (Anti-Boutique-Vide)** :
+       - *Problème* : 62,4% des boutiques (63 sur 101) avaient 0 produit en base. Le commerçant ouvrait sa caisse POS, constatait qu'elle était vide, et n'enregistrait aucune vente.
+       - *Correction* : Création de `backend/data/starter-catalogues.json` (articles types par catégorie : alimentation, mode, cosmétique, électronique, divers avec prix réels Dakar et unités de vente) et de `backend/services/starter-catalogues.js`. Auto-injection à la création (Web et WhatsApp), endpoint `POST /api/boutiques/:id/starter-pack` et bouton 1-clic dans `CatalogueProduits.tsx`.
+    3. **Portail Public de Paiement de Dette 1-Clic Wave & OM (`/payer-credit/[token]`)** :
+       - *Problème* : Les rappels de carnet de crédit renvoyaient vers l'accueil de la boutique avec pour seule consigne de se déplacer physiquement en magasin.
+       - *Correction* : Jeton HMAC autonome `backend/lib/creditPaymentToken.js`, routes publiques `backend/routes/public-credit.js` (imputation sur `caisse_credit_historique`, mise à jour du solde client, notifications WhatsApp commerçant et débiteur), page Next.js `frontend-next/src/app/payer-credit/[token]/page.tsx` et `PayerCreditClient.tsx` (< 380 lignes, 0 émoji UI, strict Lucide icons), et intégration du lien dans `cron-relances-carnet.js`.
+    4. **Centre de Contrôle des Notifications & Bouclier Anti-Harcèlement** :
+       - *Correction* : Migration PostgreSQL (`notif_bilan_caisse`, `notif_heure_bilan`, `notif_relance_dettes`, `notif_panier_abandonne`, `relances_suspendues`, `nb_relances_sans_reponse`). Gating horaire strict (aucun envoi entre 20h30 et 09h00 GMT Dakar), plafond 1 relance/jour, suspension automatique après 3 messages sans réponse. Gestion des commandes WhatsApp STOP et START dans `whatsapp-chatbot.js` suspendant automatiquement les relances boutique. Interface commerçant dédiée `frontend-next/src/app/boutique/ParametresNotifications.tsx`.
+    5. **Bilan Journalier de Caisse du Soir Automatisé** :
+       - *Correction* : Déploiement de `backend/services/cron-bilan-journalier.js` calculant chaque soir les ventes effectives (Wave, Espèces, OM) et mouvements de crédit avec lien d'accès direct POS. Optimisation de la tâche `verifier_alertes_prix` de 15 min à 1x/jour à 08h00.
+    6. **CTA Relance Paniers Abandonnés Réparé** :
+       - *Correction* : Intégration de l'URL directe de finalisation Wave dans `backend/services/relance-panier.js`.
+  * **🧪 Validation & Qualité** :
+    - Suite de tests automatisés E2E (`scratch/test_retention_corrections_e2e.js`) 100% validée.
+    - 0 régression lint slop (`npm run lint:slop`).
+
 - **Colmatage Intégral du Paywall POS, Sécurisation Backend & Moteur de Conversion des Essais Gratuits (27 septembre 2026 - Nuit)** 🔒💳⚡📈🎯✅ :
   * **🎯 Problèmes Résolus & Améliorations Apportées** :
     1. **Colmatage des Fuites de Paywall POS (`boutiques-pos.js`, `CaisseClient.tsx`, `useCaisseData.ts`)** :

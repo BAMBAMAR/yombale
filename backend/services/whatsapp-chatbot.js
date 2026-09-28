@@ -2347,6 +2347,17 @@ async function handleIncomingInternal(msg) {
           `, [cId]);
         }
       }
+      // Suspendre également les relances automatiques pour les boutiques du commerçant
+      await pool.query(
+        `UPDATE boutiques 
+         SET relances_suspendues = true, updated_at = NOW() 
+         WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
+            OR proprietaire_id IN (
+              SELECT id FROM utilisateurs 
+              WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
+            )`,
+        [phone, normPh, phone.slice(-9)]
+      );
     } catch (_) {}
 
     await sendWhatsAppText(
@@ -2361,7 +2372,22 @@ async function handleIncomingInternal(msg) {
   // ── 2. Réinscription / START ────────────────────────────────────────────────
   const MOTS_START = ['start', 'reinscrire', 'debloquer', 'reprendre'];
   if (MOTS_START.includes(normText)) {
+    const normPh = normalisePhone(phone);
     await retirerBlacklist(phone);
+    try {
+      // Réactiver les relances boutique si commerçant
+      await pool.query(
+        `UPDATE boutiques 
+         SET relances_suspendues = false, nb_relances_sans_reponse = 0, updated_at = NOW() 
+         WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
+            OR proprietaire_id IN (
+              SELECT id FROM utilisateurs 
+              WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
+            )`,
+        [phone, normPh, phone.slice(-9)]
+      );
+    } catch (_) {}
+
     await sendWhatsAppText(
       phone,
       `✅ *Réinscription effectuée — Nopalou*\n\nVotre numéro (+${phone}) a bien été réinscrit. Vous pouvez de nouveau échanger avec l'assistant Nopalou.\n\nTapez *menu* pour commencer !`
@@ -5370,6 +5396,14 @@ async function handleIncomingInternal(msg) {
         );
       } catch (eBu) {
         console.warn('[BOUTIQUE UTILISATEURS WA WARN]:', eBu.message);
+      }
+
+      // 3bis. Pack de démarrage catalogue automatique (Anti-Boutique-Vide)
+      try {
+        const { injecterStarterPack } = require('./starter-catalogues');
+        await injecterStarterPack(bqCreee.id, categorieSlug);
+      } catch (ePack) {
+        console.warn('[STARTER PACK WA WARN]:', ePack.message);
       }
 
       // 4. Créer l'abonnement d'essai de 30 jours offerts

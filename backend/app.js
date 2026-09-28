@@ -315,6 +315,7 @@ app.use('/api/boutiques',       require('./routes/boutiques'));
 app.use('/api/promotions',      require('./routes/boutiques'));
 app.use('/api/devises',         require('./routes/boutiques'));
 app.use('/api/paiements',       require('./routes/boutiques'));
+app.use('/api/public-credit',   require('./routes/public-credit'));
 app.use('/api/facebook-posts',  require('./routes/facebook-posts'));
 app.use('/api/abonnements',     require('./routes/abonnements'));
 app.use('/api/admin/auth',         require('./routes/admin-auth'));
@@ -482,6 +483,7 @@ async function demarrerApp() {
         console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
       }
       try { require('./services/cron-relances-carnet'); } catch (e) { console.warn('[CRON CARNET] Warning:', e.message); }
+      try { require('./services/cron-bilan-journalier'); } catch (e) { console.warn('[CRON BILAN JOURNALIER] Warning:', e.message); }
       try { require('./services/cron-relances-prospects'); } catch (e) { console.warn('[CRON PROSPECTS] Warning:', e.message); }
       try { require('./services/cron-sauvegarde'); } catch (e) { console.warn('[CRON SAUVEGARDE] Warning:', e.message); }
     }

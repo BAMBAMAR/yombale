@@ -1,0 +1,192 @@
+{
+  "alimentation": [
+    {
+      "nom": "Riz Brisé Parfumé (Sac 25kg)",
+      "description": "Riz blanc parfumé 100% brisé de qualité supérieure, idéal pour le Tiep.",
+      "prix": 17500,
+      "en_stock": true,
+      "stock_quantite": 20,
+      "unite_vente": "sac",
+      "categorie": "Alimentation"
+    },
+    {
+      "nom": "Huile de Table Raffinée (Bidon 5L)",
+      "description": "Huile végétale 100% pure enrichie en vitamines A et D.",
+      "prix": 5500,
+      "en_stock": true,
+      "stock_quantite": 35,
+      "unite_vente": "bidon",
+      "categorie": "Alimentation"
+    },
+    {
+      "nom": "Sucre Blanc en Poudre (Sac 1kg)",
+      "description": "Sucre cristallisé blanc pur canne, idéal pour le café et thé.",
+      "prix": 650,
+      "en_stock": true,
+      "stock_quantite": 50,
+      "unite_vente": "kg",
+      "categorie": "Alimentation"
+    },
+    {
+      "nom": "Lait en Poudre Entier (Boîte 400g)",
+      "description": "Lait instantané enrichi en calcium et minéraux pour toute la famille.",
+      "prix": 2200,
+      "en_stock": true,
+      "stock_quantite": 25,
+      "unite_vente": "boîte",
+      "categorie": "Alimentation"
+    },
+    {
+      "nom": "Savon de Ménage Multiusage (Barre)",
+      "description": "Savon traditionnel efficace pour linge et vaisselle.",
+      "prix": 350,
+      "en_stock": true,
+      "stock_quantite": 100,
+      "unite_vente": "pièce",
+      "categorie": "Alimentation"
+    }
+  ],
+  "mode": [
+    {
+      "nom": "Robe Bubu Brodé Soie & Coton",
+      "description": "Coupe moderne avec broderie fine au col, tissu respirant pour cérémonies et sorties.",
+      "prix": 18500,
+      "en_stock": true,
+      "stock_quantite": 12,
+      "unite_vente": "pièce",
+      "categorie": "Mode"
+    },
+    {
+      "nom": "T-Shirt Coton Premium Col Rond",
+      "description": "T-shirt 100% coton peigné haute densité, coupe décontractée.",
+      "prix": 5000,
+      "en_stock": true,
+      "stock_quantite": 30,
+      "unite_vente": "pièce",
+      "categorie": "Mode"
+    },
+    {
+      "nom": "Pantalon Jean Slim Stretch",
+      "description": "Denim souple résistant, coupe ajustée confortable.",
+      "prix": 12000,
+      "en_stock": true,
+      "stock_quantite": 15,
+      "unite_vente": "pièce",
+      "categorie": "Mode"
+    },
+    {
+      "nom": "Sandales en Cuir Artisanal",
+      "description": "Conception cuir véritable faite main, semelle anti-dérapante.",
+      "prix": 8500,
+      "en_stock": true,
+      "stock_quantite": 18,
+      "unite_vente": "paire",
+      "categorie": "Mode"
+    }
+  ],
+  "cosmetique": [
+    {
+      "nom": "Beurre de Karité Brut Pure 250ml",
+      "description": "Nourrissant et régénérant 100% naturel sans parfum ajouté.",
+      "prix": 3500,
+      "en_stock": true,
+      "stock_quantite": 25,
+      "unite_vente": "pot",
+      "categorie": "Cosmétique"
+    },
+    {
+      "nom": "Savon Noir d'Afrique Éclat Naturel",
+      "description": "Nettoyant visage et corps purifiant, élimine les impuretés.",
+      "prix": 1500,
+      "en_stock": true,
+      "stock_quantite": 40,
+      "unite_vente": "pièce",
+      "categorie": "Cosmétique"
+    },
+    {
+      "nom": "Eau de Parfum Orientale 50ml",
+      "description": "Senteur intense longue tenue aux notes ambrées et vanillées.",
+      "prix": 12000,
+      "en_stock": true,
+      "stock_quantite": 10,
+      "unite_vente": "flacon",
+      "categorie": "Cosmétique"
+    },
+    {
+      "nom": "Huile Végétale Cheveux & Barbe 100ml",
+      "description": "Mélange ricin et argan pour stimulation de la pousse et brillance.",
+      "prix": 4500,
+      "en_stock": true,
+      "stock_quantite": 20,
+      "unite_vente": "flacon",
+      "categorie": "Cosmétique"
+    }
+  ],
+  "electronique": [
+    {
+      "nom": "Écouteurs Sans Fil Bluetooth TWS",
+      "description": "Autonomie 24h avec boîtier de charge, réduction de bruit passive.",
+      "prix": 7500,
+      "en_stock": true,
+      "stock_quantite": 15,
+      "unite_vente": "boîte",
+      "categorie": "Électronique"
+    },
+    {
+      "nom": "Câble de Charge Rapide USB-C / iPhone",
+      "description": "Câble tressé nylon indéchirable 1.2m charge rapide 3A.",
+      "prix": 2500,
+      "en_stock": true,
+      "stock_quantite": 40,
+      "unite_vente": "pièce",
+      "categorie": "Électronique"
+    },
+    {
+      "nom": "Adaptateur Chargeur Mural 20W Fast Charge",
+      "description": "Prise secteur compacte sécurité anti-surchauffe certifiée.",
+      "prix": 4500,
+      "en_stock": true,
+      "stock_quantite": 20,
+      "unite_vente": "pièce",
+      "categorie": "Électronique"
+    },
+    {
+      "nom": "Support Téléphone Magnétique Auto / Bureau",
+      "description": "Aimant puissant compatible tous smartphones, rotation 360°.",
+      "prix": 3000,
+      "en_stock": true,
+      "stock_quantite": 25,
+      "unite_vente": "pièce",
+      "categorie": "Électronique"
+    }
+  ],
+  "divers": [
+    {
+      "nom": "Article Essentiel N°1",
+      "description": "Produit standard de vente au comptoir prêt à l'encaissement.",
+      "prix": 2500,
+      "en_stock": true,
+      "stock_quantite": 20,
+      "unite_vente": "pièce",
+      "categorie": "Divers"
+    },
+    {
+      "nom": "Article Essentiel N°2",
+      "description": "Produit standard prêt pour votre catalogue en ligne.",
+      "prix": 5000,
+      "en_stock": true,
+      "stock_quantite": 20,
+      "unite_vente": "pièce",
+      "categorie": "Divers"
+    },
+    {
+      "nom": "Article Premium N°3",
+      "description": "Article de référence pour vos ventes régulières.",
+      "prix": 10000,
+      "en_stock": true,
+      "stock_quantite": 10,
+      "unite_vente": "pièce",
+      "categorie": "Divers"
+    }
+  ]
+}

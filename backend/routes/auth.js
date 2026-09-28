@@ -720,18 +720,26 @@ router.post('/magic-login', limiterAuth, async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ error: 'Token manquant' });
     
-    let payload;
-    try {
-      payload = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
+    const { validerMagicToken } = require('../lib/magicAuthToken');
+    let userId = null;
+
+    const resHmac = validerMagicToken(token);
+    if (resHmac.valide) {
+      userId = resHmac.userId;
+    } else {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        if (payload.type === 'magic') userId = payload.userId;
+      } catch (_) {}
+    }
+
+    if (!userId) {
       return res.status(400).json({ error: 'Lien magique invalide ou expiré' });
     }
-    
-    if (payload.type !== 'magic') return res.status(400).json({ error: 'Type de token invalide' });
 
     const { rows } = await pool.query(
       'SELECT id, nom, email, email_verifie, suspendu, supprime_le, telephone FROM utilisateurs WHERE id=$1',
-      [payload.userId]
+      [userId]
     );
     
     if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
@@ -741,6 +749,46 @@ router.post('/magic-login', limiterAuth, async (req, res) => {
 
     const sessionToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ user, token: sessionToken });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/magic-verify - Route pour Next.js Server Components / Handlers
+router.post('/magic-verify', limiterAuth, async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'Token manquant' });
+
+    const { validerMagicToken } = require('../lib/magicAuthToken');
+    let userId = null;
+
+    const resHmac = validerMagicToken(token);
+    if (resHmac.valide) {
+      userId = resHmac.userId;
+    } else {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        if (payload.type === 'magic') userId = payload.userId;
+      } catch (_) {}
+    }
+
+    if (!userId) {
+      return res.status(400).json({ error: 'Lien magique invalide ou expiré' });
+    }
+
+    const { rows } = await pool.query(
+      'SELECT id, nom, email, email_verifie, suspendu, supprime_le, telephone FROM utilisateurs WHERE id=$1',
+      [userId]
+    );
+
+    if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    const user = rows[0];
+    if (user.suspendu) return res.status(403).json({ error: 'Compte suspendu.' });
+    if (user.supprime_le) return res.status(403).json({ error: 'Compte en cours de suppression.' });
+
+    const sessionToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ success: true, user, token: sessionToken });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -74,7 +74,7 @@ export interface Produit {
   partage_le: string | null
 }
 
-export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'studio' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite' | 'echelonnement' | 'appstore' | 'entrepots' | 'abtesting' | 'blog' | 'abonnements'
+export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'studio' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite' | 'echelonnement' | 'appstore' | 'entrepots' | 'abtesting' | 'blog' | 'abonnements' | 'notifications'
 
 export interface NavItem {
   key: ManageTab | 'caisse'

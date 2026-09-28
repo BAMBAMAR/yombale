@@ -317,4 +317,161 @@ router.post('/:id/ai-agent', verifierToken, param('id').isUUID(), async (req, re
   }
 });
 
+// ── GET /api/boutiques/:id/preferences-notifications (Anti-IDOR)
+router.get('/:id/preferences-notifications', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { rows } = await pool.query(
+      `SELECT id, nom, telephone, whatsapp, 
+              COALESCE(notif_bilan_caisse, true) AS notif_bilan_caisse,
+              COALESCE(notif_heure_bilan, 21) AS notif_heure_bilan,
+              COALESCE(notif_relance_dettes, false) AS notif_relance_dettes,
+              COALESCE(notif_panier_abandonne, true) AS notif_panier_abandonne,
+              COALESCE(notif_marketing_astuces, false) AS notif_marketing_astuces,
+              COALESCE(relances_suspendues, false) AS relances_suspendues,
+              COALESCE(nb_relances_sans_reponse, 0) AS nb_relances_sans_reponse
+       FROM boutiques WHERE id = $1`,
+      [bq.id]
+    );
+
+    if (!rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const { estDesinscrit } = require('../../services/whatsapp');
+    const tel = rows[0].whatsapp || rows[0].telephone;
+    const estBlackliste = tel ? await estDesinscrit(tel) : false;
+
+    res.json({
+      success: true,
+      preferences: {
+        ...rows[0],
+        est_blackliste_whatsapp: estBlackliste,
+      }
+    });
+  } catch (err) {
+    console.error('[GET NOTIF PREFS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des préférences' });
+  }
+});
+
+// ── PATCH /api/boutiques/:id/preferences-notifications (Anti-IDOR)
+router.patch('/:id/preferences-notifications', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const {
+      notif_bilan_caisse,
+      notif_heure_bilan,
+      notif_relance_dettes,
+      notif_panier_abandonne,
+      notif_marketing_astuces,
+      relances_suspendues,
+      stopper_tout_whatsapp
+    } = req.body;
+
+    const updates = [];
+    const values = [];
+
+    if (typeof notif_bilan_caisse === 'boolean') {
+      values.push(notif_bilan_caisse);
+      updates.push(`notif_bilan_caisse = $${values.length}`);
+    }
+
+    if (Number.isInteger(Number(notif_heure_bilan))) {
+      const h = Math.min(23, Math.max(8, Number(notif_heure_bilan)));
+      values.push(h);
+      updates.push(`notif_heure_bilan = $${values.length}`);
+    }
+
+    if (typeof notif_relance_dettes === 'boolean') {
+      values.push(notif_relance_dettes);
+      updates.push(`notif_relance_dettes = $${values.length}`);
+    }
+
+    if (typeof notif_panier_abandonne === 'boolean') {
+      values.push(notif_panier_abandonne);
+      updates.push(`notif_panier_abandonne = $${values.length}`);
+    }
+
+    if (typeof notif_marketing_astuces === 'boolean') {
+      values.push(notif_marketing_astuces);
+      updates.push(`notif_marketing_astuces = $${values.length}`);
+    }
+
+    if (typeof relances_suspendues === 'boolean') {
+      values.push(relances_suspendues);
+      updates.push(`relances_suspendues = $${values.length}`);
+      if (!relances_suspendues) {
+        // Réactivation : réinitialiser le compteur d'échecs
+        updates.push(`nb_relances_sans_reponse = 0`);
+      }
+    }
+
+    if (stopper_tout_whatsapp === true) {
+      values.push(true);
+      updates.push(`relances_suspendues = $${values.length}`);
+      values.push(false);
+      updates.push(`notif_bilan_caisse = $${values.length}`);
+      values.push(false);
+      updates.push(`notif_relance_dettes = $${values.length}`);
+      values.push(false);
+      updates.push(`notif_panier_abandonne = $${values.length}`);
+      values.push(false);
+      updates.push(`notif_marketing_astuces = $${values.length}`);
+
+      // Optionnel : ajouter le numéro dans la blacklist
+      const { ajouterBlacklist } = require('../../services/whatsapp');
+      const tel = bq.whatsapp || bq.telephone;
+      if (tel) {
+        await ajouterBlacklist(tel, 'optout_marchand_dashboard');
+      }
+    }
+
+    if (!updates.length) {
+      return res.status(400).json({ error: 'Aucune préférence à mettre à jour' });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(bq.id);
+
+    const { rows } = await pool.query(
+      `UPDATE boutiques SET ${updates.join(', ')} WHERE id = $${values.length} RETURNING *`,
+      values
+    );
+
+    res.json({
+      success: true,
+      message: stopper_tout_whatsapp ? 'Toutes les notifications WhatsApp ont été arrêtées.' : 'Préférences de notifications mises à jour avec succès.',
+      preferences: rows[0]
+    });
+  } catch (err) {
+    console.error('[PATCH NOTIF PREFS ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour des préférences' });
+  }
+});
+
+// ── POST /api/boutiques/:id/starter-pack — Activer un pack d'articles de démarrage
+router.post('/:id/starter-pack', verifierToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bq = await checkBoutiqueAccess(id, req.user.userId);
+    if (!bq && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette boutique' });
+    }
+
+    const { categorie, forcer } = req.body;
+    const catFinale = categorie || bq.categorie || 'Divers';
+    const { injecterStarterPack } = require('../../services/starter-catalogues');
+    const result = await injecterStarterPack(bq.id, catFinale, forcer === true);
+
+    res.json(result);
+  } catch (err) {
+    console.error('[STARTER PACK ROUTE ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l’injection du pack de démarrage' });
+  }
+});
+
 module.exports = router;
+

@@ -26,7 +26,43 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (27 septembre 2026 - Nuit - Colmatage Paywall POS & Moteur de Conversion des Essais Gratuits) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Nuit - Remédiation Complète de la Rétention & Parcours Notification-Action Commerçant) :
+- **Suppression du Mur de Connexion (Système de Magic Links HMAC)** :
+  - **Diagnostic** : 100% des commerçants relancés par WhatsApp arrivaient dans une WebView mobile sans cookies de session et se heurtaient à la barrière `/connexion`, abandonnant instantanément car leur mot de passe avait été généré automatiquement par le bot WhatsApp.
+  - **Correction** :
+    - `backend/lib/magicAuthToken.js` : Génération et validation de jetons HMAC-SHA256 temporaires (validité 48h, anti-altération timing-safe).
+    - `POST /api/auth/magic-verify` dans `backend/routes/auth.js`.
+    - Route Handler Next.js `frontend-next/src/app/api/auth/magic-login/route.ts` posant le cookie HTTP-only sécurisé `nopalou_session` et redirigeant sans jamais demander de mot de passe.
+    - Injection automatique de ces liens dans tous les crons et services WhatsApp (`cron-relances-marchands.js`, `relance-catalogue.js`, `cron-bilan-journalier.js`).
+- **Pack de Démarrage Automatique (Anti-Boutique-Vide & Activation Immédiate du POS)** :
+  - **Diagnostic** : 62,4% des boutiques (63 sur 101) avaient 0 produit en base de données. Le marchand ouvrait sa caisse POS, constatait qu'elle était vide, et n'enregistrait aucune vente.
+  - **Correction** :
+    - `backend/data/starter-catalogues.json` : Catalogues types adaptés aux commerces dakarois par catégorie (`alimentation`, `mode`, `cosmetique`, `electronique`, `divers`) avec prix réels du marché et unités de vente.
+    - `backend/services/starter-catalogues.js` (`injecterStarterPack`) : Détection et injection automatique de 4 à 5 articles populaires lors de la création d'une boutique sur le Web (`boutiques-crud.js`) ou via le bot WhatsApp (`whatsapp-chatbot.js`).
+    - Endpoint sécurisé `POST /api/boutiques/:id/starter-pack` dans `boutiques-integrations.js` avec vérification anti-IDOR.
+    - Bouton 1-clic d'activation du pack dans `frontend-next/src/app/boutique/CatalogueProduits.tsx` lorsque le catalogue est vide.
+- **Portail Public de Paiement de Dette 1-Clic Wave & Orange Money (`/payer-credit/[token]`)** :
+  - **Diagnostic** : Les rappels de carnet de crédit renvoyaient vers l'accueil de la boutique avec pour seule consigne de se déplacer physiquement au magasin, rendant le taux de recouvrement digital nul.
+  - **Correction** :
+    - `backend/lib/creditPaymentToken.js` : Jeton HMAC autonome identifiant de façon étanche le client débiteur et sa boutique.
+    - `backend/routes/public-credit.js` : API publique (`GET /:token`, `POST /:token/initier-wave`, `POST /:token/confirmer`) imputant les règlements sur `caisse_credit_historique` et décrémentant le solde `caisse_clients_credits.solde`.
+    - Alertes instantanées WhatsApp envoyées au marchand lors de chaque encaissement et reçu digital remis au débiteur.
+    - Page publique Next.js `frontend-next/src/app/payer-credit/[token]/page.tsx` et `PayerCreditClient.tsx` (< 380 lignes, 0 émoji UI, strict Lucide icons, Design System Nopalou).
+    - Intégration du lien direct de règlement dans `backend/services/cron-relances-carnet.js`.
+- **Centre de Contrôle des Notifications & Bouclier Anti-Harcèlement** :
+  - Migration colonnes PostgreSQL dans `boutiques` (`notif_bilan_caisse`, `notif_heure_bilan`, `notif_relance_dettes`, `notif_panier_abandonne`, `notif_marketing_astuces`, `relances_suspendues`, `nb_relances_sans_reponse`).
+  - Gating horaire strict (aucun message entre 20h30 et 09h00 GMT Dakar), plafond d'une relance max par jour, suspension automatique après 3 messages sans réponse.
+  - Gestionnaire de commandes STOP et START dans `backend/services/whatsapp-chatbot.js` mettant à jour immédiatement `relances_suspendues` pour les boutiques du commerçant.
+  - Interface marchande dédiée `frontend-next/src/app/boutique/ParametresNotifications.tsx` avec sélection de l'heure du bilan, commutateurs par canal et bouton d'arrêt d'urgence WhatsApp.
+- **Bilan Journalier de Caisse du Soir Automatisé** :
+  - Création de `backend/services/cron-bilan-journalier.js` calculant chaque soir les ventes effectives (Wave, Espèces, OM) et les mouvements de crédit pour les marchands actifs, avec lien d'accès direct POS.
+- **Optimisation des Tâches Fantômes & CTA Paniers** :
+  - Réduction de la cadence de `verifier_alertes_prix` de 15 minutes à 1 fois par jour à 08h00 dans `scraper.js`.
+  - Intégration du lien direct Wave de finalisation dans `relance-panier.js`.
+- **Validation Complète par Suite de Tests E2E** :
+  - `scratch/test_retention_corrections_e2e.js` : Validation 100% PASS de la chaîne Magic Link, injection catalogue, paiement créance et bilan de caisse.
+
+### 📌 Version Précédente (27 septembre 2026 - Nuit - Colmatage Paywall POS & Moteur de Conversion des Essais Gratuits) :
 - **Colmatage Intégral des Fuites de Paywall POS & Caisse Enregistreuse** :
   - **Diagnostic** : La route `GET /api/boutiques/caisse-terminal/:token` et le hook client `useCaisseData.ts` possédaient un fallback forcé `plan || 'pro'`, attribuant automatiquement les droits Pro à tout appareil tactile ouvrant la caisse, y compris des mois après l'expiration de l'essai gratuit. De plus, `POST /:id/pos-vente` n'effectuait aucune vérification d'abonnement actif, permettant des encaissements illimités ad vitam æternam sans payer.
   - **Correction Backend (`boutiques-pos.js`)** :

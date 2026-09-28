@@ -193,14 +193,10 @@ router.post('/taf-taf', async (req, res) => {
     );
 
     // 3.5 Initialiser 2 articles modèles pour que la caisse POS et la vitrine soient immédiatement opérationnelles
+    // Initialiser le pack d'articles de démarrage par catégorie (Anti-Boutique-Vide)
     try {
-      await pool.query(
-        `INSERT INTO boutique_produits (boutique_id, nom, prix, stock_quantite, en_stock, description, categorie, slug)
-         VALUES 
-          ($1, 'Article Exemple 1', 5000, 10, true, 'Exemple d''article personnalisable. Prêt pour test de vente et ticket.', $2, 'article-exemple-1-' || SUBSTRING(MD5(RANDOM()::text), 1, 6)),
-          ($1, 'Article Exemple 2', 10000, 5, true, 'Exemple d''article personnalisable. Modifiez le nom et le prix à tout moment.', $2, 'article-exemple-2-' || SUBSTRING(MD5(RANDOM()::text), 1, 6))`,
-        [boutiqueId, categorie || 'Divers']
-      );
+      const { injecterStarterPack } = require('../../services/starter-catalogues');
+      await injecterStarterPack(boutiqueId, categorie || 'Divers');
     } catch (errProd) {
       console.warn('[BOUTIQUE SEED STARTER PRODUCTS TAF TAF]:', errProd.message);
     }
@@ -728,15 +724,10 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
       console.error('[BOUTIQUES POST] Erreur création abonnement:', errAbo.message);
     }
 
-    // Initialiser 2 articles modèles pour que la caisse POS et la vitrine soient immédiatement opérationnelles
+    // Initialiser le pack de démarrage par catégorie pour que la caisse POS et la vitrine soient immédiatement opérationnelles
     try {
-      await pool.query(
-        `INSERT INTO boutique_produits (boutique_id, nom, prix, stock_quantite, en_stock, description, categorie, slug)
-         VALUES 
-          ($1, 'Article Exemple 1', 5000, 10, true, 'Exemple d''article personnalisable. Prêt pour test de vente et ticket.', $2, 'article-exemple-1-' || SUBSTRING(MD5(RANDOM()::text), 1, 6)),
-          ($1, 'Article Exemple 2', 10000, 5, true, 'Exemple d''article personnalisable. Modifiez le nom et le prix à tout moment.', $2, 'article-exemple-2-' || SUBSTRING(MD5(RANDOM()::text), 1, 6))`,
-        [newId, req.body.categorie || 'Divers']
-      );
+      const { injecterStarterPack } = require('../../services/starter-catalogues');
+      await injecterStarterPack(newId, req.body.categorie || 'Divers');
     } catch (errProd) {
       console.warn('[BOUTIQUES POST SEED PRODS]:', errProd.message);
     }

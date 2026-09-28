@@ -19,23 +19,34 @@ async function assurerColonnesRelance() {
   }
 }
 
+const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+
 /**
  * Exécute une passe de détection et relance des paniers abandonnés
  */
 async function executerRelancePaniers() {
+  // Garde-fou horaire strict : Fuseau horaire Dakar (UTC+0).
+  const heureDakar = new Date().getUTCHours();
+  if (heureDakar < 9 || heureDakar >= 21) {
+    return { count: 0, message: 'Relance paniers suspendue en dehors des heures ouvrées (09h-21h GMT)' };
+  }
+
   try {
     await assurerColonnesRelance();
 
-    // Commandes en attente de paiement créées il y a entre 45 minutes et 24 heures
+    // Commandes en attente créées il y a entre 45 minutes et 24 heures
+    // Filtrées selon le choix du commerçant (notif_panier_abandonne) et statut non-suspendu
     const { rows } = await pool.query(`
       SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.montant_total, c.nom_produit, c.quantite,
-             b.nom as boutique_nom, b.telephone as boutique_tel
+             b.nom as boutique_nom, b.telephone as boutique_tel, b.whatsapp as boutique_whatsapp
       FROM commandes_boutique c
       LEFT JOIN boutiques b ON b.id = c.boutique_id
       WHERE (c.statut = 'en_attente' OR c.statut = 'attente_paiement')
         AND (c.relance_panier_envoyee IS NOT TRUE)
         AND c.client_telephone IS NOT NULL
         AND length(trim(c.client_telephone)) >= 9
+        AND COALESCE(b.notif_panier_abandonne, true) = true
+        AND b.relances_suspendues IS NOT TRUE
         AND c.created_at <= NOW() - INTERVAL '45 minutes'
         AND c.created_at >= NOW() - INTERVAL '24 hours'
       LIMIT 15
@@ -58,16 +69,19 @@ async function executerRelancePaniers() {
         const prenom = cmd.client_nom ? cmd.client_nom.split(' ')[0] : 'Bonjour';
         const montantFmt = new Intl.NumberFormat('fr-FR').format(cmd.montant_total);
         const nomBoutique = cmd.boutique_nom || 'Nopalou Sénégal';
+        const lienPaiement = `${SITE}/suivi-commande?ref=${encodeURIComponent(cmd.reference)}`;
 
         const msg = 
 `👋 *${prenom}, avez-vous oublié vos articles chez ${nomBoutique} ?*
 
 Votre commande *${cmd.reference}* (${cmd.quantite}x ${cmd.nom_produit || 'Produit'} — *${montantFmt} FCFA*) est réservée et prête pour expédition !
 
-⚡ *Pour finaliser votre commande en 1 clic :*
-Vous pouvez régler par Wave ou Orange Money, ou nous confirmer la livraison cash.
+⚡ *Pour finaliser votre commande en 1 clic (Wave / OM / Cash) :*
+👉 ${lienPaiement}
 
-Besoin d'un renseignement ? Répondez directement à ce message pour échanger avec notre service client.`;
+Besoin d'un renseignement ? Répondez directement à ce message pour échanger avec notre service client.
+
+_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 
         await sendWhatsAppText(phone, msg);
 

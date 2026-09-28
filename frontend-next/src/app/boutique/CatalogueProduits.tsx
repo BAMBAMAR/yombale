@@ -78,6 +78,30 @@ function CatalogueProduits({
     toggleSelectAll,
   } = useCatalogueProduitsData({ boutique, userId, filtreInitial })
 
+  const [packLoading, setPackLoading] = useState(false)
+
+  const handleActiverStarterPack = async () => {
+    setPackLoading(true)
+    try {
+      const res = await fetch(`/api/boutiques/${boutique.id}/starter-pack`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categorie: boutique.categorie })
+      })
+      const data = await res.json()
+      if (data.succes) {
+        setSuccessMsg(data.message || 'Articles de démarrage ajoutés avec succès !')
+        await loadProduits()
+      } else {
+        setDeleteError(data.message || 'Impossible d\'ajouter le pack de démarrage.')
+      }
+    } catch (_) {
+      setDeleteError('Erreur réseau lors de l\'activation du pack.')
+    } finally {
+      setPackLoading(false)
+    }
+  }
+
   const effectivePlanResolved =
     planActif ||
     boutique.plan_actif ||
@@ -281,27 +305,49 @@ function CatalogueProduits({
         <div
           style={{
             textAlign: 'center',
-            padding: '32px 20px',
+            padding: '36px 20px',
             background: '#f8fafc',
-            borderRadius: 12,
+            borderRadius: 16,
             border: '1px dashed #d1d5db',
           }}
         >
-          <p style={{ color: '#6b7280', margin: '0 0 16px' }}>Aucun produit dans votre catalogue.</p>
-          <button
-            onClick={() => setMode({ creating: 'rapide' })}
-            style={{
-              background: 'var(--accent, #C75B00)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '10px 20px',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            Ajouter mon premier produit
-          </button>
+          <p style={{ color: '#6b7280', margin: '0 0 16px', fontSize: 14 }}>
+            Votre catalogue est actuellement vide. Vous pouvez ajouter un premier produit ou pré-charger un pack de démarrage type.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={handleActiverStarterPack}
+              disabled={packLoading}
+              style={{
+                background: 'var(--price, #0A5C36)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '10px 18px',
+                fontWeight: 700,
+                fontSize: 13.5,
+                cursor: packLoading ? 'not-allowed' : 'pointer',
+                opacity: packLoading ? 0.7 : 1,
+              }}
+            >
+              {packLoading ? 'Chargement du pack…' : 'Activer le pack de démarrage (Articles types)'}
+            </button>
+            <button
+              onClick={() => setMode({ creating: 'rapide' })}
+              style={{
+                background: 'var(--accent, #C75B00)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '10px 18px',
+                fontWeight: 700,
+                fontSize: 13.5,
+                cursor: 'pointer',
+              }}
+            >
+              Ajouter un produit personnalisé
+            </button>
+          </div>
         </div>
       ) : produitsFiltres.length === 0 ? (
         <div

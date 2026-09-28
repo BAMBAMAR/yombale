@@ -27,6 +27,7 @@ import {
   Repeat,
   CreditCard,
   Calculator,
+  Bell,
   LucideIcon,
 } from 'lucide-react'
 
@@ -57,6 +58,7 @@ export const VALID_TABS: ManageTab[] = [
   'abtesting',
   'blog',
   'abonnements',
+  'notifications',
 ]
 
 /**
@@ -199,6 +201,7 @@ export function getNavAdvanced(t: (key: string) => string): NavGroup[] {
       items: [
         { key: 'entrepots', icon: Warehouse, label: 'Entrepôts & Dépôts', minPlan: 'pro' },
         { key: 'fiscalite', icon: Scale, label: t('shop.taxSettings') || 'Fiscalité & TVA', minPlan: 'pro' },
+        { key: 'notifications', icon: Bell, label: 'Notifications WhatsApp' },
         { key: 'equipe', icon: Users, label: t('shop.team') || 'Mon équipe', minPlan: 'business' },
         { key: 'abtesting', icon: Split, label: 'A/B Testing Vitrine', minPlan: 'pro' },
         { key: 'journal', icon: ScrollText, label: t('shop.auditLog') || 'Journal d\'activité', minPlan: 'business' },
@@ -234,6 +237,11 @@ export function getTabInfoMap(t: (key: string) => string): Record<ManageTab, { t
     documents: { icon: FileText, title: t('shop.documents'), desc: t('shop.documentsDesc') },
     fournisseurs: { icon: Truck, title: t('shop.suppliers'), desc: t('shop.suppliersDesc') },
     fiscalite: { icon: Scale, title: t('shop.taxSettings'), desc: t('shop.taxSettingsDesc') },
+    notifications: {
+      icon: Bell,
+      title: 'Notifications & Alertes WhatsApp',
+      desc: 'Contrôlez vos bilans quotidiens de caisse, relances de panier et activez le droit au silence.',
+    },
     fidelite: {
       icon: Gift,
       title: t('shop.fidelitePromos') || 'Fidélité & Promotions',

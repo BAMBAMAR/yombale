@@ -2618,9 +2618,16 @@ module.exports = async function migrateInline(customConnStr = null) {
       );
       CREATE INDEX IF NOT EXISTS idx_security_vault_event ON security_audit_vault(event_type, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_security_vault_user ON security_audit_vault(user_id, created_at DESC);
-      CREATE INDEX IF NOT EXISTS idx_security_vault_created ON security_audit_vault(created_at DESC);
+      -- Préférences de notifications & Garde-fous Anti-Harcèlement Marchands
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS notif_bilan_caisse BOOLEAN DEFAULT TRUE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS notif_heure_bilan INTEGER DEFAULT 21;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS notif_relance_dettes BOOLEAN DEFAULT FALSE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS notif_panier_abandonne BOOLEAN DEFAULT TRUE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS notif_marketing_astuces BOOLEAN DEFAULT FALSE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS relances_suspendues BOOLEAN DEFAULT FALSE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS nb_relances_sans_reponse INTEGER DEFAULT 0;
     `);
-    console.log('[MIGRATE] ✅ Écosystème Conversationnel, Crons, Support, Signalements & Audit Vault créés');
+    console.log('[MIGRATE] ✅ Écosystème Conversationnel, Crons, Support, Signalements, Audit Vault & Notif Preferences créés');
   } catch (err) {
     console.warn('[MIGRATE] Écosystème Conversationnel échec:', err.message);
   }

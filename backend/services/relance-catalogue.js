@@ -1,7 +1,8 @@
 // backend/services/relance-catalogue.js — Moteur de relance & onboarding catalogue marchands
 const cron = require('node-cron');
 const { pool } = require('../models/db');
-const { sendWhatsAppNotification, normalisePhone } = require('./whatsapp');
+const { sendWhatsAppNotification, normalisePhone, estDesinscrit } = require('./whatsapp');
+const { genererMagicToken } = require('../lib/magicAuthToken');
 const settingsCache = require('../lib/settingsCache');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
@@ -14,11 +15,25 @@ function genererMessageRelance({ boutique, nbProduits = 0, template, titre }) {
     || (boutique.proprietaire_nom ? boutique.proprietaire_nom.trim().split(' ')[0] : 'Cher Marchand');
   const nom = boutique.proprietaire_nom || 'Marchand';
   const boutiqueNom = boutique.nom || 'Votre boutique';
-  const lienBoutique = `${SITE}/boutique?tab=produits&id=${boutique.id}`;
-  const lienCaisse = `${SITE}/boutique/caisse?manage=${boutique.id}`;
+
+  let magicToken = '';
+  if (boutique.utilisateur_id) {
+    try {
+      magicToken = genererMagicToken({ userId: boutique.utilisateur_id, boutiqueId: boutique.id });
+    } catch (_) {}
+  }
+
+  const lienBoutique = magicToken
+    ? `${SITE}/api/auth/magic-login?token=${magicToken}&redirect=${encodeURIComponent('/boutique?tab=produits&id=' + boutique.id)}`
+    : `${SITE}/boutique?tab=produits&id=${boutique.id}`;
+
+  const lienCaisse = magicToken
+    ? `${SITE}/api/auth/magic-login?token=${magicToken}&redirect=${encodeURIComponent('/boutique/caisse?manage=' + boutique.id)}`
+    : `${SITE}/boutique/caisse?manage=${boutique.id}`;
+
   const lienAccueil = `${SITE}/boutiques/${boutique.slug || boutique.id}`;
 
-  const tpl = template || `👋 Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! 🎉\n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les 5 façons rapides d'ajouter vos articles :\n\n1️⃣ 🪄 *L'Import Magique par Photo (IA)* :\nPrenez en photo vos articles ou une facture/catalogue et envoyez-les directement ici sur WhatsApp ou dans votre espace. L'IA crée la fiche produit (titre, description, prix) en 3 secondes !\n\n2️⃣ 🛍️ *Depuis votre Espace Marchand* :\nRendez-vous sur : {lien_boutique}\nCliquez sur « Ajouter un produit » pour renseigner photos, prix et stock.\n\n3️⃣ ⚡ *La Saisie Express (Caisse POS)* :\nEnregistrez vos articles en 1 clic lors de vos ventes au comptoir : {lien_caisse}\n\n4️⃣ 📊 *L'Import Excel / CSV* :\nImportez tout votre catalogue d'un coup si vous avez déjà un fichier.\n\n5️⃣ 🤖 *Discussion avec l'Assistant WhatsApp* :\nÉcrivez simplement les noms et prix de vos articles à ce numéro, l'assistant les enregistre directement.\n\nBesoin d'aide ou d'un conseil ? Répondez directement à ce message, l'équipe Nopalou vous accompagne ! 🤝`;
+  const tpl = template || `👋 Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! 🎉\n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les façons rapides d'ajouter vos articles :\n\n1️⃣ 🪄 *L'Import Magique par Photo (IA)* :\nPrenez en photo vos articles ou une facture/catalogue et envoyez-les directement ici sur WhatsApp. L'IA crée la fiche produit en 3 secondes !\n\n2️⃣ 🛍️ *Depuis votre Espace Marchand (Accès Direct)* :\nRendez-vous sur : {lien_boutique}\n\n3️⃣ ⚡ *La Saisie Express (Caisse POS)* :\nEnregistrez vos articles lors de vos ventes au comptoir : {lien_caisse}\n\nBesoin d'aide ? Répondez directement à ce message, l'équipe Nopalou vous accompagne ! 🤝\n\n_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 
   const textMessage = tpl
     .replace(/\{prenom\}/gi, prenom)
@@ -30,14 +45,14 @@ function genererMessageRelance({ boutique, nbProduits = 0, template, titre }) {
     .replace(/\{lien_accueil\}/gi, lienAccueil);
 
   const cleanTitle = (titre || `🛍️ ${boutiqueNom} — Ajoutez vos produits`).slice(0, 60);
-  const detail = `Votre boutique "${boutiqueNom}" a ${nbProduits} produit(s). Ajoutez vos articles via Import IA, POS Caisse ou le catalogue en ligne pour lancer vos ventes.`;
+  const detail = `Votre boutique "${boutiqueNom}" a ${nbProduits} produit(s). Accédez en 1 clic pour activer vos ventes.`;
 
   return {
     textMessage,
     title: cleanTitle,
     detail,
     url: lienBoutique,
-    buttonParam: `boutique?tab=produits&id=${boutique.id}`,
+    buttonParam: magicToken ? `api/auth/magic-login?token=${magicToken}` : `boutique?tab=produits&id=${boutique.id}`,
   };
 }
 
@@ -46,8 +61,8 @@ function genererMessageRelance({ boutique, nbProduits = 0, template, titre }) {
  */
 async function envoyerRelanceCatalogueBoutique(boutiqueId, { messageCustom, titreCustom } = {}) {
   const { rows } = await pool.query(
-    `SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.actif,
-            b.derniere_relance_catalogue_at, b.nb_relances_catalogue,
+    `SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.actif, b.utilisateur_id,
+            b.derniere_relance_catalogue_at, b.nb_relances_catalogue, b.relances_suspendues, b.nb_relances_sans_reponse,
             u.nom AS proprietaire_nom, split_part(u.nom, ' ', 1) AS proprietaire_prenom, u.telephone AS proprietaire_telephone,
             (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits
      FROM boutiques b
@@ -61,9 +76,18 @@ async function envoyerRelanceCatalogueBoutique(boutiqueId, { messageCustom, titr
   }
 
   const boutique = rows[0];
+  if (boutique.relances_suspendues) {
+    throw new Error('Relances désactivées ou suspendues pour cette boutique.');
+  }
+
   const tel = boutique.whatsapp || boutique.telephone || boutique.proprietaire_telephone;
   if (!tel) {
     throw new Error(`Aucun numéro de téléphone WhatsApp disponible pour la boutique "${boutique.nom}"`);
+  }
+
+  if (await estDesinscrit(tel)) {
+    await pool.query('UPDATE boutiques SET relances_suspendues = true WHERE id = $1', [boutique.id]);
+    throw new Error(`Numéro ${tel} désinscrit via STOP. Envoi ignoré.`);
   }
 
   const defaultTemplate = await settingsCache.get('relance_catalogue_template');
@@ -87,7 +111,9 @@ async function envoyerRelanceCatalogueBoutique(boutiqueId, { messageCustom, titr
   await pool.query(
     `UPDATE boutiques 
      SET derniere_relance_catalogue_at = NOW(), 
-         nb_relances_catalogue = COALESCE(nb_relances_catalogue, 0) + 1 
+         nb_relances_catalogue = COALESCE(nb_relances_catalogue, 0) + 1,
+         nb_relances_sans_reponse = COALESCE(nb_relances_sans_reponse, 0) + 1,
+         relances_suspendues = CASE WHEN COALESCE(nb_relances_sans_reponse, 0) + 1 >= 3 THEN TRUE ELSE FALSE END
      WHERE id = $1`,
     [boutique.id]
   );
@@ -139,13 +165,15 @@ async function recupererBoutiquesEligiblesRelance() {
   const intervalleJours = await settingsCache.getNum('relance_catalogue_intervalle_jours', 7);
 
   const query = `
-    SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.created_at,
+    SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.created_at, b.utilisateur_id,
            b.derniere_relance_catalogue_at, b.nb_relances_catalogue,
            u.nom AS proprietaire_nom, split_part(u.nom, ' ', 1) AS proprietaire_prenom, u.telephone AS proprietaire_telephone,
            (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits
     FROM boutiques b
     LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
     WHERE b.actif = true
+      AND b.relances_suspendues IS NOT TRUE
+      AND COALESCE(b.nb_relances_sans_reponse, 0) < 3
       AND b.created_at <= NOW() - ($1 * INTERVAL '1 hour')
       AND (
         b.derniere_relance_catalogue_at IS NULL 
