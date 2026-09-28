@@ -227,6 +227,8 @@ async function upsertAnnonce(a) {
 
 async function scraperImmo({ dryRun = false } = {}) {
   const stats = { scrapes: 0, inseres: 0, ignores: 0, erreurs: [], dryRun };
+  const tDebut = Date.now();
+  let pagesOk = 0, pagesErreur = 0;
 
   for (const sec of SECTIONS) {
     for (let pg = 1; pg <= 5; pg++) {
@@ -243,6 +245,7 @@ async function scraperImmo({ dryRun = false } = {}) {
         break;
       }
 
+      pagesOk++;
       stats.scrapes += annonces.length;
 
       for (const a of annonces) {
@@ -265,6 +268,30 @@ async function scraperImmo({ dryRun = false } = {}) {
   }
 
   console.log(`[EXPAT-IMMO ${dryRun ? 'DRY' : 'RÉEL'}] scrapes: ${stats.scrapes}, insérés: ${stats.inseres}, ignorés: ${stats.ignores}, erreurs: ${stats.erreurs.length}`);
+
+  // Persister les métriques dans scraping_runs
+  if (!dryRun) {
+    pool.query(
+      `INSERT INTO scraping_runs
+         (source, systeme, pages_cibles, pages_ok, pages_erreur,
+          items_extraits, items_inseres, items_filtres,
+          duree_ms, statut, erreur_msg, ended_at)
+       VALUES ($1,'immo',$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())`,
+      [
+        'expat-dakar',
+        SECTIONS.length * 5,
+        pagesOk,
+        pagesErreur,
+        stats.scrapes,
+        stats.inseres,
+        stats.ignores,
+        Date.now() - tDebut,
+        stats.erreurs.length > 0 ? 'erreur_partielle' : 'ok',
+        stats.erreurs.length > 0 ? stats.erreurs.slice(0, 3).join(' | ') : null,
+      ]
+    ).catch(e => console.warn('[SCRAPING_RUN WARN]', e.message));
+  }
+
   return stats;
 }
 

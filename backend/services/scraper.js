@@ -544,11 +544,43 @@ async function scraperAuchan(categorie='137-boissons', maxPages=3) {
 }
 
 // ══════════════════════════════════════════════════════
-//  SCRAPER 6 — Decathlon (Next.js data-src JSON)
+//  SCRAPER 6 — Decathlon Sénégal (multi-stratégie)
+//  Stratégie 1 : WooCommerce Store API /wp-json/wc/store/v1/products
+//  Stratégie 2 : JSON-LD ItemList dans <script type="application/ld+json">
+//  Stratégie 3 : script[type="application/json"][data-src] (legacy)
+//  Stratégie 4 : CSS adaptatif (WooCommerce HTML)
 // ══════════════════════════════════════════════════════
-async function scraperDecathlon(categorie = '3745-tous-les-sports', maxPages = 2) {
+async function scraperDecathlon(categorie = '3745-tous-les-sports', maxPages = 3) {
   const resultats = [], base = `https://www.decathlon.sn/${categorie}`;
   console.log(`\n[DECATHLON] ${base}`);
+
+  // Stratégie 1 — WooCommerce Store API (JSON public, pas de JS requis)
+  try {
+    const apiUrl = 'https://www.decathlon.sn/wp-json/wc/store/v1/products?per_page=100&status=publish';
+    const { data: apiData } = await require('axios').get(apiUrl, {
+      headers: { 'User-Agent': randUA(), 'Accept': 'application/json' },
+      timeout: 15000,
+    });
+    if (Array.isArray(apiData) && apiData.length > 0) {
+      for (const p of apiData) {
+        const titre = nettoyerTitre(p.name);
+        const prix = nettoyerPrix(String(p.prices?.price || p.prices?.regular_price || ''));
+        const href = p.permalink || '';
+        const img = p.images?.[0]?.src || null;
+        if (titre.length > 3 && prix > 500) {
+          resultats.push({ titre, prix: Math.round(prix / 100), url: href, image_url: img });
+        }
+      }
+      if (resultats.length > 0) {
+        console.log(`[DECATHLON] Stratégie API WooCommerce : ${resultats.length} produits`);
+        return resultats;
+      }
+    }
+  } catch (e) {
+    console.warn('[DECATHLON] API WooCommerce inaccessible :', e.message);
+  }
+
+  // Stratégie 2–4 — Scraping HTML page par page
   for (let page = 1; page <= maxPages; page++) {
     const url = page === 1 ? base : `${base}?page=${page}`;
     try {
@@ -556,30 +588,66 @@ async function scraperDecathlon(categorie = '3745-tous-les-sports', maxPages = 2
       const $ = cheerio.load(html);
       let found = 0;
 
-      $('script[type="application/json"][data-src]').each((_, el) => {
+      // Stratégie 2 — JSON-LD ItemList
+      $('script[type="application/ld+json"]').each((_, el) => {
         try {
-          const jsonText = $(el).html();
-          if (jsonText && jsonText.includes('"price"')) {
-            const data = JSON.parse(jsonText);
-            const items = data[0]; 
-            if (Array.isArray(items)) {
-              for (const p of items) {
-                if (p.title && p.price && p.price.amountRaw) {
-                  const titre = nettoyerTitre(p.title);
-                  const prix = parseInt(p.price.amountRaw, 10);
-                  const url = p.cardLinkUrl || '';
-                  const img = p.image ? p.image.url : null;
-                  
-                  if (titre.length > 3 && prix > 500) {
-                    resultats.push({ titre, prix, url, image_url: img });
-                    found++;
-                  }
-                }
-              }
+          const ld = JSON.parse($(el).html() || '{}');
+          const items = ld['@type'] === 'ItemList' ? (ld.itemListElement || [])
+                      : ld['@type'] === 'Product'  ? [ld]
+                      : [];
+          for (const it of items) {
+            const prod = it.item || it;
+            const titre = nettoyerTitre(prod.name || '');
+            const prix = nettoyerPrix(String(prod.offers?.price || prod.offers?.lowPrice || ''));
+            const href = prod.url || '';
+            const img = Array.isArray(prod.image) ? prod.image[0] : (prod.image || null);
+            if (titre.length > 3 && prix > 500 && href) {
+              resultats.push({ titre, prix, url: href, image_url: img }); found++;
             }
           }
         } catch (e) {}
       });
+
+      // Stratégie 3 — JSON inline data-src (legacy Decathlon)
+      if (found === 0) {
+        $('script[type="application/json"]').each((_, el) => {
+          try {
+            const jsonText = $(el).html() || '';
+            if (!jsonText.includes('price')) return;
+            const data = JSON.parse(jsonText);
+            const items = Array.isArray(data) ? data : (Array.isArray(data?.[0]) ? data[0] : []);
+            for (const p of items) {
+              const titre = nettoyerTitre(p.title || p.name || '');
+              const prix = parseInt(p.price?.amountRaw || p.price || '0', 10);
+              const href = p.cardLinkUrl || p.url || '';
+              const img = p.image?.url || p.thumbnail || null;
+              if (titre.length > 3 && prix > 500) {
+                resultats.push({ titre, prix, url: href, image_url: img }); found++;
+              }
+            }
+          } catch (e) {}
+        });
+      }
+
+      // Stratégie 4 — CSS WooCommerce adaptatif
+      if (found === 0) {
+        const essais = [
+          { c: 'li.product,.product-small,.product-card', t: '.woocommerce-loop-product__title,.product-title,h2,h3', p: '.price .amount,span.amount,.price', l: 'a.woocommerce-loop-product__link,a', i: 'img' },
+          { c: '.type-product',                           t: 'h2,h3,.product-title',                                  p: '.price',                            l: 'a[href]',                                                                i: 'img' },
+        ];
+        for (const s of essais) {
+          const items = $(s.c); if (!items.length) continue;
+          items.each((_, el) => {
+            const titre = nettoyerTitre($(el).find(s.t).first().text());
+            const prix  = nettoyerPrix($(el).find(s.p).first().text());
+            let href    = $(el).find(s.l).first().attr('href') || '';
+            if (href && !href.startsWith('http')) href = `https://www.decathlon.sn${href}`;
+            const img = $(el).find(s.i).first().attr('data-src') || $(el).find(s.i).first().attr('src') || null;
+            if (titre.length > 3 && prix > 500) { resultats.push({ titre, prix, url: href, image_url: img }); found++; }
+          });
+          if (found > 0) break;
+        }
+      }
 
       console.log(`[DECATHLON] Page ${page}: ${found} résultats`);
       if (found === 0) break;
@@ -1081,17 +1149,57 @@ async function lancerScraping(sources=['expat','jumia','coinafrique','auchan','k
     };
     for(const src of sources){
       const c=conf[src]; if(!c) continue;
-      const stats={inseres:0,mis_a_jour:0,erreurs:0,scrapes:0};
+      const stats={inseres:0,mis_a_jour:0,erreurs:0,scrapes:0,filtres:0};
+      const tDebut = Date.now();
+      const pagesOk = [], pagesErr = [];
+
       for(const cat of c.cats){
         try{
-          const items=await c.fn(cat,4); stats.scrapes+=items.length;
-          if(items.length>0){ const r=await sauvegarderProduits(items,c.nom,c.url); stats.inseres+=r.inseres; stats.mis_a_jour+=r.mis_a_jour; stats.erreurs+=r.erreurs; }
-        }catch(err){ console.error(`[SCRAPER] ${src}/${cat}:`,err.message); stats.erreurs++; }
+          const items=await c.fn(cat,4);
+          stats.scrapes+=items.length;
+          pagesOk.push(cat);
+          if(items.length>0){
+            const r=await sauvegarderProduits(items,c.nom,c.url);
+            stats.inseres+=r.inseres;
+            stats.mis_a_jour+=r.mis_a_jour;
+            stats.erreurs+=r.erreurs;
+            stats.filtres+=(r.filtres||0);
+          }
+        }catch(err){
+          console.error(`[SCRAPER] ${src}/${cat}:`,err.message);
+          stats.erreurs++;
+          pagesErr.push(cat);
+        }
         await sleep(4000);
       }
+
       rapport.sources[src]=stats;
+      const dureeSrc = Date.now() - tDebut;
+
+      // Persister les métriques de ce run dans scraping_runs
+      pool.query(
+        `INSERT INTO scraping_runs
+           (source, systeme, pages_cibles, pages_ok, pages_erreur,
+            items_extraits, items_inseres, items_maj, items_filtres,
+            duree_ms, statut, erreur_msg, ended_at)
+         VALUES ($1,'produits',$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW())`,
+        [
+          c.nom,
+          c.cats.length,
+          pagesOk.length,
+          pagesErr.length,
+          stats.scrapes,
+          stats.inseres,
+          stats.mis_a_jour,
+          stats.filtres,
+          dureeSrc,
+          stats.erreurs > 0 ? 'erreur_partielle' : 'ok',
+          pagesErr.length > 0 ? pagesErr.join(',') : null,
+        ]
+      ).catch(e => console.warn('[SCRAPING_RUN WARN]', e.message));
+
       await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1',[c.nom]).catch(e => console.warn('[MARCHAND SYNC WARN]', e.message));
-      console.log(`[SCRAPER] ${c.nom}: ${stats.scrapes} scrapés → ${stats.inseres} nouveaux, ${stats.mis_a_jour} màj`);
+      console.log(`[SCRAPER] ${c.nom}: ${stats.scrapes} scrapés → ${stats.inseres} nouveaux, ${stats.mis_a_jour} màj, ${stats.filtres} filtrés, ${stats.erreurs} erreurs`);
       await sleep(5000);
     }
     rapport.fin=new Date(); rapport.duree_s=Math.round((rapport.fin-rapport.debut)/1000);
