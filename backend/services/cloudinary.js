@@ -72,4 +72,24 @@ async function uploadDocumentBuffer(buffer, folder, filename) {
   });
 }
 
-module.exports = { uploadBuffer, uploadVideoBuffer, uploadDocumentBuffer };
+// Upload par URL distante — Cloudinary accepte directement une URL source.
+// Utilisé par le scraper FB pour persister les images fbcdn.net (URLs signées temporaires).
+// Timeout 15s : les URLs fbcdn expirent vite, inutile d'attendre plus longtemps.
+async function uploadFromUrl(url, folder) {
+  const result = await cloudinary.uploader.upload(url, {
+    folder:        folder || 'annonces/fb',
+    resource_type: 'image',
+    quality:       85,
+    fetch_format:  'auto',
+    flags:         'progressive',
+    timeout:       15000,
+    // Watermark léger identique aux autres uploads
+    transformation: [
+      { overlay: { font_family: 'Arial', font_size: 16, font_weight: 'bold', text: '© nopalou.com' },
+        color: 'white', opacity: 30, gravity: 'south_east', x: 8, y: 8 }
+    ],
+  });
+  return result; // expose secure_url, public_id, etc.
+}
+
+module.exports = { uploadBuffer, uploadVideoBuffer, uploadDocumentBuffer, uploadFromUrl };

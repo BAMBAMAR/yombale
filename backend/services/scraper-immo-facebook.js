@@ -72,35 +72,35 @@ function resoudreSession() {
 
 const GROUPES = [
   // Pages publiques / profils (type:'page' → URL /pageid, pas /groups/)
-  { id: 'ndeyeyacineseckfaye', label: 'Ndeye Yacine Seck Faye (Offres Emploi)', type: 'page', force_categorie: 'emploi' },
-  { id: 'badou.diop.587',       label: 'Badou Diop (Offres Emploi)',           type: 'page', force_categorie: 'emploi' },
+  { id: 'ndeyeyacineseckfaye', label: 'Ndeye Yacine Seck Faye (Offres Emploi)', type: 'page', force_categorie: 'emploi', ville_defaut: 'Dakar' },
+  { id: 'badou.diop.587',       label: 'Badou Diop (Offres Emploi)',           type: 'page', force_categorie: 'emploi', ville_defaut: 'Dakar' },
   // Groupes emploi/recrutement au Sénégal
-  { id: '1989058224662026',  label: 'Emploi 1', force_categorie: 'emploi' },
-  { id: '234254775016841',   label: 'Emploi 2', force_categorie: 'emploi' },
-  { id: '519668123858499',   label: 'Emploi 3', force_categorie: 'emploi' },
-  { id: '462589772247046',   label: 'Emploi 4', force_categorie: 'emploi' },
-  { id: '1763952164139832',  label: 'Emploi 5', force_categorie: 'emploi' },
-  { id: '1462110264598253',  label: 'Emploi 6', force_categorie: 'emploi' },
-  { id: '2767116616757898',  label: 'Emploi 7', force_categorie: 'emploi' },
-  { id: '1293527887919003',  label: 'Emploi 8', force_categorie: 'emploi' },
+  { id: '1989058224662026',  label: 'Emploi 1', force_categorie: 'emploi', ville_defaut: 'Dakar' },
+  { id: '234254775016841',   label: 'Emploi 2', force_categorie: 'emploi', ville_defaut: 'Dakar' },
+  { id: '519668123858499',   label: 'Emploi 3', force_categorie: 'emploi', ville_defaut: 'Dakar' },
+  { id: '462589772247046',   label: 'Emploi 4', force_categorie: 'emploi', ville_defaut: 'Dakar' },
+  { id: '1763952164139832',  label: 'Emploi 5', force_categorie: 'emploi', ville_defaut: 'Dakar' },
+  { id: '1462110264598253',  label: 'Emploi 6', force_categorie: 'emploi', ville_defaut: 'Dakar' },
+  { id: '2767116616757898',  label: 'Emploi 7', force_categorie: 'emploi', ville_defaut: 'Dakar' },
+  { id: '1293527887919003',  label: 'Emploi 8', force_categorie: 'emploi', ville_defaut: 'Dakar' },
 
   // Autres groupes (Immo, divers)
-  { id: '252740871421764',   label: 'Groupe immo 1' },
-  { id: '4675042465930136',  label: 'Groupe immo 2' },
-  { id: '1246400909421367',  label: 'Groupe immo 3' },
-  { id: '356818102024748',   label: 'Vente rapide grossistes/detaillants' },
-  { id: '263300261466842',   label: "T'ES DE TOUBA OFFICIEL" },
-  { id: '263795925782124',   label: 'Je vend je vide on achete et echange' },
-  { id: '2193708840910911',  label: 'Market Colobane' },
-  { id: '329011281773600',   label: 'Marketplace Senegal' },
-  { id: '362598108177086',   label: 'Senegal Shopping' },
-  { id: '355049209509795',   label: 'Vendre et Acheter en ligne au Senegal' },
-  { id: '542521219189852',   label: 'Achat vente a Dakar' },
-  { id: '513266200918066',   label: 'Je vide je vends j\'achete je livre' },
-  { id: '368760451655502',   label: 'Vendeur chic' },
-  { id: '276857303027165',   label: 'Tout vendre et tout acheter au Senegal' },
-  { id: '670553284135014',   label: 'Thies ventes et achats en ligne' },
-  { id: 'saintlouisachats',  label: 'Achats et ventes a Saint-Louis' },
+  { id: '252740871421764',   label: 'Groupe immo 1',                          ville_defaut: 'Dakar' },
+  { id: '4675042465930136',  label: 'Groupe immo 2',                          ville_defaut: 'Dakar' },
+  { id: '1246400909421367',  label: 'Groupe immo 3',                          ville_defaut: 'Dakar' },
+  { id: '356818102024748',   label: 'Vente rapide grossistes/detaillants',    ville_defaut: 'Dakar' },
+  { id: '263300261466842',   label: "T'ES DE TOUBA OFFICIEL",                ville_defaut: 'Touba' },
+  { id: '263795925782124',   label: 'Je vend je vide on achete et echange',   ville_defaut: 'Dakar' },
+  { id: '2193708840910911',  label: 'Market Colobane',                        ville_defaut: 'Dakar' },
+  { id: '329011281773600',   label: 'Marketplace Senegal',                    ville_defaut: 'Dakar' },
+  { id: '362598108177086',   label: 'Senegal Shopping',                       ville_defaut: 'Dakar' },
+  { id: '355049209509795',   label: 'Vendre et Acheter en ligne au Senegal',  ville_defaut: 'Dakar' },
+  { id: '542521219189852',   label: 'Achat vente a Dakar',                    ville_defaut: 'Dakar' },
+  { id: '513266200918066',   label: 'Je vide je vends j\'achete je livre',    ville_defaut: 'Dakar' },
+  { id: '368760451655502',   label: 'Vendeur chic',                           ville_defaut: 'Dakar' },
+  { id: '276857303027165',   label: 'Tout vendre et tout acheter au Senegal', ville_defaut: 'Dakar' },
+  { id: '670553284135014',   label: 'Thies ventes et achats en ligne',        ville_defaut: 'Thiès' },
+  { id: 'saintlouisachats',  label: 'Achats et ventes a Saint-Louis',         ville_defaut: 'Saint-Louis' },
 ];
 
 const VILLES = ['Dakar', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor',
@@ -211,16 +211,26 @@ function decoderChainePlus(txt) {
   return txt;
 }
 
+// Regex détectant le préfixe auteur Facebook : "Prénom Nom [· il y a X (jours|heures|sem.|min.)]" ou
+// "Participant(e) anonyme il y a X …" — toujours en tête du texte DOM d'un post de groupe.
+const PREFIXE_AUTEUR_FB = /^(?:Participant\(e\)\s+anonyme|[A-ZÀÂÉÈÊÙÏÎ][a-zA-ZÀ-ÿ'-]{1,30}(?:\s+[A-ZÀÂÉÈÊÙÏÎ][a-zA-ZÀ-ÿ'-]{1,30}){1,3})(?:\s+(?:est|se trouve|est à)[^·\n]*)?(?:\s*[·•]\s*il\s+y\s+a\s+\d+\s+(?:jours?|heures?|sem\.?|min\.?|mois))?\s*/i;
+
 function extraireTitreIntelligentFB(texte) {
   if (!texte) return 'Annonce';
   let t = purgerUnicodeStealthFB(texte);
   t = purgerUiFacebook(t);
   t = decoderChainePlus(t);
 
+  // ── Correction 1 : retirer le préfixe auteur ("Badara Gueye il y a 2 jours · …") ──
+  // Il se trouve toujours en première position dans innerText d'un post de groupe.
+  t = t.replace(PREFIXE_AUTEUR_FB, '');
+
   const phrases = t.split(/(?:[\n·|•]|\.\s+)/)
     .map(p => p.trim())
     .filter(p => {
       if (p.length < 6) return false;
+      // Écarter les phrases qui SONT encore un horodatage relatif FB
+      if (p.match(/^il\s+y\s+a\s+\d+\s+(?:jours?|heures?|sem\.?|min\.?|mois)/i)) return false;
       if (p.match(/^(bonjour|salut|hello|coucou|disponible|inbox|contact|tél|tel|prix|http|whatsapp)/i)) return false;
       if (p.match(/^[0-9\s\+\.\-\/]{1,15}$/)) return false;
       if (p.match(/cliquez sur le lien|rejoindre ma chaîne/i)) return false;
@@ -261,11 +271,69 @@ function parsePrixFB(texte) {
   return null;
 }
 
-function parseVilleFB(texte) {
+function parseVilleFB(texte, villeDefaut) {
   for (const v of VILLES) {
     if (texte.toLowerCase().includes(v.toLowerCase())) return v;
   }
-  return 'Dakar';
+  // ── Correction 2 : utiliser la ville par défaut du groupe (ex: Saint-Louis, Thiès)
+  // au lieu d'un fallback universel 'Dakar' qui était toujours incorrect.
+  return villeDefaut || 'Dakar';
+}
+
+// ── Correction 3 : extraction de l'état/condition du produit ─────────────────
+const ETATS = [
+  { val: 'neuf',       mots: ['neuf', 'nouveau', 'nouvelle', 'jamais utilisé', 'jamais utilise', 'sous blister', 'scellé', 'scelle'] },
+  { val: 'occasion',   mots: ['occasion', 'd\'occasion', 'seconde main', 'second main', 'usage', 'usagé', 'usagé', 'used'] },
+  { val: 'bon_etat',   mots: ['bon état', 'bon etat', 'très bon état', 'tres bon etat', 'impeccable', 'propre', 'bien entretenu'] },
+  { val: 'reconditionne', mots: ['reconditionné', 'reconditionne', 'remis à neuf', 'remis a neuf', 'refurb'] },
+  { val: 'defauts',    mots: ['défaut', 'defaut', 'fissure', 'fissuré', 'cassé', 'casse', 'rayure', 'pour pièce', 'pour piece'] },
+];
+
+function parseEtatFB(texte) {
+  if (!texte) return null;
+  const t = texte.toLowerCase();
+  for (const e of ETATS) {
+    if (e.mots.some(m => t.includes(m))) return e.val;
+  }
+  return null;
+}
+
+// ── Correction 4 : parser la date relative Facebook en date absolue ───────────
+// Facebook affiche "il y a 2 jours", "il y a 3 heures", "il y a 1 sem.", etc.
+function parseDatePublicationFB(texte) {
+  if (!texte) return null;
+  const t = texte;
+  const now = Date.now();
+  let m;
+  // "il y a X minute(s)/min"
+  m = t.match(/il\s+y\s+a\s+(\d+)\s+min/i);
+  if (m) return new Date(now - parseInt(m[1]) * 60 * 1000).toISOString();
+  // "il y a X heure(s)"
+  m = t.match(/il\s+y\s+a\s+(\d+)\s+heure/i);
+  if (m) return new Date(now - parseInt(m[1]) * 3600 * 1000).toISOString();
+  // "il y a X jour(s)"
+  m = t.match(/il\s+y\s+a\s+(\d+)\s+jour/i);
+  if (m) return new Date(now - parseInt(m[1]) * 86400 * 1000).toISOString();
+  // "il y a X sem."
+  m = t.match(/il\s+y\s+a\s+(\d+)\s+sem/i);
+  if (m) return new Date(now - parseInt(m[1]) * 7 * 86400 * 1000).toISOString();
+  // "il y a X mois"
+  m = t.match(/il\s+y\s+a\s+(\d+)\s+mois/i);
+  if (m) return new Date(now - parseInt(m[1]) * 30 * 86400 * 1000).toISOString();
+  return null;
+}
+
+// ── Correction 5 : extraire le nom de l'auteur (vendeur) depuis l'en-tête FB ──
+// Le texte DOM d'un post commence par "Prénom Nom · il y a X jours".
+// Le préfixe auteur matche PREFIXE_AUTEUR_FB (défini plus haut dans ce fichier).
+function parseAuteurFB(texte) {
+  if (!texte) return null;
+  const m = texte.match(/^((?:Participant\(e\)\s+anonyme|[A-ZÀÂÉÈÊÙÏÎ][a-zA-ZÀ-ÿ'-]{1,30}(?:\s+[A-ZÀÂÉÈÊÙÏÎ][a-zA-ZÀ-ÿ'-]{1,30}){1,3}))/u);
+  if (!m) return null;
+  const nom = m[1].trim();
+  // Rejeter les faux positifs évidents ("Participant" anonyme, compte machine)
+  if (/participant|anonyme|bison|beet|\d/i.test(nom)) return null;
+  return nom.slice(0, 100);
 }
 
 // Numéro sénégalais : 9 chiffres commençant par 7 (mobile : 70, 71, 72, 75, 76, 77, 78, 79),
@@ -324,35 +392,74 @@ function texteEstPauvre(texte) {
 // Fenêtre réduite à 24h (au lieu de 7 jours) pour permettre à un même vendeur d'être capturé
 // dans plusieurs groupes différents — un vendeur sérieux republie souvent dans 3-5 groupes
 // le même jour, la fenêtre 7j bloquait toutes ces republications comme doublons.
+// ── Correction 6 : persistance photos sur Cloudinary ────────────────────────
+// Les URLs fbcdn.net sont signées et expirent en < 24h. On upload sur Cloudinary
+// pour avoir une URL stable. Si l'upload échoue on garde l'URL FB en fallback.
+let cloudinaryModule = null;
+try { cloudinaryModule = require('./cloudinary'); } catch {}
+
+async function persistPhotosFB(imgs) {
+  if (!cloudinaryModule || !imgs || imgs.length === 0) return imgs;
+  const persisted = [];
+  for (const url of imgs) {
+    // Ne pas re-uploader si déjà sur Cloudinary
+    if (url.includes('res.cloudinary.com') || url.includes('cloudinary.com')) {
+      persisted.push(url); continue;
+    }
+    try {
+      const result = await cloudinaryModule.uploadFromUrl(url, 'annonces/fb');
+      persisted.push(result.secure_url || url);
+    } catch {
+      persisted.push(url); // fallback URL temporaire
+    }
+  }
+  return persisted;
+}
+
 async function upsertAnnonceClassifiee(a) {
   try {
-    // On ne dédoublonne pas par téléphone si c'est la valeur de repli pour les offres d'emploi
-    if (a.contact_tel !== 'Voir sur Facebook') {
+    // ── Correction 7 : dédoublonnage sans ref_externe par titre normalisé + source (24h) ──
+    // Quand ref_externe est absent (85 % des cas), on dédoublonne sur (titre_slug, source)
+    // pour éviter les re-insertions de commentaires identiques.
+    if (a.contact_tel && a.contact_tel !== 'Voir sur Facebook') {
       const { rows } = await pool.query(`
         SELECT 1 FROM annonces_classifiees
         WHERE contact_tel = $1 AND source = $2 AND created_at > NOW() - INTERVAL '24 hours'
         LIMIT 1
       `, [a.contact_tel, a.source]);
       if (rows.length > 0) return { doublon: true };
+    } else if (!a.ref_externe) {
+      // Dédoublonnage par titre normalisé pour posts sans tel ni ref (emploi, commentaires)
+      const titreSlug = (a.titre || '').toLowerCase().replace(/\s+/g, ' ').slice(0, 120);
+      const { rows } = await pool.query(`
+        SELECT 1 FROM annonces_classifiees
+        WHERE titre = $1 AND source = $2 AND created_at > NOW() - INTERVAL '48 hours'
+        LIMIT 1
+      `, [titreSlug, a.source]);
+      if (rows.length > 0) return { doublon: true };
     }
 
     await pool.query(`
       INSERT INTO annonces_classifiees
-        (categorie_slug, titre, description, prix, ville, contact_tel,
-         photos, actif, source, ref_externe, url_source)
-      VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,true,$8,$9,$10)
+        (categorie_slug, titre, description, prix, ville, contact_tel, contact_nom,
+         photos, actif, source, ref_externe, url_source, caracteristiques)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,true,$9,$10,$11,$12::jsonb)
       ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
       DO UPDATE SET
-        prix       = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
-        updated_at = NOW()
+        prix            = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
+        contact_nom     = COALESCE(EXCLUDED.contact_nom, annonces_classifiees.contact_nom),
+        caracteristiques = COALESCE(EXCLUDED.caracteristiques, annonces_classifiees.caracteristiques),
+        updated_at      = NOW()
     `, [
-      a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.contact_tel,
-      JSON.stringify(a.photos || []), a.source, a.ref_externe, a.url_source,
+      a.categorie_slug, a.titre, a.description, a.prix, a.ville,
+      a.contact_tel || null,          // Correction 8 : NULL au lieu de 'Voir sur Facebook'
+      a.contact_nom  || null,
+      JSON.stringify(a.photos || []),
+      a.source, a.ref_externe, a.url_source,
+      JSON.stringify(a.caracteristiques || {}),
     ]);
     return { doublon: false };
   } catch (err) {
-    // Si la connexion directe BDD Postgres (TCP) échoue (ex: ECONNRESET sur Render IP externe),
-    // basculer automatiquement vers l'API HTTPS du backend Render
     if (err.code === 'ECONNRESET' || (err.message && (err.message.includes('ECONNRESET') || err.message.includes('timeout')))) {
       const backendUrl = process.env.BACKEND_URL || 'https://yombale.onrender.com';
       const secret = process.env.ADMIN_SECRET || 'NDIEME@131215';
@@ -630,7 +737,11 @@ async function lancerNavigateur(pw) {
                               .map(img => img.src).slice(0, 5);
 
             const setM = photoLien?.href.match(/set=pcb\.(\d+)/);
-            const href = setM ? photoLien.href : (userLien?.href || photoLien?.href || '');
+            // ── Correction URL : priorité permalink > profil-user ──
+            // userLien pointe vers le profil de l'auteur (URL erronée pour l'annonce).
+            // photoLien pointe vers le post lui-même (permalink ou album) — c'est l'URL correcte.
+            // On n'utilise userLien qu'en dernier recours absolu si aucun photoLien n'existe.
+            const href = photoLien?.href || userLien?.href || '';
 
             items.push({ texte, imgs, href, refExterneId: setM ? setM[1] : null });
           }
@@ -665,25 +776,40 @@ async function lancerNavigateur(pw) {
           }
 
           const tel = parseTelephoneFB(texte);
-          
-          // Dérogation pour l'emploi : s'il n'y a pas de téléphone, on met "Voir sur Facebook"
-          const estEmploi = categorie_slug === 'emploi';
-          const telFinal = tel || (estEmploi ? 'Voir sur Facebook' : null);
 
-          // Un numéro de téléphone réel + une catégorie détectée sont déjà le signal le plus
-          // fort qu'il s'agit d'une vraie annonce — le style local ("45 mille x 3", "prend un
-          // homme") omet souvent tout mot de SIGNAUX_VENTE (pas de "prix"/"vends"/"disponible"
-          // explicite), donc ce filtre ne s'applique qu'en repli si aucun numéro n'est trouvé.
-          if (!telFinal && !estAnnoncePotentielle(texte)) { stats.ignores++; continue; }
-          // Sans numéro extrait (et hors dérogation Emploi), l'annonce n'est pas exploitable
-          if (!telFinal) { stats.ignores++; continue; }
+          // ── Correction 8 : suppression du placeholder "Voir sur Facebook" ──
+          // Avant, les annonces emploi sans numéro recevaient telFinal = 'Voir sur Facebook'.
+          // Ce placeholder est non-actionnable et pollue le champ téléphone. On stocke NULL.
+          // La déduplication par titre (48h) empêche les re-insertions de commentaires.
+          const telFinal = tel || null;
+
+          // Un numéro de téléphone réel OU une catégorie forte (emploi) avec signal vente
+          // sont nécessaires pour qu'une annonce soit retenue.
+          const estEmploi = categorie_slug === 'emploi';
+          if (!telFinal && !estEmploi && !estAnnoncePotentielle(texte)) { stats.ignores++; continue; }
+          if (!telFinal && !estEmploi) { stats.ignores++; continue; }
 
           const descriptionPropre = purgerUiFacebook(purgerUnicodeStealthFB(texte)).slice(0, 2000);
-          const titre = extraireTitreIntelligentFB(texte);
-          const prix  = parsePrixFB(texte);
-          const ville = parseVilleFB(texte);
+          const titre  = extraireTitreIntelligentFB(texte);
+          const prix   = parsePrixFB(texte);
+          // ── Correction 2 : passer ville_defaut du groupe à parseVilleFB ──
+          const ville  = parseVilleFB(texte, groupe.ville_defaut);
+          // ── Correction 3 : état/condition ──
+          const etat   = parseEtatFB(texte);
+          // ── Correction 4 : date de publication FB ──
+          const datePub = parseDatePublicationFB(texte);
+          // ── Correction 5 : nom du vendeur ──
+          const auteur = parseAuteurFB(texte);
 
           const ref_externe = post.refExterneId ? `fb-${groupe.id}-${post.refExterneId}` : null;
+
+          // ── Correction 6 : persistance photos Cloudinary ──
+          const photosPersistees = await persistPhotosFB(post.imgs);
+
+          // Construire le JSONB caracteristiques avec les champs enrichis
+          const caracteristiques = {};
+          if (etat)    caracteristiques.etat = etat;
+          if (datePub) caracteristiques.date_publication = datePub;
 
           const annonce = {
             categorie_slug,
@@ -692,7 +818,9 @@ async function lancerNavigateur(pw) {
             prix,
             ville,
             contact_tel: telFinal,
-            photos:      post.imgs,
+            contact_nom: auteur,
+            photos:      photosPersistees,
+            caracteristiques,
             source:      groupe.type === 'page' ? `facebook-${groupe.id}` : `facebook-group-${groupe.id}`,
             ref_externe: ref_externe,
             url_source:  post.href || url,

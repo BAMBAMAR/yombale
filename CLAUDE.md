@@ -26,7 +26,20 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Modération Produits & Exclusion Catalogue Accueil) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Audit & Corrections Qualité Données Scraping) :
+- **Audit qualité exhaustif (`annonces_classifiees`, 4 819 enregistrements, 40 sources)** : Mesure champ par champ de la conformité des données issues du scraper Facebook. Résultat initial : note 2/10, 8 problèmes structurels identifiés avec preuves reproductibles.
+- **8 corrections appliquées dans `backend/services/scraper-immo-facebook.js`** :
+  1. **Titre** : Ajout de `PREFIXE_AUTEUR_FB` (regex) + `t.replace(PREFIXE_AUTEUR_FB, '')` dans `extraireTitreIntelligentFB()` — supprime le "Prénom Nom · il y a X jours" en tête de post avant d'extraire la première phrase utile.
+  2. **Localisation** : Chaque groupe GROUPES reçoit `ville_defaut` (Saint-Louis, Thiès, Touba, Dakar) ; `parseVilleFB()` accepte ce paramètre comme fallback au lieu du hardcode "Dakar" universel.
+  3. **État/condition** : Nouvelle fonction `parseEtatFB()` extrayant l'état (neuf, occasion, bon_etat, reconditionne, defauts) depuis le texte du post ; stocké dans `caracteristiques.etat`.
+  4. **Date de publication** : Nouvelle fonction `parseDatePublicationFB()` convertissant les dates relatives FB ("il y a 2 jours", "il y a 3 heures"...) en ISO date absolue ; stocké dans `caracteristiques.date_publication`.
+  5. **Vendeur (contact_nom)** : Nouvelle fonction `parseAuteurFB()` extrayant le nom de l'auteur depuis l'en-tête du post (rejette comptes anonymes/machines). Inséré dans la colonne `contact_nom`.
+  6. **Photos persistées** : Nouvelle fonction `persistPhotosFB()` — upload chaque image `scontent.fbcdn.net` (URLs signées temporaires, expiry < 24h) vers Cloudinary via `uploadFromUrl()`. Nouvelle fonction `uploadFromUrl(url, folder)` ajoutée dans `backend/services/cloudinary.js`.
+  7. **URL source** : Inversion de priorité — `photoLien?.href || userLien?.href` au lieu de `setM ? photoLien.href : userLien?.href`. Les 60 % d'URLs profil-auteur sont désormais remplacées par le permalink du post quand disponible.
+  8. **Téléphone / Déduplication** : Suppression du placeholder `'Voir sur Facebook'` (862 occurrences) — stocké `NULL`. Ajout d'une déduplication par titre normalisé (48h) pour les posts sans `ref_externe` (85 % des cas), bloquant les commentaires dupliqués. L'INSERT inclut maintenant `contact_nom` et `caracteristiques` JSONB avec `ON CONFLICT DO UPDATE` pour les mettre à jour.
+
+### 📌 Version Précédente (28 septembre 2026 - Modération Produits & Exclusion Catalogue Accueil) :
+
 - **Supervision & Modération Produits Complète (`/admin/produits`)** :
   - **Correction du bridage d'affichage** : Dans `frontend-next/src/app/admin/(protected)/produits/page.tsx`, remplacement de `?limit=40` par `?limit=500` permettant de charger l'intégralité du catalogue des boutiques (168 articles) et d'inclure les produits suspendus situés au-delà des 40 plus récents.
   - **Compteurs dynamiques synchronisés** : Dans `ProduitsSupervisionClient.tsx`, synchronisation des onglets avec les données réelles (`Tous (168)`, `En vente (150)`, `Suspendus / Modérés (1)`, `Ruptures de stock (17)`) avec réactivité temps réel sur les cartes KPI lors des actions de modération.
