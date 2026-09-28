@@ -291,7 +291,10 @@ async function trouverProduitCorrespondant(pool, item, catId = null) {
 
   // 1. Recherche par EAN exact
   if (ean) {
-    const { rows } = await pool.query('SELECT * FROM produits WHERE ean = $1 LIMIT 1', [ean]);
+    const { rows } = await pool.query(
+      'SELECT * FROM produits WHERE ean = $1 ORDER BY (nb_offres > 0) DESC, created_at ASC LIMIT 1',
+      [ean]
+    );
     if (rows.length > 0) return rows[0];
   }
 
@@ -302,7 +305,8 @@ async function trouverProduitCorrespondant(pool, item, catId = null) {
     const { rows } = await pool.query(
       `SELECT * FROM produits 
        WHERE LOWER(marque) = LOWER($1) 
-         AND LOWER(nom) LIKE '%' || LOWER($2) || '%'
+         AND f_unaccent(LOWER(nom)) LIKE '%' || f_unaccent(LOWER($2)) || '%'
+       ORDER BY (nb_offres > 0) DESC, created_at ASC
        LIMIT 5`,
       [marque, modele]
     );
@@ -312,19 +316,25 @@ async function trouverProduitCorrespondant(pool, item, catId = null) {
     }
   }
 
-  // 3. Recherche par titre normalisé exact
-  const { rows: exacts } = await pool.query('SELECT * FROM produits WHERE LOWER(nom) = LOWER($1) LIMIT 1', [normTitre]);
+  // 3. Recherche par titre normalisé exact (insensible aux accents via f_unaccent)
+  const { rows: exacts } = await pool.query(
+    `SELECT * FROM produits 
+     WHERE f_unaccent(LOWER(nom)) = LOWER($1) 
+     ORDER BY (nb_offres > 0) DESC, created_at ASC 
+     LIMIT 1`,
+    [normTitre]
+  );
   if (exacts.length > 0) return exacts[0];
 
-  // 4. Recherche par mots-clés discriminants + pg_trgm
+  // 4. Recherche par mots-clés discriminants + pg_trgm (insensible aux accents)
   const mots = normTitre.split(/\s+/).filter(w => w.length >= 3 && !['apple','samsung','sony','pour','avec'].includes(w)).slice(0, 3);
   if (mots.length >= 2) {
     const { rows: fuzzy } = await pool.query(`
       SELECT id, nom, prix_min, categorie_id, marque,
-             similarity(LOWER(nom), $1) AS sim
+             similarity(f_unaccent(LOWER(nom)), $1) AS sim
       FROM produits
-      WHERE LOWER(nom) LIKE '%' || $2 || '%'
-      ORDER BY sim DESC
+      WHERE f_unaccent(LOWER(nom)) LIKE '%' || $2 || '%'
+      ORDER BY (nb_offres > 0) DESC, sim DESC
       LIMIT 5
     `, [normTitre, mots[0]]);
 

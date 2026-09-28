@@ -976,6 +976,7 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
   const produitsModifies = new Set();
 
   for(const item of items){
+    let produitCreeId = null;
     try{
       const prixVerifie = corrigerPrixXOF(item.prix);
       if (prixVerifie === null) {
@@ -983,6 +984,44 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         continue;
       }
       item.prix = corrigerPrixParPlancher(prixVerifie, item.titre);
+      const cleanUrl = item.url && item.url.trim() ? item.url.trim() : null;
+
+      // 0. Vérification d'idempotence stricte : L'offre (marchand, URL) existe-t-elle déjà ?
+      // Si oui, on met à jour l'offre directement sans jamais créer de nouveau produit en double !
+      if (cleanUrl) {
+        const { rows: offEx } = await pool.query(
+          'SELECT id, produit_id, prix FROM offres WHERE marchand_id = $1 AND url_achat = $2 LIMIT 1',
+          [marchandId, cleanUrl]
+        );
+        if (offEx.length > 0) {
+          const existingOffre = offEx[0];
+          const specs = extraireSpecs(item.titre);
+          const prixChange = Number(existingOffre.prix) !== Number(item.prix);
+
+          await pool.query(
+            `UPDATE offres SET
+               prix = $1,
+               titre_marchand = $2,
+               specs = $3,
+               scraped_at = NOW(),
+               stock = true
+             WHERE id = $4`,
+            [item.prix, item.titre, JSON.stringify(specs), existingOffre.id]
+          );
+
+          if (prixChange) {
+            await pool.query('INSERT INTO historique_prix(offre_id, prix) VALUES($1, $2)', [existingOffre.id, item.prix]);
+          }
+
+          if (item.image_url) {
+            await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL', [item.image_url, existingOffre.produit_id]);
+          }
+
+          produitsModifies.add(existingOffre.produit_id);
+          stats.mis_a_jour++;
+          continue;
+        }
+      }
 
       // 1. Recherche du produit correspondant via le moteur de matching
       const catId = await getCatId(item.titre);
@@ -999,6 +1038,7 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
           [item.titre, marqueDetectee, catId, item.ean || null, item.image_url]
         );
         produitId = n[0].id;
+        produitCreeId = produitId;
         stats.inseres++;
       }
 
@@ -1016,7 +1056,6 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       let offreRows = [];
 
       // 2. Insertion de l'offre avec protection contre les doublons (produit_id, marchand_id)
-      const cleanUrl = item.url && item.url.trim() ? item.url.trim() : null;
       const { rows: resOffre } = await pool.query(
         `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock)
          VALUES($1, $2, $3, $4, $5, $6, NOW(), true)
@@ -1037,7 +1076,17 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       }
 
       produitsModifies.add(produitId);
-    }catch(err){ console.error(`[DB] "${item.titre}":`,err.message); stats.erreurs++; }
+    }catch(err){ 
+      console.error(`[DB] "${item.titre}":`,err.message); 
+      stats.erreurs++; 
+      // Si un produit a été créé mais que l'insertion de l'offre échoue (ex: collision imprévue),
+      // purger le produit orphelin créé pour ne laisser aucune scorie vide en base
+      if (produitCreeId) {
+        try {
+          await pool.query('DELETE FROM produits WHERE id = $1 AND id NOT IN (SELECT DISTINCT produit_id FROM offres)', [produitCreeId]);
+        } catch (_) {}
+      }
+    }
   }
 
   if(produitsModifies.size > 0){
@@ -1100,7 +1149,7 @@ function _motsClesCommuns(a, b) {
 }
 
 function sqlNomNormalise(col) {
-  return `TRIM(LOWER(regexp_replace(regexp_replace(${col}, '[''’‘“”"()\\[\\]]', '', 'g'), '\\s+', ' ', 'g')))`;
+  return `TRIM(f_unaccent(LOWER(regexp_replace(regexp_replace(${col}, '[''’‘“”"()\\[\\]]', '', 'g'), '\\s+', ' ', 'g'))))`;
 }
 
 function normaliserTitre(s) {

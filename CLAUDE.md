@@ -26,7 +26,23 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Audit & Corrections Qualité Données Scraping) :
+### 📌 Dernière Version Locale (28 septembre 2026 - Correction Structurelle Déduplication & Idempotence Scraper) :
+- **Audit et Résolution du Gonflement Artificiel du Catalogue (`produits`)** :
+  - **Diagnostic** : Identification de 42 160 fiches orphelines (79,1 % de la table `produits`) sans aucune offre, générées par un clash d'upsert à deux têtes (`idx_offres_marchand_url` vs `ON CONFLICT (produit_id, marchand_id)`) lors des re-scrapings quotidiens.
+  - **Idempotence Stricte dans `backend/services/scraper.js` (`sauvegarderProduits`)** :
+    - Étape 0 prioritaire : Vérification si l'offre `(marchand_id, cleanUrl)` existe déjà en base avant toute tentative de matching ou d'insertion.
+    - Si existante : mise à jour directe du prix, stock, specs et horodatage sans jamais créer de produit en double.
+    - Gestion sécurisée des erreurs : Si un nouveau produit est inséré mais que l'offre échoue, suppression immédiate du produit orphelin créé.
+    - Résultat test d'idempotence : 0 erreur, 0 produit fantôme créé, 100 % de mises à jour fluides.
+  - **Support des Accents & Priorisation Produits Actifs (`backend/services/matching.js`)** :
+    - Création de la fonction PostgreSQL IMMUTABLE `f_unaccent(text)` et de l'index GIN trigramme `idx_produits_nom_unaccent`.
+    - Recherche par titre exact et recherche trigramme via `f_unaccent(LOWER(nom))` permettant d'aligner les titres avec accents (ex. "Vêtements", "Réfrigérateur") sur les titres normalisés en minuscules sans accents.
+    - Priorisation stricte des produits ayant déjà des offres réelles : `ORDER BY (nb_offres > 0) DESC, created_at ASC`.
+  - **Purge Sécurisée des 41 995 Fiches Orphelines (`backend/scripts/assainir-produits-orphelins.js`)** :
+    - Purge par lots de 5 000 transactions des scories sans offres (`offres.id IS NULL`), sans alertes et sans clics d'affiliation.
+    - Assainissement du catalogue : Réduction de 53 303 à 11 308 fiches produits réelles et vérifiées, avec 12 643 offres marchands actives.
+
+### 📌 Version Précédente (28 septembre 2026 - Audit & Corrections Qualité Données Scraping) :
 - **Audit qualité exhaustif (`annonces_classifiees`, 4 819 enregistrements, 40 sources)** : Mesure champ par champ de la conformité des données issues du scraper Facebook. Résultat initial : note 2/10, 8 problèmes structurels identifiés avec preuves reproductibles.
 - **8 corrections appliquées dans `backend/services/scraper-immo-facebook.js`** :
   1. **Titre** : Ajout de `PREFIXE_AUTEUR_FB` (regex) + `t.replace(PREFIXE_AUTEUR_FB, '')` dans `extraireTitreIntelligentFB()` — supprime le "Prénom Nom · il y a X jours" en tête de post avant d'extraire la première phrase utile.
