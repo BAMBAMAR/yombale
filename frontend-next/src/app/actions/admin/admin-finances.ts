@@ -23,7 +23,9 @@ export async function fetchReversementsDus(): Promise<{ reversements?: any[]; er
 }
 
 export async function effectuerReversementWave(
-  commandeId: string
+  commandeId: string,
+  mode: 'wave_api' | 'manuel' = 'wave_api',
+  reference_manuelle?: string
 ): Promise<{ success?: boolean; error?: string; payout?: any; net_amount?: number; mobile?: string }> {
   const jar   = await cookies()
   const token = extractAdminToken(jar)
@@ -33,6 +35,7 @@ export async function effectuerReversementWave(
     const r = await fetch(`${BACKEND}/api/comptabilite/admin/reversements/${commandeId}/payer`, {
       method: 'POST',
       headers: adminHeaders(token),
+      body: JSON.stringify({ mode, reference_manuelle }),
     })
     const data = await r.json()
     if (!r.ok) return { error: data.error || 'Erreur lors du transfert Wave' }
@@ -43,6 +46,7 @@ export async function effectuerReversementWave(
     return { error: err.message || 'Erreur serveur' }
   }
 }
+
 
 export async function validerLotReversementsWave(
   ids: string[]

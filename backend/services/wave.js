@@ -158,9 +158,12 @@ function verifyWebhookSignature(req) {
  * Endpoint officiel Wave Payout API: POST https://api.wave.com/v1/payouts
  */
 async function sendPayout({ amount, mobile, client_reference }) {
-  const apiKey = process.env.WAVE_API_KEY;
-  if (!apiKey || apiKey.includes('xxxxxxxx')) {
-    throw new Error('Clé API Wave non configurée.');
+  const cfg = require('../lib/settingsCache');
+  const apiKey = process.env.WAVE_API_KEY || (await cfg.get('wave_api_key'));
+  const signingSecret = process.env.WAVE_SIGNING_SECRET || process.env.WAVE_WEBHOOK_SECRET || (await cfg.get('wave_signing_secret'));
+
+  if (!apiKey || !apiKey.trim() || apiKey.includes('xxxxxxxx')) {
+    throw new Error('Clé API Wave non configurée. Veuillez renseigner WAVE_API_KEY dans vos paramètres admin ou variables d\'environnement.');
   }
 
   const formattedMobile = mobile.startsWith('+')
@@ -174,7 +177,6 @@ async function sendPayout({ amount, mobile, client_reference }) {
     client_reference,
   };
 
-  const signingSecret = process.env.WAVE_SIGNING_SECRET || process.env.WAVE_WEBHOOK_SECRET;
   const headers = {
     Authorization: `Bearer ${apiKey.trim()}`,
     'Content-Type': 'application/json',
@@ -183,13 +185,24 @@ async function sendPayout({ amount, mobile, client_reference }) {
     headers['Wave-Signature'] = generateWaveSignature(signingSecret, payload);
   }
 
-  const response = await axios.post(`${WAVE_BASE_URL}/v1/payout`, payload, {
-    headers,
-    timeout: 10000,
-  });
-
-  return response.data;
+  try {
+    const response = await axios.post(`${WAVE_BASE_URL}/v1/payouts`, payload, {
+      headers,
+      timeout: 12000,
+    });
+    return response.data;
+  } catch (err) {
+    if (err.response?.status === 404) {
+      const responseFallback = await axios.post(`${WAVE_BASE_URL}/v1/payout`, payload, {
+        headers,
+        timeout: 12000,
+      });
+      return responseFallback.data;
+    }
+    throw err;
+  }
 }
+
 
 module.exports = {
   createCheckoutSession,

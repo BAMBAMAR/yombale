@@ -3,9 +3,10 @@
 import { useState, useTransition } from 'react'
 import {
   ShoppingBag, Search, Filter, Clock, CheckCircle2, Truck, XCircle,
-  Eye, RefreshCw, Phone, MapPin, Store, DollarSign
+  Eye, RefreshCw, Phone, MapPin, Store, DollarSign, Send, ArrowDownLeft
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
+import { effectuerReversementWave } from '@/app/actions/admin'
 
 interface Commande {
   id: string
@@ -58,6 +59,7 @@ export default function AdminCommandesClient({
   const [page, setPage] = useState(1)
   const [selectedCmd, setSelectedCmd] = useState<Commande | null>(null)
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [payingWaveId, setPayingWaveId] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -126,10 +128,35 @@ export default function AdminCommandesClient({
         return { bg: '#f3e8ff', color: '#7e22ce', label: 'Expédiée' }
       case 'livree':
         return { bg: '#dcfce7', color: '#15803d', label: 'Livrée' }
+      case 'reverse':
+        return { bg: '#e0e7ff', color: '#3730a3', label: 'Reversée' }
       case 'annulee':
         return { bg: '#fee2e2', color: '#b91c1c', label: 'Annulée' }
       default:
         return { bg: '#f1f5f9', color: '#475569', label: statut }
+    }
+  }
+
+  const handleReversementWave = async (cmd: Commande) => {
+    if (!confirm(`Confirmer le reversement Wave 1-Clic pour la commande ${cmd.reference} vers ${cmd.boutique_nom || 'la boutique'} ?`)) {
+      return
+    }
+    setPayingWaveId(cmd.id)
+    try {
+      const res = await effectuerReversementWave(cmd.id)
+      if (res.error) {
+        showToast('err', `Erreur Wave : ${res.error}`)
+      } else {
+        showToast('ok', `Reversement Wave de ${fcfa(res.net_amount || cmd.montant_total)} envoyé avec succès à ${cmd.boutique_nom} !`)
+        setCommandes(prev => prev.map(c => c.id === cmd.id ? { ...c, statut: 'reverse' } : c))
+        if (selectedCmd?.id === cmd.id) {
+          setSelectedCmd(prev => prev ? { ...prev, statut: 'reverse' } : null)
+        }
+      }
+    } catch (err: any) {
+      showToast('err', `Erreur réseau : ${err.message}`)
+    } finally {
+      setPayingWaveId(null)
     }
   }
 
@@ -354,6 +381,7 @@ export default function AdminCommandesClient({
                         <option value="confirmee">Confirmée</option>
                         <option value="expediee">Expédiée</option>
                         <option value="livree">Livrée</option>
+                        <option value="reverse">Reversée</option>
                         <option value="annulee">Annulée</option>
                       </select>
                     </td>
@@ -458,8 +486,41 @@ export default function AdminCommandesClient({
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                {selectedCmd.methode_paiement?.toLowerCase().includes('wave') && selectedCmd.statut !== 'reverse' && (
+                  <button
+                    type="button"
+                    onClick={() => handleReversementWave(selectedCmd)}
+                    disabled={payingWaveId === selectedCmd.id}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: '#1d4ed8',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: 12,
+                      cursor: payingWaveId === selectedCmd.id ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      boxShadow: '0 2px 6px rgba(29,78,216,0.25)',
+                    }}
+                  >
+                    <Send size={13} />
+                    <span>{payingWaveId === selectedCmd.id ? 'Payout en cours…' : 'Reversement Wave 1-Clic'}</span>
+                  </button>
+                )}
+                {selectedCmd.statut === 'reverse' && (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <CheckCircle2 size={14} /> Déjà Reversé
+                  </span>
+                )}
+              </div>
+
               <button
+                type="button"
                 onClick={() => setSelectedCmd(null)}
                 style={{
                   padding: '8px 20px',

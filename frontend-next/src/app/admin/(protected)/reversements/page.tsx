@@ -1,11 +1,13 @@
 import { cookies } from 'next/headers'
 import ReversementsClient from './ReversementsClient'
-import { BACKEND, adminHeaders } from '@/app/actions/admin'
+import { BACKEND, extractAdminToken, adminHeaders } from '@/app/actions/admin'
+import { ArrowDownLeft } from 'lucide-react'
+
+export const metadata = { title: 'Reversements Marchands Wave 1-Clic — Admin Nopalou' }
 
 export default async function AdminReversementsPage() {
   const jar   = await cookies()
-  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
-  if (!token) return null
+  const token = extractAdminToken(jar) || ''
 
   let reversements: any[] = []
   try {
@@ -17,19 +19,23 @@ export default async function AdminReversementsPage() {
       const data = await res.json()
       reversements = data.reversements || []
     }
-  } catch (err) { console.warn('[Nopalou:page:L20]', err); }
+  } catch (err) {
+    console.warn('[REVERSEMENTS_PAGE_ERR]', err)
+  }
 
   return (
     <div className="admin-content" style={{ padding: '24px 32px' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span></span> Reversements Marchands Wave 1-Clic
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ArrowDownLeft size={24} color="#1d4ed8" />
+          <span>Reversements Marchands Wave 1-Clic</span>
         </h1>
-        <p style={{ color: '#6b7280', marginTop: 4, fontSize: 14 }}>
-          Commandes de boutiques livrées payées par Wave. Cliquez sur un bouton pour transférer les fonds au marchand en 1 clic via Wave Payout API.
+        <p style={{ color: '#64748b', marginTop: 4, fontSize: 14 }}>
+          Commandes de boutiques livrées ou payées via Wave. Transférez instantanément les fonds nets aux commerçants en 1 clic via l&apos;API Wave Payout.
         </p>
       </div>
       <ReversementsClient initialReversements={reversements} />
     </div>
   )
 }
+

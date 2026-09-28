@@ -1920,16 +1920,20 @@ router.get('/:boutiqueId/zones/public', async (req, res) => {
 });
 
 // GET /api/comptabilite/admin/reversements-dus — Liste des commandes livrées en attente de reversement marchand
-router.get('/admin/reversements-dus', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
+router.get('/admin/reversements-dus', requireAdminAuth, requireAdminRole('super_admin', 'finance', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut, c.created_at,
-             b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp, b.id AS boutique_id
+             b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp, b.id AS boutique_id,
+             u.nom AS marchant_nom, u.telephone AS marchant_telephone
       FROM commandes_boutique c
       JOIN boutiques b ON b.id = c.boutique_id
-      WHERE c.paiement_recu = true AND c.statut != 'reverse' AND (c.methode_paiement = 'wave' OR c.methode_paiement = 'pay_wave')
+      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+      WHERE (c.paiement_recu = true OR c.statut IN ('payee', 'livree'))
+        AND c.statut != 'reverse'
+        AND (c.methode_paiement ILIKE '%wave%' OR c.methode_paiement = 'pay_wave')
       ORDER BY c.created_at DESC
-      LIMIT 100
+      LIMIT 150
     `);
     res.json({ reversements: rows });
   } catch (err) {
@@ -1938,8 +1942,9 @@ router.get('/admin/reversements-dus', requireAdminAuth, requireAdminRole('super_
 });
 
 // POST /api/comptabilite/admin/reversements/:commandeId/payer — Déclencher le Payout Wave vers le marchand
-router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
+router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAdminRole('super_admin', 'finance', 'admin_operationnel'), async (req, res) => {
   try {
+    const { mode = 'wave_api', reference_manuelle } = req.body || {};
     const { rows: [commande] } = await pool.query(`
       SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut,
              b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp
@@ -1960,12 +1965,21 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
     const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
     const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - (Number(commande.montant_commission) || 0) - fraisWaveTotaux));
 
-    const wave = require('../services/wave');
-    const payoutResult = await wave.sendPayout({
-      amount: netAmount,
-      mobile,
-      client_reference: `payout_${commande.reference}`,
-    });
+    let payoutResult = { id: `payout_${commande.reference}` };
+
+    if (mode === 'wave_api') {
+      const wave = require('../services/wave');
+      payoutResult = await wave.sendPayout({
+        amount: netAmount,
+        mobile,
+        client_reference: `payout_${commande.reference}`,
+      });
+    } else {
+      payoutResult = {
+        id: reference_manuelle || `payout_manuel_${Date.now()}`,
+        mode: 'manuel',
+      };
+    }
 
     // P0 FIX: Persister immédiatement le statut 'reverse' pour empêcher tout double décaissement
     await pool.query(
@@ -1993,9 +2007,35 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
         net_amount: netAmount,
         frais_wave: fraisWaveTotaux,
         payout_id: payoutResult.id,
+        mode,
       },
       ip: req.ip || req.headers['x-forwarded-for'],
     });
+
+    // 1. Notification WhatsApp automatique du marchand
+    try {
+      const { sendWhatsAppNotification } = require('../services/whatsapp');
+      sendWhatsAppNotification(mobile, {
+        title: 'Reversement Wave Effectué !',
+        textMessage: `🎉 *Reversement Effectué !*\n\nBonjour *${commande.boutique_nom}*,\nVotre virement de *${netAmount.toLocaleString('fr-FR')} FCFA* (Commande: ${commande.reference}) a été envoyé avec succès vers votre compte Wave *${mobile}*.\n\nMerci pour votre confiance sur Nopalou !`,
+        detail: `Virement Wave de ${netAmount.toLocaleString('fr-FR')} FCFA pour la commande ${commande.reference}.`,
+        url: 'https://nopalou.com/boutique',
+      }).catch(errW => console.warn('[WHATSAPP REVERSEMENT MARCHAND ERR]:', errW.message));
+    } catch (_) {}
+
+    // 2. Notification de traçabilité Admin (WhatsApp 777202086 + Telegram)
+    try {
+      const { alerterAdmin } = require('../services/admin-alerts');
+      alerterAdmin({
+        type: `reversement_effectue_${commande.reference}`,
+        priorite: 'INFO',
+        titre: `Reversement Effectué (${commande.boutique_nom})`,
+        message: `Virement de ${netAmount.toLocaleString('fr-FR')} FCFA envoyé à ${commande.boutique_nom} (${mobile}) pour la commande ${commande.reference}.`,
+        details: `Boutique : ${commande.boutique_nom}\nMontant : ${netAmount.toLocaleString('fr-FR')} FCFA\nMode : ${mode === 'manuel' ? 'Manuel / Guichet' : 'Wave API 1-Clic'}\nTél : ${mobile}`,
+        force: true,
+        cooldownMs: 0,
+      }).catch(() => {});
+    } catch (_) {}
 
     res.json({ success: true, payout: payoutResult, net_amount: netAmount, frais_wave: fraisWaveTotaux, mobile });
   } catch (err) {
@@ -2005,7 +2045,7 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
 });
 
 // POST /api/comptabilite/admin/reversements/valider-lot — Marquer un lot de commandes comme reversées
-router.post('/admin/reversements/valider-lot', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
+router.post('/admin/reversements/valider-lot', requireAdminAuth, requireAdminRole('super_admin', 'finance', 'admin_operationnel'), async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -2047,3 +2087,4 @@ router.post('/admin/reversements/valider-lot', requireAdminAuth, requireAdminRol
 module.exports = router;
 module.exports.creerCommandeBoutique = creerCommandeBoutique;
 module.exports.notifierVendeurCommande = notifierVendeurCommande;
+
