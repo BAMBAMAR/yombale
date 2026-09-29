@@ -747,7 +747,10 @@ async function lancerNavigateur(pw) {
           }
           const items = [];
           for (const el of feedChildren) {
-            const authorEl = el.querySelector('h2 strong, h3 strong, a[href*="/user/"] strong, a[href*="/user/"] span, h2 a, h3 a, [data-ad-preview="message"] - header');
+            let authorEl = null;
+            try {
+              authorEl = el.querySelector('h2 strong, h3 strong, a[href*="/user/"] strong, a[href*="/user/"] span, h2 a, h3 a, [role="heading"] a');
+            } catch (_) {}
             const contactNom = authorEl ? authorEl.innerText.replace(/Contenu IA/gi, '').trim() : null;
 
             const postPermalinkLien = el.querySelector('a[href*="/permalink/"], a[href*="/posts/"], a[href*="story_fbid"], a[href*="set=pcb."]');

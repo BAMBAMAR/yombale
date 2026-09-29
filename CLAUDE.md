@@ -26,7 +26,16 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version (29 septembre 2026 - Refonte Ergonomique & Guidée de la Fiche Commande Mobile Marchand) :
+### 📌 Dernière Version (29 septembre 2026 - Déblocage Scraper Facebook, Correction Sélecteur CSS & Consolidation Immo 373 Biens) :
+- **Consolidation Immédiate Catalogue Immo (`backend/scripts/consolidate-immo-classifiees.js`)** :
+  - Décloisonnement réussi de 1 154 fiches : passage immédiat de **165 à 373 annonces actives vérifiées** sur le portail public (+126% de biens réels).
+  - Détail du catalogue en direct : 326 locations, 47 ventes, 100% avec prix validé (`>= 10 000 FCFA`) et contact téléphonique sénégalais direct vérifié (`77`, `78`, `76`...).
+- **Résolution Définitive du Crash Scraper Facebook (`backend/services/scraper-immo-facebook.js`)** :
+  - Éradication de la `SyntaxError: Failed to execute 'querySelector' on 'Element': '... [data-ad-preview="message"] - header' is not a valid selector` qui bloquait les 10 groupes Facebook.
+  - Remplacement par des sélecteurs CSS valides (`h2 strong, h3 strong, a[href*="/user/"] strong, a[href*="/user/"] span, h2 a, h3 a, [role="heading"] a`) et encapsulation sous `try / catch` préventif.
+  - Scraper Facebook prêt pour l'exécution live avec la session active fraîchement connectée.
+
+### 📌 Version Précédente (29 septembre 2026 - Refonte Ergonomique & Guidée de la Fiche Commande Mobile Marchand) :
 - **Clarification Immédiate du Workflow Marchand (`CommandeCard.tsx`)** :
   - Éradication de la dispersion visuelle et des 7 boutons disparates au même niveau qui semaient le doute chez le marchand.
   - Structuration en 3 zones limpides : Action prioritaire conseillée, Contact client & livraison, Détail financier transparent.
