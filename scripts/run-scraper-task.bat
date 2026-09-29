@@ -29,27 +29,60 @@ if %errorlevel% neq 0 (
     )
 )
 
-:: Arguments passés ou par défaut --facebook
-set "ARGS=%*"
-if "%ARGS%"=="" set "ARGS=--facebook"
+:: Détection du mode planifié (pas de pause interactive)
+set "IS_SCHEDULED=0"
+echo %* | findstr /i /c:"--scheduled" >nul
+if %errorlevel% equ 0 set "IS_SCHEDULED=1"
 
-echo [!DATE! !TIME!] Execution: "%NODE_CMD%" scripts/sync-immo-local.js %ARGS% >> "%LOG_FILE%"
+:: Nettoyage de l'argument --scheduled pour Node
+set "NODE_ARGS=%*"
+set "NODE_ARGS=%NODE_ARGS:--scheduled=%"
+set "NODE_ARGS=%NODE_ARGS:  = %"
+
+:: Script cible selon les options
+set "TARGET_SCRIPT=scripts\sync-immo-local.js"
+echo %NODE_ARGS% | findstr /i /c:"--omnisource" >nul
+if %errorlevel% equ 0 (
+    set "TARGET_SCRIPT=scripts\collecte-omnisource.js"
+    set "NODE_ARGS=%NODE_ARGS:--omnisource=%"
+)
+
+echo %NODE_ARGS% | findstr /i /c:"--full" >nul
+if %errorlevel% equ 0 (
+    set "TARGET_SCRIPT=FULL_COMBO"
+)
+
+if "%NODE_ARGS%"=="" set "NODE_ARGS=--facebook"
+
+echo [!DATE! !TIME!] Lancement tâche: %TARGET_SCRIPT% %NODE_ARGS% >> "%LOG_FILE%"
 echo ========================================================
-echo   LANCEMENT DU SCRAPING LOCAL NOPALOU
-echo   Logs enregistres dans : logs\scraper-task.log
+echo   LANCEMENT DE LA TÂCHE DE SCRAPING NOPALOU
+echo   Logs enregistrés dans : logs\scraper-task.log
 echo ========================================================
 echo.
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' scripts\sync-immo-local.js %ARGS% } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
-set "EXIT_CODE=%errorlevel%"
+if "%TARGET_SCRIPT%"=="FULL_COMBO" (
+    echo [!DATE! !TIME!] Phase 1 : Collecte Omnisource (Google / Réseaux) >> "%LOG_FILE%"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' scripts\collecte-omnisource.js --immo } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
+    echo [!DATE! !TIME!] Phase 2 : Synchronisation Immo Facebook >> "%LOG_FILE%"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' scripts\sync-immo-local.js --facebook } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
+    set "EXIT_CODE=%errorlevel%"
+) else (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' %TARGET_SCRIPT% %NODE_ARGS% } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
+    set "EXIT_CODE=%errorlevel%"
+)
 
 echo [!DATE! !TIME!] Fin de la tâche avec code de sortie: %EXIT_CODE% >> "%LOG_FILE%"
 echo =================================================== >> "%LOG_FILE%"
 
 echo.
 echo ========================================================
-echo Scraping termine (Code de sortie: %EXIT_CODE%).
+echo Scraping terminé (Code de sortie: %EXIT_CODE%).
 echo ========================================================
-pause
+
+if "%IS_SCHEDULED%"=="0" (
+    echo Appuyez sur une touche pour fermer cette fenêtre...
+    timeout /t 10 >nul 2>nul || pause
+)
 
 exit /b %EXIT_CODE%

@@ -26,7 +26,11 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version (29 septembre 2026 - Moteur Omnisource, Correction Scraper Facebook & Persistance Photos Cloudinary en RAM) :
+### 📌 Dernière Version (29 septembre 2026 - Moteur Omnisource, Correction Scraper Facebook, Photos Cloudinary & Planificateur Windows) :
+- **Tâche Planifiée Windows (`Nopalou_Scraper_Combo`, `gerer-taches-planifiees.ps1`)** :
+  - Création et activation de la tâche planifiée sous Windows Task Scheduler s'exécutant automatiquement toutes les 6 heures (`22:00`, `04:00`, `10:00`, `16:00`).
+  - Séquence 2-en-1 : Phase 1 Collecte Omnisource (Google Search, Maps, TikTok, Instagram) + Phase 2 Scraping Immo Facebook avec session locale authentifiée et persistance Cloudinary.
+  - Résolution des blocages `pause` et redirection propre des logs vers `logs/scraper-task.log`.
 - **Persistance Binaire des Photos Facebook vers Cloudinary (`backend/services/scraper-immo-facebook.js`)** :
   - Fin des liens Facebook éphémères (`scontent...fbcdn.net`) et des erreurs 403 Forbidden : téléchargement du buffer binaire des images directement en mémoire vive via le contexte authentifié du navigateur Playwright (`page.request.get(url)`).
   - Téléversement direct du buffer binaire vers Cloudinary (`cloudinaryModule.uploadBuffer(buffer, 'annonces/fb')`) avec watermark automatique `© nopalou.com`.
