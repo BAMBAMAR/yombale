@@ -201,8 +201,8 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     }
     if (prixMin && !isNaN(parseFloat(prixMin))) { vals.push(parseFloat(prixMin)); conds.push(`prix >= $${vals.length}`); }
     if (prixMax && !isNaN(parseFloat(prixMax))) { vals.push(parseFloat(prixMax)); conds.push(`prix <= $${vals.length}`); }
-    if (source === 'facebook') { conds.push(`source LIKE 'facebook-%'`); }
-    else if (source === 'manuel') { conds.push(`(source IS NULL OR source NOT LIKE 'facebook-%')`); }
+    if (source === 'facebook') { conds.push("(source = 'facebook' OR source LIKE 'facebook-%')"); }
+    else if (source === 'manuel') { conds.push("(source IS NULL OR (source != 'facebook' AND source NOT LIKE 'facebook-%'))"); }
 
     const orderBy = tri === 'prix_asc'  ? '(a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC, a.prix ASC NULLS LAST'
                   : tri === 'prix_desc' ? '(a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC, a.prix DESC NULLS LAST'

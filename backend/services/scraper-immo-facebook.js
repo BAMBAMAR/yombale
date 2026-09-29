@@ -237,14 +237,17 @@ function extraireTitreIntelligentFB(texte) {
       return true;
     });
 
-  if (phrases.length > 0) {
+    if (phrases.length > 0) {
     let candidat = phrases[0].replace(/\s*\+\d{1,3}\s*$/, '').trim();
+    // Écarter les résidus de timestamps relatifs type "London Bridge il y a 10 heures"
+    candidat = candidat.replace(/\s*(?:·|•)?\s*il\s+y\s+a\s+\d+\s+(?:heures?|minutes?|jours?|semaines?|sem\.?|min\.?|mois).*$/i, '').trim();
     if (candidat.length >= 6) {
       return candidat.slice(0, 250);
     }
   }
 
-  return (t.slice(0, 100).replace(/\s*\+\d{1,3}\s*$/, '').trim()) || 'Annonce';
+  const fallback = t.replace(/\s*(?:·|•)?\s*il\s+y\s+a\s+\d+\s+(?:heures?|minutes?|jours?|semaines?|sem\.?|min\.?|mois).*$/i, '').slice(0, 100).replace(/\s*\+\d{1,3}\s*$/, '').trim();
+  return (fallback.length >= 4 ? fallback : null) || 'Annonce';
 }
 
 function parsePrixFB(texte) {

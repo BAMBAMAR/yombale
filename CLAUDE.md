@@ -26,7 +26,22 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Déployée (29 septembre 2026 - Assainissement Exhaustif Immobilier, Purge Photos Mortes 403 & Faux Immo, Refonte Fallbacks) :
+### 📌 Dernière Version (29 septembre 2026 - Résolution Intégrale des Anomalies de Scraping S-001 à S-011 & Assainissement DB) :
+- **Audit Médico-Légal & Correction Structurelle des Scrapers (`scraper.js`, `scraper-immo-facebook.js`, `annonces.js`)** :
+  - **S-003 — Jiji Sénégal Débloqué (100% fonctionnel)** : Détection et correction du bug de parsing de prix sur les montants anglo-saxons avec virgule séparatrice de milliers (`"CFA 155,000"` → extrait 155000 FCFA au lieu de 155 FCFA). 13 tests unitaires validés, scraper live validé (18 produits réels extraits avec prix conformes et URLs complètes).
+  - **S-001 — Plafond Absolu Prix & Éradication des Prix Aberrants** : Mise en quarantaine et déstockage de l'offre aberrante CoinAfrique à 778 millions FCFA (`offres.quarantinee = true`). Implémentation d'un plafond absolu de 20 000 000 FCFA dans `corrigerPrixXOF()` et `sauvegarderProduits()` pour rejeter préventivement toute saisie erronée.
+  - **S-007 — Purge Offres Fantômes sans URL & Verrouillage Ingestion** : Suppression SQL définitive de 227 offres mortes sans URL d'achat et hors-stock issues d'Electroménager Dakar et AfriQ Market. Purge de 361 produits orphelins associés. Ajout d'une garde stricte `cleanUrl.startsWith('http')` dans `sauvegarderProduits()` interdisant l'insertion d'offres sans URL.
+  - **S-006 — Dé-stockage Kanje Inactif > 30 jours** : 319 offres Kanje inactives passées à `stock = false`, recalcul en cascade des `prix_min` et `nb_offres` de 319 produits.
+  - **S-008 — Cron Automatique de Dé-stockage des Offres Obsolètes (> 45 jours)** : Dé-stockage SQL immédiat de 1 910 offres non rafraîchies depuis plus de 45 jours (recalcul de 1 756 produits). Intégration dans le cron quotidien de `scraper.js` de la fonction `destockerOffresObsoletes(45)` à 04h30.
+  - **S-005 — Éradication des Descriptions Nulles (10 960 produits mis à jour)** : Backfill SQL de 10 960 descriptions de produits vides avec leur libellé de référence (`description = nom`). Modification de `sauvegarderProduits()` pour insérer systématiquement `item.description || item.titre` sur les nouveaux produits.
+  - **S-009 — Normalisation Source Facebook & Compatibilité API** : Ajout de la colonne `source_detail` sur `annonces_classifiees` (4 750 annonces enrichies avec leur groupe d'origine `facebook-group-<id>`). Mise à jour de `routes/annonces.js` pour supporter indifféremment `source = 'facebook'` et `source LIKE 'facebook-%'`.
+  - **S-011 — Nettoyage des Titres Facebook Invalides** : Nettoyage SQL de 117 annonces Facebook polluées par des mentions d'horodatage résiduel (`"il y a X heures"`). Durcissement de la regex de parsing dans `scraper-immo-facebook.js` (`extraireTitreIntelligentFB`).
+  - **S-002 — Résilience & Diagnostic Jumia** : Ajout de logs détaillés sur la taille HTML reçue et les sélecteurs `article.prd`. Amélioration de la stratégie de retry et contournement des coupures transitoires (test direct : 112 produits extraits).
+- **Validation Globale** :
+  - `node scripts/verify_all_corrections.js` : **100% des tests validés**.
+  - Zéro offre active > 20M, zéro offre fantôme sans URL, zéro produit avec description vide, zéro offre obsolète active > 45j.
+
+### 📌 Version Précédente (29 septembre 2026 - Assainissement Exhaustif Immobilier, Purge Photos Mortes 403 & Faux Immo, Refonte Fallbacks) :
 - **Audit Médico-Légal & Assainissement Base de Données (`annonces_immo`, PostgreSQL)** :
   - **Purge Faux Immo & Parasites (111 annonces rejetées)** : Éradication des annonces de recrutement de personnel de maison (nounous, aides-maisons type *THIAMSERVICE*), caissiers/gérants de boutique, vente de mobilier/high-tech (chaises visiteurs, tables de bureau, barres de son, blenders) et commentaires Facebook résiduels (*"Participant(e) anonyme"*, *"Je suis intéressé"*).
   - **Purge Annonces sans Prix (614 annonces rejetées)** : Élimination stricte des annonces sans loyer ou au prix dérisoire `< 10 000 FCFA` responsables de l'invasion de tirets `—` sur le comparateur sectoriel.

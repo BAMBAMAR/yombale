@@ -137,11 +137,13 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function nettoyerPrix(t) {
   if (!t) return 0;
   let str = (t + '').trim();
+  str = str.replace(/^(?:CFA|FCFA|XOF|F)\s*/i, '').trim();
   const lignes = str.split(/\n|\r|\t|\s{2,}|[-–—/]/).map(s => s.trim()).filter(Boolean);
   const cible = lignes.length > 0 ? lignes[0] : str;
-  const m = cible.match(/(\d{1,3}(?:[\s.\u00a0]\d{3})+|\d+)(?:[.,](\d{1,2}))?/);
+  let normalise = cible.replace(/,(\d{3})(?!\d)/g, '$1').replace(/\.(\d{3})(?!\d)/g, '$1');
+  const m = normalise.match(/(\d{1,3}(?:[\s\u00a0]\d{3})+|\d+)(?:[.,](\d{1,2}))?/);
   if (!m) return 0;
-  const entier = m[1].replace(/[\s.\u00a0]/g, '');
+  const entier = m[1].replace(/[\s\u00a0]/g, '');
   const n = parseInt(entier, 10);
   return isNaN(n) || n < 100 ? 0 : n;
 }
@@ -323,6 +325,7 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
     try{
       const html=await fetchPage(url);
       const $=cheerio.load(html);
+      console.log(`[JUMIA] Page ${page}: HTML reçu (${html ? html.length : 0} bytes), article.prd: ${$('article.prd').length}`);
 
       const nextRaw = $('#__NEXT_DATA__').html() || $('script#__NEXT_DATA__').html();
       if (nextRaw) {
@@ -399,12 +402,12 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
         }
       }
 
-      if(found===0){
+      if (found === 0 && page > 1) {
         break;
       }
     }catch(err){
       console.error(`[JUMIA] Page ${page}:`,err.message);
-      if (err.response?.status === 404 || page === 1) break;
+      if (err.response?.status === 404) break;
     }
     await sleep(2500+Math.random()*1500);
   }
@@ -902,6 +905,7 @@ function prixPlancher(titre) {
 function corrigerPrixXOF(prix) {
   if (prix <= 0) return null;
   if (prix < 500) return null;
+  if (prix > 20_000_000) return null; // Plafond absolu pour e-commerce/biens de consommation
   return prix;
 }
 
@@ -985,6 +989,11 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       }
       item.prix = corrigerPrixParPlancher(prixVerifie, item.titre);
       const cleanUrl = item.url && item.url.trim() ? item.url.trim() : null;
+      // Rejeter strictement les offres sans URL valide (évite les offres fantômes non-actionnables)
+      if (!cleanUrl || !cleanUrl.startsWith('http')) {
+        stats.filtres++;
+        continue;
+      }
 
       // 0. Vérification d'idempotence stricte : L'offre (marchand, URL) existe-t-elle déjà ?
       // Si oui, on met à jour l'offre directement sans jamais créer de nouveau produit en double !
@@ -1016,6 +1025,7 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
           if (item.image_url) {
             await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL', [item.image_url, existingOffre.produit_id]);
           }
+          await pool.query('UPDATE produits SET description=$1 WHERE id=$2 AND (description IS NULL OR TRIM(description) = \'\')', [item.description || item.titre, existingOffre.produit_id]);
 
           produitsModifies.add(existingOffre.produit_id);
           stats.mis_a_jour++;
@@ -1034,8 +1044,8 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       } else {
         const marqueDetectee = matching.extraireMarque(item.titre) || extraireMarque(item.titre);
         const { rows: n } = await pool.query(
-          'INSERT INTO produits(nom, marque, categorie_id, ean, image_url) VALUES($1, $2, $3, $4, $5) RETURNING id',
-          [item.titre, marqueDetectee, catId, item.ean || null, item.image_url]
+          'INSERT INTO produits(nom, marque, categorie_id, ean, image_url, description) VALUES($1, $2, $3, $4, $5, $6) RETURNING id',
+          [item.titre, marqueDetectee, catId, item.ean || null, item.image_url, item.description || item.titre]
         );
         produitId = n[0].id;
         produitCreeId = produitId;
@@ -1045,6 +1055,7 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       if (item.image_url) {
         await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL', [item.image_url, produitId]);
       }
+      await pool.query('UPDATE produits SET description=$1 WHERE id=$2 AND (description IS NULL OR TRIM(description) = \'\')', [item.description || item.titre, produitId]);
       if (catId) {
         await pool.query(
           'UPDATE produits SET categorie_id=$1 WHERE id=$2 AND (categorie_id IS NULL OR categorie_id != $1)',
@@ -1453,6 +1464,42 @@ async function nettoyerOffresExpirees(limite = 200) {
   return { verifiees: offres.length, mortes };
 }
 
+async function destockerOffresObsoletes(jours = 45) {
+  const { rows: updated } = await pool.query(`
+    UPDATE offres
+    SET stock = false
+    WHERE stock = true
+      AND scraped_at < NOW() - INTERVAL '1 day' * $1
+      AND quarantinee = false
+    RETURNING id, produit_id
+  `, [jours]);
+
+  if (updated.length > 0) {
+    const prodIds = [...new Set(updated.map(u => u.produit_id))];
+    const batchSize = 500;
+    for (let i = 0; i < prodIds.length; i += batchSize) {
+      const batch = prodIds.slice(i, i + batchSize);
+      await pool.query(`
+        UPDATE produits SET
+          prix_min = sub.prix_min,
+          nb_offres = sub.nb_offres
+        FROM (
+          SELECT p.id,
+            MIN(CASE WHEN o.stock AND NOT o.quarantinee THEN o.prix END) AS prix_min,
+            COUNT(o.id) FILTER (WHERE o.stock AND NOT o.quarantinee) AS nb_offres
+          FROM produits p
+          LEFT JOIN offres o ON o.produit_id = p.id
+          WHERE p.id = ANY($1::uuid[])
+          GROUP BY p.id
+        ) sub
+        WHERE produits.id = sub.id
+      `, [batch]);
+    }
+  }
+  console.log(`[DESTOCKAGE] ${updated.length} offres obsolètes (> ${jours} jours) passées à stock = false.`);
+  return { destockees: updated.length };
+}
+
 async function nettoyerAnnoncesImmoExpirees(limite = 200) {
   const { rows: annonces } = await pool.query(
     `SELECT id, url_source, source, titre FROM annonces_immo
@@ -1568,6 +1615,7 @@ function demarrerScraping() {
   cron.schedule('30 4 * * *', () => {
     nettoyerOffresExpirees().catch(err => console.error('[NETTOYAGE OFFRES]', err.message));
     nettoyerAnnoncesImmoExpirees().catch(err => console.error('[NETTOYAGE IMMO]', err.message));
+    destockerOffresObsoletes(45).catch(err => console.error('[DESTOCKAGE CRON]', err.message));
   });
   // Scraping immobilier régulier (tous les 2 jours à 02h00)
   cron.schedule('0 2 */2 * *', () => {
@@ -1633,6 +1681,7 @@ module.exports = {
   prixPlancher, 
   corrigerPrixParPlancher, 
   nettoyerOffresExpirees, 
+  destockerOffresObsoletes,
   nettoyerAnnoncesImmoExpirees,
   offreEstMorte,
   extraireSpecs, 
