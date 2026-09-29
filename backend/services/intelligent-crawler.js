@@ -202,6 +202,73 @@ async function lancerNavigateurPlaywright(pw) {
 }
 
 /**
+ * Visite furtive de la page de détail pour extraire les photos Ultra-HD et démasquer les contacts
+ */
+async function enrichirAnnonceDeep(context, itemUrl) {
+  if (!context || !itemUrl || !itemUrl.startsWith('http')) return null;
+  let pageDetail = null;
+  try {
+    pageDetail = await context.newPage();
+    await pageDetail.goto(itemUrl, { waitUntil: 'domcontentloaded', timeout: 12000 });
+    const htmlDetail = await pageDetail.content();
+    const $d = cheerio.load(htmlDetail);
+
+    // 1. Photos Ultra HD (recherche dans srcset max-width, data-full, gallery sans bannières)
+    const photosHD = [];
+    $d('img').each((_, img) => {
+      const srcset = $d(img).attr('srcset') || $d(img).attr('data-srcset');
+      if (srcset) {
+        const parts = srcset.split(',').map(s => s.trim().split(' ')).filter(p => p.length === 2);
+        parts.sort((a, b) => parseInt(b[1]) - parseInt(a[1]));
+        if (parts[0] && parts[0][0].startsWith('http')) {
+          const u = parts[0][0];
+          if (!u.includes('sdc-bn') && !u.includes('client-') && !u.includes('avatar') && !u.includes('logo') && !u.includes('badge')) {
+            photosHD.push(u);
+          }
+        }
+      } else {
+        const src = $d(img).attr('src') || $d(img).attr('data-src');
+        if (src && src.startsWith('http') && !src.includes('sdc-bn') && !src.includes('client-') && !src.includes('avatar') && !src.includes('logo') && !src.includes('badge') && !src.includes('icon') && !src.endsWith('.svg')) {
+          photosHD.push(src);
+        }
+      }
+    });
+
+    // 2. Téléphones démasqués (liens tel:, wa.me, data-phone, containers)
+    const tels = [];
+    $d('a[href^="tel:"]').each((_, a) => {
+      const raw = $d(a).attr('href').replace('tel:', '').replace(/[^\d]/g, '');
+      const clean = raw.startsWith('221') ? raw.slice(3) : raw;
+      if (clean.length === 9) tels.push(clean);
+    });
+
+    $d('a[href*="wa.me/"], a[href*="whatsapp.com/send"]').each((_, a) => {
+      const raw = ($d(a).attr('href') || '').replace(/[^\d]/g, '');
+      const clean = raw.startsWith('221') ? raw.slice(3) : raw;
+      if (clean.length === 9) tels.push(clean);
+    });
+
+    // 3. Vraie Description
+    let descDetail = $d('[class*="description"], [data-t-description], .listing-item__description').first().text().replace(/\s+/g, ' ').trim();
+    if (descDetail && descDetail.length < 20) descDetail = null;
+
+    // 4. Titre H1 de l'annonce
+    const titreDetail = $d('h1').first().text().trim();
+
+    return {
+      titre: titreDetail && titreDetail.length > 5 ? titreDetail : null,
+      description: descDetail,
+      photosHD: [...new Set(photosHD)].slice(0, 6),
+      telephones: [...new Set(tels)]
+    };
+  } catch (_) {
+    return null;
+  } finally {
+    if (pageDetail) await pageDetail.close().catch(() => {});
+  }
+}
+
+/**
  * Moteur principal : Crawl d'une URL avec extraction sémantique
  */
 async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'crawler-ai' }) {
@@ -347,12 +414,23 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
           }
         }
 
-        // 3. Images locales du bloc
+        // 3. Images locales du bloc (priorité à la plus haute résolution de srcset)
         const blocPhotos = [];
         $(el).find('img').each((__, img) => {
-          const src = $(img).attr('src') || $(img).attr('data-src') || $(img).attr('data-lazy-src');
-          if (src && src.startsWith('http') && !src.includes('avatar') && !src.includes('logo') && !src.includes('badge')) {
-            blocPhotos.push(src);
+          let srcMax = null;
+          const srcset = $(img).attr('srcset') || $(img).attr('data-srcset');
+          if (srcset) {
+            const parts = srcset.split(',').map(s => s.trim().split(' ')).filter(p => p.length === 2);
+            parts.sort((a, b) => parseInt(b[1]) - parseInt(a[1]));
+            if (parts[0] && parts[0][0].startsWith('http')) {
+              srcMax = parts[0][0];
+            }
+          }
+          if (!srcMax) {
+            srcMax = $(img).attr('src') || $(img).attr('data-src') || $(img).attr('data-lazy-src');
+          }
+          if (srcMax && srcMax.startsWith('http') && !srcMax.includes('avatar') && !srcMax.includes('logo') && !srcMax.includes('badge') && !srcMax.includes('sdc-bn')) {
+            blocPhotos.push(srcMax);
           }
         });
 
@@ -379,6 +457,27 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
     }
 
     resultats.annoncesTrouvees = items.length;
+
+    // ── Enrichissement profond automatique (Photos Ultra-HD 1920w et démasquage complet des numéros) ──
+    for (const item of items) {
+      if (item.url && item.url !== url && (item.url.includes('/annonce/') || item.url.includes('/ad/') || item.url.includes('/item/'))) {
+        const deep = await enrichirAnnonceDeep(context, item.url);
+        if (deep) {
+          if (deep.photosHD && deep.photosHD.length > 0) {
+            item.photos = deep.photosHD;
+          }
+          if (deep.telephones && deep.telephones.length > 0) {
+            item.telephoneDirect = deep.telephones[0];
+          }
+          if (deep.titre) {
+            item.titre = deep.titre;
+          }
+          if (deep.description) {
+            item.description = deep.description;
+          }
+        }
+      }
+    }
 
     // Enregistrement en base de données PostgreSQL
     for (const item of items) {
