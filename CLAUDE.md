@@ -26,7 +26,34 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version (29 septembre 2026 - Résolution Intégrale des Anomalies de Scraping S-001 à S-011 & Assainissement DB) :
+### 📌 Dernière Version (29 septembre 2026 - Audit Qualité Données Scraping, Focus Spécial Immobilier, Assainissement DB & Durcissement Scrapers) :
+- **Audit Médico-Légal Global & Focus Spécial Immobilier** :
+  - Inspection exhaustive DB & Live HTTP : 10 962 produits, 12 441 offres, 4 821 annonces classifiées, 4 058 annonces immo, 144 forfaits télécom.
+  - Diagnostic immo prouvé : 90.2% de rejets historiques sur CoinAfrique/Expat-Dakar dus aux numéros de téléphone masqués par JS statique, dédoublonnage Facebook à 24h insuffisant ayant engendré 1 573 doublons de republiants, expiration systématique des CDN `fbcdn.net` (HTTP 403), pollution par accessoires matériels (fenêtres alu, bureaux) et titres corrompus par noms d'auteurs Facebook.
+- **Assainissement Transactionnel de la Base de Données (`scripts/assainir-donnees-scraping-v2.js`)** :
+  - **S-005 Immo** : Purge définitive de 2 933 annonces orphelines rejetées sans contact ni valeur.
+  - **S-001 Immo** : Désactivation de 169 annonces corrompues dont le titre était le nom propre de l'auteur FB.
+  - **S-009 Immo** : Rejet de 6 accessoires matériels hors-sujet, redressement de 3 ventes déguisées en location, désactivation de 13 ventes dérisoires (< 1M FCFA) et reclassement de 7 loyers géants (>= 10M FCFA) en vente.
+  - **S-007 E-commerce** : Désactivation des 2 marchands défaillants (Kanje : 100% rupture / URLs redirigées ; Univers Cosmetix : HTTP 403 Cloudflare permanent) et passage à `stock=false` de leurs 1 195 offres mortes.
+  - **S-006 Immo** : Désactivation de 24 annonces immo obsolètes (> 60 jours sans mise à jour).
+  - **Recalcul & Cohérence** : Recalcul en cascade des `prix_min`, `prix_max` et `nb_offres` de 765 fiches produits.
+- **Reclassification Catégorielle Intelligente (`scripts/reclasser-produits-divers.js`)** :
+  - **930 produits reclassés avec succès hors de "Divers"** vers leurs catégories cibles respectives : `tv-electro` (+318), `maison` (+245), `informatique` (+161), `beaute` (+95), `mode` (+85), `alimentation` (+24), `smartphones` (+2). "Divers" réduit de 4 620 à 3 690 fiches.
+- **Refonte & Durcissement du Scraper Immo Facebook (`backend/services/scraper-immo-facebook.js`)** :
+  - **`extraireTitreIntelligentFB`** : Préservation de la structure multiligne DOM, purge ciblée des en-têtes d'auteurs, modérateurs et dates relatives/absolues (`EST_DATE_FB`, `EST_NOM_PERSONNE`). Éradication totale des noms d'auteurs dans les titres (8/8 tests unitaires validés).
+  - **Dédoublonnage Robuste à 30 jours** : Empreinte pérenne `(contact_tel, titreNormalise, 30 jours)` évitant la réinsertion en boucle des mêmes annonces republiées chaque semaine.
+  - **Normalisation des URLs sources** : Suppression des tokens tracking éphémères (`__cft__`, `__tn__`, query params).
+  - **Rejet Préventif Non-Immo (`REGEX_NON_IMMO`)** : Filtrage automatique à l'ingestion des fenêtres alu, portes blindées, chaises, armoires, mixeurs et bureaux.
+  - **Extraction Séparée Auteur / Post** : Priorité absolue aux permalinks exacts des publications (`postPermalinkLien`) plutôt qu'aux profils d'utilisateurs.
+- **Surveillance & Observabilité Active (`backend/services/scraping-health-monitor.js`)** :
+  - Création du moniteur de santé automatisé : détection des marchands non scrapés > 48h, anomalies de prix (< 1 000 ou > 20M FCFA), fiches immo corrompues (sans téléphone ou fausses ventes), et images non persistées `fbcdn.net`.
+- **Moteur d'Ingestion Omnisource Universel (`backend/services/omnisource-collector.js`, `routes/prospection.js`)** :
+  - Double ingestion simultanée : création des annonces dans `annonces_classifiees` (et `annonces_immo`) + synchronisation automatique dans `prospection_leads` pour le CRM WhatsApp.
+  - Sourcing multi-canaux : requêtes dorking ciblées sur Instagram, TikTok, Facebook + scanner des commerces physiques géolocalisés (Google Places / Overpass OSM avec rotation de 3 miroirs anti-timeout).
+  - SAS de qualification stricte : normalisation des téléphones sénégalais mobiles/WhatsApp (77, 78, 76, 75, 70), extraction intelligente de prix FCFA et loyers mensuels (`extrairePrixTexte`), nettoyage de titres sans emojis ni hashtags parasites (`nettoyerTitreReseauSocial`), dédoublonnage d'empreinte sur 30 jours.
+  - Endpoints d'API ajoutés : `POST /api/prospection/omnisource` et `GET /api/prospection/omnisource/stats`. 100% des tests unitaires validés (7/7).
+
+### 📌 Version Précédente (29 septembre 2026 - Résolution Intégrale des Anomalies de Scraping S-001 à S-011 & Assainissement DB) :
 - **Audit Médico-Légal & Correction Structurelle des Scrapers (`scraper.js`, `scraper-immo-facebook.js`, `annonces.js`)** :
   - **S-003 — Jiji Sénégal Débloqué (100% fonctionnel)** : Détection et correction du bug de parsing de prix sur les montants anglo-saxons avec virgule séparatrice de milliers (`"CFA 155,000"` → extrait 155000 FCFA au lieu de 155 FCFA). 13 tests unitaires validés, scraper live validé (18 produits réels extraits avec prix conformes et URLs complètes).
   - **S-001 — Plafond Absolu Prix & Éradication des Prix Aberrants** : Mise en quarantaine et déstockage de l'offre aberrante CoinAfrique à 778 millions FCFA (`offres.quarantinee = true`). Implémentation d'un plafond absolu de 20 000 000 FCFA dans `corrigerPrixXOF()` et `sauvegarderProduits()` pour rejeter préventivement toute saisie erronée.

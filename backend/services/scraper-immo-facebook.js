@@ -178,7 +178,7 @@ function purgerUnicodeStealthFB(txt) {
   return txt
     .replace(/[\u0300-\u036F\u0370-\u03FF\u00AD\u200B-\u200D\uFEFF]/g, '')
     .replace(/\u00A0/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[^\S\r\n]+/g, ' ')
     .trim();
 }
 
@@ -196,7 +196,7 @@ function purgerUiFacebook(txt) {
   s = s.replace(/Commenter en tant que\s*.*$/gi, '');
   s = s.replace(/\b\d{1,2}:\d{2}\s*\/\s*\d{1,2}:\d{2}\b/g, '');
   s = s.replace(/(?:Les commentaires ont été désactivés pour cette publication\.?)/gi, '');
-  s = s.replace(/\s+/g, ' ').trim();
+  s = s.replace(/[^\S\r\n]+/g, ' ').trim();
   return s;
 }
 
@@ -211,25 +211,45 @@ function decoderChainePlus(txt) {
   return txt;
 }
 
-// Regex détectant le préfixe auteur Facebook : "Prénom Nom [· il y a X (jours|heures|sem.|min.)]" ou
-// "Participant(e) anonyme il y a X …" — toujours en tête du texte DOM d'un post de groupe.
-const PREFIXE_AUTEUR_FB = /^(?:Participant\(e\)\s+anonyme|[A-ZÀÂÉÈÊÙÏÎ][a-zA-ZÀ-ÿ'-]{1,30}(?:\s+[A-ZÀÂÉÈÊÙÏÎ][a-zA-ZÀ-ÿ'-]{1,30}){1,3})(?:\s+(?:est|se trouve|est à)[^·\n]*)?(?:\s*[·•]\s*il\s+y\s+a\s+\d+\s+(?:jours?|heures?|sem\.?|min\.?|mois))?\s*/i;
+// Regex détectant si une chaîne courte n'est qu'un simple nom propre d'auteur
+const EST_NOM_PERSONNE = /^[A-ZÀÂÉÈÊÙÏÎ][a-zA-ZÀ-ÿ'-]{1,25}(?:\s+[A-ZÀÂÉÈÊÙÏÎ][a-zA-ZÀ-ÿ'-]{1,25}){1,2}(?:\s+Contenu IA)?$/;
+
+// Regex détectant une ligne de date Facebook (relative ou absolue)
+const EST_DATE_FB = /^(?:\d{1,2}\s+(?:janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|janv\.?|févr\.?|fevr\.?|avr\.?|juil\.?|sept\.?|oct\.?|nov\.?|déc\.?|dec\.?)(?:\s+\d{4})?(?:[,\s]+à\s+\d{1,2}:\d{2}|[,\s]+\d{1,2}:\d{2})?|il\s+y\s+a\s+\d+\s+(?:jours?|heures?|sem\.?|min\.?|mois)|\d{1,2}:\d{2})\s*(?:[·•]\s*)?$/i;
 
 function extraireTitreIntelligentFB(texte) {
   if (!texte) return 'Annonce';
   let t = purgerUnicodeStealthFB(texte);
-  t = purgerUiFacebook(t);
-  t = decoderChainePlus(t);
 
-  // ── Correction 1 : retirer le préfixe auteur ("Badara Gueye il y a 2 jours · …") ──
-  // Il se trouve toujours en première position dans innerText d'un post de groupe.
-  t = t.replace(PREFIXE_AUTEUR_FB, '');
+  // Séparer d'abord par lignes pour préserver la séparation Auteur / Date / Corps
+  const lignesBrutes = t.split(/\r?\n/).map(l => decoderChainePlus(purgerUiFacebook(l)).trim()).filter(Boolean);
+  
+  // Éliminer les premières lignes qui sont typiquement l'en-tête FB (Auteur, Date)
+  const lignesNettoyees = [];
+  let corpsAtteint = false;
 
-  const phrases = t.split(/(?:[\n·|•]|\.\s+)/)
+  for (const l of lignesBrutes) {
+    if (!corpsAtteint) {
+      if (l.match(/^(?:Auteur|Participant\(e\)\s+anonyme|Admin|Modérateur|Membre)\s*$/i)) continue;
+      if (EST_DATE_FB.test(l)) continue;
+      if (EST_NOM_PERSONNE.test(l) && !/(appartement|villa|chambre|studio|terrain|maison|vendre|louer|f\d\b|bail|loyer)/i.test(l)) {
+        continue;
+      }
+      corpsAtteint = true;
+    }
+    lignesNettoyees.push(l);
+  }
+
+  const texteUtile = (lignesNettoyees.length > 0 ? lignesNettoyees.join('\n') : t);
+
+  const phrases = texteUtile.split(/(?:[\n·|•]|\.\s+)/)
     .map(p => p.trim())
     .filter(p => {
       if (p.length < 6) return false;
-      // Écarter les phrases qui SONT encore un horodatage relatif FB
+      // Écarter les phrases qui sont un simple nom de personne
+      if (EST_NOM_PERSONNE.test(p) && !/(appartement|villa|chambre|studio|terrain|maison|vendre|louer|f\d\b)/i.test(p)) return false;
+      // Écarter les phrases qui sont une date/heure FB
+      if (EST_DATE_FB.test(p)) return false;
       if (p.match(/^il\s+y\s+a\s+\d+\s+(?:jours?|heures?|sem\.?|min\.?|mois)/i)) return false;
       if (p.match(/^(bonjour|salut|hello|coucou|disponible|inbox|contact|tél|tel|prix|http|whatsapp)/i)) return false;
       if (p.match(/^[0-9\s\+\.\-\/]{1,15}$/)) return false;
@@ -237,16 +257,20 @@ function extraireTitreIntelligentFB(texte) {
       return true;
     });
 
-    if (phrases.length > 0) {
-    let candidat = phrases[0].replace(/\s*\+\d{1,3}\s*$/, '').trim();
-    // Écarter les résidus de timestamps relatifs type "London Bridge il y a 10 heures"
-    candidat = candidat.replace(/\s*(?:·|•)?\s*il\s+y\s+a\s+\d+\s+(?:heures?|minutes?|jours?|semaines?|sem\.?|min\.?|mois).*$/i, '').trim();
-    if (candidat.length >= 6) {
-      return candidat.slice(0, 250);
+  if (phrases.length > 0) {
+    for (const p of phrases) {
+      let candidat = p.replace(/\s*\+\d{1,3}\s*$/, '').trim();
+      candidat = candidat.replace(/\s*(?:·|•)?\s*il\s+y\s+a\s+\d+\s+(?:heures?|minutes?|jours?|semaines?|sem\.?|min\.?|mois).*$/i, '').trim();
+      if (candidat.length >= 6 && !EST_NOM_PERSONNE.test(candidat) && !EST_DATE_FB.test(candidat)) {
+        return candidat.slice(0, 250);
+      }
     }
   }
 
   const fallback = t.replace(/\s*(?:·|•)?\s*il\s+y\s+a\s+\d+\s+(?:heures?|minutes?|jours?|semaines?|sem\.?|min\.?|mois).*$/i, '').slice(0, 100).replace(/\s*\+\d{1,3}\s*$/, '').trim();
+  if (EST_NOM_PERSONNE.test(fallback)) {
+    return 'Annonce locale';
+  }
   return (fallback.length >= 4 ? fallback : null) || 'Annonce';
 }
 
@@ -419,26 +443,49 @@ async function persistPhotosFB(imgs) {
   return persisted;
 }
 
+// Regex pour rejeter les accessoires matériels capturés par erreur dans les groupes immo
+const REGEX_NON_IMMO = /(?:fen[eê]tres?|portes?\s+(?:alu|blind[eé]e?s?)|chaises?|tables?\s+de\s+bureau|blenders?|mixeurs?|matelas|bureaux?\s+en\s+bois|fauteuils?|armoires?)/i;
+
 async function upsertAnnonceClassifiee(a) {
   try {
-    // ── Correction 7 : dédoublonnage sans ref_externe par titre normalisé + source (24h) ──
-    // Quand ref_externe est absent (85 % des cas), on dédoublonne sur (titre_slug, source)
-    // pour éviter les re-insertions de commentaires identiques.
+    // Normaliser l'URL source pour éliminer les jetons de tracking FB éphémères (__cft__, __tn__)
+    if (a.url_source) {
+      a.url_source = a.url_source.split('?')[0];
+    }
+
+    // Filtre de cohérence pour éviter d'insérer du matériel ou des faux titres en immo
+    if (a.categorie_slug === 'immo') {
+      if (REGEX_NON_IMMO.test(a.titre || '') || REGEX_NON_IMMO.test(a.description || '')) {
+        return { doublon: true, rejete: true, motif: 'Accessoire non immobilier' };
+      }
+      if (EST_NOM_PERSONNE.test(a.titre || '')) {
+        return { doublon: true, rejete: true, motif: 'Titre corrompu nom auteur' };
+      }
+    }
+
+    // ── Correction 7 : dédoublonnage persistant par empreinte (tel + titre normalisé) ──
+    const titreNormalise = (a.titre || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 120);
+
     if (a.contact_tel && a.contact_tel !== 'Voir sur Facebook') {
       const { rows } = await pool.query(`
-        SELECT 1 FROM annonces_classifiees
-        WHERE contact_tel = $1 AND source = $2 AND created_at > NOW() - INTERVAL '24 hours'
+        SELECT id FROM annonces_classifiees
+        WHERE contact_tel = $1 AND LOWER(TRIM(titre)) = $2 AND created_at > NOW() - INTERVAL '30 days'
         LIMIT 1
-      `, [a.contact_tel, a.source]);
+      `, [a.contact_tel, titreNormalise]);
+      if (rows.length > 0) return { doublon: true };
+    } else if (a.url_source && a.url_source.includes('/posts/')) {
+      const { rows } = await pool.query(`
+        SELECT id FROM annonces_classifiees
+        WHERE url_source = $1
+        LIMIT 1
+      `, [a.url_source]);
       if (rows.length > 0) return { doublon: true };
     } else if (!a.ref_externe) {
-      // Dédoublonnage par titre normalisé pour posts sans tel ni ref (emploi, commentaires)
-      const titreSlug = (a.titre || '').toLowerCase().replace(/\s+/g, ' ').slice(0, 120);
       const { rows } = await pool.query(`
-        SELECT 1 FROM annonces_classifiees
-        WHERE titre = $1 AND source = $2 AND created_at > NOW() - INTERVAL '48 hours'
+        SELECT id FROM annonces_classifiees
+        WHERE LOWER(TRIM(titre)) = $1 AND source = $2 AND created_at > NOW() - INTERVAL '30 days'
         LIMIT 1
-      `, [titreSlug, a.source]);
+      `, [titreNormalise, a.source]);
       if (rows.length > 0) return { doublon: true };
     }
 
@@ -455,7 +502,7 @@ async function upsertAnnonceClassifiee(a) {
         updated_at      = NOW()
     `, [
       a.categorie_slug, a.titre, a.description, a.prix, a.ville,
-      a.contact_tel || null,          // Correction 8 : NULL au lieu de 'Voir sur Facebook'
+      a.contact_tel || null,
       a.contact_nom  || null,
       JSON.stringify(a.photos || []),
       a.source, a.ref_externe, a.url_source,
@@ -700,37 +747,21 @@ async function lancerNavigateur(pw) {
           }
           const items = [];
           for (const el of feedChildren) {
-            const userLien = el.querySelector('a[href*="/user/"], a[href*="/profile.php"], a[href*="/people/"], a[href*="/groups/"], a[role="link"]');
-            const photoLien = el.querySelector('a[href*="set=pcb."], a[href*="/posts/"], a[href*="/permalink/"]');
-            if (!userLien && !photoLien) continue; // pas un post top-level identifiable
+            const authorEl = el.querySelector('h2 strong, h3 strong, a[href*="/user/"] strong, a[href*="/user/"] span, h2 a, h3 a, [data-ad-preview="message"] - header');
+            const contactNom = authorEl ? authorEl.innerText.replace(/Contenu IA/gi, '').trim() : null;
+
+            const postPermalinkLien = el.querySelector('a[href*="/permalink/"], a[href*="/posts/"], a[href*="story_fbid"], a[href*="set=pcb."]');
+            const userLien = el.querySelector('a[href*="/user/"], a[href*="/profile.php"], a[href*="/people/"]');
+            if (!userLien && !postPermalinkLien) continue; // pas un post top-level identifiable
 
             let texte = el.innerText || '';
             texte = texte.replace(/(?:Facebook\s*){2,}/g, ' ');
             texte = texte.split(/Commenter en tant que/)[0];
-            // Coupe avant le fil de commentaires : Facebook affiche "Voir plus de
-            // commentaires", puis chaque commentaire suivi de son propre "J'aime Répondre
-            // Partager" — sans cette coupe, les noms des commentateurs et leur texte se
-            // mélangent au corps réel du post (ex: "Machine à vendre ... Voir plus de
-            // commentaires Muslim Balde Prix J'aime Répondre Partager ...").
             texte = texte.split(/Voir plus de commentaires|Voir \d+ commentaires?/)[0];
-            // Suffixes d'interface Facebook (placeholder du champ de commentaire, jamais du
-            // vrai contenu du post) — toujours en toute fin de texte, simple retrait.
             texte = texte.split(/Envoyez votre premier commentaire|Écrivez un commentaire public/)[0];
-            // "En voir plus" / "Voir plus" : boutons de troncature Facebook — le texte réel
-            // au-delà n'existe pas dans le DOM tant qu'on ne clique pas dessus, on ne peut que
-            // retirer le bouton lui-même du texte visible (le contenu reste tronqué, ce n'est
-            // pas récupérable ici). Peut apparaître ailleurs qu'en toute fin (ex: suivi du
-            // minuteur vidéo d'un reel), donc retiré n'importe où dans le texte, pas juste en fin.
             texte = texte.replace(/…?\s*(?:En\s+)?[Vv]oir\s+plus\b/g, ' ');
-            // Minuteur de lecteur vidéo Facebook ("0:00 / 1:44") — apparaît sur les posts de
-            // type reel/vidéo, aucune valeur pour une annonce.
             texte = texte.replace(/\d{1,2}:\d{2}\s*\/\s*\d{1,2}:\d{2}/g, ' ');
-            // Hashtags de reels ("#diallovaisselldakar #viralfacebookreels...") — bruit de
-            // promotion vidéo, jamais une info produit utile.
             texte = texte.replace(/#\S+/g, ' ');
-            // "Envoyer un message" : bouton de contact Facebook Marketplace, toujours en toute
-            // fin de post, parfois suivi d'un compteur de réactions/vues isolé — tout ce qui
-            // suit ce bouton n'est jamais du contenu de l'annonce.
             texte = texte.split(/Envoyer un message/)[0];
             texte = texte.replace(/(?:\b[a-zA-Z0-9]{1,2}\b[\s]+){6,}/g, ' ');
             texte = texte.replace(/\s+/g, ' ').trim();
@@ -739,14 +770,16 @@ async function lancerNavigateur(pw) {
             const imgs = Array.from(el.querySelectorAll('img[src*="scontent"]'))
                               .map(img => img.src).slice(0, 5);
 
-            const setM = photoLien?.href.match(/set=pcb\.(\d+)/);
-            // ── Correction URL : priorité permalink > profil-user ──
-            // userLien pointe vers le profil de l'auteur (URL erronée pour l'annonce).
-            // photoLien pointe vers le post lui-même (permalink ou album) — c'est l'URL correcte.
-            // On n'utilise userLien qu'en dernier recours absolu si aucun photoLien n'existe.
-            const href = photoLien?.href || userLien?.href || '';
+            const setM = postPermalinkLien?.href.match(/set=pcb\.(\d+)/);
+            // Priorité absolue au permalink exact du post
+            let href = '';
+            if (postPermalinkLien && postPermalinkLien.href) {
+              href = postPermalinkLien.href.split('?')[0];
+            } else if (userLien && userLien.href) {
+              href = userLien.href.split('?')[0];
+            }
 
-            items.push({ texte, imgs, href, refExterneId: setM ? setM[1] : null });
+            items.push({ texte, imgs, href, contactNom, refExterneId: setM ? setM[1] : null });
           }
           // Dédoublonner par identifiant de post (plusieurs photos d'un même post partagent le même set=pcb.)
           const vus = new Set();
@@ -801,8 +834,8 @@ async function lancerNavigateur(pw) {
           const etat   = parseEtatFB(texte);
           // ── Correction 4 : date de publication FB ──
           const datePub = parseDatePublicationFB(texte);
-          // ── Correction 5 : nom du vendeur ──
-          const auteur = parseAuteurFB(texte);
+          // ── Correction 5 : nom du vendeur (DOM prioritaire, puis regex de texte) ──
+          const auteur = (post.contactNom && post.contactNom.trim()) || parseAuteurFB(texte);
 
           const ref_externe = post.refExterneId ? `fb-${groupe.id}-${post.refExterneId}` : null;
 
@@ -814,6 +847,8 @@ async function lancerNavigateur(pw) {
           if (etat)    caracteristiques.etat = etat;
           if (datePub) caracteristiques.date_publication = datePub;
 
+          const urlSourcePropre = post.href ? post.href.split('?')[0].split('&')[0] : url;
+
           const annonce = {
             categorie_slug,
             titre: titre || 'Annonce',
@@ -821,12 +856,12 @@ async function lancerNavigateur(pw) {
             prix,
             ville,
             contact_tel: telFinal,
-            contact_nom: auteur,
+            contact_nom: auteur || null,
             photos:      photosPersistees,
             caracteristiques,
             source:      groupe.type === 'page' ? `facebook-${groupe.id}` : `facebook-group-${groupe.id}`,
             ref_externe: ref_externe,
-            url_source:  post.href || url,
+            url_source:  urlSourcePropre,
           };
 
           if (dryRun) {
@@ -870,4 +905,9 @@ async function lancerNavigateur(pw) {
   return stats;
 }
 
-module.exports = { scraperImmo };
+module.exports = { 
+  scraperImmo, 
+  extraireTitreIntelligentFB, 
+  parseAuteurFB, 
+  REGEX_NON_IMMO 
+};

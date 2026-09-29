@@ -409,6 +409,56 @@ router.post('/auto-collecte', adminOnly, async (req, res) => {
   }
 });
 
+// ── POST /api/prospection/omnisource ──────────────────────────────────────────
+// Ingestion universelle double flux : Annonces Classifiées + Leads Prospection CRM
+// (Google Search, Instagram, TikTok, Facebook & Google Places)
+router.post('/omnisource', adminOnly, async (req, res) => {
+  try {
+    const { mode = 'all', verticale = 'all', limite = 50 } = req.body;
+    const { lancerCollecteOmnisource } = require('../services/omnisource-collector');
+    const rapport = await lancerCollecteOmnisource({ mode, verticale, limite });
+    res.json(rapport);
+  } catch (err) {
+    console.error('[OMNISOURCE COLLECTE ERR]:', err);
+    res.status(500).json({ succes: false, error: err.message || 'Erreur lors de la collecte omnisource' });
+  }
+});
+
+// ── GET /api/prospection/omnisource/stats ─────────────────────────────────────
+// Métriques en temps réel des données collectées via Omnisource
+router.get('/omnisource/stats', adminOnly, async (_req, res) => {
+  try {
+    const { rows: statsAnnonces } = await pool.query(`
+      SELECT 
+        source,
+        COUNT(*)::int AS total,
+        COUNT(CASE WHEN actif = true AND rejete = false THEN 1 END)::int AS actives
+      FROM annonces_classifiees
+      WHERE source IN ('instagram', 'tiktok', 'facebook', 'google_places')
+         OR source_detail LIKE 'omnisource_%'
+      GROUP BY source
+    `);
+
+    const { rows: statsLeads } = await pool.query(`
+      SELECT 
+        source,
+        COUNT(*)::int AS total,
+        ROUND(AVG(score), 1) AS score_moyen
+      FROM prospection_leads
+      WHERE source LIKE 'omnisource_%' OR source IN ('osm_places', 'dorking_auto')
+      GROUP BY source
+    `);
+
+    res.json({
+      succes: true,
+      annonces: statsAnnonces,
+      leads: statsLeads,
+    });
+  } catch (err) {
+    res.status(500).json({ succes: false, error: err.message });
+  }
+});
+
 // ── POST /api/prospection/leads/import-vrac ───────────────────────────────────
 // Importation de texte brut / exports de groupes WhatsApp / CSV
 router.post('/leads/import-vrac', adminOnly, async (req, res) => {
