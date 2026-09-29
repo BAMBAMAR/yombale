@@ -26,7 +26,14 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version (29 septembre 2026 - Moteur Omnisource, Correction Scraper Facebook, Photos Cloudinary & Planificateur Windows) :
+### 📌 Dernière Version (29 septembre 2026 - Moteur Crawler Sémantique Intelligent, Omnisource, Photos Cloudinary & Tâche Windows) :
+- **Moteur de Crawling Sémantique Intelligent (`backend/services/intelligent-crawler.js`, `scripts/crawl-ai.js`)** :
+  - Implémentation du pattern architectural de Crawl4AI en 100% Node.js / Playwright natif (zéro latence inter-processus, zéro dépendance Python).
+  - Nettoyage anti-bruit HTML automatique (suppression scripts, styles, iframes, bannières pubs et popups pour isoler 100% du contenu sémantique).
+  - Extraction structurée haute précision pour le Sénégal : détection des prix FCFA, contacts 221 (77/78/76/75/70), quartiers de Dakar et villes du pays, typologies de biens et transactions.
+  - Téléchargement binaire Playwright en RAM et téléversement direct vers Cloudinary (`annonces/crawler`) avec filtres anti-trackers.
+  - Triple ingestion automatique : `annonces_classifiees`, `annonces_immo` et `prospection_leads` (CRM WhatsApp).
+  - Exposition CLI (`scripts/crawl-ai.js --url <URL>`) et route API admin (`POST /api/prospection/crawler-ai`).
 - **Tâche Planifiée Windows (`Nopalou_Scraper_Combo`, `gerer-taches-planifiees.ps1`)** :
   - Création et activation de la tâche planifiée sous Windows Task Scheduler s'exécutant automatiquement toutes les 6 heures (`22:00`, `04:00`, `10:00`, `16:00`).
   - Séquence 2-en-1 : Phase 1 Collecte Omnisource (Google Search, Maps, TikTok, Instagram) + Phase 2 Scraping Immo Facebook avec session locale authentifiée et persistance Cloudinary.

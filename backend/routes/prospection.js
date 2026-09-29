@@ -1103,6 +1103,22 @@ router.get('/leads/:id/timeline', adminOnly, async (req, res) => {
   }
 });
 
+// ── POST /api/prospection/crawler-ai ──────────────────────────────────────────
+// Crawl sémantique intelligent à la demande (Crawl4AI pattern)
+router.post('/crawler-ai', adminOnly, async (req, res) => {
+  try {
+    const { url, maxItems = 15, sourceLabel = 'crawler-ai' } = req.body;
+    if (!url) return res.status(400).json({ success: false, error: 'URL requise' });
+
+    const { crawlerPageIntelligente } = require('../services/intelligent-crawler');
+    const resultats = await crawlerPageIntelligente({ url, maxItems, sourceLabel });
+    res.json({ success: true, ...resultats });
+  } catch (err) {
+    console.error('[PROSPECTION CRAWLER-AI ERR]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
 
 
