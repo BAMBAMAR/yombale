@@ -425,19 +425,43 @@ function texteEstPauvre(texte) {
 let cloudinaryModule = null;
 try { cloudinaryModule = require('./cloudinary'); } catch {}
 
-async function persistPhotosFB(imgs) {
-  if (!cloudinaryModule || !imgs || imgs.length === 0) return imgs;
+async function persistPhotosFB(imgs, page = null) {
+  if (!cloudinaryModule || !imgs || imgs.length === 0) return imgs || [];
   const persisted = [];
   for (const url of imgs) {
+    if (!url || typeof url !== 'string') continue;
     // Ne pas re-uploader si déjà sur Cloudinary
     if (url.includes('res.cloudinary.com') || url.includes('cloudinary.com')) {
-      persisted.push(url); continue;
+      persisted.push(url);
+      continue;
     }
-    try {
-      const result = await cloudinaryModule.uploadFromUrl(url, 'annonces/fb');
-      persisted.push(result.secure_url || url);
-    } catch {
-      persisted.push(url); // fallback URL temporaire
+
+    let secureUrl = null;
+
+    // 1. Priorité absolue : téléchargement binaire via la session connectée du navigateur Playwright
+    if (page && page.request) {
+      try {
+        const resp = await page.request.get(url, { timeout: 8000 });
+        if (resp && resp.ok()) {
+          const buffer = await resp.body();
+          if (buffer && buffer.length > 3000) {
+            secureUrl = await cloudinaryModule.uploadBuffer(buffer, 'annonces/fb');
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. Méthode de repli : upload par URL distante
+    if (!secureUrl) {
+      try {
+        const result = await cloudinaryModule.uploadFromUrl(url, 'annonces/fb');
+        secureUrl = result.secure_url;
+      } catch (_) {}
+    }
+
+    // Si Cloudinary a réussi, on stocke l'URL permanente, sinon l'URL d'origine en dernier recours
+    if (secureUrl) {
+      persisted.push(secureUrl);
     }
   }
   return persisted;
@@ -494,8 +518,8 @@ async function upsertAnnonceClassifiee(a) {
         (categorie_slug, titre, description, prix, ville, contact_tel, contact_nom,
          photos, actif, source, ref_externe, url_source, caracteristiques)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,true,$9,$10,$11,$12::jsonb)
-      ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
       DO UPDATE SET
+        photos          = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0 THEN EXCLUDED.photos ELSE annonces_classifiees.photos END,
         prix            = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
         contact_nom     = COALESCE(EXCLUDED.contact_nom, annonces_classifiees.contact_nom),
         caracteristiques = COALESCE(EXCLUDED.caracteristiques, annonces_classifiees.caracteristiques),
@@ -508,6 +532,32 @@ async function upsertAnnonceClassifiee(a) {
       a.source, a.ref_externe, a.url_source,
       JSON.stringify(a.caracteristiques || {}),
     ]);
+
+    // ── Miroir immédiat vers annonces_immo avec les photos Cloudinary ───────────
+    if (a.categorie_slug === 'immo' && a.prix && a.prix >= 10000 && a.contact_tel) {
+      await pool.query(`
+        INSERT INTO annonces_immo (
+          titre, description, prix, ville, quartier, type_bien, transaction,
+          photos, source, ref_externe, actif, supprimee, rejete, contact_nom, contact_tel, created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, 'appartement', 
+          CASE WHEN $1 ILIKE '%vente%' OR $1 ILIKE '%vendre%' OR $2 ILIKE '%vente%' THEN 'vente' ELSE 'location' END,
+          $6::jsonb, 'particulier_annonce', $7, true, false, false, $8, $9, NOW(), NOW()
+        )
+        ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
+        DO UPDATE SET
+          photos = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0 THEN EXCLUDED.photos ELSE annonces_immo.photos END,
+          prix = COALESCE(EXCLUDED.prix, annonces_immo.prix),
+          updated_at = NOW()
+      `, [
+        a.titre, a.description, a.prix, a.ville || 'Dakar', a.quartier || 'Dakar',
+        JSON.stringify(a.photos || []),
+        a.ref_externe || `fb-${Date.now()}`,
+        a.contact_nom || null,
+        a.contact_tel
+      ]).catch(() => {});
+    }
+
     return { doublon: false };
   } catch (err) {
     if (err.code === 'ECONNRESET' || (err.message && (err.message.includes('ECONNRESET') || err.message.includes('timeout')))) {
@@ -842,8 +892,8 @@ async function lancerNavigateur(pw) {
 
           const ref_externe = post.refExterneId ? `fb-${groupe.id}-${post.refExterneId}` : null;
 
-          // ── Correction 6 : persistance photos Cloudinary ──
-          const photosPersistees = await persistPhotosFB(post.imgs);
+          // ── Correction 6 : persistance photos Cloudinary via Playwright binaire ──
+          const photosPersistees = await persistPhotosFB(post.imgs, page);
 
           // Construire le JSONB caracteristiques avec les champs enrichis
           const caracteristiques = {};
