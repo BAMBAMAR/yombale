@@ -1,5 +1,17 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Refonte Responsive Commandes Marchand & Correction Mobile Formulaires Support/Litige (29 septembre 2026)** :
+  * **Commande Marchand (Desktop 2 Colonnes & Mobile Compact)** :
+    - Remplacement de l'accordéon vertical étiré par une grille 2 colonnes équilibrée (`1.15fr 0.85fr`) sur grand écran.
+    - Éradication de la redondance du bouton *« Dispatch Livreur Tiak-Tiak »*.
+    - Élimination des teintes violettes au profit de la charte Nopalou (`--navy`, `--accent`, `--price`, `--border`).
+    - Création de `frontend-next/src/styles/commandes.css` et allégement de `CommandeCard.tsx` à 333 lignes.
+  * **Formulaires Support & Litiges (`ModalCreerTicket.tsx`, `ModalSignalerProbleme.tsx`, `SuiviTicketSection.tsx`)** :
+    - Résolution des troncatures de texte sur mobile via des grilles adaptatives passant en 1 colonne complète (`<= 600px`).
+    - Débordement corrigé pour le bouton *« Transmettre le signalement »* avec `.npl-modal-btn-row` (pleine largeur ergonomique sur smartphone `<= 480px`).
+    - Agrandissement du champ de texte `textarea` (`min-height: 96px`, padding confortable).
+    - Création de `frontend-next/src/styles/aide.css` et tests de conformité TypeScript et linter Anti-Slop (100% validés).
+
 - **Résolution Complète des Anomalies & Faiblesses Audio Nopalou (29 septembre 2026)** :
   * **Problèmes Résolus & Améliorations Apportées** :
     1. **Carnet de Dettes & Crédit Client (`voice-assistant.ts`)** :
