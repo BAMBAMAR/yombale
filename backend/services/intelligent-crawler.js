@@ -209,7 +209,7 @@ async function enrichirAnnonceDeep(context, itemUrl) {
   let pageDetail = null;
   try {
     pageDetail = await context.newPage();
-    await pageDetail.goto(itemUrl, { waitUntil: 'domcontentloaded', timeout: 12000 });
+    await pageDetail.goto(itemUrl, { waitUntil: 'domcontentloaded', timeout: 16000 });
     const htmlDetail = await pageDetail.content();
     const $d = cheerio.load(htmlDetail);
 
@@ -458,25 +458,29 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
 
     resultats.annoncesTrouvees = items.length;
 
-    // ── Enrichissement profond automatique (Photos Ultra-HD 1920w et démasquage complet des numéros) ──
-    for (const item of items) {
-      if (item.url && item.url !== url && (item.url.includes('/annonce/') || item.url.includes('/ad/') || item.url.includes('/item/'))) {
-        const deep = await enrichirAnnonceDeep(context, item.url);
-        if (deep) {
-          if (deep.photosHD && deep.photosHD.length > 0) {
-            item.photos = deep.photosHD;
-          }
-          if (deep.telephones && deep.telephones.length > 0) {
-            item.telephoneDirect = deep.telephones[0];
-          }
-          if (deep.titre) {
-            item.titre = deep.titre;
-          }
-          if (deep.description) {
-            item.description = deep.description;
-          }
-        }
-      }
+    // ── Enrichissement profond automatique (Photos Ultra-HD 1920w et demasquage complet des numeros) ──
+    // Parallélisation avec semaphore P(3) : 3 pages Playwright max en simultané
+    const DEEP_CONCURRENCY = 3;
+    const itemsAEnrichir = items.filter(
+      (item) => item.url && item.url !== url &&
+        (item.url.includes('/annonce/') || item.url.includes('/ad/') || item.url.includes('/item/'))
+    );
+
+    // Traitement par lots de DEEP_CONCURRENCY
+    for (let i = 0; i < itemsAEnrichir.length; i += DEEP_CONCURRENCY) {
+      const lot = itemsAEnrichir.slice(i, i + DEEP_CONCURRENCY);
+      const resultats_deep = await Promise.allSettled(
+        lot.map((item) => enrichirAnnonceDeep(context, item.url))
+      );
+      resultats_deep.forEach((res, idx) => {
+        if (res.status !== 'fulfilled' || !res.value) return;
+        const deep = res.value;
+        const item = lot[idx];
+        if (deep.photosHD && deep.photosHD.length > 0) item.photos = deep.photosHD;
+        if (deep.telephones && deep.telephones.length > 0) item.telephoneDirect = deep.telephones[0];
+        if (deep.titre) item.titre = deep.titre;
+        if (deep.description) item.description = deep.description;
+      });
     }
 
     // Enregistrement en base de données PostgreSQL
@@ -522,7 +526,9 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
         refExterne,
         item.url || url,
         JSON.stringify({ quartier: entites.quartier, type_bien: entites.typeBien, transaction: entites.transaction })
-      ]).catch(() => {});
+      ]).catch((err) => {
+        console.error('[CRAWLER-AI-INSERT annonces_classifiees ERR]', { refExterne, msg: err.message });
+      });
 
       // 2. Insertion miroir dans annonces_immo si contact téléphonique présent
       if (telephoneFinal) {
@@ -553,7 +559,9 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
           JSON.stringify(photosFinales),
           refExterne,
           telephoneFinal
-        ]).catch(() => {});
+        ]).catch((err) => {
+          console.error('[CRAWLER-AI-INSERT annonces_immo ERR]', { refExterne, msg: err.message });
+        });
 
         // 3. Synchronisation dans prospection_leads (CRM WhatsApp)
         let operateur = 'Orange';

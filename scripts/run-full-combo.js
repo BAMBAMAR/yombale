@@ -15,7 +15,7 @@ function execScript(scriptRelPath, args = []) {
   return new Promise((resolve) => {
     const fullPath = path.resolve(__dirname, '..', scriptRelPath);
     console.log(`\n==================================================`);
-    console.log(`🚀 Exécution : node ${scriptRelPath} ${args.join(' ')}`);
+    console.log(`[RUN] node ${scriptRelPath} ${args.join(' ')}`);
     console.log(`==================================================\n`);
 
     const child = spawn(process.execPath, [fullPath, ...args], {
@@ -36,24 +36,34 @@ function execScript(scriptRelPath, args = []) {
 }
 
 async function main() {
-  console.log(`\n════════════════════════════════════════════════════════════`);
-  console.log(`🔄 NOPALOU COMBO SCRAPER : SEQUENCE COMPLETE AUTOMATISEE`);
-  console.log(`════════════════════════════════════════════════════════════\n`);
+  console.log(`\n============================================================`);
+  console.log(`[COMBO] NOPALOU COMBO SCRAPER : SEQUENCE COMPLETE AUTOMATISEE`);
+  console.log(`============================================================\n`);
 
   // Phase 1 : Omnisource Immo
-  console.log(`▶ [PHASE 1/2] Collecte Omnisource (Google, Maps, TikTok, Insta)...`);
+  console.log(`[PHASE 1/2] Collecte Omnisource (Google, Maps, TikTok, Insta)...`);
   const codeOmni = await execScript('scripts/collecte-omnisource.js', ['--immo']);
-  console.log(`✔ Phase 1 terminée (code ${codeOmni})`);
+  if (codeOmni !== 0) {
+    console.error(`[PHASE 1/2] ECHEC avec code ${codeOmni}`);
+  } else {
+    console.log(`[PHASE 1/2] OK (code ${codeOmni})`);
+  }
 
   // Phase 2 : Facebook Immo
-  console.log(`\n▶ [PHASE 2/2] Scraping Immo Facebook (Groupes rotatifs & Cloudinary)...`);
+  console.log(`\n[PHASE 2/2] Scraping Immo Facebook (Groupes rotatifs & Cloudinary)...`);
   const codeFb = await execScript('scripts/sync-immo-local.js', ['--facebook']);
-  console.log(`✔ Phase 2 terminée (code ${codeFb})`);
+  if (codeFb !== 0) {
+    console.error(`[PHASE 2/2] ECHEC avec code ${codeFb}`);
+  } else {
+    console.log(`[PHASE 2/2] OK (code ${codeFb})`);
+  }
 
-  console.log(`\n════════════════════════════════════════════════════════════`);
-  console.log(`✅ Séquence Combo terminée avec succès.`);
-  console.log(`════════════════════════════════════════════════════════════\n`);
-  process.exit(codeFb === 0 ? codeOmni : codeFb);
+  // Retourne le premier code non-zero rencontré (Phase 1 prioritaire)
+  const exitCode = codeOmni !== 0 ? codeOmni : codeFb;
+  console.log(`\n============================================================`);
+  console.log(`[COMBO] Sequence terminee. Code de sortie final : ${exitCode}`);
+  console.log(`============================================================\n`);
+  process.exit(exitCode);
 }
 
 main().catch(err => {

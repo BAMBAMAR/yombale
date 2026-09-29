@@ -650,9 +650,13 @@ async function upsertAnnonceClassifiee(a) {
       });
 
       // ── Synchronisation automatique vers prospection_leads (CRM WhatsApp) ─────
+      // Guard : contact_tel peut être null/undefined sur certaines annonces FB sans numéro
+      if (!a.contact_tel) return { doublon: false };
       const telClean = a.contact_tel.replace(/[^\d]/g, '');
       const tel9 = telClean.startsWith('221') ? telClean.slice(3) : telClean;
-      if (tel9.length === 9) {
+      // Filtrage : numéros fixes (33xxxxxxx) exclus de la sync CRM WhatsApp
+      const estMobile = tel9.length === 9 && !tel9.startsWith('33');
+      if (estMobile) {
         let operateur = 'Orange';
         if (tel9.startsWith('76')) operateur = 'Free';
         else if (tel9.startsWith('70')) operateur = 'Expresso';
@@ -673,8 +677,10 @@ async function upsertAnnonceClassifiee(a) {
           operateur,
           a.ville || 'Dakar',
           a.quartier || 'Dakar',
-          `Opportunité Facebook Immo : ${a.titre} (${a.prix ? a.prix.toLocaleString('fr-FR') : ''} FCFA)`
-        ]).catch(() => {});
+          `Opportunite Facebook Immo : ${a.titre} (${a.prix ? a.prix.toLocaleString('fr-FR') : ''} FCFA)`
+        ]).catch((err) => {
+          console.error('[FB-SCRAPER-CRM-LEAD ERR]:', err.message);
+        });
       }
     }
 
