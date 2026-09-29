@@ -9,7 +9,7 @@ const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rba
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const cfg = require('../lib/settingsCache');
 const wave = require('../services/wave');
-const { alerterAdmin, alerterPaiementManuel, alerterAbonnement } = require('../services/admin-alerts');
+const { alerterAdmin, alerterPaiementManuel, alerterAbonnement, alerterPaiementRecu } = require('../services/admin-alerts');
 const multer = require('multer');
 const { uploadBuffer } = require('../services/cloudinary');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
@@ -545,6 +545,17 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
                 }).catch(err => console.error('[WAVE WEBHOOK NOTIF VENDEUR ERR]:', err.message));
               }
             }
+
+            // 3. Notification d'encaissement Admin (Telegram + WhatsApp + Email)
+            alerterPaiementRecu({
+              reference: cmd.reference,
+              montant: cmd.montant_total,
+              methode: 'Wave',
+              clientNom: cmd.client_nom,
+              clientTel: cmd.client_telephone,
+              boutiqueNom: boutique?.nom,
+              typePaiement: 'Commande Marchande (Wave)',
+            }).catch(errA => console.warn('[ALERTE ADMIN WAVE RECUEIL ERR]:', errA.message));
           } catch (whatsappErr) {
             console.error('[WAVE WEBHOOK WHATSAPP SEND ERR]:', whatsappErr.message);
           }
@@ -693,6 +704,17 @@ router.post('/stripe/webhook', limiterGeneral, async (req, res) => {
                 }).catch(err => console.error('[STRIPE WEBHOOK NOTIF VENDEUR ERR]:', err.message));
               }
             }
+
+            // 3. Notification d'encaissement Admin (Telegram + WhatsApp + Email)
+            alerterPaiementRecu({
+              reference: cmd.reference,
+              montant: cmd.montant_total,
+              methode: 'Carte Bancaire / Stripe',
+              clientNom: cmd.client_nom,
+              clientTel: cmd.client_telephone,
+              boutiqueNom: boutique?.nom,
+              typePaiement: 'Commande Marchande (Stripe/CB)',
+            }).catch(errA => console.warn('[ALERTE ADMIN STRIPE RECUEIL ERR]:', errA.message));
           } catch (whatsappErr) {
             console.error('[STRIPE WEBHOOK WHATSAPP SEND ERR]:', whatsappErr.message);
           }

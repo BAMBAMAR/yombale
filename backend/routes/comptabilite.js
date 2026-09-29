@@ -1211,11 +1211,35 @@ router.patch(
                 amount: netAmount,
                 mobile,
                 client_reference: `auto_payout_${commande.reference}`,
+                boutique_nom: boutique.nom,
+                reference_commande: commande.reference,
               });
               console.log(`[AUTO PAYOUT WAVE SUCCESS] ⚡ ${netAmount} FCFA transférés automatiquement à ${boutique.nom} (${mobile}) [Déduction Frais Wave 2% (1%+1%): ${fraisWaveTotaux} FCFA]`);
+
+              const { alerterReversementMarchand } = require('../services/admin-alerts');
+              alerterReversementMarchand({
+                reference: commande.reference,
+                montant: netAmount,
+                boutiqueNom: boutique.nom,
+                telephone: mobile,
+                statut: 'succes',
+                mode: 'auto_payout_wave',
+              }).catch(() => {});
             }
           } catch (autoErr) {
             console.error('[AUTO PAYOUT WAVE ERR]:', autoErr.message);
+            try {
+              const { alerterReversementMarchand } = require('../services/admin-alerts');
+              alerterReversementMarchand({
+                reference: commande.reference,
+                montant: commande.montant_total,
+                boutiqueNom: boutique.nom,
+                telephone: boutique.whatsapp || boutique.telephone || 'N/A',
+                statut: 'echec',
+                motifErreur: autoErr.message,
+                mode: 'auto_payout_wave',
+              }).catch(() => {});
+            } catch (_) {}
           }
         }
 
@@ -2025,17 +2049,16 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
       }).catch(errW => console.warn('[WHATSAPP REVERSEMENT MARCHAND ERR]:', errW.message));
     } catch (_) {}
 
-    // 2. Notification de traçabilité Admin (WhatsApp 777202086 + Telegram)
+    // 2. Notification de traçabilité Admin (WhatsApp 777202086 + Telegram + Email)
     try {
-      const { alerterAdmin } = require('../services/admin-alerts');
-      alerterAdmin({
-        type: `reversement_effectue_${commande.reference}`,
-        priorite: 'INFO',
-        titre: `Reversement Effectué (${commande.boutique_nom})`,
-        message: `Virement de ${netAmount.toLocaleString('fr-FR')} FCFA envoyé à ${commande.boutique_nom} (${mobile}) pour la commande ${commande.reference}.`,
-        details: `Boutique : ${commande.boutique_nom}\nMontant : ${netAmount.toLocaleString('fr-FR')} FCFA\nMode : ${mode === 'manuel' ? 'Manuel / Guichet' : 'Wave API 1-Clic'}\nTél : ${mobile}`,
-        force: true,
-        cooldownMs: 0,
+      const { alerterReversementMarchand } = require('../services/admin-alerts');
+      alerterReversementMarchand({
+        reference: commande.reference,
+        montant: netAmount,
+        boutiqueNom: commande.boutique_nom,
+        telephone: mobile,
+        statut: 'succes',
+        mode,
       }).catch(() => {});
     } catch (_) {}
 
@@ -2045,6 +2068,7 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
 
     // Mapper les error_code Wave documentés vers des messages compréhensibles
     const waveErrorMessages = {
+      'no-permission':             'Votre compte Wave Business n\'a pas encore l\'autorisation payouts_api activée. Contactez votre chargé de compte Wave pour activer les reversements API.',
       'insufficient-funds':        'Fonds insuffisants sur le compte Wave Business Nopalou.',
       'recipient-limit-exceeded':  'Le marchand a atteint ses limites mensuelles Wave. Il doit vérifier son identité en agence Wave.',
       'recipient-account-blocked': 'Le compte Wave du marchand est bloqué (perdu / fraude). Contactez le marchand.',
@@ -2063,6 +2087,20 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
     const waveCode = err.waveErrorCode || err.response?.data?.code || err.response?.data?.error;
     const friendlyMessage = waveErrorMessages[waveCode];
     const rawMessage = err.response?.data?.message || err.response?.data?.error_message || err.message || 'Erreur lors du transfert Wave Payout';
+
+    // Alerter l'admin immédiatement de l'échec par Telegram + WhatsApp + Email
+    try {
+      const { alerterReversementMarchand } = require('../services/admin-alerts');
+      alerterReversementMarchand({
+        reference: req.params.commandeId,
+        montant: 0,
+        boutiqueNom: 'Marchand',
+        telephone: 'N/A',
+        statut: 'echec',
+        motifErreur: friendlyMessage || rawMessage,
+        mode: req.body?.mode || 'wave_api',
+      }).catch(() => {});
+    } catch (_) {}
 
     res.status(500).json({
       error: friendlyMessage || rawMessage,

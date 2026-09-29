@@ -26,7 +26,19 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version (29 septembre 2026 - Audit Qualité Données Scraping, Focus Spécial Immobilier, Assainissement DB & Durcissement Scrapers) :
+### 📌 Dernière Version (29 septembre 2026 - Alertes Multi-Canales Versements & Reversements, Diagnostic Wave Payout) :
+- **Diagnostic Médicolégal Payout Wave 1-Clic** :
+  - Interrogation directe de l'API Wave Payout avec les clés de production : identification précise du code d'erreur Wave `403 { code: 'no-permission', message: 'Your business using API key ending in BHow does not have permission for payouts_api. Please contact your account manager.' }`.
+  - Enrichissement du mapping d'erreurs Wave dans [`backend/routes/comptabilite.js`](file:///backend/routes/comptabilite.js) avec un message d'action explicite pour l'administrateur.
+- **Système d'Alerte Multi-Canale Dédié aux Versements & Reversements (`backend/services/admin-alerts.js`)** :
+  - Création de `alerterPaiementRecu` : alerte instantanée multi-canal (Telegram `@nopaloubot`, WhatsApp `+221 77 720 20 86`, Email `dieteltouba@gmail.com`) lors de tout encaissement / versement client réussi (Wave, Stripe, Orange Money).
+  - Création de `alerterReversementMarchand` : traçabilité temps réel des reversements marchands Wave 1-clic et reversements automatiques lors des livraisons (alertes en cas de succès et alertes immédiates en cas d'échec avec motif précis).
+- **Câblage Intégral Webhooks & Comptabilité** :
+  - Webhooks de paiement ([`backend/routes/paiement.js`](file:///backend/routes/paiement.js)) : déclenchement automatique de `alerterPaiementRecu` dans le webhook Wave et le webhook Stripe (auparavant réservé uniquement aux déclarations de virements manuels).
+  - Reversements marchands ([`backend/routes/comptabilite.js`](file:///backend/routes/comptabilite.js)) : intégration de `alerterReversementMarchand` dans le contrôleur de paiement `/admin/reversements/:commandeId/payer` (succès et bloc d'erreur `catch`) ainsi que dans le flux de reversement 100% automatique.
+- **Persistance Configuration** : Ajout de `ADMIN_WHATSAPP_PHONE=221777202086` dans `.env`.
+
+### 📌 Version Précédente (29 septembre 2026 - Audit Qualité Données Scraping, Focus Spécial Immobilier, Assainissement DB & Durcissement Scrapers) :
 - **Audit Médico-Légal Global & Focus Spécial Immobilier** :
   - Inspection exhaustive DB & Live HTTP : 10 962 produits, 12 441 offres, 4 821 annonces classifiées, 4 058 annonces immo, 144 forfaits télécom.
   - Diagnostic immo prouvé : 90.2% de rejets historiques sur CoinAfrique/Expat-Dakar dus aux numéros de téléphone masqués par JS statique, dédoublonnage Facebook à 24h insuffisant ayant engendré 1 573 doublons de republiants, expiration systématique des CDN `fbcdn.net` (HTTP 403), pollution par accessoires matériels (fenêtres alu, bureaux) et titres corrompus par noms d'auteurs Facebook.

@@ -306,6 +306,72 @@ async function alerterPaiementManuel({
 }
 
 /**
+ * 💵 Alerte Nouveau Paiement / Versement Reçu (Wave, Orange Money, Stripe, CB)
+ */
+async function alerterPaiementRecu({
+  reference,
+  montant,
+  methode = 'Wave',
+  clientNom,
+  clientTel,
+  boutiqueNom,
+  typePaiement = 'Commande Boutique',
+}) {
+  const montantFormatte = Number(montant || 0).toLocaleString('fr-FR');
+  const opNom = String(methode).toUpperCase();
+  const adminUrl = `https://nopalou.com/admin/paiements?q=${encodeURIComponent(reference || '')}`;
+
+  const boutons = [{ texte: '🔎 Voir le Paiement', url: adminUrl }];
+
+  return alerterAdmin({
+    type: `paiement_recu_${reference || Date.now()}`,
+    priorite: 'INFO',
+    titre: `Nouveau Versement Reçu : ${montantFormatte} FCFA (${opNom})`,
+    message: `Paiement de ${montantFormatte} FCFA encaissé avec succès.\nType : ${typePaiement}\nClient : ${clientNom || 'Client'} (${clientTel || 'N/A'})${boutiqueNom ? '\nBoutique : ' + boutiqueNom : ''}\nRéférence : ${reference}`,
+    details: `Opérateur : ${opNom}\nMontant : ${montantFormatte} FCFA\nType : ${typePaiement}\nRéférence : ${reference}\nClient : ${clientNom || 'Anonyme'} (${clientTel || 'N/A'})${boutiqueNom ? '\nBoutique : ' + boutiqueNom : ''}`,
+    lienAction: adminUrl,
+    texteAction: 'Consulter dans le Panel Admin',
+    boutons,
+    cooldownMs: 0,
+    force: true,
+  });
+}
+
+/**
+ * 💸 Alerte Reversement Marchand Effectué ou Échoué (Wave Payout)
+ */
+async function alerterReversementMarchand({
+  reference,
+  montant,
+  boutiqueNom,
+  telephone,
+  statut = 'succes', // 'succes' ou 'echec'
+  motifErreur,
+  mode = 'wave_api',
+}) {
+  const montantFormatte = Number(montant || 0).toLocaleString('fr-FR');
+  const adminUrl = 'https://nopalou.com/admin/comptabilite';
+  const estSucces = statut === 'succes';
+
+  return alerterAdmin({
+    type: `reversement_${estSucces ? 'succes' : 'echec'}_${reference || Date.now()}`,
+    priorite: estSucces ? 'INFO' : 'CRITIQUE',
+    titre: estSucces
+      ? `Reversement Effectué : ${montantFormatte} FCFA (${boutiqueNom})`
+      : `Échec Reversement Marchand : ${montantFormatte} FCFA (${boutiqueNom})`,
+    message: estSucces
+      ? `Virement de ${montantFormatte} FCFA envoyé à la boutique ${boutiqueNom} (${telephone}) via Wave Payout.`
+      : `Le virement de ${montantFormatte} FCFA vers ${boutiqueNom} (${telephone}) a ÉCHOUÉ.\nMotif : ${motifErreur || 'Erreur passerelle'}`,
+    details: `Boutique : ${boutiqueNom}\nTéléphone : ${telephone}\nMontant : ${montantFormatte} FCFA\nRéférence : ${reference}\nMode : ${mode}\nStatut : ${estSucces ? 'Envoyé avec succès' : 'Échec : ' + (motifErreur || 'Inconnu')}`,
+    lienAction: adminUrl,
+    texteAction: 'Ouvrir la Comptabilité',
+    boutons: [{ texte: '📊 Voir la Comptabilité', url: adminUrl }],
+    cooldownMs: 0,
+    force: true,
+  });
+}
+
+/**
  * 👑 2. Alerte Abonnement Boutique Activé ou Renouvelé
  */
 async function alerterAbonnement({
@@ -451,6 +517,8 @@ async function alerterWhatsAppPanne({ motif, details, lienAction, codeErreur }) 
 
 module.exports = {
   alerterAdmin,
+  alerterPaiementRecu,
+  alerterReversementMarchand,
   alerterWhatsAppPanne,
   alerterPaiementManuel,
   alerterAbonnement,
