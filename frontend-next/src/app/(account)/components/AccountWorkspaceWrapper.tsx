@@ -69,7 +69,7 @@ export default function AccountWorkspaceWrapper({
   const resolvedInitiale = userInitiale || (userName ? userName.charAt(0).toUpperCase() : 'U')
 
   return (
-    <div className="account-workspace-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="account-workspace-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', width: '100%', boxSizing: 'border-box' }}>
       {/* 1. En-tête Unique Espace Compte 56px */}
       <AccountTopNavbar
         nom={userName || 'Mon Compte'}
@@ -81,7 +81,7 @@ export default function AccountWorkspaceWrapper({
       />
 
       {/* 2. Contenu Principal de l'Espace Compte */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', boxSizing: 'border-box' }}>
         {children}
       </div>
 

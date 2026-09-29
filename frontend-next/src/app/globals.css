@@ -3010,9 +3010,11 @@ a {
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
-  padding: 24px 20px 80px;
-  max-width: 1260px;
-  margin: 0 auto;
+  padding: 20px 20px 80px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
 }
 
 @media (max-width: 860px) {
@@ -3174,7 +3176,7 @@ a {
 }
 @media (min-width: 861px) {
   .account-client-content {
-    padding: 0 4px;
+    padding: 0;
   }
 }
 

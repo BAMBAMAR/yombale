@@ -26,7 +26,22 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (28 septembre 2026 - Sama Xaalis : Carte Héro Lumineuse Premium, Gestion Dettes Entités & Catégories Courantes) :
+### 📌 Dernière Version Locale (29 septembre 2026 - Alignement Pleine Largeur Compte & Zéro Espace à Gauche) :
+- **Suppression du Centrage Parasite & Espace Vide à Gauche sur le Compte (`globals.css`, `AccountWorkspaceWrapper.tsx`, `AccountTopNavbar.tsx`)** :
+  - **Correction Fondamentale de `.account-layout` (`globals.css`)** :
+    - Éradication de `max-width: 1260px; margin: 0 auto;` qui provoquait un auto-margin de 130px à gauche et réduisait artificiellement la largeur de la grille sur les sous-onglets compacts (Sama Kalpé, Profil, Annonces).
+    - Passage à `width: 100%; max-width: 100%; margin: 0; padding: 20px 20px 80px; box-sizing: border-box;`.
+    - Nettoyage du décalage de 4px sur `.account-client-content` (`padding: 0;`).
+  - **Verrouillage Pleine Largeur du Wrapper (`AccountWorkspaceWrapper.tsx`)** :
+    - Application stricte de `width: '100%', boxSizing: 'border-box'` sur `.account-workspace-root` et sur le container principal `{children}`, empêchant tout rétrécissement cross-axis flexbox.
+  - **Harmonisation d'En-tête (`AccountTopNavbar.tsx`)** :
+    - Alignement millimétré du padding de la navbar supérieure (`padding: '0 clamp(12px, 1.5vw, 20px)'`) pour que le logo `[N] Nopalou` s'aligne exactement sur la colonne de la barre latérale du compte.
+- **Validation & Qualité** :
+  - `npx tsc --noEmit` : **0 erreur**.
+  - `npm test -- --run` : **69/69 tests validés (100%)**.
+  - `npm run lint:slop` : **0 violation**.
+
+### 📌 Version Précédente (28 septembre 2026 - Sama Xaalis : Carte Héro Lumineuse Premium, Gestion Dettes Entités & Catégories Courantes) :
 - **Refonte Héro Card Sama Xaalis (Plus Lumineux, Ultra-Premium)** :
   - **Transformation Radicale de la Carte Centrale (`KalpeSituationCards.tsx`)** :
     - Éradication complète du bloc sombre noir/navy opaque (`#1C2B4A` vers `#152238`) qui écrasait l'écran.

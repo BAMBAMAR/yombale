@@ -54,7 +54,7 @@ export default function AccountTopNavbar({
         height: 56,
         background: '#FFFFFF',
         borderBottom: '1px solid #E5E7EB',
-        padding: '0 12px',
+        padding: '0 clamp(12px, 1.5vw, 20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
