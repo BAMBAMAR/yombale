@@ -1659,6 +1659,12 @@ function demarrerCronsMetier() {
   } catch (e) {
     console.error('[CRON SOCIAL AUTO-SYNC INIT ERR]:', e.message);
   }
+  try {
+    const { demarrerCronOmnisource } = require('./omnisource-collector');
+    demarrerCronOmnisource();
+  } catch (e) {
+    console.error('[CRON OMNISOURCE INIT ERR]:', e.message);
+  }
 }
 
 module.exports = { 

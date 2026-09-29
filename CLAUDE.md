@@ -34,6 +34,8 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
   - Éradication de la `SyntaxError: Failed to execute 'querySelector' on 'Element': '... [data-ad-preview="message"] - header' is not a valid selector` qui bloquait les 10 groupes Facebook.
   - Remplacement par des sélecteurs CSS valides (`h2 strong, h3 strong, a[href*="/user/"] strong, a[href*="/user/"] span, h2 a, h3 a, [role="heading"] a`) et encapsulation sous `try / catch` préventif.
   - Scraper Facebook prêt pour l'exécution live avec la session active fraîchement connectée.
+- **Automatisation Totale Omnisource en Arrière-Plan (`demarrerCronOmnisource`, `scraper.js`)** :
+  - Intégration du moteur Omnisource dans le planificateur CRON serveur récurrent (`0 0,6,12,18 * * *`) : capture automatique 4 fois par jour sans intervention humaine des opportunités fraîches sur Google Search, Maps, Instagram, TikTok et Facebook avec injection directe dans le catalogue public et le CRM WhatsApp.
 
 ### 📌 Version Précédente (29 septembre 2026 - Refonte Ergonomique & Guidée de la Fiche Commande Mobile Marchand) :
 - **Clarification Immédiate du Workflow Marchand (`CommandeCard.tsx`)** :

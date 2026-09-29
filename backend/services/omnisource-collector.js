@@ -505,10 +505,30 @@ async function lancerCollecteOmnisource(options = {}) {
   return synthese;
 }
 
+/**
+ * 4. Planificateur CRON Automatique Récurrent (Toutes les 6h)
+ * Aspire automatiquement sans intervention humaine
+ */
+function demarrerCronOmnisource() {
+  const cron = require('node-cron');
+  // Planification : à 00h, 06h, 12h et 18h chaque jour
+  cron.schedule('0 0,6,12,18 * * *', async () => {
+    try {
+      console.log('[CRON OMNISOURCE] 🌐 Démarrage de la collecte automatique universelle...');
+      const res = await lancerCollecteOmnisource({ mode: 'all', limite: 50 });
+      console.log(`[CRON OMNISOURCE] ✅ Succès : +${res.totalAnnoncesCreees} annonces publiques, +${res.totalLeadsSynchronises} commerçants synchronisés (${res.totalDoublonsEvites} doublons filtrés)`);
+    } catch (err) {
+      console.error('[CRON OMNISOURCE ERR]:', err.message);
+    }
+  });
+  console.log('[CRON] ⏰ Cron Ingestion Omnisource Universelle planifié (0 0,6,12,18 * * *)');
+}
+
 module.exports = {
   lancerCollecteOmnisource,
   collecterReseauxSociaux,
   collecterCommercesLocaux,
+  demarrerCronOmnisource,
   CONFIG_OMNISOURCE,
   extrairePrixTexte,
   nettoyerTitreReseauSocial,
