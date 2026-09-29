@@ -73,8 +73,8 @@ export default function CommandeActionsBar({
           <span>{t('shop.createInvoiceAction') || 'Facture PDF'}</span>
         </button>
 
-        {/* Dispatch Livreur moto rapide */}
-        {onDispatch && (
+        {/* Dispatch Livreur moto (affiché uniquement si non présent dans l'étape active) */}
+        {!['confirmee', 'en_preparation'].includes(commande.statut) && onDispatch && (
           <button
             type="button"
             onClick={() => onDispatch(commande)}

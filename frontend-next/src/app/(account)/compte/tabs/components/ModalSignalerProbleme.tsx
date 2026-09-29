@@ -127,33 +127,8 @@ export default function ModalSignalerProbleme({
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
-    >
-      <div
-        style={{
-          background: 'var(--card, #ffffff)',
-          borderRadius: '16px',
-          width: '100%',
-          maxWidth: '520px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-          border: '1px solid var(--border, #E8DDD2)',
-          position: 'relative',
-          padding: '24px',
-        }}
-      >
+    <div className="npl-ticket-modal-overlay">
+      <div className="npl-ticket-modal-dialog">
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -317,14 +292,13 @@ export default function ModalSignalerProbleme({
             )}
 
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '6px' }}>
+              <label className="npl-ticket-label">
                 Motif du problème
               </label>
               <select
                 value={motif}
                 onChange={e => setMotif(e.target.value)}
-                className="input-npl"
-                style={{ width: '100%', height: '42px', fontSize: '13.5px' }}
+                className="input-npl npl-ticket-input"
               >
                 {MOTIFS.map(m => (
                   <option key={m.id} value={m.id}>
@@ -335,7 +309,7 @@ export default function ModalSignalerProbleme({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '6px' }}>
+              <label className="npl-ticket-label">
                 Description détaillée du litige *
               </label>
               <textarea
@@ -344,27 +318,26 @@ export default function ModalSignalerProbleme({
                 placeholder="Expliquez précisément la situation (ex: colis non reçu à l'adresse convenue, article cassé au déballage, taille non conforme...)"
                 rows={4}
                 required
-                className="input-npl"
-                style={{ width: '100%', resize: 'vertical', fontSize: '13.5px', padding: '10px 12px' }}
+                className="input-npl npl-ticket-textarea"
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="npl-ticket-grid-2">
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '6px' }}>
+                <label className="npl-ticket-label">
                   Votre nom
                 </label>
                 <input
                   type="text"
                   value={nom}
                   onChange={e => setNom(e.target.value)}
-                  className="input-npl"
-                  style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                  placeholder="Mamadou Diop"
+                  className="input-npl npl-ticket-input"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '6px' }}>
+                <label className="npl-ticket-label">
                   Téléphone WhatsApp *
                 </label>
                 <input
@@ -373,33 +346,31 @@ export default function ModalSignalerProbleme({
                   onChange={e => setTelephone(e.target.value)}
                   required
                   placeholder="77 123 45 67"
-                  className="input-npl"
-                  style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                  className="input-npl npl-ticket-input"
                 />
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '6px' }}>
+              <label className="npl-ticket-label">
                 Email de confirmation (recommandé)
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="votre.email@exemple.com"
-                className="input-npl"
-                style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                placeholder="votre.email@domaine.com"
+                className="input-npl npl-ticket-input"
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+            <div className="npl-modal-btn-row">
               <button
                 type="button"
                 onClick={handleResetAndClose}
                 disabled={submitting}
                 className="btn-npl btn-npl-secondary"
-                style={{ flex: '1', justifyContent: 'center' }}
+                style={{ flex: '1', height: '42px', justifyContent: 'center' }}
               >
                 Annuler
               </button>
@@ -408,7 +379,7 @@ export default function ModalSignalerProbleme({
                 type="submit"
                 disabled={submitting}
                 className="btn-npl btn-npl-primary"
-                style={{ flex: '2', justifyContent: 'center' }}
+                style={{ flex: '2', height: '42px', justifyContent: 'center', whiteSpace: 'nowrap' }}
               >
                 {submitting ? (
                   <>

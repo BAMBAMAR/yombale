@@ -23,6 +23,8 @@ import '@/styles/immo.css';
 import '@/styles/produit.css';
 import '@/styles/vitrine-publique.css';
 import '@/styles/boutique-dashboard.css';
+import '@/styles/commandes.css';
+import '@/styles/aide.css';
 import '@/styles/saas-commerce.css';
 import '@/styles/social-shop.css';
 import '@/styles/studio.css';

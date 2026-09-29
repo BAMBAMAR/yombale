@@ -253,8 +253,8 @@ export default function CommandeNextStepGuide({
     return (
       <div
         style={{
-          background: '#faf5ff',
-          border: '1.5px solid #e9d5ff',
+          background: '#fffbf5',
+          border: '1px solid #fed7aa',
           borderRadius: 10,
           padding: '12px 14px',
           display: 'flex',
@@ -263,13 +263,13 @@ export default function CommandeNextStepGuide({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Sparkles size={16} color="#7e22ce" />
-          <span style={{ fontSize: 13, fontWeight: 800, color: '#581c87' }}>
+          <Sparkles size={16} color="var(--accent, #C75B00)" />
+          <span style={{ fontSize: 13, fontWeight: 800, color: '#9a3412' }}>
             Étape conseillée : Expédition &amp; Livraison
           </span>
         </div>
-        <p style={{ margin: 0, fontSize: 12.5, color: '#6b21a8', lineHeight: 1.4 }}>
-          Le colis est en préparation. Transmettez la course au coursier moto dès que le paquet est prêt.
+        <p style={{ margin: 0, fontSize: 12.5, color: '#7c2d12', lineHeight: 1.4 }}>
+          Le colis est en préparation. Transmettez la course au coursier dès que le paquet est prêt.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2 }}>
@@ -280,22 +280,22 @@ export default function CommandeNextStepGuide({
               disabled={loading}
               style={{
                 width: '100%',
-                height: 42,
+                height: 40,
                 background: 'var(--accent, #C75B00)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: 8,
                 fontSize: 13,
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: loading ? 'not-allowed' : 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
-                boxShadow: '0 2px 6px rgba(199,91,0,0.25)',
+                boxShadow: '0 2px 4px rgba(199,91,0,0.2)',
               }}
             >
-              <Bike size={17} />
+              <Bike size={16} />
               <span>Dispatch Livreur Tiak-Tiak (WhatsApp)</span>
             </button>
           )}
@@ -309,7 +309,7 @@ export default function CommandeNextStepGuide({
               height: 38,
               background: '#ffffff',
               color: 'var(--navy, #1C2B4A)',
-              border: '1.5px solid #cbd5e1',
+              border: '1px solid #cbd5e1',
               borderRadius: 8,
               fontSize: 12.5,
               fontWeight: 700,

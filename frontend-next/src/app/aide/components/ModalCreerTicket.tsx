@@ -122,33 +122,8 @@ export default function ModalCreerTicket({
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
-    >
-      <div
-        style={{
-          background: 'var(--card, #ffffff)',
-          borderRadius: '16px',
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-          border: '1px solid var(--border, #E8DDD2)',
-          position: 'relative',
-          padding: '24px',
-        }}
-      >
+    <div className="npl-ticket-modal-overlay">
+      <div className="npl-ticket-modal-dialog">
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -293,16 +268,15 @@ export default function ModalCreerTicket({
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+            <div className="npl-ticket-grid-1-2">
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '5px' }}>
+                <label className="npl-ticket-label">
                   Catégorie du problème *
                 </label>
                 <select
                   value={categorie}
                   onChange={e => setCategorie(e.target.value)}
-                  className="input-npl"
-                  style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                  className="input-npl npl-ticket-input"
                 >
                   {CATEGORIES.map(c => (
                     <option key={c.id} value={c.id}>
@@ -313,14 +287,13 @@ export default function ModalCreerTicket({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '5px' }}>
+                <label className="npl-ticket-label">
                   Urgence / Priorité
                 </label>
                 <select
                   value={priorite}
                   onChange={e => setPriorite(e.target.value)}
-                  className="input-npl"
-                  style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                  className="input-npl npl-ticket-input"
                 >
                   <option value="normale">Normale</option>
                   <option value="haute">Haute (Bloquant)</option>
@@ -330,7 +303,7 @@ export default function ModalCreerTicket({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '5px' }}>
+              <label className="npl-ticket-label">
                 Sujet de votre demande *
               </label>
               <input
@@ -339,13 +312,12 @@ export default function ModalCreerTicket({
                 onChange={e => setSujet(e.target.value)}
                 placeholder="Ex: Erreur lors de l'export comptable SYSCOHADA"
                 required
-                className="input-npl"
-                style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                className="input-npl npl-ticket-input"
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '5px' }}>
+              <label className="npl-ticket-label">
                 Description détaillée *
               </label>
               <textarea
@@ -354,14 +326,13 @@ export default function ModalCreerTicket({
                 placeholder="Décrivez précisément ce qui s'est passé, les messages d'erreur rencontrés, les étapes pour reproduire..."
                 rows={4}
                 required
-                className="input-npl"
-                style={{ width: '100%', resize: 'vertical', fontSize: '13px', padding: '10px 12px' }}
+                className="input-npl npl-ticket-textarea"
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="npl-ticket-grid-2">
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '5px' }}>
+                <label className="npl-ticket-label">
                   Votre nom
                 </label>
                 <input
@@ -369,13 +340,12 @@ export default function ModalCreerTicket({
                   value={nom}
                   onChange={e => setNom(e.target.value)}
                   placeholder="Mamadou Diop"
-                  className="input-npl"
-                  style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                  className="input-npl npl-ticket-input"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '5px' }}>
+                <label className="npl-ticket-label">
                   Téléphone WhatsApp *
                 </label>
                 <input
@@ -384,29 +354,27 @@ export default function ModalCreerTicket({
                   onChange={e => setTelephone(e.target.value)}
                   placeholder="77 123 45 67"
                   required
-                  className="input-npl"
-                  style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                  className="input-npl npl-ticket-input"
                 />
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+            <div className="npl-ticket-grid-1-2">
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '5px' }}>
+                <label className="npl-ticket-label">
                   Email de notification
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="votre.email@exemple.com"
-                  className="input-npl"
-                  style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                  placeholder="votre.email@domaine.com"
+                  className="input-npl npl-ticket-input"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: '5px' }}>
+                <label className="npl-ticket-label">
                   Réf. Commande (optionnel)
                 </label>
                 <input
@@ -414,8 +382,7 @@ export default function ModalCreerTicket({
                   value={commandeRef}
                   onChange={e => setCommandeRef(e.target.value)}
                   placeholder="CMD-XXXX"
-                  className="input-npl"
-                  style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                  className="input-npl npl-ticket-input"
                 />
               </div>
             </div>
@@ -426,7 +393,7 @@ export default function ModalCreerTicket({
                 onClick={handleClose}
                 disabled={submitting}
                 className="btn-npl btn-npl-secondary"
-                style={{ flex: '1', justifyContent: 'center' }}
+                style={{ flex: '1', height: '42px', justifyContent: 'center' }}
               >
                 Annuler
               </button>
@@ -435,7 +402,7 @@ export default function ModalCreerTicket({
                 type="submit"
                 disabled={submitting}
                 className="btn-npl btn-npl-primary"
-                style={{ flex: '2', justifyContent: 'center' }}
+                style={{ flex: '2', height: '42px', justifyContent: 'center' }}
               >
                 {submitting ? (
                   <>

@@ -184,15 +184,14 @@ export default function SuiviTicketSection({
       </p>
 
       {/* Formulaire de recherche de ticket */}
-      <form onSubmit={handleSearch} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr auto', gap: '10px', marginBottom: '20px' }}>
+      <form onSubmit={handleSearch} className="npl-suivi-form-grid">
         <input
           type="text"
           value={numero}
           onChange={e => setNumero(e.target.value)}
           placeholder="Numéro de ticket (ex: TCK-2026-XXXX)"
           required
-          className="input-npl"
-          style={{ height: '42px', fontSize: '13.5px' }}
+          className="input-npl npl-ticket-input"
         />
 
         <input
@@ -200,15 +199,14 @@ export default function SuiviTicketSection({
           value={contact}
           onChange={e => setContact(e.target.value)}
           placeholder="Téléphone ou email de vérification"
-          className="input-npl"
-          style={{ height: '42px', fontSize: '13.5px' }}
+          className="input-npl npl-ticket-input"
         />
 
         <button
           type="submit"
           disabled={loading}
           className="btn-npl btn-npl-primary"
-          style={{ height: '42px', padding: '0 18px', whiteSpace: 'nowrap' }}
+          style={{ height: '42px', padding: '0 18px', whiteSpace: 'nowrap', justifyContent: 'center' }}
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
           <span>{loading ? 'Recherche...' : 'Consulter'}</span>

@@ -100,31 +100,15 @@ export default function CommandeCard({
   }
 
   return (
-    <div
-      style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: 12,
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      }}
-    >
+    <div className="npl-commande-card">
       {/* En-tête de la carte */}
       <div
         onClick={() => setOpen(!open)}
-        style={{
-          padding: '14px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-          cursor: 'pointer',
-          background: open ? '#fafafa' : '#ffffff',
-          transition: 'background 0.15s ease',
-        }}
+        className={`npl-commande-header ${open ? 'is-open' : ''}`}
       >
         {/* Ligne 1 : Statut & badges à gauche | Montant, Date & Accordéon à droite */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div className="npl-commande-header-top">
+          <div className="npl-commande-badges">
             <span style={statutStyle(commande.statut)}>{getStatutLabel(commande.statut, t)}</span>
             {commande.source === 'whatsapp' && (
               <span
@@ -141,12 +125,12 @@ export default function CommandeCard({
               </span>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <div className="npl-commande-top-right">
             <div style={{ textAlign: 'right' }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: 'var(--accent, #C75B00)', whiteSpace: 'nowrap' }}>
+              <p className="npl-commande-montant-header">
                 {fcfa(commande.montant_total)}
               </p>
-              <p style={{ margin: 0, fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap' }}>
+              <p className="npl-commande-date-header">
                 {fmtDateHeure(commande.created_at)}
               </p>
             </div>
@@ -157,22 +141,19 @@ export default function CommandeCard({
         </div>
 
         {/* Ligne 2 : Titre produit & Client */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, width: '100%' }}>
+        <div className="npl-commande-header-main">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p
-              style={{
-                margin: 0,
-                fontWeight: 700,
-                fontSize: 14,
-                color: '#0f172a',
-                lineHeight: 1.4,
-                wordBreak: 'break-word',
-              }}
-            >
+            <p className="npl-commande-titre-produit">
               {displayNomProduit}
             </p>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748b' }}>
-              {commande.client_nom} · {commande.client_telephone}
+            <p className="npl-commande-subtitle-client">
+              <span>{commande.client_nom}</span>
+              {commande.client_telephone && (
+                <>
+                  <span>·</span>
+                  <span>{commande.client_telephone}</span>
+                </>
+              )}
             </p>
           </div>
           {produitFicheUrl && (
@@ -191,7 +172,7 @@ export default function CommandeCard({
                 borderRadius: 6,
                 background: '#f8fafc',
                 border: '1px solid #cbd5e1',
-                color: '#0f172a',
+                color: 'var(--navy, #1C2B4A)',
                 fontSize: 11,
                 fontWeight: 700,
                 textDecoration: 'none',
@@ -204,206 +185,146 @@ export default function CommandeCard({
         </div>
       </div>
 
-      {/* Détails dépliés (Vue Mobile & Desktop unifiée) */}
+      {/* Détails dépliés (Grille 2 Colonnes Web / Stack Mobile) */}
       {open && (
-        <div
-          style={{
-            borderTop: '1px solid #f1f5f9',
-            padding: '14px 16px',
-            background: '#ffffff',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14,
-          }}
-        >
-          {/* 1. Étape suivante conseillée pour orienter immédiatement le marchand */}
-          <CommandeNextStepGuide
-            commande={commande}
-            loading={actions.loading}
-            changeStatut={changeStatut}
-            onDispatch={onDispatch}
-            onRelancerWave={actions.relancerWave}
-            onApprouverCredit={actions.approuverCredit}
-            onRejeterCredit={actions.rejeterCredit}
-            t={t}
-          />
+        <div className="npl-commande-body">
+          <div className="npl-commande-grid">
+            {/* Colonne Gauche : Étape conseillée + Articles & Règlement + Séquestre */}
+            <div className="npl-commande-col-left">
+              {/* 1. Étape suivante conseillée pour orienter immédiatement le marchand */}
+              <CommandeNextStepGuide
+                commande={commande}
+                loading={actions.loading}
+                changeStatut={changeStatut}
+                onDispatch={onDispatch}
+                onRelancerWave={actions.relancerWave}
+                onApprouverCredit={actions.approuverCredit}
+                onRejeterCredit={actions.rejeterCredit}
+                t={t}
+              />
 
-          {/* 2. Section Client & Contact Direct (Actionable Mobile) */}
-          <div
-            style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: 10,
-              padding: '12px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Client &amp; Livraison
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
-                {commande.client_nom}
-              </span>
+              {/* 2. Section Articles & Règlement (Clarté absolue des montants) */}
+              <div className="npl-commande-box">
+                <div className="npl-commande-box-header">
+                  <span className="npl-commande-box-label">
+                    <Package size={13} />
+                    <span>Articles &amp; Règlement</span>
+                  </span>
+                  <span style={{ fontSize: 11.5, color: '#64748b' }}>
+                    Réf : <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{commande.reference}</strong>
+                  </span>
+                </div>
+
+                <div className="npl-commande-item-row">
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy, #1C2B4A)' }}>
+                    {displayNomProduit}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap' }}>
+                    {fcfa(commande.quantite * (commande.prix_unitaire || 0))}
+                  </span>
+                </div>
+
+                {commande.frais_livraison > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, color: '#64748b' }}>
+                    <span>Frais de livraison :</span>
+                    <span>{fcfa(commande.frais_livraison)}</span>
+                  </div>
+                )}
+
+                <div className="npl-commande-item-total">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CreditCard size={14} color="#64748b" />
+                    <span style={{ fontSize: 12, color: '#475569' }}>
+                      {formatModePaiement(commande.methode_paiement)}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>
+                    {fcfa(commande.montant_total)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Note client si présente */}
+              {commande.note && (
+                <div className="npl-commande-note-box">
+                  <span style={{ fontWeight: 700 }}>Note du client :</span> {commande.note}
+                </div>
+              )}
+
+              {/* Nopalou Pay Safe — Séquestre Actif si applicable */}
+              <CommandeSequestreBox commande={commande} onUpdate={onUpdate} />
             </div>
 
-            {commande.client_adresse && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12.5, color: '#334155' }}>
-                <MapPin size={15} color="#64748b" style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{commande.client_adresse}</span>
+            {/* Colonne Droite : Destinataire & Contact + Actions rapides + Statut */}
+            <div className="npl-commande-col-right">
+              {/* Fiche Client & Contact Direct */}
+              <div className="npl-commande-box">
+                <div className="npl-commande-box-header">
+                  <span className="npl-commande-box-label">
+                    Client &amp; Contact
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+                    {commande.client_nom}
+                  </span>
+                </div>
+
+                {commande.client_telephone && (
+                  <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 500 }}>
+                    {commande.client_telephone}
+                  </p>
+                )}
+
+                {commande.client_adresse && (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#475569' }}>
+                    <MapPin size={14} color="#64748b" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <span>{commande.client_adresse}</span>
+                  </div>
+                )}
+
+                {/* Boutons d'action directe au pouce */}
+                <div className="npl-commande-contact-grid">
+                  <a
+                    href={`tel:${commande.client_telephone}`}
+                    className="npl-commande-btn-tel"
+                    title={`Appeler ${commande.client_nom}`}
+                  >
+                    <Phone size={14} color="#0284c7" />
+                    <span>Appeler</span>
+                  </a>
+
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="npl-commande-btn-wa"
+                    title={`Contacter ${commande.client_nom} sur WhatsApp`}
+                  >
+                    <MessageCircle size={14} />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
               </div>
-            )}
 
-            {/* Boutons d'action directe au pouce */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
-              <a
-                href={`tel:${commande.client_telephone}`}
-                style={{
-                  height: 40,
-                  background: '#ffffff',
-                  color: 'var(--navy, #1C2B4A)',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 8,
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                }}
-              >
-                <Phone size={15} color="#0284c7" />
-                <span>Appeler</span>
-              </a>
+              {/* Barre d'outils secondaire compacte */}
+              <CommandeActionsBar
+                commande={commande}
+                loading={actions.loading}
+                onDispatch={onDispatch}
+                onRetour={onRetour}
+                onFacture={actions.genererFacture}
+                onAnnuler={actions.annulerCommande}
+                t={t}
+              />
 
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  height: 40,
-                  background: '#25D366',
-                  color: '#ffffff',
-                  borderRadius: 8,
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  boxShadow: '0 1px 2px rgba(37,211,102,0.2)',
-                }}
-              >
-                <MessageCircle size={15} />
-                <span>WhatsApp</span>
-              </a>
+              {/* Modification manuelle de statut (discrète) */}
+              <CommandeStatusSelector
+                commande={commande}
+                loading={actions.loading}
+                changeStatut={changeStatut}
+                t={t}
+              />
             </div>
           </div>
-
-          {/* 3. Section Articles & Règlement (Clarté absolue des montants) */}
-          <div
-            style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: 10,
-              padding: '12px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Articles &amp; Règlement
-              </span>
-              <span style={{ fontSize: 11.5, color: '#64748b' }}>
-                Réf : <strong style={{ color: '#0f172a' }}>{commande.reference}</strong>
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, paddingTop: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                <Package size={14} color="#64748b" style={{ flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
-                  {displayNomProduit}
-                </span>
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap' }}>
-                {fcfa(commande.quantite * (commande.prix_unitaire || 0))}
-              </span>
-            </div>
-
-            {commande.frais_livraison > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, color: '#64748b' }}>
-                <span>Frais de livraison :</span>
-                <span>{fcfa(commande.frais_livraison)}</span>
-              </div>
-            )}
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderTop: '1px dashed #cbd5e1',
-                paddingTop: 8,
-                marginTop: 2,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <CreditCard size={14} color="#64748b" />
-                <span style={{ fontSize: 12, color: '#475569' }}>
-                  {formatModePaiement(commande.methode_paiement)}
-                </span>
-              </div>
-              <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>
-                {fcfa(commande.montant_total)}
-              </span>
-            </div>
-          </div>
-
-          {/* Note client si présente */}
-          {commande.note && (
-            <div
-              style={{
-                background: '#fff7ed',
-                border: '1px solid #fed7aa',
-                borderRadius: 8,
-                padding: '8px 12px',
-                fontSize: 12.5,
-                color: '#92400e',
-              }}
-            >
-              <span style={{ fontWeight: 700 }}>Note du client :</span> {commande.note}
-            </div>
-          )}
-
-          {/* Nopalou Pay Safe — Séquestre Actif si applicable */}
-          <CommandeSequestreBox commande={commande} onUpdate={onUpdate} />
-
-          {/* 4. Barre d'outils secondaire compacte */}
-          <CommandeActionsBar
-            commande={commande}
-            loading={actions.loading}
-            onDispatch={onDispatch}
-            onRetour={onRetour}
-            onFacture={actions.genererFacture}
-            onAnnuler={actions.annulerCommande}
-            t={t}
-          />
-
-          {/* 5. Modification manuelle de statut (discrète) */}
-          <CommandeStatusSelector
-            commande={commande}
-            loading={actions.loading}
-            changeStatut={changeStatut}
-            t={t}
-          />
         </div>
       )}
     </div>
