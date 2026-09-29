@@ -64,7 +64,8 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
       WHERE ai.actif = true
         AND (ai.supprimee IS NULL OR ai.supprimee = false)
-        AND (ai.prix IS NULL OR ai.prix >= 10000)
+        AND (ai.rejete IS NULL OR ai.rejete = false)
+        AND ai.prix IS NOT NULL AND ai.prix >= 10000
         AND ($1::text IS NULL OR ai.transaction = $1)
         AND ($2::text IS NULL OR ai.ville ILIKE $2)
         AND ($3::text IS NULL OR ai.quartier ILIKE '%' || $3 || '%')
@@ -300,10 +301,12 @@ router.get('/:id/similaires', async (req, res) => {
       const { rows: r1 } = await pool.query(
         `SELECT id, titre, prix, ville, quartier, type_bien, transaction, surface_m2, nb_pieces, nb_chambres, photos
          FROM annonces_immo
-         WHERE actif = true AND supprimee = false AND id != $1
+         WHERE actif = true AND (supprimee IS NULL OR supprimee = false) AND (rejete IS NULL OR rejete = false)
+           AND id != $1
            AND quartier ILIKE $2 AND type_bien = $3 AND transaction = $4
-           AND ($5::numeric IS NULL OR prix IS NULL OR (prix >= $5 AND prix <= $6))
-         ORDER BY ABS(COALESCE(prix, $7) - $7) ASC
+           AND prix IS NOT NULL AND prix >= 10000
+           AND ($5::numeric IS NULL OR (prix >= $5 AND prix <= $6))
+         ORDER BY ABS(prix - $7) ASC
          LIMIT $8`,
         [req.params.id, quartier, type_bien, transaction, prixMin, prixMax, prix || 0, +limit]
       );
@@ -315,10 +318,12 @@ router.get('/:id/similaires', async (req, res) => {
       const { rows: r2 } = await pool.query(
         `SELECT id, titre, prix, ville, quartier, type_bien, transaction, surface_m2, nb_pieces, nb_chambres, photos
          FROM annonces_immo
-         WHERE actif = true AND supprimee = false AND id != ALL($1::uuid[])
+         WHERE actif = true AND (supprimee IS NULL OR supprimee = false) AND (rejete IS NULL OR rejete = false)
+           AND id != ALL($1::uuid[])
            AND ville ILIKE $2 AND type_bien = $3 AND transaction = $4
-           AND ($5::numeric IS NULL OR prix IS NULL OR (prix >= $5 AND prix <= $6))
-         ORDER BY ABS(COALESCE(prix, $7) - $7) ASC
+           AND prix IS NOT NULL AND prix >= 10000
+           AND ($5::numeric IS NULL OR (prix >= $5 AND prix <= $6))
+         ORDER BY ABS(prix - $7) ASC
          LIMIT $8`,
         [excludeIds, ville, type_bien, transaction, prixMin, prixMax, prix || 0, +limit - rows.length]
       );

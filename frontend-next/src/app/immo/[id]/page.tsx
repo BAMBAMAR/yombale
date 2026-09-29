@@ -8,9 +8,10 @@ import { getOptionalSession } from '@/lib/dal';
 import { cloudinaryHQ } from '@/lib/cloudinary';
 import BoutonWhatsApp from '@/components/BoutonWhatsApp';
 import SimilRow from '@/components/SimilRow';
+import ExternalImg from '@/components/ExternalImg';
 import { sanitizeImgUrl } from '@/lib/sanitizeImg';
 import PageHeader from '@/components/PageHeader';
-import { Scale } from 'lucide-react';
+import { Scale, Building2 } from 'lucide-react';
 import { AgenceInfo, AgentInfo } from './BlocAgenceAnnonce';
 import FicheImmoSidebar from './FicheImmoSidebar';
 import GaleriePhotosFiche from './GaleriePhotosFiche';
@@ -375,9 +376,12 @@ export default async function FicheImmoPage({
       {/* ── Comparaison automatique avec des biens similaires ───── */}
       {similaires.length > 0 && annonce.prix && (() => {
         const prixCourant = annonce.prix!
+        const validesSimilaires = similaires.filter(s => s.prix && Number(s.prix) >= 10000)
+        if (validesSimilaires.length === 0) return null
+
         const lignes = [
           { id: annonce.id, titre: annonce.titre, prix: prixCourant, surface_m2: annonce.surface_m2, photo: mainPhoto, courant: true },
-          ...similaires.map(s => ({
+          ...validesSimilaires.map(s => ({
             id: s.id, titre: s.titre, prix: s.prix, surface_m2: s.surface_m2,
             photo: s.photos?.[0] ?? null, courant: false,
           })),
@@ -414,10 +418,16 @@ export default async function FicheImmoPage({
                       <td>
                         <div className="simil-produit-cell">
                           <div className="simil-img-wrap">
-                            {l.photo
-                              ? <img src={sanitizeImgUrl(l.photo)!} alt={l.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              : <span></span>
-                            }
+                            <ExternalImg
+                              src={l.photo}
+                              alt={l.titre}
+                              fallback={
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)' }}>
+                                  <Building2 size={16} />
+                                </div>
+                              }
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
                           </div>
                           <div>
                             <span className="simil-nom">{l.titre}</span>

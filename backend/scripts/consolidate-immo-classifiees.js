@@ -26,6 +26,33 @@ function infererTypeBien(titre = '', description = '') {
   return 'appartement';
 }
 
+function estFauxImmo(titre = '', description = '') {
+  const text = `${titre} ${description}`.toLowerCase();
+  const fauxMots = [
+    'recrutement', 'cherche travail', 'poste disponible', 'aide-maison', 'aide maison',
+    'nounou', 'cuisinier', 'cuisinière', 'femme de ménage', 'chauffeur', 'gérant', 'gérante',
+    'vendeur', 'vendeuse', 'chaise', 'chaises', 'table de bureau', 'tables de bureau',
+    'barre de son', 'mixeur', 'blender', 'tontine', 'thiamservice', 'participant(e) anonyme',
+    'je suis intéressé', 'suis intéressé', 'suis disponible'
+  ];
+  return fauxMots.some(m => text.includes(m));
+}
+
+function nettoyerTitreImmo(titre = '', description = '') {
+  let clean = (titre || '').trim();
+  clean = clean.replace(/^DAKAR,\s*SÉNÉGAL\s*/i, '');
+  // Si le titre ressemble à un simple prénom/nom sans mot immobilier
+  if (/^[A-ZÀ-ÿa-z\s-]{3,30}$/.test(clean) && !/\b(chambre|appartement|villa|studio|terrain|maison|bureau|local|magasin|f3|f4|f2)\b/i.test(clean)) {
+    // Chercher la première phrase significative dans la description
+    const descLines = (description || '').split(/[.\n!]/).map(s => s.trim()).filter(Boolean);
+    const lineWithImmo = descLines.find(l => /\b(chambre|appartement|villa|studio|terrain|maison|bureau|local|magasin|f3|f4|f2|showroom)\b/i.test(l));
+    if (lineWithImmo && lineWithImmo.length > 10) {
+      return lineWithImmo.slice(0, 100);
+    }
+  }
+  return clean || 'Bien immobilier à Dakar';
+}
+
 async function consolidateImmoClassifiees() {
   console.log('🔄 Démarrage de la consolidation des annonces classifiées immo...');
 
@@ -44,11 +71,11 @@ async function consolidateImmoClassifiees() {
   let skipped = 0;
 
   for (const ad of ads) {
-    if (ad.supprimee) {
-      // Si supprimée, désactiver le miroir dans annonces_immo si existant
+    if (ad.supprimee || estFauxImmo(ad.titre, ad.description)) {
+      // Si supprimée ou faux immo, désactiver le miroir dans annonces_immo si existant
       await pool.query(`
         UPDATE annonces_immo 
-        SET supprimee = true, actif = false, updated_at = NOW() 
+        SET supprimee = true, actif = false, rejete = true, motif_rejet = 'Faux immo ou supprimé', updated_at = NOW() 
         WHERE source = 'particulier_annonce' AND ref_externe = $1
       `, [`classifiee-${ad.id}`]);
       skipped++;
@@ -57,22 +84,33 @@ async function consolidateImmoClassifiees() {
 
     const transaction = infererTransaction(ad.titre, ad.description);
     const type_bien = infererTypeBien(ad.titre, ad.description);
-    const photosJson = Array.isArray(ad.photos) ? JSON.stringify(ad.photos) : (typeof ad.photos === 'string' ? ad.photos : '[]');
+    const rawPhotos = Array.isArray(ad.photos) ? ad.photos : [];
+    // Purger les URLs Facebook CDN (403 Forbidden)
+    const validPhotos = rawPhotos.filter(p => typeof p === 'string' && !p.includes('fbcdn.net'));
+    const photosJson = JSON.stringify(validPhotos);
     const ville = ad.ville ? ad.ville.trim() : 'Dakar';
     const ref_externe = `classifiee-${ad.id}`;
 
-    // Nettoyer prix aberrant si < 10 000 FCFA
+    // Nettoyer prix : obligatoire >= 10 000 FCFA
     const prix = (ad.prix && Number(ad.prix) >= 10000) ? Number(ad.prix) : null;
+    const phoneClean = (ad.contact_tel || '').replace(/[^0-9]/g, '');
+    const hasValidPhone = phoneClean.length >= 9 && !/facebook/i.test(ad.contact_tel || '');
+
+    // Si pas de prix ou pas de téléphone, rejeter l'annonce
+    const isActif = Boolean(ad.actif) && prix !== null && hasValidPhone;
+    const isRejete = !isActif;
+    const motifRejet = !hasValidPhone ? 'Téléphone invalide' : (!prix ? 'Absence de prix' : null);
+    const titreNettoye = nettoyerTitreImmo(ad.titre, ad.description);
 
     const res = await pool.query(`
       INSERT INTO annonces_immo (
         titre, type_bien, transaction, prix, ville, quartier, description,
         photos, source, ref_externe, actif, supprimee, contact_nom, contact_tel,
-        utilisateur_id, created_at, updated_at
+        utilisateur_id, rejete, motif_rejet, created_at, updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7,
         $8::jsonb, 'particulier_annonce', $9, $10, false, $11, $12,
-        $13, $14, $15
+        $13, $14, $15, $16, $17
       )
       ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
       DO UPDATE SET
@@ -88,10 +126,12 @@ async function consolidateImmoClassifiees() {
         supprimee = EXCLUDED.supprimee,
         contact_nom = EXCLUDED.contact_nom,
         contact_tel = EXCLUDED.contact_tel,
+        rejete = EXCLUDED.rejete,
+        motif_rejet = EXCLUDED.motif_rejet,
         updated_at = NOW()
       RETURNING (xmax = 0) AS is_insert;
     `, [
-      ad.titre,
+      titreNettoye,
       type_bien,
       transaction,
       prix,
@@ -100,10 +140,12 @@ async function consolidateImmoClassifiees() {
       ad.description || null,
       photosJson,
       ref_externe,
-      Boolean(ad.actif),
+      isActif,
       ad.contact_nom || null,
       ad.contact_tel || null,
       ad.utilisateur_id || null,
+      isRejete,
+      motifRejet,
       ad.created_at || new Date(),
       ad.updated_at || new Date(),
     ]);

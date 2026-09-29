@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Building2 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import CardActions from '@/app/CardActions'
@@ -48,7 +49,6 @@ const SOURCE_LABELS: Record<string, string> = {
 export default function ImmoCard({ a }: { a: AnnonceImmo }) {
   const img = Array.isArray(a.photos) ? a.photos[0] ?? null : null
   const localisation = [a.quartier, a.ville].filter(Boolean).join(', ') || 'Sénégal'
-  const typeIcon = TYPE_ICONS[a.type_bien ?? ''] ?? ''
   const isVente = a.transaction === 'vente'
 
   return (
@@ -67,7 +67,26 @@ export default function ImmoCard({ a }: { a: AnnonceImmo }) {
           <ExternalImg 
             src={cloudinaryHQ(img, { width: 480 })} 
             alt={a.titre} 
-            fallback={typeIcon} 
+            fallback={
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  background: 'linear-gradient(135deg, var(--bg, #F8F5F0) 0%, #EFE8DE 100%)',
+                  color: 'var(--navy, #1C2B4A)',
+                }}
+              >
+                <Building2 size={28} opacity={0.65} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B' }}>
+                  Photo sur demande
+                </span>
+              </div>
+            } 
             fallbackClassName="immo-img-placeholder" 
             style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             loading="lazy" 
@@ -82,7 +101,7 @@ export default function ImmoCard({ a }: { a: AnnonceImmo }) {
 
         <div className="immo-card-body">
           {a.type_bien && (
-            <span className="immo-type-tag">{typeIcon} {a.type_bien}</span>
+            <span className="immo-type-tag">{a.type_bien}</span>
           )}
           <h3 className="immo-titre">{a.titre}</h3>
           <p className="immo-localisation">{localisation}</p>

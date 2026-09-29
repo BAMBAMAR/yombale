@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Camera, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { Camera, ChevronLeft, ChevronRight, Maximize2, Building2 } from 'lucide-react';
 import { cloudinaryHQ } from '@/lib/cloudinary';
 import ModalAlbumPhotos from '@/app/agence/[slug]/vitrine/components/ModalAlbumPhotos';
 
@@ -13,6 +13,7 @@ interface GaleriePhotosFicheProps {
 export default function GaleriePhotosFiche({ photos, titre }: GaleriePhotosFicheProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
 
   const prevPhoto = () => setActiveIdx((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
   const nextPhoto = () => setActiveIdx((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
@@ -41,10 +42,54 @@ export default function GaleriePhotosFiche({ photos, titre }: GaleriePhotosFiche
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [photos, isLightboxOpen]);
 
-  if (!photos || photos.length === 0) return null;
+  if (!photos || photos.length === 0) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          minHeight: 240,
+          borderRadius: 12,
+          background: 'linear-gradient(135deg, var(--bg, #F8F5F0) 0%, #EFE9DF 100%)',
+          border: '1px solid var(--border, #E8DDD2)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '32px 20px',
+          marginBottom: 20,
+          textAlign: 'center',
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: '50%',
+            background: 'rgba(28, 43, 74, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--navy, #1C2B4A)',
+          }}
+        >
+          <Building2 size={26} />
+        </div>
+        <div>
+          <h4 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            Photos disponibles sur demande
+          </h4>
+          <p style={{ margin: 0, fontSize: 13, color: '#64748B', maxWidth: 440, lineHeight: 1.5 }}>
+            Le propriétaire ou démarcheur peut vous transmettre les photos récentes et organiser une visite directe par WhatsApp ou téléphone.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const currentPhoto = photos[activeIdx] || photos[0];
   const hasMultiple = photos.length > 1;
+  const isCurrentBroken = Boolean(imgErrors[activeIdx]);
 
   function handlePrev(e: React.MouseEvent) {
     e.stopPropagation();
@@ -67,19 +112,49 @@ export default function GaleriePhotosFiche({ photos, titre }: GaleriePhotosFiche
             height: 380,
             borderRadius: 12,
             overflow: 'hidden',
-            background: '#0F172A',
-            cursor: 'pointer',
+            background: 'linear-gradient(135deg, #1C2B4A 0%, #0F172A 100%)',
+            cursor: isCurrentBroken ? 'default' : 'pointer',
             boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
           }}
-          onClick={() => setIsLightboxOpen(true)}
+          onClick={() => {
+            if (!isCurrentBroken) setIsLightboxOpen(true);
+          }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={cloudinaryHQ(currentPhoto, { width: 1000 })}
-            alt={`${titre} - photo ${activeIdx + 1}`}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            loading="eager"
-          />
+          {isCurrentBroken ? (
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#CBD5E1',
+                padding: 24,
+                textAlign: 'center',
+                gap: 12,
+              }}
+            >
+              <Building2 size={36} color="#94A3B8" />
+              <div>
+                <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#F8FAFC' }}>
+                  Photo non disponible en ligne
+                </p>
+                <p style={{ margin: 0, fontSize: 12, color: '#94A3B8', maxWidth: 360 }}>
+                  Contactez l’annonceur ci-contre pour obtenir les photos récentes du bien.
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={cloudinaryHQ(currentPhoto, { width: 1000 })}
+              alt={`${titre} - photo ${activeIdx + 1}`}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              loading="eager"
+              onError={() => setImgErrors(prev => ({ ...prev, [activeIdx]: true }))}
+            />
+          )}
 
           {/* Flèche Gauche */}
           {hasMultiple && (
@@ -196,13 +271,20 @@ export default function GaleriePhotosFiche({ photos, titre }: GaleriePhotosFiche
                   transition: 'all 0.15s ease',
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={cloudinaryHQ(url, { width: 200 })}
-                  alt={`${titre} miniature ${i + 1}`}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  loading="lazy"
-                />
+                {imgErrors[i] ? (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1E293B', color: '#94A3B8' }}>
+                    <Building2 size={18} />
+                  </div>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={cloudinaryHQ(url, { width: 200 })}
+                    alt={`${titre} miniature ${i + 1}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    loading="lazy"
+                    onError={() => setImgErrors(prev => ({ ...prev, [i]: true }))}
+                  />
+                )}
               </button>
             ))}
           </div>
