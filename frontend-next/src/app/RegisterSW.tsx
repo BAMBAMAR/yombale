@@ -43,7 +43,7 @@ export default function RegisterSW() {
     // Incrémenté uniquement pour les utilisateurs disposant d'un ancien cache.
     // Un premier visiteur (currentForce === null) n'est JAMAIS forcé à recharger.
     // =====================================================================
-    const FORCE_VERSION = '20'
+    const FORCE_VERSION = '21'
     const FORCE_KEY = 'nopalou_force_v'
 
     try {

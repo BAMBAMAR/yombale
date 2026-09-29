@@ -155,52 +155,79 @@ function verifyWebhookSignature(req) {
 
 /**
  * Déclenche un reversement (Payout) depuis le compte Wave Business vers le téléphone d'un marchand.
- * Endpoint officiel Wave Payout API: POST https://api.wave.com/v1/payouts
+ *
+ * Conformité Wave Payout API officielle (docs.wave.com/payout) :
+ *  - Endpoint : POST /v1/payout (singulier)
+ *  - Paramètre : receive_amount (String entier, net de frais) — PAS "amount"
+ *  - Header obligatoire : Idempotency-Key (UUID v4) pour éviter les doubles paiements
+ *  - Header Wave-Signature obligatoire si request signing activé sur la clé (WAVE_SIGNING_SECRET présent)
+ *  - Authentification : Authorization: Bearer <WAVE_API_KEY>
  */
-async function sendPayout({ amount, mobile, client_reference }) {
+async function sendPayout({ amount, mobile, client_reference, boutique_nom, reference_commande }) {
   const cfg = require('../lib/settingsCache');
-  const apiKey = process.env.WAVE_API_KEY || (await cfg.get('wave_api_key'));
-  const signingSecret = process.env.WAVE_SIGNING_SECRET || process.env.WAVE_WEBHOOK_SECRET || (await cfg.get('wave_signing_secret'));
+  const { randomUUID } = require('crypto');
 
-  if (!apiKey || !apiKey.trim() || apiKey.includes('xxxxxxxx')) {
-    throw new Error('Clé API Wave non configurée. Veuillez renseigner WAVE_API_KEY dans vos paramètres admin ou variables d\'environnement.');
+  const apiKey = (process.env.WAVE_API_KEY || (await cfg.get('wave_api_key')) || '').trim();
+  const signingSecret = (
+    process.env.WAVE_SIGNING_SECRET ||
+    process.env.WAVE_WEBHOOK_SECRET ||
+    (await cfg.get('wave_signing_secret')) ||
+    ''
+  ).trim();
+
+  if (!apiKey || apiKey.includes('xxxxxxxx')) {
+    throw new Error(
+      'Clé API Wave non configurée. Veuillez renseigner WAVE_API_KEY dans vos variables d\'environnement Render.'
+    );
   }
 
+  // Format E.164 obligatoire : +221XXXXXXXXX
   const formattedMobile = mobile.startsWith('+')
     ? mobile
     : `+221${mobile.replace(/\D/g, '').slice(-9)}`;
 
+  // receive_amount = string entier (sans décimales), net de frais
+  const receiveAmount = String(Math.round(Number(amount)));
+
   const payload = {
-    amount: Math.round(Number(amount)),
     currency: 'XOF',
+    receive_amount: receiveAmount,
     mobile: formattedMobile,
-    client_reference,
+    ...(boutique_nom ? { name: String(boutique_nom).slice(0, 255) } : {}),
+    ...(client_reference ? { client_reference: String(client_reference).slice(0, 255) } : {}),
+    ...(reference_commande ? { payment_reason: `Reversement Nopalou ${reference_commande}`.slice(0, 40) } : {}),
   };
 
+  // Idempotency-Key obligatoire sur les POST (Wave rejette sans lui)
+  const idempotencyKey = randomUUID();
+
   const headers = {
-    Authorization: `Bearer ${apiKey.trim()}`,
+    'Authorization': `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
+    'Idempotency-Key': idempotencyKey,
   };
-  if (signingSecret) {
+
+  // Wave-Signature obligatoire si request signing activé (WAVE_SIGNING_SECRET présent)
+  if (signingSecret && !signingSecret.includes('xxxxxxxx')) {
     headers['Wave-Signature'] = generateWaveSignature(signingSecret, payload);
   }
 
-  try {
-    const response = await axios.post(`${WAVE_BASE_URL}/v1/payouts`, payload, {
-      headers,
-      timeout: 12000,
-    });
-    return response.data;
-  } catch (err) {
-    if (err.response?.status === 404) {
-      const responseFallback = await axios.post(`${WAVE_BASE_URL}/v1/payout`, payload, {
-        headers,
-        timeout: 12000,
-      });
-      return responseFallback.data;
-    }
+  const response = await axios.post(`${WAVE_BASE_URL}/v1/payout`, payload, {
+    headers,
+    timeout: 15000,
+  });
+
+  const data = response.data;
+
+  // Vérifier le statut du payout (succeeded / processing / failed)
+  if (data.status === 'failed' && data.payout_error) {
+    const err = new Error(data.payout_error.error_message || 'Payout Wave échoué');
+    err.waveErrorCode = data.payout_error.error_code;
+    err.payoutData = data;
     throw err;
   }
+
+  return data;
 }
 
 
@@ -210,3 +237,4 @@ module.exports = {
   generateWaveSignature,
   sendPayout,
 };
+

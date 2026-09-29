@@ -20,8 +20,11 @@ const FAST_RETRY_COUNT = 3            // Nombre de tentatives rapides avant de r
 const THROTTLE_PING_MS = 500          // Pas de réémission de ping si le dernier date de < 500ms
 
 // ── ÉTAT GLOBAL UNIQUE (SINGLETON) ──────────────────────────────────────────
+// NOTE: globalIsChecking doit être `false` au démarrage pour que le SSR
+// et le premier rendu client soient identiques (pas de mismatch d'hydratation).
+// Le ping réel est déclenché uniquement côté client dans useEffect.
 let globalIsOnline = true
-let globalIsChecking = true
+let globalIsChecking = false
 let lastPingTimestamp = 0
 let inFlightPingPromise: Promise<boolean> | null = null
 let retryCount = 0

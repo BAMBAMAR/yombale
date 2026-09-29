@@ -1973,6 +1973,8 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
         amount: netAmount,
         mobile,
         client_reference: `payout_${commande.reference}`,
+        boutique_nom: commande.boutique_nom,
+        reference_commande: commande.reference,
       });
     } else {
       payoutResult = {
@@ -2040,7 +2042,32 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
     res.json({ success: true, payout: payoutResult, net_amount: netAmount, frais_wave: fraisWaveTotaux, mobile });
   } catch (err) {
     console.error('[ADMIN PAYOUT ERR]', err);
-    res.status(500).json({ error: err.message || 'Erreur lors du transfert Wave Payout' });
+
+    // Mapper les error_code Wave documentés vers des messages compréhensibles
+    const waveErrorMessages = {
+      'insufficient-funds':        'Fonds insuffisants sur le compte Wave Business Nopalou.',
+      'recipient-limit-exceeded':  'Le marchand a atteint ses limites mensuelles Wave. Il doit vérifier son identité en agence Wave.',
+      'recipient-account-blocked': 'Le compte Wave du marchand est bloqué (perdu / fraude). Contactez le marchand.',
+      'recipient-account-inactive':'Le compte Wave du marchand est inactif. Le marchand doit appeler le support Wave.',
+      'recipient-minor':           'Le destinataire est mineur et ne peut pas recevoir de payout.',
+      'country-mismatch':          'Le numéro du marchand n\'est pas dans le même pays que le compte Wave Business.',
+      'missing-signature':         'La signature Wave-Signature est manquante. Vérifiez WAVE_SIGNING_SECRET.',
+      'invalid-signature':         'La signature Wave-Signature est invalide. Vérifiez WAVE_SIGNING_SECRET dans Render.',
+      'expired-signature-timestamp':'La signature Wave a expiré (horloge serveur désynchronisée).',
+      'api-key-revoked':           'La clé API Wave a été révoquée. Créez une nouvelle clé dans le Wave Business Portal.',
+      'no-matching-api-key':       'La clé WAVE_API_KEY est invalide ou introuvable dans le système Wave.',
+      'too-many-requests':         'Limite de taux Wave dépassée. Réessayez dans quelques secondes.',
+      'service-unavailable':       'L\'API Wave est temporairement indisponible. Réessayez dans quelques minutes.',
+    };
+
+    const waveCode = err.waveErrorCode || err.response?.data?.code || err.response?.data?.error;
+    const friendlyMessage = waveErrorMessages[waveCode];
+    const rawMessage = err.response?.data?.message || err.response?.data?.error_message || err.message || 'Erreur lors du transfert Wave Payout';
+
+    res.status(500).json({
+      error: friendlyMessage || rawMessage,
+      wave_error_code: waveCode || undefined,
+    });
   }
 });
 
