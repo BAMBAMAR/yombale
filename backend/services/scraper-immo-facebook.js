@@ -601,6 +601,7 @@ async function upsertAnnonceClassifiee(a) {
         (categorie_slug, titre, description, prix, ville, contact_tel, contact_nom,
          photos, actif, source, ref_externe, url_source, caracteristiques)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,true,$9,$10,$11,$12::jsonb)
+      ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
       DO UPDATE SET
         photos          = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0 THEN EXCLUDED.photos ELSE annonces_classifiees.photos END,
         prix            = COALESCE(EXCLUDED.prix, annonces_classifiees.prix),
@@ -618,14 +619,15 @@ async function upsertAnnonceClassifiee(a) {
 
     // ── Miroir immédiat vers annonces_immo avec les photos Cloudinary ───────────
     if (a.categorie_slug === 'immo' && a.prix && a.prix >= 10000 && a.contact_tel) {
+      const transactionCalculee = ((a.titre || '') + ' ' + (a.description || '')).toLowerCase().includes('vente') ? 'vente' : 'location';
+
       await pool.query(`
         INSERT INTO annonces_immo (
           titre, description, prix, ville, quartier, type_bien, transaction,
           photos, source, ref_externe, actif, supprimee, rejete, contact_nom, contact_tel, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, 'appartement', 
-          CASE WHEN $1 ILIKE '%vente%' OR $1 ILIKE '%vendre%' OR $2 ILIKE '%vente%' THEN 'vente' ELSE 'location' END,
-          $6::jsonb, 'particulier_annonce', $7, true, false, false, $8, $9, NOW(), NOW()
+          $1, $2, $3, $4, $5, 'appartement', $6,
+          $7::jsonb, 'particulier_annonce', $8, true, false, false, $9, $10, NOW(), NOW()
         )
         ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
         DO UPDATE SET
@@ -633,12 +635,47 @@ async function upsertAnnonceClassifiee(a) {
           prix = COALESCE(EXCLUDED.prix, annonces_immo.prix),
           updated_at = NOW()
       `, [
-        a.titre, a.description, a.prix, a.ville || 'Dakar', a.quartier || 'Dakar',
+        a.titre,
+        a.description,
+        a.prix,
+        a.ville || 'Dakar',
+        a.quartier || 'Dakar',
+        transactionCalculee,
         JSON.stringify(a.photos || []),
         a.ref_externe || `fb-${Date.now()}`,
         a.contact_nom || null,
         a.contact_tel
-      ]).catch(() => {});
+      ]).catch((err) => {
+        console.error('[FB-SCRAPER-IMMO-MIRROR ERR]:', err.message);
+      });
+
+      // ── Synchronisation automatique vers prospection_leads (CRM WhatsApp) ─────
+      const telClean = a.contact_tel.replace(/[^\d]/g, '');
+      const tel9 = telClean.startsWith('221') ? telClean.slice(3) : telClean;
+      if (tel9.length === 9) {
+        let operateur = 'Orange';
+        if (tel9.startsWith('76')) operateur = 'Free';
+        else if (tel9.startsWith('70')) operateur = 'Expresso';
+        else if (tel9.startsWith('75')) operateur = 'Promobile';
+
+        await pool.query(`
+          INSERT INTO prospection_leads (
+            nom_boutique, contact_nom, telephone, telephone_brut, operateur, categorie, ville, quartier, source, statut, score, notes
+          ) VALUES ($1, $2, $3, $4, $5, 'immo', $6, $7, 'facebook_immo', 'nouveau', 75, $8)
+          ON CONFLICT (telephone) DO UPDATE SET
+            notes = COALESCE(EXCLUDED.notes, prospection_leads.notes),
+            updated_at = NOW()
+        `, [
+          `FB - ${a.titre.slice(0, 45)}`,
+          a.contact_nom || 'Annonceur Facebook',
+          tel9,
+          `+221${tel9}`,
+          operateur,
+          a.ville || 'Dakar',
+          a.quartier || 'Dakar',
+          `Opportunité Facebook Immo : ${a.titre} (${a.prix ? a.prix.toLocaleString('fr-FR') : ''} FCFA)`
+        ]).catch(() => {});
+      }
     }
 
     return { doublon: false };
@@ -1045,5 +1082,6 @@ module.exports = {
   scraperImmo, 
   extraireTitreIntelligentFB, 
   parseAuteurFB, 
-  REGEX_NON_IMMO 
+  REGEX_NON_IMMO,
+  upsertAnnonceClassifiee
 };

@@ -49,10 +49,11 @@ if %errorlevel% equ 0 (
 
 echo %NODE_ARGS% | findstr /i /c:"--full" >nul
 if %errorlevel% equ 0 (
-    set "TARGET_SCRIPT=FULL_COMBO"
+    set "TARGET_SCRIPT=scripts\run-full-combo.js"
+    set "NODE_ARGS="
 )
 
-if "%NODE_ARGS%"=="" set "NODE_ARGS=--facebook"
+if "%NODE_ARGS%"=="" if not "%TARGET_SCRIPT%"=="scripts\run-full-combo.js" set "NODE_ARGS=--facebook"
 
 echo [!DATE! !TIME!] Lancement tâche: %TARGET_SCRIPT% %NODE_ARGS% >> "%LOG_FILE%"
 echo ========================================================
@@ -61,16 +62,8 @@ echo   Logs enregistrés dans : logs\scraper-task.log
 echo ========================================================
 echo.
 
-if "%TARGET_SCRIPT%"=="FULL_COMBO" (
-    echo [!DATE! !TIME!] Phase 1 : Collecte Omnisource (Google / Réseaux) >> "%LOG_FILE%"
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' scripts\collecte-omnisource.js --immo } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
-    echo [!DATE! !TIME!] Phase 2 : Synchronisation Immo Facebook >> "%LOG_FILE%"
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' scripts\sync-immo-local.js --facebook } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
-    set "EXIT_CODE=%errorlevel%"
-) else (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' %TARGET_SCRIPT% %NODE_ARGS% } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
-    set "EXIT_CODE=%errorlevel%"
-)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' %TARGET_SCRIPT% %NODE_ARGS% } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
+set "EXIT_CODE=%errorlevel%"
 
 echo [!DATE! !TIME!] Fin de la tâche avec code de sortie: %EXIT_CODE% >> "%LOG_FILE%"
 echo =================================================== >> "%LOG_FILE%"

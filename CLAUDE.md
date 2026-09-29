@@ -26,6 +26,11 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Éradication des Erreurs SQL Scraper Facebook & Tâche Planifiée Windows (`backend/services/scraper-immo-facebook.js`, `scripts/run-full-combo.js`, `scripts/run-scraper-task.bat`)** :
+  - **Correction de la Requête SQL d'Insertion Annonces (`syntax error at or near "DO"`)** : Rétablissement de la clause obligatoire `ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL` manquante devant `DO UPDATE SET`, qui provoquait l'échec systématique des 32 annonces extraites par run.
+  - **Correction d'Incohérence de Type Paramètre SQL (`annonces_immo`)** : Élimination du conflit de type PostgreSQL (`inconsistent types deduced for parameter $1`) en pré-calculant la transaction (`vente` vs `location`) en amont en JavaScript au lieu d'une expression `CASE WHEN $1 ILIKE ...` non castée.
+  - **Synchronisation CRM WhatsApp Facebook Directe** : Insertion miroir automatisée des annonceurs immobiliers Facebook dans `prospection_leads` (`+221...`, opérateur, quartier, note avec prix).
+  - **Nouveau Runner Node.js Full Combo (`scripts/run-full-combo.js`)** : Remplacement de l'évaluation batch fragile `FULL_COMBO` par un runner Node unifié orchestrant séquentiellement Phase 1 (Omnisource Google/Réseaux) et Phase 2 (Scraping Facebook avec Cloudinary), éliminant l'erreur `Cannot find module 'FULL_COMBO'`.
 - **Résolution Définitive de l'Erreur 401 sur le Portail Développeur (`/admin/developer`)** :
   - **Correction du Proxy Next.js (`src/app/api/boutiques/[id]/[...path]/route.ts`)** : Transmission obligatoire des headers administratifs (`X-Admin-Secret`, `Authorization`) et des cookies de session vers le backend Express, évitant l'écrasement silencieux des privilèges.
   - **Pré-chargement SSR Sécurisé (`developer/page.tsx`)** : Chargement direct côté serveur des clés API et webhooks avec les identifiants admin serveur, supprimant le flash de chargement et le 401 client.
