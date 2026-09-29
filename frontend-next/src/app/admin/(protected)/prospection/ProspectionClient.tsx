@@ -265,6 +265,8 @@ export default function ProspectionClient({
           autoCollecteResult={autoOps.autoCollecteResult}
           onLancerAutoCollecte={autoOps.handleLancerAutoCollecte}
           dorking={dorking}
+          secret={secret}
+          onCrawlSuccess={leadOps.reloadLeads}
         />
       )}
 

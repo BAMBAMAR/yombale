@@ -1,5 +1,6 @@
 import { Layers, Zap, RefreshCw, ExternalLink, Info } from 'lucide-react'
 import type { DorkingRequete, AutoCollecteResult } from './types'
+import CrawlerAiCard from './CrawlerAiCard'
 
 interface Props {
   rawImportText: string
@@ -17,6 +18,8 @@ interface Props {
   autoCollecteResult: AutoCollecteResult | null
   onLancerAutoCollecte: (source: 'all' | 'osm' | 'dorking', target?: string) => void
   dorking: DorkingRequete[]
+  secret: string
+  onCrawlSuccess?: () => void
 }
 
 export default function ProspectionTabImport({
@@ -35,6 +38,8 @@ export default function ProspectionTabImport({
   autoCollecteResult,
   onLancerAutoCollecte,
   dorking,
+  secret,
+  onCrawlSuccess,
 }: Props) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
@@ -345,6 +350,11 @@ Boutique Parcelles, 70 111 22 33`}
             )
           })}
         </div>
+      </div>
+
+      {/* Bloc 3 : Crawler Sémantique IA Pleine Largeur */}
+      <div style={{ gridColumn: '1 / -1' }}>
+        <CrawlerAiCard secret={secret} onSuccess={onCrawlSuccess} />
       </div>
     </div>
   )

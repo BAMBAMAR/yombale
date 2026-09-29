@@ -27,7 +27,8 @@
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 ### 📌 Dernière Version (29 septembre 2026 - Moteur Crawler Sémantique Intelligent, Omnisource, Photos Cloudinary & Tâche Windows) :
-- **Moteur de Crawling Sémantique Intelligent (`backend/services/intelligent-crawler.js`, `scripts/crawl-ai.js`)** :
+- **Moteur & Interface Web de Crawling Sémantique Intelligent (`CrawlerAiCard.tsx`, `intelligent-crawler.js`, `scripts/crawl-ai.js`)** :
+  - **Interface Web Admin (`/admin/prospection`)** : Ajout du formulaire interactif « Crawler Sémantique IA » dans l'onglet *Import & Sourcing* avec saisie d'URL, choix du volume d'annonces, bouton d'exécution asynchrone et rapport des créations en direct.
   - Implémentation du pattern architectural de Crawl4AI en 100% Node.js / Playwright natif (zéro latence inter-processus, zéro dépendance Python).
   - Nettoyage anti-bruit HTML automatique (suppression scripts, styles, iframes, bannières pubs et popups pour isoler 100% du contenu sémantique).
   - Extraction structurée haute précision pour le Sénégal : détection des prix FCFA, contacts 221 (77/78/76/75/70), quartiers de Dakar et villes du pays, typologies de biens et transactions.
