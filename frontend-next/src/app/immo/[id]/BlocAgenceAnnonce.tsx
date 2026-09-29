@@ -8,12 +8,41 @@ import {
   MessageCircle,
   ExternalLink,
   Phone,
+  Eye,
   User,
   Calendar,
   Star
 } from 'lucide-react';
 import { fcfa } from '@/lib/format';
 import ModalDemandeVisite from './ModalDemandeVisite';
+
+function formaterNumeroMasque(tel: string): { masque: string; complet: string } {
+  const digits = tel.replace(/\D/g, '');
+  const net = digits.startsWith('221') ? digits.slice(3) : digits;
+
+  if (net.length === 9) {
+    const p1 = net.slice(0, 2);
+    const p2 = net.slice(2, 5);
+    const p3 = net.slice(5, 7);
+    const p4 = net.slice(7, 9);
+    return {
+      masque: `${p1} ${p2} •• ••`,
+      complet: `${p1} ${p2} ${p3} ${p4}`,
+    };
+  }
+
+  if (digits.length >= 6) {
+    return {
+      masque: `${digits.slice(0, 4)} ••• ••`,
+      complet: tel,
+    };
+  }
+
+  return {
+    masque: '•• •• •• ••',
+    complet: tel,
+  };
+}
 
 export interface AgenceInfo {
   id: string;
@@ -70,11 +99,13 @@ export default function BlocAgenceAnnonce({
   source,
 }: BlocAgenceAnnonceProps) {
   const [showModalVisite, setShowModalVisite] = useState(false);
+  const [telRevealed, setTelRevealed] = useState(false);
   const isAgence = Boolean(agence?.id);
 
   // Numéro WhatsApp prioritaire : WhatsApp agence > WhatsApp agent > téléphone contact
   const rawWa = agence?.whatsapp || agence?.telephone || agent?.telephone || contactTel || '';
   const cleanWa = rawWa.replace(/\D/g, '');
+  const telFormat = formaterNumeroMasque(cleanWa || rawWa);
 
   const waText = encodeURIComponent(
     `Bonjour ${agence?.nom ? agence.nom : ''},\n\nJe vous contacte au sujet du bien vu sur Nopalou :\n*${titre}*${prix ? ` — ${fcfa(prix)}` : ''}\n📍 ${[quartier, ville].filter(Boolean).join(', ')}\n🔗 https://nopalou.com/immo/${annonceId}\n\nEst-il toujours disponible ?`
@@ -275,10 +306,25 @@ export default function BlocAgenceAnnonce({
 
       {/* ── Corps : Coordonnées & Actions ── */}
       <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {/* Téléphone direct si présent */}
+        {/* Téléphone direct masqué en partie par défaut avec révélation au clic */}
         {cleanWa && (
-          <a
-            href={`tel:${cleanWa}`}
+          <button
+            type="button"
+            onClick={() => {
+              if (!telRevealed) {
+                setTelRevealed(true);
+                try {
+                  if (typeof window !== 'undefined' && (window as any).gtag) {
+                    (window as any).gtag('event', 'show_phone_number_immo', {
+                      event_category: 'ImmoContact',
+                      event_label: titre,
+                    });
+                  }
+                } catch (_) {}
+              } else {
+                window.location.href = `tel:${cleanWa}`;
+              }
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -290,13 +336,36 @@ export default function BlocAgenceAnnonce({
               color: 'var(--navy, #1C2B4A)',
               fontSize: 13.5,
               fontWeight: 750,
-              textDecoration: 'none',
               background: '#ffffff',
+              cursor: 'pointer',
+              width: '100%',
+              transition: 'all 0.15s ease',
             }}
+            title={telRevealed ? "Cliquez pour appeler directement" : "Cliquez pour afficher le numéro complet"}
           >
             <Phone size={16} style={{ color: 'var(--navy, #1C2B4A)' }} />
-            <span>Appeler : {rawWa}</span>
-          </a>
+            <span>Appeler : {telRevealed ? telFormat.complet : telFormat.masque}</span>
+            {!telRevealed && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 11,
+                  background: 'var(--bg, #F8F5F0)',
+                  color: 'var(--accent, #C75B00)',
+                  padding: '2px 8px',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  border: '1px solid var(--border, #E8DDD2)',
+                  marginLeft: 4,
+                }}
+              >
+                <Eye size={12} />
+                Afficher
+              </span>
+            )}
+          </button>
         )}
 
         {/* Bouton WhatsApp avec capture lead CRM si agence */}
