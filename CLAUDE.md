@@ -26,7 +26,32 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version Locale (29 septembre 2026 - Résolution Complète des Anomalies & Faiblesses Audio Nopalou) :
+### 📌 Dernière Version Déployée (29 septembre 2026 - Assainissement Exhaustif Immobilier, Purge Photos Mortes 403 & Faux Immo, Refonte Fallbacks) :
+- **Audit Médico-Légal & Assainissement Base de Données (`annonces_immo`, PostgreSQL)** :
+  - **Purge Faux Immo & Parasites (111 annonces rejetées)** : Éradication des annonces de recrutement de personnel de maison (nounous, aides-maisons type *THIAMSERVICE*), caissiers/gérants de boutique, vente de mobilier/high-tech (chaises visiteurs, tables de bureau, barres de son, blenders) et commentaires Facebook résiduels (*"Participant(e) anonyme"*, *"Je suis intéressé"*).
+  - **Purge Annonces sans Prix (614 annonces rejetées)** : Élimination stricte des annonces sans loyer ou au prix dérisoire `< 10 000 FCFA` responsables de l'invasion de tirets `—` sur le comparateur sectoriel.
+  - **Purge Numéros Invalides (4 annonces rejetées)** : Suppression des annonces sans contact téléphonique sénégalais direct vérifié.
+  - **Purge URLs Facebook Mortes HTTP 403 (443 annonces remises à `photos: []`)** : Remplacement des URLs `scontent...fbcdn.net` expirées et bloquées par Meta (qui généraient des carrés noirs et alt-texts tronqués `Mam`, `DAK`, `Maga`) par un tableau vide pour basculer sur les placeholders vectoriels propres.
+  - **Normalisation des Titres** : Remplacement des noms de profils d'auteurs Facebook (ex: *"Mamadou Sarel"*) par le vrai titre descriptif (*"Showroom & Grand Magasin 250 m² - Les Mamelles"*), suppression des préfixes *"DAKAR, SÉNÉGAL"* sur 21 annonces.
+  - **Inventaire Actif Sain** : 395 annonces réelles, vérifiées et joignables.
+- **Durcissement Backend & Scripts d'Ingestion (`backend/routes/immo.js`, `backend/scripts/consolidate-immo-classifiees.js`)** :
+  - **Comparateur Sectoriel (`/api/immo/:id/similaires`)** : Suppression définitive de `OR prix IS NULL`. Obligation stricte de `prix IS NOT NULL AND prix >= 10000 AND rejete = false`. Zéro annonce sans prix dans le tableau comparatif.
+  - **Catalogue Public (`GET /api/immo`)** : Verrouillage sur `ai.rejete = false AND ai.prix IS NOT NULL AND ai.prix >= 10000`.
+  - **Script de Consolidation Immo (`consolidate-immo-classifiees.js`)** : Ajout du prédicat `estFauxImmo`, nettoyage de titre `nettoyerTitreImmo`, purge des photos 403 et conditionnement `actif = true` à la présence conjointe d'un prix `>= 10 000` et d'un téléphone sénégalais valide.
+- **Refonte UI / UX & Fallbacks Visuels Haute Résilience (`GaleriePhotosFiche.tsx`, `immo/[id]/page.tsx`, `ImmoCard.tsx`)** :
+  - **Héro Galerie Immo Fiche Détail (`GaleriePhotosFiche.tsx`)** :
+    - Remplacement de l'état `null` vide par une carte héro élégante Nopalou avec icône vectorielle `Building2`, indiquant que les photos récentes sont disponibles sur demande directe via WhatsApp/appel auprès de l'annonceur.
+    - Écouteur `onError` sur l'image principale et les miniatures : bascule instantanée en placeholder vectoriel élégant en cas de CDN indisponible, sans aucun carré noir ni icône brisée.
+  - **Biens Comparables dans le Secteur (`immo/[id]/page.tsx`)** :
+    - Filtrage préventif côté client pour garantir zéro ligne sans prix.
+    - Remplacement du `<img alt />` brut par `ExternalImg` avec fallback vectoriel doux `Building2` pour un alignement impeccable sans texte alt débordant.
+  - **Cartes Catalogue Vitrine (`ImmoCard.tsx`)** :
+    - Remplacement de la boîte grise inerte par un visuel architectural soigné avec icône `Building2` et mention *"Photo sur demande"*.
+- **Validation Globale** :
+  - `npx tsc --noEmit` : **0 erreur**.
+  - `npm run lint:slop` : **0 violation** (aucun émoji Unicode dans l'UI).
+
+### 📌 Version Précédente (29 septembre 2026 - Résolution Complète des Anomalies & Faiblesses Audio Nopalou) :
 - **Audit & Remédiation Exhaustive du Moteur Audio & Assistant Vocal (`voice-assistant.ts`, `PosVoiceInput.tsx`, `KalpeSaisieMontant.tsx`, `NavbarSearch.tsx`, `whatsapp-chatbot.js`)** :
   - **Carnet de Dettes & Crédit Client (`voice-assistant.ts`)** :
     - **Correction Bug P0 (Inversion Dette/Remboursement)** : Priorisation stricte de `isRemboursement` sur `isCredit` (ex: *"Paiement dette Amadou 15000"* classé en remboursement et non plus en vente à crédit).
