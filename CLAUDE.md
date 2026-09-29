@@ -26,7 +26,9 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version (29 septembre 2026 - Moteur Crawler Sémantique Intelligent, Omnisource, Photos Cloudinary & Tâche Windows) :
+- **Expansion Massive du Répertoire Scraper Facebook (`backend/services/scraper-immo-facebook.js`)** :
+  - Intégration de plus de 80 nouveaux groupes Facebook qualifiés : passage d'un pool restreint à **102 groupes actifs** (Immobilier Dakar & Régions, Thiès, Saly/Mbour, Casamance, Keur Massar, Zac Mbao, Louma, High-Tech, Autos et Vide-greniers).
+  - Ajustement de la rotation de fenêtre glissante (`maxGroupes = 15`) : rotation intelligente par cycles de 15 groupes toutes les 6 heures pour couvrir l'intégralité du territoire en 24h sans saturer la RAM ni heurter les limites de débit Meta.
 - **Moteur & Interface Web de Crawling Sémantique Intelligent (`CrawlerAiCard.tsx`, `intelligent-crawler.js`, `scripts/crawl-ai.js`)** :
   - **Interface Web Admin (`/admin/prospection`)** : Ajout du formulaire interactif « Crawler Sémantique IA » dans l'onglet *Import & Sourcing* avec saisie d'URL, choix du volume d'annonces, bouton d'exécution asynchrone et rapport des créations en direct.
   - Implémentation du pattern architectural de Crawl4AI en 100% Node.js / Playwright natif (zéro latence inter-processus, zéro dépendance Python).
