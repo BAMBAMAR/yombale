@@ -1,5 +1,37 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Résolution Complète des Anomalies & Faiblesses Audio Nopalou (29 septembre 2026)** :
+  * **Problèmes Résolus & Améliorations Apportées** :
+    1. **Carnet de Dettes & Crédit Client (`voice-assistant.ts`)** :
+       - *Correction Bug P0 (Inversion Dette/Remboursement)* : Priorisation stricte de `isRemboursement` sur `isCredit` (ex: "Paiement dette Amadou 15000" classé en remboursement et non plus en vente à crédit).
+       - *Enrichissement des verbes de paiement* : Ajout de `paiement|paiements|acompte|acomptes|solde|solder|reglement`.
+       - *Neutralisation des numéros de téléphone sénégalais dictés* : Regex 9 chiffres `(?:\+?221\s*)?(?:7[05678]|33)...` éliminant le faux montant de dette extrait sur les numéros clients.
+       - *Éradication des faux clients de politesse* : Stop-words de salutation (`bonjour`, `bonsoir`, `salam`, `salut`, `allo`, `merci`, etc.) pour éviter la création de fiches clients parasites.
+    2. **Création & Saisie Produit (`voice-assistant.ts`)** :
+       - *Purge intégrale des nombres Wolof & caractères spéciaux non-ASCII* : Nettoyage des suffixes et formes numérales Wolof (`ñaari`, `netti`, `ñetti`, `ñeenti`, `juroomi`, `fukki`) via regex lookaround `(?:^|\s+)` sans faille `\b` sur les caractères UTF-8.
+       - *Suppression des verbes d'amorce étendus* : Prise en compte de `créer`, `mettre en vente`, etc.
+    3. **Saisie Express Comptable & Sama Xaalis (`voice-assistant.ts`, `KalpeSaisieMontant.tsx`)** :
+       - *Priorisation Fournitures vs Stock* : `fournitures` (emballages, sacs plastiques, cartons) passe avant `achat de stock`.
+       - *Détection Dépenses Dettes / Règlements* : Prise en compte de `remboursement|rembourser|dette|reglement` dans les charges comptables.
+       - *Guidage Pédagogique Vocal Sama Xaalis* : Ajout d'une consigne contextuelle dynamique pendant l'écoute (*« Dites un montant, ex : "5000", "10 mille", ou en Wolof "téemeer" / "junni" »*).
+    4. **Caisse POS Comptoir (`PosVoiceInput.tsx`)** :
+       - *Centralisation du moteur de normalisation* : Remplacement des regex ad-hoc par `normaliserTexteVocal` et `extraireMontantCFA` (support natif devises Wolof, abréviations 10k, séparateurs).
+       - *Conformité Design System* : Remplacement des couleurs hexadécimales brutes par les variables CSS de la charte Nopalou (`var(--danger)`, `var(--danger-bg)`, `var(--border)`, `var(--price)`, `var(--navy)`).
+       - *Bulle d'aide d'écoute active* : Affichage d'un prompt d'exemple lisible (*« Dites : 2 Café Touba ou 5000 FCFA »*).
+    5. **Recherche Globale Navbar (`NavbarSearch.tsx`)** :
+       - *Placeholder dynamique d'écoute* : Affichage de *« Parlez... Ex: Robe Bazin, iPhone... »* dès activation du microphone.
+       - *Tokens CSS conformes* : Remplacement des hexadécimaux inline par `var(--accent)` et `var(--text3)`.
+    6. **WhatsApp Note Vocale Audio (`backend/services/whatsapp-chatbot.js`)** :
+       - *Persistance & Traçabilité des Notes Vocales* : Sauvegarde immédiate de `audioUrl` dans `context.derniere_note_vocale_url`.
+       - *Rattachement automatique aux commandes* : Liaison de l'audio aux notes de la commande (`creerCommandeBoutique({ note: noteFinale })`) et transmission directe du lien audio au commerçant via `notifierVendeurCommande`.
+       - *Réponse contextuelle enrichie* : Confirmation personnalisée informant le client que sa note vocale est rattachée à sa commande en cours auprès de la boutique.
+  * **Validation & Benchmarks Audio Réels** :
+    - `scratch/test_audio_engine.mjs` : **22/22 tests PASSÉS (100%)** — Parsing monétaire, devises Wolof, Saisie Express, Carnet de dettes, Catalogue POS, Création produit, Audio WebAudio sans CDN, Permissions micro, et Stress Test (40 000 opérations de parsing en ~270 ms soit 6,9 µs/op).
+    - `scratch/test_dette_parsing.mjs` : **21/21 tests PASSÉS (100%)**.
+    - `frontend-next/` `npm test` : **69/69 tests validés (100%)**.
+    - `frontend-next/` `npx tsc --noEmit` : **0 erreur**.
+    - `frontend-next/` `npm run lint:slop` : **0 violation**.
+
 - **Audit Forensic d'Utilité Commerciale du Scraping, Assainissement DB & Déverrouillage des Canaux (28 septembre 2026)** :
   * **Problèmes Résolus & Améliorations Apportées** :
     1. **Assainissement des Données Immobilières Corrompues (`annonces_immo`)** :

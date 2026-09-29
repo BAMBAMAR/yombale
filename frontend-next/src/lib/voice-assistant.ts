@@ -61,7 +61,17 @@ export function normaliserTexteVocal(texte: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'’]/g, ' ')
+
+  // IMPORTANT : Préserver les décimales entre deux chiffres (ex: 2.5 ou 2,5 -> 2.5) avant de supprimer la ponctuation
+  res = res.replace(/(\d+)[,.](\d+)/g, '$1DOTDECIMAL$2')
+
+  // Supprimer la ponctuation résiduelle
+  res = res.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'’]/g, ' ')
+
+  // Restaurer le point décimal
+  res = res.replace(/DOTDECIMAL/g, '.')
+
+  res = res
     .replace(/[\u00a0\u202f\u2007\u2009\u200a]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -96,10 +106,13 @@ export function extraireMontantCFA(cleanText: string): number | null {
   if (!cleanText) return null
   const clean = normaliserTexteVocal(cleanText)
 
+  // 0. Neutraliser les numéros de téléphone sénégalais (exactement 9 chiffres commençant par 70, 75, 76, 77, 78, 33)
+  const cleanSansTel = clean.replace(/(?:\+?221\s*)?(?:7[05678]|33)(?:\s*\d{3}\s*\d{2}\s*\d{2}|\s*\d{2}\s*\d{2}\s*\d{3}|\s*\d{7})\b/g, ' ')
+
   // 1. Détection des devises Wolof (téemeer, junni) avec multiplicateur
   for (const [motW, baseVal] of Object.entries(DEVISES_WOLOF)) {
-    if (clean.includes(motW)) {
-      const mots = clean.split(/\s+/)
+    if (cleanSansTel.includes(motW)) {
+      const mots = cleanSansTel.split(/\s+/)
       const idx = mots.indexOf(motW)
       let mult = 1
       if (idx > 0) {
@@ -114,10 +127,10 @@ export function extraireMontantCFA(cleanText: string): number | null {
     }
   }
 
-  // 2. Détection de notation "chiffre + mille" ou "chiffre + k" (ex: "10 mille", "10k", "2.5 mille")
-  const matchChiffreMille = clean.match(/\b(\d+(?:[.,]\d+)?)\s*(?:k|mille|mil)\b/i)
+  // 2. Détection de notation "chiffre + mille" ou "chiffre + k" (ex: "10 mille", "10k", "2.5 mille", "2,5 k")
+  const matchChiffreMille = cleanSansTel.match(/\b(\d+(?:\.\d+)?)\s*(?:k|mille|mil)\b/i)
   if (matchChiffreMille) {
-    const val = parseFloat(matchChiffreMille[1].replace(',', '.'))
+    const val = parseFloat(matchChiffreMille[1])
     return Math.round(val * 1000)
   }
 
@@ -161,14 +174,14 @@ export function extraireMontantCFA(cleanText: string): number | null {
   ]
 
   for (const item of motsMille) {
-    if (item.pattern.test(clean)) {
+    if (item.pattern.test(cleanSansTel)) {
       return item.val
     }
   }
 
   // 4. Détection de nombres écrits en chiffres directs (ex: 2500, 10000, 50000)
   const regexChiffres = /\b(\d{3,8})\b/g
-  const matches = clean.match(regexChiffres)
+  const matches = cleanSansTel.match(regexChiffres)
   if (matches && matches.length > 0) {
     const nombres = matches.map(n => parseInt(n, 10))
     return Math.max(...nombres)
@@ -176,7 +189,7 @@ export function extraireMontantCFA(cleanText: string): number | null {
 
   // 5. Nombres 2 chiffres (ex: 50, 75, 100) si aucun plus grand
   const regexPetitsChiffres = /\b(\d{2})\b/g
-  const matchPetits = clean.match(regexPetitsChiffres)
+  const matchPetits = cleanSansTel.match(regexPetitsChiffres)
   if (matchPetits && matchPetits.length > 0) {
     const nombres = matchPetits.map(n => parseInt(n, 10))
     const nonTel = nombres.filter(n => n !== 77 && n !== 78 && n !== 76 && n !== 75 && n !== 70 && n !== 33)
@@ -216,14 +229,14 @@ export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente
   const montant = extraireMontantCFA(clean)
 
   // 1. Détection explicite des mots-clés de Dépense (singulier, pluriel, wolof, variantes)
-  const hasMotCleDepense = /\b(depense|depenses|depans|depanse|depanser|depanseur|charge|charges|sortie|sorties|payer|paiement|paiements|facture|factures|frais|perte|pertes|decaissement|decaissements)\b/i.test(clean)
+  const hasMotCleDepense = /\b(depense|depenses|depans|depanse|depanser|depanseur|charge|charges|sortie|sorties|payer|paiement|paiements|facture|factures|frais|perte|pertes|decaissement|decaissements|remboursement|rembourser|dette|reglement)\b/i.test(clean)
 
   // 2. Détection des catégories typiquement Dépenses même sans le mot "dépense"
   const isEcole = /\b(ecole|école|scolarite|scolarité|mensualite|mensualité|etudes|études|fournitures scolaires|inscription|daara|creche|crèche|universite|université|college|collège|lycee|lycée)\b/i.test(clean)
   const isPressing = /\b(pressing|blanchisserie|repassage|lavage|linge|nettoyage vetement|teinturerie)\b/i.test(clean)
   const isTransport = /\b(transport|transports|essence|carburant|gasoil|gazoil|diesel|taxi|taxis|tiak|tiaktiak|clando|peage|autoroute)\b/i.test(clean)
   const isLoyer = /\b(loyer|loyers|magasin|bail|locataire)\b/i.test(clean)
-  const isFourniture = /\b(fourniture|fournitures|sachet|sachets|emballage|emballages|carton|cartons|papier|papiers|scotch|etiquette|etiquettes)\b/i.test(clean)
+  const isFourniture = /\b(fourniture|fournitures|sachet|sachets|emballage|emballages|carton|cartons|papier|papiers|scotch|etiquette|etiquettes|sac|sacs|sacs plastiques|sac plastique)\b/i.test(clean)
   const isSalaire = /\b(salaire|salaires|employe|employes|personnel|gardien|commission|commissions|avance salaire)\b/i.test(clean)
   const isTaxes = /\b(taxe|taxes|impot|impots|patente|mairie|douane|fiscalite)\b/i.test(clean)
   const isChargesCourantes = /\b(woyofal|senelec|sde|sen eau|seneau|electricite|eau|sonatel|orange|wifi|forfait|credit telephone|repas|dejeuner|diner|manger|thieb|ndekki|nourriture|recharge)\b/i.test(clean)
@@ -263,6 +276,9 @@ export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente
     } else if (isLoyer) {
       cat = 'loyer'
       descDefaut = 'Paiement loyer'
+    } else if (isFourniture) {
+      cat = 'fournitures'
+      descDefaut = 'Fournitures / Emballages'
     } else if (isAchatStock || /\b(stock|marchandise|fournisseur|achat|colis)\b/i.test(clean)) {
       cat = 'stock'
       descDefaut = 'Achat de stock'
@@ -272,9 +288,6 @@ export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente
     } else if (/\b(marketing|pub|publicite|sponsor|flyer|flyers)\b/i.test(clean)) {
       cat = 'marketing'
       descDefaut = 'Marketing / Publicité'
-    } else if (isFourniture) {
-      cat = 'fournitures'
-      descDefaut = 'Fournitures / Emballages'
     } else if (isTaxes) {
       cat = 'taxes'
       descDefaut = 'Taxes / Impôts'
@@ -340,7 +353,7 @@ export function parseDetteIntent(transcript: string, listeClientsConnus: string[
 
     // Mots clés de remboursement avec variantes phonétiques fréquentes issues de la reconnaissance vocale
     // Wolof "fey" / "feyna" souvent transcrit par les moteurs FR en "faye", "faillite", "fait", "fais", "paye"
-    const isRemboursement = /\b(remboursement|remboursements|rembourser|rembourse|fey|feyna|feye|faye|faillite|payer|paye|payé|payee|a paye|a payé|versement|versements|verser|verse|versé|regler|regle|reglé|rendu|rendre)\b/i.test(clean)
+    const isRemboursement = /\b(remboursement|remboursements|rembourser|rembourse|paiement|paiements|payer|paye|payé|payee|a paye|a payé|acompte|acomptes|solde|solder|fey|feyna|feye|faye|faillite|versement|versements|verser|verse|versé|regler|reglement|regle|reglé|rendu|rendre)\b/i.test(clean)
 
     // Mots clés de dette / crédit avec variantes phonétiques fréquentes issues de la reconnaissance vocale
     // Wolof "bor" souvent transcrit par les moteurs FR en "bord", "bore", "boire", "bon", "port", "pour"
@@ -377,8 +390,12 @@ export function parseDetteIntent(transcript: string, listeClientsConnus: string[
 
     // 2. Si pas trouvé dans les clients connus, extraire le prénom/nom dicté
     if (!clientTrouve) {
-      const sansMotsCles = clean
-        .replace(/\b(dette|dettes|date|dates|credit|credits|bor|bore|bord|borde|boire|bon|port|pour|keredit|doit|dois|doigt|doivent|doive|prete|preter|avancer|avance|remboursement|remboursements|rembourser|rembourse|fey|feyna|faye|faillite|payer|paye|payé|versement|versements|verser|regler|cherche|trouve|voir|client|pour|de|du|des|le|la|bu|ci|ak|ajoute|ajouter|ajout|mettre|met|donne|donner|note|noter|enregistre|enregistrer|nouveau|nouvelle|prend|prendre|pris)\b/gi, ' ')
+      // Neutraliser les numéros de téléphone sénégalais dictés
+      const cleanSansTel = clean.replace(/(?:\+?221\s*)?(?:7[05678]|33)\s*\d{3}\s*\d{2}\s*\d{2}/g, ' ')
+        .replace(/(?:\+?221\s*)?(?:7[05678]|33)\d{7}/g, ' ')
+
+      const sansMotsCles = cleanSansTel
+        .replace(/\b(bonjour|bonsoir|salam|salut|allo|allô|merci|stp|svp|dette|dettes|date|dates|credit|credits|bor|bore|bord|borde|boire|bon|port|pour|keredit|doit|dois|doigt|doivent|doive|prete|preter|avancer|avance|remboursement|remboursements|rembourser|rembourse|paiement|paiements|acompte|acomptes|solde|solder|fey|feyna|faye|faillite|payer|paye|payé|versement|versements|verser|regler|reglement|cherche|trouve|voir|client|pour|de|du|des|le|la|bu|ci|ak|ajoute|ajouter|ajout|mettre|met|donne|donner|note|noter|enregistre|enregistrer|nouveau|nouvelle|prend|prendre|pris)\b/gi, ' ')
         .replace(/\b(\d{1,8})\b/g, ' ')
         .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs|f|euro|euros)\b/gi, ' ')
         .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|mille|million|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, ' ')
@@ -455,16 +472,30 @@ export function parseAjoutProduitIntent(transcript: string): { nom: string; prix
   let nomClean = transcript.trim()
 
   // Supprimer les verbes ou mots d'amorce éventuels
-  nomClean = nomClean.replace(/^(ajouter|mettre en vente|creer|nouveau produit|produit|article)\s+/i, '')
+  nomClean = nomClean.replace(/^(ajouter|mettre en vente|creer|créer|nouveau produit|produit|article)\s+/i, '')
 
   // Si un montant a été extrait, retirer la partie correspondant au prix à la fin ou dans le texte
   if (montant !== null) {
     // Retirer les nombres en chiffres purs
     nomClean = nomClean.replace(new RegExp(`\\b${montant}\\b`, 'g'), '')
+    // Retirer les formats abrégés (ex: "25k", "25 mille")
+    nomClean = nomClean.replace(/\b(\d+(?:[.,]\d+)?)\s*(?:k|mille|mil)\b/gi, '')
     // Retirer les devises wolof éventuelles
     nomClean = nomClean.replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs)\b/gi, '')
-    // Retirer les mots de prix écrits en lettres (ex: "quinze mille", "dix mille", "deux mille", "mille")
-    nomClean = nomClean.replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt|trente|quarante|cinquante|cent|mille|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, '')
+    // Purge de tous les nombres (Français et Wolof, y compris avec caractères spéciaux ñ)
+    const motsNombres = [
+      'un', 'une', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix',
+      'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'vingt', 'trente', 'quarante', 'cinquante', 'cent', 'mille', 'million',
+      'benn', 'ben', 'benni',
+      'naar', 'ñaar', 'niar', 'gnari', 'gnaar', 'naari', 'ñaari', 'niari',
+      'nett', 'ñett', 'gnett', 'niett', 'netti', 'ñetti',
+      'neent', 'ñeent', 'gneent', 'nient', 'neenti', 'ñeenti',
+      'juroom', 'juróom', 'diourom', 'djourom', 'juroomi', 'juróomi',
+      'fukk', 'fuk', 'fouk', 'fukki'
+    ]
+    const regexMots = new RegExp(`(?:^|\\s+)(?:${motsNombres.join('|')})(?=\\s+|$)`, 'gi')
+    nomClean = nomClean.replace(regexMots, ' ')
+    nomClean = nomClean.replace(regexMots, ' ')
   }
 
   // Nettoyer les espaces résiduels et la ponctuation

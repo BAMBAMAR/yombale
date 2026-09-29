@@ -142,7 +142,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Rechercher..."
+            placeholder={isListeningVoice ? "Parlez... Ex: Robe Bazin, iPhone..." : "Rechercher..."}
             className="navbar-search-input"
             autoFocus
             aria-label="Recherche globale Nopalou"
@@ -165,7 +165,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
             aria-label="Recherche vocale"
             title={isListeningVoice ? "Arrêter l'écoute" : "Recherche vocale (Wolof / FR)"}
             style={{
-              background: isListeningVoice ? '#ea580c' : 'none',
+              background: isListeningVoice ? 'var(--accent, #C75B00)' : 'none',
               border: 'none',
               borderRadius: '8px',
               width: 28,
@@ -174,11 +174,11 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: isListeningVoice ? '#ffffff' : '#64748b',
+              color: isListeningVoice ? '#ffffff' : 'var(--text3, #64748b)',
               marginRight: 2,
               flexShrink: 0,
               transition: 'all 0.2s ease',
-              boxShadow: isListeningVoice ? '0 0 0 3px rgba(234, 88, 12, 0.25)' : 'none',
+              boxShadow: isListeningVoice ? '0 0 0 3px rgba(199, 91, 0, 0.25)' : 'none',
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

@@ -84,14 +84,44 @@ export function KalpeSaisieMontant({
         </span>
       </div>
 
-      {/* Voice Feedback */}
+      {/* Voice Feedback ou Guide d'écoute */}
+      {isListening && !voiceFeedback && (
+        <div
+          style={{
+            fontSize: '11.5px',
+            color: 'var(--accent, #C75B00)',
+            background: 'var(--accent-light, #FFF7ED)',
+            border: '1px solid var(--accent-border, #FED7AA)',
+            padding: '6px 10px',
+            borderRadius: 8,
+            marginTop: '8px',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: 'var(--danger, #DC2626)',
+              display: 'inline-block',
+              flexShrink: 0,
+            }}
+          />
+          <span>Dites un montant, ex : « 5000 », « 10 mille », ou en Wolof « téemeer » / « junni »</span>
+        </div>
+      )}
+
       {voiceFeedback && (
         <div
           style={{
             fontSize: '11.5px',
-            color: isListening ? '#C75B00' : '#0A5C36',
-            background: isListening ? '#FFF7ED' : '#ECFDF5',
-            border: isListening ? '1px solid #FED7AA' : '1px solid #A7F3D0',
+            color: isListening ? 'var(--accent, #C75B00)' : 'var(--price, #0A5C36)',
+            background: isListening ? 'var(--accent-light, #FFF7ED)' : 'var(--success-bg, #ECFDF5)',
+            border: isListening ? '1px solid var(--accent-border, #FED7AA)' : '1px solid var(--success-border, #A7F3D0)',
             padding: '6px 10px',
             borderRadius: 8,
             marginTop: '8px',
@@ -107,13 +137,13 @@ export function KalpeSaisieMontant({
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                background: '#DC2626',
+                background: 'var(--danger, #DC2626)',
                 display: 'inline-block',
                 flexShrink: 0,
               }}
             />
           ) : (
-            <Check size={14} style={{ color: '#0A5C36', flexShrink: 0 }} />
+            <Check size={14} style={{ color: 'var(--price, #0A5C36)', flexShrink: 0 }} />
           )}
           <span>{voiceFeedback}</span>
         </div>

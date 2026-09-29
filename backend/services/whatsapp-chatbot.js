@@ -2239,6 +2239,18 @@ async function handleIncomingInternal(msg) {
       console.log('[WHATSAPP AUDIO]: Note vocale rattachée au contexte boutique', context.boutique_id);
     }
 
+    // Sauvegarde de l'audio dans le contexte session pour transmission au vendeur
+    if (audioUrl) {
+      const updatedContext = { ...(context || {}), derniere_note_vocale_url: audioUrl };
+      if (state?.startsWith('COMMANDE_')) {
+        updatedContext.commande = updatedContext.commande || {};
+        updatedContext.commande.notes = updatedContext.commande.notes
+          ? `${updatedContext.commande.notes} | Consigne vocale: ${audioUrl}`
+          : `Consigne vocale: ${audioUrl}`;
+      }
+      await setSession(phone, state || 'IDLE', updatedContext);
+    }
+
     // 1. Détection Commerçant (Boutique Yombale / Nopalou)
     const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
     if (bqMarchand) {
@@ -2263,9 +2275,11 @@ async function handleIncomingInternal(msg) {
     }
 
     // 2. Client / Acheteur
-    const msgContexte = context?.boutique_nom
-      ? `Votre consigne vocale a bien été enregistrée pour la boutique *${context.boutique_nom}*. Le vendeur l'écoutera directement pour votre commande.`
-      : `Si votre note vocale concerne une commande, le commerçant écoutera directement vos consignes.`;
+    const msgContexte = (state?.startsWith('COMMANDE_') && (context?.boutique_nom || context?.boutique?.nom))
+      ? `Votre consigne vocale a bien été enregistrée et rattachée à votre commande en cours pour la boutique *${context.boutique_nom || context.boutique?.nom}*. Le vendeur l'écoutera directement.`
+      : context?.boutique_nom
+        ? `Votre consigne vocale a bien été enregistrée pour la boutique *${context.boutique_nom}*. Le vendeur l'écoutera directement pour votre commande.`
+        : `Si votre note vocale concerne une commande, le commerçant écoutera directement vos consignes.`;
 
     await sendWhatsAppButtons3(
       phone,
@@ -4841,6 +4855,7 @@ async function handleIncomingInternal(msg) {
     const creees = [];
     const echecs = [];
     let boutiqueChargee = boutique;
+    const noteFinale = c.notes || (context.derniere_note_vocale_url ? `Consigne vocale: ${context.derniere_note_vocale_url}` : undefined);
     for (const item of c.items) {
       try {
         const { commande, boutique: b } = await creerCommandeBoutique({
@@ -4854,6 +4869,7 @@ async function handleIncomingInternal(msg) {
           methodePaiement: c.methode_paiement,
           zoneLivraisonId: c.zone_livraison_id || null,
           groupeCommande,
+          note: noteFinale,
         });
         creees.push(commande);
         boutiqueChargee = b;

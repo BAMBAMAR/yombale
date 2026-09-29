@@ -82,7 +82,7 @@ export default function PosVoiceInput({
 
   // Analyse intelligente de la commande vocale (Wolof & Français)
   const traiterCommandeVocale = (texte: string) => {
-    const clean = texte.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const clean = normaliserTexteVocal(texte)
     const mots = clean.split(/\s+/)
 
     // 1. Détection de quantité
@@ -95,27 +95,15 @@ export default function PosVoiceInput({
       }
     }
 
-    // 2. Détection de montant en Franc CFA / Wolof (ex: "téemeer" = 500, "junni" = 5000)
-    let montantDetecte: number | null = null
-    for (const [motW, montantW] of Object.entries(DEVISES_WOLOF)) {
-      if (clean.includes(motW)) {
-        montantDetecte = quantite > 1 ? quantite * montantW : montantW
-        break
-      }
-    }
-
-    // Si un nombre en milliers est dit (ex: "vente 5000" ou "2500")
-    const nombreDirectMatch = clean.match(/\b(\d{3,6})\b/)
-    if (nombreDirectMatch) {
-      montantDetecte = parseInt(nombreDirectMatch[1], 10)
-    }
+    // 2. Détection de montant en Franc CFA / Wolof (ex: "téemeer" = 500, "junni" = 5000, "5000 FCFA", "10k")
+    const montantDetecte = extraireMontantCFA(clean)
 
     // 3. Recherche du produit le plus proche dans le catalogue
     let meilleurProduit: ProduitCaisseVoice | null = null
     let scoreMax = 0
 
     for (const p of produits) {
-      const nomP = p.nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      const nomP = normaliserTexteVocal(p.nom)
       const motsP = nomP.split(/\s+/)
 
       let score = 0
@@ -180,20 +168,20 @@ export default function PosVoiceInput({
           height: 38,
           padding: isListening ? '0 14px' : '0 12px',
           borderRadius: 10,
-          border: isListening ? '2px solid #EF4444' : '1.5px solid #E2E8F0',
-          background: isListening ? '#FEF2F2' : '#FFFFFF',
-          color: isListening ? '#DC2626' : 'var(--navy, #1C2B4A)',
+          border: isListening ? '2px solid var(--danger, #DC2626)' : '1.5px solid var(--border, #E8DDD2)',
+          background: isListening ? 'var(--danger-bg, #FEF2F2)' : 'var(--card-bg, #FFFFFF)',
+          color: isListening ? 'var(--danger, #DC2626)' : 'var(--navy, #1C2B4A)',
           fontSize: 13,
           fontWeight: 750,
           cursor: 'pointer',
-          boxShadow: isListening ? '0 0 12px rgba(239, 68, 68, 0.4)' : '0 1px 2px rgba(0,0,0,0.04)',
+          boxShadow: isListening ? '0 0 12px rgba(220, 38, 38, 0.4)' : '0 1px 2px rgba(0,0,0,0.04)',
           transition: 'all 0.2s ease',
         }}
       >
         {isListening ? (
           <>
             <span style={{
-              width: 10, height: 10, borderRadius: '50%', background: '#DC2626',
+              width: 10, height: 10, borderRadius: '50%', background: 'var(--danger, #DC2626)',
               animation: 'pulse 1s infinite alternate'
             }} />
             <Mic size={16} />
@@ -207,6 +195,28 @@ export default function PosVoiceInput({
         )}
       </button>
 
+      {/* Guide vocal en cours d'écoute */}
+      {isListening && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          right: 0,
+          marginTop: 6,
+          zIndex: 9998,
+          background: 'var(--navy, #1C2B4A)',
+          color: '#FFFFFF',
+          padding: '6px 10px',
+          borderRadius: 8,
+          fontSize: 11.5,
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          pointerEvents: 'none'
+        }}>
+          « Dites : 2 Café Touba ou 5000 FCFA »
+        </div>
+      )}
+
       {/* Popover de confirmation / feedback vocal */}
       {feedback && (
         <div style={{
@@ -215,7 +225,7 @@ export default function PosVoiceInput({
           right: 0,
           marginTop: 8,
           zIndex: 9999,
-          background: feedback.type === 'success' ? '#166534' : feedback.type === 'error' ? '#991B1B' : '#1E293B',
+          background: feedback.type === 'success' ? 'var(--price, #0A5C36)' : feedback.type === 'error' ? 'var(--danger, #991B1B)' : 'var(--navy, #1C2B4A)',
           color: '#FFFFFF',
           padding: '10px 14px',
           borderRadius: 12,
