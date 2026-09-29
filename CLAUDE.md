@@ -26,7 +26,25 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-### 📌 Dernière Version (29 septembre 2026 - Alertes Multi-Canales Versements & Reversements, Diagnostic Wave Payout) :
+### 📌 Dernière Version (29 septembre 2026 - Refonte Ergonomique & Guidée de la Fiche Commande Mobile Marchand) :
+- **Clarification Immédiate du Workflow Marchand (`CommandeCard.tsx`)** :
+  - Éradication de la dispersion visuelle et des 7 boutons disparates au même niveau qui semaient le doute chez le marchand.
+  - Structuration en 3 zones limpides : Action prioritaire conseillée, Contact client & livraison, Détail financier transparent.
+- **Nouveau Composant d'Orientation Guidée (`CommandeNextStepGuide.tsx`)** :
+  - Diagnostic et affichage proéminent de l'action suivante attendue du marchand selon le cycle de vie de la commande :
+    - *En attente* : Validation de la commande en 1 clic ou relance Wave directe sur WhatsApp / Approbation de vente à crédit dans le carnet.
+    - *Confirmée* : Consigne claire de préparation du colis avec bouton principal « Passer en préparation » et bouton secondaire « Assigner livreur Tiak-Tiak ».
+    - *En préparation* : Bouton de transmission directe de la course « Dispatch Livreur Tiak-Tiak (WhatsApp) » et « Marquer comme expédiée ».
+    - *Expédiée* : Bouton « Confirmer la remise au client (Livrée) ».
+- **Optimisation Ergonomique Mobile & Contact Tactile** :
+  - Boutons d'action rapide côte à côte au format tactile (40px) : appel direct (`tel:`) et ouverture WhatsApp pré-remplie (`wa.me/`).
+  - Décomposition claire et sans équivoque des montants : prix article, frais de transport par zone, mode de règlement explicité (Wave, Espèces, etc.) et total mis en valeur en couleur accentuée Nopalou.
+- **Modularisation & Respect Strict des 5 Règles Anti-Slop** :
+  - Extraction de la logique métier dans [`useCommandeActions.ts`](file:///frontend-next/src/app/boutique/commandes/useCommandeActions.ts).
+  - Épuration de [`CommandeActionsBar.tsx`](file:///frontend-next/src/app/boutique/commandes/CommandeActionsBar.tsx) (actions secondaires et documents) et [`CommandeStatusSelector.tsx`](file:///frontend-next/src/app/boutique/commandes/CommandeStatusSelector.tsx) (correction manuelle discrète).
+  - Tous les composants strictement < 450 lignes, zéro émoji unicode (icônes vectorielles SVG `lucide-react`), tokens CSS officiels Nopalou (`--navy`, `--accent`, `--price`).
+
+### 📌 Version Précédente (29 septembre 2026 - Alertes Multi-Canales Versements & Reversements, Diagnostic Wave Payout) :
 - **Diagnostic Médicolégal Payout Wave 1-Clic** :
   - Interrogation directe de l'API Wave Payout avec les clés de production : identification précise du code d'erreur Wave `403 { code: 'no-permission', message: 'Your business using API key ending in BHow does not have permission for payouts_api. Please contact your account manager.' }`.
   - Enrichissement du mapping d'erreurs Wave dans [`backend/routes/comptabilite.js`](file:///backend/routes/comptabilite.js) avec un message d'action explicite pour l'administrateur.

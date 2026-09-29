@@ -5,6 +5,11 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  Phone,
+  MessageCircle,
+  MapPin,
+  CreditCard,
+  Package,
 } from 'lucide-react'
 import { updateStatutCommande } from '../actions'
 import { fmtDateHeure, fcfa } from '@/lib/format'
@@ -14,6 +19,8 @@ import { getStatutLabel, statutStyle } from './types'
 import CommandeSequestreBox from './CommandeSequestreBox'
 import CommandeActionsBar from './CommandeActionsBar'
 import CommandeStatusSelector from './CommandeStatusSelector'
+import CommandeNextStepGuide from './CommandeNextStepGuide'
+import { useCommandeActions } from './useCommandeActions'
 
 interface CommandeCardProps {
   commande: Commande
@@ -34,7 +41,6 @@ export default function CommandeCard({
 }: CommandeCardProps) {
   const { t } = useTranslation() as { t: any }
   const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [, startTransition] = useTransition()
 
   const cleanNom = (commande.nom_produit || '').trim()
@@ -57,11 +63,11 @@ export default function CommandeCard({
       : null
 
   function changeStatut(statut: string) {
-    setLoading(true)
+    actions.setLoading(true)
     startTransition(() => {
       updateStatutCommande(boutiqueId, commande.id, statut)
         .then(() => {
-          setLoading(false)
+          actions.setLoading(false)
           onUpdate()
           if (
             commande.methode_paiement === 'credit' ||
@@ -70,24 +76,53 @@ export default function CommandeCard({
             window.dispatchEvent(new Event('carnet_updated'))
           }
         })
-        .catch(() => setLoading(false))
+        .catch(() => actions.setLoading(false))
     })
   }
 
+  const actions = useCommandeActions(boutiqueId, commande, onUpdate, changeStatut)
+
+  const cleanPhone = (commande.client_telephone || '').replace(/\D/g, '')
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+    `Bonjour ${commande.client_nom}, concernant votre commande Réf: ${commande.reference} (${commande.quantite}x ${commande.nom_produit}) sur notre boutique Nopalou :`
+  )}`
+
+  const formatModePaiement = (mode: string | null) => {
+    if (!mode) return 'Paiement à la livraison / Espèces'
+    const dict: Record<string, string> = {
+      wave: 'Wave Mobile Money',
+      orange_money: 'Orange Money',
+      cash: 'Espèces à la livraison',
+      virement: 'Virement bancaire',
+      credit: t('shop.transactionCreditSale') || 'Achat à Crédit (Carnet)',
+    }
+    return dict[mode] || mode
+  }
+
   return (
-    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-      {/* Header commande */}
+    <div
+      style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: 12,
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}
+    >
+      {/* En-tête de la carte */}
       <div
         onClick={() => setOpen(!open)}
         style={{
-          padding: '14px 18px',
+          padding: '14px 16px',
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
           cursor: 'pointer',
+          background: open ? '#fafafa' : '#ffffff',
+          transition: 'background 0.15s ease',
         }}
       >
-        {/* Ligne 1 : Statuts & Badges à gauche | Montant, Date & Chevron à droite */}
+        {/* Ligne 1 : Statut & badges à gauche | Montant, Date & Accordéon à droite */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={statutStyle(commande.statut)}>{getStatutLabel(commande.statut, t)}</span>
@@ -111,15 +146,17 @@ export default function CommandeCard({
               <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: 'var(--accent, #C75B00)', whiteSpace: 'nowrap' }}>
                 {fcfa(commande.montant_total)}
               </p>
-              <p style={{ margin: 0, fontSize: 11, color: '#9ca3af', whiteSpace: 'nowrap' }}>{fmtDateHeure(commande.created_at)}</p>
+              <p style={{ margin: 0, fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap' }}>
+                {fmtDateHeure(commande.created_at)}
+              </p>
             </div>
-            <span style={{ color: '#9ca3af', display: 'flex', alignItems: 'center' }}>
+            <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
               {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </span>
           </div>
         </div>
 
-        {/* Ligne 2 : Nom du produit complet (zéro troncature sauvage) + Lien Fiche Produit */}
+        {/* Ligne 2 : Titre produit & Client */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, width: '100%' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p
@@ -127,14 +164,14 @@ export default function CommandeCard({
                 margin: 0,
                 fontWeight: 700,
                 fontSize: 14,
-                color: '#111827',
+                color: '#0f172a',
                 lineHeight: 1.4,
                 wordBreak: 'break-word',
               }}
             >
               {displayNomProduit}
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748b' }}>
               {commande.client_nom} · {commande.client_telephone}
             </p>
           </div>
@@ -148,17 +185,16 @@ export default function CommandeCard({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
+                gap: 4,
                 flexShrink: 0,
-                padding: '5px 9px',
-                borderRadius: 7,
+                padding: '4px 8px',
+                borderRadius: 6,
                 background: '#f8fafc',
                 border: '1px solid #cbd5e1',
                 color: '#0f172a',
                 fontSize: 11,
                 fontWeight: 700,
                 textDecoration: 'none',
-                marginTop: 2,
               }}
             >
               <ExternalLink size={12} color="#0284c7" />
@@ -168,96 +204,170 @@ export default function CommandeCard({
         </div>
       </div>
 
-      {/* Détails */}
+      {/* Détails dépliés (Vue Mobile & Desktop unifiée) */}
       {open && (
-        <div style={{ borderTop: '1px solid #f3f4f6', padding: '14px 18px', background: '#fafafa' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div>
-              <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>
-                {t('shop.orderClient').toUpperCase()}
-              </p>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{commande.client_nom}</p>
-              <a href={`tel:${commande.client_telephone}`} style={{ fontSize: 13, color: '#1d4ed8' }}>
-                {commande.client_telephone}
-              </a>
-              <br />
+        <div
+          style={{
+            borderTop: '1px solid #f1f5f9',
+            padding: '14px 16px',
+            background: '#ffffff',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+          }}
+        >
+          {/* 1. Étape suivante conseillée pour orienter immédiatement le marchand */}
+          <CommandeNextStepGuide
+            commande={commande}
+            loading={actions.loading}
+            changeStatut={changeStatut}
+            onDispatch={onDispatch}
+            onRelancerWave={actions.relancerWave}
+            onApprouverCredit={actions.approuverCredit}
+            onRejeterCredit={actions.rejeterCredit}
+            t={t}
+          />
+
+          {/* 2. Section Client & Contact Direct (Actionable Mobile) */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Client &amp; Livraison
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
+                {commande.client_nom}
+              </span>
+            </div>
+
+            {commande.client_adresse && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12.5, color: '#334155' }}>
+                <MapPin size={15} color="#64748b" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>{commande.client_adresse}</span>
+              </div>
+            )}
+
+            {/* Boutons d'action directe au pouce */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
               <a
-                href={`https://wa.me/${commande.client_telephone.replace(/\D/g, '')}`}
+                href={`tel:${commande.client_telephone}`}
+                style={{
+                  height: 40,
+                  background: '#ffffff',
+                  color: 'var(--navy, #1C2B4A)',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 8,
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                }}
+              >
+                <Phone size={15} color="#0284c7" />
+                <span>Appeler</span>
+              </a>
+
+              <a
+                href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
-                style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}
+                style={{
+                  height: 40,
+                  background: '#25D366',
+                  color: '#ffffff',
+                  borderRadius: 8,
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  boxShadow: '0 1px 2px rgba(37,211,102,0.2)',
+                }}
               >
-                WhatsApp
+                <MessageCircle size={15} />
+                <span>WhatsApp</span>
               </a>
             </div>
-            <div>
-              <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>
-                {t('shop.orders').toUpperCase()}
-              </p>
-              <p style={{ margin: 0, fontSize: 13 }}>
-                {t('shop.orderReference')} : <strong>{commande.reference}</strong>
-              </p>
-              <p style={{ margin: '4px 0 2px', fontSize: 13, fontWeight: 700, color: '#111827', wordBreak: 'break-word' }}>
-                {displayNomProduit}
-              </p>
-              <p style={{ margin: 0, fontSize: 13, color: '#4b5563' }}>
-                {commande.quantite} × {fcfa(commande.prix_unitaire)}
-              </p>
-              {commande.frais_livraison > 0 && (
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
-                  {t('shop.deliveryZoneLabel')} : {fcfa(commande.frais_livraison)}
-                </p>
-              )}
-              {commande.methode_paiement && (
-                <p
-                  style={{
-                    margin: '2px 0 0',
-                    fontSize: 12,
-                    color: commande.methode_paiement === 'credit' ? '#0369a1' : '#6b7280',
-                    fontWeight: commande.methode_paiement === 'credit' ? 800 : 400,
-                  }}
-                >
-                  {({
-                    wave: 'Wave',
-                    orange_money: 'Orange Money',
-                    cash: 'Espèces',
-                    virement: 'Virement',
-                    credit: t('shop.transactionCreditSale'),
-                  } as Record<string, string>)[commande.methode_paiement] ?? commande.methode_paiement}
-                </p>
-              )}
-              {commande.client_adresse && (
-                <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>
-                  {commande.client_adresse}
-                </p>
-              )}
-              {produitFicheUrl && (
-                <div style={{ marginTop: 8 }}>
-                  <a
-                    href={produitFicheUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 12px',
-                      borderRadius: 8,
-                      background: '#eff6ff',
-                      border: '1px solid #bfdbfe',
-                      color: '#1d4ed8',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                    }}
-                  >
-                    <ExternalLink size={13} />
-                    Voir la fiche du produit
-                  </a>
-                </div>
-              )}
+          </div>
+
+          {/* 3. Section Articles & Règlement (Clarté absolue des montants) */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Articles &amp; Règlement
+              </span>
+              <span style={{ fontSize: 11.5, color: '#64748b' }}>
+                Réf : <strong style={{ color: '#0f172a' }}>{commande.reference}</strong>
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, paddingTop: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                <Package size={14} color="#64748b" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
+                  {displayNomProduit}
+                </span>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap' }}>
+                {fcfa(commande.quantite * (commande.prix_unitaire || 0))}
+              </span>
+            </div>
+
+            {commande.frais_livraison > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, color: '#64748b' }}>
+                <span>Frais de livraison :</span>
+                <span>{fcfa(commande.frais_livraison)}</span>
+              </div>
+            )}
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderTop: '1px dashed #cbd5e1',
+                paddingTop: 8,
+                marginTop: 2,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CreditCard size={14} color="#64748b" />
+                <span style={{ fontSize: 12, color: '#475569' }}>
+                  {formatModePaiement(commande.methode_paiement)}
+                </span>
+              </div>
+              <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>
+                {fcfa(commande.montant_total)}
+              </span>
             </div>
           </div>
+
+          {/* Note client si présente */}
           {commande.note && (
             <div
               style={{
@@ -265,43 +375,35 @@ export default function CommandeCard({
                 border: '1px solid #fed7aa',
                 borderRadius: 8,
                 padding: '8px 12px',
-                marginBottom: 12,
-                fontSize: 13,
+                fontSize: 12.5,
                 color: '#92400e',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
               }}
             >
-              <span style={{ fontWeight: 700 }}>Note :</span> {commande.note}
+              <span style={{ fontWeight: 700 }}>Note du client :</span> {commande.note}
             </div>
           )}
 
-          {/* Nopalou Pay Safe — Séquestre Actif */}
+          {/* Nopalou Pay Safe — Séquestre Actif si applicable */}
           <CommandeSequestreBox commande={commande} onUpdate={onUpdate} />
 
-          {/* Actions de statut & Validation Marchand */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <CommandeActionsBar
-              commande={commande}
-              boutiqueId={boutiqueId}
-              loading={loading}
-              setLoading={setLoading}
-              changeStatut={changeStatut}
-              onUpdate={onUpdate}
-              onDispatch={onDispatch}
-              onRetour={onRetour}
-              t={t}
-            />
+          {/* 4. Barre d'outils secondaire compacte */}
+          <CommandeActionsBar
+            commande={commande}
+            loading={actions.loading}
+            onDispatch={onDispatch}
+            onRetour={onRetour}
+            onFacture={actions.genererFacture}
+            onAnnuler={actions.annulerCommande}
+            t={t}
+          />
 
-            {/* Avancement ou Correction de statut */}
-            <CommandeStatusSelector
-              commande={commande}
-              loading={loading}
-              changeStatut={changeStatut}
-              t={t}
-            />
-          </div>
+          {/* 5. Modification manuelle de statut (discrète) */}
+          <CommandeStatusSelector
+            commande={commande}
+            loading={actions.loading}
+            changeStatut={changeStatut}
+            t={t}
+          />
         </div>
       )}
     </div>

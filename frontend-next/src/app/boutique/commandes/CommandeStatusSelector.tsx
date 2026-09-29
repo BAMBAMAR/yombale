@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Edit3 } from 'lucide-react'
+import { Edit3, Check, X } from 'lucide-react'
 import type { Commande } from './types'
-import { STATUTS_META, TRANSITIONS, getStatutLabel } from './types'
+import { STATUTS_META, getStatutLabel } from './types'
 
 interface CommandeStatusSelectorProps {
   commande: Commande
@@ -20,7 +20,6 @@ export default function CommandeStatusSelector({
 }: CommandeStatusSelectorProps) {
   const [correcting, setCorrecting] = useState(false)
   const [correctStatut, setCorrectStatut] = useState(commande.statut)
-  const next = TRANSITIONS[commande.statut] ?? []
 
   function applyCorrection() {
     if (correctStatut === commande.statut) {
@@ -32,77 +31,57 @@ export default function CommandeStatusSelector({
   }
 
   return (
-    <>
-      {next.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: '#6b7280' }}>{t('shop.advanceStatus')} :</span>
-          {next.map((s) => {
-            const info = STATUTS_META.find((x) => x.key === s)!
-            return (
-              <button
-                key={s}
-                onClick={() => changeStatut(s)}
-                disabled={loading}
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: '5px 12px',
-                  borderRadius: 8,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  border: 'none',
-                  background: info.bg,
-                  color: info.color,
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                {getStatutLabel(s, t)} →
-              </button>
-            )
-          })}
-        </div>
-      )}
-      {next.length === 0 && (
-        <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>✓ {t('shop.orderUpdatedSuccess')}</p>
-      )}
-
-      {/* Correction de statut */}
+    <div style={{ display: 'flex', alignItems: 'center', marginTop: 4 }}>
       {!correcting ? (
         <button
+          type="button"
           onClick={() => {
             setCorrecting(true)
             setCorrectStatut(commande.statut)
           }}
           style={{
-            fontSize: 11,
-            color: '#6b7280',
+            fontSize: 11.5,
+            color: '#64748b',
             background: 'none',
-            border: '1px solid #e5e7eb',
+            border: '1px dashed #cbd5e1',
             borderRadius: 6,
             padding: '4px 10px',
             cursor: 'pointer',
-            alignSelf: 'flex-start',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 4,
+            gap: 5,
           }}
+          title="Modifier manuellement le statut de la commande en cas d'erreur"
         >
-          <Edit3 size={11} />
-          <span>
-            {t('common.edit')} {t('common.status')}
-          </span>
+          <Edit3 size={12} />
+          <span>{t('common.edit') || 'Modifier'} {t('common.status') || 'statut'}</span>
         </button>
       ) : (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, color: '#6b7280' }}>{t('common.edit')} :</span>
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            background: '#f1f5f9',
+            padding: '6px 10px',
+            borderRadius: 8,
+            width: '100%',
+          }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>
+            {t('common.edit') || 'Modifier'} :
+          </span>
           <select
             value={correctStatut}
             onChange={(e) => setCorrectStatut(e.target.value)}
             style={{
               fontSize: 12,
-              border: '1px solid #d1d5db',
+              border: '1px solid #cbd5e1',
               borderRadius: 6,
               padding: '4px 8px',
               background: '#fff',
+              color: '#0f172a',
             }}
           >
             {STATUTS_META.map((s) => (
@@ -112,37 +91,47 @@ export default function CommandeStatusSelector({
             ))}
           </select>
           <button
+            type="button"
             onClick={applyCorrection}
             disabled={loading}
             style={{
               fontSize: 12,
               fontWeight: 700,
-              background: '#374151',
+              background: 'var(--navy, #1C2B4A)',
               color: '#fff',
               border: 'none',
               borderRadius: 6,
-              padding: '4px 12px',
+              padding: '4px 10px',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
             }}
           >
-            {t('common.confirm')}
+            <Check size={13} />
+            <span>{t('common.confirm') || 'Valider'}</span>
           </button>
           <button
+            type="button"
             onClick={() => setCorrecting(false)}
             style={{
               fontSize: 12,
               background: 'none',
-              border: '1px solid #d1d5db',
+              border: '1px solid #cbd5e1',
               borderRadius: 6,
-              padding: '4px 10px',
+              padding: '4px 8px',
               cursor: 'pointer',
-              color: '#6b7280',
+              color: '#64748b',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 3,
             }}
           >
-            {t('common.cancel')}
+            <X size={13} />
+            <span>{t('common.cancel') || 'Annuler'}</span>
           </button>
         </div>
       )}
-    </>
+    </div>
   )
 }
