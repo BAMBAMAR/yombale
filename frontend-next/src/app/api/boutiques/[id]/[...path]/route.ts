@@ -22,10 +22,23 @@ async function proxy(req: NextRequest, boutiqueId: string, pathSegments: string[
       }
     }
 
+    const forwardHeaders: Record<string, string> = contentType.includes('multipart/form-data')
+      ? {}
+      : { 'Content-Type': contentType || 'application/json' }
+
+    const adminSecret = req.headers.get('x-admin-secret')
+    if (adminSecret) forwardHeaders['X-Admin-Secret'] = adminSecret
+
+    const authHeader = req.headers.get('authorization')
+    if (authHeader) forwardHeaders['Authorization'] = authHeader
+
+    const cookieHeader = req.headers.get('cookie')
+    if (cookieHeader) forwardHeaders['Cookie'] = cookieHeader
+
     const res = await backendFetch(url, {
       method: req.method,
       body,
-      headers: contentType.includes('multipart/form-data') ? {} : { 'Content-Type': contentType || 'application/json' },
+      headers: forwardHeaders,
     })
 
     const responseContentType = res.headers.get('content-type') || ''

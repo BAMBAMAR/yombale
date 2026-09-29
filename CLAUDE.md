@@ -26,6 +26,10 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Résolution Définitive de l'Erreur 401 sur le Portail Développeur (`/admin/developer`)** :
+  - **Correction du Proxy Next.js (`src/app/api/boutiques/[id]/[...path]/route.ts`)** : Transmission obligatoire des headers administratifs (`X-Admin-Secret`, `Authorization`) et des cookies de session vers le backend Express, évitant l'écrasement silencieux des privilèges.
+  - **Pré-chargement SSR Sécurisé (`developer/page.tsx`)** : Chargement direct côté serveur des clés API et webhooks avec les identifiants admin serveur, supprimant le flash de chargement et le 401 client.
+  - **Server Actions Développeur (`developer/actions.ts`, `DeveloperClient.tsx`)** : Implémentation de `fetchDevPortalData`, `revoquerCleApiAction` et `supprimerWebhookAction` avec révalidation instantanée du cache et conformité Anti-Slop (icônes vectorielles SVG `lucide-react`, palette officielle Nopalou).
 - **Expansion Massive du Répertoire Scraper Facebook (`backend/services/scraper-immo-facebook.js`)** :
   - Intégration de plus de 80 nouveaux groupes Facebook qualifiés : passage d'un pool restreint à **102 groupes actifs** (Immobilier Dakar & Régions, Thiès, Saly/Mbour, Casamance, Keur Massar, Zac Mbao, Louma, High-Tech, Autos et Vide-greniers).
   - Ajustement de la rotation de fenêtre glissante (`maxGroupes = 15`) : rotation intelligente par cycles de 15 groupes toutes les 6 heures pour couvrir l'intégralité du territoire en 24h sans saturer la RAM ni heurter les limites de débit Meta.
