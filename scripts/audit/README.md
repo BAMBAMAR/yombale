@@ -10,7 +10,7 @@ Méthode : `docs/METHODOLOGIE-AUDIT.md`. Ce kit ne touche jamais la production :
 
 ## Sauvegarde chiffrée du mot de passe (hors dépôt)
 
-`powershell -File scripts\audit\pgpass-backup.ps1 -Action save` chiffre `pgpass.txt` (DPAPI Windows) dans `%USERPROFILE%\.nopalou-audit\pgpass.dpapi`. Ce fichier n'est lisible que par le même compte Windows sur le même poste : il survit à un nouveau clone du dépôt, mais pas à la perte du poste ou du profil (conserver aussi le mot de passe dans un gestionnaire de mots de passe). `audit-env.ps1` et `check-pg.ps1` restaurent automatiquement `.local\pgpass.txt` depuis cette sauvegarde s'il manque ; `-Action status` indique l'état des deux fichiers. Refaire un `save` après toute réinitialisation du mot de passe.
+`powershell -File scripts\audit\pgpass-backup.ps1 -Action save` chiffre `pgpass.txt` (DPAPI Windows) en deux copies : `scripts\audit\.secrets\pgpass.dpapi` (dans le projet, ignorée par git) et `%USERPROFILE%\.nopalou-audit\pgpass.dpapi` (hors projet, survit à la suppression du dossier). Ce fichier n'est lisible que par le même compte Windows sur le même poste : il survit à un nouveau clone du dépôt, mais pas à la perte du poste ou du profil (conserver aussi le mot de passe dans un gestionnaire de mots de passe). `audit-env.ps1` et `check-pg.ps1` restaurent automatiquement `.local\pgpass.txt` depuis cette sauvegarde s'il manque ; `-Action status` indique l'état des deux fichiers. Refaire un `save` après toute réinitialisation du mot de passe.
 
 ## Mot de passe perdu ou `pgpass.txt` absent
 

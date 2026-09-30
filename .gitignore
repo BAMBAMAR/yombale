@@ -50,3 +50,5 @@ frontend-next/tsconfig.tsbuildinfo
 .superpowers/
 
 scripts/audit/.local/
+
+scripts/audit/.secrets/
