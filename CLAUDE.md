@@ -26,6 +26,9 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Correction du Type Error Next.js Build sur le Panier (`useDrawerCartCheckout.ts`)** :
+  - **Déclaration Hook Scope de `isRetrait` et `isAConvenir`** : Correction de la variable non déclarée `Cannot find name 'isAConvenir'` qui bloquait la compilation TypeScript (`next build`) en production sur Render. Les deux variables dérivées de `zoneSelectionnee` sont désormais instanciées à la racine du hook et exportées pour tout le cycle de vie du panier.
+
 - **Résolution du Crash Satori Edge ImageResponse `Image size cannot be determined` (`opengraph-image.tsx`, `assets/produit-promo/route.tsx`, `assets/produit-boutique/...`, `assets/boutique/...`)** :
   - **Attributs Numériques Explicites `width` et `height` sur `<img>`** : Satori (le moteur `@vercel/og` de Next.js) exige des dimensions numériques absolues (`width={X}` et `height={Y}`) directement sur les balises `<img>`. L'utilisation exclusive de styles CSS inline (`width: '100%'`, `maxWidth`) déclenchait une tentative interne de résolution du header de l'image distante qui échouait et plantait l'Edge Function (`Error: Image size cannot be determined. Please provide the width and height of the image.`).
   - **Garantie de Dimensions & Fallback Silencieux sur Toutes les Routes d'Images Dynamiques** :
