@@ -26,6 +26,11 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Assainissement des Zones de Livraison & Éradication du Faux Libellé « Gratuit » (`CheckoutStep1Info.tsx`, `CommanderFormView.tsx`, `useCommander.ts`, `DrawerCartCheckout.tsx`, `useDrawerCartCheckout.ts`, `checkout-express/page.tsx`, `whatsapp-chatbot.js`)** :
+  - **Suppression du Libellé « Gratuit » sur « Frais à convenir »** : L'option `Livraison (Frais à convenir avec le vendeur)` ayant techniquement un prix de 0 en base avant accord, l'interface lui accolait faussement `— Gratuit`, trompant le client. Seul le *Retrait en boutique* affiche désormais `Gratuit` ; l'option à convenir affiche son libellé exact sans suffixe de prix.
+  - **Suppression des Fausses Zones Géographiques par Défaut (Dakar / Banlieue / Régions)** : Lorsqu'un marchand n'a pas configuré de zones de livraison, le système n'injecte plus arbitrairement des zones fictives avec des tarifs inventés (1 000 F, 1 500 F, 2 200 F). Seules les deux options universelles sont présentées : `Livraison (Frais à convenir avec le vendeur)` et `Retrait gratuit en boutique`.
+  - **Alignement Web & Chatbot WhatsApp** : Suppression de `f_dakar_wave`, `f_dakar_cash` et `f_banlieue_cash` en fallback pour les boutiques sans grille tarifaire.
+
 - **Correction du Type Error Next.js Build sur le Panier (`useDrawerCartCheckout.ts`)** :
   - **Déclaration Hook Scope de `isRetrait` et `isAConvenir`** : Correction de la variable non déclarée `Cannot find name 'isAConvenir'` qui bloquait la compilation TypeScript (`next build`) en production sur Render. Les deux variables dérivées de `zoneSelectionnee` sont désormais instanciées à la racine du hook et exportées pour tout le cycle de vie du panier.
 
