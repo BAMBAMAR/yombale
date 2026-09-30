@@ -58,5 +58,6 @@ export const DEFAULT_ZONES: Zone[] = [
   { id: 'grande_banlieue', nom: 'Grande Banlieue (Rufisque, Bargny, Diamniadio) — 3 000 FCFA', prix: 3000 },
   { id: 'regions_proches', nom: 'Petite Côte & Thiès (Thiès, Mbour, Saly) — 3 500 FCFA', prix: 3500 },
   { id: 'regions_eloignees', nom: 'Régions Intérieures (St-Louis, Touba, Kaolack, Ziguinchor) — 5 000 FCFA', prix: 5000 },
+  { id: 'a_convenir', nom: 'Autre zone (Frais à convenir avec le vendeur)', prix: 0 },
   { id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 },
 ]

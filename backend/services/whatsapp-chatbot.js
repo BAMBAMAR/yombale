@@ -1907,6 +1907,51 @@ async function envoyerContactVendeurDirect(phone, boutique, produitId) {
   await setSession(phone, 'BOUTIQUE_MENU', { boutique });
 }
 
+// ── Modèle Hybride Pro : Générateur universel des formules de livraison WhatsApp ─
+function construireFormulesLivraisonWhatsApp(zonesRows) {
+  let rows = [];
+  if (Array.isArray(zonesRows) && zonesRows.length > 0) {
+    // Jusqu'à 3 zones pour garantir le respect strict du plafond de 10 rows de Meta
+    const zonesSelection = zonesRows.slice(0, 3);
+    for (const z of zonesSelection) {
+      const zNomCourt = (z.nom || 'Zone').slice(0, 15);
+      rows.push({
+        id: `f_z_${z.id}_wave`,
+        title: `🌊 ${zNomCourt} (Wave)`,
+        description: `${prixFmt(Number(z.prix))} — Payez par Wave`,
+      });
+      rows.push({
+        id: `f_z_${z.id}_cash`,
+        title: `💵 ${zNomCourt} (Cash)`,
+        description: `${prixFmt(Number(z.prix))} — Cash à la livraison`,
+      });
+    }
+    // Option Frais à convenir systématiquement offerte
+    rows.push({
+      id: 'f_a_convenir_cash',
+      title: '🚚 Frais à convenir',
+      description: 'Tarif fixé directement avec le vendeur',
+    });
+    // Retrait Boutique TOUJOURS garanti (gratuit)
+    rows.push({
+      id: 'f_retrait_cash',
+      title: '🏬 Retrait Boutique',
+      description: 'Gratuit (0 FCFA) — En magasin',
+    });
+  } else {
+    // Aucune zone personnalisée : propositions claires sans imposer un tarif unique
+    rows = [
+      { id: 'f_a_convenir_cash', title: '🚚 Frais à convenir (Cash)', description: 'Frais de livraison fixés avec le vendeur' },
+      { id: 'f_a_convenir_wave', title: '🌊 Frais à convenir (Wave)', description: 'Articles payés par Wave, livraison à part' },
+      { id: 'f_dakar_wave', title: '🌊 Dakar standard + Wave', description: '1 500 FCFA — Dakar & Wave' },
+      { id: 'f_dakar_cash', title: '💵 Dakar standard + Cash', description: '1 500 FCFA — Cash à la livraison' },
+      { id: 'f_banlieue_cash', title: '🚚 Banlieue + Cash', description: '2 500 FCFA — Cash à la livraison' },
+      { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
+    ];
+  }
+  return rows;
+}
+
 // ── Démarrage du flux de commande ────────────────────────────────────────────
 async function demarrerCommande(phone, boutique, produitId) {
   const r = await pool.query(
@@ -1939,21 +1984,7 @@ async function demarrerCommande(phone, boutique, produitId) {
   );
 
   const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
-  let rows = [];
-  if (zones.rows.length > 0) {
-    for (const z of zones.rows) {
-      rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Payez par Wave` });
-      rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash à la livraison` });
-    }
-  } else {
-    rows = [
-      { id: 'f_dakar_wave', title: '🌊 Dakar + Wave', description: '1 500 FCFA — Dakar & Wave' },
-      { id: 'f_dakar_cash', title: '💵 Dakar + Espèces', description: '1 500 FCFA — Cash à la livraison' },
-      { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave', description: '2 500 FCFA — Banlieue & Wave' },
-      { id: 'f_banlieue_cash', title: '🚚 Banlieue + Espèces', description: '2 500 FCFA — Cash à la livraison' },
-      { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
-    ];
-  }
+  const rows = construireFormulesLivraisonWhatsApp(zones.rows);
 
   await sendWhatsAppInteractive(
     phone,
@@ -1962,9 +1993,9 @@ async function demarrerCommande(phone, boutique, produitId) {
     [{ title: 'Formules Tout-en-un', rows }]
   ).catch(async () => {
     await sendWhatsAppButtons3(phone, 'Choisissez votre mode de livraison :', [
-      { id: 'f_dakar_wave', title: '🌊 Dakar + Wave' },
-      { id: 'f_dakar_cash', title: '💵 Dakar + Cash' },
       { id: 'f_retrait_cash', title: '🏬 Retrait Boutique' },
+      { id: 'f_a_convenir_cash', title: '🚚 Frais à convenir' },
+      { id: 'f_dakar_cash', title: '💵 Dakar Standard' },
     ]);
   });
 
@@ -2006,8 +2037,22 @@ async function envoyerRecapFinal(phone, boutique, commande) {
   for (const it of commande.items) {
     lignes.push(`🛍️ ${it.nom_produit} × ${it.quantite} — ${prixFmt(it.prix * it.quantite)}`);
   }
-  if (commande.frais_livraison) lignes.push(`🚚 Livraison (${commande.zone_nom}) : ${prixFmt(commande.frais_livraison)}`);
-  lignes.push(`*Total : ${prixFmt(total)}*`, ``);
+  const isRetrait = commande.zone_nom?.toLowerCase().includes('retrait');
+  const isAConvenir = commande.zone_nom?.toLowerCase().includes('convenir') || (commande.note && commande.note.includes('À convenir'));
+
+  if (commande.frais_livraison > 0) {
+    lignes.push(`🚚 Livraison (${commande.zone_nom}) : ${prixFmt(commande.frais_livraison)}`);
+  } else if (isRetrait) {
+    lignes.push(`🏬 Mode : Retrait en boutique (Gratuit)`);
+  } else if (isAConvenir) {
+    lignes.push(`🚚 Livraison : Frais à convenir avec le vendeur`);
+  }
+
+  if (isAConvenir) {
+    lignes.push(`*Total articles : ${prixFmt(total)} (+ livraison à régler à part)*`, ``);
+  } else {
+    lignes.push(`*Total : ${prixFmt(total)}*`, ``);
+  }
   lignes.push(`👤 ${commande.client_nom}`, `📞 ${commande.client_telephone}`, `📍 ${commande.client_adresse}`);
   lignes.push(`💳 Paiement : ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}`);
 
@@ -2093,21 +2138,7 @@ async function traiterPanierMeta(phone, order) {
   );
 
   const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
-  let rows = [];
-  if (zones.rows.length > 0) {
-    for (const z of zones.rows) {
-      rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Wave` });
-      rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash` });
-    }
-  } else {
-    rows = [
-      { id: 'f_dakar_wave', title: '🌊 Dakar + Wave', description: '1 500 FCFA — Dakar & Wave' },
-      { id: 'f_dakar_cash', title: '💵 Dakar + Espèces', description: '1 500 FCFA — Cash à la livraison' },
-      { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave', description: '2 500 FCFA — Banlieue & Wave' },
-      { id: 'f_banlieue_cash', title: '🚚 Banlieue + Espèces', description: '2 500 FCFA — Cash' },
-      { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
-    ];
-  }
+  const rows = construireFormulesLivraisonWhatsApp(zones.rows);
 
   await sendWhatsAppInteractive(
     phone,
@@ -2116,9 +2147,9 @@ async function traiterPanierMeta(phone, order) {
     [{ title: 'Formules Tout-en-un', rows }]
   ).catch(async () => {
     await sendWhatsAppButtons3(phone, 'Choisissez votre mode de livraison :', [
-      { id: 'f_dakar_wave', title: '🌊 Dakar + Wave' },
-      { id: 'f_dakar_cash', title: '💵 Dakar + Cash' },
       { id: 'f_retrait_cash', title: '🏬 Retrait Boutique' },
+      { id: 'f_a_convenir_cash', title: '🚚 Frais à convenir' },
+      { id: 'f_dakar_cash', title: '💵 Dakar Standard' },
     ]);
   });
 
@@ -4507,21 +4538,7 @@ async function handleIncomingInternal(msg) {
       return;
     }
     const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
-    let rows = [];
-    if (zones.rows.length > 0) {
-      for (const z of zones.rows) {
-        rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Wave` });
-        rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash` });
-      }
-    } else {
-      rows = [
-        { id: 'f_dakar_wave', title: '🌊 Dakar + Wave', description: '1 500 FCFA — Dakar & Wave' },
-        { id: 'f_dakar_cash', title: '💵 Dakar + Espèces', description: '1 500 FCFA — Cash à la livraison' },
-        { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave', description: '2 500 FCFA — Banlieue & Wave' },
-        { id: 'f_banlieue_cash', title: '🚚 Banlieue + Espèces', description: '2 500 FCFA — Cash' },
-        { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
-      ];
-    }
+    const rows = construireFormulesLivraisonWhatsApp(zones.rows);
     await sendWhatsAppInteractive(
       phone,
       'Livraison & Paiement',
@@ -4578,21 +4595,7 @@ async function handleIncomingInternal(msg) {
       return;
     } else if (!text || text.trim().length < 2) {
       const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
-      let rows = [];
-      if (zones.rows.length > 0) {
-        for (const z of zones.rows) {
-          rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Wave` });
-          rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash` });
-        }
-      } else {
-        rows = [
-          { id: 'f_dakar_wave', title: '🌊 Dakar + Wave', description: '1 500 FCFA — Dakar & Wave' },
-          { id: 'f_dakar_cash', title: '💵 Dakar + Espèces', description: '1 500 FCFA — Cash à la livraison' },
-          { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave', description: '2 500 FCFA — Banlieue & Wave' },
-          { id: 'f_banlieue_cash', title: '🚚 Banlieue + Espèces', description: '2 500 FCFA — Cash' },
-          { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
-        ];
-      }
+      const rows = construireFormulesLivraisonWhatsApp(zones.rows);
       await sendWhatsAppInteractive(
         phone,
         'Livraison & Paiement',
@@ -4621,21 +4624,7 @@ async function handleIncomingInternal(msg) {
       };
 
       const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
-      let rows = [];
-      if (zones.rows.length > 0) {
-        for (const z of zones.rows) {
-          rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Payez par Wave` });
-          rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash à la livraison` });
-        }
-      } else {
-        rows = [
-          { id: 'f_dakar_wave', title: '🌊 Dakar + Wave (1500F)', description: 'Livraison Dakar & Wave' },
-          { id: 'f_dakar_cash', title: '💵 Dakar + Cash (1500F)', description: 'Livraison Dakar & Espèces' },
-          { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave (2500F)', description: 'Banlieue (Pikine...) & Wave' },
-          { id: 'f_banlieue_cash', title: '🚚 Banlieue + Cash (2500F)', description: 'Banlieue & Espèces à la livraison' },
-          { id: 'f_retrait_cash', title: '🏬 Retrait sur place', description: 'Retrait en boutique (0 FCFA)' },
-        ];
-      }
+      const rows = construireFormulesLivraisonWhatsApp(zones.rows);
       await sendWhatsAppInteractive(
         phone,
         'Livraison & Paiement',
@@ -4691,15 +4680,18 @@ async function handleIncomingInternal(msg) {
     } else {
       const commandeAvecAdresse = { ...context.commande, client_adresse: text.trim() };
 
-      const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 10', [boutique.id]);
+      const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 8', [boutique.id]);
       let rows = [];
       if (zones.rows.length > 0) {
         rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
+        rows.push({ id: 'zone_def_a_convenir', title: '🚚 Frais à convenir', description: 'Tarif fixé avec le vendeur' });
+        rows.push({ id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA) — En magasin' });
       } else {
         rows = [
+          { id: 'zone_def_a_convenir', title: '🚚 Frais à convenir', description: 'Tarif fixé avec le vendeur' },
           { id: 'zone_def_dakar', title: '📍 Dakar (Intra-Muros)', description: '1 500 FCFA' },
-          { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA)' },
           { id: 'zone_def_banlieue', title: '🚚 Banlieue (Pikine...)', description: '2 500 FCFA' },
+          { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA)' },
         ];
       }
       await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre mode/zone de livraison :', [{ title: 'Options Livraison', rows }]);
@@ -4741,6 +4733,14 @@ async function handleIncomingInternal(msg) {
       zoneNom = 'Retrait en boutique (gratuit)';
       fraisLivraison = 0;
       methodePaiement = 'cash';
+    } else if (interactiveId === 'f_a_convenir_cash' || interactiveId === 'zone_def_a_convenir') {
+      zoneNom = 'À convenir avec le vendeur';
+      fraisLivraison = 0;
+      methodePaiement = 'cash';
+    } else if (interactiveId === 'f_a_convenir_wave') {
+      zoneNom = 'À convenir avec le vendeur';
+      fraisLivraison = 0;
+      methodePaiement = 'wave';
     } else {
       const customMatch = interactiveId.match(/^f_z_(.+)_(wave|cash)$/);
       if (customMatch) {
@@ -4765,12 +4765,20 @@ async function handleIncomingInternal(msg) {
       }
     }
 
+    const isAConvenir = zoneNom === 'À convenir avec le vendeur';
+    const noteExistante = context.commande?.note || context.commande?.notes || '';
+    const noteFinale = isAConvenir && !noteExistante.includes('À convenir')
+      ? (noteExistante ? `${noteExistante} | [Livraison : À convenir avec le client]` : '[Livraison : À convenir avec le client]')
+      : noteExistante;
+
     await envoyerRecapFinal(phone, boutique, {
       ...context.commande,
       zone_livraison_id: zoneId,
       zone_nom: zoneNom,
       frais_livraison: fraisLivraison,
       methode_paiement: methodePaiement,
+      note: noteFinale || undefined,
+      notes: noteFinale || undefined,
     });
     return;
   }

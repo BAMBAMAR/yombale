@@ -9,6 +9,7 @@ const DEFAULT_ZONES: Zone[] = [
   { id: 'dakar-intra', nom: 'Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
   { id: 'dakar-banlieue', nom: 'Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
   { id: 'regions-senegal', nom: 'Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
+  { id: 'a-convenir', nom: 'Autre quartier (Frais à convenir avec le vendeur)', prix: 0 },
   { id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 },
 ]
 
@@ -55,14 +56,26 @@ export function useDrawerCartCheckout() {
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
-  // Chargement des zones de livraison
+  // Chargement des zones de livraison — Modèle Hybride Pro (Garantie Retrait & À convenir)
   useEffect(() => {
     if (activeBoutiqueId) {
       fetch(`${backendUrl}/api/comptabilite/${activeBoutiqueId}/zones/public`)
         .then((r) => (r.ok ? r.json() : []))
         .then((data) => {
-          if (Array.isArray(data) && data.length > 0) setZones(data)
-          else setZones(DEFAULT_ZONES)
+          if (Array.isArray(data) && data.length > 0) {
+            const hasRetrait = data.some((z: Zone) => z.id === 'retrait-boutique' || z.nom.toLowerCase().includes('retrait'))
+            const hasConvenir = data.some((z: Zone) => z.id === 'a-convenir' || z.nom.toLowerCase().includes('convenir'))
+            const merged = [...data]
+            if (!hasConvenir) {
+              merged.push({ id: 'a-convenir', nom: 'Autre quartier (Frais à convenir avec le vendeur)', prix: 0 })
+            }
+            if (!hasRetrait) {
+              merged.push({ id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 })
+            }
+            setZones(merged)
+          } else {
+            setZones(DEFAULT_ZONES)
+          }
         })
         .catch(() => setZones(DEFAULT_ZONES))
     }
@@ -183,10 +196,22 @@ export function useDrawerCartCheckout() {
     if (currentReduction > 0 && currentPromoCode) {
       msg += `Code Promo (${currentPromoCode}): -${fcfa(currentReduction)}\n`
     }
+    const isRetrait = zoneSelectionnee?.id === 'retrait-boutique' || zoneSelectionnee?.nom?.toLowerCase().includes('retrait')
+    const isAConvenir = zoneSelectionnee?.id === 'a-convenir' || zoneSelectionnee?.nom?.toLowerCase().includes('convenir')
+
     if (currentFraisLivraison > 0) {
       msg += `Livraison (${zoneSelectionnee?.nom || 'Zone choisie'}): ${fcfa(currentFraisLivraison)}\n`
+    } else if (isRetrait) {
+      msg += `Mode: Retrait gratuit en boutique\n`
+    } else if (isAConvenir) {
+      msg += `Livraison: Frais à convenir avec le vendeur\n`
     }
-    msg += `TOTAL: ${fcfa(currentTotal !== undefined ? currentTotal : currentSousTotal + currentFraisLivraison - currentReduction)}\n\nPouvons-nous organiser la livraison ?`
+
+    if (isAConvenir) {
+      msg += `TOTAL: ${fcfa(currentSousTotal - currentReduction)} (+ livraison à régler à part)\n\nPouvons-nous organiser la livraison ?`
+    } else {
+      msg += `TOTAL: ${fcfa(currentTotal !== undefined ? currentTotal : currentSousTotal + currentFraisLivraison - currentReduction)}\n\nPouvons-nous organiser la livraison ?`
+    }
     return msg
   }
 
@@ -261,6 +286,7 @@ export function useDrawerCartCheckout() {
           methode_paiement: currentMethode,
           zone_livraison_id: zoneId && zoneId.length === 36 ? zoneId : undefined,
           frais_livraison: currentFraisLiv,
+          note: isAConvenir ? '[Livraison : À convenir avec le client]' : isRetrait ? '[Retrait en boutique]' : undefined,
           source: 'web_panier',
           items: formattedItems,
           code_promo: currentPromoCode || undefined,

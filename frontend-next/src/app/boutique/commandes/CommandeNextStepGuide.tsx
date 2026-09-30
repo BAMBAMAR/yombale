@@ -42,6 +42,14 @@ export default function CommandeNextStepGuide({
 
   // Configurations adaptatives selon l'état actuel de la commande
   if (commande.statut === 'en_attente') {
+    const isAConvenir = (!commande.frais_livraison || commande.frais_livraison === 0) && (
+      Boolean(commande.note && (commande.note.includes('À convenir') || commande.note.includes('a convenir')))
+    )
+    const isRetrait = (!commande.frais_livraison || commande.frais_livraison === 0) && (
+      Boolean(commande.note && commande.note.toLowerCase().includes('retrait')) ||
+      Boolean(commande.client_adresse && commande.client_adresse.toLowerCase().includes('retrait'))
+    )
+
     return (
       <div
         style={{
@@ -65,6 +73,79 @@ export default function CommandeNextStepGuide({
             ? "Le client sollicite un achat à crédit. Validez ou refusez l'inscription dans son carnet."
             : "Nouvelle commande reçue. Confirmez la commande pour engager sa préparation."}
         </p>
+
+        {isAConvenir && (
+          <div
+            style={{
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
+              borderRadius: 8,
+              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Truck size={15} color="#b45309" />
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: '#92400e' }}>
+                Frais de livraison à convenir avec le client
+              </span>
+            </div>
+            <p style={{ margin: 0, fontSize: 12, color: '#78350f', lineHeight: 1.4 }}>
+              Adresse client : <strong>{commande.client_adresse || 'Non précisée'}</strong>.
+              Fixez le tarif du transport avec le client avant d&apos;expédier la marchandise.
+            </p>
+            {commande.client_telephone && (
+              <button
+                type="button"
+                onClick={() => {
+                  const cleanTel = commande.client_telephone.replace(/\D/g, '')
+                  const telWa = cleanTel.length === 9 ? `221${cleanTel}` : cleanTel
+                  const nomTxt = commande.client_nom && commande.client_nom !== 'Client WhatsApp' ? ` ${commande.client_nom}` : ''
+                  const msg = `Bonjour${nomTxt} ! Pour votre commande ${commande.reference} (${commande.nom_produit}), nous préparons votre livraison pour ${commande.client_adresse || 'votre quartier'}. Le coût du tiak-tiak est de ... FCFA. Êtes-vous d'accord ?`
+                  window.open(`https://wa.me/${telWa}?text=${encodeURIComponent(msg)}`, '_blank')
+                }}
+                style={{
+                  padding: '7px 12px',
+                  background: '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  alignSelf: 'flex-start',
+                }}
+              >
+                <MessageCircle size={14} />
+                <span>Fixer le tarif sur WhatsApp</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {isRetrait && (
+          <div
+            style={{
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              borderRadius: 8,
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <PackageCheck size={16} color="#059669" />
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: '#065f46' }}>
+              Mode Retrait en boutique — Le client viendra récupérer sa commande sur place.
+            </span>
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2 }}>
           {isCredit ? (

@@ -978,16 +978,20 @@ router.get('/:boutiqueId/commandes', verifierToken, async (req, res) => {
   }
 });
 
-// PATCH /api/comptabilite/:boutiqueId/commandes/:commandeId — vendeur change le statut
+// PATCH /api/comptabilite/:boutiqueId/commandes/:commandeId — vendeur change le statut ou ajuste les frais de livraison
 router.patch(
   '/:boutiqueId/commandes/:commandeId',
   verifierToken,
   param('boutiqueId').isUUID(),
   param('commandeId').isUUID(),
-  body('statut').isIn(STATUTS_VALIDES),
+  body('statut').optional().isIn(STATUTS_VALIDES),
+  body('frais_livraison').optional().isNumeric(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    if (!req.body.statut && req.body.frais_livraison === undefined) {
+      return res.status(400).json({ error: 'Statut ou frais de livraison requis' });
+    }
     try {
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
@@ -998,11 +1002,22 @@ router.patch(
       );
       if (!oldCmd) return res.status(404).json({ error: 'Commande introuvable' });
       const ancienStatut = oldCmd.statut;
+      const nouveauStatut = req.body.statut || ancienStatut;
+
+      let nouveauFrais = Number(oldCmd.frais_livraison || 0);
+      let nouveauMontantTotal = Number(oldCmd.montant_total || 0);
+
+      if (req.body.frais_livraison !== undefined) {
+        const parsedFrais = Math.max(0, Math.round(Number(req.body.frais_livraison) || 0));
+        const diff = parsedFrais - Number(oldCmd.frais_livraison || 0);
+        nouveauFrais = parsedFrais;
+        nouveauMontantTotal = Math.max(0, Number(oldCmd.montant_total || 0) + diff);
+      }
 
       const { rows: [commande] } = await pool.query(
-        `UPDATE commandes_boutique SET statut=$1, updated_at=NOW()
-         WHERE id=$2 AND boutique_id=$3 RETURNING *`,
-        [req.body.statut, req.params.commandeId, req.params.boutiqueId]
+        `UPDATE commandes_boutique SET statut=$1, frais_livraison=$2, montant_total=$3, updated_at=NOW()
+         WHERE id=$4 AND boutique_id=$5 RETURNING *`,
+        [nouveauStatut, nouveauFrais, nouveauMontantTotal, req.params.commandeId, req.params.boutiqueId]
       );
       if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
 

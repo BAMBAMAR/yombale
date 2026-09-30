@@ -33,6 +33,7 @@ export {
   deleteVente,
   listCommandes,
   updateStatutCommande,
+  updateCommandeLivraison,
   creerCommandeDirecte,
   getPosHistorique,
   creerPosVente,

@@ -230,6 +230,22 @@ export async function updateStatutCommande(boutiqueId: string, commandeId: strin
   }
 }
 
+export async function updateCommandeLivraison(boutiqueId: string, commandeId: string, fraisLivraison: number): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/commandes/${commandeId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ frais_livraison: fraisLivraison }),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de mettre à jour les frais de livraison' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function creerCommandeDirecte(
   boutiqueId: string,
   data: {

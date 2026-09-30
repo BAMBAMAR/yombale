@@ -224,12 +224,22 @@ export default function CommandeCard({
                   </span>
                 </div>
 
-                {commande.frais_livraison > 0 && (
+                {commande.frais_livraison > 0 ? (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, color: '#64748b' }}>
                     <span>Frais de livraison :</span>
                     <span>{fcfa(commande.frais_livraison)}</span>
                   </div>
-                )}
+                ) : (commande.note?.includes('À convenir') || commande.note?.includes('a convenir')) ? (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#b45309', background: '#fffbeb', padding: '4px 8px', borderRadius: 6, border: '1px solid #fde68a' }}>
+                    <span style={{ fontWeight: 700 }}>⚠️ Livraison :</span>
+                    <span style={{ fontWeight: 700 }}>Frais à convenir</span>
+                  </div>
+                ) : (commande.client_adresse?.toLowerCase().includes('retrait') || commande.note?.toLowerCase().includes('retrait')) ? (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#047857', background: '#ecfdf5', padding: '4px 8px', borderRadius: 6, border: '1px solid #a7f3d0' }}>
+                    <span style={{ fontWeight: 700 }}>🏬 Mode :</span>
+                    <span>Retrait en boutique (Gratuit)</span>
+                  </div>
+                ) : null}
 
                 <div className="npl-commande-item-total">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

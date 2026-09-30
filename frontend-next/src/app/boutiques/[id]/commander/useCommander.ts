@@ -78,8 +78,20 @@ export function useCommander({
     fetch(`${backendUrl}/api/comptabilite/${boutiqueId}/zones/public`)
       .then(r => (r.ok ? r.json() : []))
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) setZones(data)
-        else setZones(DEFAULT_ZONES)
+        if (Array.isArray(data) && data.length > 0) {
+          const hasRetrait = data.some((z: Zone) => z.id === 'retrait-boutique' || z.nom.toLowerCase().includes('retrait'))
+          const hasConvenir = data.some((z: Zone) => z.id === 'a_convenir' || z.nom.toLowerCase().includes('convenir'))
+          const merged = [...data]
+          if (!hasConvenir) {
+            merged.push({ id: 'a_convenir', nom: 'Autre zone (Frais à convenir avec le vendeur)', prix: 0 })
+          }
+          if (!hasRetrait) {
+            merged.push({ id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 })
+          }
+          setZones(merged)
+        } else {
+          setZones(DEFAULT_ZONES)
+        }
       })
       .catch(() => setZones(DEFAULT_ZONES))
 
@@ -250,6 +262,11 @@ export function useCommander({
         }
       }
 
+      const isAConvenir = zoneId === 'a_convenir' || zoneSelectionnee?.nom?.toLowerCase().includes('convenir')
+      const isRetrait = zoneId === 'retrait-boutique' || zoneSelectionnee?.nom?.toLowerCase().includes('retrait')
+      const noteSupplementaire = isAConvenir ? '[Livraison : À convenir avec le client]' : isRetrait ? '[Retrait en boutique]' : ''
+      const noteFinale = note ? (noteSupplementaire ? `${note} | ${noteSupplementaire}` : note) : (noteSupplementaire || undefined)
+
       const res = await fetch(`${backendUrl}/api/boutiques/commandes/express`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -258,7 +275,7 @@ export function useCommander({
           client_nom: nom,
           client_telephone: tel,
           client_adresse: adresse || undefined,
-          note: note || undefined,
+          note: noteFinale,
           methode_paiement: paiement,
           frais_livraison: fraisLivraison,
           articles: articlesPayload,

@@ -45,14 +45,40 @@ async function notifierVendeurCommande(boutique, {
   const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes&ref=${encodeURIComponent(reference)}` : `${SITE}/boutique?tab=commandes&ref=${encodeURIComponent(reference)}`;
   const btnParam = bRef ? `boutique?manage=${bRef}&tab=commandes` : 'boutique?tab=commandes';
   const montantFmt = new Intl.NumberFormat('fr-FR').format(montantTotal);
+  const isAConvenir = (!fraisLivraison || fraisLivraison === 0) && (
+    (note && (note.includes('À convenir') || note.includes('a convenir'))) ||
+    (commande.zone_nom && commande.zone_nom.toLowerCase().includes('convenir'))
+  );
+  const isRetrait = (!fraisLivraison || fraisLivraison === 0) && (
+    (note && note.toLowerCase().includes('retrait')) ||
+    (commande.zone_nom && commande.zone_nom.toLowerCase().includes('retrait')) ||
+    (clientAdresse && clientAdresse.toLowerCase().includes('retrait'))
+  );
+
+  let ligneLivraison = '';
+  if (fraisLivraison > 0) {
+    ligneLivraison = `🚚 Livraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA\n`;
+  } else if (isRetrait) {
+    ligneLivraison = `🏬 Mode : Retrait gratuit en boutique\n`;
+  } else if (isAConvenir) {
+    ligneLivraison = `🚚 Livraison : ⚠️ *Frais à convenir avec le client*\n`;
+  }
+
+  const cleanTelClient = String(clientTelephone || '').replace(/\D/g, '');
+  const telClientWa = cleanTelClient.length === 9 ? `221${cleanTelClient}` : cleanTelClient;
+  const ctaAConvenir = (isAConvenir && telClientWa)
+    ? `💬 *Convenir du transport avec le client sur WhatsApp :*\n👉 https://wa.me/${telClientWa}\n\n`
+    : '';
+
   const msg = `${isCredit ? '🚨 *Demande d\'achat à crédit (Carnet)*' : '🛒 *Nouvelle commande*'} — *${boutique.nom}*\n\n` +
     `Réf : *${reference}*\n` +
     `Produit : ${nomProduit} × ${quantite}\n` +
-    (montantTotal > 0 ? `Montant : *${montantFmt} FCFA*\n` : '') +
-    (fraisLivraison > 0 ? `Livraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA\n` : '') +
+    (montantTotal > 0 ? `Montant : *${montantFmt} FCFA*${isAConvenir ? ' (+ livraison à part)' : ''}\n` : '') +
+    ligneLivraison +
     `💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n` +
     `👤 Client : ${clientNom}\n` +
     `📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n` +
+    ctaAConvenir +
     `👉 *Consultez vos commandes ici :*\n${lienCommandes}\n\n` +
     `⚡ Répondez vite pour confirmer !`;
 
@@ -66,7 +92,7 @@ async function notifierVendeurCommande(boutique, {
     `📞 Tél : ${clientTelephone || 'Non renseigné'}` +
     (clientAdresse ? `\n📍 Adresse : ${clientAdresse}` : '') +
     `\n💳 Paiement : ${payLabel}` +
-    (fraisLivraison > 0 ? ` | Livr: ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} F` : '');
+    (fraisLivraison > 0 ? ` | Livr: ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} F` : isRetrait ? ' | Retrait magasin' : isAConvenir ? ' | Livr: À convenir' : '');
 
   sendWhatsAppNotification(vendeurTel, {
     textMessage: msg,
