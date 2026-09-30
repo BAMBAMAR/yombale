@@ -528,8 +528,8 @@ Commits du périmètre depuis le dernier rapport : `744272e0` (checkout express,
 | AUD-073, 074, 075, 076 | corrigé | même fichier (prix serveur, 409 surstock + concurrence, suspendu/hors vente/sans prix, variantes) |
 | AUD-077, 078 | corrigé | même fichier (cycle de statuts, trace de remboursement, frais seuls) |
 | AUD-079, 080 | corrigé | même fichier (jokers refusés, référence `C-…` suivie) |
-| AUD-081 | corrigé pour `pos-vente`, `pos-incident` et `boutiques-equipe.js` (4 routes) ; **reste ouvert** : verrouillage des essais de PIN | même fichier |
-| AUD-082 | partiellement corrigé : limiteur ajouté (inactif hors production, donc rafale non rejouée) ; saturation du pool non traitée | lecture de code |
+| AUD-081 | corrigé : `pos-vente`, `pos-incident`, `boutiques-equipe.js` (4 routes) et verrouillage progressif sur `verifier-pin` (429) | même fichier |
+| AUD-082 | corrigé : limiteur ajouté et cause racine de la saturation supprimée (interblocage du pool : connexion détenue + seconde demandée) ; rafale de 60 commandes rejouée : 0 erreur 500 | test d'intégration |
 | AUD-083 | corrigé (annulation + 502) ; le message affiché côté panier n'a pas été vérifié dans un navigateur | test d'intégration API |
 | AUD-084 | corrigé, y compris Club VIP : palier réel côté serveur (`lib/clubVip.js`), facturé = affiché ; remise à la charge du marchand, activée par lui (`club_vip_actif`, désactivé par défaut) | pipeline express + panier + test Club VIP |
 | AUD-085 | corrigé | même fichier |

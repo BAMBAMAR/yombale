@@ -372,8 +372,10 @@ async function creerCommandeBoutique({
       inTransaction = false;
     }
 
-    // Télémétrie non-bloquante
-    await pool.query(
+    // Télémétrie non-bloquante. Volontairement NON attendue : la connexion de transaction est encore détenue ici
+    // (libérée dans `finally`), et attendre une seconde connexion du pool sous charge provoque un interblocage du pool
+    // (AUD-082 : 60 commandes simultanées => 32 erreurs 500 « timeout exceeded when trying to connect »).
+    pool.query(
       `INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`,
       [actualBoutiqueId]
     ).catch(() => {});

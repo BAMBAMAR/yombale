@@ -10,6 +10,7 @@ const { scrapeProductFromUrl } = require('../../services/magic-import');
 const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog');
 const cfg = require('../../lib/settingsCache');
 const { enregistrerAuditLog } = require('../../lib/auditLogger');
+const pinLockout = require('../../lib/pinLockout');
 const { normalizeSocialUrl } = require('../../services/social-parser');
 const {
   checkBoutiqueAccess,
@@ -575,18 +576,28 @@ router.post('/:id/caissiers/verifier-pin', tokenOptional, async (req, res) => {
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutiqueId = bRes.rows[0].id;
 
+    // AUD-081 : verrouillage progressif (par source et par boutique) : la route répond sinon comme un oracle de force brute
+    const source = req.ip || req.headers['x-forwarded-for'] || 'inconnue';
+    const etat = pinLockout.verifier(boutiqueId, source);
+    if (etat.bloque) {
+      res.set('Retry-After', String(etat.attenteSecondes));
+      return res.status(429).json({ valide: false, error: `Trop d'essais. Réessayez dans ${Math.ceil(etat.attenteSecondes / 60)} minute(s).`, attente_secondes: etat.attenteSecondes });
+    }
+
     // Sécurité P0 : Ne jamais renvoyer code_pin dans l'objet caissier retourné
     const r = await pool.query(
       `SELECT id, nom, prenom, role
        FROM boutique_caissiers
        WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE`,
-      [boutiqueId, code_pin.trim()]
+      [boutiqueId, String(code_pin).trim()]
     );
 
     if (r.rows[0]) {
+      pinLockout.enregistrerSucces(boutiqueId, source);
       return res.json({ valide: true, caissier: r.rows[0] });
     }
 
+    pinLockout.enregistrerEchec(boutiqueId, source);
     res.json({ valide: false, message: 'Code PIN incorrect' });
   } catch (err) {
     console.error('[VERIFIER PIN ERR]', err);

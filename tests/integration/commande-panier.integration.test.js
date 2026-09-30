@@ -316,6 +316,43 @@ describeIntegration('Panier réel — prix, stock, statuts, virement, suivi, cai
     expect((await api('get', `/api/boutiques/${bM}/club-vip`, null, N.token)).status).toBe(403);
   });
 
+  test('AUD-081 : vérification de PIN verrouillée après 5 échecs (429), même avec le bon PIN, puis déblocage', async () => {
+    const pinLockout = require('../../backend/lib/pinLockout');
+    pinLockout.reinitialiserTout();
+    await pool.query("INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, actif) VALUES ($1,'Lock','Test','6391',true)", [bM]);
+    const verifier = (pin) => api('post', `/api/boutiques/${bM}/caissiers/verifier-pin`, { code_pin: pin });
+    expect((await verifier('6391')).body.valide).toBe(true);
+    for (let i = 0; i < 5; i++) {
+      const r = await verifier(String(1000 + i));
+      expect(r.status).toBe(200);
+      expect(r.body.valide).toBe(false);
+    }
+    const bloque = await verifier('6391'); // le bon PIN lui-même est refusé pendant le blocage
+    expect(bloque.status).toBe(429);
+    expect(Number(bloque.headers['retry-after'])).toBeGreaterThan(0);
+    // simulation de l'écoulement du temps : le blocage expire
+    const maintenant = Date.now() + 2 * 60 * 1000 + 1000;
+    expect(pinLockout.verifier(bM, 'autre-source', maintenant).bloque).toBe(false); // autre source : non concernée par le blocage de source
+    pinLockout.reinitialiserTout();
+    expect((await verifier('6391')).body.valide).toBe(true);
+  });
+
+  test('AUD-082 : 60 commandes anonymes simultanées (panier et express) ne saturent plus le pool : aucune erreur 500', async () => {
+    const p = await produit(M, bM, { nom: 'Art rafale', prix: 1000, stock_quantite: 500 });
+    const lot = [];
+    for (let i = 0; i < 60; i++) {
+      lot.push(i % 2
+        ? api('post', `/api/comptabilite/${bM}/commandes`, { ...cli, client_telephone: `7706${String(10000 + i)}`, methode_paiement: 'cash', items: [{ produit_id: p.id, quantite: 1 }] })
+        : api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: `7707${String(10000 + i)}`, methode_paiement: 'cash', zone_livraison_id: zone.id, articles: [{ produit_id: p.id, quantite: 1 }] }));
+    }
+    const reponses = await Promise.all(lot);
+    const codes = {};
+    reponses.forEach(r => { codes[r.status] = (codes[r.status] || 0) + 1; });
+    expect(codes[500] || 0).toBe(0);
+    expect(codes[201]).toBe(60);
+    expect(await stock(p.id)).toBe(440);
+  });
+
   test('AUD-085 : PUT partiel conserve la description ; stock obsolète refusé', async () => {
     const p = await produit(M, bM, { nom: 'Art put', prix: 2000, stock_quantite: 10, description: 'Description importante' });
     const r = await api('put', `/api/boutiques/${bM}/produits/${p.id}`, { prix: 2100 }, M.token);

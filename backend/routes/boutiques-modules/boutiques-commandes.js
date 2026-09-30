@@ -137,6 +137,27 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
       if (zRes.rows[0]) fraisLiv = Math.max(0, Number(zRes.rows[0].prix) || 0);
     }
 
+    // Remise Club VIP : palier lu AVANT d'ouvrir la connexion de transaction. Demander une seconde connexion du pool
+    // pendant qu'on en détient une provoque un interblocage sous charge (AUD-082). Remise à la charge du marchand,
+    // seulement si sa boutique a activé le Club VIP (désactivé par défaut).
+    const { statutClubVip, remiseLivraison } = require('../../lib/clubVip');
+    let statutVip = null;
+    if (fraisLiv > 0) {
+      try {
+        const vr = await pool.query('SELECT COALESCE(club_vip_actif, false) AS actif, club_vip_config AS config FROM boutiques WHERE id = $1', [actualBoutiqueId]);
+        if (vr.rows[0]?.actif === true) {
+          statutVip = await statutClubVip(pool, client_telephone, { config: vr.rows[0].config || null, boutiqueId: actualBoutiqueId });
+        }
+      } catch (_) { statutVip = null; }
+    }
+
+    const reglagesPromo = { platformPromoActive: false, platformPromoCode: '', platformPromoReduc: 0 };
+    if (code_promo && String(code_promo).trim()) {
+      reglagesPromo.platformPromoActive = await cfg.getBool('promo_active');
+      reglagesPromo.platformPromoCode = ((await cfg.get('promo_code')) || '').trim().toUpperCase();
+      reglagesPromo.platformPromoReduc = (await cfg.getNum('promo_reduction')) || 0;
+    }
+
     const client = await pool.connect();
     let clientReleased = false;
     const releaseClient = () => {
@@ -248,10 +269,8 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
       if (code_promo && String(code_promo).trim()) {
         const cleanCode = String(code_promo).trim().toUpperCase();
 
-        // Vérification promo globale
-        const platformPromoActive = await cfg.getBool('promo_active');
-        const platformPromoCode = ((await cfg.get('promo_code')) || '').trim().toUpperCase();
-        const platformPromoReduc = (await cfg.getNum('promo_reduction')) || 0;
+        // Vérification promo globale (réglages lus avant d'ouvrir la transaction : pas de seconde connexion du pool)
+        const { platformPromoActive, platformPromoCode, platformPromoReduc } = reglagesPromo;
 
         if (platformPromoActive && platformPromoCode && cleanCode === platformPromoCode) {
           reductionVal = Math.round((totalArticles * platformPromoReduc) / 100);
@@ -311,19 +330,7 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
       // la contrainte UNIQUE(reference) refuse : tout panier de 2 articles ou plus échouait en 500.
       // Remise Club VIP (AUD-084) : calculée ICI à partir du palier réel du téléphone (commandes livrées/encaissées),
       // sur la livraison restant à payer après une éventuelle promo « livraison offerte ». Affichage = facturation.
-      const { statutClubVip, remiseLivraison } = require('../../lib/clubVip');
       const fraisRestants = Math.max(0, fraisLiv - reductionSurLivraison);
-      // Remise à la charge du MARCHAND : seulement si sa boutique a activé le Club VIP (désactivé par défaut)
-      let vipActifBoutique = false;
-      let vipConfig = null;
-      if (fraisRestants > 0) {
-        try {
-          const vr = await pool.query('SELECT COALESCE(club_vip_actif, false) AS actif, club_vip_config AS config FROM boutiques WHERE id = $1', [actualBoutiqueId]);
-          vipActifBoutique = vr.rows[0]?.actif === true;
-          vipConfig = vr.rows[0]?.config || null;
-        } catch (_) { vipActifBoutique = false; }
-      }
-      const statutVip = vipActifBoutique ? await statutClubVip(pool, client_telephone, { config: vipConfig, boutiqueId: actualBoutiqueId }) : null;
       const remiseVip = statutVip ? remiseLivraison(statutVip, fraisRestants) : 0;
       if (remiseVip > 0) {
         const vipNote = `[Club VIP ${statutVip.palier} : -${remiseVip} FCFA sur la livraison]`;
