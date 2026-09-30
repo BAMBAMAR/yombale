@@ -7,6 +7,7 @@ const {
   estLeadEmploiOuInvalide,
   toTitleCase,
   nettoyerContactNom,
+  evaluerLeadComplet,
 } = require('./prospection');
 let estDesinscrit;
 try {
@@ -90,13 +91,31 @@ async function lancerScrapingProspection(options = {}) {
 
       let contactNom = nettoyerContactNom(row.nom_vendeur);
 
+      const leadForEval = {
+        nom_boutique: nomBq,
+        contact_nom: contactNom,
+        telephone: norm.national,
+        telephone_brut: norm.brut,
+        categorie: cat,
+        quartier: quartDetecte,
+        ville: row.ville || 'Dakar',
+        statut: 'nouveau',
+      };
+      const evalLead = evaluerLeadComplet ? evaluerLeadComplet(leadForEval) : { score: 75, fit_score: 80, priority_score: 70, next_best_action: 'contacter' };
+
       const ins = await pool.query(
         `INSERT INTO prospection_leads (
-          nom_boutique, contact_nom, telephone, telephone_brut, operateur, categorie, ville, quartier, source, statut, score
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'scraper_auto', 'nouveau', 65)
+          nom_boutique, contact_nom, telephone, telephone_brut, operateur, categorie, ville, quartier, source, statut,
+          score, fit_score, engagement_score, conversion_score, contactability_score, priority_score, next_best_action, scoring_details
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'scraper_auto', 'nouveau', $9, $10, $11, $12, $13, $14, $15, $16::jsonb)
         ON CONFLICT (telephone) DO NOTHING
         RETURNING id`,
-        [nomBq, contactNom, norm.national, norm.brut, norm.operateur, cat, row.ville || 'Dakar', quartDetecte]
+        [
+          nomBq, contactNom, norm.national, norm.brut, norm.operateur, cat, row.ville || 'Dakar', quartDetecte,
+          evalLead.score || 75, evalLead.fit_score || 80, evalLead.engagement_score || 50, evalLead.conversion_score || 50,
+          evalLead.contactability_score || 80, evalLead.priority_score || 70, evalLead.next_best_action || 'contacter',
+          JSON.stringify(evalLead.scoring_details || [])
+        ]
       );
 
       if (ins.rows.length > 0) {
@@ -147,13 +166,31 @@ async function lancerScrapingProspection(options = {}) {
 
         let contactNom = nettoyerContactNom(row.nom_vendeur);
 
+        const leadImmoForEval = {
+          nom_boutique: nomBq,
+          contact_nom: contactNom,
+          telephone: norm.national,
+          telephone_brut: norm.brut,
+          categorie: 'immo',
+          quartier: quartDetecte,
+          ville: row.ville || 'Dakar',
+          statut: 'nouveau',
+        };
+        const evalLeadImmo = evaluerLeadComplet ? evaluerLeadComplet(leadImmoForEval) : { score: 75, fit_score: 85, priority_score: 75, next_best_action: 'contacter' };
+
         const ins = await pool.query(
           `INSERT INTO prospection_leads (
-            nom_boutique, contact_nom, telephone, telephone_brut, operateur, categorie, ville, quartier, source, statut, score
-          ) VALUES ($1, $2, $3, $4, $5, 'immo', $6, $7, 'scraper_immo', 'nouveau', 70)
+            nom_boutique, contact_nom, telephone, telephone_brut, operateur, categorie, ville, quartier, source, statut,
+            score, fit_score, engagement_score, conversion_score, contactability_score, priority_score, next_best_action, scoring_details
+          ) VALUES ($1, $2, $3, $4, $5, 'immo', $6, $7, 'scraper_immo', 'nouveau', $8, $9, $10, $11, $12, $13, $14, $15::jsonb)
           ON CONFLICT (telephone) DO NOTHING
           RETURNING id`,
-          [nomBq, contactNom, norm.national, norm.brut, norm.operateur, row.ville || 'Dakar', quartDetecte]
+          [
+            nomBq, contactNom, norm.national, norm.brut, norm.operateur, row.ville || 'Dakar', quartDetecte,
+            evalLeadImmo.score || 75, evalLeadImmo.fit_score || 85, evalLeadImmo.engagement_score || 50, evalLeadImmo.conversion_score || 50,
+            evalLeadImmo.contactability_score || 80, evalLeadImmo.priority_score || 75, evalLeadImmo.next_best_action || 'contacter',
+            JSON.stringify(evalLeadImmo.scoring_details || [])
+          ]
         );
 
         if (ins.rows.length > 0) {

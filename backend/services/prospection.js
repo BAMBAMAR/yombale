@@ -1135,60 +1135,75 @@ async function reconcilierAgencesEtBoutiquesExistantes() {
   // 1. Réconciliation des Agences Immobilières (agences_immo)
   try {
     const { rows: agences } = await pool.query(`
-      SELECT a.id, a.nom, a.slug, a.telephone, a.whatsapp, u.telephone as user_tel
+      SELECT a.id, a.nom, a.slug, a.telephone, a.whatsapp, a.crm_lead_id, u.telephone as user_tel
       FROM agences_immo a
       LEFT JOIN utilisateurs u ON a.utilisateur_id = u.id
     `);
 
     for (const ag of agences) {
       const phones = [ag.telephone, ag.whatsapp, ag.user_tel].filter(Boolean);
+      let matchedLead = null;
+
       for (const rawP of phones) {
         const norm = normaliserTelephoneSenegal(rawP);
-        if (norm.valide) {
-          const resUp = await pool.query(`
-            UPDATE prospection_leads
-            SET
-              statut = 'converti',
-              categorie = 'immo',
-              sous_profil = 'agence',
-              nom_boutique = CASE 
-                WHEN nom_boutique IS NULL OR nom_boutique IN ('Immobilière', 'Agence Immobilière', 'Commerce Général', 'Mode') OR nom_boutique ILIKE '%galaxy%'
-                THEN $1
-                ELSE nom_boutique
-              END,
-              conversion_score = 100,
-              engagement_score = 100,
-              priority_score = 0,
-              next_best_action = 'agence_onboarding',
-              derniere_action_at = NOW(),
-              updated_at = NOW()
-            WHERE (telephone = $2 OR telephone = $3 OR telephone LIKE '%' || $4)
-              AND (statut != 'converti' OR nom_boutique ILIKE '%galaxy%' OR nom_boutique = 'Immobilière')
-            RETURNING id
-          `, [ag.nom, norm.national, norm.local, norm.local.slice(-9)]);
+        if (!norm.valide) continue;
 
-          // A-02 FIX : Stocker le lead_id dans agences_immo pour traçabilité causale
-          if (resUp.rows.length > 0) {
-            await pool.query(
-              `UPDATE agences_immo SET crm_lead_id = $1 WHERE id = $2 AND crm_lead_id IS NULL`,
-              [resUp.rows[0].id, ag.id]
-            ).catch(() => {});
-          }
+        const { rows: leads } = await pool.query(`
+          SELECT id, statut, nom_boutique FROM prospection_leads
+          WHERE (telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3)
+          ORDER BY (statut = 'converti') DESC, created_at DESC
+          LIMIT 1
+        `, [norm.national, norm.local, norm.local.slice(-9)]);
 
-          if (resUp.rows.length > 0) {
-            stats.agences_reconciliees += resUp.rows.length;
-            for (const r of resUp.rows) {
-              await pool.query(`
-                INSERT INTO prospection_lead_events (
-                  lead_id, type_evenement, canal, description, metadata
-                ) VALUES ($1, 'agence_creee', 'reconciliation', $2, $3)
-              `, [
-                r.id,
-                `Réconciliation historique : Agence Immobilière "${ag.nom}" active sur Nopalou Immo`,
-                JSON.stringify({ agence_id: ag.id, slug: ag.slug, nom: ag.nom })
-              ]).catch(() => {});
-            }
-          }
+        if (leads.length > 0) {
+          matchedLead = leads[0];
+          break;
+        }
+      }
+
+      if (matchedLead) {
+        // Lier l'agence au lead CRM
+        if (!ag.crm_lead_id || ag.crm_lead_id !== matchedLead.id) {
+          await pool.query(
+            `UPDATE agences_immo SET crm_lead_id = $1 WHERE id = $2`,
+            [matchedLead.id, ag.id]
+          ).catch(() => {});
+        }
+
+        // Mettre à jour le lead
+        await pool.query(`
+          UPDATE prospection_leads
+          SET
+            statut = 'converti',
+            categorie = 'immo',
+            sous_profil = 'agence',
+            nom_boutique = CASE 
+              WHEN nom_boutique IS NULL OR nom_boutique IN ('Immobilière', 'Agence Immobilière', 'Commerce Général', 'Mode') OR nom_boutique ILIKE '%galaxy%'
+              THEN $1
+              ELSE nom_boutique
+            END,
+            conversion_score = 100,
+            engagement_score = 100,
+            priority_score = 0,
+            next_best_action = 'agence_onboarding',
+            derniere_action_at = NOW(),
+            updated_at = NOW()
+          WHERE id = $2
+        `, [ag.nom, matchedLead.id]);
+
+        stats.agences_reconciliees++;
+
+        // Journaliser dans la timeline si nouveau
+        if (matchedLead.statut !== 'converti') {
+          await pool.query(`
+            INSERT INTO prospection_lead_events (
+              lead_id, type_evenement, canal, description, metadata
+            ) VALUES ($1, 'agence_creee', 'reconciliation', $2, $3)
+          `, [
+            matchedLead.id,
+            `Réconciliation : Agence Immobilière "${ag.nom}" active sur Nopalou Immo`,
+            JSON.stringify({ agence_id: ag.id, slug: ag.slug, nom: ag.nom })
+          ]).catch(() => {});
         }
       }
     }
@@ -1199,46 +1214,74 @@ async function reconcilierAgencesEtBoutiquesExistantes() {
   // 2. Réconciliation des Boutiques Marchandes (boutiques)
   try {
     const { rows: boutiques } = await pool.query(`
-      SELECT b.id, b.nom, b.slug, b.telephone, b.categorie
+      SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.crm_lead_id, u.telephone as user_tel
       FROM boutiques b
+      LEFT JOIN utilisateurs u ON b.utilisateur_id = u.id
       WHERE b.actif = true
     `);
 
     for (const bq of boutiques) {
-      if (bq.telephone) {
-        const norm = normaliserTelephoneSenegal(bq.telephone);
-        if (norm.valide) {
-          const resUp = await pool.query(`
-            UPDATE prospection_leads
-            SET
-              statut = 'converti',
-              nom_boutique = CASE 
-                WHEN nom_boutique IS NULL OR nom_boutique IN ('Commerce Général', 'Mode', 'Véhicules', 'Commerce & Boutique')
-                THEN $1
-                ELSE nom_boutique
-              END,
-              conversion_score = 100,
-              engagement_score = 100,
-              priority_score = 0,
-              next_best_action = 'boutique_onboarding',
-              derniere_action_at = NOW(),
-              updated_at = NOW()
-            WHERE (telephone = $2 OR telephone = $3 OR telephone LIKE '%' || $4)
-              AND statut != 'converti'
-            RETURNING id
-          `, [bq.nom, norm.national, norm.local, norm.local.slice(-9)]);
+      const phones = [bq.telephone, bq.whatsapp, bq.user_tel].filter(Boolean);
+      let matchedLead = null;
 
-          // A-02 FIX : Stocker le lead_id dans boutiques pour traçabilité causale
-          if (resUp.rows.length > 0) {
-            await pool.query(
-              `UPDATE boutiques SET crm_lead_id = $1 WHERE id = $2 AND crm_lead_id IS NULL`,
-              [resUp.rows[0].id, bq.id]
-            ).catch(() => {});
-          }
+      for (const rawP of phones) {
+        const norm = normaliserTelephoneSenegal(rawP);
+        if (!norm.valide) continue;
 
-          if (resUp.rows.length > 0) {
-            stats.boutiques_reconciliees += resUp.rows.length;
-          }
+        const { rows: leads } = await pool.query(`
+          SELECT id, statut, nom_boutique FROM prospection_leads
+          WHERE (telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3)
+          ORDER BY (statut = 'converti') DESC, created_at DESC
+          LIMIT 1
+        `, [norm.national, norm.local, norm.local.slice(-9)]);
+
+        if (leads.length > 0) {
+          matchedLead = leads[0];
+          break;
+        }
+      }
+
+      if (matchedLead) {
+        // Lier la boutique au lead CRM
+        if (!bq.crm_lead_id || bq.crm_lead_id !== matchedLead.id) {
+          await pool.query(
+            `UPDATE boutiques SET crm_lead_id = $1 WHERE id = $2`,
+            [matchedLead.id, bq.id]
+          ).catch(() => {});
+        }
+
+        // Mettre à jour le lead
+        await pool.query(`
+          UPDATE prospection_leads
+          SET
+            statut = 'converti',
+            nom_boutique = CASE 
+              WHEN nom_boutique IS NULL OR nom_boutique IN ('Commerce Général', 'Mode', 'Véhicules', 'Commerce & Boutique')
+              THEN $1
+              ELSE nom_boutique
+            END,
+            conversion_score = 100,
+            engagement_score = 100,
+            priority_score = 0,
+            next_best_action = 'boutique_onboarding',
+            derniere_action_at = NOW(),
+            updated_at = NOW()
+          WHERE id = $2
+        `, [bq.nom, matchedLead.id]);
+
+        stats.boutiques_reconciliees++;
+
+        // Journaliser dans la timeline si non précédemment converti
+        if (matchedLead.statut !== 'converti') {
+          await pool.query(`
+            INSERT INTO prospection_lead_events (
+              lead_id, type_evenement, canal, description, metadata
+            ) VALUES ($1, 'boutique_creee', 'reconciliation', $2, $3)
+          `, [
+            matchedLead.id,
+            `Réconciliation : Boutique marchande "${bq.nom}" active sur Nopalou`,
+            JSON.stringify({ boutique_id: bq.id, slug: bq.slug, nom: bq.nom })
+          ]).catch(() => {});
         }
       }
     }

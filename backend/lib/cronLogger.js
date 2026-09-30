@@ -14,6 +14,14 @@ async function executerTacheCron(nomCron, asyncFn) {
   const startedAt = new Date();
 
   try {
+    // Nettoyer automatiquement les anciennes exécutions bloquées de cette tâche (> 1h)
+    await pool.query(
+      `UPDATE cron_executions 
+       SET ended_at = NOW(), statut = 'erreur', erreur = 'Tâche expirée ou interrompue (timeout > 1h)'
+       WHERE nom_cron = $1 AND statut = 'en_cours' AND started_at < NOW() - INTERVAL '1 hour'`,
+      [nomCron]
+    ).catch(() => {});
+
     const { rows } = await pool.query(
       `INSERT INTO cron_executions (nom_cron, started_at, statut, stats)
        VALUES ($1, $2, 'en_cours', '{}'::jsonb)

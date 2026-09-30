@@ -1,6 +1,7 @@
 // backend/services/cron-relances-marchands.js — Moteur de relances et d'onboarding marchands (J+1, J+7, J+25)
 const { pool } = require('../models/db');
 const { genererMagicToken } = require('../lib/magicAuthToken');
+const { executerTacheCron } = require('../lib/cronLogger');
 let sendWhatsAppNotification;
 let estDesinscrit;
 try {
@@ -18,7 +19,8 @@ const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
  * Exécute les vagues de relances marchands automatiques (J+1, J+7, J+25)
  */
 async function traiterRelancesMarchands() {
-  const stats = { j1: 0, j7: 0, j25: 0, total: 0, erreurs: [] };
+  return executerTacheCron('relances_marchands', async () => {
+    const stats = { j1: 0, j7: 0, j25: 0, total: 0, erreurs: [] };
 
   // Garde-fou horaire strict : Fuseau horaire Dakar (UTC+0).
   // Aucun envoi avant 09h00 ou après 20h30.
@@ -337,10 +339,11 @@ async function traiterRelancesMarchands() {
 
     console.log(`[CRON RELANCES MARCHANDS] ✅ Traité : ${stats.total} envois (J+1: ${stats.j1}, J+7: ${stats.j7}, J-3: ${stats.jMoins3 || 0}, J-1: ${stats.jMoins1 || 0}, J+1_exp: ${stats.jPlus1 || 0})`);
     return { succes: true, stats };
-  } catch (err) {
-    console.error('[CRON RELANCES MARCHANDS FAIL]', err);
-    return { succes: false, error: err.message, stats };
-  }
+    } catch (err) {
+      console.error('[CRON RELANCES MARCHANDS FAIL]', err);
+      throw err;
+    }
+  });
 }
 
 // Planification automatique quotidienne
