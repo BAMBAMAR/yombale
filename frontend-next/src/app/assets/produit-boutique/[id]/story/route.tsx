@@ -180,7 +180,9 @@ export async function GET(
                 <img
                   src={boutiqueLogo}
                   alt={boutiqueNom}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  width={72}
+                  height={72}
+                  style={{ width: 72, height: 72, objectFit: 'cover' }}
                 />
               </div>
             ) : (
@@ -308,9 +310,11 @@ export async function GET(
             <img
               src={image}
               alt={nom}
+              width={960}
+              height={900}
               style={{
-                width: '100%',
-                height: '100%',
+                width: 960,
+                height: 900,
                 objectFit: 'contain',
                 padding: 40,
                 boxSizing: 'border-box',

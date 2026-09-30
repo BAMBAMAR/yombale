@@ -101,9 +101,11 @@ export async function GET(
             <img
               src={logo}
               alt={nom}
+              width={480}
+              height={540}
               style={{
-                width: '100%',
-                height: '100%',
+                width: 480,
+                height: 540,
                 objectFit: 'contain',
                 padding: 30,
                 boxSizing: 'border-box',

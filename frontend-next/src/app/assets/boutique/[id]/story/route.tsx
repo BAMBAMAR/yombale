@@ -204,7 +204,9 @@ export async function GET(
               <img
                 src={logo}
                 alt={nom}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                width={240}
+                height={240}
+                style={{ width: 240, height: 240, objectFit: 'cover' }}
               />
             ) : (
               <span style={{ fontSize: 96, color: '#ffffff', fontWeight: 900 }}>

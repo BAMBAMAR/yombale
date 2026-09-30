@@ -630,7 +630,7 @@ export async function GET(request: Request) {
           <div style={{ width: 380, height: 380, borderRadius: 24, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', border: '3px solid #E2E8F0', flexShrink: 0 }}>
             {image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={image} alt={nomAffichage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={image} alt={nomAffichage} width={380} height={380} style={{ width: 380, height: 380, objectFit: 'cover' }} />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 80, display: 'flex' }}></span>
