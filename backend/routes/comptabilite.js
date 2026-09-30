@@ -870,11 +870,15 @@ router.post(
         utm_medium,
         utm_campaign,
         social_post_id,
+        idempotencyKey: req.body.idempotency_key,
       });
 
       // Double soumission : la commande existante est renvoyée sans nouvelle notification ni nouvelle session de paiement
       if (doublon) return res.status(200).json({ commande, doublon: true, message: 'Commande déjà enregistrée' });
 
+      // AUD-102 : pour un paiement Wave, les notifications partent APRÈS l'initialisation de la session de paiement ;
+      // sinon le marchand et le client sont alertés d'une commande qui sera annulée si Wave échoue.
+      const notifierCommande = async () => {
       await notifierVendeurCommande(boutique, {
         reference: commande.reference,
         nomProduit: commande.nom_produit,
@@ -894,7 +898,7 @@ router.post(
           const { sendWhatsAppNotification } = require('../services/whatsapp');
           const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement bancaire', credit: 'Achat à Crédit' };
           const montantFmt = new Intl.NumberFormat('fr-FR').format(commande.montant_total);
-          const msgClient = `✅ *Commande enregistrée avec succès — ${boutique.nom}*\n\nRéférence : *${commande.reference}*\nProduit : ${commande.nom_produit} × ${commande.quantite}\n💰 Total : *${montantFmt} FCFA*\n💳 Mode de paiement : ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}\n\n🙏 La boutique *${boutique.nom}* a bien reçu votre commande et vous contactera très vite !`;
+          const msgClient = `✅ *Commande enregistrée avec succès — ${boutique.nom}*\n\nRéférence : *${commande.reference}*\nProduit : ${/^\d+x\s/.test(commande.nom_produit) ? commande.nom_produit : `${commande.nom_produit} × ${commande.quantite}`}\n💰 Total : *${montantFmt} FCFA*\n💳 Mode de paiement : ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}\n\n🙏 La boutique *${boutique.nom}* a bien reçu votre commande et vous contactera très vite !`;
 
           const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
           const titleTpl = `✅ Commande enregistrée — ${boutique.nom}`;
@@ -914,6 +918,10 @@ router.post(
             .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
         } catch (eCl) {}
       }
+      };
+
+      const paiementWave = (methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx');
+      if (!paiementWave) await notifierCommande();
 
       // Si le paiement Wave est sélectionné et l'API Wave est disponible, initialiser le checkout Wave
       if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
@@ -926,6 +934,7 @@ router.post(
             error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur?ref=${commande.reference}&type=commande-boutique`,
             client_reference: commande.reference,
           });
+          await notifierCommande();
           return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
         } catch (waveErr) {
           const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;

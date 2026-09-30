@@ -2,6 +2,7 @@
 const { pool } = require('../models/db');
 const {
   sendWhatsAppText,
+  sendWhatsAppTemplate,
   sendWhatsAppInteractive,
   sendWhatsAppCarousel,
   sendWhatsAppProduct,
@@ -2169,7 +2170,7 @@ async function notifierVendeurPanierGroupe(boutique, commandesCreees, groupeComm
   const totalArticles = commandesCreees.reduce((s, c) => s + Number(c.montant_total) - Number(c.frais_livraison || 0), 0);
   const fraisLivraison = Number(premiere.frais_livraison) || 0;
   const total = totalArticles + fraisLivraison;
-  const lignesArticles = commandesCreees.map(c => `• ${c.nom_produit} × ${c.quantite} — ${prixFmt(Number(c.prix_unitaire) * c.quantite)}`).join('\n');
+  const lignesArticles = commandesCreees.map(c => `• ${c.nom_produit} — ${prixFmt(Number(c.montant_total) - Number(c.frais_livraison || 0))}`).join('\n');
   const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
   const bRef = boutique.slug || boutique.id;
   const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes` : `${SITE}/boutique?tab=commandes`;
@@ -2191,10 +2192,10 @@ async function notifierVendeurPanierGroupe(boutique, commandesCreees, groupeComm
     (fraisLivraison > 0 ? ` | Livr: ${prixFmt(fraisLivraison)}` : '');
 
   const btnParam = String(boutique.slug || boutique.id || 'boutique').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
-  sendWhatsAppTemplate(vendeurTel, 'nopalou_fiche_texte', [
+  Promise.resolve().then(() => sendWhatsAppTemplate(vendeurTel, 'nopalou_fiche_texte', [
     { type: 'body', parameters: [{ type: 'text', text: titleTpl }, { type: 'text', text: detailTpl.slice(0, 1000) }, { type: 'text', text: lienCommandes }] },
     { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: btnParam }] },
-  ]).catch(err => {
+  ])).catch(err => {
     console.error('[WHATSAPP NOTIF GROUPE TEMPLATE ERR]:', err.response?.data?.error?.message || err.message);
   });
 }
@@ -4769,6 +4770,8 @@ async function handleIncomingInternal(msg) {
       ...context.commande,
       zone_livraison_id: zoneId,
       zone_nom: zoneNom,
+      // AUD-101 : un retrait en boutique n'a pas d'adresse de livraison (« Livraison standard » était trompeur)
+      client_adresse: zoneNom.startsWith('Retrait') ? 'Retrait en boutique' : context.commande?.client_adresse,
       frais_livraison: fraisLivraison,
       methode_paiement: methodePaiement,
       note: noteFinale || undefined,
@@ -4853,14 +4856,24 @@ async function handleIncomingInternal(msg) {
       return;
     }
     const c = context.commande;
-    const groupeCommande = c.items.length > 1 ? require('crypto').randomUUID() : null;
+    // AUD-094 : la clé de confirmation est figée dans la session la première fois : si le client reclique
+    // « Confirmer » (réponse perdue, erreur), les mêmes commandes sont retrouvées, sans doublon ni nouvelle
+    // notification au marchand avec une autre référence de groupe.
+    const cleConfirmation = c.cle_confirmation || require('crypto').randomUUID();
+    if (!c.cle_confirmation) {
+      c.cle_confirmation = cleConfirmation;
+      await setSession(phone, state, { ...context, commande: c }).catch(() => {});
+    }
+    const groupeCommande = c.items.length > 1 ? cleConfirmation : null;
     const creees = [];
     const echecs = [];
+    let nbDoublons = 0;
     let boutiqueChargee = boutique;
     const noteFinale = c.notes || (context.derniere_note_vocale_url ? `Consigne vocale: ${context.derniere_note_vocale_url}` : undefined);
-    for (const item of c.items) {
+    for (const [idxItem, item] of c.items.entries()) {
       try {
-        const { commande, boutique: b } = await creerCommandeBoutique({
+        const { commande, boutique: b, doublon } = await creerCommandeBoutique({
+          idempotencyKey: `${cleConfirmation}:${idxItem}`,
           boutiqueId: boutique.id,
           produitId: item.produit_id,
           quantite: item.quantite,
@@ -4874,6 +4887,7 @@ async function handleIncomingInternal(msg) {
           note: noteFinale,
         });
         creees.push(commande);
+        if (doublon) nbDoublons++;
         boutiqueChargee = b;
       } catch (err) {
         echecs.push({ nom: item.nom_produit, erreur: err.message });
@@ -4881,7 +4895,9 @@ async function handleIncomingInternal(msg) {
     }
 
     if (creees.length > 0) {
-      if (creees.length === 1) {
+      if (nbDoublons === creees.length) {
+        // commandes déjà enregistrées et notifiées lors d'une confirmation précédente : pas de nouvelle notification
+      } else if (creees.length === 1) {
         await notifierVendeurCommande(boutiqueChargee, {
           reference: creees[0].reference,
           nomProduit: creees[0].nom_produit,

@@ -6,6 +6,12 @@ const { sendWhatsAppNotification } = require('./whatsapp');
 
 const STATUTS_VALIDES = ['en_attente', 'confirmee', 'en_preparation', 'expediee', 'livree', 'annulee'];
 
+// Le libellé agrégé d'une commande contient déjà les quantités (« 2x Robe, 1x Boubou ») : on n'y ajoute pas
+// « × quantité totale » (AUD-101 : « 2x Robe × 2 », « 2x Robe, 1x Boubou × 3 »).
+function libelleProduit(nomProduit, quantite) {
+  return /^\d+x\s/.test(String(nomProduit || '')) ? String(nomProduit) : `${nomProduit} × ${quantite}`;
+}
+
 function genRefCommande() {
   // Suffixe aléatoire : deux commandes créées dans la même milliseconde ne doivent pas se heurter à UNIQUE(reference)
   const suffixe = require('crypto').randomBytes(2).toString('hex').toUpperCase();
@@ -77,7 +83,7 @@ async function notifierVendeurCommande(boutique, {
 
   const msg = `${isCredit ? '🚨 *Demande d\'achat à crédit (Carnet)*' : '🛒 *Nouvelle commande*'} — *${boutique.nom}*\n\n` +
     `Réf : *${reference}*\n` +
-    `Produit : ${nomProduit} × ${quantite}\n` +
+    `Produit : ${libelleProduit(nomProduit, quantite)}\n` +
     (montantTotal > 0 ? `Montant : *${montantFmt} FCFA*${isAConvenir ? ' (+ livraison à part)' : ''}\n` : '') +
     ligneLivraison +
     `💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n` +
@@ -92,7 +98,7 @@ async function notifierVendeurCommande(boutique, {
   // On y intègre l'ensemble des coordonnées client (Nom, Tel, Adresse, Paiement) pour que le commerçant
   // dispose de TOUTES les informations vitales même en dehors de la fenêtre 24h Meta sans avoir à écrire au bot.
   const payLabel = methodeLabel[methodePaiement] || methodePaiement || 'Wave';
-  const detailTpl = `Réf ${reference} — ${nomProduit} × ${quantite}${montantTotal > 0 ? ` (${montantFmt} FCFA)` : ''}\n` +
+  const detailTpl = `Réf ${reference} — ${libelleProduit(nomProduit, quantite)}${montantTotal > 0 ? ` (${montantFmt} FCFA)` : ''}\n` +
     `👤 Client : ${clientNom || 'Client'}\n` +
     `📞 Tél : ${clientTelephone || 'Non renseigné'}` +
     (clientAdresse ? `\n📍 Adresse : ${clientAdresse}` : '') +
@@ -108,7 +114,11 @@ async function notifierVendeurCommande(boutique, {
     buttonParam: btnParam,
     type: 'commande',
   })
-    .then(async () => {
+    .then(async (res) => {
+      // AUD-102 : sendWhatsAppNotification ne rejette pas en cas d'échec (elle renvoie null après l'échec du
+      // modèle et du repli SMS). Seule une réponse porteuse d'un identifiant de message prouve l'envoi.
+      const livree = Boolean(res && res.success !== false && (res.messages?.[0]?.id || res.fallback_sms));
+      if (!livree) throw new Error('Notification non délivrée (modèle et repli SMS en échec)');
       console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`);
       try {
         await pool.query(
@@ -123,6 +133,10 @@ async function notifierVendeurCommande(boutique, {
         await pool.query(
           `UPDATE commandes_boutique SET note = COALESCE(note, '') || ' [Échec Notif WhatsApp: ' || $1 || ']' WHERE reference = $2`,
           [err.message.slice(0, 80), reference]
+        );
+        await pool.query(
+          `INSERT INTO notification_echecs (type, reference_id, erreur) VALUES ($1, $2, $3)`,
+          ['notif_vendeur_commande', reference, err.message.slice(0, 300)]
         );
       } catch (_) {}
     });
@@ -149,6 +163,7 @@ async function creerCommandeBoutique({
   nomProduitManuel, groupeCommande, items = [], varianteId,
   codePromo, formuleEchelonnement,
   utm_source, utm_medium, utm_campaign, social_post_id,
+  idempotencyKey,
 }) {
   const bQuery = 'SELECT id, nom, slug, telephone, whatsapp, utilisateur_id, actif FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
@@ -157,6 +172,14 @@ async function creerCommandeBoutique({
 
   const actualBoutiqueId = boutique.id;
   let fraisLivraison = 0;
+
+  // AUD-095 : une commande passée hors-ligne (ou renvoyée après réponse perdue) porte une clé d'idempotence ;
+  // la même clé retrouve la commande existante au lieu d'en créer une seconde (et de redécrémenter le stock).
+  const cleIdem = typeof idempotencyKey === 'string' && idempotencyKey.length > 0 && idempotencyKey.length <= 128 ? idempotencyKey : null;
+  if (cleIdem) {
+    const { rows: [deja] } = await pool.query('SELECT * FROM commandes_boutique WHERE boutique_id = $1 AND idempotency_key = $2 LIMIT 1', [actualBoutiqueId, cleIdem]);
+    if (deja) return { commande: deja, boutique, doublon: true };
+  }
 
   const validZoneId = (zoneLivraisonId && UUID_RE.test(String(zoneLivraisonId))) ? zoneLivraisonId : null;
   if (validZoneId) {
@@ -345,17 +368,21 @@ async function creerCommandeBoutique({
       await client.query(`UPDATE boutique_promotions SET fois_utilise = fois_utilise + 1 WHERE id = $1`, [promoValidee.id]);
     }
 
+    // AUD-101 : prix_unitaire est un prix d'UNE unité (prix moyen pondéré si plusieurs lignes), jamais le total de
+    // la ligne ou du panier ; le détail exact par article est dans commandes_boutique_items.
+    const prixUnitaireMoyen = totalQuantite > 0 ? Math.round((sousTotal / totalQuantite) * 100) / 100 : sousTotal;
+
     const ref = genRefCommande();
     const { rows: [commande] } = await client.query(
       `INSERT INTO commandes_boutique
          (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
           client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande,
-          utm_source, utm_medium, utm_campaign, social_post_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
-      [ref, actualBoutiqueId, lignes[0].produit_id, nomProduitGlobal.slice(0, 300), totalQuantite, sousTotal, montantTotal,
+          utm_source, utm_medium, utm_campaign, social_post_id, idempotency_key)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
+      [ref, actualBoutiqueId, lignes[0].produit_id, nomProduitGlobal.slice(0, 300), totalQuantite, prixUnitaireMoyen, montantTotal,
        clientNom, clientTelephone, clientAdresse || null, finalNote || null, source,
        methodePaiement, validZoneId, fraisLivraison, groupeCommande || null,
-       utm_source || null, utm_medium || null, utm_campaign || null, validSocialPostId]
+       utm_source || null, utm_medium || null, utm_campaign || null, validSocialPostId, cleIdem]
     );
 
     for (const it of lignes) {
