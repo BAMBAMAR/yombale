@@ -470,3 +470,53 @@ Note : AUD-065 (absence de route de changement de mot de passe) a un impact prod
 - 0 création de compte par `/whatsapp-login` sans OTP validé.
 - Suite `t1`/`t2`/`t3` (nettoyée, committée sous `scripts/audit/`) : 100 % des cas passent en `OK`.
 - RBAC (`verify-rbac.js`) toujours 150/150 après le lot (non-régression).
+
+---
+
+# Addendum Phase 6 — Parcours commercial (AUD-072 à AUD-086)
+
+Source : `docs/AUDIT-NOPALOU-2026-09-30.md`, section « Phase 6 ». Aucun code modifié pour produire cet addendum. Prérequis : `powershell -File scripts\audit\check-pg.ps1` doit afficher OK ; tests d'intégration avec `DATABASE_URL_TEST` = base locale jamais la production.
+
+## A. Cause commune et stratégie
+Deux routes de création de commande ont divergé : `POST /api/boutiques/commandes/express` (corrigée le 30/09) et `POST /api/comptabilite/:boutiqueId/commandes` → `creerCommandeBoutique` (route réelle du panier et du chatbot, non corrigée). Les AUD-073 à 076 et 084 viennent de cette duplication. **Approche retenue** : un seul service `preparerPanier({boutique, items, zoneId, codePromo})` (prix, variante, stock verrouillé, zone, promo, disponibilité) appelé par les deux routes ; alternative écartée : recopier les correctifs dans chaque route (la divergence reviendrait).
+
+## B. Ordre des phases
+| Phase | Fiches | Dépendance | Sortie attendue |
+|---|---|---|---|
+| 6-0 Filet | test d'intégration « panier réel » (copie du pipeline express sur la route comptabilité) écrit **rouge** ; variable d'exploitation `REVERSEMENT_AUTOMATIQUE_WAVE=false` côté Render (action E1) | aucune | tests rouges qui reproduisent AUD-072 à 077 |
+| 6-1 P0 argent | AUD-072 | 6-0 | plus aucun virement sans `paiement_recu` ; idempotence |
+| 6-2 P1 | AUD-073, 074, 075, 076 (service commun), AUD-077, AUD-079, AUD-081 | AUD-073 avant AUD-072 étape finale ; AUD-077 avant 072 (transitions) | panier et express équivalents ; machine d'états |
+| 6-3 P2 | AUD-078, 080, 082, 083, 084, 085 | 6-2 | parcours complet commande → suivi → statut |
+| 6-4 P3 | AUD-086 | 6-2 | clé d'idempotence explicite |
+| 6-5 Régression | express 13 tests, unitaires Stripe/upsell, `verify-rbac.js` 150/150, sondes T1 à T14 rejouées | tout | voir indicateurs |
+
+## C. Fiches de correction
+| ID | Fichiers | Approche | Risque de régression | Test de validation (doit échouer avant) | Critère d'acceptation | Retour arrière | Effort |
+|---|---|---|---|---|---|---|---|
+| AUD-072 | `backend/routes/comptabilite.js` (l.1185-1259, 1971, 1984-2034), `backend/services/wave.js` (`Idempotency-Key`) | payout seulement si `paiement_recu=true` et montant égal ; écrire `statut='reverse'`/`payout_ref` avant l'appel ; clé `payout_<commande.id>` ; filtrer `payout_ref IS NULL` dans la liste | moyen : reversements manuels existants ; ne pas changer la formule de net | `payout.probe.test.js` (scratch) devenu test d'intégration : Wave non payée → 0 appel ; payée + aller-retour → 1 appel ; liste sans commande virée | 0 virement sur 100 cas non payés, 1 max par commande | revert du commit ; `REVERSEMENT_AUTOMATIQUE_WAVE=false` | 0,5 j |
+| AUD-073 | `backend/services/commande-service.js` (l.211-223) | article sans produit de la boutique → 400 | faible : le chatbot envoie `nomProduitManuel` (vérifier ses appels) | article libre → 400 ; produit d'une autre boutique → 400 | 0 commande à prix client | revert | 0,25 j |
+| AUD-074 | `commande-service.js` (l.348-381) | `SELECT … FOR UPDATE`, refus 409 si stock insuffisant, même pour variantes | moyen : produits sans `stock_quantite` (NULL = illimité) à conserver | stock 1, quantité 5 → 409 ; 2 requêtes concurrentes, 1 acceptée | stock jamais négatif ni masqué par `GREATEST` | revert | 0,5 j |
+| AUD-075 | `commande-service.js`, `boutiques-commandes.js`, `boutiques-produits.js` (GET catalogue) | filtre `statut_moderation='actif'`, `en_stock`, `prix>0`, boutique `actif` ; aligner sur l'accueil | moyen : le marchand doit toujours voir ses produits suspendus (branche authentifiée) | suspendu absent du GET anonyme, commande refusée | 0 produit suspendu public ou commandable | revert | 0,5 j |
+| AUD-076 | même service | résoudre `variante_id` (appartenance, prix, stock) | moyen : produits `has_variants` sans SKU | variante 5 000 F → total 5 000 F, stock variante −1 sur les deux routes | prix et stock variantes corrects | revert | 0,5 j |
+| AUD-077 | `comptabilite.js` (l.982-1100), `commande-service.js` (`STATUTS_VALIDES`) | table de transitions, colonne ou note « stock restitué », `payee`/`reverse` dans le vocabulaire, refus d'annulation d'une commande payée sans action de remboursement | élevé : écrans marchands et chatbot changent d'état ; revue UI | cycle annulee/confirmee/annulee → stock +3 une seule fois ; livree → en_attente refusé | stock cohérent après tout enchaînement | revert | 1 j |
+| AUD-078 | `comptabilite.js` (l.1368 et bloc marchand) | garde `req.body.statut` ; refus si `paiement_recu` ; notification client du nouveau total | faible | PATCH frais seul → 200, message client, total cohérent | 0 écriture suivie d'un 500 | revert | 0,25 j |
+| AUD-079 | `boutiques-commandes.js` (l.521-569) | égalité exacte, validation de format, échappement des jokers, limiteur | faible | `CMD-%` → 400 | 0 fuite inter-boutiques | revert | 0,25 j |
+| AUD-080 | même route | accepter `C-…` (ou unifier `genRefCommande` avec `CMD-`) ; test lien WhatsApp → suivi | faible | réf `C-…` → 200 | suivi possible pour toute commande | revert | 0,25 j |
+| AUD-081 | `boutiques-pos.js` (l.98-128), `boutiques-equipe.js` (PIN) | PIN uniquement dans une session/terminal authentifié ; hachage bcrypt ; verrou par boutique+IP ; migration des PIN existants (réinitialisation) | élevé : terminaux caisse déjà déployés → communiquer (E2) | PIN seul → 403 ; 5 échecs → 429 | 0 vente sans session/jeton | revert ; conserver l'ancien flux 1 semaine derrière un drapeau | 1 j |
+| AUD-082 | `comptabilite.js` (route POST), `middlewares/rateLimit.js` | limiteur par IP et par téléphone comme `limiterCommandeExpress` ; plafond de pool | faible | 60 requêtes → 429, 0 × 500 | pas de 500 en rafale | revert | 0,25 j |
+| AUD-083 | `comptabilite.js` (l.925-934), `useDrawerCartCheckout.ts` | annuler comme l'express ou afficher le paiement manuel | moyen : décision métier E3 | échec Wave → commande annulée ou écran de paiement manuel | 0 commande orpheline > 2 h | revert | 0,5 j |
+| AUD-084 | `boutiques-commandes.js` | via le service commun : zone serveur, `livraison_offerte` | moyen : `useCommander.ts` envoie `frais_livraison` | frais 0 avec zone → total avec frais ; promo livraison offerte = 2 000 F | totaux identiques panier/express | revert | 0,25 j (inclus 6-2) |
+| AUD-085 | `boutiques-produits.js` (l.243-356) | `COALESCE` sur champs absents ; stock relatif ou `updated_at` optimiste | moyen : formulaire marchand | PUT partiel garde la description ; stock obsolète → 409 | 0 perte de champ, 0 stock écrasé | revert | 0,5 j |
+| AUD-086 | `commande-service.js` (l.303-318) | clé d'idempotence fournie par le client | faible | 2 commandes distinctes même montant → 2 lignes | 0 fusion silencieuse | revert | 0,25 j |
+
+## D. Stratégie de test
+Unitaires : transitions de statut, calcul du total. Intégration contre la base locale : reprendre `p6_probe1..4` et `payout.probe.test.js` (scratch de la session) comme tests committés sous `tests/integration/`. Mutation : retirer chaque correctif, le test dédié doit échouer. Navigateur : panier → paiement manuel (AUD-083), suivi depuis le lien WhatsApp (AUD-080), écran commandes marchand (AUD-077/078). Non-régression : 13 tests express, `verify-rbac.js` 150/150.
+
+## E. Actions d'exploitation (décision humaine)
+- **E1 (avant tout code)** : vérifier sur Render `REVERSEMENT_AUTOMATIQUE_WAVE` et l'état de `payouts_api` chez Wave ; tant qu'AUD-072 n'est pas corrigé, fixer `REVERSEMENT_AUTOMATIQUE_WAVE=false`. Décide : direction / finance.
+- **E2** : communication aux marchands avant AUD-081 (réinitialisation des PIN caissier).
+- **E3** : numéro de dépôt manuel affiché au client (aujourd'hui le numéro d'administration `777202086`) et règle d'annulation des impayés (2 h) — décision métier.
+- **E4** : revoir les reversements déjà effectués : rapprocher `ventes`/`commandes_boutique` livrées avec `paiement_recu=false` (AUD-037) et les virements Wave du compte Business sur la période où la permission payout existait.
+
+## F. Indicateurs de sortie
+0 virement sans `paiement_recu` ; panier et express donnent le même total et les mêmes refus sur 14 scénarios (T1 à T14) ; 0 commande à prix client ; stock toujours cohérent après annulation ; suivi inter-boutiques impossible ; 0 vente POS sans session ; express 13/13 et RBAC 150/150 toujours verts.

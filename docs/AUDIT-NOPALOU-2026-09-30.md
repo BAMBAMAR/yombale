@@ -414,3 +414,109 @@ Réserve : le journal indique des assainissements massifs les 28-29/09 (produits
 - Présence du même défaut d'échappement HTML (AUD-058) sur les autres surfaces affichant `nom` (commandes, admin, apporteur, avis) — seule la surface e-mail de bienvenue a été prouvée.
 - Parcours desktop/mobile à proprement parler (rendu, ergonomie) : cet audit a porté sur la chaîne API/session/DB ; aucun test Playwright visuel n'a été exécuté dans ce lot (cohérent avec la couverture « NON FAIT » déjà notée en Phase 1 pour les parcours UI).
 - Messages WhatsApp/SMS : le contenu et le routage ont été vérifiés (capture des appels sortants), mais pas la présentation réelle dans l'application WhatsApp cliente (rendu de template Meta).
+
+---
+
+# Phase 6 — Audit du parcours commercial (30 septembre 2026, nuit)
+
+**Parcours audité** : Produit → Boutique → Recherche → Panier → Commande → WhatsApp → Paiement → Statut → Suivi. Chaîne exécutée : frontend (code du panier `useDrawerCartCheckout.ts`, non exécuté dans un navigateur, voir « Non vérifié ») → API (`/api/comptabilite/:id/commandes`, `/api/boutiques/commandes/express`, `/api/boutiques/:id/produits`, `PATCH …/commandes/:cmdId`, `/api/boutiques/commandes/suivi`, `/api/boutiques/:id/pos-vente`) → backend (`commande-service.js`, `comptabilite.js`, `boutiques-produits.js`, `boutiques-pos.js`, `paiement.js`) → PostgreSQL local (`commandes_boutique`, `commandes_boutique_items`, `boutique_produits`, `boutique_produit_variantes`, `boutique_promotions`, `boutique_caissiers`).
+
+**Méthode** : pile isolée (PostgreSQL local :54329 base `nopalou_audit`, backend :4100, clés externes factices, garde réseau bouclée). Wave, WhatsApp et Telegram jamais atteints (le journal du backend montre `AUDIT-GUARD blocked api.wave.com` / `graph.facebook.com`). Deux marchands de test (M, N), 6 produits, 1 zone de livraison (2 500 F), 1 promo ; environ 45 requêtes de sonde par script (`scratch` de session, non commité) plus un test Jest isolé avec Wave simulé pour le virement automatique. Aucun code de l'application modifié. **Incident d'environnement (à connaître)** : `scripts/audit/.local/pgpass.txt` avait disparu ; avec l'accord explicite de l'utilisateur, le mot de passe du rôle `postgres` de l'instance locale :54329 a été réinitialisé (accès local `trust` temporaire puis `pg_hba.conf` restauré et confirmé : connexion sans mot de passe de nouveau refusée, 4 bases intactes). Procédure consignée dans `scripts/audit/README.md`, contrôle ajouté : `scripts/audit/check-pg.ps1`.
+
+## Recoupement avec les livraisons déjà faites (obligatoire)
+Commits du périmètre depuis le dernier rapport : `744272e0` (checkout express, AUD-010/011/013/040/042/044/045/046/047/048) et `c035d530` (AUD-014). Rejeu effectif :
+- `tests/integration/commande-express-pipeline.integration.test.js` contre la base locale : **13/13** réussis. `tests/unit/stripe-webhook-signature.test.js` + `spec-02-checkout-upsell.test.js` : **11/11**.
+- Sondes directes sur la route express : stock insuffisant → **409** ; article libre ou prix falsifié → refusé/re-tarifé (T1b, T2c) ; expiration des impayés et compensation d'échec Wave/Orange (couvertes par les 13 tests). Le cas « webhook Wave reçu sur une commande déjà annulée » (`paiement.js:465`) n'a pas de test : lu dans le code seulement, NON REJOUÉ.
+- **Verdict : « recoupé, tenu » pour la route express uniquement.** Les correctifs AUD-010 et AUD-011 n'ont **pas** été appliqués à `POST /api/comptabilite/:boutiqueId/commandes`, qui est la route réellement appelée par le panier du site (`useDrawerCartCheckout.ts:278` et `:381`) et par le chatbot WhatsApp. Les fiches AUD-073 et AUD-074 sont donc des **fermetures incomplètes** d'AUD-011 et AUD-010, pas des doublons.
+- AUD-051 (références `C-…` non reconnues par le suivi) : reconfirmé et **reclassé** (AUD-080) car ces références sont celles de la route principale.
+
+## Synthèse des parcours (PASS = état cohérent entre interface, API, base et historique)
+| Parcours | Résultat | Fiches |
+|---|---|---|
+| Création / modification produit | FAIL partiel | AUD-085 |
+| Catalogue public, produit suspendu ou hors vente | FAIL | AUD-075 |
+| Panier réel → commande (prix, stock, variantes) | FAIL | AUD-073, 074, 076 |
+| Checkout express → commande | PASS sur stock/prix ; FAIL sur livraison et promo | AUD-084 |
+| Paiement Wave (échec d'initialisation) | FAIL | AUD-083 |
+| Encaissement et virement marchand | FAIL (P0 conditionnel) | AUD-072 |
+| Changement de statut / annulation / frais | FAIL | AUD-077, 078 |
+| Suivi client | FAIL | AUD-079, 080 |
+| Notifications WhatsApp (contenu, destinataire, cadence) | FAIL partiel | AUD-082 |
+| Caisse POS (accès sans session) | FAIL | AUD-081 |
+| Orange Money, Stripe réels, rendu navigateur, chatbot WhatsApp | NON VALIDÉ — voir « Non vérifié » | — |
+
+## Fiches
+
+### AUD-072 — CRITIQUE (P0 conditionnel) — Virement Wave automatique déclenché sans paiement reçu, répétable, et commande laissée dans la liste des reversements admin
+- **Preuve (PROUVÉ, test Jest isolé, Wave simulé)** : commande créée via `POST /api/comptabilite/:id/commandes` avec `methode_paiement: 'wave'` et un article fictif à 100 000 F. La session Wave échoue (commande `en_attente`, `paiement_recu = false`). Le marchand la passe à `livree` : `sendPayout` est appelé avec **98 000 F** vers le numéro de la boutique. Retour à `en_attente` puis nouveau `livree` : **second virement de 98 000 F** (la référence est la même, mais `Idempotency-Key` est un UUID neuf à chaque appel, `wave.js:202`). Après coup : `statut = livree`, `payout_ref = NULL`, `paiement_recu = false`, et la commande **figure dans la requête de `GET /admin/reversements-dus`** (`comptabilite.js:1971`), donc un troisième virement par l'écran admin reste possible (`payer` ne contrôle ni `paiement_recu` ni l'absence de virement automatique préalable, `:1984-2034`).
+- **Cause racine (CODE)** : `comptabilite.js:1217-1231` n'exige pas `commande.paiement_recu = true`, ne marque pas la commande (`statut='reverse'`, `payout_ref`, `payout_date`), n'est pas idempotent, et la route `PATCH` accepte des transitions arbitraires (AUD-077). Combiné à AUD-073 (prix libre), le montant versé est choisi par le marchand.
+- **Impact** : un marchand (compte gratuit suffisant) peut se faire virer de l'argent depuis le compte Wave Business de Nopalou sans aucun encaissement ; perte sèche, sans alerte. Le virement automatique échoue aujourd'hui en production si `payouts_api` n'est pas activé chez Wave (constat du 29/09 dans le journal : `403 no-permission`) : **le risque devient réel dès l'activation de cette permission** ou si `REVERSEMENT_AUTOMATIQUE_WAVE` est actif. État de la variable sur Render : NON DÉTERMINÉ.
+- **Correctif recommandé** : (1) n'autoriser le virement que si `paiement_recu = true` et montant encaissé égal au total ; (2) verrouiller la commande (`SELECT … FOR UPDATE`), écrire `statut`/`payout_ref` avant l'appel et utiliser une `Idempotency-Key` dérivée de la commande (`payout_<id>`) ; (3) exclure de `reversements-dus` ce qui a un `payout_ref` ; (4) journaliser et alerter chaque virement. Effort : 0,5 j.
+- **Test** : commande Wave non payée → `livree` → aucun appel `sendPayout` ; commande payée → un seul appel même après aller-retour de statut ; liste admin sans commande déjà virée.
+
+### AUD-073 — MAJEUR — Prix fixé par le client sur la route du panier (AUD-011 non fermé)
+- **Preuve (PROUVÉ)** : `POST /api/comptabilite/:id/commandes` avec `items:[{nom_produit:'Article libre', prix_unitaire:1}]` → **201, total 1 F** (`C-MUOICK9Q7199`). Même résultat avec le `produit_id` d'une **autre boutique** (prix réel 3 000 F) envoyé à 1 F → 201, total 1 F. Un produit de la boutique est bien re-tarifé (2 000 F, sonde T2c).
+- **Cause (CODE)** : `commande-service.js:211-223` ne re-tarife que si le produit existe dans la boutique et ne refuse jamais un article sans produit valide (la boucle ne fait rien sinon).
+- **Impact** : commande à montant arbitraire, avec Wave session pour ce montant ; condition d'exploitation de AUD-072. **Correctif** : refuser tout article sans `produit_id` valide appartenant à la boutique (comme `boutiques-commandes.js:191-197`) ; factoriser le calcul du panier dans un seul service partagé par les deux routes. **Test** : article libre → 400 ; produit d'une autre boutique → 400 ; panier normal → 201.
+
+### AUD-074 — MAJEUR — Aucun contrôle de stock sur la route du panier (AUD-010 partiel)
+- **Preuve (PROUVÉ)** : produit en stock 1, commande de 5 unités → **201**, total 5 000 F, stock ramené à 0 (`GREATEST(0, …)`). La même demande sur la route express est refusée (409).
+- **Impact** : survente ; une seule personne peut mettre un produit hors vente ; le stock affiché cesse de refléter le réel. **Cause (CODE)** : `commande-service.js:372-381`. **Correctif** : verrouillage de ligne et refus (409) si `stock_quantite < quantité` (idem variantes). **Test** : stock 1, quantité 5 → 409, stock inchangé ; deux commandes concurrentes de la dernière unité → une seule acceptée.
+
+### AUD-075 — MAJEUR — Produits suspendus, hors vente ou sans prix : visibles et commandables
+- **Preuve (PROUVÉ)** : produit `statut_moderation = 'suspendu'` → `GET /api/boutiques/:id/produits` (anonyme) le renvoie (`visible: true`) et `POST …/express` l'accepte (201). Produit `en_stock=false` sans `stock_quantite` → commande acceptée sur les deux routes (201, 500 F). Produit sans prix → express 201 à **0 F** (`prix = Number(null) || 0`, `boutiques-commandes.js:168`).
+- **Impact** : contournement de la modération admin (le journal du 28/09 annonce l'exclusion des produits suspendus, vraie pour l'accueil, pas pour la vitrine ni la commande) ; commandes à 0 F. **Correctif** : filtre `statut_moderation`, `en_stock`, `prix > 0`, boutique `actif` dans le catalogue public et dans les deux routes de commande. **Test** : suspendu → absent du catalogue public et commande 400/409.
+
+### AUD-076 — MAJEUR — Prix et stock des variantes ignorés
+- **Preuve (PROUVÉ)** : produit à 1 000 F avec variante « XL » à 5 000 F : commande avec `variante_id` → **1 000 F** sur la route du panier et sur la route express. Stock variante : décrémenté par le panier, **jamais par l'express** (`variante_id` codé `NULL`, `boutiques-commandes.js:294`).
+- **Impact** : tout produit dont les variantes ont des prix différents est facturé au prix de base ; écart entre prix affiché (variante) et total enregistré. **Correctif** : résoudre la variante côté serveur (appartenance au produit, prix, stock). **Test** : variante 5 000 F → total 5 000 F ; stock variante décrémenté sur les deux routes.
+
+### AUD-077 — MAJEUR — Statuts de commande sans machine d'états : stock restitué plusieurs fois, commande payée annulable sans trace
+- **Preuve (PROUVÉ)** : stock 10, commande de 3 (→ 7). `annulee` → 10 ; `confirmee` → 10 (non redécrémenté) ; `annulee` → **13** ; `livree`, `en_attente` acceptés. Stock final **13 pour une commande encore ouverte**, donc 3 unités fantômes. Une commande `paiement_recu = true` passe à `annulee` (200) sans marqueur de remboursement ni alerte ; `payee` n'est pas un statut acceptable par l'API (400) alors que le webhook l'écrit.
+- **Cause (CODE)** : `comptabilite.js:999-1025` ne vérifie aucune transition et teste `ancienStatut !== 'annulee'` au lieu d'un état « stock déjà restitué » ; `STATUTS_VALIDES` (`commande-service.js:7`) ne contient pas `payee` (AUD-043). **Correctif** : table de transitions autorisées, stock restitué une fois (transaction + indicateur), refus ou alerte d'annulation d'une commande encaissée, `payee` et `reverse` dans le vocabulaire. **Test** : cycle annuler/réactiver ne change le stock qu'une fois ; `livree → en_attente` refusé.
+
+### AUD-078 — MAJEUR — `PATCH` du seul `frais_livraison` : erreur 500 après écriture, client jamais prévenu
+- **Preuve (PROUVÉ)** : `PATCH /api/comptabilite/:id/commandes/:cmd {"frais_livraison":9000}` → **500**, alors que la base est modifiée (frais 9 000, total 2 000 → 11 000) ; y compris sur une commande déjà payée (`paiement_recu=true`, total modifié a posteriori).
+- **Cause (CODE)** : `comptabilite.js:1368` exécute `req.body.statut.toUpperCase()` alors que `statut` est absent ; l'exception est attrapée en 500 après l'`UPDATE`. La fonction « fixer le tarif de livraison » livrée le 30/09 (journal : « Ajustement Backend des Frais de Livraison ») ne fonctionne donc pas.
+- **Impact** : le marchand voit une erreur alors que le montant a changé, le client n'est ni notifié ni relancé (Wave) ; une commande payée voit son total changer, ce qui fait échouer ensuite tout contrôle de montant. **Correctif** : gérer `statut` absent, refuser la modification des frais d'une commande payée, notifier le client. **Test** : PATCH frais seul → 200 + message client ; commande payée → 409.
+
+### AUD-079 — MAJEUR — Suivi public : joker `ILIKE` ouvrant toutes les boutiques
+- **Preuve (PROUVÉ)** : `GET /api/boutiques/commandes/suivi?ref=CMD-%` (anonyme) → 200, 5 commandes ; `ref=CMD-20260930-N0B%` renvoie la commande de la **boutique N** (produit « 1x PN autre boutique », 3 000 F, statut, nom de boutique) sans en connaître la référence.
+- **Cause (CODE)** : `boutiques-commandes.js:549` `c.reference ILIKE $1` avec la saisie brute ; `CMD-%` passe le test `startsWith('CMD-')`.
+- **Impact** : énumération des commandes de toutes les boutiques (produits, montants, statuts, noms de boutique ; téléphone et nom masqués) par tout internaute. **Correctif** : égalité stricte (`=`), échapper `%`, `_`, `\`, limiter aux références bien formées, limiteur par IP. **Test** : `CMD-%` → 400/404 ; référence exacte → 200.
+
+### AUD-080 — MAJEUR — Le client ne peut pas suivre une commande passée depuis le panier (réévaluation d'AUD-051)
+- **Preuve (PROUVÉ)** : référence réelle `C-MUOICK7KC158` (route du panier) → `GET …/suivi?ref=C-MUOICK7KC158` → **404**. La référence express `CMD-…` → 200. Le message WhatsApp de confirmation envoie pourtant vers `suivi-commande?ref=<référence>` (`comptabilite.js:897`).
+- **Cause (CODE)** : `boutiques-commandes.js:531` n'accepte que `CMD-`, `PAY-`, `V-` et UUID. **Correctif** : accepter `C-` (ou unifier le format) ; test de bout en bout lien WhatsApp → page de suivi.
+
+### AUD-081 — MAJEUR — Caisse POS : un code PIN de caissier suffit, sans session, sans verrouillage
+- **Preuve (PROUVÉ)** : `POST /api/boutiques/:id/pos-vente` sans jeton : 120 PIN erronés → 120 × 403 (aucun 429, aucun verrouillage) ; le PIN correct `9876` → **201**, vente `POS-425049` enregistrée, stock décrémenté, prix unitaire choisi par l'appelant (1 F).
+- **Cause (CODE)** : `boutiques-pos.js:110-116` : `superviseur_pin` remplace l'authentification ; PIN de 4 à 6 chiffres (`boutiques-equipe.js:227`) stocké en clair (`boutique_caissiers.code_pin`) ; l'identifiant de boutique est public ; seul le limiteur global (1 000 requêtes/15 min/IP) freine.
+- **Impact** : un tiers qui connaît l'identifiant d'une boutique peut retrouver un PIN à 4 chiffres (≤ 10 000 essais ; le seul frein mesuré est le limiteur global de 1 000 requêtes/15 min/IP, non contourné ici) et enregistrer de fausses ventes (comptabilité, TVA, stock, fidélité). **Correctif** : exiger la session ou le jeton de terminal ; le PIN n'autorise qu'une action supervisée dans une session existante ; hacher le PIN ; verrouillage progressif par boutique et par IP. **Test** : PIN seul → 403 ; 5 échecs → 429.
+
+### AUD-082 — MOYEN — Création de commande anonyme sans limiteur propre : saturation du pool et messages vers des tiers
+- **Preuve (PROUVÉ)** : 60 commandes anonymes simultanées sur la route du panier → **28 × 201 et 32 × 500** (`timeout exceeded when trying to connect` dans le journal : pool de connexions saturé). Aucun 429. Chaque commande envoie un message WhatsApp (repli SMS observé : `Vers +221770008888`) au numéro saisi par l'appelant, sans preuve de propriété.
+- **Impact** : indisponibilité du paiement pour les clients légitimes, bourrage de la base, messagerie de la plateforme utilisable pour contacter n'importe quel numéro (même famille qu'AUD-027). **Correctif** : limiteur dédié (par IP et par téléphone) sur la route, comme `limiterCommandeExpress`, et plafond de connexions par requête. **Test** : rafale de 60 → 429 au-delà du seuil, aucune 500.
+
+### AUD-083 — MOYEN — Échec Wave sur le panier : le client n'est pas informé, la commande est annulée seule 2 h plus tard
+- **Preuve (PROUVÉ pour l'API, CODE pour l'interface)** : initialisation Wave impossible → **201** `fallback_manuel: true`, `numero_depot: "777202086"` (numéro d'administration), commande `en_attente` et stock consommé. `useDrawerCartCheckout.ts` ne lit jamais `fallback_manuel` (aucune occurrence dans ce fichier) : le client voit « commande enregistrée » sans instruction de paiement ; le cron `cron-commandes-impayees` annule la commande après 2 h (`commande-service.js:474`).
+- **Correctif** : afficher le paiement manuel, ou annuler tout de suite comme la route express (`compenserEchecPaiement`). Décision métier : numéro de dépôt affiché au client (propriétaire : direction).
+
+### AUD-084 — MOYEN — Route express : frais de livraison fixés par le client, promotion « livraison offerte » mal appliquée
+- **Preuve (PROUVÉ)** : zone réelle à 2 500 F ; `frais_livraison: 0` envoyé → total 2 000 F (la route ne reçoit aucune zone ; `boutiques-commandes.js:132`). Promo `livraison_offerte` (valeur 2 500) avec livraison 2 500 et panier 2 000 : route panier **2 000 F** (correct), route express **2 500 F** (la remise est retirée du prix des articles, `:235`).
+- **Impact** : le marchand supporte un transport non payé ; le client est surfacturé de la remise promise. **Correctif** : résoudre zone et type de promotion dans le service commun (voir AUD-073).
+
+### AUD-085 — MOYEN — Modification d'un produit : champs effacés et stock écrasé
+- **Preuve (PROUVÉ)** : `PUT …/produits/:id {"prix":2100}` → 200, **description remise à NULL** (`boutiques-produits.js:315`, `description||null`). Stock 10 → commande de 4 (→ 6) → enregistrement d'une fiche ouverte avant la commande (stock saisi 10) → stock **10** : les 4 unités vendues sont « rendues ».
+- **Correctif** : mise à jour partielle (`COALESCE`), comparaison de version (`updated_at`) ou opération de stock relative. **Test** : PUT partiel conserve la description ; écriture de stock obsolète refusée (409).
+
+### AUD-086 — MINEUR — Verrou « anti double soumission » trop large
+- **Preuve (PROUVÉ, par accident de sonde)** : deux commandes de produits différents, même téléphone et même montant à moins de 5 s → la seconde renvoie la **première commande** (aucune création, aucun stock décrémenté, `commande-service.js:304-317`). Le message de notification est renvoyé deux fois. **Correctif** : clé d'idempotence explicite envoyée par le client.
+
+## Non vérifié dans cette phase (et pourquoi)
+- **Interface** : aucun test navigateur (Playwright) du panier, de l'écran marchand des commandes et de la page de suivi n'a été exécuté ; le frontend n'a pas été démarré. Les constats AUD-080, AUD-083 sont prouvés côté API, le comportement d'écran est lu dans le code. **NON VALIDÉ — rendu non exécuté dans cette passe.**
+- **Orange Money, Stripe, Wave réels** : simulés ou bloqués ; seules la signature des webhooks et les montants (tests existants) ont été rejoués. Le virement Wave réel n'a pas été testé.
+- **Chatbot WhatsApp** (`whatsapp-chatbot.js`, commande par conversation) : appelle `creerCommandeBoutique`, donc exposé à AUD-073/074/075 par lecture de code ; le flux conversationnel n'a pas été exécuté.
+- **Données réelles** : cet audit n'a pas utilisé `nopalou_audit_data` ; l'ampleur en production des cas ci-dessus (commandes à prix libre, stocks incohérents) n'est pas mesurée. La partie « incohérences existantes » d'AUD-037 reste valable.
+- **Notifications** : contenu et destinataires vérifiés dans le journal du backend ; livraison réelle WhatsApp non testable (garde réseau).
+- **Performance du panier sous charge réelle** : un seul test de rafale (60 requêtes), machine de développement.
