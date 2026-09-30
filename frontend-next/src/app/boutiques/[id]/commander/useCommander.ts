@@ -265,6 +265,7 @@ export function useCommander({
           note: noteFinale,
           methode_paiement: paiement,
           frais_livraison: fraisLivraison,
+          zone_livraison_id: zoneId && zoneId.length === 36 ? zoneId : undefined,
           articles: articlesPayload,
           code_promo: promoApplique?.code || undefined,
           montant_reduction: promoApplique?.reduction || undefined,

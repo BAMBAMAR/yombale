@@ -520,3 +520,17 @@ Commits du périmètre depuis le dernier rapport : `744272e0` (checkout express,
 - **Données réelles** : cet audit n'a pas utilisé `nopalou_audit_data` ; l'ampleur en production des cas ci-dessus (commandes à prix libre, stocks incohérents) n'est pas mesurée. La partie « incohérences existantes » d'AUD-037 reste valable.
 - **Notifications** : contenu et destinataires vérifiés dans le journal du backend ; livraison réelle WhatsApp non testable (garde réseau).
 - **Performance du panier sous charge réelle** : un seul test de rafale (60 requêtes), machine de développement.
+
+## Statut des corrections de la Phase 6 (30 septembre 2026, nuit)
+| Fiche | Statut | Preuve |
+|---|---|---|
+| AUD-072 | corrigé | `commande-panier.integration.test.js` (virement seulement si encaissé, une fois ; liste admin) |
+| AUD-073, 074, 075, 076 | corrigé | même fichier (prix serveur, 409 surstock + concurrence, suspendu/hors vente/sans prix, variantes) |
+| AUD-077, 078 | corrigé | même fichier (cycle de statuts, trace de remboursement, frais seuls) |
+| AUD-079, 080 | corrigé | même fichier (jokers refusés, référence `C-…` suivie) |
+| AUD-081 | corrigé pour `pos-vente` et `pos-incident` ; **reste ouvert** pour `boutiques-equipe.js` (PIN superviseur) et le verrouillage des essais | même fichier |
+| AUD-082 | partiellement corrigé : limiteur ajouté (inactif hors production, donc rafale non rejouée) ; saturation du pool non traitée | lecture de code |
+| AUD-083 | corrigé (annulation + 502) ; le message affiché côté panier n'a pas été vérifié dans un navigateur | test d'intégration API |
+| AUD-084 | corrigé ; remise Club VIP sur livraison express non honorée (à rétablir avec vérification serveur) | pipeline express + panier |
+| AUD-085 | corrigé | même fichier |
+| AUD-086 | corrigé (critère : mêmes articles et même montant) | même fichier |

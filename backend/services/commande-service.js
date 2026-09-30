@@ -130,31 +130,35 @@ async function notifierVendeurCommande(boutique, {
 
 // Logique de création de commande, partagée entre la route HTTP publique
 // (POST /:boutiqueId/commandes, source='web') et le chatbot WhatsApp (source='whatsapp').
-// Lève une erreur avec .status (404/400) et .message (message utilisateur) en cas d'échec.
+// Lève une erreur avec .status (404/400/409) et .message (message utilisateur) en cas d'échec.
 // N'envoie PAS de notification elle-même — l'appelant appelle notifierVendeurCommande()
 // séparément (permet de grouper la notification pour un panier multi-articles).
+// AUD-073/074/075/076 : prix, disponibilité, stock et variantes sont résolus CÔTÉ SERVEUR dans la transaction,
+// sous verrou de ligne. Un article sans produit valide de la boutique est refusé (le prix ne vient jamais du client).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function erreurCommande(status, message) {
+  const e = new Error(message);
+  e.status = status;
+  return e;
+}
+
 async function creerCommandeBoutique({
   boutiqueId, produitId, quantite = 1, clientNom, clientTelephone, clientAdresse,
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
-  nomProduitManuel, prixUnitaireManuel, groupeCommande, items = [], varianteId,
-  codePromo, montantReduction, formuleEchelonnement,
+  nomProduitManuel, groupeCommande, items = [], varianteId,
+  codePromo, formuleEchelonnement,
   utm_source, utm_medium, utm_campaign, social_post_id,
 }) {
-  const bQuery = 'SELECT id, nom, slug, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
+  const bQuery = 'SELECT id, nom, slug, telephone, whatsapp, utilisateur_id, actif FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
-  if (!boutique) {
-    const e = new Error('Boutique introuvable');
-    e.status = 404;
-    throw e;
-  }
+  if (!boutique) throw erreurCommande(404, 'Boutique introuvable');
+  if (boutique.actif === false) throw erreurCommande(409, 'Cette boutique n\'accepte pas de commandes pour le moment.');
 
   const actualBoutiqueId = boutique.id;
   let fraisLivraison = 0;
 
-  const validZoneId = (zoneLivraisonId && String(zoneLivraisonId).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(zoneLivraisonId)) ? zoneLivraisonId : null;
-  const validProduitId = (produitId && String(produitId).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(produitId)) ? produitId : null;
-  const validVarianteId = (varianteId && String(varianteId).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(varianteId)) ? varianteId : null;
-
+  const validZoneId = (zoneLivraisonId && UUID_RE.test(String(zoneLivraisonId))) ? zoneLivraisonId : null;
   if (validZoneId) {
     const { rows: [zone] } = await pool.query(
       'SELECT prix, nom FROM zones_livraison WHERE id = $1 AND boutique_id = $2',
@@ -163,66 +167,23 @@ async function creerCommandeBoutique({
     if (zone) fraisLivraison = Number(zone.prix);
   }
 
-  // Validation stricte anti-panier vide (P0)
+  // Validation stricte anti-panier vide
   const hasItems = Array.isArray(items) && items.length > 0;
-  if (!hasItems && !produitId && !nomProduitManuel) {
-    const e = new Error('Au moins un article ou produit est requis pour passer commande');
-    e.status = 400;
-    throw e;
+  if (!hasItems && !produitId) {
+    throw erreurCommande(400, 'Au moins un article ou produit est requis pour passer commande');
   }
 
-  // Normalisation des articles de commande (multi-articles ou article unique)
-  let normalizedItems = [];
-  if (hasItems) {
-    normalizedItems = items.map(it => ({
-      produit_id: (it.produit_id && String(it.produit_id).length === 36) ? it.produit_id : (it.id && String(it.id).length === 36 ? it.id : null),
-      variante_id: (it.variante_id && String(it.variante_id).length === 36) ? it.variante_id : null,
-      nom_produit: String(it.nom_produit || it.nom || 'Produit').slice(0, 300),
-      details_variante: it.details_variante ? String(it.details_variante).slice(0, 255) : null,
-      prix_unitaire: Number(it.prix_unitaire || it.prix || 0),
-      quantite: Math.max(1, parseInt(it.quantite, 10) || 1),
-    }));
-  } else {
-    let nomP = nomProduitManuel || 'Produit';
-    let pxU = Number(prixUnitaireManuel) || 0;
-    if (validProduitId) {
-      const { rows: [p] } = await pool.query(
-        'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
-        [validProduitId, actualBoutiqueId]
-      );
-      if (p) {
-        if (!nomProduitManuel && p.nom) nomP = p.nom;
-        if (!prixUnitaireManuel && p.prix) pxU = Number(p.prix);
-      }
-    }
-    normalizedItems = [{
-      produit_id: validProduitId,
-      variante_id: validVarianteId,
-      nom_produit: nomP,
-      details_variante: null,
-      prix_unitaire: pxU,
-      quantite: Math.max(1, parseInt(quantite, 10) || 1),
-    }];
-  }
+  // Normalisation : seuls l'identifiant produit, la variante et la quantité viennent du client
+  const demandes = hasItems
+    ? items.map(it => ({
+        produit_id: it.produit_id || it.id || null,
+        variante_id: it.variante_id || null,
+        details_variante: it.details_variante ? String(it.details_variante).slice(0, 255) : null,
+        quantite: Math.min(1000, Math.max(1, parseInt(it.quantite, 10) || 1)),
+      }))
+    : [{ produit_id: produitId, variante_id: varianteId || null, details_variante: null, quantite: Math.min(1000, Math.max(1, parseInt(quantite, 10) || 1)) }];
 
-  // T-064 : imposition du prix catalogue côté serveur (anti-falsification de prix).
-  // Pour tout article rattaché à un produit réel du catalogue, on écrase le prix
-  // envoyé par le client par le prix officiel enregistré en base.
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  for (const it of normalizedItems) {
-    if (it.produit_id && UUID_RE.test(String(it.produit_id))) {
-      const { rows: [p] } = await pool.query(
-        'SELECT nom, prix FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
-        [it.produit_id, actualBoutiqueId]
-      ).catch(() => ({ rows: [] }));
-      if (p && p.prix != null) {
-        it.prix_unitaire = Number(p.prix);
-        if (!it.nom_produit || it.nom_produit === 'Produit') it.nom_produit = p.nom;
-      }
-    }
-  }
-
-  // Vérification si le client est blacklisté pour les achats à crédit
+  // Client bloqué pour les achats à crédit
   if (methodePaiement === 'credit') {
     const cleanTel = String(clientTelephone || '').replace(/\D/g, '');
     const shortTel = cleanTel.length >= 9 ? cleanTel.slice(-9) : cleanTel;
@@ -238,86 +199,11 @@ async function creerCommandeBoutique({
          LIMIT 1`,
         [actualBoutiqueId, shortTel, (clientNom || '').trim()]
       );
-      if (blackRes.rows[0]) {
-        const e = new Error('⛔ Votre compte est actuellement bloqué par la boutique pour les achats à crédit.');
-        e.status = 400;
-        throw e;
-      }
+      if (blackRes.rows[0]) throw erreurCommande(400, '⛔ Votre compte est actuellement bloqué par la boutique pour les achats à crédit.');
     }
   }
 
-  const sousTotal = normalizedItems.reduce((acc, it) => acc + (it.prix_unitaire * it.quantite), 0);
-  const totalQuantite = normalizedItems.reduce((acc, it) => acc + it.quantite, 0);
-
-  // T-065 : la réduction n'est JAMAIS celle envoyée par le client. Elle est recalculée
-  // côté serveur après validation stricte du code promo (existence, actif, date, quota, min achat).
-  let reductionVal = 0;
-  let promoValidee = null;
-  if (codePromo && String(codePromo).trim()) {
-    const codeUp = String(codePromo).trim().toUpperCase();
-    const { rows: [promo] } = await pool.query(
-      `SELECT * FROM boutique_promotions WHERE boutique_id = $1 AND UPPER(code) = $2 AND actif = true`,
-      [actualBoutiqueId, codeUp]
-    ).catch(() => ({ rows: [] }));
-    if (promo) {
-      const expiree = promo.fin && new Date(promo.fin) < new Date();
-      const quotaAtteint = promo.limite_utilisation !== null && promo.limite_utilisation !== undefined && Number(promo.fois_utilise || 0) >= Number(promo.limite_utilisation);
-      const minAchatOk = !promo.min_achat || sousTotal >= Number(promo.min_achat);
-      if (!expiree && !quotaAtteint && minAchatOk) {
-        if (promo.type_remise === 'pourcentage') {
-          reductionVal = Math.round((sousTotal * Number(promo.valeur)) / 100);
-        } else if (promo.type_remise === 'fixe') {
-          reductionVal = Math.min(sousTotal, Number(promo.valeur));
-        } else if (promo.type_remise === 'livraison_offerte') {
-          reductionVal = Math.min(fraisLivraison, Number(promo.valeur) || fraisLivraison);
-        }
-        reductionVal = Math.max(0, Math.round(reductionVal));
-        if (reductionVal > 0) promoValidee = promo;
-      }
-    }
-  }
-
-  const montantTotal = Math.max(0, sousTotal + fraisLivraison - reductionVal);
-  const nomProduitGlobal = normalizedItems.map(it => `${it.quantite}x ${it.nom_produit}${it.details_variante ? ` (${it.details_variante})` : ''}`).join(', ');
-  const ref = genRefCommande();
-
-  let finalNote = note || '';
-  if (formuleEchelonnement && typeof formuleEchelonnement === 'object') {
-    const apportFmt = formuleEchelonnement.apport ? `${formuleEchelonnement.apport} FCFA` : '0 FCFA';
-    const echelonNote = `[Échelonnement: Apport ${apportFmt}, ${formuleEchelonnement.nb_echeances || 3}x (${formuleEchelonnement.frequence || 'mensuel'})]`;
-    finalNote = finalNote ? `${finalNote} | ${echelonNote}` : echelonNote;
-  }
-  // T-065 : la note et l'incrément du compteur ne s'appliquent que si le code promo
-  // a été réellement validé et a produit une réduction côté serveur.
-  if (promoValidee) {
-    const promoNote = `[Code Promo: ${String(promoValidee.code).toUpperCase()} (-${reductionVal} FCFA)]`;
-    finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
-
-    // Incrémentation du compteur d'utilisation (par id de la promo validée)
-    await pool.query(
-      `UPDATE boutique_promotions SET fois_utilise = fois_utilise + 1 WHERE id = $1`,
-      [promoValidee.id]
-    ).catch(() => {});
-  }
-
-  // Protection Idempotence / Anti-Double Soumission Commande (verrou 5 secondes)
-  if (clientTelephone && actualBoutiqueId) {
-    const existingCmd = await pool.query(
-      `SELECT * FROM commandes_boutique
-       WHERE boutique_id = $1
-         AND client_telephone = $2
-         AND montant_total = $3
-         AND created_at >= NOW() - INTERVAL '5 seconds'
-       LIMIT 1`,
-      [actualBoutiqueId, clientTelephone, montantTotal]
-    );
-    if (existingCmd.rows[0]) {
-      console.warn(`[IDEMPOTENCE COMMANDE] Double soumission bloquée (ref existante: ${existingCmd.rows[0].reference})`);
-      return { commande: existingCmd.rows[0], boutique };
-    }
-  }
-
-  const validSocialPostId = (social_post_id && String(social_post_id).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(social_post_id)) ? social_post_id : null;
+  const validSocialPostId = (social_post_id && UUID_RE.test(String(social_post_id))) ? social_post_id : null;
 
   // ── Mode transactionnel ACID ───────────────────────────────────────────────
   // Utilise un client dédié de transaction si pool.connect existe (PostgreSQL réel).
@@ -332,53 +218,153 @@ async function creerCommandeBoutique({
       inTransaction = true;
     }
 
+    // 1. Résolution serveur des lignes (prix, disponibilité, variante) + décrément de stock sous verrou
+    const lignes = [];
+    for (const d of demandes) {
+      if (!d.produit_id || !UUID_RE.test(String(d.produit_id))) {
+        throw erreurCommande(400, 'Un article du panier n\'est pas un produit valide de cette boutique.');
+      }
+      const { rows: [p] } = await client.query(
+        `SELECT id, nom, prix, prix_achat, stock_quantite, en_stock, statut_moderation
+           FROM boutique_produits WHERE id = $1 AND boutique_id = $2 FOR UPDATE`,
+        [d.produit_id, actualBoutiqueId]
+      );
+      if (!p) throw erreurCommande(400, 'Un article du panier n\'est pas un produit valide de cette boutique.');
+      if (p.statut_moderation && p.statut_moderation !== 'actif') {
+        throw erreurCommande(409, `"${p.nom}" n'est plus disponible à la vente.`);
+      }
+      if (p.stock_quantite === null && p.en_stock === false) {
+        throw erreurCommande(409, `"${p.nom}" est en rupture de stock.`);
+      }
+
+      let prix = Number(p.prix);
+      let detailsVariante = d.details_variante;
+      let varianteId2 = null;
+      if (d.variante_id) {
+        if (!UUID_RE.test(String(d.variante_id))) throw erreurCommande(400, `Variante invalide pour "${p.nom}".`);
+        const { rows: [v] } = await client.query(
+          `SELECT id, prix, stock_quantite, attributs FROM boutique_produit_variantes
+            WHERE id = $1 AND produit_id = $2 AND boutique_id = $3 AND actif = true FOR UPDATE`,
+          [d.variante_id, p.id, actualBoutiqueId]
+        );
+        if (!v) throw erreurCommande(400, `Variante indisponible pour "${p.nom}".`);
+        varianteId2 = v.id;
+        if (v.prix !== null && Number(v.prix) > 0) prix = Number(v.prix);
+        if (v.stock_quantite !== null && Number(v.stock_quantite) < d.quantite) {
+          throw erreurCommande(409, `Stock insuffisant pour "${p.nom}" (disponible : ${v.stock_quantite}, demandé : ${d.quantite}).`);
+        }
+        if (!detailsVariante && v.attributs && typeof v.attributs === 'object') {
+          detailsVariante = Object.values(v.attributs).join(' / ').slice(0, 255) || null;
+        }
+        await client.query(
+          'UPDATE boutique_produit_variantes SET stock_quantite = stock_quantite - $1 WHERE id = $2 AND stock_quantite IS NOT NULL',
+          [d.quantite, v.id]
+        );
+      }
+      if (!Number.isFinite(prix) || prix <= 0) {
+        throw erreurCommande(409, `Le prix de "${p.nom}" n'est pas défini : commande impossible.`);
+      }
+      if (p.stock_quantite !== null) {
+        if (Number(p.stock_quantite) < d.quantite) {
+          throw erreurCommande(409, `Stock insuffisant pour "${p.nom}" (disponible : ${p.stock_quantite}, demandé : ${d.quantite}).`);
+        }
+        await client.query(
+          `UPDATE boutique_produits
+              SET stock_quantite = stock_quantite - $1,
+                  en_stock = CASE WHEN stock_quantite - $1 <= 0 THEN false ELSE en_stock END
+            WHERE id = $2 AND boutique_id = $3`,
+          [d.quantite, p.id, actualBoutiqueId]
+        );
+      }
+      lignes.push({
+        produit_id: p.id, variante_id: varianteId2, nom_produit: p.nom,
+        details_variante: detailsVariante, prix_unitaire: prix,
+        prix_achat: p.prix_achat != null ? Number(p.prix_achat) : null, quantite: d.quantite,
+      });
+    }
+
+    const sousTotal = lignes.reduce((acc, it) => acc + (it.prix_unitaire * it.quantite), 0);
+    const totalQuantite = lignes.reduce((acc, it) => acc + it.quantite, 0);
+
+    // 2. Code promo : toujours recalculé côté serveur (existence, actif, dates, quota, minimum d'achat)
+    let reductionVal = 0;
+    let promoValidee = null;
+    if (codePromo && String(codePromo).trim()) {
+      const codeUp = String(codePromo).trim().toUpperCase();
+      const { rows: [promo] } = await client.query(
+        `SELECT * FROM boutique_promotions WHERE boutique_id = $1 AND UPPER(code) = $2 AND actif = true FOR UPDATE`,
+        [actualBoutiqueId, codeUp]
+      );
+      if (promo) {
+        const expiree = promo.fin && new Date(promo.fin) < new Date();
+        const quotaAtteint = promo.limite_utilisation !== null && promo.limite_utilisation !== undefined && Number(promo.fois_utilise || 0) >= Number(promo.limite_utilisation);
+        const minAchatOk = !promo.min_achat || sousTotal >= Number(promo.min_achat);
+        if (!expiree && !quotaAtteint && minAchatOk) {
+          if (promo.type_remise === 'pourcentage') {
+            reductionVal = Math.round((sousTotal * Number(promo.valeur)) / 100);
+          } else if (promo.type_remise === 'fixe') {
+            reductionVal = Math.min(sousTotal, Number(promo.valeur));
+          } else if (promo.type_remise === 'livraison_offerte') {
+            reductionVal = Math.min(fraisLivraison, Number(promo.valeur) || fraisLivraison);
+          }
+          reductionVal = Math.max(0, Math.round(reductionVal));
+          if (reductionVal > 0) promoValidee = promo;
+        }
+      }
+    }
+
+    const montantTotal = Math.max(0, sousTotal + fraisLivraison - reductionVal);
+    const nomProduitGlobal = lignes.map(it => `${it.quantite}x ${it.nom_produit}${it.details_variante ? ` (${it.details_variante})` : ''}`).join(', ');
+
+    // 3. Anti double-soumission (5 s) : même boutique, même téléphone, mêmes articles et même montant
+    //    (AUD-086 : deux commandes de produits différents au même montant ne sont plus fusionnées)
+    if (clientTelephone) {
+      const existingCmd = await client.query(
+        `SELECT * FROM commandes_boutique
+          WHERE boutique_id = $1 AND client_telephone = $2 AND montant_total = $3 AND nom_produit = $4
+            AND created_at >= NOW() - INTERVAL '5 seconds'
+          LIMIT 1`,
+        [actualBoutiqueId, clientTelephone, montantTotal, nomProduitGlobal.slice(0, 300)]
+      );
+      if (existingCmd.rows[0]) {
+        console.warn(`[IDEMPOTENCE COMMANDE] Double soumission bloquée (ref existante: ${existingCmd.rows[0].reference})`);
+        if (inTransaction) { await client.query('ROLLBACK'); inTransaction = false; }
+        return { commande: existingCmd.rows[0], boutique, doublon: true };
+      }
+    }
+
+    let finalNote = note || '';
+    if (formuleEchelonnement && typeof formuleEchelonnement === 'object') {
+      const apportFmt = formuleEchelonnement.apport ? `${formuleEchelonnement.apport} FCFA` : '0 FCFA';
+      const echelonNote = `[Échelonnement: Apport ${apportFmt}, ${formuleEchelonnement.nb_echeances || 3}x (${formuleEchelonnement.frequence || 'mensuel'})]`;
+      finalNote = finalNote ? `${finalNote} | ${echelonNote}` : echelonNote;
+    }
+    if (promoValidee) {
+      const promoNote = `[Code Promo: ${String(promoValidee.code).toUpperCase()} (-${reductionVal} FCFA)]`;
+      finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
+      await client.query(`UPDATE boutique_promotions SET fois_utilise = fois_utilise + 1 WHERE id = $1`, [promoValidee.id]);
+    }
+
+    const ref = genRefCommande();
     const { rows: [commande] } = await client.query(
       `INSERT INTO commandes_boutique
          (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
           client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande,
           utm_source, utm_medium, utm_campaign, social_post_id)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
-      [ref, actualBoutiqueId, normalizedItems[0]?.produit_id || null, nomProduitGlobal.slice(0, 300), totalQuantite, sousTotal, montantTotal,
+      [ref, actualBoutiqueId, lignes[0].produit_id, nomProduitGlobal.slice(0, 300), totalQuantite, sousTotal, montantTotal,
        clientNom, clientTelephone, clientAdresse || null, finalNote || null, source,
        methodePaiement, validZoneId, fraisLivraison, groupeCommande || null,
        utm_source || null, utm_medium || null, utm_campaign || null, validSocialPostId]
     );
 
-    // Insertion détaillée de chaque article et décrémentation des stocks
-    for (const it of normalizedItems) {
-      let prixAchat = null;
-      if (it.produit_id) {
-        const pData = await client.query('SELECT prix_achat FROM boutique_produits WHERE id=$1', [it.produit_id]);
-        prixAchat = pData.rows[0]?.prix_achat ? Number(pData.rows[0].prix_achat) : null;
-      }
-
+    for (const it of lignes) {
       await client.query(
         `INSERT INTO commandes_boutique_items
            (commande_id, boutique_id, produit_id, variante_id, nom_produit, details_variante, prix_unitaire, prix_achat, quantite, montant_total)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-        [commande.id, actualBoutiqueId, it.produit_id, it.variante_id, it.nom_produit, it.details_variante, it.prix_unitaire, prixAchat, it.quantite, it.prix_unitaire * it.quantite]
+        [commande.id, actualBoutiqueId, it.produit_id, it.variante_id, it.nom_produit, it.details_variante, it.prix_unitaire, it.prix_achat, it.quantite, it.prix_unitaire * it.quantite]
       );
-
-      // Décrémentation du stock sur la variante
-      if (it.variante_id) {
-        await client.query(
-          `UPDATE boutique_produit_variantes
-           SET stock_quantite = GREATEST(0, stock_quantite - $1)
-           WHERE id = $2 AND boutique_id = $3`,
-          [it.quantite, it.variante_id, actualBoutiqueId]
-        );
-      }
-
-      // Décrémentation du stock sur le produit parent
-      if (it.produit_id) {
-        await client.query(
-          `UPDATE boutique_produits
-           SET stock_quantite = GREATEST(0, stock_quantite - $1),
-               en_stock = CASE WHEN (stock_quantite - $1) <= 0 THEN false ELSE en_stock END
-           WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
-          [it.quantite, it.produit_id, actualBoutiqueId]
-        );
-      }
     }
 
     if (inTransaction) {

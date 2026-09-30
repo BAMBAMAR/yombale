@@ -129,7 +129,13 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
       String(now.getDate()).padStart(2, '0');
     const entropy = crypto.randomBytes(3).toString('hex').toUpperCase();
     const ref = `CMD-${dateStr}-${entropy}`;
-    const fraisLiv = Math.max(0, Number(frais_livraison) || 0);
+    // AUD-084 : les frais de livraison viennent UNIQUEMENT de la zone de la boutique (jamais du corps de requête).
+    // Sans zone valide (retrait, frais à convenir) la livraison vaut 0, comme sur la route du panier.
+    let fraisLiv = 0;
+    if (req.body.zone_livraison_id && UUID_RE.test(String(req.body.zone_livraison_id))) {
+      const zRes = await pool.query('SELECT prix FROM zones_livraison WHERE id = $1 AND boutique_id = $2', [req.body.zone_livraison_id, actualBoutiqueId]);
+      if (zRes.rows[0]) fraisLiv = Math.max(0, Number(zRes.rows[0].prix) || 0);
+    }
 
     const client = await pool.connect();
     let clientReleased = false;
@@ -156,15 +162,27 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
         const validProdId = (art.produit_id && UUID_RE.test(String(art.produit_id))) ? String(art.produit_id) : null;
         let prix = 0;
         let prixAchat = null;
+        let varianteId = null;
+        let detailsVariante = null;
         let nomProd = art.nom_produit || 'Produit sans nom';
         const qte = Math.max(1, Math.floor(Number(art.quantite)) || 1);
 
         if (validProdId) {
           const pRes = await client.query(
-            'SELECT id, nom, prix, prix_achat, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2 FOR UPDATE',
+            'SELECT id, nom, prix, prix_achat, stock_quantite, en_stock, statut_moderation FROM boutique_produits WHERE id = $1 AND boutique_id = $2 FOR UPDATE',
             [validProdId, actualBoutiqueId]
           );
           if (pRes.rows[0]) {
+            // AUD-075 : produit suspendu, hors vente ou sans prix : non commandable
+            const pr = pRes.rows[0];
+            const indispo = (pr.statut_moderation && pr.statut_moderation !== 'actif')
+              || (pr.stock_quantite === null && pr.en_stock === false)
+              || !(Number(pr.prix) > 0);
+            if (indispo) {
+              await client.query('ROLLBACK');
+              releaseClient();
+              return res.status(409).json({ error: `"${pr.nom}" n'est pas disponible à la vente.` });
+            }
             prix = Number(pRes.rows[0].prix) || 0;
             prixAchat = pRes.rows[0].prix_achat != null ? Number(pRes.rows[0].prix_achat) : null;
             if (pRes.rows[0].nom) nomProd = pRes.rows[0].nom;
@@ -179,9 +197,33 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
                 });
               }
               await client.query(
-                'UPDATE boutique_produits SET stock_quantite = stock_quantite - $1 WHERE id = $2',
+                `UPDATE boutique_produits SET stock_quantite = stock_quantite - $1,
+                   en_stock = CASE WHEN stock_quantite - $1 <= 0 THEN false ELSE en_stock END WHERE id = $2`,
                 [qte, validProdId]
               );
+            }
+            // AUD-076 : prix et stock de la variante choisie (résolus côté serveur)
+            if (art.variante_id) {
+              const vRes = UUID_RE.test(String(art.variante_id)) ? await client.query(
+                `SELECT id, prix, stock_quantite, attributs FROM boutique_produit_variantes
+                  WHERE id = $1 AND produit_id = $2 AND boutique_id = $3 AND actif = true FOR UPDATE`,
+                [art.variante_id, validProdId, actualBoutiqueId]
+              ) : { rows: [] };
+              const v = vRes.rows[0];
+              if (!v) {
+                await client.query('ROLLBACK');
+                releaseClient();
+                return res.status(400).json({ error: `Variante indisponible pour "${nomProd}".` });
+              }
+              if (v.stock_quantite !== null && Number(v.stock_quantite) < qte) {
+                await client.query('ROLLBACK');
+                releaseClient();
+                return res.status(409).json({ error: `Stock insuffisant pour "${nomProd}" (disponible : ${v.stock_quantite}, demandé : ${qte}).` });
+              }
+              if (v.prix !== null && Number(v.prix) > 0) prix = Number(v.prix);
+              await client.query('UPDATE boutique_produit_variantes SET stock_quantite = stock_quantite - $1 WHERE id = $2 AND stock_quantite IS NOT NULL', [qte, v.id]);
+              varianteId = v.id;
+              if (v.attributs && typeof v.attributs === 'object') detailsVariante = Object.values(v.attributs).join(' / ').slice(0, 255) || null;
             }
           } else {
             await client.query('ROLLBACK');
@@ -198,7 +240,7 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
 
         const totalLigne = prix * qte;
         totalArticles += totalLigne;
-        articlesTraites.push({ validProdId, nomProd, qte, prix, prixAchat, totalLigne });
+        articlesTraites.push({ validProdId, nomProd, qte, prix, prixAchat, totalLigne, varianteId, detailsVariante });
       }
 
       // ── 2. Validation stricte du code promo côté serveur ──
@@ -231,6 +273,9 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
             if (notExpired && minAchatOk && maxUsageOk) {
               if (p.type_remise === 'pourcentage') {
                 reductionVal = Math.round((totalArticles * Number(p.valeur || 0)) / 100);
+              } else if (p.type_remise === 'livraison_offerte') {
+                // AUD-084 : la remise porte sur la livraison, jamais sur le prix des articles
+                reductionVal = Math.min(fraisLiv, Number(p.valeur) || fraisLiv);
               } else {
                 reductionVal = Math.min(totalArticles, Number(p.valeur || 0));
               }
@@ -291,8 +336,8 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
         await client.query(
           `INSERT INTO commandes_boutique_items
              (commande_id, boutique_id, produit_id, variante_id, nom_produit, details_variante, prix_unitaire, prix_achat, quantite, montant_total)
-           VALUES ($1, $2, $3, NULL, $4, NULL, $5, $6, $7, $8)`,
-          [entete.id, actualBoutiqueId, item.validProdId, item.nomProd.slice(0, 300), item.prix, item.prixAchat, item.qte, item.totalLigne]
+           VALUES ($1, $2, $3, $9, $4, $10, $5, $6, $7, $8)`,
+          [entete.id, actualBoutiqueId, item.validProdId, item.nomProd.slice(0, 300), item.prix, item.prixAchat, item.qte, item.totalLigne, item.varianteId, item.detailsVariante]
         );
       }
 
@@ -528,7 +573,11 @@ router.get('/commandes/suivi', async (req, res) => {
 
     const cleanDigits = rawTerm.replace(/[^0-9]/g, '');
     const isPhoneSearch = cleanDigits.length >= 9;
-    const isReferenceSearch = rawTerm.toUpperCase().startsWith('CMD-') || rawTerm.toUpperCase().startsWith('PAY-') || rawTerm.toUpperCase().startsWith('V-') || /^[0-9a-f-]{36}$/i.test(rawTerm);
+    // AUD-079/080 : référence strictement bien formée (jamais de joker ILIKE) ; les références du panier (`C-…`) sont acceptées
+    const isReferenceSearch = /^(CMD|PAY|V|C)-[A-Z0-9-]{3,60}$/i.test(rawTerm) || UUID_RE.test(rawTerm);
+    if (!isReferenceSearch && /[%_*\\]/.test(rawTerm)) {
+      return res.status(400).json({ error: 'Référence de commande invalide.' });
+    }
 
     if (!isPhoneSearch && !isReferenceSearch && rawTerm.length < 8) {
       return res.status(400).json({ error: 'Terme de recherche trop court ou générique. Indiquez votre référence exacte (ex: CMD-2026-1234) ou votre numéro complet.' });
@@ -546,7 +595,7 @@ router.get('/commandes/suivi', async (req, res) => {
                COALESCE(b.telephone, '') as boutique_whatsapp
         FROM commandes_boutique c
         LEFT JOIN boutiques b ON b.id = c.boutique_id
-        WHERE c.reference ILIKE $1 OR c.id::text = $1
+        WHERE UPPER(c.reference) = UPPER($1) OR c.id::text = LOWER($1)
         ORDER BY c.created_at DESC
         LIMIT 5
       `;

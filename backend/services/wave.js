@@ -199,7 +199,10 @@ async function sendPayout({ amount, mobile, client_reference, boutique_nom, refe
   };
 
   // Idempotency-Key obligatoire sur les POST (Wave rejette sans lui)
-  const idempotencyKey = randomUUID();
+  // Clé déterministe par référence de virement : un rejeu (deux clics, reprise) ne peut pas payer deux fois (AUD-072)
+  const idempotencyKey = client_reference
+    ? require('crypto').createHash('sha256').update(`nopalou-payout:${client_reference}`).digest('hex').replace(/^(.{8})(.{4}).(.{3}).(.{3})(.{12}).*$/, '$1-$2-4$3-8$4-$5')
+    : randomUUID();
 
   const headers = {
     'Authorization': `Bearer ${apiKey}`,

@@ -115,6 +115,7 @@ describe('SPEC 02 — Checkout Web 1-Page Unifié & Cross-Sell Panier', () => {
       if (typeof sql === 'string' && sql.includes('FROM boutiques WHERE')) {
         return { rows: [{ id: boutiqueId, nom: 'Tech Dakar' }] };
       }
+      if (typeof sql === 'string' && sql.includes('FROM zones_livraison')) return { rows: [{ prix: 1500 }] }; // AUD-084
       return { rows: [] };
     });
 
@@ -135,7 +136,7 @@ describe('SPEC 02 — Checkout Web 1-Page Unifié & Cross-Sell Panier', () => {
         boutique_id: boutiqueId,
         client_nom: 'Moussa Ndiaye',
         client_telephone: '771234567',
-        frais_livraison: 1500,
+        zone_livraison_id: '8c1f7e7a-3b1d-4c77-9d57-3f0a1f3e9b21',
         articles: [{ produit_id: prodId, quantite: 1, prix_unitaire: 12000 }]
       });
 

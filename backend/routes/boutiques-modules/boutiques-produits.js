@@ -30,9 +30,15 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
     const cacheKey = `cat:${param}`;
+    // AUD-075 : le public ne voit jamais un produit suspendu par la modération ; le propriétaire (ou l'équipe) voit tout.
+    let estGestionnaire = false;
+    if (req.user?.userId) {
+      try { estGestionnaire = !!(await checkBoutiqueAccess(param, req.user.userId)); } catch { estGestionnaire = false; }
+    }
+    const filtrer = (liste) => (estGestionnaire ? liste : liste.filter(p => !p.statut_moderation || p.statut_moderation === 'actif'));
     const cachedData = await cacheGet(cacheKey);
     if (cachedData) {
-      return res.json({ produits: cachedData, cached: true });
+      return res.json({ produits: filtrer(cachedData), cached: true });
     }
 
     const { rows } = await pool.query(
@@ -59,8 +65,8 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
       [param]
     );
 
-    await cacheSet(cacheKey, rows, 120); // Cache 2 minutes
-    res.json({ produits: rows });
+    await cacheSet(cacheKey, rows, 120); // Cache 2 minutes (liste complète ; le filtrage public est appliqué à la lecture)
+    res.json({ produits: filtrer(rows) });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
@@ -305,6 +311,18 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     }
     const finalEnStock = safeStock !== null ? (safeStock > 0) : (en_stock !== 'false');
 
+    // AUD-085 : écriture de stock obsolète refusée. Le formulaire envoie le stock qu'il a chargé (`stock_precedent`) ;
+    // si des ventes ont modifié le stock depuis, l'écrasement silencieux est remplacé par un 409.
+    const stockPrecedent = req.body.stock_precedent;
+    if (stockPrecedent !== undefined && stockPrecedent !== null && String(stockPrecedent).trim() !== ''
+        && existing.rows[0].stock_quantite !== null && Number(stockPrecedent) !== Number(existing.rows[0].stock_quantite)
+        && Number(safeStock) !== Number(existing.rows[0].stock_quantite)) {
+      return res.status(409).json({
+        error: `Le stock a changé depuis l'ouverture de la fiche (${existing.rows[0].stock_quantite} en stock actuellement). Rechargez la fiche avant d'enregistrer.`,
+        stock_actuel: existing.rows[0].stock_quantite,
+      });
+    }
+
     const hasVariants = (skusArray && skusArray.length > 0) || (variantesJson.length > 0 && variantesJson.some(v => v.valeurs && v.valeurs.length > 0));
 
     const r = await pool.query(
@@ -312,7 +330,7 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
        images=$6, en_stock=$7, stock_quantite=$8, categorie=$9, caracteristiques=$10, variantes=$11, code_barre=$12,
        unite_vente=$13, has_variants=$14, date_expiration=$15, updated_at=NOW()
        WHERE id=$16 AND boutique_id=$17 RETURNING *`,
-      [nom||existing.rows[0].nom, description||null, safePrix, safePrixBarre, safePrixAchat,
+      [nom||existing.rows[0].nom, description !== undefined ? (description || null) : existing.rows[0].description, safePrix, safePrixBarre, safePrixAchat,
        images, finalEnStock, safeStock, categorie||existing.rows[0].categorie||null,
        caracJson, JSON.stringify(variantesJson), codeBarreVal,
        unite_vente || existing.rows[0].unite_vente || 'piece', hasVariants, date_expiration || existing.rows[0].date_expiration || null, prodId, id]

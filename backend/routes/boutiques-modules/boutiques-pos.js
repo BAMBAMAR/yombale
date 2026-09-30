@@ -107,13 +107,8 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         accessGranted = true;
       }
     }
-    if (!accessGranted && superviseur_pin) {
-      const supCheck = await pool.query(
-        `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE LIMIT 1`,
-        [boutiqueId, String(superviseur_pin).trim()]
-      );
-      if (supCheck.rows[0]) accessGranted = true;
-    }
+    // AUD-081 : un code PIN de caissier (4 à 6 chiffres, sans limite d'essais) n'est JAMAIS une authentification :
+    // seuls une session marchand/équipe ou le jeton du terminal de caisse autorisent l'opération.
     if (!accessGranted) {
       const { logSecurityViolation } = require('../../middlewares/tenantSecurity');
       logSecurityViolation({
@@ -529,13 +524,8 @@ router.post('/:id/pos-incident', tokenOptional, async (req, res) => {
         accessGranted = true;
       }
     }
-    if (!accessGranted && superviseur_pin) {
-      const supCheck = await pool.query(
-        `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE LIMIT 1`,
-        [boutiqueId, String(superviseur_pin).trim()]
-      );
-      if (supCheck.rows[0]) accessGranted = true;
-    }
+    // AUD-081 : un code PIN de caissier (4 à 6 chiffres, sans limite d'essais) n'est JAMAIS une authentification :
+    // seuls une session marchand/équipe ou le jeton du terminal de caisse autorisent l'opération.
     if (!accessGranted) {
       const { logSecurityViolation } = require('../../middlewares/tenantSecurity');
       logSecurityViolation({

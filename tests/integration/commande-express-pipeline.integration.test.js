@@ -26,7 +26,7 @@ jest.mock('../../backend/services/admin-alerts', () => new Proxy({}, { get: () =
 const crypto = require('crypto');
 
 describeIntegration('Checkout express — intégrité commande / stock / paiement', () => {
-  let request, app, pool, wave, marchand, boutique, produits, annulerExp;
+  let request, app, pool, wave, marchand, boutique, produits, annulerExp, zoneId;
   const PW = 'Integration!Pass2026x';
   const tel = '771119900';
 
@@ -59,6 +59,8 @@ describeIntegration('Checkout express — intégrité commande / stock / paiemen
       const p = await post(`/api/boutiques/${boutique.id}/produits`, { nom, prix, stock_quantite: 50, description: nom }, marchand.token);
       produits.push({ id: p.body.produit.id, prix });
     }
+    // AUD-084 : la livraison vient de la zone de la boutique (le montant envoyé par le client est ignoré)
+    zoneId = (await post(`/api/comptabilite/${boutique.id}/zones`, { nom: 'Zone pipeline', prix: 1500 }, marchand.token)).body.id;
   });
 
   afterAll(async () => {
@@ -77,7 +79,7 @@ describeIntegration('Checkout express — intégrité commande / stock / paiemen
     const cart = [{ produit_id: produits[0].id, quantite: 2 }, { produit_id: produits[1].id, quantite: 1 }, { produit_id: produits[2].id, quantite: 3 }];
     const attendu = 2 * 10000 + 5000 + 3 * 2500 + 1500;
 
-    const res = await post('/api/boutiques/commandes/express', { ...base(), frais_livraison: 1500, articles: cart });
+    const res = await post('/api/boutiques/commandes/express', { ...base(), zone_livraison_id: zoneId, articles: cart });
     expect(res.status).toBe(201);
     expect(Number(res.body.montant_total)).toBe(attendu);
 
@@ -95,7 +97,7 @@ describeIntegration('Checkout express — intégrité commande / stock / paiemen
 
   test('webhook Wave signé : accepté au montant total (livraison incluse), refusé au montant des articles seuls', async () => {
     const cart = [{ produit_id: produits[0].id, quantite: 1 }, { produit_id: produits[1].id, quantite: 1 }];
-    const o = await post('/api/boutiques/commandes/express', { ...base(), frais_livraison: 1500, articles: cart });
+    const o = await post('/api/boutiques/commandes/express', { ...base(), zone_livraison_id: zoneId, articles: cart });
     const total = 10000 + 5000 + 1500;
 
     await webhookWave(o.body.reference, 10000 + 5000);
@@ -195,7 +197,7 @@ describeIntegration('Checkout express — intégrité commande / stock / paiemen
       return (signed ? r.set('Stripe-Signature', `t=${t},v1=${v1}`) : r).send(body);
     };
     const nouvelleCommande = async (frais = 0) => {
-      const o = await post('/api/boutiques/commandes/express', { ...base(), frais_livraison: frais, articles: [{ produit_id: produits[0].id, quantite: 1 }] });
+      const o = await post('/api/boutiques/commandes/express', { ...base(), ...(frais > 0 ? { zone_livraison_id: zoneId } : {}), articles: [{ produit_id: produits[0].id, quantite: 1 }] });
       return { ref: o.body.reference, total: Number(o.body.montant_total) };
     };
     const etat = async (ref) => (await pool.query('SELECT paiement_recu, statut FROM commandes_boutique WHERE reference=$1', [ref])).rows[0];

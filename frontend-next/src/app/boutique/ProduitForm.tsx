@@ -207,6 +207,7 @@ function ProduitForm({
       <input type="hidden" name="categorie" value={cat} />
       <input type="hidden" name="code_barre" value={codeBarreForm} />
       <input type="hidden" name="quantite_stock" value={stockQuantiteForm} />
+      {produit?.stock_quantite != null && <input type="hidden" name="stock_precedent" value={String(produit.stock_quantite)} />}
       <input type="hidden" name="caracteristiques" value={JSON.stringify(carac)} />
       <input type="hidden" name="variantes" value={JSON.stringify(variantesState.variantes.filter(v => v.nom.trim() && v.valeurs.length > 0))} />
       <input type="hidden" name="variantes_skus" value={JSON.stringify(variantesState.variantesSkus)} />

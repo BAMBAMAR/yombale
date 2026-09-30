@@ -12,6 +12,7 @@ const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const { uploadBuffer } = require('../services/cloudinary');
 const { enregistrerAuditLog } = require('../lib/auditLogger');
 const { syncProduit } = require('../services/whatsapp-catalog');
+const { limiterCommandeExpress } = require('../middlewares/rateLimit');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -831,6 +832,7 @@ const {
 // POST /api/comptabilite/:boutiqueId/commandes — public, client passe commande
 router.post(
   '/:boutiqueId/commandes',
+  limiterCommandeExpress, // AUD-082 : limiteur dédié (l'envoi de messages à un numéro saisi exige une limite)
   body('client_nom').trim().isLength({ min: 2, max: 150 }),
   body('client_telephone').trim().isLength({ min: 6, max: 30 }),
   body('produit_id').optional(),
@@ -846,7 +848,7 @@ router.post(
         return res.status(400).json({ error: 'Au moins un article ou produit est requis pour passer commande' });
       }
 
-      const { commande, boutique } = await creerCommandeBoutique({
+      const { commande, boutique, doublon } = await creerCommandeBoutique({
         boutiqueId: req.params.boutiqueId,
         produitId: produit_id,
         varianteId: variante_id,
@@ -869,6 +871,9 @@ router.post(
         utm_campaign,
         social_post_id,
       });
+
+      // Double soumission : la commande existante est renvoyée sans nouvelle notification ni nouvelle session de paiement
+      if (doublon) return res.status(200).json({ commande, doublon: true, message: 'Commande déjà enregistrée' });
 
       await notifierVendeurCommande(boutique, {
         reference: commande.reference,
@@ -925,12 +930,10 @@ router.post(
         } catch (waveErr) {
           const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
           console.error('[COMMANDE WAVE INIT ERR]:', waveMsg);
-          return res.status(201).json({
-            commande,
-            fallback_manuel: true,
-            numero_depot: '777202086',
-            message: 'Commande enregistrée. Redirection vers le paiement manuel…'
-          });
+          // AUD-083 : comme la route express, la commande sans session de paiement est annulée et le stock restitué
+          // (auparavant : 201 + paiement manuel que le panier n'affichait pas, annulation silencieuse 2 h plus tard).
+          try { await require('../services/commande-service').annulerCommandeNonPayee(commande.reference, 'initialisation Wave impossible'); } catch (e) { console.error('[COMMANDE COMPENSATION ERR]:', e.message); }
+          return res.status(502).json({ error: 'Le paiement Wave n’a pas pu être initialisé. Votre commande n’a pas été enregistrée, réessayez ou choisissez un autre mode de paiement.' });
         }
       }
 
@@ -1004,9 +1007,25 @@ router.patch(
       const ancienStatut = oldCmd.statut;
       const nouveauStatut = req.body.statut || ancienStatut;
 
+      // AUD-077 : machine d'états. `annulee` et `reverse` sont terminaux (une réactivation ne redécrémenterait pas le stock) ;
+      // aucun retour en arrière (livree -> en_attente) ; l'annulation reste possible depuis tout état actif.
+      if (nouveauStatut !== ancienStatut) {
+        const RANG = { en_attente: 0, payee: 1, confirmee: 2, en_preparation: 3, expediee: 4, livree: 5 };
+        if (ancienStatut === 'annulee' || ancienStatut === 'reverse') {
+          return res.status(409).json({ error: `Une commande ${ancienStatut === 'annulee' ? 'annulée' : 'déjà reversée'} ne peut plus changer de statut.` });
+        }
+        if (nouveauStatut !== 'annulee' && RANG[nouveauStatut] < (RANG[ancienStatut] ?? 0)) {
+          return res.status(409).json({ error: `Retour en arrière interdit (${ancienStatut} vers ${nouveauStatut}).` });
+        }
+      }
+
       let nouveauFrais = Number(oldCmd.frais_livraison || 0);
       let nouveauMontantTotal = Number(oldCmd.montant_total || 0);
 
+      if (req.body.frais_livraison !== undefined && oldCmd.paiement_recu === true) {
+        // AUD-078 : le total d'une commande encaissée ne change plus (le contrôle de montant du webhook en dépend)
+        return res.status(409).json({ error: 'Commande déjà payée : les frais de livraison ne peuvent plus être modifiés.' });
+      }
       if (req.body.frais_livraison !== undefined) {
         const parsedFrais = Math.max(0, Math.round(Number(req.body.frais_livraison) || 0));
         const diff = parsedFrais - Number(oldCmd.frais_livraison || 0);
@@ -1016,13 +1035,28 @@ router.patch(
 
       const { rows: [commande] } = await pool.query(
         `UPDATE commandes_boutique SET statut=$1, frais_livraison=$2, montant_total=$3, updated_at=NOW()
-         WHERE id=$4 AND boutique_id=$5 RETURNING *`,
-        [nouveauStatut, nouveauFrais, nouveauMontantTotal, req.params.commandeId, req.params.boutiqueId]
+         WHERE id=$4 AND boutique_id=$5 AND statut=$6 RETURNING *`,
+        [nouveauStatut, nouveauFrais, nouveauMontantTotal, req.params.commandeId, req.params.boutiqueId, ancienStatut]
       );
-      if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
+      // Garde optimiste : deux changements simultanés ne restituent pas le stock deux fois
+      if (!commande) return res.status(409).json({ error: 'La commande vient d\'être modifiée, rechargez la page.' });
 
       // ── RESTAURATION DES STOCKS ET INVARIANTS LORS D'UNE ANNULATION ──
       if (req.body.statut === 'annulee' && ancienStatut !== 'annulee') {
+        // AUD-077 : une commande déjà encaissée annulée laisse une trace de remboursement à traiter
+        if (oldCmd.paiement_recu === true) {
+          await pool.query(
+            `UPDATE commandes_boutique SET note = COALESCE(note || ' | ', '') || '[REMBOURSEMENT CLIENT À TRAITER : commande payée puis annulée]' WHERE id = $1`,
+            [commande.id]
+          ).catch(() => {});
+          try {
+            require('../services/admin-alerts').alerterAdmin({
+              type: 'commande_payee_annulee', priorite: 'CRITIQUE',
+              titre: 'Commande payée annulée par le marchand',
+              message: `Commande ${commande.reference} (${commande.montant_total} FCFA) encaissée puis annulée : rembourser le client.`,
+            }).catch(() => {});
+          } catch (_) { /* alertes optionnelles */ }
+        }
         try {
           // 1. Récupérer les articles de la commande (multi-articles ou article unique)
           const itemsRes = await pool.query(
@@ -1182,7 +1216,7 @@ router.patch(
       }
 
       // Alimenter la Comptabilité et la commission si la commande passe à "livree"
-      if (req.body.statut === 'livree' && commande.montant_total > 0) {
+      if (req.body.statut === 'livree' && ancienStatut !== 'livree' && commande.montant_total > 0) {
         const { rows: [b] } = await pool.query('SELECT commission_rate FROM boutiques WHERE id=$1', [req.params.boutiqueId]);
         if (b?.commission_rate > 0) {
           const commission = (commande.montant_total * b.commission_rate / 100).toFixed(2);
@@ -1214,21 +1248,37 @@ router.patch(
         }
 
         // Reversement 100% Automatique Wave Payout vers le marchand si activé
+        // AUD-072 : virement seulement si le paiement est réellement encaissé, et une seule fois (réservation atomique de payout_ref)
+        let payoutReserve = false;
         if ((commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') && process.env.REVERSEMENT_AUTOMATIQUE_WAVE !== 'false' && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+          if (commande.paiement_recu === true) {
+            const { rowCount } = await pool.query(
+              `UPDATE commandes_boutique SET payout_ref = 'auto_en_cours', payout_date = NOW()
+                WHERE id = $1 AND paiement_recu = true AND payout_ref IS NULL`,
+              [commande.id]
+            );
+            payoutReserve = rowCount === 1;
+          }
+        }
+        if (payoutReserve) {
           try {
             const mobile = boutique.whatsapp || boutique.telephone;
+            if (!mobile) {
+              await pool.query(`UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'auto_en_cours'`, [commande.id]);
+            }
             if (mobile) {
               const commission = (b?.commission_rate > 0) ? (commande.montant_total * b.commission_rate / 100) : 0;
               const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
               const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - commission - fraisWaveTotaux));
               const wave = require('../services/wave');
-              await wave.sendPayout({
+              const payout = await wave.sendPayout({
                 amount: netAmount,
                 mobile,
                 client_reference: `auto_payout_${commande.reference}`,
                 boutique_nom: boutique.nom,
                 reference_commande: commande.reference,
               });
+              await pool.query(`UPDATE commandes_boutique SET payout_ref = $2, payout_date = NOW() WHERE id = $1`, [commande.id, String((payout && payout.id) || `auto_payout_${commande.reference}`).slice(0, 120)]);
               console.log(`[AUTO PAYOUT WAVE SUCCESS] ⚡ ${netAmount} FCFA transférés automatiquement à ${boutique.nom} (${mobile}) [Déduction Frais Wave 2% (1%+1%): ${fraisWaveTotaux} FCFA]`);
 
               const { alerterReversementMarchand } = require('../services/admin-alerts');
@@ -1243,6 +1293,8 @@ router.patch(
             }
           } catch (autoErr) {
             console.error('[AUTO PAYOUT WAVE ERR]:', autoErr.message);
+            // Échec : on libère la réservation pour qu'un reversement manuel (admin) reste possible
+            await pool.query(`UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'auto_en_cours'`, [commande.id]).catch(() => {});
             try {
               const { alerterReversementMarchand } = require('../services/admin-alerts');
               alerterReversementMarchand({
@@ -1361,11 +1413,28 @@ router.patch(
           if (uRes.rows[0]?.telephone) vendeurMobile = uRes.rows[0].telephone;
         } catch (eU) {}
       }
-      if (vendeurMobile) {
+      // AUD-078 : une modification des seuls frais de livraison n'a pas de statut ; le client est prévenu du nouveau total
+      const statutAffiche = (req.body.statut || 'frais de livraison mis à jour').toUpperCase();
+      if (!req.body.statut && commande.client_telephone) {
+        try {
+          const { sendWhatsAppNotification } = require('../services/whatsapp');
+          const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+          sendWhatsAppNotification(commande.client_telephone, {
+            textMessage: `🚚 *Frais de livraison fixés — ${boutique.nom}*\n\nCommande *${commande.reference}* : livraison ${new Intl.NumberFormat('fr-FR').format(commande.frais_livraison)} FCFA, nouveau total *${montantFmt} FCFA*.`,
+            title: `🚚 Livraison fixée — ${boutique.nom}`.slice(0, 60),
+            montant: `${montantFmt} FCFA`,
+            detail: `Réf ${commande.reference} : livraison ${commande.frais_livraison} FCFA, total ${montantFmt} FCFA`,
+            url: `${SITE}/suivi-commande?ref=${encodeURIComponent(commande.reference)}`,
+            buttonParam: `suivi-commande?ref=${encodeURIComponent(commande.reference)}`,
+            type: 'commande',
+          }).catch(err => console.error('[WHATSAPP CLIENT FRAIS ERR]:', err.message));
+        } catch (_) { /* notification optionnelle */ }
+      }
+      if (vendeurMobile && req.body.statut) {
         const { sendWhatsAppNotification } = require('../services/whatsapp');
         const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
         const bRef = boutique.slug || boutique.id;
-        const msgVendeur = `📢 *Statut Commande Mis à Jour — ${boutique.nom}*\n\nCommande : *${commande.reference}*\nNouveau statut : *${req.body.statut.toUpperCase()}*\nClient : ${commande.client_nom} (${commande.client_telephone})`;
+        const msgVendeur = `📢 *Statut Commande Mis à Jour — ${boutique.nom}*\n\nCommande : *${commande.reference}*\nNouveau statut : *${statutAffiche}*\nClient : ${commande.client_nom} (${commande.client_telephone})`;
         const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes` : `${SITE}/boutique?tab=commandes`;
         const btnParam = bRef ? `boutique?manage=${bRef}&tab=commandes` : 'boutique?tab=commandes';
         const titleVendeur = `📢 Statut mis à jour — ${boutique.nom}`;
@@ -1969,7 +2038,8 @@ router.get('/admin/reversements-dus', requireAdminAuth, requireAdminRole('super_
       JOIN boutiques b ON b.id = c.boutique_id
       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
       WHERE (c.paiement_recu = true OR c.statut IN ('payee', 'livree'))
-        AND c.statut != 'reverse'
+        AND c.statut NOT IN ('reverse', 'annulee')
+        AND c.payout_ref IS NULL
         AND (c.methode_paiement ILIKE '%wave%' OR c.methode_paiement = 'pay_wave')
       ORDER BY c.created_at DESC
       LIMIT 150
@@ -1986,6 +2056,7 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
     const { mode = 'wave_api', reference_manuelle } = req.body || {};
     const { rows: [commande] } = await pool.query(`
       SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut,
+             c.paiement_recu, c.payout_ref,
              b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp
       FROM commandes_boutique c
       JOIN boutiques b ON b.id = c.boutique_id
@@ -1994,12 +2065,25 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
 
     if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
 
-    if (commande.statut === 'reverse') {
+    if (commande.statut === 'reverse' || commande.payout_ref) {
       return res.status(400).json({ error: 'Cette commande a déjà fait l\'objet d\'un reversement.' });
     }
+    // AUD-072 : jamais de virement API sur une commande dont l'encaissement n'est pas constaté (le mode manuel reste
+    // possible après vérification humaine dans le back-office Wave)
+    if (mode === 'wave_api' && commande.paiement_recu !== true) {
+      return res.status(409).json({ error: 'Paiement non constaté pour cette commande : virement API refusé. Vérifiez l\'encaissement Wave puis utilisez le mode manuel.' });
+    }
+    // Réservation atomique : un second clic ou un virement automatique concurrent est refusé
+    const reserve = await pool.query(
+      `UPDATE commandes_boutique SET payout_ref = 'admin_en_cours', payout_date = NOW()
+        WHERE id = $1 AND payout_ref IS NULL AND statut != 'reverse'`, [req.params.commandeId]);
+    if (reserve.rowCount !== 1) return res.status(409).json({ error: 'Reversement déjà en cours ou effectué pour cette commande.' });
 
     const mobile = commande.boutique_whatsapp || commande.boutique_telephone;
-    if (!mobile) return res.status(400).json({ error: 'Numéro de téléphone du marchand introuvable' });
+    if (!mobile) {
+      await pool.query(`UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'admin_en_cours'`, [req.params.commandeId]);
+      return res.status(400).json({ error: 'Numéro de téléphone du marchand introuvable' });
+    }
 
     const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
     const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - (Number(commande.montant_commission) || 0) - fraisWaveTotaux));
@@ -2080,6 +2164,8 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
     res.json({ success: true, payout: payoutResult, net_amount: netAmount, frais_wave: fraisWaveTotaux, mobile });
   } catch (err) {
     console.error('[ADMIN PAYOUT ERR]', err);
+    // L'échec du virement libère la réservation pour permettre un nouvel essai
+    await pool.query(`UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'admin_en_cours'`, [req.params.commandeId]).catch(() => {});
 
     // Mapper les error_code Wave documentés vers des messages compréhensibles
     const waveErrorMessages = {

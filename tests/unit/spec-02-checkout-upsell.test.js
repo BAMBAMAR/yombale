@@ -43,6 +43,8 @@ describe('POST /api/boutiques/commandes/express (Spec 02)', () => {
       if (typeof sql === 'string' && sql.includes('FROM boutiques WHERE')) {
         return { rows: [{ id: boutiqueId, nom: 'Ma Boutique Tech' }] };
       }
+      // AUD-084 : les frais de livraison viennent de la zone de la boutique
+      if (typeof sql === 'string' && sql.includes('FROM zones_livraison')) return { rows: [{ prix: 2000 }] };
       return { rows: [] };
     });
 
@@ -67,7 +69,8 @@ describe('POST /api/boutiques/commandes/express (Spec 02)', () => {
         client_telephone: '778009988',
         client_adresse: 'Fann Résidence',
         methode_paiement: 'wave',
-        frais_livraison: 2000,
+        frais_livraison: 0, // ignoré : la zone fait foi
+        zone_livraison_id: '8c1f7e7a-3b1d-4c77-9d57-3f0a1f3e9b21',
         articles: [
           { produit_id: produitId, quantite: 1, prix_unitaire: 15000 }
         ]

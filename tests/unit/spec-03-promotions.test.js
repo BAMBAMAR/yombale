@@ -139,29 +139,37 @@ describe('POST /api/comptabilite/:boutiqueId/commandes avec Code Promo (Spec 03)
     const comptabiliteRouter = require('../../backend/routes/comptabilite');
     app.use('/api/comptabilite', comptabiliteRouter);
 
-    pool.query
-      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, nom: 'Ma Boutique', telephone: '771234567', whatsapp: '771234567', utilisateur_id: 'user-123' }] }) // boutique lookup
-      .mockResolvedValueOnce({ rows: [] }) // update boutique_promotions
-      .mockResolvedValueOnce({ rows: [{ id: 'cmd-promo-1', reference: 'CMD-2026-PROMO', nom_produit: 'Article Test', quantite: 1, montant_total: 18000, note: '[Code Promo: SOLDE2000 (-2000 FCFA)]' }] }) // insert commande
-      .mockResolvedValueOnce({ rows: [{ prix_achat: 10000 }] }) // item prix achat
-      .mockResolvedValueOnce({ rows: [] }) // insert item
-      .mockResolvedValueOnce({ rows: [] }) // analytics
+    // AUD-073 : le prix vient de la base (produit de la boutique) ; le montant de remise envoyé par le client est ignoré.
+    // Le simulateur répond selon la requête SQL (l'ordre des appels n'est plus figé).
+    const produitId = '4a52f5a7-d29b-457a-b92e-67022c84c47a';
+    let insertCommande = null;
+    pool.query.mockImplementation(async (sql, params) => {
+      const s = String(sql);
+      if (/FROM boutiques/.test(s)) return { rows: [{ id: boutiqueId, nom: 'Ma Boutique', telephone: '771234567', whatsapp: '771234567', utilisateur_id: 'user-123', actif: true }] };
+      if (/FROM boutique_produits/.test(s)) return { rows: [{ id: produitId, nom: 'Chaussures Sport', prix: 20000, prix_achat: 10000, stock_quantite: 5, en_stock: true, statut_moderation: 'actif' }] };
+      if (/FROM boutique_promotions/.test(s)) return { rows: [{ id: promoId, code: 'SOLDE2000', type_remise: 'fixe', valeur: 2000, actif: true, limite_utilisation: null, fois_utilise: 0, min_achat: null }] };
+      if (/INSERT INTO commandes_boutique\s*\(/.test(s)) {
+        insertCommande = params;
+        return { rows: [{ id: 'cmd-promo-1', reference: params[0], nom_produit: params[3], quantite: params[4], montant_total: params[6], note: params[10] }] };
+      }
+      return { rows: [] };
+    });
 
     const res = await request(app)
       .post(`/api/comptabilite/${boutiqueId}/commandes`)
       .send({
         client_nom: 'Moussa Diop',
         client_telephone: '770001122',
-        nom_produit: 'Chaussures Sport',
-        prix_unitaire: 20000,
-        quantite: 1,
+        items: [{ produit_id: produitId, quantite: 1, prix_unitaire: 1 }],
         code_promo: 'SOLDE2000',
-        montant_reduction: 2000,
+        montant_reduction: 99999,
       });
 
     expect(res.status).toBe(201);
     expect(res.body.commande).toBeDefined();
     expect(res.body.commande.montant_total).toBe(18000);
+    expect(insertCommande).not.toBeNull();
+    expect(res.body.commande.note).toMatch(/SOLDE2000 \(-2000 FCFA\)/);
   });
 });
 
