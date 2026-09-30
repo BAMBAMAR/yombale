@@ -28,8 +28,8 @@ import {
   CreditCard,
   Calculator,
   Bell,
-  LucideIcon,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react' // type seul : effacé à la compilation (un import de valeur casse les tests Node, AUD-049)
 
 export const VALID_TABS: ManageTab[] = [
   'dashboard',

@@ -1,6 +1,9 @@
 // Suite de Tests Rigoureuse et Exhaustive — Specs 01 à 06 (OpenSpec Nopalou)
 process.env.JWT_SECRET = 'test-secret';
 
+// AUD-020 : verifierToken simulé (voir tests/helpers/mock-auth.js)
+jest.mock('../../backend/middlewares/auth', () => require('../helpers/mock-auth'));
+
 const mockClient = {
   query: jest.fn(),
   release: jest.fn(),
@@ -118,6 +121,10 @@ describe('SPEC 02 — Checkout Web 1-Page Unifié & Cross-Sell Panier', () => {
     mockClient.query.mockImplementation(async (sql) => {
       if (typeof sql === 'string' && sql.includes('FROM boutique_produits')) {
         return { rows: [{ en_stock: true, prix: 12000, nom: 'Maillot Basket', stock_quantite: 10 }] };
+      }
+      // AUD-044 : en-tête de commande (RETURNING id) puis lignes dans commandes_boutique_items
+      if (typeof sql === 'string' && sql.includes('INSERT INTO commandes_boutique (')) {
+        return { rows: [{ id: 'cmd-uuid-1' }] };
       }
       return { rows: [] };
     });

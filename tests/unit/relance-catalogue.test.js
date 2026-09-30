@@ -6,6 +6,8 @@ jest.mock('../../backend/models/db', () => ({ pool: { query: jest.fn() } }));
 jest.mock('../../backend/services/whatsapp', () => ({
   sendWhatsAppNotification: jest.fn().mockResolvedValue({ success: true, messageId: 'wa-mock-123' }),
   normalisePhone: jest.fn(p => String(p).replace(/\D/g, '')),
+  // AUD-020 : le service vérifie désormais la liste de désinscription (STOP) avant tout envoi
+  estDesinscrit: jest.fn().mockResolvedValue(false),
 }));
 jest.mock('../../backend/lib/settingsCache', () => {
   const store = {

@@ -13,6 +13,9 @@ jest.mock('../../backend/models/db', () => ({
 
 jest.mock('../../backend/services/admin-alerts', () => ({
   alerterAdmin: jest.fn(),
+  // AUD-020 : les routes destructurent aussi ces helpers ; absents du mock ils valaient undefined (TypeError, 500)
+  alerterSignalement: jest.fn().mockResolvedValue({ success: true }),
+  alerterSupportTicket: jest.fn().mockResolvedValue({ success: true }),
 }));
 
 jest.mock('../../backend/services/email', () => ({

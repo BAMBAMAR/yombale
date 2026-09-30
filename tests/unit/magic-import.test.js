@@ -157,6 +157,12 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
   });
 
   describe('6. Scraper Produit Intégré (scrapeProductFromUrl)', () => {
+    // AUD-026 : le service résout maintenant le DNS avant toute requête (anti-SSRF). Test hermétique : pas de réseau.
+    beforeEach(() => {
+      jest.spyOn(require('dns').promises, 'lookup').mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
+    });
+    afterEach(() => { jest.restoreAllMocks(); });
+
     test('extrait les données réelles Schema.org JSON-LD avec prix en devises et photos', async () => {
       const mockHtml = `
         <!DOCTYPE html>

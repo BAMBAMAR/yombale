@@ -49,14 +49,22 @@ import {
 let passed = 0
 let failed = 0
 
+// AUD-049 : les callbacks asynchrones (await import(...)) doivent être attendus ; avant, leurs échecs
+// n'étaient jamais observés et le test comptait comme réussi. Les promesses sont collectées puis attendues
+// avant le résumé final.
+const enAttente = []
 function it(name, fn) {
+  const ok = () => { passed++; console.log(`  ✓ ${name}`) }
+  const ko = (e) => { failed++; console.error(`  ✗ ${name}: ${e && e.message}`) }
   try {
-    fn()
-    passed++
-    console.log(`  ✓ ${name}`)
+    const r = fn()
+    if (r && typeof r.then === 'function') {
+      enAttente.push(r.then(ok, ko))
+    } else {
+      ok()
+    }
   } catch (e) {
-    failed++
-    console.error(`  ✗ ${name}: ${e.message}`)
+    ko(e)
   }
 }
 
@@ -902,11 +910,11 @@ it('Checkout: validation des étapes et des coordonnées sans compte obligatoire
 })
 
 console.log('\n📦 17. Système de Thèmes Boutique (boutique-themes.ts)')
-it('THEMES_BOUTIQUE: validation des 5 thèmes officiels et tokens système natifs', async () => {
+it('THEMES_BOUTIQUE: validation des 8 thèmes officiels et tokens système natifs', async () => {
   const { THEMES_BOUTIQUE, getBoutiqueTheme } = await import('../src/lib/boutique-themes.ts')
-  assert.equal(THEMES_BOUTIQUE.length, 5)
-
-  const expectedIds = ['classique', 'luxe-sombre', 'nature-vert', 'tech-moderne', 'mode-chic']
+  // AUD-049 : ce test ne s'exécutait jamais réellement (async non attendu) et attendait encore l'ancien jeu de 5 thèmes
+  const expectedIds = ['classique', 'mode-wax', 'tech-moderne', 'superette-frais', 'beaute-cosmetique', 'quincaillerie-pro', 'restauration-delices', 'artisanat-deco']
+  assert.equal(THEMES_BOUTIQUE.length, expectedIds.length)
   for (const id of expectedIds) {
     const theme = THEMES_BOUTIQUE.find(t => t.id === id)
     assert.ok(theme, `Thème ${id} manquant`)
@@ -921,7 +929,7 @@ it('THEMES_BOUTIQUE: validation des 5 thèmes officiels et tokens système natif
   }
 
   // Fallback getBoutiqueTheme
-  assert.equal(getBoutiqueTheme('luxe-sombre').id, 'luxe-sombre')
+  assert.equal(getBoutiqueTheme('mode-wax').id, 'mode-wax')
   assert.equal(getBoutiqueTheme(null).id, 'classique')
   assert.equal(getBoutiqueTheme('inconnu').id, 'classique')
 })
@@ -1026,8 +1034,10 @@ it('creditCalculator: garantie absolue de l’arrondi au franc (somme des éché
   assert.equal(somme + calc.apport_initial, calc.total_a_payer)
 })
 
-it('creditCalculator: imputation FIFO et solde anticipé', async () => {
-  const { imputerPaiementSurEcheances, solderCreditAnticipe } = await import('../src/lib/creditCalculator.ts')
+it('creditCalculator: imputation FIFO des paiements sur les échéances', async () => {
+  // AUD-049 : le solde anticipé n'existe que côté backend (backend/lib/creditCalculator.js), testé dans
+  // tests/unit/credit-solder-anticipe.test.js ; ce test l'importait du frontend où il n'existe pas.
+  const { imputerPaiementSurEcheances } = await import('../src/lib/creditCalculator.ts')
   const echeances = [
     { id: '1', numero_echeance: 1, montant_prevu: 20000, montant_paye: 0, montant_restant: 20000, statut: 'a_venir' },
     { id: '2', numero_echeance: 2, montant_prevu: 20000, montant_paye: 0, montant_restant: 20000, statut: 'a_venir' },
@@ -1039,10 +1049,6 @@ it('creditCalculator: imputation FIFO et solde anticipé', async () => {
   assert.equal(r1.echeancesUpdated[1].statut, 'partielle')
   assert.equal(r1.echeancesUpdated[1].montant_paye, 5000)
   assert.equal(r1.echeancesUpdated[1].montant_restant, 15000)
-
-  const rSolde = solderCreditAnticipe({ id: 'p1', montant_total: 40000, solde_restant: 20000, statut: 'actif' }, echeances)
-  assert.equal(rSolde.planUpdated.statut, 'solde')
-  assert.equal(rSolde.echeancesUpdated[0].statut, 'soldee_par_anticipation')
 })
 
 console.log('\n📦 21. Sécurité JSON-LD (jsonld.ts) — AUD-025')
@@ -1065,6 +1071,8 @@ it('safeJsonLd: valeurs limites (undefined, null, tableaux, nombres)', () => {
   assert.equal(safeJsonLd(null), 'null')
   assert.deepEqual(JSON.parse(safeJsonLd([1, 'a&b', { k: '<b>' }])), [1, 'a&b', { k: '<b>' }])
 })
+
+await Promise.all(enAttente)
 
 console.log('\n──────────────────────────────────────────────────────────')
 console.log(`Résultats: ${passed} passés, ${failed} échoués (Total: ${passed + failed})`)

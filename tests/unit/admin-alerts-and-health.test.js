@@ -94,7 +94,17 @@ describe('Admin Alerts & WhatsApp Health Resilience', () => {
       expect(whatsappHealth.isDegraded()).toBe(false);
     });
 
-    test('détecte l\'erreur critique de facturation Meta (131056 / unsettled payments)', () => {
+    // AUD-020 : whatsapp-health délègue à alerterAdmin, asynchrone (lecture de la configuration avant l'envoi).
+    // L'e-mail part donc après recordFailure ; on attend l'effet au lieu de l'exiger immédiatement.
+    const attendre = async (assertion, essais = 100) => {
+      let derniere;
+      for (let i = 0; i < essais; i++) {
+        try { assertion(); return; } catch (e) { derniere = e; await new Promise(r => setTimeout(r, 10)); }
+      }
+      throw derniere;
+    };
+
+    test('détecte l\'erreur critique de facturation Meta (131056 / unsettled payments)', async () => {
       whatsappHealth.recordFailure({
         code: 131056,
         title: 'Payment issue',
@@ -106,11 +116,11 @@ describe('Admin Alerts & WhatsApp Health Resilience', () => {
       expect(status.healthy).toBe(false);
       expect(whatsappHealth.isDegraded()).toBe(true);
       expect(status.lastFailure.code).toBe(131056);
-      expect(envoyerEmail).toHaveBeenCalledWith(
+      await attendre(() => expect(envoyerEmail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: expect.stringContaining('WhatsApp Bloqué'),
         })
-      );
+      ));
     });
 
     test('détecte l\'erreur critique de token expiré (190)', () => {
@@ -158,7 +168,7 @@ describe('Admin Alerts & WhatsApp Health Resilience', () => {
       expect(envoyerEmail).not.toHaveBeenCalled();
     });
 
-    test('déclenche le mode dégradé après 3 pannes d\'infrastructure serveur consécutives', () => {
+    test('déclenche le mode dégradé après 3 pannes d\'infrastructure serveur consécutives', async () => {
       for (let i = 0; i < 3; i++) {
         whatsappHealth.recordFailure({
           code: 500,
@@ -170,7 +180,7 @@ describe('Admin Alerts & WhatsApp Health Resilience', () => {
       expect(status.healthy).toBe(false);
       expect(whatsappHealth.isDegraded()).toBe(true);
       expect(status.consecutiveFailures).toBe(3);
-      expect(envoyerEmail).toHaveBeenCalled();
+      await attendre(() => expect(envoyerEmail).toHaveBeenCalled());
     });
 
     test('rétablit l\'état sain lors d\'un succès', () => {

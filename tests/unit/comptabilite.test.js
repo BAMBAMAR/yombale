@@ -1,6 +1,9 @@
 // Tests unitaires — routes/comptabilite.js (logique vente/stock)
 process.env.JWT_SECRET = 'test-secret';
 
+// AUD-020 : verifierToken simulé (voir tests/helpers/mock-auth.js)
+jest.mock('../../backend/middlewares/auth', () => require('../helpers/mock-auth'));
+
 jest.mock('../../backend/models/db', () => ({ pool: { query: jest.fn() } }));
 
 const jwt = require('jsonwebtoken');
