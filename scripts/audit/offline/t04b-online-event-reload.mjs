@@ -1,0 +1,13 @@
+﻿import { launch, BASE, login, state, out } from './lib.mjs';
+import { openPos } from './t05a-pos-online.mjs';
+const S = state(); const res = {};
+const { browser, ctx, page } = await launch();
+await ctx.addInitScript(() => { window.open = () => null; window.print = () => {}; });
+const cdp = await ctx.newCDPSession(page); await cdp.send('Page.enable'); const nav = [];
+cdp.on('Page.frameRequestedNavigation', e => nav.push(`reason=${e.reason}`));
+await login(page, S.M.email, S.pw); await openPos(page, S); await page.waitForTimeout(3000);
+const essai = async (nom, fn) => { await page.evaluate(() => { window.__marker = 'm'; }); nav.length = 0; await fn(); await page.waitForTimeout(2500); res[nom] = { recharge: (await page.evaluate(() => window.__marker).catch(() => null)) !== 'm', nav: [...nav] }; if (res[nom].recharge) { await page.waitForTimeout(2500); if (await page.locator('button', { hasText: 'Gérant Off M' }).count()) { await page.locator('button', { hasText: 'Gérant Off M' }).first().click(); await page.locator('input[type=password]').first().fill('1357'); await page.keyboard.press('Enter'); await page.waitForTimeout(1500); } } };
+await essai('A_evenement_online_synthetique_EN_LIGNE', () => page.evaluate(() => window.dispatchEvent(new Event('online'))));
+await ctx.setOffline(true); await page.waitForTimeout(4500);
+await essai('B_retour_reseau_sans_aucune_vente_en_file', async () => { await ctx.setOffline(false); });
+out(res); await browser.close();

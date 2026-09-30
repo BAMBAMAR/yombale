@@ -1,0 +1,12 @@
+﻿import { launch, BASE, login, state, out } from './lib.mjs';
+const T = process.env.AUDIT_TMP; const S = state(); const res = {};
+const { browser, ctx, page } = await launch();
+await login(page, S.Z.email, S.pw);
+const vue = async (u, nom) => { const r = await page.goto(BASE + u, { waitUntil: 'load' }).catch(() => null); await page.waitForTimeout(3500); return { url: u, http: r && r.status(), titre: await page.title(), erreur_affichee: /Page introuvable|Erreur|erreur serveur/i.test(await page.evaluate(() => document.body.innerText)) }; };
+res.pages = [];
+for (const u of ['/compte', '/compte?tab=commandes', '/mes-annonces', '/favoris', '/deposer-annonce', '/deposer-immo', '/immo', '/agences', '/annonces', '/telecom', '/suivi-commande', '/assistant-whatsapp']) res.pages.push(await vue(u));
+await page.goto(BASE + '/deposer-annonce', { waitUntil: 'load' }); await page.waitForTimeout(3500);
+res.annonce_champs = await page.$$eval('input,textarea,select', is => is.filter(i => i.offsetParent).map(i => ({ t: i.type || i.tagName, n: i.name, ph: i.placeholder, req: i.required })));
+res.annonce_boutons = await page.$$eval('button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim().replace(/\s+/g, ' ')).filter(Boolean).slice(0, 14));
+await page.screenshot({ path: T + '/annonce.png' });
+out(res); await browser.close();

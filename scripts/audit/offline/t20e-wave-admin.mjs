@@ -1,0 +1,21 @@
+﻿import { launch, BASE, state, out } from './lib.mjs';
+import { execSync } from 'node:child_process';
+const T = process.env.AUDIT_TMP; const S = state(); const res = {};
+const sql = (q) => JSON.parse(execSync(`node "${T}/q.js" "${q.replace(/"/g, '\\"')}"`, { env: process.env }).toString());
+const bid = S.M.boutique.id, slug = S.M.boutique.slug; const a = new Date(Date.now() - 2000).toISOString();
+const { browser, ctx, page } = await launch();
+await ctx.addInitScript(() => { window.open = () => null; });
+const stockAvant = sql(`SELECT stock_quantite s FROM boutique_produits WHERE id='${S.prod.A.id}'`)[0].s;
+await page.goto(BASE + `/boutiques/${slug}/produits/${S.prod.A.id}`, { waitUntil: 'load' }); await page.waitForTimeout(2500);
+await page.getByRole('button', { name: /Ajouter au panier/i }).first().click(); await page.waitForTimeout(1200);
+await page.locator('button', { hasText: /paiement\s*en ligne/i }).first().click(); await page.waitForTimeout(800);
+await page.locator('input[placeholder="Ex: Babacar Ndiaye"]').fill('Payeur Wave'); await page.locator('input[placeholder="Ex: 77 123 45 67"]').fill('775559999');
+await page.locator('button', { hasText: 'Wave' }).first().click(); await page.locator('button', { hasText: /Valider et Payer/ }).first().click(); await page.waitForTimeout(5000);
+const ui = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+res.message_affiche = ui.match(/(Le paiement Wave[^]{0,140}|Impossible[^]{0,100}|Erreur[^]{0,100})/)?.[0];
+res.panier_conserve = !!(await page.evaluate(() => localStorage.getItem('nopalou_carts')));
+res.commande_en_base = sql(`SELECT reference, statut, methode_paiement, note FROM commandes_boutique WHERE boutique_id='${bid}' AND created_at > '${a}'`);
+res.stock_restitue = sql(`SELECT stock_quantite s FROM boutique_produits WHERE id='${S.prod.A.id}'`)[0].s === stockAvant;
+// Administration : accès sans secret, puis page de connexion
+const r1 = await page.goto(BASE + '/admin', { waitUntil: 'load' }); res.admin_url_finale = page.url().replace(BASE, ''); res.admin_titre = await page.title();
+out(res); await browser.close();
