@@ -9,12 +9,13 @@ Méthode appliquée lors de l'audit du 30 septembre 2026 (`AUDIT-NOPALOU-2026-09
 3. **Jamais la production.** Aucun test, sonde, charge ou écriture contre la base Render ni les API réelles (Wave, WhatsApp, Telegram, Stripe, Resend, Cloudinary, Facebook). Toujours passer par `scripts/audit/audit-env.ps1` (base locale, clés factices non vides, garde réseau en liste blanche bouclée locale). Une fuite d'isolation est divulguée à l'utilisateur dès sa découverte.
 4. **Données réelles en lecture seule.** Une copie restaurée d'une sauvegarde de production sert à mesurer la qualité des données ; elle contient des données personnelles : ne jamais la committer ni l'exporter, la supprimer quand elle n'est plus utile.
 5. **Chaque correction est prouvée** par un test qui échoue sans elle (contrôle par mutation : retirer le correctif, le test doit échouer) et passe avec.
+6. **Recoupement avec l'existant avant toute nouvelle fiche.** Ne jamais signaler une anomalie sans avoir vérifié qu'elle n'est pas déjà corrigée : `git log`/`git diff` sur les fichiers et routes du périmètre depuis le dernier rapport d'audit ou `docs/JOURNAL-LIVRAISONS.md`, puis rejeu effectif (sonde, script de `scripts/audit/`, ou test dédié) de tout correctif antérieur touchant le même périmètre — jamais une simple lecture du message de commit ou du journal. Consigner le résultat du rejeu dans le rapport (« recoupé, tenu » ou « recoupé, régression détectée → nouvelle fiche »).
 
 ## 2. Phase d'audit
 
-**Ordre** : (0) état réel du système, (1) inventaire exhaustif, (2) sondes automatisées, (3) analyse par domaine, (4) preuves, (5) rapport.
+**Ordre** : (0) état réel du système (recoupement inclus), (1) inventaire exhaustif, (2) sondes automatisées, (3) analyse par domaine, (4) preuves, (5) rapport.
 
-0. **État réel** : branche, dernier commit, dépendances, variables d'environnement attendues (noms seulement), versions, suites de tests existantes et leur état de départ (nombre de suites/tests en échec), ce qui démarre ou non.
+0. **État réel** : branche, dernier commit, dépendances, variables d'environnement attendues (noms seulement), versions, suites de tests existantes et leur état de départ (nombre de suites/tests en échec), ce qui démarre ou non. **Recoupement** (principe 6) : identifier les commits touchant le périmètre depuis le dernier audit/journal et rejouer leurs preuves de correction avant de sonder quoi que ce soit de neuf.
 1. **Inventaire** : routes (`enum-routes.js` : toutes les routes Express avec leurs middlewares), pages frontend, tables et colonnes, crons, intégrations externes, rôles et permissions.
 2. **Sondes** :
    - non authentifié : `probe.js` sur toutes les routes (hors liste de routes à risque en écriture) ;
