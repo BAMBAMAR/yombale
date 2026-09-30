@@ -1208,6 +1208,7 @@ module.exports = async function migrateInline(customConnStr = null) {
     // Remise Club VIP sur la livraison, à la charge du marchand qui l'a activée (boutiques.club_vip_actif, désactivé par défaut)
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS remise_club_vip NUMERIC(12,2) DEFAULT 0`);
     await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS club_vip_actif BOOLEAN DEFAULT false`);
+    await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS club_vip_config JSONB`);
     // Attribution Social Commerce : canal d'acquisition (UTM) et post source
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS utm_source VARCHAR(100)`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS utm_medium VARCHAR(100)`);

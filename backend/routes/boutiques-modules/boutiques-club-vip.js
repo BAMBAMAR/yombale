@@ -4,22 +4,23 @@ const { param, validationResult } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken } = require('../../middlewares/auth');
 const { checkBoutiqueAccess } = require('./helpers');
-const { statutClubVip } = require('../../lib/clubVip');
+const { statutClubVip, normaliserConfig, configEffective, CONFIG_DEFAUT, MAX_PALIERS } = require('../../lib/clubVip');
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{5,12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Le Club VIP est une remise sur la livraison à la CHARGE DU MARCHAND, accordée seulement s'il l'active
-// (boutiques.club_vip_actif, désactivé par défaut). Sans activation, aucune remise n'est affichée ni facturée.
-async function boutiqueAccordeClubVip(ref) {
-  if (!ref) return false;
+// (boutiques.club_vip_actif, désactivé par défaut) et selon SA configuration (boutiques.club_vip_config).
+async function lireReglage(ref) {
+  if (!ref) return null;
   try {
     const { rows } = await pool.query(
-      `SELECT COALESCE(club_vip_actif, false) AS actif FROM boutiques WHERE ${UUID_RE.test(String(ref)) ? 'id = $1' : 'slug = $1'}`,
+      `SELECT id, COALESCE(club_vip_actif, false) AS actif, club_vip_config AS config
+         FROM boutiques WHERE ${UUID_RE.test(String(ref)) ? 'id = $1' : 'slug = $1'}`,
       [String(ref)]
     );
-    return rows[0]?.actif === true;
+    return rows[0] || null;
   } catch (_) {
-    return false;
+    return null;
   }
 }
 
@@ -37,18 +38,19 @@ router.get('/club-vip/statut', async (req, res) => {
       badge: 'Acheteur Bronze',
       reduction_livraison: 0,
       livraison_offerte: false,
-      description: 'Passez votre 1ère commande pour débloquer les avantages Tiak-Tiak Club VIP',
-      prochain_palier: { nom: 'Silver', commandes_restantes: 2, reduction_livraison: 500 }
+      description: 'Passez votre 1ère commande pour débloquer les avantages Club VIP',
+      prochain_palier: null,
     };
     if (!rawPhone || rawPhone.replace(/\D/g, '').length < 7) return res.json(vide);
 
-    const s = await statutClubVip(pool, rawPhone);
+    const reglage = await lireReglage(req.query.boutique);
     // Remise affichée seulement si CETTE boutique a activé le Club VIP
-    const actif = await boutiqueAccordeClubVip(req.query.boutique);
-    if (!actif) {
+    if (!reglage || reglage.actif !== true) {
+      const s = await statutClubVip(pool, rawPhone, { config: reglage?.config, boutiqueId: reglage?.id });
       return res.json({ success: true, ...s, reduction_livraison: 0, livraison_offerte: false, club_vip_boutique: false,
         description: 'Cette boutique ne propose pas de remise Club VIP.', prochain_palier: null });
     }
+    const s = await statutClubVip(pool, rawPhone, { config: reglage.config, boutiqueId: reglage.id });
     res.json({ success: true, ...s, club_vip_boutique: true });
   } catch (err) {
     console.error('[CLUB VIP STATUT ERR]', err);
@@ -56,29 +58,40 @@ router.get('/club-vip/statut', async (req, res) => {
   }
 });
 
-// ── GET /api/boutiques/:id/club-vip — réglage du marchand
+// ── GET /api/boutiques/:id/club-vip — réglage complet du marchand (activation + paliers)
 router.get('/:id/club-vip', verifierToken, param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const own = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!own) return res.status(403).json({ error: 'Accès refusé' });
-    const { rows } = await pool.query('SELECT COALESCE(club_vip_actif, false) AS actif FROM boutiques WHERE id = $1', [req.params.id]);
-    res.json({ success: true, actif: rows[0]?.actif === true });
+    const reglage = await lireReglage(req.params.id);
+    res.json({ success: true, actif: reglage?.actif === true, config: configEffective(reglage?.config), defaut: CONFIG_DEFAUT, max_paliers: MAX_PALIERS });
   } catch (err) {
     console.error('[CLUB VIP GET ERR]', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// ── PUT /api/boutiques/:id/club-vip {actif:boolean} — le marchand décide d'offrir (et de financer) la remise
+// ── PUT /api/boutiques/:id/club-vip {actif?:boolean, config?:{portee, paliers[]}} — le marchand décide d'offrir (et de financer) la remise
 router.put('/:id/club-vip', verifierToken, param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
-  if (typeof req.body?.actif !== 'boolean') return res.status(400).json({ error: 'Le champ "actif" (vrai/faux) est requis' });
+  const { actif, config } = req.body || {};
+  if (actif !== undefined && typeof actif !== 'boolean') return res.status(400).json({ error: 'Le champ "actif" doit être vrai ou faux' });
+  if (actif === undefined && config === undefined) return res.status(400).json({ error: 'Indiquez "actif" et/ou "config"' });
   try {
     const own = await checkBoutiqueAccess(req.params.id, req.user.userId);
     if (!own) return res.status(403).json({ error: 'Accès refusé' });
-    await pool.query('UPDATE boutiques SET club_vip_actif = $1 WHERE id = $2', [req.body.actif, req.params.id]);
-    res.json({ success: true, actif: req.body.actif });
+    let configNormalisee;
+    if (config !== undefined) {
+      try { configNormalisee = normaliserConfig(config); } catch (e) { return res.status(400).json({ error: e.message }); }
+    }
+    await pool.query(
+      `UPDATE boutiques SET club_vip_actif = COALESCE($1::boolean, club_vip_actif),
+                            club_vip_config = COALESCE($2::jsonb, club_vip_config) WHERE id = $3`,
+      [actif === undefined ? null : actif, configNormalisee ? JSON.stringify(configNormalisee) : null, req.params.id]
+    );
+    const reglage = await lireReglage(req.params.id);
+    res.json({ success: true, actif: reglage?.actif === true, config: configEffective(reglage?.config) });
   } catch (err) {
     console.error('[CLUB VIP PUT ERR]', err);
     res.status(500).json({ error: 'Erreur serveur' });

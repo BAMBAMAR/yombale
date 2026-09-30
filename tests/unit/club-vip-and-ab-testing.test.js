@@ -59,7 +59,7 @@ describe('GET /api/boutiques/club-vip/statut (Spec 09)', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.palier).toBe('Gold');
-    expect(res.body.badge).toBe('Acheteur Vérifié Gold');
+    expect(res.body.badge).toBe('Acheteur Gold'); // badge dérivé du nom de palier défini par le marchand
     expect(res.body.reduction_livraison).toBe(1000);
     expect(res.body.livraison_offerte).toBe(false);
     expect(res.body.prochain_palier.nom).toBe('Platine VIP');

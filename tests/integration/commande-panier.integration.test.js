@@ -270,6 +270,52 @@ describeIntegration('Panier réel — prix, stock, statuts, virement, suivi, cai
     expect(payouts[payouts.length - 1].amount).toBe(97510); // 99500 - 1990 (2 %), sans compensation
   });
 
+  test('Club VIP paramétrable : paliers, seuils, montants et portée définis par le marchand, validés côté serveur', async () => {
+    const p = await produit(M, bM, { nom: 'Art vip cfg', prix: 2000, stock_quantite: 50 });
+    const telA = '770888111'; // 1 commande livrée dans la boutique M
+    const telB = '770888222'; // 1 commande livrée dans l'autre boutique N uniquement
+    const insert = (b, t, i) => pool.query(`INSERT INTO commandes_boutique (reference, boutique_id, nom_produit, quantite, prix_unitaire, montant_total, client_nom, client_telephone, statut, methode_paiement)
+                                            VALUES ($1,$2,'x',1,2000,2000,'v',$3,'livree','cash')`, [`C-CFG${Date.now()}${i}`, b, t]);
+    await insert(bM, telA, 1); await insert(bN, telB, 2);
+    const put = (config) => api('put', `/api/boutiques/${bM}/club-vip`, { actif: true, config }, M.token);
+
+    // validations : messages clairs, rien n'est enregistré
+    expect((await put({ portee: 'monde', paliers: [{ nom: 'A', min_commandes: 1, remise_fcfa: 100 }] })).status).toBe(400);
+    expect((await put({ portee: 'boutique', paliers: [] })).status).toBe(400);
+    expect((await put({ portee: 'boutique', paliers: [{ nom: 'A', min_commandes: 0, remise_fcfa: 100 }] })).status).toBe(400);
+    expect((await put({ portee: 'boutique', paliers: [{ nom: 'A', min_commandes: 1, remise_fcfa: 0, livraison_offerte: false }] })).status).toBe(400);
+    expect((await put({ portee: 'boutique', paliers: [{ nom: 'A', min_commandes: 1, remise_fcfa: 100 }, { nom: 'a', min_commandes: 2, remise_fcfa: 200 }] })).status).toBe(400);
+    expect((await put({ portee: 'boutique', paliers: [{ nom: 'A', min_commandes: 1, remise_fcfa: -5 }] })).status).toBe(400);
+
+    // configuration du marchand : dès 1 commande dans SA boutique = 300 F ; dès 3 = livraison offerte plafonnée à 1 500 F
+    const ok = await put({ portee: 'boutique', paliers: [
+      { nom: 'Fidèle', min_commandes: 1, min_depense: null, remise_fcfa: 300, livraison_offerte: false },
+      { nom: 'Ambassadeur', min_commandes: 3, min_depense: 500000, remise_fcfa: 1500, livraison_offerte: true },
+    ] });
+    expect(ok.status).toBe(200);
+    expect(ok.body.config.paliers.map(x => x.nom)).toEqual(['Fidèle', 'Ambassadeur']);
+    expect((await api('get', `/api/boutiques/${bM}/club-vip`, null, M.token)).body.config.portee).toBe('boutique');
+
+    const sA = await api('get', `/api/boutiques/club-vip/statut?telephone=${telA}&boutique=${bM}`);
+    expect(sA.body.palier).toBe('Fidèle');
+    expect(sA.body.reduction_livraison).toBe(300);
+    expect(sA.body.prochain_palier.nom).toBe('Ambassadeur');
+    const sB = await api('get', `/api/boutiques/club-vip/statut?telephone=${telB}&boutique=${bM}`);
+    expect(sB.body.palier).toBe('Bronze'); // sa commande est dans une autre boutique : portée « boutique »
+
+    const cmd = await api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: telA, methode_paiement: 'cash', zone_livraison_id: zone.id, articles: [{ produit_id: p.id, quantite: 1 }] });
+    expect(cmd.body.montant_total).toBe(4200); // 2000 + 2500 - 300
+    const nonEligible = await api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: telB, methode_paiement: 'cash', zone_livraison_id: zone.id, articles: [{ produit_id: p.id, quantite: 1 }] });
+    expect(nonEligible.body.montant_total).toBe(4500);
+
+    // portée plateforme : la commande faite chez N compte aussi
+    await put({ portee: 'plateforme', paliers: [{ nom: 'Fidèle', min_commandes: 1, remise_fcfa: 300 }] });
+    expect((await api('get', `/api/boutiques/club-vip/statut?telephone=${telB}&boutique=${bM}`)).body.palier).toBe('Fidèle');
+    // un autre marchand ne peut pas lire ni modifier ce réglage
+    expect((await api('put', `/api/boutiques/${bM}/club-vip`, { config: { paliers: [] } }, N.token)).status).toBe(403);
+    expect((await api('get', `/api/boutiques/${bM}/club-vip`, null, N.token)).status).toBe(403);
+  });
+
   test('AUD-085 : PUT partiel conserve la description ; stock obsolète refusé', async () => {
     const p = await produit(M, bM, { nom: 'Art put', prix: 2000, stock_quantite: 10, description: 'Description importante' });
     const r = await api('put', `/api/boutiques/${bM}/produits/${p.id}`, { prix: 2100 }, M.token);

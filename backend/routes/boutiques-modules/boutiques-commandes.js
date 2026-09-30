@@ -315,13 +315,15 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
       const fraisRestants = Math.max(0, fraisLiv - reductionSurLivraison);
       // Remise à la charge du MARCHAND : seulement si sa boutique a activé le Club VIP (désactivé par défaut)
       let vipActifBoutique = false;
+      let vipConfig = null;
       if (fraisRestants > 0) {
         try {
-          const vr = await pool.query('SELECT COALESCE(club_vip_actif, false) AS actif FROM boutiques WHERE id = $1', [actualBoutiqueId]);
+          const vr = await pool.query('SELECT COALESCE(club_vip_actif, false) AS actif, club_vip_config AS config FROM boutiques WHERE id = $1', [actualBoutiqueId]);
           vipActifBoutique = vr.rows[0]?.actif === true;
+          vipConfig = vr.rows[0]?.config || null;
         } catch (_) { vipActifBoutique = false; }
       }
-      const statutVip = vipActifBoutique ? await statutClubVip(pool, client_telephone) : null;
+      const statutVip = vipActifBoutique ? await statutClubVip(pool, client_telephone, { config: vipConfig, boutiqueId: actualBoutiqueId }) : null;
       const remiseVip = statutVip ? remiseLivraison(statutVip, fraisRestants) : 0;
       if (remiseVip > 0) {
         const vipNote = `[Club VIP ${statutVip.palier} : -${remiseVip} FCFA sur la livraison]`;
