@@ -19,6 +19,13 @@
    - **Alignement Monoligne Prioritaire** : Verrouiller les contrôles d'en-tête (vocal, scan, onglets) sur une seule et même ligne tant que l'espace le permet via `flexWrap: 'nowrap'` et `flexShrink: 0`.
    - **Lisibilité Produit sans Troncature Sauvage** : Pour les listes d'articles, découper en 2 sous-lignes calibrées (Ligne 1 : Nom complet lisible sans troncature agressive ; Ligne 2 : Prix FCFA et badge stock en `whiteSpace: 'nowrap'`), avec le bouton d'action calé à droite sans tronquer le texte ni déborder de la carte.
 
+## 🔎 3. Audits & Plans de Correction (méthode complète : [`docs/METHODOLOGIE-AUDIT.md`](docs/METHODOLOGIE-AUDIT.md))
+- **Environnement isolé obligatoire** : tout audit, test ou sonde passe par `scripts/audit/` (`. scripts\audit\audit-env.ps1` : base PostgreSQL locale port 54329, clés externes factices non vides, garde réseau en liste blanche). **Jamais** de test ni de sonde contre la base Render ou les API réelles (Wave, WhatsApp, Telegram, Stripe, Resend, Cloudinary, Facebook). Mot de passe local dans `scripts/audit/.local/pgpass.txt` (ignoré par git, jamais committé ; ne jamais copier de secrets dans le dépôt).
+- **Audit = preuve ou rien** : chaque anomalie `AUD-NNN` a une preuve reproductible, un impact, une cause racine, une gravité (P0 argent/fuite/prise de contrôle, P1 contournement/donnée corrompue/sauvegarde inutilisable, P2, P3). Ce qui n'est pas vérifié est listé comme tel. Aucune correction pendant l'audit. Rapport : `docs/AUDIT-NOPALOU-AAAA-MM-JJ.md`.
+- **Plan = livrable séparé, sans toucher au code** : `docs/PLAN-CORRECTION-NOPALOU-AAAA-MM-JJ.md`, phases ordonnées (Phase 0 filet de tests, puis P0, P1, P2, P3, régression globale), et pour chaque anomalie : fichiers, approche, risque de régression, test de validation, critère d'acceptation, retour arrière, effort ; actions d'exploitation (rotation de secrets, variables Render) listées à part.
+- **Exécution** : branche dédiée, commits locaux `fix(zone): AUD-NNN …`, pas de `git push` sans ordre. Chaque correctif est prouvé par un test qui échoue sans lui (contrôle par mutation). Migrations idempotentes validées sur base vide (`MIGRATE_STRICT=true node scripts/audit/freshmig.js 2 nobase`) puis sur base existante. Journal dans `docs/JOURNAL-LIVRAISONS.md`.
+- **Entretien de l'environnement** : conserver `nopalou_audit`, `nopalou_audit_data` (copie de production = données personnelles, jamais commitée, à rafraîchir avant un audit) et mettre à jour `scripts/audit/` et la méthodologie quand une sonde ou une règle est ajoutée.
+
 ---
 
 
