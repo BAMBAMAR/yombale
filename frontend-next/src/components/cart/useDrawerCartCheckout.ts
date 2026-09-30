@@ -50,6 +50,8 @@ export function useDrawerCartCheckout() {
   const items = activeCart?.items || []
   const sousTotal = activeBoutiqueId ? getCartTotal(activeBoutiqueId) : 0
   const zoneSelectionnee = zones.find((z) => z.id === zoneId) || (zoneId === '' ? null : DEFAULT_ZONES[0])
+  const isRetrait = zoneSelectionnee?.id === 'retrait-boutique' || Boolean(zoneSelectionnee?.nom?.toLowerCase().includes('retrait'))
+  const isAConvenir = zoneSelectionnee?.id === 'a-convenir' || Boolean(zoneSelectionnee?.nom?.toLowerCase().includes('convenir'))
   const fraisLivraison = zoneSelectionnee ? Number(zoneSelectionnee.prix || 0) : 0
   const reductionMontant = promoApplique ? Number(promoApplique.reduction || 0) : 0
   const totalGlobal = Math.max(0, sousTotal + fraisLivraison - reductionMontant)
@@ -478,5 +480,7 @@ export function useDrawerCartCheckout() {
     fraisLivraison,
     reductionMontant,
     totalGlobal,
+    isRetrait,
+    isAConvenir,
   }
 }
