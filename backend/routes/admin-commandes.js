@@ -85,9 +85,11 @@ router.get('/:id', adminSecretOnly, async (req, res) => {
     const { id } = req.params;
     const { rows: cmdRows } = await pool.query(`
       SELECT c.*,
-             b.nom AS boutique_nom, b.slug AS boutique_slug, b.telephone AS boutique_tel, b.email AS boutique_email
+             b.nom AS boutique_nom, b.slug AS boutique_slug, b.telephone AS boutique_tel,
+             u.email AS boutique_email
       FROM commandes_boutique c
       LEFT JOIN boutiques b ON b.id = c.boutique_id
+      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
       WHERE c.id = $1
     `, [id]);
 

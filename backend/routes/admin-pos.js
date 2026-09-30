@@ -37,8 +37,8 @@ router.get('/stats', async (req, res) => {
       pool.query(`
         SELECT
           COUNT(*) FILTER (WHERE statut = 'ouverte') AS sessions_ouvertes,
-          COUNT(*) FILTER (WHERE statut = 'fermee' AND ecart != 0) AS clotures_avec_ecart,
-          COALESCE(SUM(ABS(ecart)) FILTER (WHERE statut = 'fermee'), 0) AS total_ecarts_cumules
+          COUNT(*) FILTER (WHERE statut = 'cloturee' AND COALESCE(ecart_caisse, 0) != 0) AS clotures_avec_ecart,
+          COALESCE(SUM(ABS(ecart_caisse)) FILTER (WHERE statut = 'cloturee'), 0) AS total_ecarts_cumules
         FROM boutique_pos_sessions
       `),
       pool.query(`
@@ -91,9 +91,11 @@ router.get('/sessions', async (req, res) => {
     const values = [];
     let i = 1;
 
+    // AUD-019 : la table utilise les statuts 'ouverte' / 'cloturee' (écrits par boutiques-pos.js) ; l'interface admin
+    // parle encore de 'fermee' : on accepte les deux et on traduit à la lecture.
     if (statut && statut !== 'tous') {
       conditions.push(`s.statut = $${i++}`);
-      values.push(statut);
+      values.push(statut === 'fermee' ? 'cloturee' : statut);
     }
     if (boutique_id) {
       conditions.push(`s.boutique_id = $${i++}`);
@@ -105,15 +107,19 @@ router.get('/sessions', async (req, res) => {
     const countRes = await pool.query(`SELECT COUNT(*) FROM boutique_pos_sessions s ${whereClause}`, values);
     const total = parseInt(countRes.rows[0]?.count || 0, 10);
 
-    const { rows: sessions } = await pool.query(
-      `SELECT s.*, b.nom AS boutique_nom, b.slug AS boutique_slug, b.telephone AS boutique_tel
+    // AUD-019 : colonnes réelles date_ouverture / date_cloture / ecart_caisse, exposées sous les noms attendus
+    // par l'interface admin (ouvert_le, ferme_le, ecart) pour ne pas changer le contrat de l'API.
+    const { rows: brutes } = await pool.query(
+      `SELECT s.*, s.date_ouverture AS ouvert_le, s.date_cloture AS ferme_le, s.ecart_caisse AS ecart,
+              b.nom AS boutique_nom, b.slug AS boutique_slug, b.telephone AS boutique_tel
        FROM boutique_pos_sessions s
        JOIN boutiques b ON b.id = s.boutique_id
        ${whereClause}
-       ORDER BY s.ouvert_le DESC
+       ORDER BY s.date_ouverture DESC
        LIMIT $${i} OFFSET $${i + 1}`,
       [...values, parseInt(limit, 10), offset]
     );
+    const sessions = brutes.map(s => ({ ...s, statut: s.statut === 'cloturee' ? 'fermee' : s.statut }));
 
     res.json({ success: true, sessions, total, page: parseInt(page, 10), limit: parseInt(limit, 10) });
   } catch (err) {

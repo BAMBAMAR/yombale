@@ -756,35 +756,84 @@ router.get('/:id/produits/:prodId/composants', async (req, res) => {
     );
     res.json({ composants: rows });
   } catch (err) {
+    console.error('[COMPOSANTS GET]', err.message);
     res.status(500).json({ error: 'Erreur lors du chargement des composants du pack' });
   }
 });
 
 // POST /api/boutiques/:id/produits/:prodId/composants — Définir le contenu d'un pack (Anti-IDOR)
+const UUID_PRODUIT_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// AUD-012 : contrôle d'accès identique aux autres routes (id boutique, puis userId) ET vérification que le produit
+// appartient bien à cette boutique. L'ancien code inversait les arguments et lisait req.user.id (inexistant) :
+// la route répondait 500 à tout le monde, propriétaire compris.
+async function boutiqueEtProduitDuMarchand(req, res) {
+  const { id, prodId } = req.params;
+  if (!UUID_PRODUIT_RE.test(String(id)) || !UUID_PRODUIT_RE.test(String(prodId))) {
+    res.status(400).json({ error: 'Identifiant invalide' });
+    return null;
+  }
+  const own = await checkBoutiqueAccess(id, req.user.userId);
+  if (!own) { res.status(403).json({ error: 'Accès refusé' }); return null; }
+  const { rows } = await pool.query('SELECT id FROM boutique_produits WHERE id = $1 AND boutique_id = $2', [prodId, own.id]);
+  if (!rows[0]) { res.status(404).json({ error: 'Produit introuvable dans cette boutique' }); return null; }
+  return { boutique: own, prodId };
+}
+
 router.post('/:id/produits/:prodId/composants', verifierToken, async (req, res) => {
   try {
-    const { id, prodId } = req.params;
-    const { composants } = req.body; // Array of { enfant_id, quantite }
-    const access = await checkBoutiqueAccess(req.user.id, id);
-    if (!access.allowed) return res.status(403).json({ error: access.reason });
+    const ctx = await boutiqueEtProduitDuMarchand(req, res);
+    if (!ctx) return;
+    const { id } = req.params;
+    const { prodId } = ctx;
 
-    await pool.query('DELETE FROM produit_composants WHERE parent_id = $1', [prodId]);
-
-    if (Array.isArray(composants) && composants.length > 0) {
-      for (const comp of composants) {
-        if (comp.enfant_id && comp.quantite > 0) {
-          await pool.query(
-            `INSERT INTO produit_composants (parent_id, enfant_id, quantite)
-             VALUES ($1, $2, $3) ON CONFLICT (parent_id, enfant_id) DO UPDATE SET quantite = EXCLUDED.quantite`,
-            [prodId, comp.enfant_id, comp.quantite]
-          );
-        }
+    // Composants valides : produits de la MÊME boutique, différents du pack lui-même, quantité entière positive
+    const bruts = Array.isArray(req.body.composants) ? req.body.composants : [];
+    const composants = [];
+    for (const comp of bruts) {
+      const qte = Math.floor(Number(comp && comp.quantite));
+      if (!comp || !UUID_PRODUIT_RE.test(String(comp.enfant_id)) || !(qte > 0)) {
+        return res.status(400).json({ error: 'Composant invalide (enfant_id UUID et quantite > 0 requis)' });
       }
+      if (String(comp.enfant_id) === String(prodId)) {
+        return res.status(400).json({ error: 'Un pack ne peut pas se contenir lui-même' });
+      }
+      composants.push({ enfant_id: String(comp.enfant_id), quantite: qte });
+    }
+    if (composants.length) {
+      const { rows } = await pool.query(
+        'SELECT id FROM boutique_produits WHERE id = ANY($1::uuid[]) AND boutique_id = $2',
+        [composants.map(c => c.enfant_id), ctx.boutique.id]
+      );
+      if (new Set(rows.map(r => r.id)).size !== new Set(composants.map(c => c.enfant_id)).size) {
+        return res.status(400).json({ error: 'Un composant n\'appartient pas à cette boutique' });
+      }
+    }
+
+    // Remplacement atomique : un échec en cours de route ne laisse pas le pack vide
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM produit_composants WHERE parent_id = $1', [prodId]);
+      for (const comp of composants) {
+        await client.query(
+          `INSERT INTO produit_composants (parent_id, enfant_id, quantite)
+           VALUES ($1, $2, $3) ON CONFLICT (parent_id, enfant_id) DO UPDATE SET quantite = EXCLUDED.quantite`,
+          [prodId, comp.enfant_id, comp.quantite]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw e;
+    } finally {
+      client.release();
     }
 
     cacheInvalidatePattern(`cat:${id}`);
     res.json({ success: true, message: 'Pack mis à jour avec succès' });
   } catch (err) {
+    console.error('[COMPOSANTS POST]', err.message);
     res.status(500).json({ error: 'Erreur lors de la mise à jour des composants' });
   }
 });
@@ -802,6 +851,7 @@ router.get('/:id/produits/:prodId/tarifs-quantite', async (req, res) => {
     );
     res.json({ tarifs: rows });
   } catch (err) {
+    console.error('[TARIFS QUANTITE GET]', err.message);
     res.status(500).json({ error: 'Erreur lors du chargement de la grille tarifaire' });
   }
 });
@@ -809,28 +859,43 @@ router.get('/:id/produits/:prodId/tarifs-quantite', async (req, res) => {
 // POST /api/boutiques/:id/produits/:prodId/tarifs-quantite — Définir les seuils B2B (Anti-IDOR)
 router.post('/:id/produits/:prodId/tarifs-quantite', verifierToken, async (req, res) => {
   try {
-    const { id, prodId } = req.params;
-    const { tarifs } = req.body; // Array of { quantite_min, prix_unitaire_fcfa }
-    const access = await checkBoutiqueAccess(req.user.id, id);
-    if (!access.allowed) return res.status(403).json({ error: access.reason });
+    const ctx = await boutiqueEtProduitDuMarchand(req, res); // AUD-012 (voir ci-dessus)
+    if (!ctx) return;
+    const { id } = req.params;
+    const { prodId } = ctx;
 
-    await pool.query('DELETE FROM produit_tarifs_quantite WHERE produit_id = $1', [prodId]);
+    // Seuils valides : quantité minimale entière > 1, prix strictement positif ; un seuil par quantité
+    const bruts = Array.isArray(req.body.tarifs) ? req.body.tarifs : [];
+    const parQuantite = new Map();
+    for (const t of bruts) {
+      const q = Math.floor(Number(t && t.quantite_min));
+      const p = Number(t && t.prix_unitaire_fcfa);
+      if (q > 1 && p > 0) parQuantite.set(q, p);
+    }
 
-    if (Array.isArray(tarifs) && tarifs.length > 0) {
-      for (const t of tarifs) {
-        if (t.quantite_min > 1 && t.prix_unitaire_fcfa > 0) {
-          await pool.query(
-            `INSERT INTO produit_tarifs_quantite (produit_id, quantite_min, prix_unitaire_fcfa)
-             VALUES ($1, $2, $3) ON CONFLICT (produit_id, quantite_min) DO UPDATE SET prix_unitaire_fcfa = EXCLUDED.prix_unitaire_fcfa`,
-            [prodId, Number(t.quantite_min), Number(t.prix_unitaire_fcfa)]
-          );
-        }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM produit_tarifs_quantite WHERE produit_id = $1', [prodId]);
+      for (const [q, p] of parQuantite) {
+        await client.query(
+          `INSERT INTO produit_tarifs_quantite (produit_id, quantite_min, prix_unitaire_fcfa)
+           VALUES ($1, $2, $3) ON CONFLICT (produit_id, quantite_min) DO UPDATE SET prix_unitaire_fcfa = EXCLUDED.prix_unitaire_fcfa`,
+          [prodId, q, p]
+        );
       }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw e;
+    } finally {
+      client.release();
     }
 
     cacheInvalidatePattern(`cat:${id}`);
     res.json({ success: true, message: 'Grille tarifaire B2B enregistrée' });
   } catch (err) {
+    console.error('[TARIFS QUANTITE POST]', err.message);
     res.status(500).json({ error: 'Erreur lors de l\'enregistrement de la grille' });
   }
 });
