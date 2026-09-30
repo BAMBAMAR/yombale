@@ -95,11 +95,16 @@ export default function CheckoutStep1Info({
           value={zoneId}
           onChange={(e) => setZoneId(e.target.value)}
         >
-          {zones.map((z) => (
-            <option key={z.id} value={z.id}>
-              {z.nom} — {z.prix > 0 ? `${z.prix.toLocaleString('fr-FR')} FCFA` : 'Gratuit'}
-            </option>
-          ))}
+          {zones.map((z) => {
+            const isRetrait = z.id === 'retrait-boutique' || z.nom.toLowerCase().includes('retrait')
+            const isAConvenir = z.id === 'a_convenir' || z.id === 'a-convenir' || z.nom.toLowerCase().includes('convenir')
+            const labelPrix = isAConvenir ? '' : isRetrait ? ' — Gratuit' : ` — ${z.prix.toLocaleString('fr-FR')} FCFA`
+            return (
+              <option key={z.id} value={z.id}>
+                {z.nom}{labelPrix}
+              </option>
+            )
+          })}
         </select>
       </div>
 

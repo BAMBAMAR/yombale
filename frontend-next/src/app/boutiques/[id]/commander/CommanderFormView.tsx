@@ -264,12 +264,16 @@ export default function CommanderFormView({
               className="npl-input-airy"
               style={{ cursor: 'pointer' }}
             >
-              <option value="">— Retrait gratuit en boutique —</option>
-              {zones.map(z => (
-                <option key={z.id} value={z.id}>
-                  {z.nom} ({z.prix > 0 ? fcfa(z.prix) : 'Gratuit'})
-                </option>
-              ))}
+              {zones.map(z => {
+                const isRetrait = z.id === 'retrait-boutique' || z.nom.toLowerCase().includes('retrait')
+                const isAConvenir = z.id === 'a_convenir' || z.id === 'a-convenir' || z.nom.toLowerCase().includes('convenir')
+                const labelPrix = isAConvenir ? '' : isRetrait ? ' (Gratuit)' : ` (${fcfa(z.prix)})`
+                return (
+                  <option key={z.id} value={z.id}>
+                    {z.nom}{labelPrix}
+                  </option>
+                )
+              })}
             </select>
           </div>
         </div>

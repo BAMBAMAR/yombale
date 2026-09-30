@@ -118,11 +118,16 @@ export default function DrawerCartCheckout({
               fontSize: 13,
             }}
           >
-            {zones.map((z) => (
-              <option key={z.id} value={z.id}>
-                {z.nom} ({Number(z.prix) > 0 ? fcfa(Number(z.prix)) : t('shop.freeShopPickup')})
-              </option>
-            ))}
+            {zones.map((z) => {
+              const isRetrait = z.id === 'retrait-boutique' || z.nom.toLowerCase().includes('retrait')
+              const isAConvenir = z.id === 'a-convenir' || z.id === 'a_convenir' || z.nom.toLowerCase().includes('convenir')
+              const labelPrix = isAConvenir ? '' : isRetrait ? ` (${t('shop.freeShopPickup')})` : ` (${fcfa(Number(z.prix))})`
+              return (
+                <option key={z.id} value={z.id}>
+                  {z.nom}{labelPrix}
+                </option>
+              )
+            })}
           </select>
         </div>
       )}

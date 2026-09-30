@@ -30,7 +30,7 @@ export function useCommander({
   const [note, setNote] = useState(noteInitiale ?? '')
   const [paiement, setPaiement] = useState('wave')
   const [zones, setZones] = useState<Zone[]>(DEFAULT_ZONES)
-  const [zoneId, setZoneId] = useState<string>('dakar-intra')
+  const [zoneId, setZoneId] = useState<string>('a_convenir')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -89,11 +89,16 @@ export function useCommander({
             merged.push({ id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 })
           }
           setZones(merged)
+          setZoneId(prev => (prev === 'a_convenir' || prev === 'dakar-intra' || !merged.some(z => z.id === prev)) ? merged[0].id : prev)
         } else {
           setZones(DEFAULT_ZONES)
+          setZoneId('a_convenir')
         }
       })
-      .catch(() => setZones(DEFAULT_ZONES))
+      .catch(() => {
+        setZones(DEFAULT_ZONES)
+        setZoneId('a_convenir')
+      })
 
     // Chargement du pré-remplissage automatique des coordonnées
     try {

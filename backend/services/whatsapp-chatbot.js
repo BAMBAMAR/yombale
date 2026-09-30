@@ -1939,13 +1939,11 @@ function construireFormulesLivraisonWhatsApp(zonesRows) {
       description: 'Gratuit (0 FCFA) — En magasin',
     });
   } else {
-    // Aucune zone personnalisée : propositions claires sans imposer un tarif unique
+    // Aucune zone personnalisée configurée par le commerçant :
+    // Uniquement Frais à convenir et Retrait en boutique, sans imposer de tarifs arbitraires
     rows = [
       { id: 'f_a_convenir_cash', title: '🚚 Frais à convenir (Cash)', description: 'Frais de livraison fixés avec le vendeur' },
       { id: 'f_a_convenir_wave', title: '🌊 Frais à convenir (Wave)', description: 'Articles payés par Wave, livraison à part' },
-      { id: 'f_dakar_wave', title: '🌊 Dakar standard + Wave', description: '1 500 FCFA — Dakar & Wave' },
-      { id: 'f_dakar_cash', title: '💵 Dakar standard + Cash', description: '1 500 FCFA — Cash à la livraison' },
-      { id: 'f_banlieue_cash', title: '🚚 Banlieue + Cash', description: '2 500 FCFA — Cash à la livraison' },
       { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
     ];
   }
@@ -1995,7 +1993,6 @@ async function demarrerCommande(phone, boutique, produitId) {
     await sendWhatsAppButtons3(phone, 'Choisissez votre mode de livraison :', [
       { id: 'f_retrait_cash', title: '🏬 Retrait Boutique' },
       { id: 'f_a_convenir_cash', title: '🚚 Frais à convenir' },
-      { id: 'f_dakar_cash', title: '💵 Dakar Standard' },
     ]);
   });
 
@@ -2149,7 +2146,6 @@ async function traiterPanierMeta(phone, order) {
     await sendWhatsAppButtons3(phone, 'Choisissez votre mode de livraison :', [
       { id: 'f_retrait_cash', title: '🏬 Retrait Boutique' },
       { id: 'f_a_convenir_cash', title: '🚚 Frais à convenir' },
-      { id: 'f_dakar_cash', title: '💵 Dakar Standard' },
     ]);
   });
 
@@ -4689,9 +4685,7 @@ async function handleIncomingInternal(msg) {
       } else {
         rows = [
           { id: 'zone_def_a_convenir', title: '🚚 Frais à convenir', description: 'Tarif fixé avec le vendeur' },
-          { id: 'zone_def_dakar', title: '📍 Dakar (Intra-Muros)', description: '1 500 FCFA' },
-          { id: 'zone_def_banlieue', title: '🚚 Banlieue (Pikine...)', description: '2 500 FCFA' },
-          { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA)' },
+          { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA) — En magasin' },
         ];
       }
       await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre mode/zone de livraison :', [{ title: 'Options Livraison', rows }]);

@@ -6,10 +6,7 @@ import { fcfa } from '@/lib/format'
 import { getSavedUtm, trackAnalyticsEvent } from '@/lib/analytics'
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'dakar-intra', nom: 'Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
-  { id: 'dakar-banlieue', nom: 'Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
-  { id: 'regions-senegal', nom: 'Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
-  { id: 'a-convenir', nom: 'Autre quartier (Frais à convenir avec le vendeur)', prix: 0 },
+  { id: 'a-convenir', nom: 'Livraison (Frais à convenir avec le vendeur)', prix: 0 },
   { id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 },
 ]
 
@@ -22,7 +19,7 @@ export function useDrawerCartCheckout() {
   } = useCart()
 
   const [zones, setZones] = useState<Zone[]>(DEFAULT_ZONES)
-  const [zoneId, setZoneId] = useState<string>('dakar-intra')
+  const [zoneId, setZoneId] = useState<string>('a-convenir')
   const [loadingCheckout, setLoadingCheckout] = useState<boolean>(false)
   const [checkoutMode, setCheckoutMode] = useState<'whatsapp' | 'formulaire'>('whatsapp')
   const [orderSuccessData, setOrderSuccessData] = useState<OrderSuccessData | null>(null)
@@ -75,11 +72,16 @@ export function useDrawerCartCheckout() {
               merged.push({ id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 })
             }
             setZones(merged)
+            setZoneId(prev => (prev === 'a-convenir' || prev === 'dakar-intra' || !merged.some(z => z.id === prev)) ? merged[0].id : prev)
           } else {
             setZones(DEFAULT_ZONES)
+            setZoneId('a-convenir')
           }
         })
-        .catch(() => setZones(DEFAULT_ZONES))
+        .catch(() => {
+          setZones(DEFAULT_ZONES)
+          setZoneId('a-convenir')
+        })
     }
   }, [activeBoutiqueId, backendUrl])
 

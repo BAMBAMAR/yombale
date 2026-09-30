@@ -17,10 +17,8 @@ interface Zone {
 }
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'dakar-intra', nom: 'Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
-  { id: 'dakar-banlieue', nom: 'Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
-  { id: 'regions-senegal', nom: 'Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
-  { id: 'retrait-boutique', nom: '🏬 Retrait gratuit en boutique', prix: 0 },
+  { id: 'a-convenir', nom: 'Livraison (Frais à convenir avec le vendeur)', prix: 0 },
+  { id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 },
 ]
 
 function fcfa(amount: number) {
@@ -40,7 +38,7 @@ function CheckoutExpressContent() {
   const [loading, setLoading] = useState<boolean>(true)
   const [produitInfo, setProduitInfo] = useState<{ id: string; nom: string; prix: number; photo?: string | null; boutiqueNom?: string; boutiqueId?: string } | null>(null)
   const [zones, setZones] = useState<Zone[]>(DEFAULT_ZONES)
-  const [zoneId, setZoneId] = useState<string>('dakar-intra')
+  const [zoneId, setZoneId] = useState<string>('a-convenir')
   const [quantite, setQuantite] = useState<number>(quantiteParam > 0 ? quantiteParam : 1)
 
   // Form states
@@ -454,9 +452,14 @@ function CheckoutExpressContent() {
             className="input-npl"
             style={{ height: 42 }}
           >
-            {zones.map(z => (
-              <option key={z.id} value={z.id}>{z.nom} ({z.prix > 0 ? fcfa(z.prix) : 'Gratuit'})</option>
-            ))}
+            {zones.map(z => {
+              const isRetrait = z.id === 'retrait-boutique' || z.nom.toLowerCase().includes('retrait')
+              const isAConvenir = z.id === 'a-convenir' || z.id === 'a_convenir' || z.nom.toLowerCase().includes('convenir')
+              const labelPrix = isAConvenir ? '' : isRetrait ? ' (Gratuit)' : ` (${fcfa(z.prix)})`
+              return (
+                <option key={z.id} value={z.id}>{z.nom}{labelPrix}</option>
+              )
+            })}
           </select>
         </div>
 
