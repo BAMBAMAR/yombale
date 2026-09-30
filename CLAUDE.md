@@ -26,6 +26,15 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Résolution du Crash Satori Edge ImageResponse `Image size cannot be determined` (`opengraph-image.tsx`, `assets/produit-promo/route.tsx`, `assets/produit-boutique/...`, `assets/boutique/...`)** :
+  - **Attributs Numériques Explicites `width` et `height` sur `<img>`** : Satori (le moteur `@vercel/og` de Next.js) exige des dimensions numériques absolues (`width={X}` et `height={Y}`) directement sur les balises `<img>`. L'utilisation exclusive de styles CSS inline (`width: '100%'`, `maxWidth`) déclenchait une tentative interne de résolution du header de l'image distante qui échouait et plantait l'Edge Function (`Error: Image size cannot be determined. Please provide the width and height of the image.`).
+  - **Garantie de Dimensions & Fallback Silencieux sur Toutes les Routes d'Images Dynamiques** :
+    - `frontend-next/src/app/produit/[id]/opengraph-image.tsx` : Dimensions fixes 300x300 sur l'image produit et encapsulation dans un `try...catch` renvoyant le gabarit sans image si la ressource distante Cloudinary/CDN est inaccessible.
+    - `frontend-next/src/app/assets/produit-promo/route.tsx` : Dimensions fixes 380x380 sur l'image de promotion.
+    - `frontend-next/src/app/assets/produit-boutique/[id]/og/route.tsx` & `story/route.tsx` : Dimensions fixes explicites pour le logo de la boutique et la photo produit.
+    - `frontend-next/src/app/assets/boutique/[id]/og/route.tsx` & `story/route.tsx` : Dimensions fixes explicites pour le logo boutique.
+  - **Éradication de l'Erreur 500 `failed to pipe response`** : Le runtime Edge ne plante plus lors de la génération des cartes d'aperçu de partage WhatsApp/réseaux sociaux.
+
 - **Gestion Universelle des Livraisons & Retrait en Boutique (Modèle 1 Hybride Pro, `whatsapp-chatbot.js`, `commande-service.js`, `comptabilite.js`, `useDrawerCartCheckout.ts`, `useCommander.ts`, `CommandeCard.tsx`, `CommandeNextStepGuide.tsx`)** :
   - **Garantie Systématique du Retrait en Boutique (Gratuit - 0 FCFA)** : Éradication du bug où la présence de zones de livraison configurées par le marchand masquait complètement l'option « Retrait en boutique » sur WhatsApp et sur le Web. Le retrait sur place reste désormais TOUJOURS garanti et disponible pour le client.
   - **Option Flexible « Frais de Livraison à Convenir avec le Vendeur »** : Suppression des frais imposés arbitrairement (1 500 F / 2 500 F) pour les boutiques sans grille ou les clients hors-zone. Les clients peuvent commander avec des frais à fixer selon le quartier réel ; la commande enregistre le sous-total exact des articles avec la note `[Livraison : À convenir avec le client]`.
