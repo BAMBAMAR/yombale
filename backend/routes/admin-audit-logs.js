@@ -5,6 +5,7 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 let auditTableEnsured = false;
 async function ensureAuditLogsTable() {
   if (auditTableEnsured) return;
@@ -33,7 +34,7 @@ async function ensureAuditLogsTable() {
   }
 }
 
-router.get('/', adminSecretOnly, async (req, res) => {
+router.get('/', ...adminAccess('audit'), async (req, res) => {
   try {
     await ensureAuditLogsTable();
     const { action, cible_type, q, page = 1 } = req.query;

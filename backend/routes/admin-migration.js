@@ -4,6 +4,7 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { scrapeProductFromUrl } = require('../services/magic-import');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
@@ -33,7 +34,7 @@ async function ensureMigrationTables() {
 }
 
 // ── GET /api/admin/migration/stats — Résumé des données pour l'interface de migration
-router.get('/stats', adminSecretOnly, async (req, res) => {
+router.get('/stats', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     await ensureMigrationTables();
 
@@ -103,7 +104,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/migration/shopify-mirror — Aspiration intégrale d'une boutique Shopify
-router.post('/shopify-mirror', adminSecretOnly, async (req, res) => {
+router.post('/shopify-mirror', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     await ensureMigrationTables();
     const { storeUrl, boutiqueId, margePct = 0, arrondi = 500, categorieId = null } = req.body;
@@ -219,7 +220,7 @@ router.post('/shopify-mirror', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/migration/csv-batch — Import groupé CSV / Excel Universel
-router.post('/csv-batch', adminSecretOnly, async (req, res) => {
+router.post('/csv-batch', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     await ensureMigrationTables();
     const { boutiqueId, categorieId, items, margePct = 0, arrondi = 500 } = req.body;
@@ -300,7 +301,7 @@ router.post('/csv-batch', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/migration/url-magic — Import unitaire ou multiple par Baguette Magique
-router.post('/url-magic', adminSecretOnly, async (req, res) => {
+router.post('/url-magic', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     await ensureMigrationTables();
     const { url, boutiqueId, categorieId, margePct = 0, arrondi = 500 } = req.body;
@@ -358,7 +359,7 @@ router.post('/url-magic', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/migration/clients-batch — Import carnet de dettes & clients fidèles
-router.post('/clients-batch', adminSecretOnly, async (req, res) => {
+router.post('/clients-batch', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     const { boutiqueId, clients } = req.body;
 
@@ -424,7 +425,7 @@ router.post('/clients-batch', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/migration/welcome-kit — Générateur de kit d'accueil & message WhatsApp
-router.post('/welcome-kit', adminSecretOnly, async (req, res) => {
+router.post('/welcome-kit', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     const { boutiqueId } = req.body;
 

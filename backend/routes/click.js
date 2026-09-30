@@ -3,6 +3,7 @@ const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 const { limiterGeneral } = require('../middlewares/rateLimit');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // GET /api/click/:offreId — enregistre le clic et redirige vers le marchand
 router.get('/:offreId', limiterGeneral, async (req, res) => {
   const { offreId } = req.params;
@@ -49,7 +50,7 @@ router.get('/:offreId', limiterGeneral, async (req, res) => {
 });
 
 // GET /api/click/stats/admin — stats clics par marchand (admin)
-router.get('/stats/admin', adminSecretOnly, async (req, res) => {
+router.get('/stats/admin', ...adminAccess('finances'), async (req, res) => {
   try {
     const { rows: parMarchand } = await pool.query(`
       SELECT m.nom AS marchand, COUNT(*) AS clics,

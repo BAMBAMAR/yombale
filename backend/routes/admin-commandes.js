@@ -6,8 +6,9 @@ const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // ── GET /api/admin/commandes — Liste paginée avec filtres
-router.get('/', adminSecretOnly, async (req, res) => {
+router.get('/', ...adminAccess('commandes'), async (req, res) => {
   try {
     const { statut, q, page = 1 } = req.query;
     const limit = 40;
@@ -80,7 +81,7 @@ router.get('/', adminSecretOnly, async (req, res) => {
 });
 
 // ── GET /api/admin/commandes/:id — Détails d'une commande avec toutes ses lignes d'articles
-router.get('/:id', adminSecretOnly, async (req, res) => {
+router.get('/:id', ...adminAccess('commandes'), async (req, res) => {
   try {
     const { id } = req.params;
     const { rows: cmdRows } = await pool.query(`
@@ -113,7 +114,7 @@ router.get('/:id', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/admin/commandes/:id/statut — Mise à jour du statut d'une commande
-router.put('/:id/statut', adminSecretOnly, async (req, res) => {
+router.put('/:id/statut', ...adminAccess('commandes'), async (req, res) => {
   try {
     const { id } = req.params;
     const { statut } = req.body;
@@ -147,7 +148,7 @@ router.put('/:id/statut', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/commandes/relancer-paniers — Déclenchement manuel des relances WhatsApp
-router.post('/relancer-paniers', adminSecretOnly, async (req, res) => {
+router.post('/relancer-paniers', ...adminAccess('commandes'), async (req, res) => {
   try {
     const { executerRelancePaniers } = require('../services/relance-panier');
     const result = await executerRelancePaniers();

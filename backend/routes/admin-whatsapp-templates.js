@@ -7,8 +7,9 @@ const cfg = require('../lib/settingsCache');
 const { TEMPLATE_DEFINITIONS, getTemplateText } = require('../lib/whatsappTemplates');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // ── GET /api/admin/whatsapp-templates — Liste des templates avec textes actuels
-router.get('/', adminSecretOnly, async (req, res) => {
+router.get('/', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const list = await Promise.all(
       TEMPLATE_DEFINITIONS.map(async def => {
@@ -27,7 +28,7 @@ router.get('/', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/admin/whatsapp-templates/:key — Mise à jour d'un template
-router.put('/:key', adminSecretOnly, async (req, res) => {
+router.put('/:key', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const { key } = req.params;
     const { text } = req.body;
@@ -55,7 +56,7 @@ router.put('/:key', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/whatsapp-templates/:key/reset — Réinitialiser au texte par défaut
-router.post('/:key/reset', adminSecretOnly, async (req, res) => {
+router.post('/:key/reset', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const { key } = req.params;
     const def = TEMPLATE_DEFINITIONS.find(t => t.key === key);

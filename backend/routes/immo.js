@@ -10,6 +10,7 @@ const { limiterPublication, limiterImmo, limiterBulk, blockScraperUA } = require
 const { notifierModerationImmo } = require('../services/notifications');
 const { uploadBuffer } = require('../services/cloudinary');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // Multer — mémoire (max 5 fichiers, 5 Mo chacun)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -120,7 +121,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
 });
 
 // GET /api/immo/diagnostic — vérifier DB + réseau (admin)
-router.get('/diagnostic', adminSecretOnly, async (req, res) => {
+router.get('/diagnostic', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   const axios = require('axios');
   const diag  = { db: {}, reseau: {} };
 
@@ -256,7 +257,7 @@ router.post('/:id/demande-sponsorisation', verifierToken, async (req, res) => {
 });
 
 // GET /api/immo/admin/en-attente (admin) — toutes les annonces utilisateurs non supprimées
-router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
+router.get('/admin/en-attente', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT ai.*, u.nom AS compte_nom, u.email AS compte_email
@@ -270,7 +271,7 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
 });
 
 // GET /api/immo/admin/demandes-sponsorisation — demandes de mise en avant (admin)
-router.get('/admin/demandes-sponsorisation', adminSecretOnly, async (req, res) => {
+router.get('/admin/demandes-sponsorisation', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT ai.*, u.nom AS compte_nom, u.email AS compte_email
@@ -523,7 +524,7 @@ router.post('/public', limiterPublication, verifierToken, requireEmailVerifie, u
 });
 
 // POST /api/immo — créer (admin ou scraper)
-router.post('/', adminSecretOnly, async (req, res) => {
+router.post('/', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   try {
     const {
       titre, type_bien = 'appartement', transaction = 'location',
@@ -558,7 +559,7 @@ router.post('/', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/immo/:id — modifier (admin)
-router.put('/:id', adminSecretOnly, async (req, res) => {
+router.put('/:id', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   try {
     const {
       titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
@@ -605,7 +606,7 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
 });
 
 // DELETE /api/immo/:id — désactiver (pas de suppression physique)
-router.delete('/:id', adminSecretOnly, async (req, res) => {
+router.delete('/:id', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `UPDATE annonces_immo SET actif = false, updated_at = NOW() WHERE id = $1 RETURNING id`,
@@ -618,7 +619,7 @@ router.delete('/:id', adminSecretOnly, async (req, res) => {
 
 // POST /api/immo/sync/:source — déclencher scraping en arrière-plan (admin)
 // sources : expat-dakar | coinafrique | facebook
-router.post('/sync/:source', adminSecretOnly, async (req, res) => {
+router.post('/sync/:source', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   const src = req.params.source;
   const dryRun = req.query.dry === '1';
   const SCRAPERS = {

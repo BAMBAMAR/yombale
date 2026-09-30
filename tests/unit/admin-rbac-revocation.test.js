@@ -59,3 +59,32 @@ test('secret maître en en-tête : accepté ; mauvais secret : refusé', async (
   const ko = await run({ 'x-admin-secret': 'mauvais' });
   expect(ko.code).toBe(401);
 });
+
+// AUD-030 — verrou anti-devinette du secret maître (10 échecs / 15 min / IP)
+describe('verrou du secret maître', () => {
+  const avecIp = (ip, headers) => new Promise((resolve) => {
+    const req = { headers, query: {}, ip, method: 'GET', originalUrl: '/api/admin/x' };
+    const res = { status(c) { this.code = c; return this; }, json(b) { resolve({ code: this.code, body: b, req }); } };
+    requireAdminAuth(req, res, () => resolve({ code: 200, req }));
+  });
+
+  test('après 10 secrets faux, même le bon secret est refusé (429) depuis cette IP ; une autre IP reste servie', async () => {
+    for (let i = 0; i < 10; i++) expect((await avecIp('203.0.113.7', { 'x-admin-secret': `faux-${i}` })).code).toBe(401);
+    const verrouille = await avecIp('203.0.113.7', { 'x-admin-secret': process.env.ADMIN_SECRET });
+    expect(verrouille.code).toBe(429);
+    expect(verrouille.body.code).toBe('ADMIN_SECRET_LOCKED');
+    expect((await avecIp('198.51.100.9', { 'x-admin-secret': process.env.ADMIN_SECRET })).code).toBe(200);
+  });
+
+  test('un succès remet le compteur à zéro', async () => {
+    for (let i = 0; i < 9; i++) await avecIp('203.0.113.50', { 'x-admin-secret': `faux-${i}` });
+    expect((await avecIp('203.0.113.50', { 'x-admin-secret': process.env.ADMIN_SECRET })).code).toBe(200);
+    for (let i = 0; i < 9; i++) await avecIp('203.0.113.50', { 'x-admin-secret': `encore-faux-${i}` });
+    expect((await avecIp('203.0.113.50', { 'x-admin-secret': process.env.ADMIN_SECRET })).code).toBe(200);
+  });
+
+  test('une requête sans secret (simple absence de session) n\'alimente pas le verrou', async () => {
+    for (let i = 0; i < 15; i++) expect((await avecIp('203.0.113.99', {})).code).toBe(401);
+    expect((await avecIp('203.0.113.99', { 'x-admin-secret': process.env.ADMIN_SECRET })).code).toBe(200);
+  });
+});

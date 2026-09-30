@@ -5,7 +5,9 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 
+const { requireAdminAccess } = require('../middlewares/admin-rbac');
 router.use(requireAdminAuth);
+router.use(requireAdminAccess('paiements', {'edit':'paiements:validate'})); // AUD-028
 
 // ── GET /api/admin/paiements/stats — Synthèse globale des paiements
 router.get('/stats', async (req, res) => {

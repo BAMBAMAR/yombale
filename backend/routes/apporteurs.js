@@ -5,6 +5,7 @@ const settingsCache = require('../lib/settingsCache');
 
 const { genererCode, genererCodeUnique } = require('../lib/codeApporteur');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // POST /api/apporteurs/devenir — active le statut apporteur pour l'utilisateur connecté
 router.post('/devenir', verifierToken, async (req, res) => {
   try {
@@ -77,7 +78,7 @@ router.get('/mes-stats', verifierToken, async (req, res) => {
 });
 
 // GET /api/apporteurs/admin — vue d'ensemble de tous les apporteurs (admin)
-router.get('/admin', adminSecretOnly, async (req, res) => {
+router.get('/admin', ...adminAccess('finances'), async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT u.id, u.nom, u.email, u.code_apporteur,
@@ -96,7 +97,7 @@ router.get('/admin', adminSecretOnly, async (req, res) => {
 });
 
 // GET /api/apporteurs/admin/commissions — toutes les lignes de commission (admin)
-router.get('/admin/commissions', adminSecretOnly, async (req, res) => {
+router.get('/admin/commissions', ...adminAccess('finances'), async (req, res) => {
   try {
     const statutFiltre = req.query.statut; // 'du' | 'paye' | undefined
     const params = [];
@@ -133,7 +134,7 @@ router.get('/admin/commissions', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/apporteurs/admin/commissions/:id/payer — marquer une commission comme payée (admin)
-router.put('/admin/commissions/:id/payer', adminSecretOnly, async (req, res) => {
+router.put('/admin/commissions/:id/payer', ...adminAccess('finances'), async (req, res) => {
   try {
     const { id } = req.params;
     const ignorerSeuil = req.body?.ignorer_seuil === true;
@@ -167,7 +168,7 @@ router.put('/admin/commissions/:id/payer', adminSecretOnly, async (req, res) => 
 });
 
 // PUT /api/apporteurs/admin/boutiques/:id/attribuer — attribution manuelle boutique <-> apporteur (admin)
-router.put('/admin/boutiques/:id/attribuer', adminSecretOnly, async (req, res) => {
+router.put('/admin/boutiques/:id/attribuer', ...adminAccess('finances'), async (req, res) => {
   try {
     const { id } = req.params;
     const { code_apporteur, apporteur_id } = req.body;

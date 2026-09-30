@@ -15,9 +15,10 @@ const {
 } = require('../services/scraper');
 const { adminSecretOnly: adminOnly } = require('../middlewares/auth');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // ── GET /api/scraper/facebook/progress ────────────────────────
 // Retourne l'état et la progression en direct du scraper Facebook
-router.get('/facebook/progress', adminOnly, (req, res) => { // AUD-014 : état interne réservé à l'admin
+router.get('/facebook/progress', ...adminAccess('settings'), (req, res) => { // AUD-014 : état interne réservé à l'admin
   const progressFile = path.join(__dirname, '../.fb-scraper-progress.json');
   if (!fs.existsSync(progressFile)) {
     return res.json({ status: 'idle', message: 'Aucun scraping Facebook récent' });
@@ -32,7 +33,7 @@ router.get('/facebook/progress', adminOnly, (req, res) => { // AUD-014 : état i
 
 // ── GET /api/scraper/status ───────────────────────────────────
 // Statistiques globales : produits, offres, dernière sync par marchand
-router.get('/status', adminOnly, async (req, res) => { // AUD-014
+router.get('/status', ...adminAccess('settings'), async (req, res) => { // AUD-014
   try {
     const [produits, offres, marchands, historique] = await Promise.all([
       pool.query('SELECT COUNT(*) FROM produits'),
@@ -65,7 +66,7 @@ router.get('/status', adminOnly, async (req, res) => { // AUD-014
 //   GET /api/scraper/diagnostic/expat
 //   GET /api/scraper/diagnostic/jumia?categorie=telephones-tablettes
 //   GET /api/scraper/diagnostic/coinafrique
-router.get('/diagnostic/:source', adminOnly, async (req, res) => {
+router.get('/diagnostic/:source', ...adminAccess('settings'), async (req, res) => {
   try {
     const { source } = req.params;
     const { categorie } = req.query;
@@ -77,7 +78,7 @@ router.get('/diagnostic/:source', adminOnly, async (req, res) => {
 
 // ── POST /api/scraper/sync-annonces ─────────────────────────
 // Reçoit les annonces scrapées localement (Facebook, Expat, etc.) et les insère en BDD
-router.post('/sync-annonces', adminOnly, async (req, res) => {
+router.post('/sync-annonces', ...adminAccess('settings'), async (req, res) => {
   try {
     const { annonces } = req.body || {};
     if (!Array.isArray(annonces) || annonces.length === 0) {
@@ -149,7 +150,7 @@ router.post('/sync-annonces', adminOnly, async (req, res) => {
 // ── POST /api/scraper/run ─────────────────────────────────────
 // Déclenche un scraping manuel
 // Body: { "sources": ["expat", "jumia", "coinafrique"] }  (optionnel, défaut = tout)
-router.post('/run', adminOnly, async (req, res) => {
+router.post('/run', ...adminAccess('settings'), async (req, res) => {
   try {
     const sources = req.body?.sources || ['expat', 'jumia', 'coinafrique'];
     console.log(`[SCRAPER] Déclenchement manuel — sources: ${sources.join(', ')}`);
@@ -165,7 +166,7 @@ router.post('/run', adminOnly, async (req, res) => {
 
 // ── POST /api/scraper/run/:source ────────────────────────────
 // Déclencher une seule source
-router.post('/run/:source', adminOnly, async (req, res) => {
+router.post('/run/:source', ...adminAccess('settings'), async (req, res) => {
   try {
     const { source } = req.params;
     res.json({ message: `Scraping ${source} lancé en arrière-plan` });
@@ -177,7 +178,7 @@ router.post('/run/:source', adminOnly, async (req, res) => {
 // Teste un nouveau site sans sauvegarder
 // Exemples: GET /api/scraper/diagnostic-new/nova
 //           GET /api/scraper/diagnostic-new/jiji
-router.get('/diagnostic-new/:siteId', adminOnly, async (req, res) => {
+router.get('/diagnostic-new/:siteId', ...adminAccess('settings'), async (req, res) => {
   try {
     const { siteId } = req.params;
     console.log(`[DIAG-NEW] Test site: ${siteId}...`);
@@ -188,7 +189,7 @@ router.get('/diagnostic-new/:siteId', adminOnly, async (req, res) => {
 
 // ── GET /api/scraper/sites ────────────────────────────────────
 // Liste tous les nouveaux sites configurés
-router.get('/sites', adminOnly, async (req, res) => { // AUD-014
+router.get('/sites', ...adminAccess('settings'), async (req, res) => { // AUD-014
   const { SITES_CONFIG } = require('../services/scraper-new-sites');
   res.json({
     sites: SITES_CONFIG.map(s => ({
@@ -205,7 +206,7 @@ router.get('/sites', adminOnly, async (req, res) => { // AUD-014
 // ── POST /api/scraper/run-new ─────────────────────────────────
 // Déclenche le scraping des nouveaux sites
 // Body optionnel: { "sites": ["nova", "kanje"] }
-router.post('/run-new', adminOnly, async (req, res) => {
+router.post('/run-new', ...adminAccess('settings'), async (req, res) => {
   try {
     const siteIds = req.body?.sites || null;
     const msg = siteIds ? `Sites: ${siteIds.join(', ')}` : 'Tous les 14 nouveaux sites';
@@ -222,7 +223,7 @@ router.post('/run-new', adminOnly, async (req, res) => {
 // Répare en base les prix d'offres stockés avec des zéros manquants
 // (×100/×1000), via l'unique heuristique de plancher (corrigerPrixParPlancher).
 // Query: ?dry=1 pour prévisualiser sans modifier la base
-router.post('/corriger-prix', adminOnly, async (req, res) => {
+router.post('/corriger-prix', ...adminAccess('settings'), async (req, res) => {
   try {
     const dryRun = req.query.dry === '1';
     const { rows } = await pool.query(`
@@ -250,7 +251,7 @@ router.post('/corriger-prix', adminOnly, async (req, res) => {
 // Vérifie les offres non revues depuis 20h+ et retire (stock=false)
 // celles dont l'URL marchand renvoie 404/410 (annonce expirée côté marchand).
 // Query: ?limite=200 (nombre max d'offres vérifiées par appel)
-router.post('/nettoyer-offres-mortes', adminOnly, async (req, res) => {
+router.post('/nettoyer-offres-mortes', ...adminAccess('settings'), async (req, res) => {
   try {
     const limite = req.query.limite ? parseInt(req.query.limite) : 200;
     res.json({ message: `Vérification lancée en arrière-plan (limite ${limite})` });
@@ -261,7 +262,7 @@ router.post('/nettoyer-offres-mortes', adminOnly, async (req, res) => {
 // ── POST /api/scraper/nettoyer-immo-mortes ────────────────────
 // Vérifie les annonces immobilières scrapées et désactive (actif=false, supprimee=true)
 // celles dont l'URL source renvoie 404/410 ou est expirée.
-router.post('/nettoyer-immo-mortes', adminOnly, async (req, res) => {
+router.post('/nettoyer-immo-mortes', ...adminAccess('settings'), async (req, res) => {
   try {
     const limite = req.query.limite ? parseInt(req.query.limite) : 200;
     res.json({ message: `Vérification des annonces immobilières lancée en arrière-plan (limite ${limite})` });
@@ -271,7 +272,7 @@ router.post('/nettoyer-immo-mortes', adminOnly, async (req, res) => {
 
 // ── POST /api/scraper/lancer-immo ─────────────────────────────
 // Déclenche le scraping immobilier complet (Expat-Dakar + CoinAfrique)
-router.post('/lancer-immo', adminOnly, async (req, res) => {
+router.post('/lancer-immo', ...adminAccess('settings'), async (req, res) => {
   try {
     res.json({ message: 'Scraping immobilier lancé en arrière-plan' });
     lancerScrapingImmo().catch(console.error);

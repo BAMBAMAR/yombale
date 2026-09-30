@@ -2,6 +2,8 @@
 process.env.NODE_ENV = 'test';
 
 jest.mock('../../backend/middlewares/auth', () => ({ adminSecretOnly: (req, res, next) => next() }));
+// La route passe par le garde RBAC (AUD-028) : neutralisé ici pour tester uniquement le masquage des secrets
+jest.mock('../../backend/middlewares/admin-rbac', () => ({ adminAccess: () => [(req, res, next) => next()] }));
 const store = {
   prix_annonce: '1500',
   wave_api_key: 'wave_live_ABCDEFGHIJKL',

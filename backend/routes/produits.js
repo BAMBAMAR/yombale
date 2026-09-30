@@ -5,6 +5,7 @@ const { blockScraperUA, limiterRecherche, limiterBulk } = require('../middleware
 const { recordSearch, getTopTendances, FALLBACK_TENDANCES } = require('../lib/searchLogger');
 const { cacheGet, cacheSet, cacheInvalidatePattern } = require('../services/redis-cache');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function checkUUID(req, res, next) {
   if (!UUID_RE.test(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
@@ -456,7 +457,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
 });
 
 // GET /api/produits/admin/sponsorises — tous les produits avec statut sponsoring (admin)
-router.get('/admin/sponsorises', adminSecretOnly, async (req, res) => {
+router.get('/admin/sponsorises', ...adminAccess('produits'), async (req, res) => {
   try {
     const { q, actifs_seulement } = req.query;
     const whereExtra = actifs_seulement === '1'
@@ -479,7 +480,7 @@ router.get('/admin/sponsorises', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/produits/admin/:id/sponsoring — activer/désactiver/configurer sponsoring (admin)
-router.put('/admin/:id/sponsoring', adminSecretOnly, async (req, res) => {
+router.put('/admin/:id/sponsoring', ...adminAccess('produits'), async (req, res) => {
   try {
     if (!UUID_RE.test(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { sponsorise, sponsor_jusqu_au } = req.body;
@@ -778,7 +779,7 @@ router.get('/:id/historique', checkUUID, async (req, res) => {
 });
 
 // POST /api/produits — créer (admin)
-router.post('/', adminSecretOnly, async (req, res) => {
+router.post('/', ...adminAccess('produits'), async (req, res) => {
   try {
     const { nom, marque, categorie_id, ean, image_url } = req.body;
     const { rows } = await pool.query(

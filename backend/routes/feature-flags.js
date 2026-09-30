@@ -5,6 +5,7 @@ const router = require('express').Router();
 const { adminSecretOnly } = require('../middlewares/auth');
 const featureFlags = require('../lib/featureFlags');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // ── GET /api/feature-flags/public — dictionnaire simple des flags actifs (public)
 router.get('/public', async (req, res) => {
   try {
@@ -16,7 +17,7 @@ router.get('/public', async (req, res) => {
 });
 
 // ── GET /api/feature-flags/admin/tous — liste détaillée de tous les flags (admin)
-router.get('/admin/tous', adminSecretOnly, async (req, res) => {
+router.get('/admin/tous', ...adminAccess('settings'), async (req, res) => {
   try {
     const flags = await featureFlags.getAllFlags();
     res.json({ flags });
@@ -26,7 +27,7 @@ router.get('/admin/tous', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/feature-flags/admin/:key — mise à jour d'un drapeau (admin)
-router.put('/admin/:key', adminSecretOnly, async (req, res) => {
+router.put('/admin/:key', ...adminAccess('settings'), async (req, res) => {
   try {
     const { key } = req.params;
     const { enabled, label, description, categorie, scope, meta } = req.body;
@@ -38,7 +39,7 @@ router.put('/admin/:key', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/feature-flags/admin — création d'un nouveau drapeau (admin)
-router.post('/admin', adminSecretOnly, async (req, res) => {
+router.post('/admin', ...adminAccess('settings'), async (req, res) => {
   try {
     const { key, label, description, categorie, enabled, scope, meta } = req.body;
     if (!key || !label) {
@@ -60,7 +61,7 @@ router.post('/admin', adminSecretOnly, async (req, res) => {
 });
 
 // ── DELETE /api/feature-flags/admin/:key — suppression d'un drapeau (admin)
-router.delete('/admin/:key', adminSecretOnly, async (req, res) => {
+router.delete('/admin/:key', ...adminAccess('settings'), async (req, res) => {
   try {
     const { key } = req.params;
     await featureFlags.deleteFlag(key);

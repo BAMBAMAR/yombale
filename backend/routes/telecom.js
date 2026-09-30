@@ -6,6 +6,7 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // GET /api/telecom — liste / filtre
 router.get('/', async (req, res) => {
   try {
@@ -95,7 +96,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/telecom — créer (admin)
-router.post('/', adminSecretOnly, async (req, res) => {
+router.post('/', ...adminAccess('produits'), async (req, res) => {
   try {
     const { operateur, nom, type, data_mo, minutes, sms, validite_jours, prix, description, image_url, source } = req.body;
     if (!operateur || !nom || !type || prix == null) {
@@ -113,7 +114,7 @@ router.post('/', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/telecom/:id — modifier (admin)
-router.put('/:id', adminSecretOnly, async (req, res) => {
+router.put('/:id', ...adminAccess('produits'), async (req, res) => {
   try {
     const { operateur, nom, type, data_mo, minutes, sms, validite_jours, prix, description, image_url, actif } = req.body;
     const { rows } = await pool.query(
@@ -142,7 +143,7 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
 
 // POST /api/telecom/sync-artp — scraper ARTP en arrière-plan (admin)
 // ?dry=1 pour prévisualiser sans écrire en base
-router.post('/sync-artp', adminSecretOnly, async (req, res) => {
+router.post('/sync-artp', ...adminAccess('produits'), async (req, res) => {
   const dryRun = req.query.dry === '1';
   res.json({
     message: dryRun ? 'Scraping ARTP en dry-run (pas d\'écriture)…' : 'Scraping ARTP lancé en arrière-plan…',
@@ -154,7 +155,7 @@ router.post('/sync-artp', adminSecretOnly, async (req, res) => {
 });
 
 // DELETE /api/telecom/:id — désactiver (admin) — pas de suppression physique
-router.delete('/:id', adminSecretOnly, async (req, res) => {
+router.delete('/:id', ...adminAccess('produits'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `UPDATE forfaits_telecom SET actif = false, updated_at = NOW() WHERE id = $1 RETURNING id`,

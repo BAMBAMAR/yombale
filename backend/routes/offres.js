@@ -4,6 +4,7 @@ const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 const { corrigerPrixParPlancher } = require('../services/scraper');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // GET /api/offres
 router.get('/', async (req, res) => {
   try {
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/offres/sync — réception données d'un scraper externe (admin seulement)
-router.post('/sync', adminSecretOnly, async (req, res) => {
+router.post('/sync', ...adminAccess('produits'), async (req, res) => {
   const { marchand_id, produits } = req.body;
   if (!marchand_id || !Array.isArray(produits)) {
     return res.status(400).json({ error: 'marchand_id et produits[] requis' });

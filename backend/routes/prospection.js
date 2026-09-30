@@ -2,6 +2,7 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly: adminOnly } = require('../middlewares/auth');
+const { adminAccess } = require('../middlewares/admin-rbac');
 const {
   ensureProspectionTables,
   normaliserTelephoneSenegal,
@@ -24,7 +25,7 @@ const {
 
 // ── GET /api/prospection/leads ────────────────────────────────────────────────
 // Liste paginée avec filtres et statistiques globales
-router.get('/leads', adminOnly, async (req, res) => {
+router.get('/leads', ...adminAccess('crm'), async (req, res) => {
   try {
     const { search, categorie, statut, sous_profil, ville, page = 1, limit = 50 } = req.query;
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -131,7 +132,7 @@ router.get('/leads', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/leads ───────────────────────────────────────────────
 // Ajout manuel d'un lead
-router.post('/leads', adminOnly, async (req, res) => {
+router.post('/leads', ...adminAccess('crm'), async (req, res) => {
   try {
     const { nom_boutique, contact_nom, telephone, email, categorie, ville, quartier, notes, statut } = req.body;
 
@@ -291,12 +292,12 @@ const updateLeadHandler = async (req, res) => {
   }
 };
 
-router.put('/leads/:id', adminOnly, updateLeadHandler);
-router.patch('/leads/:id', adminOnly, updateLeadHandler);
+router.put('/leads/:id', ...adminAccess('crm'), updateLeadHandler);
+router.patch('/leads/:id', ...adminAccess('crm'), updateLeadHandler);
 
 // ── DELETE /api/prospection/leads/:id ─────────────────────────────────────────
 // Suppression d'un lead
-router.delete('/leads/:id', adminOnly, async (req, res) => {
+router.delete('/leads/:id', ...adminAccess('crm'), async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM prospection_leads WHERE id = $1', [id]);
@@ -308,7 +309,7 @@ router.delete('/leads/:id', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/leads/batch-delete ──────────────────────────────────
 // Suppression groupée de leads
-router.post('/leads/batch-delete', adminOnly, async (req, res) => {
+router.post('/leads/batch-delete', ...adminAccess('crm'), async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -325,7 +326,7 @@ router.post('/leads/batch-delete', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/leads/nettoyer ─────────────────────────────────────
 // Nettoyage intelligent des noms, enrichissement des quartiers et filtrage des leads invalides (emploi/particuliers)
-router.post('/leads/nettoyer', adminOnly, async (req, res) => {
+router.post('/leads/nettoyer', ...adminAccess('crm'), async (req, res) => {
   try {
     const stats = await nettoyerTousLesLeadsBdd();
     res.json({
@@ -341,7 +342,7 @@ router.post('/leads/nettoyer', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/leads/reconcilier-agences ──────────────────────────
 // Réconciliation manuelle des agences et boutiques clientes avec la table prospection_leads
-router.post('/leads/reconcilier-agences', adminOnly, async (_req, res) => {
+router.post('/leads/reconcilier-agences', ...adminAccess('crm'), async (_req, res) => {
   try {
     const stats = await reconcilierAgencesEtBoutiquesExistantes();
     res.json({
@@ -357,7 +358,7 @@ router.post('/leads/reconcilier-agences', adminOnly, async (_req, res) => {
 
 // ── GET /api/prospection/audit-qualite ───────────────────────────────────────
 // Audit approfondi de la santé et qualité des données (Génériques, Flous, Immo)
-router.get('/audit-qualite', adminOnly, async (_req, res) => {
+router.get('/audit-qualite', ...adminAccess('crm'), async (_req, res) => {
   try {
     const audit = await auditerQualiteDonneesCRM();
     res.json({ success: true, audit });
@@ -369,7 +370,7 @@ router.get('/audit-qualite', adminOnly, async (_req, res) => {
 
 // ── POST /api/prospection/leads/assainir-immo ─────────────────────────────────
 // Assainissement, enrichissement des quartiers et sourcing ciblé pour agences immobilières
-router.post('/leads/assainir-immo', adminOnly, async (_req, res) => {
+router.post('/leads/assainir-immo', ...adminAccess('crm'), async (_req, res) => {
   try {
     const resultats = await assainirEtEnrichirDonneesImmo();
     res.json({
@@ -385,7 +386,7 @@ router.post('/leads/assainir-immo', adminOnly, async (_req, res) => {
 
 // ── POST /api/prospection/leads/auto-source ───────────────────────────────────
 // Auto-sourcing depuis les annonces classifiées de la plateforme
-router.post('/leads/auto-source', adminOnly, async (req, res) => {
+router.post('/leads/auto-source', ...adminAccess('crm'), async (req, res) => {
   try {
     const stats = await autoSourcerDepuisAnnonces();
     res.json(stats);
@@ -397,7 +398,7 @@ router.post('/leads/auto-source', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/auto-collecte ───────────────────────────────────────
 // Auto-collecte ultra-légère pour Render (< 3 MB RAM, 0 Chromium) : OpenStreetMap Places & Dorking API
-router.post('/auto-collecte', adminOnly, async (req, res) => {
+router.post('/auto-collecte', ...adminAccess('crm'), async (req, res) => {
   try {
     const { source = 'all' } = req.body;
     const { lancerAutoCollecte } = require('../services/auto-collecte');
@@ -412,7 +413,7 @@ router.post('/auto-collecte', adminOnly, async (req, res) => {
 // ── POST /api/prospection/omnisource ──────────────────────────────────────────
 // Ingestion universelle double flux : Annonces Classifiées + Leads Prospection CRM
 // (Google Search, Instagram, TikTok, Facebook & Google Places)
-router.post('/omnisource', adminOnly, async (req, res) => {
+router.post('/omnisource', ...adminAccess('crm'), async (req, res) => {
   try {
     const { mode = 'all', verticale = 'all', limite = 50 } = req.body;
     const { lancerCollecteOmnisource } = require('../services/omnisource-collector');
@@ -426,7 +427,7 @@ router.post('/omnisource', adminOnly, async (req, res) => {
 
 // ── GET /api/prospection/omnisource/stats ─────────────────────────────────────
 // Métriques en temps réel des données collectées via Omnisource
-router.get('/omnisource/stats', adminOnly, async (_req, res) => {
+router.get('/omnisource/stats', ...adminAccess('crm'), async (_req, res) => {
   try {
     const { rows: statsAnnonces } = await pool.query(`
       SELECT 
@@ -461,7 +462,7 @@ router.get('/omnisource/stats', adminOnly, async (_req, res) => {
 
 // ── POST /api/prospection/leads/import-vrac ───────────────────────────────────
 // Importation de texte brut / exports de groupes WhatsApp / CSV
-router.post('/leads/import-vrac', adminOnly, async (req, res) => {
+router.post('/leads/import-vrac', ...adminAccess('crm'), async (req, res) => {
   try {
     const { rawText, categorie = 'mode', ville = 'Dakar', quartier = 'Dakar', source = 'import_vrac' } = req.body;
 
@@ -507,13 +508,13 @@ router.post('/leads/import-vrac', adminOnly, async (req, res) => {
 
 // ── GET /api/prospection/templates ────────────────────────────────────────────
 // Liste des modèles pré-rédigés
-router.get('/templates', adminOnly, (_req, res) => {
+router.get('/templates', ...adminAccess('crm'), (_req, res) => {
   res.json({ templates: TEMPLATES_PAR_DEFAUT });
 });
 
 // ── GET /api/prospection/dorking ──────────────────────────────────────────────
 // Générateur de requêtes Google Dorking / Maps
-router.get('/dorking', adminOnly, (req, res) => {
+router.get('/dorking', ...adminAccess('crm'), (req, res) => {
   const { categorie, quartier } = req.query;
   const requetes = genererRequetesDorking(categorie, quartier);
   res.json({ requetes });
@@ -521,7 +522,7 @@ router.get('/dorking', adminOnly, (req, res) => {
 
 // ── GET /api/prospection/campagnes ────────────────────────────────────────────
 // Liste des campagnes de prospection réconciliée en direct avec les logs réels
-router.get('/campagnes', adminOnly, async (_req, res) => {
+router.get('/campagnes', ...adminAccess('crm'), async (_req, res) => {
   try {
     // Watchdog de réconciliation automatique : clore en base les campagnes figées depuis plus de 30 minutes
     await pool.query(`
@@ -618,7 +619,7 @@ router.get('/campagnes', adminOnly, async (_req, res) => {
 
 // ── POST /api/prospection/campagnes/lancer ────────────────────────────────────
 // Déclenche une campagne (simulation ou réelle)
-router.post('/campagnes/lancer', adminOnly, async (req, res) => {
+router.post('/campagnes/lancer', ...adminAccess('crm'), async (req, res) => {
   try {
     const { titre, canal = 'whatsapp', templateMessage, sujetEmail, leadIds, simulation = true } = req.body;
 
@@ -689,7 +690,7 @@ router.post('/campagnes/lancer', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/relances/lancer ─────────────────────────────────────
 // Déclenchement manuel immédiat des relances marchands, carnet de dettes & prospects
-router.post('/relances/lancer', adminOnly, async (req, res) => {
+router.post('/relances/lancer', ...adminAccess('crm'), async (req, res) => {
   try {
     const { type = 'tout' } = req.body;
     const { traiterRelancesMarchands } = require('../services/cron-relances-marchands');
@@ -722,7 +723,7 @@ router.post('/relances/lancer', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/relances/prospects ──────────────────────────────────
 // Déclenchement spécifique des relances automatiques prospects (J+3, J+7, clôture J+14)
-router.post('/relances/prospects', adminOnly, async (req, res) => {
+router.post('/relances/prospects', ...adminAccess('crm'), async (req, res) => {
   try {
     const { limite = 30, simulation = false } = req.body;
     const stats = await traiterRelancesProspectsAutomatiques({ limite: parseInt(limite, 10) || 30, simulation });
@@ -739,7 +740,7 @@ router.post('/relances/prospects', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/scraper/lancer ──────────────────────────────────────
 // Déclenchement manuel du scraper pour une zone donnée
-router.post('/scraper/lancer', adminOnly, async (req, res) => {
+router.post('/scraper/lancer', ...adminAccess('crm'), async (req, res) => {
   try {
     const { zone = 'Sandaga', limite = 20 } = req.body;
     const { sourcerZoneDakar } = require('../services/scraper-prospection');
@@ -753,7 +754,7 @@ router.post('/scraper/lancer', adminOnly, async (req, res) => {
 
 // ── GET /api/prospection/crons/status ─────────────────────────────────────────
 // Statut global et monitoring en DIRECT des crons et automatisations (A-05 FIX)
-router.get('/crons/status', adminOnly, async (_req, res) => {
+router.get('/crons/status', ...adminAccess('crm'), async (_req, res) => {
   try {
     const [rLeads, rLogs, rBoutiques, rBlacklist, rCronHistory] = await Promise.all([
       pool.query(`
@@ -866,7 +867,7 @@ router.get('/crons/status', adminOnly, async (_req, res) => {
 
 // ── GET /api/prospection/blacklist ────────────────────────────────────────────
 // Liste des numéros blacklistés avec enrichissement des infos prospect/lead
-router.get('/blacklist', adminOnly, async (req, res) => {
+router.get('/blacklist', ...adminAccess('crm'), async (req, res) => {
   try {
     const { search } = req.query;
     let query = `
@@ -902,7 +903,7 @@ router.get('/blacklist', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/blacklist ───────────────────────────────────────────
 // Ajouter manuellement un numéro à la blacklist
-router.post('/blacklist', adminOnly, async (req, res) => {
+router.post('/blacklist', ...adminAccess('crm'), async (req, res) => {
   try {
     const { phone, reason = 'manuel_admin' } = req.body;
     if (!phone) {
@@ -927,7 +928,7 @@ router.post('/blacklist', adminOnly, async (req, res) => {
 
 // ── DELETE /api/prospection/blacklist/:phone ──────────────────────────────────
 // Retirer un numéro de la blacklist (déblocage)
-router.delete('/blacklist/:phone', adminOnly, async (req, res) => {
+router.delete('/blacklist/:phone', ...adminAccess('crm'), async (req, res) => {
   try {
     const { phone } = req.params;
     const { normalisePhone, retirerBlacklist } = require('../services/whatsapp');
@@ -943,7 +944,7 @@ router.delete('/blacklist/:phone', adminOnly, async (req, res) => {
 
 // ── GET /api/prospection/logs ─────────────────────────────────────────────────
 // Historique des messages envoyés
-router.get('/logs', adminOnly, async (req, res) => {
+router.get('/logs', ...adminAccess('crm'), async (req, res) => {
   try {
     const { limit = 100 } = req.query;
     const { rows } = await pool.query(`
@@ -969,7 +970,7 @@ router.get('/logs', adminOnly, async (req, res) => {
 
 // ── GET /api/prospection/intelligence/overview ────────────────────────────────
 // Vue 360° des performances, diagnostics, entonnoir global, top segments et top sources
-router.get('/intelligence/overview', adminOnly, async (_req, res) => {
+router.get('/intelligence/overview', ...adminAccess('crm'), async (_req, res) => {
   try {
     const data = await analyserToutesLesCampagnes();
     res.json({ success: true, ...data });
@@ -981,7 +982,7 @@ router.get('/intelligence/overview', adminOnly, async (_req, res) => {
 
 // ── GET /api/prospection/intelligence/recommandation ──────────────────────────
 // Recommandation intelligente de la prochaine campagne Nopalou
-router.get('/intelligence/recommandation', adminOnly, async (_req, res) => {
+router.get('/intelligence/recommandation', ...adminAccess('crm'), async (_req, res) => {
   try {
     const reco = await recommanderProchaineCampagne();
     res.json({ success: true, recommandation: reco });
@@ -994,7 +995,7 @@ router.get('/intelligence/recommandation', adminOnly, async (_req, res) => {
 // ── GET /api/prospection/campagnes/:id/status ─────────────────────────────────
 // Statut temps réel d'une campagne (polling depuis le frontend)
 // Permet de suivre l'avancement d'une campagne lancée en arrière-plan (A-01 FIX)
-router.get('/campagnes/:id/status', adminOnly, async (req, res) => {
+router.get('/campagnes/:id/status', ...adminAccess('crm'), async (req, res) => {
   try {
     const { id } = req.params;
     const [resCampagne, resLogs] = await Promise.all([
@@ -1077,7 +1078,7 @@ router.get('/campagnes/:id/status', adminOnly, async (req, res) => {
 // ── GET /api/prospection/campagnes/:id/diagnostic ─────────────────────────────
 
 // Diagnostic d'une campagne spécifique
-router.get('/campagnes/:id/diagnostic', adminOnly, async (req, res) => {
+router.get('/campagnes/:id/diagnostic', ...adminAccess('crm'), async (req, res) => {
   try {
     const { id } = req.params;
     const diag = await diagnostiquerCampagne(id);
@@ -1091,7 +1092,7 @@ router.get('/campagnes/:id/diagnostic', adminOnly, async (req, res) => {
 
 // ── GET /api/prospection/leads/:id/timeline ───────────────────────────────────
 // Timeline chronologique et explication du score pour un lead spécifique
-router.get('/leads/:id/timeline', adminOnly, async (req, res) => {
+router.get('/leads/:id/timeline', ...adminAccess('crm'), async (req, res) => {
   try {
     const { id } = req.params;
     const timelineData = await obtenirTimelineLead(id);
@@ -1105,7 +1106,7 @@ router.get('/leads/:id/timeline', adminOnly, async (req, res) => {
 
 // ── POST /api/prospection/crawler-ai ──────────────────────────────────────────
 // Crawl sémantique intelligent à la demande (Crawl4AI pattern)
-router.post('/crawler-ai', adminOnly, async (req, res) => {
+router.post('/crawler-ai', ...adminAccess('crm'), async (req, res) => {
   try {
     const { url, maxItems = 15, sourceLabel = 'crawler-ai' } = req.body;
     if (!url) return res.status(400).json({ success: false, error: 'URL requise' });

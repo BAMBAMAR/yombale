@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { adminSecretOnly } = require('../middlewares/auth');
 const s = require('../lib/settingsCache');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // AUD-029 : les clés sensibles ne sont jamais renvoyées en clair, quel que soit le rôle admin.
 // Le masque conserve les 4 derniers caractères pour reconnaître la valeur sans la divulguer.
 const SENSITIVE_KEY_RE = /(token|secret|api_key|apikey|password|passwd|signing|private_key)/i;
@@ -28,7 +29,7 @@ function isMaskedValue(key, value) {
 }
 
 // GET /api/settings — toutes les configs (admin seulement, secrets masqués)
-router.get('/', adminSecretOnly, async (req, res) => {
+router.get('/', ...adminAccess('settings'), async (req, res) => {
   try {
     const all = await s.getAll();
     res.json(maskSettings(all));
@@ -36,7 +37,7 @@ router.get('/', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/settings — mettre à jour une ou plusieurs clés (admin seulement)
-router.put('/', adminSecretOnly, async (req, res) => {
+router.put('/', ...adminAccess('settings'), async (req, res) => {
   try {
     const allowed = Object.keys(s.DEFAULTS);
     const updates = {};

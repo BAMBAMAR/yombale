@@ -7,6 +7,7 @@ const { pool } = require('../models/db');
 const { sendAwinPostback } = require('../services/awin-postback');
 const { adminSecretOnly } = require('../middlewares/auth');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 const router = express.Router();
 
 let affiliateClicksTableEnsured = false;
@@ -34,7 +35,7 @@ async function ensureAffiliateClicksTable() {
 }
 
 // GET /api/affiliates/clicks — liste des clics affiliés (admin)
-router.get('/clicks', adminSecretOnly, async (req, res) => {
+router.get('/clicks', ...adminAccess('finances'), async (req, res) => {
   try {
     await ensureAffiliateClicksTable();
     const range = req.query.range || '24h';
@@ -104,7 +105,7 @@ router.post('/track', async (req, res) => {
 });
 
 // POST /api/affiliates/:click_ref/convert — marquer une conversion (admin/interne uniquement)
-router.post('/:click_ref/convert', adminSecretOnly, async (req, res) => {
+router.post('/:click_ref/convert', ...adminAccess('finances'), async (req, res) => {
   try {
     const { click_ref } = req.params;
     const { boutique_id, abonnement_id, commission_montant } = req.body;

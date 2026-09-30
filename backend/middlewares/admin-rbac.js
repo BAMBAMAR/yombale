@@ -93,6 +93,27 @@ function extractAdminCredentials(req) {
   return { jwtToken, rawSecret };
 }
 
+// ── AUD-030 : verrou anti-devinette du secret maître (mémoire du processus, par adresse IP) ──
+const SECRET_MAX_FAILS = 10;
+const SECRET_WINDOW_MS = 15 * 60 * 1000;
+const _secretFails = new Map();
+function clientIp(req) { return req.ip || (req.socket && req.socket.remoteAddress) || 'inconnue'; }
+function secretGuessFail(req) {
+  const ip = clientIp(req);
+  const now = Date.now();
+  const e = _secretFails.get(ip);
+  if (!e || now > e.reset) _secretFails.set(ip, { n: 1, reset: now + SECRET_WINDOW_MS });
+  else e.n += 1;
+  if (_secretFails.size > 5000) { // borne mémoire : purge des entrées expirées
+    for (const [k, v] of _secretFails) if (now > v.reset) _secretFails.delete(k);
+  }
+}
+function secretGuessLocked(req) {
+  const e = _secretFails.get(clientIp(req));
+  return !!e && Date.now() <= e.reset && e.n >= SECRET_MAX_FAILS;
+}
+function secretGuessReset(req) { _secretFails.delete(clientIp(req)); }
+
 /**
  * Middleware d'authentification administrative
  * Accepte :
@@ -143,7 +164,18 @@ async function requireAdminAuth(req, res, next) {
   }
 
   // 2. Fallback Break-glass avec ADMIN_SECRET (accès racine technique)
+  // AUD-030 : le secret est acceptable en en-tête sur toutes les routes admin ; sans limite dédiée il pouvait être
+  // deviné à raison du quota global (1000 requêtes / 15 min / IP). Verrou par adresse IP après échecs répétés.
+  if (rawSecret && secretGuessLocked(req)) {
+    return res.status(429).json({
+      success: false,
+      error: 'Trop de tentatives d’authentification administrateur. Réessayez plus tard.',
+      code: 'ADMIN_SECRET_LOCKED',
+    });
+  }
   if (adminSecret && adminSecret.trim().length > 0 && rawSecret && secretsMatch(rawSecret, adminSecret)) {
+    secretGuessReset(req);
+    console.warn(`[ADMIN BREAK-GLASS] accès par secret maître : ${req.method} ${String(req.originalUrl || '').split('?')[0]} (ip ${clientIp(req)})`);
     req.adminUser = {
       id: '00000000-0000-0000-0000-000000000000',
       nom: 'Super Admin (Break-glass)',
@@ -154,6 +186,7 @@ async function requireAdminAuth(req, res, next) {
     return next();
   }
 
+  if (rawSecret) secretGuessFail(req); // secret fourni mais faux (ou non configuré) : compte comme un échec
   return res.status(401).json({
     success: false,
     error: 'Session administrative requise ou expirée. Veuillez vous reconnecter.',
@@ -200,10 +233,45 @@ function requireAdminPermission(permissionKey) {
   };
 }
 
+/**
+ * AUD-028 : garde RBAC par ressource. Lecture (GET/HEAD/OPTIONS) => `<ressource>:view`,
+ * toute autre méthode => `<ressource>:edit` (ou la clé fournie dans `options.edit`).
+ * `super_admin` (permissions.all) passe toujours. Mode via RBAC_MODE : `enforce` (défaut), `log` (journalise
+ * sans bloquer, pour une mise en production progressive) ou `off`.
+ */
+function requireAdminAccess(resource, options = {}) {
+  const viewKey = options.view || `${resource}:view`;
+  const editKey = options.edit || `${resource}:edit`;
+  return (req, res, next) => {
+    if (!req.adminUser) return res.status(401).json({ error: 'Non authentifié' });
+    const mode = String(process.env.RBAC_MODE || 'enforce').toLowerCase();
+    const lecture = ['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+    const key = lecture ? viewKey : editKey;
+    const perms = req.adminUser.permissions || {};
+    if (perms.all || perms[key] || mode === 'off') return next();
+    if (mode === 'log') {
+      console.warn(`[RBAC LOG] ${req.adminUser.role} aurait été refusé : ${req.method} ${req.originalUrl} (permission ${key})`);
+      return next();
+    }
+    return res.status(403).json({
+      success: false,
+      error: `Permission manquante : ${key}`,
+      code: 'ADMIN_FORBIDDEN_PERMISSION',
+    });
+  };
+}
+
+/** Raccourci pour les routes à authentification par route : [authentification admin, garde RBAC de la ressource]. */
+function adminAccess(resource, options) {
+  return [requireAdminAuth, requireAdminAccess(resource, options)];
+}
+
 module.exports = {
   requireAdminAuth,
   requireAdminRole,
   requireAdminPermission,
+  requireAdminAccess,
+  adminAccess,
   ROLE_PERMISSIONS,
   secretsMatch,
 };

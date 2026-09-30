@@ -9,9 +9,11 @@ const { envoyerEmail } = require('../services/email');
 const { sendWhatsAppNotification, normalisePhone } = require('../services/whatsapp');
 const { cacheInvalidatePattern } = require('../services/redis-cache');
 
+const { requireAdminAccess } = require('../middlewares/admin-rbac');
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 
 router.use(requireAdminAuth);
+router.use(requireAdminAccess('produits', {'edit':'produits:moderate'})); // AUD-028
 
 // Helper: formater le numéro WhatsApp international propre
 function formatWhatsAppLink(phone, message) {

@@ -7,6 +7,7 @@ const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rba
 const plansCache = require('../lib/plansCache');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // Helper slugify
 function slugify(text) {
   return String(text || '')
@@ -29,7 +30,7 @@ router.get('/public', async (req, res) => {
 });
 
 // ── GET /api/plans/admin/tous — Tous les forfaits pour la console d'administration
-router.get('/admin/tous', requireAdminAuth, async (req, res) => {
+router.get('/admin/tous', ...adminAccess('plans'), async (req, res) => {
   try {
     const plans = await plansCache.getAllPlans(false);
     

@@ -6,6 +6,7 @@ const express = require('express');
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 const router = express.Router();
 
 let quarantinesTableEnsured = false;
@@ -33,7 +34,7 @@ async function ensureQuarantinesTable() {
 }
 
 // GET /api/qualite/quarantines — liste des quarantines (admin)
-router.get('/quarantines', adminSecretOnly, async (req, res) => {
+router.get('/quarantines', ...adminAccess('produits', {'edit':'produits:moderate'}), async (req, res) => {
   try {
     await ensureQuarantinesTable();
     const status = req.query.status || 'quarantined';
@@ -65,7 +66,7 @@ router.get('/quarantines', adminSecretOnly, async (req, res) => {
 });
 
 // POST /api/qualite/quarantines/:offre_id/validate — valider une offre quarantinée
-router.post('/quarantines/:offre_id/validate', adminSecretOnly, async (req, res) => {
+router.post('/quarantines/:offre_id/validate', ...adminAccess('produits', {'edit':'produits:moderate'}), async (req, res) => {
   try {
     const { offre_id } = req.params;
     const { admin_name } = req.body;
@@ -92,7 +93,7 @@ router.post('/quarantines/:offre_id/validate', adminSecretOnly, async (req, res)
 });
 
 // POST /api/qualite/quarantines/:offre_id/reject — rejeter une offre quarantinée (garder en quarantine)
-router.post('/quarantines/:offre_id/reject', adminSecretOnly, async (req, res) => {
+router.post('/quarantines/:offre_id/reject', ...adminAccess('produits', {'edit':'produits:moderate'}), async (req, res) => {
   try {
     const { offre_id } = req.params;
     const { admin_name } = req.body;

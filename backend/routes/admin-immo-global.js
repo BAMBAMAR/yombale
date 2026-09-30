@@ -6,7 +6,9 @@ const { pool } = require('../models/db');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
+const { requireAdminAccess } = require('../middlewares/admin-rbac');
 router.use(requireAdminAuth);
+router.use(requireAdminAccess('immo', {'edit':'immo:moderate'})); // AUD-028
 
 // ── GET /api/admin/immo-global/stats — Synthèse exécutive du Pôle Immobilier
 router.get('/stats', async (req, res) => {

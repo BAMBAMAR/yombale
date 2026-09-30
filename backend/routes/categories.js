@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // Helper slugify
 function slugify(text) {
   return String(text || '')
@@ -166,7 +167,7 @@ router.get('/', async (req, res) => {
 });
 
 // ── GET /api/categories/admin/toutes — Liste complète pour la console d'administration
-router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
+router.get('/admin/toutes', ...adminAccess('produits'), async (req, res) => {
   try {
     await ensureCategoriesTable();
     let categories = [];
@@ -208,7 +209,7 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/categories/admin — Création d'une catégorie (admin)
-router.post('/admin', adminSecretOnly, async (req, res) => {
+router.post('/admin', ...adminAccess('produits'), async (req, res) => {
   try {
     await ensureCategoriesTable();
     const { nom, slug: customSlug, icone, description, actif = true, ordre = 0 } = req.body;
@@ -251,7 +252,7 @@ router.post('/admin', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/categories/admin/reordonner — Réordonner les catégories (admin)
-router.put('/admin/reordonner', adminSecretOnly, async (req, res) => {
+router.put('/admin/reordonner', ...adminAccess('produits'), async (req, res) => {
   try {
     const { items } = req.body;
     if (!Array.isArray(items)) {
@@ -272,7 +273,7 @@ router.put('/admin/reordonner', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/categories/admin/:id — Mise à jour d'une catégorie (admin)
-router.put('/admin/:id', adminSecretOnly, async (req, res) => {
+router.put('/admin/:id', ...adminAccess('produits'), async (req, res) => {
   try {
     const { id } = req.params;
     const { nom, slug: customSlug, icone, description, actif, ordre } = req.body;
@@ -309,7 +310,7 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
 });
 
 // ── DELETE /api/categories/admin/:id — Suppression d'une catégorie (admin)
-router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
+router.delete('/admin/:id', ...adminAccess('produits'), async (req, res) => {
   try {
     const { id } = req.params;
     const current = await pool.query('SELECT * FROM categories WHERE id::text = $1 OR slug = $1', [id]);

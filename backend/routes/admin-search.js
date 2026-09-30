@@ -5,7 +5,8 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 
-router.get('/', adminSecretOnly, async (req, res) => {
+const { adminAccess } = require('../middlewares/admin-rbac');
+router.get('/', ...adminAccess('users'), async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
     if (!q || q.length < 2) {

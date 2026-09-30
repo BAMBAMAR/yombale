@@ -13,6 +13,7 @@ const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog'
 const cfg = require('../../lib/settingsCache');
 const { enregistrerAuditLog } = require('../../lib/auditLogger');
 const { normalizeSocialUrl } = require('../../services/social-parser');
+const { adminAccess } = require('../../middlewares/admin-rbac');
 const {
   checkBoutiqueAccess,
   checkBoutiqueQuotas,
@@ -98,7 +99,7 @@ router.get('/admin/toutes', requireAdminAuth, async (req, res) => {
 });
 
 // ── POST /api/boutiques/admin/relance-catalogue — Envoi unitaire ou par lot de relances catalogue (admin)
-router.post('/admin/relance-catalogue', adminSecretOnly, async (req, res) => {
+router.post('/admin/relance-catalogue', ...adminAccess('boutiques'), async (req, res) => {
   try {
     const { boutiqueId, boutiqueIds, messageCustom, titreCustom } = req.body || {};
     const { envoyerRelanceCatalogueBoutique, batchRelancerCatalogueBoutiques } = require('../../services/relance-catalogue');
@@ -121,7 +122,7 @@ router.post('/admin/relance-catalogue', adminSecretOnly, async (req, res) => {
 });
 
 // ── GET /api/boutiques/admin/relance-catalogue/config — Configuration et statistiques de relance (admin)
-router.get('/admin/relance-catalogue/config', adminSecretOnly, async (req, res) => {
+router.get('/admin/relance-catalogue/config', ...adminAccess('boutiques'), async (req, res) => {
   try {
     const actif = await cfg.getBool('relance_catalogue_actif', false);
     const seuil = await cfg.getNum('relance_catalogue_seuil', 1);
@@ -182,7 +183,7 @@ router.get('/admin/relance-catalogue/config', adminSecretOnly, async (req, res) 
 });
 
 // ── POST /api/boutiques/admin/relance-catalogue/executer-cron — Exécution manuelle immédiate du cron de relance
-router.post('/admin/relance-catalogue/executer-cron', adminSecretOnly, async (req, res) => {
+router.post('/admin/relance-catalogue/executer-cron', ...adminAccess('boutiques'), async (req, res) => {
   try {
     const { recupererBoutiquesEligiblesRelance, batchRelancerCatalogueBoutiques } = require('../../services/relance-catalogue');
     const boutiques = await recupererBoutiquesEligiblesRelance();
@@ -199,7 +200,7 @@ router.post('/admin/relance-catalogue/executer-cron', adminSecretOnly, async (re
 });
 
 // ── PUT /api/boutiques/admin/relance-catalogue/config — Mise à jour de la configuration relance (admin)
-router.put('/admin/relance-catalogue/config', adminSecretOnly, async (req, res) => {
+router.put('/admin/relance-catalogue/config', ...adminAccess('boutiques'), async (req, res) => {
   try {
     const { actif, seuil, delai_heures, intervalle_jours, titre, template } = req.body || {};
 
@@ -229,7 +230,7 @@ router.put('/admin/relance-catalogue/config', adminSecretOnly, async (req, res) 
 });
 
 // ── GET /api/boutiques/admin/promotions — toutes les promotions de toutes les boutiques (admin)
-router.get('/admin/promotions', adminSecretOnly, async (req, res) => {
+router.get('/admin/promotions', ...adminAccess('boutiques'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT bp.*, b.nom AS boutique_nom, b.slug AS boutique_slug

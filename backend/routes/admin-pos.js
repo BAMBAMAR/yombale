@@ -6,7 +6,9 @@ const { pool } = require('../models/db');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
+const { requireAdminAccess } = require('../middlewares/admin-rbac');
 router.use(requireAdminAuth);
+router.use(requireAdminAccess('pos')); // AUD-028
 
 // ── GET /api/admin/pos/stats — Synthèse globale du réseau POS
 router.get('/stats', async (req, res) => {

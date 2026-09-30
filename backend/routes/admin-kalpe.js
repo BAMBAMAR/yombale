@@ -4,7 +4,9 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { requireAdminAuth } = require('../middlewares/admin-rbac');
 
+const { requireAdminAccess } = require('../middlewares/admin-rbac');
 router.use(requireAdminAuth);
+router.use(requireAdminAccess('finances')); // AUD-028
 
 // ── GET /api/admin/kalpe/stats — Métriques globales Sama Xaalis
 router.get('/stats', async (req, res) => {

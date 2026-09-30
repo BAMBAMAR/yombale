@@ -235,8 +235,9 @@ router.post('/send', verifierToken, limiterWhatsappSend, async (req, res) => {
 const { adminSecretOnly } = require('../middlewares/auth');
 const { pool } = require('../models/db');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 // GET /api/whatsapp/admin/status — état de la configuration WhatsApp
-router.get('/admin/status', adminSecretOnly, async (req, res) => {
+router.get('/admin/status', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const phoneId  = process.env.WHATSAPP_PHONE_NUMBER_ID;
     const token    = process.env.WHATSAPP_API_TOKEN;
@@ -290,7 +291,7 @@ router.get('/admin/status', adminSecretOnly, async (req, res) => {
 });
 
 // POST /api/whatsapp/admin/toggle — activer/désactiver WhatsApp ou chatbot
-router.post('/admin/toggle', adminSecretOnly, async (req, res) => {
+router.post('/admin/toggle', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const { key } = req.body; // 'whatsapp_enabled' ou 'whatsapp_chatbot'
     if (!['whatsapp_enabled', 'whatsapp_chatbot'].includes(key)) {
@@ -304,7 +305,7 @@ router.post('/admin/toggle', adminSecretOnly, async (req, res) => {
 });
 
 // POST /api/whatsapp/admin/test — envoyer un message de test (admin)
-router.post('/admin/test', adminSecretOnly, async (req, res) => {
+router.post('/admin/test', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const { phone, message } = req.body;
     if (!phone || !message) return res.status(400).json({ error: 'phone et message requis' });
@@ -315,7 +316,7 @@ router.post('/admin/test', adminSecretOnly, async (req, res) => {
 });
 
 // DELETE /api/whatsapp/admin/sessions — vider toutes les sessions chatbot
-router.delete('/admin/sessions', adminSecretOnly, async (req, res) => {
+router.delete('/admin/sessions', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const { rowCount } = await pool.query('DELETE FROM whatsapp_sessions');
     res.json({ deleted: rowCount });
@@ -323,7 +324,7 @@ router.delete('/admin/sessions', adminSecretOnly, async (req, res) => {
 });
 
 // GET /api/whatsapp/admin/sessions — liste des sessions actives
-router.get('/admin/sessions', adminSecretOnly, async (req, res) => {
+router.get('/admin/sessions', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT phone, state, context, updated_at
@@ -335,7 +336,7 @@ router.get('/admin/sessions', adminSecretOnly, async (req, res) => {
 });
 
 // GET /api/whatsapp/admin/support — liste des demandes de rappel / support
-router.get('/admin/support', adminSecretOnly, async (req, res) => {
+router.get('/admin/support', ...adminAccess('whatsapp'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT id, telephone, nom, sujet, message, statut, canal, contexte_session, notes_admin, created_at, updated_at
@@ -347,7 +348,7 @@ router.get('/admin/support', adminSecretOnly, async (req, res) => {
 });
 
 // PATCH /api/whatsapp/admin/support/:id — mise à jour du statut d'une demande de support
-router.patch('/admin/support/:id', adminSecretOnly, async (req, res) => {
+router.patch('/admin/support/:id', ...adminAccess('whatsapp', { edit: 'whatsapp:reply' }), async (req, res) => {
   try {
     const { id } = req.params;
     const { statut, notes_admin } = req.body;

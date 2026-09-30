@@ -6,6 +6,7 @@ const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
 const { envoyerEmail } = require('../services/email');
 const { limiterEcriture } = require('../middlewares/rateLimit');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 // POST /api/partenaires — déposer une demande (utilisateur connecté)
@@ -69,7 +70,7 @@ router.get('/mine', verifierToken, async (req, res) => {
 });
 
 // GET /api/partenaires/admin/en-attente — demandes à traiter (admin)
-router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
+router.get('/admin/en-attente', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT * FROM demandes_partenaires WHERE statut = 'en_attente' ORDER BY created_at DESC`
@@ -79,7 +80,7 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/partenaires/:id — approuver / rejeter (admin)
-router.put('/:id', adminSecretOnly, async (req, res) => {
+router.put('/:id', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   try {
     const { statut } = req.body;
     if (!['approuve', 'rejete', 'en_attente'].includes(statut)) {
@@ -111,7 +112,7 @@ router.put('/:id', adminSecretOnly, async (req, res) => {
 });
 
 // DELETE /api/partenaires/:id — supprimer demande partenaire (admin)
-router.delete('/:id', adminSecretOnly, async (req, res) => {
+router.delete('/:id', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, res) => {
   try {
     const { rows } = await pool.query('DELETE FROM demandes_partenaires WHERE id = $1 RETURNING id', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Demande introuvable' });

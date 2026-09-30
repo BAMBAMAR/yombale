@@ -12,6 +12,7 @@ const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/what
 const cfg = require('../lib/settingsCache');
 const { infererTransaction, infererTypeBien } = require('../scripts/consolidate-immo-classifiees');
 
+const { adminAccess } = require('../middlewares/admin-rbac');
 async function synchroniserImmoClassifiee(annonceId) {
   try {
     const { rows } = await pool.query(
@@ -240,7 +241,7 @@ router.get('/mine', verifierToken, async (req, res) => {
 });
 
 // ── GET /api/annonces/admin/en-attente (admin) — annonces non supprimées avec filtres & compteurs
-router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
+router.get('/admin/en-attente', ...adminAccess('annonces', {'edit':'annonces:moderate'}), async (req, res) => {
   try {
     const { q, categorie, statut, ville, payee, booste, tri, limit = 200 } = req.query;
     const conds = ['a.supprimee = false'];
@@ -342,7 +343,7 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/annonces/admin/:id/boost — booster ou prolonger le boost d'une annonce (admin)
-router.post('/admin/:id/boost', adminSecretOnly, async (req, res) => {
+router.post('/admin/:id/boost', ...adminAccess('annonces', {'edit':'annonces:moderate'}), async (req, res) => {
   try {
     const { jours = 7 } = req.body;
     const nbJours = parseInt(jours) || 7;
