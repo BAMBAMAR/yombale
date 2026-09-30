@@ -57,6 +57,7 @@ export const auth: LocaleTranslations['auth'] = {
   forgotSubtitle: 'Enter your email address to receive a secure reset link.',
   sendResetLink: 'Send reset link',
   resetLinkSent: 'An email with instructions has been sent.',
+  passwordResetSuccess: 'Your password has been reset successfully.',
   backToLogin: 'Back to login',
 
   // Visual side panel

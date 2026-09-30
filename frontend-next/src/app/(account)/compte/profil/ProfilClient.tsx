@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { updateProfil } from '@/app/actions/auth'
 import type { AuthState } from '@/app/actions/auth'
 import { useTranslation } from '@/i18n/context'
+import SupprimerCompteSection from './components/SupprimerCompteSection'
 
 interface Props {
   nom: string
@@ -177,6 +178,9 @@ export default function ProfilClient({ nom, email, telephone }: Props) {
           </>
         )}
       </div>
+
+      {/* Suppression autonome du compte (RGPD Art. 17) */}
+      <SupprimerCompteSection />
     </div>
   )
 }

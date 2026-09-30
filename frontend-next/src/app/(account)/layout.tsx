@@ -2,6 +2,7 @@ import { getOptionalSession } from '@/lib/dal'
 import { backendAuthFetch } from '@/lib/backendFetch'
 import AccountSidebarClient from './AccountSidebarClient'
 import BannerEmailNonVerifie from './BannerEmailNonVerifie'
+import BannerCompteSuppression from '@/components/BannerCompteSuppression'
 import AccountWorkspaceWrapper from './components/AccountWorkspaceWrapper'
 
 // Toutes les routes de ce groupe sauf /favoris sont dans PROTECTED_ROUTES
@@ -31,6 +32,7 @@ export default async function CompteLayout({ children }: { children: React.React
 
   return (
     <AccountWorkspaceWrapper nom={nom} email={session.email ?? null} initiale={initiale}>
+      <BannerCompteSuppression />
       {!emailVerifie && <BannerEmailNonVerifie />}
       <div className="account-layout">
         <AccountSidebarClient

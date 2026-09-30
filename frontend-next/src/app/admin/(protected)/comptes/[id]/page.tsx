@@ -14,6 +14,7 @@ interface DetailResponse {
     email_verifie: boolean
     suspendu: boolean
     supprime_le: string | null
+    supprime_par_utilisateur?: boolean
     anonymise_le: string | null
     est_apporteur: boolean
     code_apporteur: string | null
@@ -101,6 +102,7 @@ export default async function AdminCompteDetailPage({ params }: { params: Promis
         emailVerifie={u.email_verifie}
         suspendu={u.suspendu}
         supprimeLe={u.supprime_le}
+        supprimeParUtilisateur={u.supprime_par_utilisateur}
         anonymiseLe={u.anonymise_le}
         quotaAnnonces={u.quota_annonces}
       />

@@ -1342,12 +1342,14 @@ module.exports = async function migrateInline(customConnStr = null) {
     `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS supprime_le TIMESTAMPTZ`,
     `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS anonymise_le TIMESTAMPTZ`,
     `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS quota_annonces INTEGER DEFAULT NULL`,
+    `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS jwt_version INT DEFAULT 1`,
+    `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS supprime_par_utilisateur BOOLEAN DEFAULT FALSE`,
   ];
   for (const sql of colonnesGestionComptes) {
     try { await pool.query(sql); }
     catch (e) { console.warn('[MIGRATE] gestion_comptes:', e.message); }
   }
-  console.log('[MIGRATE] ✅ Colonnes gestion comptes (suspendu/supprime_le/anonymise_le) OK');
+  console.log('[MIGRATE] ✅ Colonnes gestion comptes (suspendu/supprime_le/anonymise_le/jwt_version/supprime_par_utilisateur) OK');
 
   // --- NOUVELLES FONCTIONNALITÉS POS (Fiscalité, Documents, Fournisseurs) ---
   try {

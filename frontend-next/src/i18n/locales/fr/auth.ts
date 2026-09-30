@@ -55,6 +55,7 @@ export const auth = {
   forgotSubtitle: 'Entrez votre adresse email pour recevoir un lien de réinitialisation sécurisé.',
   sendResetLink: 'Envoyer le lien de réinitialisation',
   resetLinkSent: 'Un email avec les instructions a été envoyé.',
+  passwordResetSuccess: 'Votre mot de passe a été réinitialisé avec succès.',
   backToLogin: 'Retour à la connexion',
 
   // Visual side panel

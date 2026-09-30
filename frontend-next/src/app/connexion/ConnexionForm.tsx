@@ -7,7 +7,7 @@ import { setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
-import { Eye, EyeOff, AlertCircle, Info, Mail, Lock, Phone, KeyRound } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, Info, Mail, Lock, Phone, KeyRound, MessageCircle } from 'lucide-react'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -193,7 +193,6 @@ export default function ConnexionForm() {
       <div style={{ marginBottom: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <label style={{ fontSize: 13, fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span></span>
             <span>{t('auth.chooseMethodLabel') || 'Mode de connexion :'}</span>
           </label>
           <span style={{
@@ -246,7 +245,7 @@ export default function ConnexionForm() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
-              <span style={{ fontSize: 18 }}></span>
+              <MessageCircle size={18} />
               <span>WhatsApp</span>
             </div>
             <span style={{
@@ -282,7 +281,7 @@ export default function ConnexionForm() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
-              <span style={{ fontSize: 16 }}></span>
+              <Mail size={16} />
               <span>Email</span>
             </div>
             <span style={{

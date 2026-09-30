@@ -14,7 +14,7 @@ function secretsMatch(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-function verifierToken(req, res, next) {
+async function verifierToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   let token = authHeader && authHeader.split(' ')[1];
 
@@ -41,6 +41,26 @@ function verifierToken(req, res, next) {
     if (decoded && TYPES_JETON_NON_SESSION.has(decoded.type)) {
       return res.status(401).json({ error: 'Ce jeton ne peut pas être utilisé comme session' });
     }
+
+    // AN-002 : Invalidation de session si jwt_version a été incrémenté en base (ou compte suspendu)
+    if (decoded.userId) {
+      try {
+        const { rows } = await pool.query('SELECT jwt_version, suspendu, supprime_le FROM utilisateurs WHERE id=$1', [decoded.userId]);
+        if (!rows.length) {
+          return res.status(401).json({ error: 'Utilisateur introuvable' });
+        }
+        if (rows[0].suspendu) {
+          return res.status(403).json({ error: 'Compte suspendu' });
+        }
+        if (decoded.jwtVersion !== undefined && rows[0].jwt_version && rows[0].jwt_version !== decoded.jwtVersion) {
+          return res.status(401).json({ error: 'Session révoquée, veuillez vous reconnecter' });
+        }
+        req.compteEnSuppression = !!rows[0].supprime_le;
+      } catch (dbErr) {
+        console.error('[AUTH MIDDLEWARE DB ERROR]', dbErr.message);
+      }
+    }
+
     req.user = decoded;
     next();
   } catch (err) {

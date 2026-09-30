@@ -57,6 +57,7 @@ export const auth: LocaleTranslations['auth'] = {
   forgotSubtitle: 'أدخل بريدك الإلكتروني لاستلام رابط إعادة التعيين الآمن.',
   sendResetLink: 'إرسال رابط إعادة التعيين',
   resetLinkSent: 'تم إرسال بريد إلكتروني يحتوي على التعليمات.',
+  passwordResetSuccess: 'تمت إعادة تعيين كلمة المرور بنجاح.',
   backToLogin: 'العودة لتسجيل الدخول',
 
   // Visual side panel

@@ -2,10 +2,12 @@ const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const { pool } = require('../models/db');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
-const { envoyerEmail } = require('../services/email');
+const { envoyerEmail, templateEmail } = require('../services/email');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
+const RESET_SECRET = process.env.RESET_SECRET || (process.env.JWT_SECRET + '_reset_nopalou_2024');
+const VERIFY_SECRET = process.env.VERIFY_SECRET || (process.env.JWT_SECRET + '_verify_nopalou_2024');
 
 // GET /api/admin/utilisateurs — liste paginée, recherche, filtres
 router.get('/', requireAdminAuth, async (req, res) => {
@@ -41,7 +43,7 @@ router.get('/', requireAdminAuth, async (req, res) => {
     const total = parseInt(countRes.rows[0].count);
 
     const listRes = await pool.query(
-      `SELECT id, nom, email, telephone, email_verifie, suspendu, supprime_le, created_at,
+      `SELECT id, nom, email, telephone, email_verifie, suspendu, supprime_le, supprime_par_utilisateur, created_at,
               EXISTS (SELECT 1 FROM boutiques b WHERE b.utilisateur_id = utilisateurs.id) AS a_boutique,
               EXISTS (SELECT 1 FROM agences_immo a WHERE a.utilisateur_id = utilisateurs.id) AS a_agence
        FROM utilisateurs ${whereClause} ${orderClause}
@@ -58,7 +60,7 @@ router.get('/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const userRes = await pool.query(
-      `SELECT id, nom, email, telephone, ville, email_verifie, suspendu, supprime_le, anonymise_le, est_apporteur, code_apporteur, quota_annonces, created_at
+      `SELECT id, nom, email, telephone, ville, email_verifie, suspendu, supprime_le, supprime_par_utilisateur, anonymise_le, est_apporteur, code_apporteur, quota_annonces, created_at
        FROM utilisateurs WHERE id = $1`,
       [id]
     );
@@ -127,13 +129,22 @@ router.post('/:id/renvoyer-verification', requireAdminAuth, requireAdminRole('su
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
     if (rows[0].email_verifie) return res.status(400).json({ error: 'Email déjà vérifié' });
 
-    const verifToken = jwt.sign({ userId: req.params.id, type: 'verify' }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const verifToken = jwt.sign({ userId: req.params.id, type: 'verify' }, VERIFY_SECRET, { expiresIn: '24h' });
     const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
     await envoyerEmail({
       to: rows[0].email,
-      subject: 'Nopalou — vérifiez votre email',
-      html: `<p>Bonjour ${rows[0].nom},</p>
-             <p><a href="${lien}">Cliquez ici pour vérifier votre adresse email</a> (lien valide 24h).</p>`,
+      subject: 'Nopalou — Vérifiez votre adresse email',
+      html: templateEmail({
+        preheader: 'Vérification de votre compte Nopalou',
+        titre: 'Confirmation de votre adresse email',
+        contenuHtml: `
+          <p>Bonjour ${rows[0].nom},</p>
+          <p>Un administrateur Nopalou vous a renvoyé un lien de confirmation pour votre compte.</p>
+        `,
+        boutonTexte: 'Confirmer mon adresse email',
+        boutonUrl: lien,
+        noteBas: 'Ce lien expire dans 24 heures. Si vous n\'avez pas sollicité cette vérification, vous pouvez ignorer cet email.',
+      }),
     });
 
     await enregistrerAdminLog({
@@ -161,7 +172,7 @@ router.post('/:id/lien-reset', requireAdminAuth, requireAdminRole('super_admin',
 
     const resetToken = jwt.sign(
       { userId: user.id, type: 'reset' },
-      process.env.JWT_SECRET,
+      RESET_SECRET,
       { expiresIn: '15m' }
     );
     const lien = `${FRONTEND_URL}/mot-de-passe-oublie?token=${resetToken}`;
@@ -238,7 +249,7 @@ router.put('/:id/reactiver', requireAdminAuth, requireAdminRole('super_admin', '
 router.post('/:id/marquer-supprime', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `UPDATE utilisateurs SET supprime_le=NOW() WHERE id=$1 AND anonymise_le IS NULL RETURNING id, nom, email, supprime_le`,
+      `UPDATE utilisateurs SET supprime_le=NOW(), supprime_par_utilisateur=FALSE WHERE id=$1 AND anonymise_le IS NULL RETURNING id, nom, email, supprime_le`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà purgé' });
@@ -247,7 +258,7 @@ router.post('/:id/marquer-supprime', requireAdminAuth, requireAdminRole('super_a
       action: 'utilisateur_marque_supprime',
       cibleType: 'utilisateur',
       cibleId: req.params.id,
-      description: `Marquage suppression (période de grâce 30j) pour ${rows[0].email}`,
+      description: `Marquage suppression par admin (période de grâce 30j) pour ${rows[0].email}`,
       req,
     });
 
@@ -259,7 +270,7 @@ router.post('/:id/marquer-supprime', requireAdminAuth, requireAdminRole('super_a
 router.post('/:id/restaurer', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `UPDATE utilisateurs SET supprime_le=NULL WHERE id=$1 AND anonymise_le IS NULL RETURNING id, nom, email`,
+      `UPDATE utilisateurs SET supprime_le=NULL, supprime_par_utilisateur=FALSE WHERE id=$1 AND anonymise_le IS NULL RETURNING id, nom, email`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà purgé' });
@@ -268,7 +279,7 @@ router.post('/:id/restaurer', requireAdminAuth, requireAdminRole('super_admin', 
       action: 'utilisateur_restaure',
       cibleType: 'utilisateur',
       cibleId: req.params.id,
-      description: `Restauration du compte (annulation de suppression) pour ${rows[0].email}`,
+      description: `Restauration du compte par admin (annulation de suppression) pour ${rows[0].email}`,
       req,
     });
 

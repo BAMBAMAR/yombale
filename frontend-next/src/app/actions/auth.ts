@@ -170,4 +170,65 @@ export async function setAuthCookieAction(input: any) {
   }
 }
 
+// ── Suppression de compte autonome (RGPD Art. 17) ───────────────────
+export async function supprimerCompteAction(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const motDePasse = formData.get('mot_de_passe')?.toString() ?? ''
+  const confirmation = formData.get('confirmation')?.toString()?.trim() ?? ''
+
+  if (confirmation.toUpperCase() !== 'SUPPRIMER') {
+    return { error: 'Veuillez taper "SUPPRIMER" pour valider la demande.' }
+  }
+
+  try {
+    const res = await backendFetch('/api/auth/supprimer-compte', {
+      method: 'POST',
+      body: JSON.stringify({ mot_de_passe: motDePasse, confirmation }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      return { error: data.error ?? 'Impossible de supprimer le compte' }
+    }
+    // Nettoyer la session Next.js
+    await deleteSession()
+    return { message: data.message ?? 'Demande de suppression enregistrée.' }
+  } catch (e) {
+    console.error('[SUPPRIMER COMPTE ACTION]', e)
+    return { error: 'Erreur de communication avec le serveur.' }
+  }
+}
+
+// ── Annuler la suppression du compte ─────────────────────────────────
+export async function annulerSuppressionAction(): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await backendFetch('/api/auth/annuler-suppression', {
+      method: 'POST',
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      return { success: false, error: data.error ?? 'Impossible d\'annuler la suppression.' }
+    }
+    return { success: true, message: data.message ?? 'Suppression annulée avec succès.' }
+  } catch (e) {
+    console.error('[ANNULER SUPPRESSION ACTION]', e)
+    return { success: false, error: 'Erreur réseau.' }
+  }
+}
+
+// ── Statut de suppression du compte ─────────────────────────────────
+export async function getStatutSuppressionAction(): Promise<{
+  en_cours_de_suppression: boolean
+  supprime_le?: string | null
+  supprime_par_utilisateur?: boolean
+  jours_restants?: number | null
+  date_limite?: string | null
+}> {
+  try {
+    const res = await backendFetch('/api/auth/statut-suppression')
+    if (!res.ok) return { en_cours_de_suppression: false }
+    return await res.json()
+  } catch {
+    return { en_cours_de_suppression: false }
+  }
+}
+
 

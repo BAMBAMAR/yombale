@@ -6,7 +6,7 @@ import { signup, type AuthState, setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
-import { User, Mail, Lock, Phone, KeyRound, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { User, Mail, Lock, Phone, KeyRound, AlertCircle, Eye, EyeOff, MessageCircle } from 'lucide-react'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -212,7 +212,6 @@ export default function InscriptionForm() {
       <div style={{ marginBottom: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <label style={{ fontSize: 13, fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span></span>
             <span>{t('auth.chooseMethodLabel') || 'Mode d\'inscription :'}</span>
           </label>
           <span style={{
@@ -265,7 +264,7 @@ export default function InscriptionForm() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
-              <span style={{ fontSize: 18 }}></span>
+              <MessageCircle size={18} />
               <span>WhatsApp</span>
             </div>
             <span style={{
@@ -301,7 +300,7 @@ export default function InscriptionForm() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
-              <span style={{ fontSize: 16 }}></span>
+              <Mail size={16} />
               <span>Email</span>
             </div>
             <span style={{

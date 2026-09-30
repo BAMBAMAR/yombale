@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { renvoyerEmailVerification } from '@/app/actions/auth'
 import { useTranslation } from '@/i18n/context'
+import { AlertCircle } from 'lucide-react'
 
 export default function BannerEmailNonVerifie() {
   const [envoye, setEnvoye]     = useState(false)
@@ -28,7 +29,7 @@ export default function BannerEmailNonVerifie() {
       role="alert"
       aria-live="polite"
     >
-      <span className="email-verif-banner__icon"></span>
+      <span className="email-verif-banner__icon"><AlertCircle size={16} /></span>
       {envoye ? (
         <span className="email-verif-banner__msg">
           <strong>{t('account.verificationEmailSent')}</strong>

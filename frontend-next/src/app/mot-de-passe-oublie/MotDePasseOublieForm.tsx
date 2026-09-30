@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
 import { validerForceMotDePasse } from '@/lib/password-validator'
-import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -37,7 +37,7 @@ function FormDemande() {
   if (done) {
     return (
       <div className="auth-success">
-        <p className="auth-success-icon"></p>
+        <p className="auth-success-icon"><CheckCircle size={48} color="#0A5C36" /></p>
         <p>{t('auth.resetLinkSent')}</p>
         <Link href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>{t('auth.backToLogin')}</Link>
       </div>
@@ -105,8 +105,8 @@ function FormReinit({ token }: { token: string }) {
   if (done) {
     return (
       <div className="auth-success">
-        <p className="auth-success-icon"></p>
-        <p>{t('account.profileUpdated')}</p>
+        <p className="auth-success-icon"><CheckCircle size={48} color="#0A5C36" /></p>
+        <p>{t('auth.passwordResetSuccess')}</p>
         <Link href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>{t('auth.loginLink')}</Link>
       </div>
     )

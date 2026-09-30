@@ -11,6 +11,7 @@ interface Props {
   emailVerifie: boolean
   suspendu: boolean
   supprimeLe: string | null
+  supprimeParUtilisateur?: boolean
   anonymiseLe: string | null
   quotaAnnonces: number | null
 }
@@ -20,7 +21,7 @@ const btnStyle = (bg: string, color: string, border: string) => ({
   background: bg, color, border: `1px solid ${border}`, cursor: 'pointer',
 })
 
-export default function ActionsCompteClient({ id, emailVerifie, suspendu, supprimeLe, anonymiseLe, quotaAnnonces }: Props) {
+export default function ActionsCompteClient({ id, emailVerifie, suspendu, supprimeLe, supprimeParUtilisateur, anonymiseLe, quotaAnnonces }: Props) {
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [lienReset, setLienReset] = useState<string | null>(null)
@@ -159,12 +160,25 @@ export default function ActionsCompteClient({ id, emailVerifie, suspendu, suppri
         )}
         {supprimeLe && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ fontSize: 13, color: '#d97706', fontWeight: 600 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{
+                fontSize: 11,
+                fontWeight: 700,
+                padding: '3px 8px',
+                borderRadius: 6,
+                background: supprimeParUtilisateur ? '#fef3c7' : '#e0e7ff',
+                color: supprimeParUtilisateur ? '#92400e' : '#3730a3',
+                border: supprimeParUtilisateur ? '1px solid #fde68a' : '1px solid #c7d2fe'
+              }}>
+                {supprimeParUtilisateur ? 'Initié par l\'utilisateur (RGPD Art. 17)' : 'Marqué par un administrateur'}
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: '#d97706', fontWeight: 600, margin: 0 }}>
               Période de grâce en cours — {joursRestants} jour(s) restant(s) avant purge possible.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button disabled={isPending} onClick={() => run(() => restaurerCompte(id))} style={btnStyle('#f0fdf4', '#16a34a', '#bbf7d0')}>
-                ↩ Restaurer le compte
+                Restaurer le compte
               </button>
               <button
                 disabled={isPending || (joursRestants !== null && joursRestants > 0)}
@@ -179,7 +193,7 @@ export default function ActionsCompteClient({ id, emailVerifie, suspendu, suppri
                   cursor: (joursRestants !== null && joursRestants > 0) ? 'not-allowed' : 'pointer',
                 }}
               >
-                ⚠ Purger définitivement
+                Purger définitivement
               </button>
             </div>
           </div>
