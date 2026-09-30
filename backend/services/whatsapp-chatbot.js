@@ -4893,6 +4893,7 @@ async function handleIncomingInternal(msg) {
           clientTelephone: creees[0].client_telephone,
           clientAdresse: creees[0].client_adresse,
           note: creees[0].note,
+          zoneNom: c.zone_nom || null,
         });
       } else {
         await notifierVendeurPanierGroupe(boutiqueChargee, creees, groupeCommande);

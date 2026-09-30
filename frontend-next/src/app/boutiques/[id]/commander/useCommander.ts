@@ -46,9 +46,10 @@ export function useCommander({
   const [promoLoading, setPromoLoading] = useState(false)
   const [promoError, setPromoError] = useState<string | null>(null)
 
-  const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242')
-  const [cardExp, setCardExp] = useState('12/28')
-  const [cardCvc, setCardCvc] = useState('123')
+  // Conservés pour compatibilité des props ; aucune donnée de carte n'est collectée (voir AUD-047)
+  const [cardNumber, setCardNumber] = useState('')
+  const [cardExp, setCardExp] = useState('')
+  const [cardCvc, setCardCvc] = useState('')
   const [deviseStripe, setDeviseStripe] = useState<'EUR' | 'USD' | 'XOF'>('EUR')
 
   const [formuleEchelonnement, setFormuleEchelonnement] = useState<{
@@ -244,28 +245,9 @@ export function useCommander({
     })
 
     try {
-      if (paiement === 'carte_bancaire') {
-        const montantFinal = deviseStripe === 'XOF' ? total : Number(getMontantDevise(total, deviseStripe))
-        const stripeRes = await fetch(`${backendUrl}/api/boutiques/paiements/stripe/simuler`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            boutique_id: boutiqueId,
-            montant: montantFinal,
-            devise: deviseStripe,
-            card_number: cardNumber,
-            exp_month: 12,
-            exp_year: 2028,
-            cvc: cardCvc,
-          }),
-        })
-        const stripeData = await stripeRes.json()
-        if (!stripeRes.ok || !stripeData.success) {
-          setError(stripeData.error || 'Erreur lors du traitement de votre carte bancaire')
-          setLoading(false)
-          return
-        }
-      }
+      // AUD-047 : plus aucune saisie ni envoi de numéro de carte à nos serveurs (hors périmètre PCI) et plus de
+      // « paiement approuvé » simulé. Le paiement par carte passe uniquement par la redirection Stripe Checkout
+      // renvoyée par le serveur (stripe_url), ci-dessous.
 
       const isAConvenir = zoneId === 'a_convenir' || zoneSelectionnee?.nom?.toLowerCase().includes('convenir')
       const isRetrait = zoneId === 'retrait-boutique' || zoneSelectionnee?.nom?.toLowerCase().includes('retrait')
@@ -300,6 +282,11 @@ export function useCommander({
 
       if (data.wave_url) {
         window.location.href = data.wave_url
+        return
+      }
+
+      if (data.stripe_url && paiement === 'carte_bancaire') {
+        window.location.href = data.stripe_url
         return
       }
 

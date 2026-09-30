@@ -455,10 +455,26 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
       if (clientRef) {
         // Idempotence : vérifier si le paiement a déjà été validé
         const existingCheck = await pool.query(
-          `SELECT paiement_recu, montant_total FROM commandes_boutique WHERE reference = $1`,
+          `SELECT paiement_recu, montant_total, statut FROM commandes_boutique WHERE reference = $1`,
           [clientRef]
         ).catch(() => ({ rows: [] }));
         const alreadyPaid = existingCheck.rows[0]?.paiement_recu === true;
+
+        // AUD-010 : paiement arrivé APRÈS l'annulation automatique (stock déjà restitué). On ne réactive rien
+        // automatiquement : alerte critique pour rembourser le client ou ressaisir la commande.
+        if (existingCheck.rows[0]?.statut === 'annulee') {
+          console.error(`[WAVE WEBHOOK] 🚨 Paiement reçu sur commande annulée ${clientRef} (${data?.amount} XOF)`);
+          try {
+            const { alerterAdmin } = require('../services/admin-alerts');
+            alerterAdmin({
+              type: 'webhook_wave_commande_annulee',
+              priorite: 'CRITIQUE',
+              titre: 'Paiement Wave reçu sur une commande annulée',
+              message: `Commande ${clientRef} annulée (paiement non reçu à temps) mais Wave a encaissé ${data?.amount} XOF : rembourser le client ou recréer la commande.`,
+            }).catch(() => {});
+          } catch (_) { /* admin-alerts optionnel */ }
+          return res.sendStatus(200);
+        }
 
         if (alreadyPaid) {
           console.log(`[WAVE WEBHOOK] ℹ️ Commande ${clientRef} déjà validée (événement idempotent, notification doublon évitée)`);
@@ -575,7 +591,7 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
       details: `Payload: ${JSON.stringify(req.body)}`,
       priorite: 'CRITIQUE',
     }).catch(() => {});
-    res.status(500).json({ error: 'Erreur lors du traitement du webhook Wave', details: err.message });
+    res.status(500).json({ error: 'Erreur lors du traitement du webhook Wave' });
   }
 });
 
@@ -624,7 +640,9 @@ router.post('/stripe/webhook', limiterGeneral, async (req, res) => {
   const rawBody = req.rawBody || JSON.stringify(req.body);
 
   const isValid = stripeService.verifyWebhookSignature(rawBody, sigHeader);
-  if (!isValid && process.env.NODE_ENV === 'production') {
+  // AUD-013 : signature exigée dans TOUS les environnements (avant, seulement en production :
+  // tout événement non signé validait une commande en développement ou si NODE_ENV était absent).
+  if (!isValid) {
     console.warn('[STRIPE WEBHOOK] ⚠️ Signature Stripe invalide');
     return res.status(401).json({ error: 'Signature Stripe invalide' });
   }
@@ -640,6 +658,35 @@ router.post('/stripe/webhook', limiterGeneral, async (req, res) => {
       const currency = sessionData?.currency || 'eur';
 
       if (clientRef) {
+        // AUD-013 : contrôle du montant encaissé (comme pour Wave), idempotence et commande annulée
+        const deja = await pool.query(
+          `SELECT montant_total, paiement_recu, statut FROM commandes_boutique WHERE reference = $1`,
+          [clientRef]
+        ).catch(() => ({ rows: [] }));
+        const connue = deja.rows[0];
+        if (connue) {
+          if (connue.paiement_recu === true) return res.json({ received: true });
+          const attendu = stripeService.montantEnUnitesStripe(connue.montant_total, currency);
+          const recu = Math.round(Number(sessionData?.amount_total));
+          const alerter = (type, titre, message) => {
+            try {
+              require('../services/admin-alerts').alerterAdmin({ type, priorite: 'CRITIQUE', titre, message }).catch(() => {});
+            } catch (_) { /* admin-alerts optionnel */ }
+          };
+          if (connue.statut === 'annulee') {
+            console.error(`[STRIPE WEBHOOK] 🚨 Paiement reçu sur commande annulée ${clientRef}`);
+            alerter('webhook_stripe_commande_annulee', 'Paiement carte reçu sur une commande annulée',
+              `Commande ${clientRef} annulée mais Stripe a encaissé ${recu} ${String(currency).toUpperCase()} : rembourser ou recréer la commande.`);
+            return res.json({ received: true });
+          }
+          if (!Number.isFinite(recu) || Math.abs(recu - attendu) > 1) {
+            console.error(`[STRIPE WEBHOOK] 🚨 MONTANT INCOHÉRENT — Réf ${clientRef} : reçu ${recu}, attendu ${attendu} (${currency}). Paiement NON validé.`);
+            alerter('webhook_stripe_montant_incoherent', 'Montant Stripe incohérent (fraude possible)',
+              `Commande ${clientRef} : montant Stripe ${recu} ${String(currency).toUpperCase()} ≠ attendu ${attendu}.`);
+            return res.json({ received: true });
+          }
+        }
+
         // Mise à jour de la commande boutique
         const cmdRes = await pool.query(
           `UPDATE commandes_boutique 
@@ -735,7 +782,7 @@ router.post('/stripe/webhook', limiterGeneral, async (req, res) => {
       details: err.stack,
       priorite: 'CRITIQUE',
     }).catch(() => {});
-    res.status(500).json({ error: 'Erreur lors du traitement du webhook Stripe', details: err.message });
+    res.status(500).json({ error: 'Erreur lors du traitement du webhook Stripe' });
   }
 });
 
@@ -940,8 +987,9 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
     if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       return res.status(401).json({ error: 'Signature Orange invalide' });
     }
-  } else if (process.env.NODE_ENV === 'production') {
-    console.error('[ORANGE WEBHOOK] ERREUR P0: ORANGE_WEBHOOK_SECRET manquant en production');
+  } else {
+    // AUD-013 : fail-closed dans tous les environnements (avant : accepté sans signature hors production)
+    console.error('[ORANGE WEBHOOK] ERREUR P0: ORANGE_WEBHOOK_SECRET manquant — requête rejetée');
     return res.status(500).json({ error: 'Configuration serveur incomplète' });
   }
   try {
@@ -959,7 +1007,7 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
       details: `Order: ${req.body?.order_id || 'inconnu'}, Montant: ${req.body?.amount || 0}, Erreur: ${err.stack || err.message}`,
       priorite: 'CRITIQUE',
     }).catch(() => {});
-    res.status(500).json({ error: 'Erreur lors du traitement du webhook Orange Money', details: err.message });
+    res.status(500).json({ error: 'Erreur lors du traitement du webhook Orange Money' });
   }
 });
 

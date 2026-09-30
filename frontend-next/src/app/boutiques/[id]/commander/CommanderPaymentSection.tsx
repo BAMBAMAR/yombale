@@ -26,6 +26,8 @@ interface CommanderPaymentSectionProps {
   total: number
   boutiqueId?: string
   onFormuleChoisie?: (formule: any) => void
+  /** Paiement par carte (Stripe Checkout réel) : masqué tant que Stripe n'est pas configuré côté serveur (AUD-047) */
+  carteBancaireActive?: boolean
 }
 
 const MODES_PAIEMENT = [
@@ -50,7 +52,9 @@ export default function CommanderPaymentSection({
   total,
   boutiqueId,
   onFormuleChoisie,
+  carteBancaireActive = false,
 }: CommanderPaymentSectionProps) {
+  const modesDisponibles = MODES_PAIEMENT.filter(m => m.value !== 'carte_bancaire' || carteBancaireActive)
   return (
     <div>
       <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
@@ -59,7 +63,7 @@ export default function CommanderPaymentSection({
       </label>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-        {MODES_PAIEMENT.map(m => {
+        {modesDisponibles.map(m => {
           const isSelected = paiement === m.value
           return (
             <button
@@ -133,7 +137,7 @@ export default function CommanderPaymentSection({
         </div>
       )}
 
-      {paiement === 'carte_bancaire' && (
+      {carteBancaireActive && paiement === 'carte_bancaire' && (
         <div
           style={{
             marginTop: 10,
@@ -250,46 +254,9 @@ export default function CommanderPaymentSection({
             </div>
           </div>
 
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>
-              Numéro de carte
-            </label>
-            <input
-              type="text"
-              value={cardNumber}
-              onChange={e => setCardNumber(e.target.value)}
-              className="commander-premium-input"
-              style={{ fontFamily: 'monospace' }}
-              placeholder="4242 4242 4242 4242"
-            />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>
-                Expiration (MM/AA)
-              </label>
-              <input
-                type="text"
-                value={cardExp}
-                onChange={e => setCardExp(e.target.value)}
-                className="commander-premium-input"
-                style={{ fontFamily: 'monospace' }}
-                placeholder="12/28"
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>
-                CVC
-              </label>
-              <input
-                type="text"
-                value={cardCvc}
-                onChange={e => setCardCvc(e.target.value)}
-                className="commander-premium-input"
-                style={{ fontFamily: 'monospace' }}
-                placeholder="123"
-              />
-            </div>
+          {/* AUD-047 : aucune saisie de carte sur notre site — la carte est saisie sur la page Stripe Checkout */}
+          <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
+            Vous serez redirigé vers la page de paiement sécurisée Stripe pour saisir votre carte. Nopalou ne voit ni ne conserve vos données bancaires.
           </div>
         </div>
       )}

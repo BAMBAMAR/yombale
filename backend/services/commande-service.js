@@ -7,7 +7,9 @@ const { sendWhatsAppNotification } = require('./whatsapp');
 const STATUTS_VALIDES = ['en_attente', 'confirmee', 'en_preparation', 'expediee', 'livree', 'annulee'];
 
 function genRefCommande() {
-  return `C-${Date.now().toString(36).toUpperCase()}`;
+  // Suffixe aléatoire : deux commandes créées dans la même milliseconde ne doivent pas se heurter à UNIQUE(reference)
+  const suffixe = require('crypto').randomBytes(2).toString('hex').toUpperCase();
+  return `C-${Date.now().toString(36).toUpperCase()}${suffixe}`;
 }
 
 // Construit et envoie le message WhatsApp de notification au vendeur.
@@ -15,7 +17,7 @@ function genRefCommande() {
 // multi-articles) de notifier une seule fois après plusieurs insertions.
 async function notifierVendeurCommande(boutique, {
   reference, nomProduit, quantite, montantTotal, fraisLivraison,
-  methodePaiement, clientNom, clientTelephone, clientAdresse, note,
+  methodePaiement, clientNom, clientTelephone, clientAdresse, note, zoneNom = null,
 }) {
   let vendeurTel = boutique.whatsapp || boutique.telephone;
 
@@ -31,7 +33,7 @@ async function notifierVendeurCommande(boutique, {
     console.warn(`[WHATSAPP NOTIF VENDEUR] ⚠️ Impossible d'envoyer la notif : Aucun téléphone/whatsapp configuré pour la boutique "${boutique.nom}"`);
     try {
       await pool.query(
-        `UPDATE commandes_boutique SET notes = COALESCE(notes, '') || ' [Notif vendeur impossible: absence de numéro]' WHERE reference = $1`,
+        `UPDATE commandes_boutique SET note = COALESCE(note, '') || ' [Notif vendeur impossible: absence de numéro]' WHERE reference = $1`,
         [reference]
       );
     } catch (_) {}
@@ -45,13 +47,16 @@ async function notifierVendeurCommande(boutique, {
   const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes&ref=${encodeURIComponent(reference)}` : `${SITE}/boutique?tab=commandes&ref=${encodeURIComponent(reference)}`;
   const btnParam = bRef ? `boutique?manage=${bRef}&tab=commandes` : 'boutique?tab=commandes';
   const montantFmt = new Intl.NumberFormat('fr-FR').format(montantTotal);
+  // AUD-045 : la variable `commande` n'existe pas dans cette fonction (ReferenceError), ce qui empêchait toute
+  // notification vendeur pour les commandes sans frais de livraison. Le nom de zone est désormais un paramètre.
+  const zoneTxt = String(zoneNom || '').toLowerCase();
   const isAConvenir = (!fraisLivraison || fraisLivraison === 0) && (
     (note && (note.includes('À convenir') || note.includes('a convenir'))) ||
-    (commande.zone_nom && commande.zone_nom.toLowerCase().includes('convenir'))
+    zoneTxt.includes('convenir')
   );
   const isRetrait = (!fraisLivraison || fraisLivraison === 0) && (
     (note && note.toLowerCase().includes('retrait')) ||
-    (commande.zone_nom && commande.zone_nom.toLowerCase().includes('retrait')) ||
+    zoneTxt.includes('retrait') ||
     (clientAdresse && clientAdresse.toLowerCase().includes('retrait'))
   );
 
@@ -107,7 +112,7 @@ async function notifierVendeurCommande(boutique, {
       console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`);
       try {
         await pool.query(
-          `UPDATE commandes_boutique SET notes = COALESCE(notes, '') || ' [Notif WhatsApp vendeur transmise]' WHERE reference = $1`,
+          `UPDATE commandes_boutique SET note = COALESCE(note, '') || ' [Notif WhatsApp vendeur transmise]' WHERE reference = $1`,
           [reference]
         );
       } catch (_) {}
@@ -116,7 +121,7 @@ async function notifierVendeurCommande(boutique, {
       console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message);
       try {
         await pool.query(
-          `UPDATE commandes_boutique SET notes = COALESCE(notes, '') || ' [Échec Notif WhatsApp: ' || $1 || ']' WHERE reference = $2`,
+          `UPDATE commandes_boutique SET note = COALESCE(note, '') || ' [Échec Notif WhatsApp: ' || $1 || ']' WHERE reference = $2`,
           [err.message.slice(0, 80), reference]
         );
       } catch (_) {}
@@ -400,9 +405,97 @@ async function creerCommandeBoutique({
   }
 }
 
+// AUD-010 : annule une commande en ligne jamais payée et restitue son stock, de façon atomique et idempotente.
+// Ne touche JAMAIS une commande déjà payée ou déjà traitée (statut différent de `en_attente`).
+// Renvoie true si la commande a été annulée, false sinon.
+async function annulerCommandeNonPayee(reference, motif = 'paiement non abouti') {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: [cmd] } = await client.query(
+      `SELECT id, boutique_id, produit_id, quantite, statut, paiement_recu
+         FROM commandes_boutique WHERE reference = $1 FOR UPDATE`,
+      [reference]
+    );
+    if (!cmd || cmd.paiement_recu === true || cmd.statut !== 'en_attente') {
+      await client.query('ROLLBACK');
+      return false;
+    }
+
+    const { rows: items } = await client.query(
+      `SELECT produit_id, variante_id, quantite FROM commandes_boutique_items WHERE commande_id = $1`,
+      [cmd.id]
+    );
+    // Commandes historiques sans lignes détaillées : la ligne unique porte produit et quantité
+    const lignes = items.length
+      ? items
+      : (cmd.produit_id ? [{ produit_id: cmd.produit_id, variante_id: null, quantite: cmd.quantite }] : []);
+
+    for (const l of lignes) {
+      const qte = Math.max(0, parseInt(l.quantite, 10) || 0);
+      if (!qte) continue;
+      if (l.produit_id) {
+        await client.query(
+          `UPDATE boutique_produits
+              SET stock_quantite = stock_quantite + $1,
+                  en_stock = CASE WHEN stock_quantite + $1 > 0 THEN true ELSE en_stock END
+            WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
+          [qte, l.produit_id, cmd.boutique_id]
+        );
+      }
+      if (l.variante_id) {
+        await client.query(
+          `UPDATE boutique_produit_variantes SET stock_quantite = stock_quantite + $1
+            WHERE id = $2 AND boutique_id = $3`,
+          [qte, l.variante_id, cmd.boutique_id]
+        );
+      }
+    }
+
+    await client.query(
+      `UPDATE commandes_boutique
+          SET statut = 'annulee', updated_at = NOW(),
+              note = COALESCE(note || ' | ', '') || $2
+        WHERE id = $1`,
+      [cmd.id, `[Annulée automatiquement : ${String(motif).slice(0, 120)}]`]
+    );
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// Annule en lot les commandes en ligne à paiement numérique restées impayées au-delà du délai.
+// Utilisé par le cron `cron-commandes-impayees`. Renvoie le nombre de commandes annulées.
+async function annulerCommandesImpayeesExpirees({ delaiHeures = 2 } = {}) {
+  const { rows } = await pool.query(
+    `SELECT reference FROM commandes_boutique
+      WHERE statut = 'en_attente' AND COALESCE(paiement_recu, false) = false
+        AND methode_paiement IN ('wave','pay_wave','orange_money','pay_om','carte_bancaire','stripe','card')
+        AND created_at < NOW() - ($1::text || ' hours')::interval
+      ORDER BY created_at ASC LIMIT 200`,
+    [String(delaiHeures)]
+  );
+  let annulees = 0;
+  for (const r of rows) {
+    try {
+      if (await annulerCommandeNonPayee(r.reference, `paiement non reçu sous ${delaiHeures} h`)) annulees++;
+    } catch (e) {
+      console.error('[CRON COMMANDES IMPAYEES] échec annulation', r.reference, e.message);
+    }
+  }
+  return annulees;
+}
+
 module.exports = {
   STATUTS_VALIDES,
   genRefCommande,
   notifierVendeurCommande,
   creerCommandeBoutique,
+  annulerCommandeNonPayee,
+  annulerCommandesImpayeesExpirees,
 };

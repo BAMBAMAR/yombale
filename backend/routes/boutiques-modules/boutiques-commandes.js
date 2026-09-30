@@ -5,7 +5,7 @@ const { body, param, query, validationResult } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../../middlewares/auth');
 const { checkAbonnement, requireAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
-const { limiterPublication, limiterImport } = require('../../middlewares/rateLimit');
+const { limiterPublication, limiterImport, limiterCommandeExpress } = require('../../middlewares/rateLimit');
 const { uploadBuffer } = require('../../services/cloudinary');
 const { scrapeProductFromUrl } = require('../../services/magic-import');
 const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog');
@@ -13,6 +13,7 @@ const cfg = require('../../lib/settingsCache');
 const { enregistrerAuditLog } = require('../../lib/auditLogger');
 const { normalizeSocialUrl } = require('../../services/social-parser');
 const creditCalc = require('../../lib/creditCalculator');
+const { annulerCommandeNonPayee } = require('../../services/commande-service');
 const {
   checkBoutiqueAccess,
   checkBoutiqueQuotas,
@@ -96,8 +97,11 @@ router.post('/:id/paniers-abandonnes/:cartId/relancer', verifierToken, async (re
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MODES_PAIEMENT_NUMERIQUES = new Set(['wave', 'pay_wave', 'orange_money', 'pay_om', 'carte_bancaire', 'stripe', 'card']);
+
 // ── Spec 02 : POST /api/boutiques/commandes/express — Checkout Web 1-Page Unifié
-router.post('/commandes/express', async (req, res) => {
+router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
   try {
     const { boutique_id, client_nom, client_telephone, client_adresse, methode_paiement, note, frais_livraison, articles, code_promo, montant_reduction, remise,
       utm_source, utm_medium, utm_campaign, social_post_id, formule_echelonnement } = req.body;
@@ -139,6 +143,8 @@ router.post('/commandes/express', async (req, res) => {
     const articlesTraites = [];
     let reductionVal = 0;
     let promoAppliquee = null;
+    let promoIdUtilisee = null;
+    let totalGeneral = 0;
     let finalNote = note || '';
 
     try {
@@ -146,18 +152,21 @@ router.post('/commandes/express', async (req, res) => {
 
       // ── 1. Calcul strict et sécurisé des prix depuis la base de données (avec verrou) ──
       for (const art of articles) {
-        const validProdId = (art.produit_id && String(art.produit_id).length === 36) ? art.produit_id : null;
+        // AUD-011 : validation UUID stricte (et non plus une simple longueur de 36 caractères)
+        const validProdId = (art.produit_id && UUID_RE.test(String(art.produit_id))) ? String(art.produit_id) : null;
         let prix = 0;
+        let prixAchat = null;
         let nomProd = art.nom_produit || 'Produit sans nom';
-        const qte = Math.max(1, Number(art.quantite) || 1);
+        const qte = Math.max(1, Math.floor(Number(art.quantite)) || 1);
 
         if (validProdId) {
           const pRes = await client.query(
-            'SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2 FOR UPDATE',
+            'SELECT id, nom, prix, prix_achat, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2 FOR UPDATE',
             [validProdId, actualBoutiqueId]
           );
           if (pRes.rows[0]) {
             prix = Number(pRes.rows[0].prix) || 0;
+            prixAchat = pRes.rows[0].prix_achat != null ? Number(pRes.rows[0].prix_achat) : null;
             if (pRes.rows[0].nom) nomProd = pRes.rows[0].nom;
 
             // Décrémentation atomique de stock si géré
@@ -180,13 +189,16 @@ router.post('/commandes/express', async (req, res) => {
             return res.status(400).json({ error: `L'article "${nomProd}" n'appartient pas à cette boutique ou est indisponible.` });
           }
         } else {
-          // Fallback exceptionnel si produit non référencé dans boutique_produits
-          prix = Math.max(0, Number(art.prix_unitaire) || 0);
+          // AUD-011 : le prix ne vient JAMAIS du client. Un article sans produit catalogue valide est refusé
+          // (le checkout public ne gère que des produits de la boutique, tarifés côté serveur).
+          await client.query('ROLLBACK');
+          releaseClient();
+          return res.status(400).json({ error: `L'article "${nomProd}" n'est pas un produit valide de cette boutique.` });
         }
 
         const totalLigne = prix * qte;
         totalArticles += totalLigne;
-        articlesTraites.push({ validProdId, nomProd, qte, prix, totalLigne });
+        articlesTraites.push({ validProdId, nomProd, qte, prix, prixAchat, totalLigne });
       }
 
       // ── 2. Validation stricte du code promo côté serveur ──
@@ -212,7 +224,9 @@ router.post('/commandes/express', async (req, res) => {
           if (p) {
             const notExpired = !p.fin || new Date(p.fin) >= new Date();
             const minAchatOk = !p.min_achat || totalArticles >= Number(p.min_achat);
-            const maxUsageOk = !p.max_utilisations || Number(p.fois_utilise || 0) < Number(p.max_utilisations);
+            // AUD-046 : la colonne réelle est `limite_utilisation` (`max_utilisations` n'existe pas : la limite n'était jamais appliquée)
+            const limiteUsage = p.limite_utilisation != null ? p.limite_utilisation : p.max_utilisations;
+            const maxUsageOk = !limiteUsage || Number(p.fois_utilise || 0) < Number(limiteUsage);
 
             if (notExpired && minAchatOk && maxUsageOk) {
               if (p.type_remise === 'pourcentage') {
@@ -221,6 +235,7 @@ router.post('/commandes/express', async (req, res) => {
                 reductionVal = Math.min(totalArticles, Number(p.valeur || 0));
               }
               promoAppliquee = cleanCode;
+              promoIdUtilisee = p.id;
               await client.query(
                 `UPDATE boutique_promotions SET fois_utilise = fois_utilise + 1 WHERE id = $1`,
                 [p.id]
@@ -243,22 +258,41 @@ router.post('/commandes/express', async (req, res) => {
         finalNote = finalNote ? `${finalNote} | ${echNote}` : echNote;
       }
 
-      // Enregistrement des lignes de commande avec le client transactionnel
+      // AUD-044 / AUD-042 : une commande = UN en-tête portant le total complet (articles + livraison - remise,
+      // c'est ce montant que le client paie et que le webhook de paiement contrôle) + ses lignes dans
+      // commandes_boutique_items. L'ancien code insérait une ligne par article avec la même référence, ce que
+      // la contrainte UNIQUE(reference) refuse : tout panier de 2 articles ou plus échouait en 500.
+      totalGeneral = Math.max(0, totalArticles + fraisLiv - reductionVal);
+      const totalQte = articlesTraites.reduce((s, a) => s + a.qte, 0);
+      const plusieurs = articlesTraites.length > 1;
+      const nomHeader = plusieurs
+        ? articlesTraites.map(a => `${a.qte}x ${a.nomProd}`).join(', ').slice(0, 300)
+        : articlesTraites[0].nomProd;
+      const prixHeader = plusieurs ? Math.round(totalArticles / totalQte) : articlesTraites[0].prix;
+
+      const { rows: [entete] } = await client.query(
+        `INSERT INTO commandes_boutique (
+          reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
+          montant_total, client_nom, client_telephone, client_adresse, note,
+          statut, source, methode_paiement, frais_livraison,
+          utm_source, utm_medium, utm_campaign, social_post_id, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, $14, $15, $16, $17, NOW())
+        RETURNING id`,
+        [
+          ref, actualBoutiqueId, articlesTraites[0].validProdId, nomHeader, totalQte, prixHeader,
+          totalGeneral, client_nom.trim(), client_telephone.trim(), client_adresse || null, finalNote || null,
+          methode_paiement || 'wave', fraisLiv,
+          utm_source || null, utm_medium || null, utm_campaign || null,
+          (social_post_id && UUID_RE.test(String(social_post_id))) ? social_post_id : null,
+        ]
+      );
+
       for (const item of articlesTraites) {
         await client.query(
-          `INSERT INTO commandes_boutique (
-            reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
-            montant_total, client_nom, client_telephone, client_adresse, note,
-            statut, source, methode_paiement, frais_livraison,
-            utm_source, utm_medium, utm_campaign, social_post_id, created_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, $14, $15, $16, $17, NOW())`,
-          [
-            ref, actualBoutiqueId, item.validProdId, item.nomProd, item.qte, item.prix,
-            item.totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, finalNote || null,
-            methode_paiement || 'wave', fraisLiv,
-            utm_source || null, utm_medium || null, utm_campaign || null,
-            (social_post_id && /^[0-9a-f-]{36}$/i.test(social_post_id)) ? social_post_id : null,
-          ]
+          `INSERT INTO commandes_boutique_items
+             (commande_id, boutique_id, produit_id, variante_id, nom_produit, details_variante, prix_unitaire, prix_achat, quantite, montant_total)
+           VALUES ($1, $2, $3, NULL, $4, NULL, $5, $6, $7, $8)`,
+          [entete.id, actualBoutiqueId, item.validProdId, item.nomProd.slice(0, 300), item.prix, item.prixAchat, item.qte, item.totalLigne]
         );
       }
 
@@ -270,8 +304,9 @@ router.post('/commandes/express', async (req, res) => {
       releaseClient();
     }
 
-    const totalGeneral = Math.max(0, totalArticles + fraisLiv - reductionVal);
-
+    // Effets secondaires (analytique, notifications, fidélité) : exécutés seulement une fois la commande viable,
+    // c'est-à-dire après la création réussie de la session de paiement pour les modes numériques (AUD-010).
+    const apresCreation = async () => {
     pool.query(`INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`, [actualBoutiqueId]).catch(() => {});
 
     // Notification WhatsApp au vendeur
@@ -279,8 +314,9 @@ router.post('/commandes/express', async (req, res) => {
       const { notifierVendeurCommande } = require('../../services/commande-service');
       notifierVendeurCommande(bqRes.rows[0], {
         reference: ref,
-        nomProduit: articles.map(a => a.nom_produit || 'Produit').join(', '),
-        quantite: articles.reduce((acc, a) => acc + (Number(a.quantite) || 1), 0),
+        // noms et quantités issus de la base (articlesTraites), jamais du corps de requête
+        nomProduit: articlesTraites.map(a => a.nomProd).join(', '),
+        quantite: articlesTraites.reduce((acc, a) => acc + a.qte, 0),
         montantTotal: totalGeneral,
         fraisLivraison: fraisLiv,
         methodePaiement: methode_paiement || 'wave',
@@ -340,7 +376,7 @@ router.post('/commandes/express', async (req, res) => {
         const { sendWhatsAppNotification } = require('../../services/whatsapp');
         const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement bancaire', credit: 'Achat à Crédit' };
         const totalFmt = new Intl.NumberFormat('fr-FR').format(totalGeneral);
-        const articlesStr = articles.map(a => `${a.quantite || 1}x ${a.nom_produit || 'Produit'}`).join(', ');
+        const articlesStr = articlesTraites.map(a => `${a.qte}x ${a.nomProd}`).join(', ');
         const msgClient = `✅ *Commande enregistrée avec succès — ${bqRes.rows[0].nom}*\n\nRéférence : *${ref}*\nArticles : ${articlesStr}\n💰 Total : *${totalFmt} FCFA*${fraisLiv > 0 ? ` (dont ${new Intl.NumberFormat('fr-FR').format(fraisLiv)} FCFA de livraison)` : ''}\n💳 Mode de paiement : ${methodeLabel[methode_paiement] || methode_paiement}\n\n📍 Adresse : ${client_adresse || 'Retrait en boutique'}\n\n🙏 La boutique *${bqRes.rows[0].nom}* a bien reçu votre commande et vous contactera très vite !`;
 
         const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
@@ -363,6 +399,16 @@ router.post('/commandes/express', async (req, res) => {
         console.error('[WHATSAPP CLIENT NOTIF ERR]:', eCl.message);
       }
     }
+    }; // fin apresCreation
+
+    // AUD-010 : si la session de paiement ne peut pas être créée, la commande est annulée et le stock restitué
+    // (auparavant la commande restait « en_attente » avec son stock consommé, sans aucune possibilité de paiement).
+    const compenserEchecPaiement = async (motif) => {
+      try { await annulerCommandeNonPayee(ref, motif); } catch (e) { console.error('[EXPRESS COMPENSATION ERR]:', e.message); }
+      if (promoIdUtilisee) {
+        await pool.query('UPDATE boutique_promotions SET fois_utilise = GREATEST(0, fois_utilise - 1) WHERE id = $1', [promoIdUtilisee]).catch(() => {});
+      }
+    };
 
     // Initialisation session Wave si paiement Wave sélectionné
     if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
@@ -375,6 +421,7 @@ router.post('/commandes/express', async (req, res) => {
           error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur?ref=${ref}&type=commande-express`,
           client_reference: ref,
         });
+        await apresCreation();
         return res.status(201).json({
           succes: true,
           reference: ref,
@@ -387,8 +434,9 @@ router.post('/commandes/express', async (req, res) => {
       } catch (waveErr) {
         const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
         console.error('[EXPRESS WAVE INIT ERR]:', waveMsg);
+        await compenserEchecPaiement('initialisation Wave impossible');
         return res.status(400).json({
-          error: `Erreur Wave API: ${waveMsg}. (Si IP non autorisée, ajoutez l'IP de votre serveur Render à la liste blanche Wave).`
+          error: `Erreur Wave API: ${waveMsg}. (Si IP non autorisée, ajoutez l'IP de votre serveur Render à la liste blanche Wave). Votre commande n'a pas été enregistrée.`
         });
       }
     }
@@ -397,11 +445,15 @@ router.post('/commandes/express', async (req, res) => {
     if (methode_paiement === 'orange_money' || methode_paiement === 'pay_om') {
       try {
         const om = require('../../services/orange-money');
+        // AUD-040 : sans notif_url explicite, le service utilisait /api/paiements/orange-money/webhook,
+        // route inexistante : Orange ne pouvait jamais confirmer le paiement.
         const omSession = await om.createWebPayment({
           amount: Number(totalGeneral),
           currency: 'XOF',
           order_id: ref,
+          notif_url: `${process.env.BACKEND_URL}/api/paiement/orange/webhook`,
         });
+        await apresCreation();
         return res.status(201).json({
           succes: true,
           reference: ref,
@@ -414,6 +466,8 @@ router.post('/commandes/express', async (req, res) => {
         });
       } catch (omErr) {
         console.error('[EXPRESS OM INIT ERR]:', omErr.message);
+        await compenserEchecPaiement('initialisation Orange Money impossible');
+        return res.status(502).json({ error: 'Le paiement Orange Money n’a pas pu être initialisé. Votre commande n’a pas été enregistrée, veuillez réessayer ou choisir un autre mode de paiement.' });
       }
     }
 
@@ -428,6 +482,7 @@ router.post('/commandes/express', async (req, res) => {
           customer_email: req.body.client_email || undefined,
           customer_name: client_nom.trim(),
         });
+        await apresCreation();
         return res.status(201).json({
           succes: true,
           reference: ref,
@@ -439,10 +494,13 @@ router.post('/commandes/express', async (req, res) => {
         });
       } catch (stripeErr) {
         console.error('[EXPRESS STRIPE INIT ERR]:', stripeErr.message);
+        await compenserEchecPaiement('initialisation Stripe impossible');
+        return res.status(502).json({ error: 'Le paiement par carte n’a pas pu être initialisé. Votre commande n’a pas été enregistrée, veuillez réessayer ou choisir un autre mode de paiement.' });
       }
     }
 
     if (!res.headersSent) {
+      await apresCreation();
       res.status(201).json({
         succes: true,
         reference: ref,

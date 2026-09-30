@@ -1,5 +1,27 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Corrections P0 de l'audit du 30 septembre 2026 (branche `audit/corrections-p0`, non poussée)** :
+  * **Sécurité (commit c035d530)** :
+    - **XSS stocké JSON-LD (AUD-025)** : `frontend-next/src/lib/jsonld.ts` (`safeJsonLd`) échappe `<`, `>`, `&`, U+2028/2029 ; appliqué aux 24 pages utilisant `__html: JSON.stringify(...)`, à `components/JsonLd.tsx` et aux constructeurs `annonces/[id]`, `immo/[id]`, `produit/[id]/components/types.ts`. Preuve navigateur : `window.__XSS_PROOF` passe de `1` à `undefined` avec la même donnée hostile ; JSON-LD toujours valide.
+    - **SSRF `magic-import` (AUD-026)** : `backend/lib/safeFetch.js` (résolution DNS, refus des IP privées/réservées IPv4+IPv6 y compris adresses mappées, contrôle à la connexion, redirections revalidées, ports 80/443, taille bornée) ; authentification exigée sur la route.
+    - **Relais WhatsApp (AUD-027)** : `POST /api/whatsapp/send` exige un compte, envoie uniquement au numéro du compte, limite 5/h par compte, respecte STOP.
+    - **Secrets (AUD-029)** : `GET /api/settings` masque les clés sensibles (`****` + 4 derniers caractères) ; un PUT renvoyant le masque n'écrase pas le secret.
+    - **Révocation admin (AUD-041)** : un admin désactivé ou supprimé est refusé immédiatement ; le rôle est lu en base, jamais dans le jeton ; le break-glass reste opérationnel.
+    - **Routes internes (AUD-014)** : `scraper/status|facebook/progress|sites`, `paiement/server-ip`, `whatsapp/health` réservées à l'admin ; `details: err.message` retiré des réponses 500 des webhooks.
+    - **Bug (AUD-017)** : `GET /api/boutiques/catalogues-standards` renvoyait 500 (chemin du fichier JSON décalé d'un niveau).
+  * **Chaîne commande/paiement** :
+    - **AUD-044** : un panier de 2 articles ou plus échouait en 500 (UNIQUE `reference`). Une commande = un en-tête au total complet + lignes dans `commandes_boutique_items`.
+    - **AUD-042** : le webhook Wave comparait le montant payé à une seule ligne ; il compare désormais le total complet (articles + livraison - remise).
+    - **AUD-010** : échec de session Wave/Orange/Stripe → commande annulée et stock restitué (transaction idempotente) ; cron `cron-commandes-impayees` (toutes les 15 min, délai 2 h, `COMMANDE_IMPAYEE_DELAI_HEURES`) pour les paiements numériques non réglés ; paiement tardif sur commande annulée → alerte admin, pas de réactivation ; limiteur de 20 commandes / 15 min / IP.
+    - **AUD-011** : article sans `produit_id` UUID valide refusé (le prix ne vient jamais du client) ; noms et quantités des notifications issus de la base.
+    - **AUD-045** : `notifierVendeurCommande` levait `ReferenceError: commande is not defined` pour toute commande sans frais de livraison, donc aucune notification vendeur ; corrigé (paramètre `zoneNom`), et marqueurs écrits dans la colonne réelle `note`.
+    - **AUD-046** : la limite d'usage d'un code promo n'était jamais appliquée au checkout express (colonne `max_utilisations` inexistante, la vraie est `limite_utilisation`).
+    - **AUD-040** : le paiement Orange Money du checkout express envoie maintenant `notif_url` vers `/api/paiement/orange/webhook` (la valeur par défaut visait une route inexistante).
+    - **AUD-013 / AUD-048** : webhooks Stripe et Orange fail-closed dans tous les environnements ; Stripe contrôle le montant, l'idempotence et la commande annulée ; la signature Stripe était impossible à valider (`JSON.stringify` d'un Buffer), corrigé.
+    - **AUD-047** : le checkout public demandait un numéro de carte + CVC et appelait un simulateur qui « approuvait » n'importe quelle carte sans débit. Saisie de carte supprimée (aucune donnée bancaire envoyée), option « Carte Bancaire » masquée tant que Stripe Checkout n'est pas configuré (`carteBancaireActive`), simulateur et session Stripe simulée désactivés en production.
+  * **Tests** : +97 tests (backend unitaires : safe-fetch, rbac, whatsapp-send, settings, stripe ; frontend : 2 ; intégration : `tests/integration/commande-express-pipeline.integration.test.js`, 13 cas sur base de test). Suite unitaire : 13 suites / 41 tests en échec avant et après (échecs préexistants, AUD-020), aucune régression ; `tsc --noEmit` 0 erreur ; tests frontend 71/71.
+  * **À noter** : `montant_total` d'une commande express inclut désormais livraison et remise (comme les commandes WhatsApp) ; le CSP à nonce et le reste du plan (`docs/PLAN-CORRECTION-NOPALOU-2026-09-30.md`) restent à faire.
+
 - **Refonte Responsive Commandes Marchand & Correction Mobile Formulaires Support/Litige (29 septembre 2026)** :
   * **Commande Marchand (Desktop 2 Colonnes & Mobile Compact)** :
     - Remplacement de l'accordéon vertical étiré par une grille 2 colonnes équilibrée (`1.15fr 0.85fr`) sur grand écran.

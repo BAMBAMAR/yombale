@@ -246,3 +246,23 @@ Réserve : le journal indique des assainissements massifs les 28-29/09 (produits
 
 ### Résolution d'un échec E2E
 `liens navbar fonctionnels` (`/telecom`) : le lien fonctionne dans un vrai navigateur (clic → `/telecom`, 4 occurrences dont 3 visibles) ; l'échec est dû à la compilation à la demande du mode dev (délai de 5 s). Non concluant, pas un défaut.
+
+
+---
+
+# Phase 4 — constats ajoutés pendant l'exécution des corrections P0 (tous reproduits par exécution)
+
+| ID | Gravité | Constat | Statut |
+|---|---|---|---|
+| AUD-040 | MAJEUR | Orange Money du checkout express : `notif_url` par défaut vers une route inexistante (`/api/paiements/orange-money/webhook`) | corrigé, testé |
+| AUD-041 | MAJEUR | Admin désactivé ou supprimé gardait l'accès pendant 7 jours | corrigé, testé |
+| AUD-042 | MAJEUR | Webhook Wave : paiement légitime refusé (« fraude montant ») avec frais, promo ou plusieurs articles | corrigé, testé |
+| AUD-044 | CRITIQUE | Panier de 2 articles ou plus : HTTP 500 (UNIQUE `reference`) | corrigé, testé |
+| AUD-045 | MAJEUR | `notifierVendeurCommande` : `ReferenceError: commande is not defined` pour toute commande sans frais de livraison → aucune notification vendeur (aussi 500 sur `POST /api/comptabilite/:boutiqueId/commandes`) | corrigé, testé |
+| AUD-046 | MOYEN | Limite d'usage des codes promo jamais appliquée au checkout express (colonne `max_utilisations` inexistante, la vraie est `limite_utilisation`) | corrigé, testé |
+| AUD-047 | CRITIQUE | Checkout public : saisie d'un numéro de carte + CVC envoyés à un simulateur qui « approuve » toute carte sans débit ; session Stripe simulée renvoyant vers la page de succès si la clé Stripe est absente | corrigé (saisie supprimée, option masquée, simulateur coupé en production), vérifié en navigateur |
+| AUD-048 | MOYEN | Signature des webhooks Stripe impossible à valider (`JSON.stringify` d'un Buffer) | corrigé, testé |
+| AUD-049 | MINEUR | `frontend-next/scripts/run-unit-tests.mjs` : `it()` n'attend pas les callbacks asynchrones (tests 17 à 20 et crédit ne peuvent jamais échouer) | NON corrigé |
+| AUD-050 | MINEUR | Les tests d'intégration existants (`tests/integration/*`) sont ignorés sans `DATABASE_URL_TEST` et utilisent des identifiants non UUID (`test-boutique-001`) : ils ne peuvent pas s'exécuter sur le schéma réel | NON corrigé |
+| AUD-051 | MINEUR | Les références `C-…` (WhatsApp, `POST /api/comptabilite/:id/commandes`) ne sont pas reconnues par `GET /api/boutiques/commandes/suivi` (préfixes acceptés : `CMD-`, `PAY-`, `V-`, UUID) | NON corrigé |
+

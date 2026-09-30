@@ -1294,6 +1294,11 @@ router.put('/:id/devise', verifierToken, param('id').isUUID(), async (req, res) 
 
 // ── Spec 06 : POST /api/paiements/stripe/simuler — Simulation Carte Bancaire Stripe
 router.post(['/paiements/stripe/simuler', '/stripe/simuler', '/:id/paiements/stripe/simuler'], async (req, res) => {
+  // AUD-047 : simulateur réservé au développement et aux tests. En production il « approuverait » n'importe
+  // quel numéro de carte sans débit, et le site n'a pas à recevoir de numéros de carte.
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(410).json({ success: false, error: 'Simulation de paiement indisponible en production.' });
+  }
   try {
     const boutique_id = req.params.id || req.body.boutique_id;
     const { montant, devise, card_number, exp_month, exp_year, cvc } = req.body;

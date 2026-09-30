@@ -101,6 +101,15 @@ const limiterImport = rateLimit({
   message: { error: 'Trop de demandes d\'import rapide — réessayez dans 5 minutes' }
 });
 
+// AUD-010 : checkout public — freine la création en rafale de commandes qui immobilisent le stock
+const limiterCommandeExpress = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 20,
+  keyGenerator: realIp,
+  skip: skipInDevOrSsr,
+  message: { error: 'Trop de commandes depuis cette connexion — réessayez dans quelques minutes' },
+  standardHeaders: true,
+});
+
 // AUD-027 : envoi de fiches WhatsApp — limite par compte (pas par IP), active aussi hors production
 const limiterWhatsappSend = rateLimit({
   windowMs: 60 * 60 * 1000, max: 5,
@@ -131,4 +140,4 @@ const limiterBulk = rateLimit({
   },
 });
 
-module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, blockScraperUA };
+module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA };

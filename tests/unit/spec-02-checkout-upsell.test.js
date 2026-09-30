@@ -44,9 +44,15 @@ describe('POST /api/boutiques/commandes/express (Spec 02)', () => {
       return { rows: [] };
     });
 
-    mockClient.query.mockImplementation(async (sql) => {
+    const insertsCommande = [];
+    mockClient.query.mockImplementation(async (sql, params) => {
       if (typeof sql === 'string' && sql.includes('FROM boutique_produits')) {
         return { rows: [{ id: produitId, nom: 'Écouteurs sans fil', prix: 15000, stock_quantite: 10 }] };
+      }
+      // En-tête de commande (AUD-044) : RETURNING id, puis lignes dans commandes_boutique_items
+      if (typeof sql === 'string' && sql.includes('INSERT INTO commandes_boutique (')) {
+        insertsCommande.push(params);
+        return { rows: [{ id: 'cmd-uuid-1' }] };
       }
       return { rows: [] };
     });
@@ -70,6 +76,9 @@ describe('POST /api/boutiques/commandes/express (Spec 02)', () => {
     expect(res.body.reference).toMatch(/^CMD-2026/);
     expect(res.body.montant_total).toBe(17000); // 15000 + 2000
     expect(res.body.statut).toBe('en_attente');
+    // L'en-tête enregistré porte le total complet (livraison incluse), pas seulement le total des articles
+    expect(insertsCommande).toHaveLength(1);
+    expect(insertsCommande[0][6]).toBe(17000);
   });
 
   test('refuse la commande si le nom ou téléphone est manquant (HTTP 400)', async () => {

@@ -5,6 +5,25 @@ const crypto = require('crypto');
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 
 /**
+ * Convertit un montant en FCFA vers l'unité Stripe de la devise (XOF sans décimale, EUR/USD en centimes).
+ * Source unique : utilisée à la création de la session ET au contrôle du montant à la réception du webhook.
+ */
+function montantEnUnitesStripe(amount, currency = 'xof') {
+  const cleanCurrency = String(currency).toLowerCase();
+  let unitAmount = Math.round(Number(amount));
+  if (cleanCurrency === 'eur' || cleanCurrency === 'usd') {
+    // Si montant passé en FCFA et devise choisie est EUR/USD, ou si déjà converti
+    if (unitAmount > 500) {
+      const enDevise = cleanCurrency === 'eur' ? unitAmount / 655.957 : unitAmount / 600.0;
+      unitAmount = Math.round(enDevise * 100);
+    } else {
+      unitAmount = Math.round(unitAmount * 100);
+    }
+  }
+  return unitAmount;
+}
+
+/**
  * Crée une session de paiement Stripe Checkout (Cartes Bancaires Visa / Mastercard)
  */
 async function createCheckoutSession({
@@ -26,19 +45,14 @@ async function createCheckoutSession({
   const defaultCancel = cancel_url || `${SITE}/paiement/erreur?ref=${encodeURIComponent(client_reference)}&type=commande-express`;
 
   // Montant selon la devise (XOF est une devise sans décimale, EUR/USD en centimes)
-  let unitAmount = Math.round(Number(amount));
-  if (cleanCurrency === 'eur' || cleanCurrency === 'usd') {
-    // Si montant passé en FCFA et devise choisie est EUR/USD, ou si déjà converti
-    if (unitAmount > 500) {
-      const enDevise = cleanCurrency === 'eur' ? unitAmount / 655.957 : unitAmount / 600.0;
-      unitAmount = Math.round(enDevise * 100);
-    } else {
-      unitAmount = Math.round(unitAmount * 100);
-    }
-  }
+  const unitAmount = montantEnUnitesStripe(amount, cleanCurrency);
 
   // Si pas de clé Stripe ou clé de test/sandbox, bascule élégante en mode simulation
   if (!secretKey || secretKey.includes('xxxxxxxx') || !secretKey.startsWith('sk_')) {
+    // AUD-047 : en production, pas de « session simulée » qui renverrait le client vers la page de succès sans débit
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Paiement par carte non configuré (STRIPE_SECRET_KEY absente ou invalide)');
+    }
     console.log(`[STRIPE SANDBOX] Commande ${client_reference} : session simulée (${unitAmount} ${cleanCurrency})`);
     return {
       success: true,
@@ -112,7 +126,12 @@ function verifyWebhookSignature(payload, sigHeader, webhookSecret) {
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - Number(timestamp)) > 300) return false;
 
-  const signedPayload = `${timestamp}.${typeof payload === 'string' ? payload : JSON.stringify(payload)}`;
+  // AUD-048 : req.rawBody est un Buffer ; JSON.stringify(Buffer) produit {"type":"Buffer",...} et aucune
+  // signature Stripe authentique ne pouvait donc jamais être validée. On signe les octets reçus, décodés tels quels.
+  const payloadStr = Buffer.isBuffer(payload)
+    ? payload.toString('utf8')
+    : (typeof payload === 'string' ? payload : JSON.stringify(payload));
+  const signedPayload = `${timestamp}.${payloadStr}`;
   const expectedSignature = crypto
     .createHmac('sha256', secret.trim())
     .update(signedPayload)
@@ -127,4 +146,5 @@ function verifyWebhookSignature(payload, sigHeader, webhookSecret) {
 module.exports = {
   createCheckoutSession,
   verifyWebhookSignature,
+  montantEnUnitesStripe,
 };
