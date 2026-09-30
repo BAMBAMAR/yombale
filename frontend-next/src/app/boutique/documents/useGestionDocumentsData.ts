@@ -58,16 +58,9 @@ export function useGestionDocumentsData(boutiqueId: string, t: (key: string) => 
     if (!cDocs) setLoading(true)
 
     try {
-      let docs = await getBoutiqueDocuments(boutiqueId)
-      if (!Array.isArray(docs) || docs.length === 0) {
-        try {
-          const resDocs = await fetch(`/api/boutiques/${boutiqueId}/documents`)
-          if (resDocs.ok) {
-            const dataDocs = await resDocs.json()
-            if (Array.isArray(dataDocs)) docs = dataDocs
-          }
-        } catch {}
-      }
+      // Utiliser exclusivement la server action (backendFetch avec cookie de session)
+      // Pas de fetch() direct client-side → évite le 403 (token absent dans le navigateur)
+      const docs = await getBoutiqueDocuments(boutiqueId)
       if (Array.isArray(docs)) {
         setDocuments(docs)
         if (docs.length > 0 || !cDocs) {

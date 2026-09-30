@@ -219,15 +219,21 @@ export default function CompteClient({
               })
               .catch(() => {})
 
-            // 4g. Documents
-            fetchLow(`/api/boutiques/${b.id}/documents`)
-              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-              .then(data => {
-                if (data?.documents) {
-                  localStorage.setItem(`nopalou_offline_docs_${b.id}`, JSON.stringify(data.documents))
-                }
-              })
-              .catch(() => {})
+            // Déterminer si la boutique a accès aux fonctionnalités avancées Pro / Business
+            const planBoutique = b.plan_actif || (typeof window !== 'undefined' ? localStorage.getItem('nopalou_plan_actif') : null)
+            const hasProOrBusiness = planBoutique === 'pro' || planBoutique === 'business'
+
+            // 4g. Documents (Pro / Business uniquement)
+            if (hasProOrBusiness) {
+              fetchLow(`/api/boutiques/${b.id}/documents`)
+                .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+                .then(data => {
+                  if (data?.documents) {
+                    localStorage.setItem(`nopalou_offline_docs_${b.id}`, JSON.stringify(data.documents))
+                  }
+                })
+                .catch(() => {})
+            }
 
             // 4h. Logs
             fetchLow(`/api/boutiques/${b.id}/logs?limit=150`)
@@ -294,15 +300,17 @@ export default function CompteClient({
               })
               .catch(() => {})
 
-            // 4m. Comptabilité : Bilan
-            fetchLow(`/api/comptabilite/${b.id}/bilan`)
-              .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
-              .then(bData => {
-                if (bData && !bData.error) {
-                  localStorage.setItem(`nopalou_bilan_${b.id}_fallback`, JSON.stringify(bData))
-                }
-              })
-              .catch(() => {})
+            // 4m. Comptabilité : Bilan (Pro / Business uniquement)
+            if (hasProOrBusiness) {
+              fetchLow(`/api/comptabilite/${b.id}/bilan`)
+                .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+                .then(bData => {
+                  if (bData && !bData.error) {
+                    localStorage.setItem(`nopalou_bilan_${b.id}_fallback`, JSON.stringify(bData))
+                  }
+                })
+                .catch(() => {})
+            }
 
             // 4n. Comptabilité : Zones de livraison
             fetchLow(`/api/comptabilite/${b.id}/zones`)

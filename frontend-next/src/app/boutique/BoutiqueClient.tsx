@@ -61,19 +61,8 @@ export default function BoutiqueClient({
   const [sponsorError] = useState<string | null>(null)
   const router = useRouter()
 
-  const [boutiquesList, setBoutiquesList] = useState<Boutique[]>(() => {
-    if (boutiques && boutiques.length > 0) return boutiques
-    if (typeof window !== 'undefined') {
-      const cachedStr = localStorage.getItem('nopalou_pos_user_boutiques')
-      if (cachedStr) {
-        try {
-          const cached = JSON.parse(cachedStr)
-          if (Array.isArray(cached) && cached.length > 0) return cached
-        } catch (_) {}
-      }
-    }
-    return []
-  })
+  // Initialisation SSR-safe : toujours les props serveur pour éviter le mismatch hydration (#418/#425)
+  const [boutiquesList, setBoutiquesList] = useState<Boutique[]>(boutiques ?? [])
 
   const isReallyOnline = useOnlineStatus()
   const [dashboardOffline, setDashboardOffline] = useState(false)
@@ -97,60 +86,41 @@ export default function BoutiqueClient({
     }
   }, [boutiques.length, boutiquesList.length])
 
-  // Plan actif : persistance offline sans purge destructrice
-  const [planActifEffectif, setPlanActifEffectif] = useState<'pro' | 'business' | 'decouverte' | 'taf_taf' | null>(() => {
-    if (planActif) return planActif as any
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('nopalou_plan_actif')
-      if (cached) return cached as any
-      const cachedBoutiquesStr = localStorage.getItem('nopalou_pos_user_boutiques')
-      if (cachedBoutiquesStr) {
-        try {
-          const parsed = JSON.parse(cachedBoutiquesStr)
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const bPlan = parsed[0]?.plan_actif || parsed[0]?.plan_souscrit
-            if (bPlan) return bPlan
-          }
-        } catch (_) {}
-      }
-    }
-    return null
-  })
+  // Plan actif : initialisation SSR-safe (localStorage lu en useEffect uniquement)
+  const [planActifEffectif, setPlanActifEffectif] = useState<'pro' | 'business' | 'decouverte' | 'taf_taf' | null>(
+    planActif ?? null
+  )
 
+  // Restauration plan actif depuis localStorage après hydration (offline-first, sans purge)
   useEffect(() => {
     if (planActif) {
       setPlanActifEffectif(planActif as any)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('nopalou_plan_actif', planActif)
-      }
+      localStorage.setItem('nopalou_plan_actif', planActif)
     } else {
-      // En mode hors-ligne ou si le serveur renvoie null temporairement,
-      // NE PAS PURGER nopalou_plan_actif ! Conserver le plan souscrit en local ou celui de la boutique.
-      if (typeof window !== 'undefined') {
-        const cached = localStorage.getItem('nopalou_plan_actif')
-        if (cached) {
-          setPlanActifEffectif(cached as any)
-        } else if (boutiquesList.length > 0) {
-          const bPlan = boutiquesList[0]?.plan_actif || boutiquesList[0]?.plan_souscrit
-          if (bPlan) setPlanActifEffectif(bPlan as any)
-        }
+      // Serveur renvoie null → conserver le plan en cache local, NE PAS PURGER
+      const cached = localStorage.getItem('nopalou_plan_actif')
+      if (cached) {
+        setPlanActifEffectif(cached as any)
+      } else if (boutiquesList.length > 0) {
+        const bPlan = boutiquesList[0]?.plan_actif || boutiquesList[0]?.plan_souscrit
+        if (bPlan) setPlanActifEffectif(bPlan as any)
       }
     }
   }, [planActif, boutiquesList])
 
+  // Restauration cache localStorage après hydration (côté client uniquement)
   useEffect(() => {
     if (boutiques && boutiques.length > 0) {
       setBoutiquesList(boutiques)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(boutiques))
-      }
+      localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(boutiques))
       sauvegarderBoutiquesLocales(boutiques, userId).catch(() => {})
     } else {
-      const cachedStr = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_user_boutiques') : null
+      // Serveur n'a pas renvoyé de boutiques → tenter le cache local (offline)
+      const cachedStr = localStorage.getItem('nopalou_pos_user_boutiques')
       if (cachedStr) {
         try {
           const cached = JSON.parse(cachedStr)
-          if (cached && Array.isArray(cached) && cached.length > 0) {
+          if (Array.isArray(cached) && cached.length > 0) {
             setBoutiquesList(cached)
             return
           }

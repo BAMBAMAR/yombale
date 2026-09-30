@@ -201,25 +201,32 @@ export function useBoutiqueOfflinePreloader(
               }
             }).catch(() => {})
 
-          // Précharge les documents (Factures, Devis, Proformas)
-          fetchLow(`/api/boutiques/${b.id}/documents`)
-            .then((r) => (r.ok ? r.json() : Promise.reject()))
-            .then((data) => {
-              const docsList = Array.isArray(data) ? data : (data?.documents || [])
-              if (Array.isArray(docsList) && docsList.length > 0) {
-                localStorage.setItem(`nopalou_offline_docs_${b.id}`, JSON.stringify(docsList))
-              }
-            }).catch(() => {})
+          // Précharge les documents & fournisseurs uniquement si le plan le permet (Pro ou Business)
+          // Évite les erreurs 403 Forbidden sur les boutiques en plan gratuit / découverte
+          const planBoutique = b.plan_actif || (typeof window !== 'undefined' ? localStorage.getItem('nopalou_plan_actif') : null)
+          const hasProOrBusiness = planBoutique === 'pro' || planBoutique === 'business'
 
-          // Précharge les fournisseurs
-          fetchLow(`/api/boutiques/${b.id}/fournisseurs`)
-            .then((r) => (r.ok ? r.json() : Promise.reject()))
-            .then((data) => {
-              const fousList = Array.isArray(data) ? data : (data?.fournisseurs || [])
-              if (Array.isArray(fousList) && fousList.length > 0) {
-                localStorage.setItem(`nopalou_offline_fournisseurs_${b.id}`, JSON.stringify(fousList))
-              }
-            }).catch(() => {})
+          if (hasProOrBusiness) {
+            // Précharge les documents (Factures, Devis, Proformas)
+            fetchLow(`/api/boutiques/${b.id}/documents`)
+              .then((r) => (r.ok ? r.json() : Promise.reject()))
+              .then((data) => {
+                const docsList = Array.isArray(data) ? data : (data?.documents || [])
+                if (Array.isArray(docsList) && docsList.length > 0) {
+                  localStorage.setItem(`nopalou_offline_docs_${b.id}`, JSON.stringify(docsList))
+                }
+              }).catch(() => {})
+
+            // Précharge les fournisseurs
+            fetchLow(`/api/boutiques/${b.id}/fournisseurs`)
+              .then((r) => (r.ok ? r.json() : Promise.reject()))
+              .then((data) => {
+                const fousList = Array.isArray(data) ? data : (data?.fournisseurs || [])
+                if (Array.isArray(fousList) && fousList.length > 0) {
+                  localStorage.setItem(`nopalou_offline_fournisseurs_${b.id}`, JSON.stringify(fousList))
+                }
+              }).catch(() => {})
+          }
 
           // Précharge les abonnements et livraisons récurrentes
           fetchLow(`/api/boutiques/${b.id}/abonnements`)
