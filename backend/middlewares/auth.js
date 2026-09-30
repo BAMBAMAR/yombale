@@ -45,12 +45,17 @@ async function verifierToken(req, res, next) {
     // AN-002 : Invalidation de session si jwt_version a été incrémenté en base (ou compte suspendu)
     if (decoded.userId) {
       try {
-        const { rows } = await pool.query('SELECT jwt_version, suspendu, supprime_le FROM utilisateurs WHERE id=$1', [decoded.userId]);
+        const { rows } = await pool.query('SELECT jwt_version, suspendu, supprime_le, anonymise_le FROM utilisateurs WHERE id=$1', [decoded.userId]);
         if (!rows.length) {
           return res.status(401).json({ error: 'Utilisateur introuvable' });
         }
         if (rows[0].suspendu) {
           return res.status(403).json({ error: 'Compte suspendu' });
+        }
+        // AUD-071 : une purge RGPD (anonymise_le) doit invalider immédiatement toute session déjà
+        // ouverte, indépendamment de jwt_version (qui n'est pas systématiquement incrémenté par /purger).
+        if (rows[0].anonymise_le) {
+          return res.status(401).json({ error: 'Ce compte a été définitivement supprimé.' });
         }
         if (decoded.jwtVersion !== undefined && rows[0].jwt_version && rows[0].jwt_version !== decoded.jwtVersion) {
           return res.status(401).json({ error: 'Session révoquée, veuillez vous reconnecter' });

@@ -1378,6 +1378,19 @@ module.exports = async function migrateInline(customConnStr = null) {
   }
   console.log('[MIGRATE] ✅ Colonnes gestion comptes (suspendu/supprime_le/anonymise_le/jwt_version/supprime_par_utilisateur) OK');
 
+  // AUD-052 : utilisateurs.telephone n'avait aucune contrainte d'unicité, ce qui permettait à deux
+  // comptes de partager un numéro (confusion d'authentification OTP — voir backend/routes/auth.js,
+  // backend/lib/telephoneIntegrity.js). Tentative non destructive : si des doublons existent encore
+  // en production, l'index échoue et se contente d'un avertissement (aucune donnée n'est modifiée ni
+  // supprimée automatiquement — la résolution des doublons est une décision produit/support, voir
+  // docs/PLAN-CORRECTION-NOPALOU-2026-09-30.md, section E). Idempotent : sans effet si déjà posé.
+  try {
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_utilisateurs_telephone_unique ON utilisateurs (telephone) WHERE telephone IS NOT NULL`);
+    console.log('[MIGRATE] ✅ Index unique utilisateurs.telephone posé (AUD-052)');
+  } catch (e) {
+    console.warn('[MIGRATE] ⚠️  AUD-052 : index unique utilisateurs.telephone NON posé (doublons existants à résoudre manuellement) —', e.message);
+  }
+
   // --- NOUVELLES FONCTIONNALITÉS POS (Fiscalité, Documents, Fournisseurs) ---
   try {
     // 1. Boutiques et produits + Infos légales OHADA

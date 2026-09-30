@@ -307,7 +307,8 @@ router.post('/:id/purger', requireAdminAuth, requireAdminRole('super_admin'), as
            email = 'deleted-' || id || '@nopalou.local',
            telephone = NULL,
            mot_de_passe_hash = 'INVALIDATED',
-           anonymise_le = NOW()
+           anonymise_le = NOW(),
+           jwt_version = COALESCE(jwt_version, 1) + 1
        WHERE id = $1 AND anonymise_le IS NULL
        RETURNING id`,
       [id]

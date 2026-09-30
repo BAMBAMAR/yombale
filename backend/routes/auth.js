@@ -18,16 +18,32 @@ const VERIFY_SECRET = process.env.VERIFY_SECRET || (process.env.JWT_SECRET + '_v
 const { genererCodeUnique } = require('../lib/codeApporteur');
 const { validerForceMotDePasse } = require('../lib/passwordValidator');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
+const { resolverComptesParTelephone, telephoneEstLibrePourCompte } = require('../lib/telephoneIntegrity');
+
+// AUD-055 : espace de noms réservé à l'auto-provisionnement WhatsApp — un compte e-mail ordinaire
+// ne doit jamais pouvoir revendiquer <numero>@whatsapp.nopalou.com avant (ou à la place) du vrai
+// titulaire du numéro.
+const EMAIL_WHATSAPP_RESERVE = /@whatsapp\.nopalou\.com$/i;
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 router.post('/inscription',
   limiterAuth,
-  body('email').isEmail().normalizeEmail().withMessage('Adresse email invalide'),
-  body('mot_de_passe').custom(val => {
+  body('email').isEmail().normalizeEmail().withMessage('Adresse email invalide')
+    .custom(val => {
+      // AUD-055 : espace de noms réservé à l'auto-provisionnement WhatsApp interne
+      if (EMAIL_WHATSAPP_RESERVE.test(String(val || ''))) throw new Error('Cette adresse email est réservée.');
+      return true;
+    }),
+  body('mot_de_passe').isString().withMessage('Le mot de passe est obligatoire').custom(val => {
     const check = validerForceMotDePasse(val);
     if (!check.valide) throw new Error(check.message);
     return true;
   }),
-  body('nom').trim().notEmpty().withMessage('Le nom complet est obligatoire'),
+  // AUD-066 : type et longueur du nom validés explicitement (évite les 500 sur objets/chaînes géantes)
+  body('nom').isString().withMessage('Le nom doit être une chaîne de caractères').trim().notEmpty().withMessage('Le nom complet est obligatoire').isLength({ max: 200 }).withMessage('Le nom ne doit pas dépasser 200 caractères'),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -37,10 +53,17 @@ router.post('/inscription',
       if (exist.rows.length) return res.status(409).json({ error: 'Email déjà utilisé' });
       const hash = await bcrypt.hash(mot_de_passe, 12);
       const codeApporteur = await genererCodeUnique();
-      const { rows } = await pool.query(
-        'INSERT INTO utilisateurs (nom,email,mot_de_passe_hash,est_apporteur,code_apporteur,jwt_version) VALUES ($1,$2,$3,true,$4,1) RETURNING id,nom,email,code_apporteur,jwt_version',
-        [nom, email, hash, codeApporteur]
-      );
+      let rows;
+      try {
+        ({ rows } = await pool.query(
+          'INSERT INTO utilisateurs (nom,email,mot_de_passe_hash,est_apporteur,code_apporteur,jwt_version) VALUES ($1,$2,$3,true,$4,1) RETURNING id,nom,email,code_apporteur,jwt_version',
+          [nom, email, hash, codeApporteur]
+        ));
+      } catch (insertErr) {
+        // AUD-063 : course d'inscription simultanée du même e-mail → 409 propre, pas un 500 générique
+        if (insertErr.code === '23505') return res.status(409).json({ error: 'Email déjà utilisé' });
+        throw insertErr;
+      }
       const token = jwt.sign({ userId: rows[0].id, jwtVersion: rows[0].jwt_version || 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
       res.cookie('nopalou_session', token, {
         httpOnly: true,
@@ -61,14 +84,14 @@ router.post('/inscription',
       }
 
       // Email de bienvenue + vérification (envoyé en arrière-plan, n'empêche pas l'inscription)
-      const verifToken = jwt.sign({ userId: rows[0].id, type: 'verify' }, VERIFY_SECRET, { expiresIn: '24h' });
+      const verifToken = jwt.sign({ userId: rows[0].id, email: rows[0].email, type: 'verify' }, VERIFY_SECRET, { expiresIn: '24h' });
       const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
       envoyerEmail({
         to: email,
         subject: 'Bienvenue sur Nopalou — Vérifiez votre adresse email',
         html: templateEmail({
           preheader: 'Activez votre compte Nopalou en un clic',
-          titre: `Bienvenue sur Nopalou, ${nom} !`,
+          titre: `Bienvenue sur Nopalou, ${escapeHtml(nom)} !`,
           contenuHtml: `
             <p>Votre compte a été créé avec succès.</p>
             <p>Pour sécuriser vos accès et profiter pleinement de tous les services (boutique, annonces, alertes), veuillez confirmer votre adresse email.</p>
@@ -91,6 +114,14 @@ router.get('/verifier-email', async (req, res) => {
     const { token } = req.query;
     const payload = jwt.verify(token, VERIFY_SECRET);
     if (payload.type !== 'verify') throw new Error('Token invalide');
+    // AUD-053 : si le jeton porte une adresse (émis après un changement d'e-mail), elle doit
+    // correspondre à l'adresse ACTUELLE du compte — un ancien jeton ne doit jamais valider une
+    // adresse différente de celle pour laquelle il a été émis. Les jetons antérieurs à ce correctif
+    // (sans champ email) restent acceptés le temps de leur propre expiration (24h).
+    if (payload.email) {
+      const { rows } = await pool.query('SELECT email FROM utilisateurs WHERE id=$1', [payload.userId]);
+      if (!rows.length || rows[0].email !== payload.email) throw new Error('Adresse email non correspondante');
+    }
     await pool.query('UPDATE utilisateurs SET email_verifie = true WHERE id = $1', [payload.userId]);
     res.redirect(`${FRONTEND_URL}/?email_verifie=1`);
   } catch (err) {
@@ -107,7 +138,9 @@ router.post(['/connexion', '/login'],
     }
     next();
   },
-  body('mot_de_passe').notEmpty().withMessage('Le mot de passe est obligatoire'),
+  // AUD-066 : un mot de passe non-chaîne (tableau/objet/nombre/booléen) faisait planter
+  // bcrypt.compare (500) au lieu d'un 400 propre.
+  body('mot_de_passe').isString().withMessage('Le mot de passe est obligatoire').notEmpty().withMessage('Le mot de passe est obligatoire'),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -316,7 +349,7 @@ router.post('/renvoyer-verification', limiterAuth, verifierToken, async (req, re
     if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
     if (rows[0].email_verifie) return res.status(400).json({ error: 'Email déjà vérifié' });
 
-    const verifToken = jwt.sign({ userId: req.user.userId, type: 'verify' }, VERIFY_SECRET, { expiresIn: '24h' });
+    const verifToken = jwt.sign({ userId: req.user.userId, email: rows[0].email, type: 'verify' }, VERIFY_SECRET, { expiresIn: '24h' });
     const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
     await envoyerEmail({
       to: rows[0].email,
@@ -325,7 +358,7 @@ router.post('/renvoyer-verification', limiterAuth, verifierToken, async (req, re
         preheader: 'Vérification de votre compte Nopalou',
         titre: 'Confirmation de votre adresse email',
         contenuHtml: `
-          <p>Bonjour ${rows[0].nom},</p>
+          <p>Bonjour ${escapeHtml(rows[0].nom)},</p>
           <p>Vous avez demandé un nouveau lien de confirmation pour votre compte Nopalou.</p>
         `,
         boutonTexte: 'Confirmer mon adresse email',
@@ -337,17 +370,67 @@ router.post('/renvoyer-verification', limiterAuth, verifierToken, async (req, re
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// AUD-064 : plafond de demandes de réinitialisation PAR COMPTE (limiterAuth ne plafonne que par IP ;
+// sans ceci, 15 demandes envoyées depuis 15 IP différentes produisent 15 e-mails vers la même victime).
+let _migreeResetLimite = false;
+async function assurerTableResetLimite() {
+  if (_migreeResetLimite) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS auth_reset_demandes (
+        id BIGSERIAL PRIMARY KEY,
+        utilisateur_id UUID NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_auth_reset_demandes_user_date ON auth_reset_demandes(utilisateur_id, created_at);
+    `);
+  } catch (e) { /* idempotent : déjà créée */ }
+  _migreeResetLimite = true;
+}
+const RESET_MAX_PAR_HEURE = 3;
+
 // POST /api/auth/mot-de-passe-oublie — demander un lien de réinitialisation
 router.post('/mot-de-passe-oublie', limiterAuth, body('email').isEmail().normalizeEmail().withMessage('Adresse email invalide'), async (req, res) => {
   try {
     const { email } = req.body;
-    const { rows } = await pool.query('SELECT id, nom FROM utilisateurs WHERE email=$1', [email]);
+    const { rows } = await pool.query('SELECT id, nom, COALESCE(jwt_version, 1) AS jwt_version FROM utilisateurs WHERE email=$1', [email]);
 
     // Toujours répondre OK pour ne pas révéler si l'email existe
     res.json({ success: true, message: 'Si ce compte existe, un email de réinitialisation a été envoyé.' });
 
     if (rows.length) {
-      const resetToken = jwt.sign({ userId: rows[0].id, type: 'reset' }, RESET_SECRET, { expiresIn: '1h' });
+      await assurerTableResetLimite();
+      // Verrou transactionnel par compte : la vérification + l'insertion doivent être atomiques,
+      // sinon des demandes strictement simultanées passent toutes le contrôle avant qu'aucune ne soit
+      // encore comptée (constaté : 10 requêtes en parallèle → 10 e-mails malgré le plafond de 3).
+      const client = await pool.connect();
+      let autorise = false;
+      try {
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [rows[0].id]);
+        const { rows: recent } = await client.query(
+          `SELECT COUNT(*)::int AS n FROM auth_reset_demandes WHERE utilisateur_id=$1 AND created_at > NOW() - INTERVAL '1 hour'`,
+          [rows[0].id]
+        );
+        if (recent[0].n < RESET_MAX_PAR_HEURE) {
+          await client.query('INSERT INTO auth_reset_demandes (utilisateur_id) VALUES ($1)', [rows[0].id]);
+          autorise = true;
+        }
+        await client.query('COMMIT');
+      } catch (lockErr) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw lockErr;
+      } finally {
+        client.release();
+      }
+      if (!autorise) {
+        console.warn(`[RESET LIMITE] compte ${rows[0].id} : plafond de ${RESET_MAX_PAR_HEURE} demandes/heure atteint, e-mail non envoyé`);
+        return;
+      }
+
+      // AUD-057 : jwtVersion figée au moment de l'émission — la vérification rejette le jeton si la
+      // version courante a déjà bougé (un usage réussi incrémente jwt_version), le rendant à usage unique.
+      const resetToken = jwt.sign({ userId: rows[0].id, type: 'reset', jwtVersion: rows[0].jwt_version }, RESET_SECRET, { expiresIn: '1h' });
       const lien = `${FRONTEND_URL}/mot-de-passe-oublie?token=${resetToken}`;
       envoyerEmail({
         to: email,
@@ -356,7 +439,7 @@ router.post('/mot-de-passe-oublie', limiterAuth, body('email').isEmail().normali
           preheader: 'Lien de réinitialisation sécurisé pour votre mot de passe',
           titre: 'Réinitialisation de votre mot de passe',
           contenuHtml: `
-            <p>Bonjour ${rows[0].nom},</p>
+            <p>Bonjour ${escapeHtml(rows[0].nom)},</p>
             <p>Nous avons reçu une demande de réinitialisation du mot de passe associé à votre compte Nopalou.</p>
             <p>Cliquez sur le bouton ci-dessous pour choisir votre nouveau mot de passe :</p>
           `,
@@ -390,8 +473,20 @@ router.post('/reinitialiser-mot-de-passe',
     }
     if (payload.type !== 'reset') return res.status(400).json({ error: 'Lien de réinitialisation invalide' });
 
+    const { rows } = await pool.query('SELECT suspendu, anonymise_le, COALESCE(jwt_version, 1) AS jwt_version FROM utilisateurs WHERE id=$1', [payload.userId]);
+    if (!rows.length) return res.status(400).json({ error: 'Lien de réinitialisation invalide' });
+    // AUD-069 : un compte suspendu ou anonymisé (purgé RGPD) ne doit jamais voir son mot de passe
+    // réinitialisé — cet état est distinct de « en grâce » (supprime_le), qui reste autorisé.
+    if (rows[0].suspendu || rows[0].anonymise_le) {
+      return res.status(403).json({ error: 'Ce compte n\'est pas accessible.' });
+    }
+    // AUD-057 : rejeu du même lien après un premier usage réussi — jwt_version a déjà changé.
+    if (payload.jwtVersion !== undefined && rows[0].jwt_version !== payload.jwtVersion) {
+      return res.status(400).json({ error: 'Ce lien de réinitialisation a déjà été utilisé.' });
+    }
+
     const hash = await bcrypt.hash(mot_de_passe, 12);
-    // Incrémente jwt_version pour déconnecter tous les appareils existants
+    // Incrémente jwt_version pour déconnecter tous les appareils existants ET invalider ce jeton
     await pool.query('UPDATE utilisateurs SET mot_de_passe_hash=$1, jwt_version=COALESCE(jwt_version, 1) + 1 WHERE id=$2', [hash, payload.userId]);
     res.json({ success: true, message: 'Mot de passe mis à jour avec succès.' });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -431,17 +526,38 @@ router.get('/profil', verifierToken, async (req, res) => {
 // PUT /api/auth/profil — modifier nom, email et/ou telephone
 router.put('/profil',
   verifierToken,
-  body('nom').optional().trim().notEmpty().withMessage('Le nom ne peut pas être vide'),
-  body('email').optional().isEmail().normalizeEmail().withMessage('Email invalide'),
-  body('telephone').optional().trim(),
+  body('nom').optional().isString().withMessage('Le nom doit être une chaîne').trim().notEmpty().withMessage('Le nom ne peut pas être vide').isLength({ max: 200 }),
+  body('email').optional().isEmail().normalizeEmail().withMessage('Email invalide')
+    .custom(val => {
+      if (EMAIL_WHATSAPP_RESERVE.test(String(val || ''))) throw new Error('Cette adresse email est réservée.');
+      return true;
+    }),
+  body('telephone').optional().isString().withMessage('Le téléphone doit être une chaîne').trim(),
+  body('mot_de_passe').optional().isString(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     try {
-      const { nom, email, telephone } = req.body;
+      const { nom, email, telephone, mot_de_passe } = req.body;
       if (!nom && !email && telephone === undefined) return res.status(400).json({ error: 'Au moins un champ à modifier' });
 
-      if (email) {
+      const { rows: meRows } = await pool.query(
+        'SELECT email, mot_de_passe_hash, email_verifie FROM utilisateurs WHERE id=$1',
+        [req.user.userId]
+      );
+      if (!meRows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
+      const ancienEmail = meRows[0].email;
+
+      // AUD-053 : un changement d'e-mail est une opération sensible — exige le mot de passe courant
+      // (comme /supprimer-compte), pour qu'une session volée ne suffise pas à rediriger la récupération
+      // de compte vers une adresse contrôlée par l'attaquant.
+      if (email && email !== ancienEmail) {
+        const compteAMotDePasse = meRows[0].mot_de_passe_hash && !ancienEmail.endsWith('@whatsapp.nopalou.com');
+        if (compteAMotDePasse) {
+          if (!mot_de_passe) return res.status(400).json({ error: 'Veuillez confirmer votre mot de passe actuel pour changer d\'adresse email.' });
+          const ok = await bcrypt.compare(mot_de_passe, meRows[0].mot_de_passe_hash);
+          if (!ok) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+        }
         const exist = await pool.query(
           'SELECT id FROM utilisateurs WHERE email=$1 AND id!=$2',
           [email, req.user.userId]
@@ -449,24 +565,76 @@ router.put('/profil',
         if (exist.rows.length) return res.status(409).json({ error: 'Cet email est déjà utilisé' });
       }
 
+      // AUD-052/AUD-055 : un numéro de téléphone ne peut être écrit que s'il n'appartient à aucun
+      // AUTRE compte — empêche la confusion d'authentification OTP entre deux comptes partageant un numéro.
+      let cleanTel;
+      if (telephone !== undefined) {
+        cleanTel = telephone ? String(telephone).replace(/[^\d+]/g, '').trim() : null;
+        if (telephone && !cleanTel) return res.status(400).json({ error: 'Numéro de téléphone invalide' });
+        if (cleanTel) {
+          const libre = await telephoneEstLibrePourCompte(pool, cleanTel.replace(/^\+/, ''), req.user.userId);
+          if (!libre) return res.status(409).json({ error: 'Ce numéro est déjà associé à un autre compte.' });
+        }
+      }
+
       const sets = [];
       const vals = [];
       let i = 1;
       if (nom)                  { sets.push(`nom=$${i++}`);       vals.push(nom); }
-      if (email)                { sets.push(`email=$${i++}`);     vals.push(email); }
+      if (email && email !== ancienEmail) {
+        // Un changement d'e-mail remet la vérification à zéro : la nouvelle adresse n'a pas été prouvée.
+        sets.push(`email=$${i++}`);     vals.push(email);
+        sets.push(`email_verifie=false`);
+      }
       if (telephone !== undefined) {
-        const cleanTel = telephone ? String(telephone).replace(/[^\d+]/g, '').trim() : null;
         sets.push(`telephone=$${i++}`);
         vals.push(cleanTel);
       }
+      if (!sets.length) return res.status(400).json({ error: 'Au moins un champ à modifier' });
       vals.push(req.user.userId);
 
       const { rows } = await pool.query(
-        `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email, telephone`,
+        `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email, telephone, email_verifie`,
         vals
       );
+
+      if (email && email !== ancienEmail) {
+        const verifToken = jwt.sign({ userId: req.user.userId, email: rows[0].email, type: 'verify' }, VERIFY_SECRET, { expiresIn: '24h' });
+        const lien = `${FRONTEND_URL}/api/auth/verifier-email?token=${verifToken}`;
+        envoyerEmail({
+          to: rows[0].email,
+          subject: 'Nopalou — Confirmez votre nouvelle adresse email',
+          html: templateEmail({
+            preheader: 'Confirmez votre nouvelle adresse email Nopalou',
+            titre: 'Confirmez votre nouvelle adresse email',
+            contenuHtml: `<p>Bonjour ${escapeHtml(rows[0].nom)},</p><p>Vous venez de définir cette adresse comme nouvel e-mail de votre compte Nopalou. Confirmez-la pour continuer à recevoir vos notifications importantes (réinitialisation de mot de passe, commandes).</p>`,
+            boutonTexte: 'Confirmer cette adresse',
+            boutonUrl: lien,
+            noteBas: 'Ce lien expire dans 24 heures.',
+          }),
+        }).catch(e => console.warn('[EMAIL VERIF NOUVELLE ADRESSE]', e.message));
+
+        // AUD-053 : alerte de sécurité vers l'ANCIENNE adresse — seul signal qui permettrait à la
+        // victime de réagir si ce changement n'est pas de son fait.
+        if (ancienEmail && !ancienEmail.endsWith('@whatsapp.nopalou.com')) {
+          envoyerEmail({
+            to: ancienEmail,
+            subject: 'Nopalou — L\'adresse email de votre compte a été modifiée',
+            html: templateEmail({
+              preheader: 'Alerte de sécurité Nopalou',
+              titre: 'Changement d\'adresse email détecté',
+              contenuHtml: `<p>Bonjour ${escapeHtml(rows[0].nom)},</p><p>L'adresse email associée à votre compte Nopalou vient d'être remplacée par <strong>${escapeHtml(rows[0].email)}</strong>.</p><p>Si vous n'êtes pas à l'origine de cette action, contactez immédiatement le support Nopalou : votre compte a peut-être été compromis.</p>`,
+              noteBas: 'Cet e-mail est un message de sécurité automatique, envoyé à votre ancienne adresse.',
+            }),
+          }).catch(e => console.warn('[EMAIL ALERTE CHANGEMENT EMAIL]', e.message));
+        }
+      }
+
       res.json({ user: rows[0] });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+      if (err.code === '23505') return res.status(409).json({ error: 'Cette valeur est déjà utilisée par un autre compte.' });
+      res.status(500).json({ error: err.message });
+    }
   }
 );
 
@@ -508,11 +676,14 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
     const raw9Digits = cleanPhone.startsWith('221') ? cleanPhone.slice(3) : cleanPhone;
 
     if (type === 'login') {
-      const { rows } = await pool.query(
-        `SELECT id, suspendu, supprime_le FROM utilisateurs 
-         WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1`,
-        [cleanPhone, withPlus, raw9Digits]
-      );
+      // AUD-052 : résolution déterministe — si plusieurs comptes partagent ce numéro (ne devrait
+      // plus arriver une fois le nettoyage de production fait, mais reste possible tant que l'index
+      // unique n'est pas posé), on refuse plutôt que de choisir un compte au hasard.
+      const { rows, ambigu } = await resolverComptesParTelephone(pool, cleanPhone, 'id, suspendu, supprime_le');
+      if (ambigu) {
+        console.error(`[SÉCURITÉ][AUD-052] Plusieurs comptes partagent le numéro ${cleanPhone.slice(0, 4)}**** — OTP send refusé`);
+        return res.status(409).json({ error: 'Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.' });
+      }
       if (!rows.length) {
         // Vérification si ce numéro correspond à un contact locataire/propriétaire enregistré par une agence
         const short9 = raw9Digits.length >= 9 ? raw9Digits.slice(-9) : raw9Digits;
@@ -535,11 +706,7 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
         return res.status(403).json({ error: 'Ce compte est en cours de suppression.' });
       }
     } else if (type === 'register') {
-      const { rows } = await pool.query(
-        `SELECT id FROM utilisateurs 
-         WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1`,
-        [cleanPhone, withPlus, raw9Digits]
-      );
+      const { rows } = await resolverComptesParTelephone(pool, cleanPhone, 'id');
       if (rows.length) {
         return res.status(409).json({ error: 'Un compte existe déjà avec ce numéro WhatsApp. Veuillez vous connecter.' });
       }
@@ -608,18 +775,22 @@ router.post('/whatsapp-otp-login', limiterAuth, async (req, res) => {
     
     // Trouver l'utilisateur (compatible avec formats +221, 221 et 9 chiffres)
     const cleanPhone = normalisePhone(telephone);
-    const withPlus = '+' + cleanPhone;
     const raw9Digits = cleanPhone.startsWith('221') ? cleanPhone.slice(3) : cleanPhone;
 
-    const { rows } = await pool.query(
-      `SELECT id, nom, email, email_verifie, suspendu, supprime_le, anonymise_le, COALESCE(jwt_version, 1) AS jwt_version, telephone 
-       FROM utilisateurs 
-       WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1`,
-      [cleanPhone, withPlus, raw9Digits]
+    // AUD-052 : résolution déterministe, échec explicite si plusieurs comptes partagent ce numéro —
+    // c'est précisément le scénario reproduit où le titulaire réel du numéro pouvait se retrouver
+    // authentifié sur le compte d'un tiers selon l'ordre physique (non garanti) des lignes en base.
+    const { rows, ambigu } = await resolverComptesParTelephone(
+      pool, cleanPhone,
+      'id, nom, email, email_verifie, suspendu, supprime_le, anonymise_le, COALESCE(jwt_version, 1) AS jwt_version, telephone'
     );
-    
+    if (ambigu) {
+      console.error(`[SÉCURITÉ][AUD-052] Plusieurs comptes partagent le numéro ${cleanPhone.slice(0, 4)}**** — OTP login refusé`);
+      return res.status(409).json({ error: 'Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.' });
+    }
+
     let user = rows[0];
-    
+
     if (!user) {
       // Auto-provisioning sécurisé pour un locataire/bailleur reconnu en base contacts_immo
       const short9 = raw9Digits.length >= 9 ? raw9Digits.slice(-9) : raw9Digits;
@@ -668,32 +839,38 @@ router.post('/whatsapp-otp-register', limiterAuth, async (req, res) => {
     let { telephone, code, nom } = req.body;
     telephone = normalisePhone(telephone);
     
+    // AUD-066 : sans ce contrôle, un nom manquant provoque un 500 (NOT NULL sur utilisateurs.nom)
+    if (!nom || typeof nom !== 'string' || !nom.trim()) {
+      return res.status(400).json({ error: 'Le nom complet est obligatoire' });
+    }
+
     const verif = await verifierOtpPhone(telephone, 'register', code);
     if (!verif.valide) {
       return res.status(verif.tropDeTentatives ? 429 : 400).json({ error: verif.error });
     }
-    
+
     // Vérifier si l'utilisateur existe déjà (compatible formats +221, 221 et 9 chiffres)
     const cleanPhone = normalisePhone(telephone);
-    const withPlus = '+' + cleanPhone;
-    const raw9Digits = cleanPhone.startsWith('221') ? cleanPhone.slice(3) : cleanPhone;
 
-    const exist = await pool.query(
-      `SELECT id FROM utilisateurs WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1`,
-      [cleanPhone, withPlus, raw9Digits]
-    );
-    if (exist.rows.length) return res.status(409).json({ error: 'Un compte existe déjà avec ce numéro WhatsApp. Veuillez vous connecter.' });
-    
+    const { rows: exist } = await resolverComptesParTelephone(pool, cleanPhone, 'id');
+    if (exist.length) return res.status(409).json({ error: 'Un compte existe déjà avec ce numéro WhatsApp. Veuillez vous connecter.' });
+
     const email = `${telephone}@whatsapp.nopalou.com`;
     const plainPassword = require('crypto').randomBytes(16).toString('hex');
     const bcrypt = require('bcryptjs');
     const hash = await bcrypt.hash(plainPassword, 12);
-    
+
     const codeApporteur = await genererCodeUnique();
-    const insertRes = await pool.query(
-      'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie, est_apporteur, code_apporteur, jwt_version) VALUES ($1, $2, $3, $4, true, true, $5, 1) RETURNING id, nom, email, telephone, code_apporteur, jwt_version',
-      [nom, email, hash, telephone, codeApporteur]
-    );
+    let insertRes;
+    try {
+      insertRes = await pool.query(
+        'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, email_verifie, est_apporteur, code_apporteur, jwt_version) VALUES ($1, $2, $3, $4, true, true, $5, 1) RETURNING id, nom, email, telephone, code_apporteur, jwt_version',
+        [nom.trim(), email, hash, telephone, codeApporteur]
+      );
+    } catch (insertErr) {
+      if (insertErr.code === '23505') return res.status(409).json({ error: 'Un compte existe déjà avec ce numéro WhatsApp. Veuillez vous connecter.' });
+      throw insertErr;
+    }
     const user = insertRes.rows[0];
     
     const token = jwt.sign({ userId: user.id, jwtVersion: 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -708,15 +885,28 @@ router.post('/whatsapp-otp-register', limiterAuth, async (req, res) => {
 // POST /api/auth/whatsapp-login - Demander un lien magique via WhatsApp
 router.post('/whatsapp-login', limiterAuth, async (req, res) => {
   try {
-    let { telephone, nom } = req.body;
+    let { telephone, nom, code } = req.body;
     if (!telephone) return res.status(400).json({ error: 'Numéro de téléphone requis' });
-    
+
     telephone = normalisePhone(telephone);
     if (telephone.length < 9) return res.status(400).json({ error: 'Numéro invalide' });
 
-    const { rows } = await pool.query('SELECT id, nom, email, code_apporteur FROM utilisateurs WHERE telephone=$1', [telephone]);
+    // AUD-054 : sans cette vérification, n'importe quel appelant anonyme pouvait faire créer un
+    // compte « vérifié » pour n'importe quel numéro et déclencher l'envoi d'un message WhatsApp non
+    // sollicité — aucune preuve de possession du numéro n'était exigée. On exige désormais le même
+    // OTP que les autres parcours (envoyé via POST /whatsapp-otp-send) avant de créer quoi que ce soit.
+    const verif = await verifierOtpPhone(telephone, 'magic_login', code);
+    if (!verif.valide) {
+      return res.status(verif.tropDeTentatives ? 429 : 400).json({ error: verif.error });
+    }
+
+    const { rows, ambigu } = await resolverComptesParTelephone(pool, telephone, 'id, nom, email, code_apporteur');
+    if (ambigu) {
+      console.error(`[SÉCURITÉ][AUD-052] Plusieurs comptes partagent le numéro ${telephone.slice(0, 4)}**** — lien magique refusé`);
+      return res.status(409).json({ error: 'Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.' });
+    }
     let user;
-    
+
     if (rows.length) {
       user = rows[0];
     } else {

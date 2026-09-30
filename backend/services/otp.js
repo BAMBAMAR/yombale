@@ -169,7 +169,10 @@ async function genererOtpPhone(telephone, action = 'auth') {
   const hashed = hashOtp(code, sel);
   const expireA = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-  // Invalider les codes déjà expirés pour ce numéro
+  // AUD-062 : invalider TOUT code non utilisé pour ce (numéro, action) — expiré ou non — avant d'en
+  // émettre un nouveau. Sans cela, plusieurs codes restaient simultanément valides (un par envoi),
+  // divisant d'autant l'espace de recherche effectif et démultipliant le budget d'essais faux
+  // puisque le compteur d'essais ne décrémente que sur le code le plus récent (voir verifierOtpPhone).
   await pool.query(`
     UPDATE auth_otp_phones
     SET utilise = TRUE
@@ -177,9 +180,9 @@ async function genererOtpPhone(telephone, action = 'auth') {
       telephone = $1
       OR RIGHT(REGEXP_REPLACE(telephone, '[^0-9]', '', 'g'), 9) = $2
     )
-    AND expire_a < NOW()
+    AND action = $3
     AND utilise = FALSE
-  `, [normPhone, shortPh]);
+  `, [normPhone, shortPh, action]);
 
   await pool.query(`
     INSERT INTO auth_otp_phones (telephone, action, code_hash, code_sel, expire_a)
@@ -240,6 +243,10 @@ async function verifierOtpPhone(telephone, action, codeSaisi) {
       const bufExpected = Buffer.from(recentValid[0].code_hash, 'hex');
       const bufActual = Buffer.from(computedHash, 'hex');
       if (bufExpected.length === bufActual.length && crypto.timingSafeEqual(bufExpected, bufActual)) {
+        // AUD-062 : cette fenêtre d'idempotence ne doit couvrir qu'un double-clic/rejeu réseau
+        // accidentel, pas rester un moyen de connexion valable par quiconque intercepte le code
+        // pendant 60 s. On expire immédiatement l'enregistrement après ce premier rejeu réussi.
+        await pool.query('UPDATE auth_otp_phones SET expire_a = NOW() WHERE id = $1', [recentValid[0].id]);
         return { valide: true, dejaValide: true };
       }
     }
