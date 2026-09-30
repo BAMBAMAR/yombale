@@ -1315,6 +1315,33 @@ module.exports = async function migrateInline(customConnStr = null) {
     console.log('[MIGRATE] ✅ Table depenses OK');
   } catch (e) { console.warn('[MIGRATE] depenses:', e.message); }
 
+  // Audit hors-ligne (AUD-090/093/095/097) : clés d'idempotence des objets créés hors-ligne et écarts de stock.
+  // Migrations additives et idempotentes ; chaque clé est unique par boutique.
+  try {
+    await pool.query(`ALTER TABLE caisse_clients_credits ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_credits_idempotency ON caisse_clients_credits(boutique_id, idempotency_key) WHERE idempotency_key IS NOT NULL`);
+    await pool.query(`ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_pos_sessions_idempotency ON boutique_pos_sessions(boutique_id, idempotency_key) WHERE idempotency_key IS NOT NULL`);
+    await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_commandes_boutique_idempotency ON commandes_boutique(boutique_id, idempotency_key) WHERE idempotency_key IS NOT NULL`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS stock_ecarts (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id        UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id         UUID,
+        produit_nom        VARCHAR(300),
+        vente_reference    VARCHAR(100),
+        stock_avant        INTEGER,
+        quantite_vendue    INTEGER,
+        quantite_manquante INTEGER,
+        resolu             BOOLEAN NOT NULL DEFAULT false,
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_stock_ecarts_boutique ON stock_ecarts(boutique_id, resolu, created_at DESC);
+    `);
+    console.log('[MIGRATE] ✅ Idempotence hors-ligne + stock_ecarts OK');
+  } catch (e) { console.warn('[MIGRATE] hors-ligne:', e.message); }
+
   // Boost annonces + parrainage + API partenaires + commissions boutiques Business
   const colonnesCommerciales = [
     `ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS boost_until TIMESTAMPTZ`,

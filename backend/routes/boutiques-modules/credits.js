@@ -1,6 +1,7 @@
 // backend/routes/boutiques-modules/credits.js
 // Carnet de dettes & crédits clients (Boutique)
 const router = require('express').Router();
+const { parseClientDate } = require('../../lib/clientDate');
 const { param } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional } = require('../../middlewares/auth');
@@ -135,11 +136,28 @@ router.post('/:id/credits-clients', verifierToken, async (req, res) => {
       return res.status(400).json({ error: 'Nom et téléphone du client requis' });
     }
 
-    const r = await pool.query(
-      `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, adresse, plafond_max, note_client, solde)
-       VALUES ($1, $2, $3, $4, $5, $6, 0) RETURNING *`,
-      [b.id, nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null]
-    );
+    // AUD-090 : un client créé hors-ligne est envoyé avec sa clé d'idempotence (identifiant local) ; un
+    // renvoi après réponse perdue retrouve le même client au lieu d'en créer un second.
+    const cleIdem = typeof req.body.idempotency_key === 'string' && req.body.idempotency_key.length > 0 && req.body.idempotency_key.length <= 128 ? req.body.idempotency_key : null;
+    if (cleIdem) {
+      const ex = await pool.query(`SELECT * FROM caisse_clients_credits WHERE boutique_id = $1 AND idempotency_key = $2 LIMIT 1`, [b.id, cleIdem]);
+      if (ex.rows[0]) return res.json({ success: true, duplicate: true, client: ex.rows[0] });
+    }
+
+    let r;
+    try {
+      r = await pool.query(
+        `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, adresse, plafond_max, note_client, solde, idempotency_key)
+         VALUES ($1, $2, $3, $4, $5, $6, 0, $7) RETURNING *`,
+        [b.id, nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null, cleIdem]
+      );
+    } catch (insErr) {
+      if (insErr.code === '23505' && cleIdem) {
+        const ex = await pool.query(`SELECT * FROM caisse_clients_credits WHERE boutique_id = $1 AND idempotency_key = $2 LIMIT 1`, [b.id, cleIdem]);
+        if (ex.rows[0]) return res.json({ success: true, duplicate: true, client: ex.rows[0] });
+      }
+      throw insErr;
+    }
 
     res.status(201).json({ success: true, client: r.rows[0] });
   } catch (err) {
@@ -404,9 +422,9 @@ router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (
       let hist;
       try {
         hist = await client.query(
-          `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp, reference)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-          [clientId, bqId, type, numMontant, mode_paiement || 'credit', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance, idempotencyKey]
+          `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp, reference, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11::timestamptz, NOW())) RETURNING *`,
+          [clientId, bqId, type, numMontant, mode_paiement || 'credit', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance, idempotencyKey, parseClientDate(req.body.client_date)]
         );
       } catch (insertErr) {
         if (insertErr.code === '23505' && idempotencyKey) { // unique violation

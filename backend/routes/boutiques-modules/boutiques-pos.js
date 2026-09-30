@@ -9,6 +9,7 @@ const { uploadBuffer } = require('../../services/cloudinary');
 const { scrapeProductFromUrl } = require('../../services/magic-import');
 const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog');
 const cfg = require('../../lib/settingsCache');
+const { parseClientDate } = require('../../lib/clientDate');
 const { enregistrerAuditLog } = require('../../lib/auditLogger');
 const { normalizeSocialUrl } = require('../../services/social-parser');
 const {
@@ -74,6 +75,8 @@ async function ensureRefColSize() {
 }
 
 router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
+  let idemCatch = null;
+  let boutiqueCatch = null;
   try {
     await ensureRefColSize();
     const idParam = req.params.id;
@@ -94,6 +97,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutique = bRes.rows[0];
     const boutiqueId = boutique.id;
+    boutiqueCatch = boutiqueId;
 
     // ── Sécurité Anti-IDOR & Terminal POS : session marchand OU jeton caisse valide ──
     let accessGranted = false;
@@ -136,6 +140,10 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     const idempotencyKey = typeof idempotency_key === 'string' && idempotency_key.length > 0 && idempotency_key.length <= 128
       ? idempotency_key
       : null;
+    idemCatch = idempotencyKey;
+    // AUD-096 : date réelle de la vente saisie hors-ligne (bornée), sinon l'instant du serveur.
+    const dateVente = parseClientDate(req.body.client_date);
+    const conflits = [];
 
     // Validation multi-tenant du caissier_id
     let validCaissierId = null;
@@ -238,6 +246,16 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           const item = calculation.items[idx];
           const qte = Number(item.quantite || 1);
 
+          // AUD-097 : une vente hors-ligne peut porter sur un article épuisé entre-temps (autre appareil). La marchandise
+          // est déjà remise : on accepte la vente mais on enregistre l'écart au lieu de le masquer par GREATEST(0, …).
+          if (item.id && /^[0-9a-f-]{36}$/i.test(item.id)) {
+            const sRes = await dbClient.query('SELECT nom, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2 FOR UPDATE', [item.id, boutiqueId]);
+            const stockAvant = sRes.rows[0] ? sRes.rows[0].stock_quantite : null;
+            if (stockAvant !== null && stockAvant !== undefined && qte > Number(stockAvant)) {
+              conflits.push({ produit_id: item.id, produit_nom: sRes.rows[0].nom, stock_avant: Number(stockAvant), quantite_vendue: qte, quantite_manquante: qte - Number(stockAvant) });
+            }
+          }
+
           // 1. Décrémenter le stock dans la base PostgreSQL
           let pRes = null;
           if (item.id && /^[0-9a-f-]{36}$/i.test(item.id)) {
@@ -273,7 +291,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
 
           await dbClient.query(
             `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, prix_achat, frais_livraison, montant_total, client_nom, methode_paiement, caissier_nom, caissier_id, session_id, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, $10, $11, $12, $13, NOW())`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, $10, $11, $12, $13, COALESCE($14::timestamptz, NOW()))`,
             [
               itemRef,
               boutiqueId,
@@ -287,7 +305,8 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
               modePaiement || 'cash',
               nomCaissierFinal,
               validCaissierId,
-              targetSessionId
+              targetSessionId,
+              dateVente
             ]
           );
         }
@@ -298,7 +317,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         const totalQteGlobale = calculation.items.reduce((acc, i) => acc + Number(i.quantite || 1), 0);
         await dbClient.query(
           `INSERT INTO commandes_boutique (reference, boutique_id, client_nom, client_telephone, statut, nom_produit, quantite, montant_total, methode_paiement, created_at)
-           VALUES ($1, $2, $3, $4, 'livree', $5, $6, $7, $8, NOW())
+           VALUES ($1, $2, $3, $4, 'livree', $5, $6, $7, $8, COALESCE($9::timestamptz, NOW()))
            ON CONFLICT (reference) DO NOTHING`,
           [
             refVente,
@@ -308,7 +327,8 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
             resumeNoms.slice(0, 200),
             totalQteGlobale,
             netAPayer,
-            modePaiement || 'cash'
+            modePaiement || 'cash',
+            dateVente
           ]
         );
 
@@ -319,12 +339,12 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
             boutique_id, client_id, caissier_id, session_id, type, reference, statut,
             total_ht, total_tva, timbre_fiscal, retenue_brs, total_ttc, net_a_payer,
             mode_paiement, notes, items, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, 'facture', $5, 'paye', $6, $7, $8, $9, $10, $11, $12, 'Vente directe caisse POS', $13, NOW(), NOW())
+          ) VALUES ($1, $2, $3, $4, 'facture', $5, 'paye', $6, $7, $8, $9, $10, $11, $12, 'Vente directe caisse POS', $13, COALESCE($14::timestamptz, NOW()), NOW())
           ON CONFLICT (reference) DO NOTHING`,
           [
             boutiqueId, validClientId, validCaissierId, targetSessionId, refVente,
             calculation.total_ht, calculation.total_tva, timbre, retenueBRS, calculation.total_ttc, netAPayer,
-            modePaiement || 'cash', JSON.stringify(calculation.items)
+            modePaiement || 'cash', JSON.stringify(calculation.items), dateVente
           ]
         );
 
@@ -467,6 +487,14 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           };
         }
 
+        for (const cf of conflits) {
+          await dbClient.query(
+            `INSERT INTO stock_ecarts (boutique_id, produit_id, produit_nom, vente_reference, stock_avant, quantite_vendue, quantite_manquante)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [boutiqueId, cf.produit_id, cf.produit_nom, refVente, cf.stock_avant, cf.quantite_vendue, cf.quantite_manquante]
+          );
+        }
+
         await dbClient.query('COMMIT');
 
         // Analytics POS : enregistrement asynchrone non bloquant pour le tableau de bord
@@ -486,9 +514,17 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         success: true,
         message: 'Stock, Comptabilité et Facture POS sauvegardés',
         reference: refVente,
-        fidelite: fideliteResult
+        fidelite: fideliteResult,
+        conflits
       });
   } catch (err) {
+    // AUD-105 : deux envois simultanés de la même vente : le second heurte l'index unique. C'est un doublon, pas une panne.
+    if (err && err.code === '23505' && idemCatch && boutiqueCatch) {
+      try {
+        const ex = await pool.query('SELECT reference FROM caisse_documents WHERE boutique_id = $1 AND reference = $2 LIMIT 1', [boutiqueCatch, idemCatch]);
+        if (ex.rows[0]) return res.json({ success: true, duplicate: true, reference: ex.rows[0].reference });
+      } catch (_) { /* on retombe sur l'erreur générale */ }
+    }
     console.error('[BOUTIQUE POS VENTE ERREUR]', err.code, err.message, err.detail || '', err.stack?.split('\n').slice(0, 5).join(' | '));
     res.status(500).json({
       error: 'Erreur serveur',
@@ -793,11 +829,19 @@ router.post('/:id/pos-sessions/ouvrir', verifierToken, async (req, res) => {
       }
     }
 
+    // AUD-093 : une session ouverte hors-ligne est créée ici à la synchronisation ; la clé d'idempotence
+    // (identifiant local `loc_…`) évite d'en créer deux si la réponse est perdue.
+    const cleIdem = typeof req.body.idempotency_key === 'string' && req.body.idempotency_key.length > 0 && req.body.idempotency_key.length <= 128 ? req.body.idempotency_key : null;
+    if (cleIdem) {
+      const ex = await pool.query(`SELECT * FROM boutique_pos_sessions WHERE boutique_id = $1 AND idempotency_key = $2 LIMIT 1`, [boutiqueId, cleIdem]);
+      if (ex.rows[0]) return res.json({ success: true, duplicate: true, session: ex.rows[0] });
+    }
+
     const r = await pool.query(
-      `INSERT INTO boutique_pos_sessions (boutique_id, caissier_id, caissier_nom, fond_caisse_initial, date_ouverture, statut)
-       VALUES ($1, $2, $3, $4, NOW(), 'ouverte')
+      `INSERT INTO boutique_pos_sessions (boutique_id, caissier_id, caissier_nom, fond_caisse_initial, date_ouverture, statut, idempotency_key)
+       VALUES ($1, $2, $3, $4, COALESCE($5::timestamptz, NOW()), 'ouverte', $6)
        RETURNING *`,
-      [boutiqueId, validCaissierId, nomCaissierFinal, Number(fondDeCaisse || 0)]
+      [boutiqueId, validCaissierId, nomCaissierFinal, Number(fondDeCaisse || 0), parseClientDate(req.body.client_date), cleIdem]
     );
 
     // Enregistrement dans le Journal d'Audit & Sécurité
@@ -838,7 +882,20 @@ router.post('/:id/pos-sessions/cloturer', verifierToken, async (req, res) => {
     const nVentes = req.body.nbVentes ?? req.body.nb_ventes;
     const cNom = req.body.caissierNom || req.body.caissier_nom;
 
-    if (targetSessionId && /^[0-9a-f-]{36}$/i.test(targetSessionId)) {
+    // AUD-093 : la route ne répond « succès » que si une session a réellement été clôturée. Un identifiant
+    // absent ou non-UUID (session jamais ouverte côté serveur) est une erreur, pas un succès silencieux.
+    if (!targetSessionId || !/^[0-9a-f-]{36}$/i.test(String(targetSessionId))) {
+      return res.status(400).json({ success: false, error: 'Session de caisse inconnue du serveur : clôture impossible.', code: 'SESSION_INVALIDE' });
+    }
+    const sessionExistante = await pool.query(`SELECT id, statut FROM boutique_pos_sessions WHERE id = $1 AND boutique_id = $2`, [targetSessionId, boutiqueId]);
+    if (!sessionExistante.rows[0]) {
+      return res.status(404).json({ success: false, error: 'Session de caisse introuvable pour cette boutique.', code: 'SESSION_INTROUVABLE' });
+    }
+    if (sessionExistante.rows[0].statut === 'cloturee') {
+      return res.json({ success: true, duplicate: true, message: 'Session déjà clôturée' });
+    }
+
+    {
       // Réconciliation comptable SQL directe sur la session
       const aggRes = await pool.query(
         `SELECT 
@@ -862,7 +919,7 @@ router.post('/:id/pos-sessions/cloturer', verifierToken, async (req, res) => {
 
       const updRes = await pool.query(
         `UPDATE boutique_pos_sessions
-         SET date_cloture = NOW(),
+         SET date_cloture = COALESCE($10::timestamptz, NOW()),
              statut = 'cloturee',
              especes_comptees = $1,
              ventes_especes = $2,
@@ -883,7 +940,8 @@ router.post('/:id/pos-sessions/cloturer', verifierToken, async (req, res) => {
           finalTotal,
           finalNb,
           targetSessionId,
-          boutiqueId
+          boutiqueId,
+          parseClientDate(req.body.client_date)
         ]
       );
 
@@ -1243,4 +1301,35 @@ router.put('/:id/pos-regles-remises', verifierToken, async (req, res) => {
 });
 
 // ── GET /api/boutiques/:id/export-complet — Portabilité Totale : Exporter toute la boutique en 1 Clic
+// ── AUD-097 : écarts de stock constatés à l'encaissement (vente hors-ligne d'un article épuisé entre-temps) ──
+// La vente est acceptée (la marchandise est déjà remise) ; l'écart est consigné ici pour recomptage.
+router.get('/:id/stock-ecarts', verifierToken, async (req, res) => {
+  try {
+    const b = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!b && !req.user?.is_admin) return res.status(403).json({ error: 'Accès non autorisé aux écarts de stock' });
+    const r = await pool.query(
+      `SELECT id, produit_id, produit_nom, vente_reference, stock_avant, quantite_vendue, quantite_manquante, resolu, created_at
+       FROM stock_ecarts WHERE boutique_id = $1 AND resolu = false ORDER BY created_at DESC LIMIT 200`,
+      [b.id]
+    );
+    res.json({ success: true, ecarts: r.rows });
+  } catch (err) {
+    console.error('[STOCK ECARTS GET]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.patch('/:id/stock-ecarts/:ecartId/resoudre', verifierToken, async (req, res) => {
+  try {
+    const b = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!b && !req.user?.is_admin) return res.status(403).json({ error: 'Accès non autorisé aux écarts de stock' });
+    if (!/^[0-9a-f-]{36}$/i.test(req.params.ecartId)) return res.status(400).json({ error: 'Identifiant invalide' });
+    const r = await pool.query(`UPDATE stock_ecarts SET resolu = true WHERE id = $1 AND boutique_id = $2 RETURNING id`, [req.params.ecartId, b.id]);
+    if (!r.rows[0]) return res.status(404).json({ error: 'Écart introuvable' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[STOCK ECARTS RESOUDRE]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 module.exports = router;
