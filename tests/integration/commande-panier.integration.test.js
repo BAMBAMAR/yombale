@@ -234,13 +234,25 @@ describeIntegration('Panier réel — prix, stock, statuts, virement, suivi, cai
       await pool.query(`INSERT INTO commandes_boutique (reference, boutique_id, nom_produit, quantite, prix_unitaire, montant_total, client_nom, client_telephone, statut, methode_paiement)
                         VALUES ($1,$2,'x',1,2000,2000,'v',$3,'livree','cash')`, [`C-VIP${Date.now()}${i}`, bM, telVip]);
     }
-    const st = await api('get', `/api/boutiques/club-vip/statut?telephone=${telVip}`);
+    // Désactivé par défaut : ni affichage ni facturation de la remise
+    const off = await api('get', `/api/boutiques/club-vip/statut?telephone=${telVip}&boutique=${bM}`);
+    expect(off.body.reduction_livraison).toBe(0);
+    expect(off.body.club_vip_boutique).toBe(false);
+    const cmdOff = await api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: telVip, methode_paiement: 'cash', zone_livraison_id: zone.id, articles: [{ produit_id: p.id, quantite: 1 }] });
+    expect(cmdOff.body.montant_total).toBe(4500);
+    // seul le propriétaire peut activer ; un autre marchand est refusé
+    expect((await api('put', `/api/boutiques/${bM}/club-vip`, { actif: true }, N.token)).status).toBe(403);
+    expect((await api('put', `/api/boutiques/${bM}/club-vip`, { actif: 'oui' }, M.token)).status).toBe(400);
+    expect((await api('put', `/api/boutiques/${bM}/club-vip`, { actif: true }, M.token)).body.actif).toBe(true);
+    expect((await api('get', `/api/boutiques/${bM}/club-vip`, null, M.token)).body.actif).toBe(true);
+
+    const st = await api('get', `/api/boutiques/club-vip/statut?telephone=${telVip}&boutique=${bM}`);
     expect(st.body.palier).toBe('Silver');
     expect(st.body.reduction_livraison).toBe(500);
-    const inconnu = await api('get', '/api/boutiques/club-vip/statut?telephone=770999888');
+    const inconnu = await api('get', `/api/boutiques/club-vip/statut?telephone=770999888&boutique=${bM}`);
     expect(inconnu.body.palier).toBe('Bronze');
 
-    const cmd = await api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: telVip, methode_paiement: 'cash', zone_livraison_id: zone.id, frais_livraison: 0, articles: [{ produit_id: p.id, quantite: 1 }] });
+    const cmd =await api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: telVip, methode_paiement: 'cash', zone_livraison_id: zone.id, frais_livraison: 0, articles: [{ produit_id: p.id, quantite: 1 }] });
     expect(cmd.body.montant_total).toBe(4000); // 2000 + 2500 - 500
     const row1 = (await pool.query('SELECT remise_club_vip, frais_livraison FROM commandes_boutique WHERE reference=$1', [cmd.body.reference])).rows[0];
     expect(Number(row1.remise_club_vip)).toBe(500);
@@ -248,14 +260,14 @@ describeIntegration('Panier réel — prix, stock, statuts, virement, suivi, cai
     const bronze = await api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: '770999888', methode_paiement: 'cash', zone_livraison_id: zone.id, frais_livraison: 0, articles: [{ produit_id: p.id, quantite: 1 }] });
     expect(bronze.body.montant_total).toBe(4500);
 
-    // reversement : le marchand reçoit comme s'il n'y avait pas de remise (supportée par Nopalou)
+    // reversement : la remise est à la charge du marchand (déjà déduite du total payé, rien n'est ajouté par Nopalou)
     const avant = payouts.length;
     const { rows: [paid] } = await pool.query(
       `INSERT INTO commandes_boutique (reference, boutique_id, nom_produit, quantite, prix_unitaire, montant_total, remise_club_vip, client_nom, client_telephone, methode_paiement, statut, paiement_recu)
        VALUES ('C-TESTVIP1', $1, 'x', 1, 99500, 99500, 500, 'c', '770009999', 'wave', 'payee', true) RETURNING id`, [bM]);
     await patch(bM, paid.id, { statut: 'livree' }, M.token);
     expect(payouts.length).toBe(avant + 1);
-    expect(payouts[payouts.length - 1].amount).toBe(98010); // 99500 - 1990 (2 %) + 500 pris en charge par Nopalou
+    expect(payouts[payouts.length - 1].amount).toBe(97510); // 99500 - 1990 (2 %), sans compensation
   });
 
   test('AUD-085 : PUT partiel conserve la description ; stock obsolète refusé', async () => {

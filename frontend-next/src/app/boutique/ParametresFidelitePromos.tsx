@@ -6,6 +6,7 @@ import { updateBoutique, createPromotion, deletePromotion, getBoutiquePromotions
 import { useToast } from '@/context/ToastContext'
 import type { ActionState } from '@/lib/backend-fetch'
 import { Gift, ShieldCheck, Tag } from 'lucide-react'
+import ParametreClubVip from './ParametreClubVip'
 import FideliteTab from './fidelite/FideliteTab'
 import RemisesPosTab, { type MotifRemise } from './fidelite/RemisesPosTab'
 import PromotionsTab from './fidelite/PromotionsTab'
@@ -241,6 +242,8 @@ export default function ParametresFidelitePromos({
           <span>3. Codes Promo &amp; Coupons</span>
         </button>
       </div>
+
+      <ParametreClubVip boutiqueId={boutique.id} />
 
       {savedMessage && (
         <div

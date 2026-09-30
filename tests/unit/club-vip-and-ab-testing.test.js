@@ -24,7 +24,23 @@ beforeEach(() => {
   pool.query.mockReset();
 });
 
+// Le simulateur répond selon la requête : palier (commandes_boutique) et activation du Club VIP par la boutique
+const simulerVip = (palierRow, actif = true) => pool.query.mockImplementation(async (sql) => {
+  if (/FROM commandes_boutique/.test(String(sql))) return { rows: [palierRow] };
+  if (/club_vip_actif/.test(String(sql))) return { rows: [{ actif }] };
+  return { rows: [] };
+});
+
 describe('GET /api/boutiques/club-vip/statut (Spec 09)', () => {
+  test('aucune remise si la boutique n\'a pas activé le Club VIP (désactivé par défaut)', async () => {
+    simulerVip({ nb_commandes: '12', total_depense: '340000' }, false);
+    const res = await request(app).get(`/api/boutiques/club-vip/statut?telephone=771234567&boutique=${boutiqueId}`);
+    expect(res.status).toBe(200);
+    expect(res.body.reduction_livraison).toBe(0);
+    expect(res.body.livraison_offerte).toBe(false);
+    expect(res.body.club_vip_boutique).toBe(false);
+  });
+
   test('retourne le palier Bronze par défaut si téléphone absent ou invalide', async () => {
     const res = await request(app).get('/api/boutiques/club-vip/statut?telephone=123');
 
@@ -36,11 +52,9 @@ describe('GET /api/boutiques/club-vip/statut (Spec 09)', () => {
   });
 
   test('calcule le palier Gold et remise 1 000 FCFA pour client avec 6 commandes', async () => {
-    pool.query.mockResolvedValueOnce({
-      rows: [{ nb_commandes: '6', total_depense: '160000' }]
-    });
+    simulerVip({ nb_commandes: '6', total_depense: '160000' });
 
-    const res = await request(app).get('/api/boutiques/club-vip/statut?telephone=771234567');
+    const res = await request(app).get(`/api/boutiques/club-vip/statut?telephone=771234567&boutique=${boutiqueId}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -52,11 +66,9 @@ describe('GET /api/boutiques/club-vip/statut (Spec 09)', () => {
   });
 
   test('calcule le palier Platine VIP avec livraison offerte pour grand acheteur', async () => {
-    pool.query.mockResolvedValueOnce({
-      rows: [{ nb_commandes: '12', total_depense: '340000' }]
-    });
+    simulerVip({ nb_commandes: '12', total_depense: '340000' });
 
-    const res = await request(app).get('/api/boutiques/club-vip/statut?telephone=221770000000');
+    const res = await request(app).get(`/api/boutiques/club-vip/statut?telephone=221770000000&boutique=${boutiqueId}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

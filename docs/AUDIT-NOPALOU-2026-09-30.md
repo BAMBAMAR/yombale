@@ -531,6 +531,6 @@ Commits du périmètre depuis le dernier rapport : `744272e0` (checkout express,
 | AUD-081 | corrigé pour `pos-vente`, `pos-incident` et `boutiques-equipe.js` (4 routes) ; **reste ouvert** : verrouillage des essais de PIN | même fichier |
 | AUD-082 | partiellement corrigé : limiteur ajouté (inactif hors production, donc rafale non rejouée) ; saturation du pool non traitée | lecture de code |
 | AUD-083 | corrigé (annulation + 502) ; le message affiché côté panier n'a pas été vérifié dans un navigateur | test d'intégration API |
-| AUD-084 | corrigé, y compris Club VIP : palier réel côté serveur (`lib/clubVip.js`), facturé = affiché, reversement marchand non pénalisé ; coût pour Nopalou à valider | pipeline express + panier + test Club VIP |
+| AUD-084 | corrigé, y compris Club VIP : palier réel côté serveur (`lib/clubVip.js`), facturé = affiché ; remise à la charge du marchand, activée par lui (`club_vip_actif`, désactivé par défaut) | pipeline express + panier + test Club VIP |
 | AUD-085 | corrigé | même fichier |
 | AUD-086 | corrigé (critère : mêmes articles et même montant) | même fichier |

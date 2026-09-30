@@ -125,7 +125,7 @@ export function useCommander({
   useEffect(() => {
     const cleanDigits = tel.replace(/\D/g, '')
     if (cleanDigits.length >= 9) {
-      fetch(`${backendUrl}/api/boutiques/club-vip/statut?telephone=${cleanDigits}`)
+      fetch(`${backendUrl}/api/boutiques/club-vip/statut?telephone=${cleanDigits}&boutique=${encodeURIComponent(boutiqueId)}`)
         .then(r => (r.ok ? r.json() : null))
         .then(data => {
           if (data && data.success && data.reduction_livraison > 0) {

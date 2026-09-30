@@ -1205,8 +1205,9 @@ module.exports = async function migrateInline(customConnStr = null) {
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS frais_livraison NUMERIC(12,2) DEFAULT 0`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS groupe_commande UUID`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS paiement_recu BOOLEAN DEFAULT false`);
-    // Remise Club VIP sur la livraison, prise en charge par Nopalou : le reversement au marchand est calculé hors remise
+    // Remise Club VIP sur la livraison, à la charge du marchand qui l'a activée (boutiques.club_vip_actif, désactivé par défaut)
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS remise_club_vip NUMERIC(12,2) DEFAULT 0`);
+    await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS club_vip_actif BOOLEAN DEFAULT false`);
     // Attribution Social Commerce : canal d'acquisition (UTM) et post source
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS utm_source VARCHAR(100)`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS utm_medium VARCHAR(100)`);
