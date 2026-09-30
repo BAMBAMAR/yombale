@@ -13,6 +13,7 @@ import SearchWithAnchor from '@/app/SearchWithAnchor'
 import { CATEGORIES } from '../categories-data'
 import { CATEGORIES as LIB_CATEGORIES } from '@/lib/categories'
 import { SOUS_CATEGORIES } from '../sous-categories-data'
+import { safeJsonLd } from '@/lib/jsonld'
 
 function resolveCategory(slug: string) {
   if (CATEGORIES[slug]) return CATEGORIES[slug]
@@ -189,12 +190,12 @@ export default async function CategoriePage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }}
       />
       {itemListJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListJsonLd) }}
         />
       )}
 

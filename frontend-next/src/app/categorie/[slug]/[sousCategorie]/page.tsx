@@ -8,6 +8,7 @@ import JsonLd from '@/components/JsonLd'
 import { breadcrumbSchema } from '@/lib/schema-org'
 import { CATEGORIES } from '../../categories-data'
 import { SOUS_CATEGORIES } from '../../sous-categories-data'
+import { safeJsonLd } from '@/lib/jsonld'
 
 export const revalidate = 600
 
@@ -126,7 +127,7 @@ export default async function SousCategoriePage({
     <>
       <JsonLd schema={breadcrumbSchema(breadcrumbs)} />
       {itemListJsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListJsonLd) }} />
       )}
 
       <div className="page-container" style={{ paddingTop: '1.5rem' }}>

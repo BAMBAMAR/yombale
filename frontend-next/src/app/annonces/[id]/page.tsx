@@ -5,6 +5,7 @@ import AnnonceGallery from './AnnonceGallery'
 import MaskedContactPhone from '@/components/MaskedContactPhone'
 import { apiFetch } from '@/lib/api'
 import PageHeader from '@/components/PageHeader'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''
@@ -96,7 +97,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 function buildAnnonceJsonLd(annonce: Annonce): string {
   const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
-  return JSON.stringify({
+  return safeJsonLd({
     '@context': 'https://schema.org',
     '@type': 'ItemPage',
     name: annonce.titre,

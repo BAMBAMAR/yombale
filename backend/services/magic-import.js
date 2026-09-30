@@ -1,6 +1,7 @@
 // backend/services/magic-import.js — Moteur d'extraction et d'import intelligent pour la Baguette Magique
 const cheerio = require('cheerio');
 const axios = require('axios');
+const { safeGet, assertSafeUrl, assertUrlShape } = require('../lib/safeFetch');
 
 // ── Taux de conversion indicatifs vers FCFA ──
 const TAUX_CHANGE_FCFA = {
@@ -52,6 +53,10 @@ function validateSafeUrl(inputUrl) {
   if (PRIVATE_IP_REGEX.test(hostname) || hostname.endsWith('.local') || hostname.endsWith('.internal')) {
     throw new Error('Accès aux adresses locales et privées interdit (SSRF Protection)');
   }
+
+  // AUD-026 : contrôle structurel complet (IPv6, adresses mappées, CGNAT, ports, identifiants).
+  // La résolution DNS et le contrôle à la connexion sont faits par safeGet/assertSafeUrl.
+  assertUrlShape(parsed.toString());
 
   return parsed.toString();
 }
@@ -378,6 +383,7 @@ function cleanImageUrls(imageArray) {
  */
 async function scrapeProductFromUrl(rawUrl) {
   const safeUrl = validateSafeUrl(rawUrl);
+  await assertSafeUrl(safeUrl); // AUD-026 : refus explicite dès l'entrée si l'hôte résout vers une IP privée
   const parsedUrl = new URL(safeUrl);
   const host = parsedUrl.hostname.toLowerCase();
 
@@ -458,7 +464,8 @@ async function scrapeProductFromUrl(rawUrl) {
           headers['Referer'] = 'https://www.google.com/';
         }
 
-        const response = await axios.get(targetUrl, {
+        // AUD-026 : requête sortante protégée (résolution DNS contrôlée, redirections revalidées)
+        const response = await safeGet(targetUrl, {
           timeout: 6000,
           headers,
           maxRedirects: 5,

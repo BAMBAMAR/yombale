@@ -6,6 +6,7 @@ import JsonLd from '@/components/JsonLd'
 import { breadcrumbSchema } from '@/lib/schema-org'
 import ImmoCard, { type AnnonceImmo } from './ImmoCard'
 import { IMMO_LANDINGS } from './landing-data'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -60,7 +61,7 @@ export default async function ImmoLanding({
         { name: cfg.label, url: self },
       ])} />
       {itemListJsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListJsonLd) }} />
       )}
 
       <div className="page-container" style={{ paddingTop: '1.5rem' }}>

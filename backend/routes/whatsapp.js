@@ -197,28 +197,33 @@ router.post('/webhook', verifyHmac, async (req, res) => {
 });
 
 // ── GET /api/whatsapp/health — état de santé et circuit-breaker ──────────────
-router.get('/health', (req, res) => {
+router.get('/health', require('../middlewares/auth').adminSecretOnly, (req, res) => { // AUD-014 : réservé à l'admin
   res.json(whatsappHealth.getStatus());
 });
 
 // ── POST /api/whatsapp/send — envoi manuel (bouton frontend) ─────────────────
-const { tokenOptional } = require('../middlewares/auth');
+const { verifierToken } = require('../middlewares/auth');
+const { limiterWhatsappSend } = require('../middlewares/rateLimit');
 
-router.post('/send', tokenOptional, async (req, res) => {
+const SEND_TYPES = new Set(['annonce', 'immo', 'produit', 'telecom']);
+
+// AUD-027 : authentification obligatoire, destinataire = numéro du compte connecté (le numéro du corps
+// de requête est ignoré : on ne prouve pas qu'un visiteur possède le numéro qu'il saisit), limite par compte.
+router.post('/send', verifierToken, limiterWhatsappSend, async (req, res) => {
   try {
-    const { type, id, phone } = req.body;
+    const { type, id } = req.body;
     if (!type || !id) return res.status(400).json({ error: 'type et id requis' });
+    if (!SEND_TYPES.has(String(type))) return res.status(400).json({ error: 'type invalide' });
 
-    // Récupérer le numéro : depuis le compte connecté ou depuis le body
-    let tel = phone;
-    if (req.user?.userId && !tel) {
-      const { pool } = require('../models/db');
-      const u = await pool.query('SELECT telephone FROM utilisateurs WHERE id=$1', [req.user.userId]);
-      tel = u.rows[0]?.telephone;
-    }
-    if (!tel) return res.status(400).json({ error: 'Numéro de téléphone requis' });
+    const { pool } = require('../models/db');
+    const u = await pool.query('SELECT telephone FROM utilisateurs WHERE id=$1', [req.user.userId]);
+    const tel = u.rows[0]?.telephone;
+    if (!tel) return res.status(400).json({ error: 'Aucun numéro de téléphone sur votre compte' });
 
-    await require('../services/whatsapp').sendFiche(type, id, tel);
+    const { sendFiche, estDesinscrit } = require('../services/whatsapp');
+    if (await estDesinscrit(tel)) return res.status(403).json({ error: 'Numéro désinscrit des messages WhatsApp' });
+
+    await sendFiche(type, id, tel);
     res.json({ success: true });
   } catch (err) {
     console.error('[WHATSAPP SEND]', err.message);

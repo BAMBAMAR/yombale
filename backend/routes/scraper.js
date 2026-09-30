@@ -17,7 +17,7 @@ const { adminSecretOnly: adminOnly } = require('../middlewares/auth');
 
 // ── GET /api/scraper/facebook/progress ────────────────────────
 // Retourne l'état et la progression en direct du scraper Facebook
-router.get('/facebook/progress', (req, res) => {
+router.get('/facebook/progress', adminOnly, (req, res) => { // AUD-014 : état interne réservé à l'admin
   const progressFile = path.join(__dirname, '../.fb-scraper-progress.json');
   if (!fs.existsSync(progressFile)) {
     return res.json({ status: 'idle', message: 'Aucun scraping Facebook récent' });
@@ -32,7 +32,7 @@ router.get('/facebook/progress', (req, res) => {
 
 // ── GET /api/scraper/status ───────────────────────────────────
 // Statistiques globales : produits, offres, dernière sync par marchand
-router.get('/status', async (req, res) => {
+router.get('/status', adminOnly, async (req, res) => { // AUD-014
   try {
     const [produits, offres, marchands, historique] = await Promise.all([
       pool.query('SELECT COUNT(*) FROM produits'),
@@ -188,7 +188,7 @@ router.get('/diagnostic-new/:siteId', adminOnly, async (req, res) => {
 
 // ── GET /api/scraper/sites ────────────────────────────────────
 // Liste tous les nouveaux sites configurés
-router.get('/sites', async (req, res) => {
+router.get('/sites', adminOnly, async (req, res) => { // AUD-014
   const { SITES_CONFIG } = require('../services/scraper-new-sites');
   res.json({
     sites: SITES_CONFIG.map(s => ({

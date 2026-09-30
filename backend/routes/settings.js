@@ -3,11 +3,35 @@ const router = require('express').Router();
 const { adminSecretOnly } = require('../middlewares/auth');
 const s = require('../lib/settingsCache');
 
-// GET /api/settings — toutes les configs (admin seulement)
+// AUD-029 : les clés sensibles ne sont jamais renvoyées en clair, quel que soit le rôle admin.
+// Le masque conserve les 4 derniers caractères pour reconnaître la valeur sans la divulguer.
+const SENSITIVE_KEY_RE = /(token|secret|api_key|apikey|password|passwd|signing|private_key)/i;
+const MASK_PREFIX = '****';
+
+function maskValue(value) {
+  const str = value == null ? '' : String(value);
+  if (!str) return '';
+  return str.length > 8 ? MASK_PREFIX + str.slice(-4) : MASK_PREFIX;
+}
+
+function maskSettings(all) {
+  const out = {};
+  for (const [k, v] of Object.entries(all)) {
+    out[k] = SENSITIVE_KEY_RE.test(k) ? maskValue(v) : v;
+  }
+  return out;
+}
+
+// Une valeur renvoyée telle quelle par le masque (formulaire admin qui ré-enregistre) ne doit pas écraser le secret.
+function isMaskedValue(key, value) {
+  return SENSITIVE_KEY_RE.test(key) && typeof value === 'string' && value.startsWith(MASK_PREFIX);
+}
+
+// GET /api/settings — toutes les configs (admin seulement, secrets masqués)
 router.get('/', adminSecretOnly, async (req, res) => {
   try {
     const all = await s.getAll();
-    res.json(all);
+    res.json(maskSettings(all));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -17,7 +41,7 @@ router.put('/', adminSecretOnly, async (req, res) => {
     const allowed = Object.keys(s.DEFAULTS);
     const updates = {};
     for (const [k, v] of Object.entries(req.body)) {
-      if (allowed.includes(k)) updates[k] = v;
+      if (allowed.includes(k) && !isMaskedValue(k, v)) updates[k] = v;
     }
     if (!Object.keys(updates).length) {
       return res.status(400).json({ error: 'Aucune clé valide fournie' });

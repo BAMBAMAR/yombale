@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -91,11 +92,11 @@ export default function GuideCreerBoutiquePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_HOWTO) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_HOWTO) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_BREADCRUMB) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_BREADCRUMB) }}
       />
 
       <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', padding: '40px 20px 80px' }}>

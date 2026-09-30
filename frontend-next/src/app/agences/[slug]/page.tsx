@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { apiFetch } from '@/lib/api'
 import AgenceVitrinePubliquePage from '../../agence/[slug]/vitrine/page'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -106,7 +107,7 @@ export default async function AgencePubliquePage({
       {jsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
       )}
       <AgenceVitrinePubliquePage />

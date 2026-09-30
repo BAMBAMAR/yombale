@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ReactNode } from 'react'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -143,11 +144,11 @@ export default function CreerBoutiqueLayout({ children }: { children: ReactNode 
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_SERVICE) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_SERVICE) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_BREADCRUMB) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_BREADCRUMB) }}
       />
       {children}
     </>

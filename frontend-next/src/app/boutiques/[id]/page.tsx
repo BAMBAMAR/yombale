@@ -14,6 +14,7 @@ import ExternalImg from '@/components/ExternalImg'
 import BoutonPartager from '@/components/BoutonPartager'
 import ABTestVitrineHeader from './ABTestVitrineHeader'
 import TrackingPixels from '@/components/TrackingPixels'
+import { safeJsonLd } from '@/lib/jsonld'
 
 interface Boutique {
   id: string
@@ -216,7 +217,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdStore) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLdStore) }}
       />
       <div className="page-container" style={{ maxWidth: 1440, paddingTop: 10, paddingBottom: '3rem' }}>
 

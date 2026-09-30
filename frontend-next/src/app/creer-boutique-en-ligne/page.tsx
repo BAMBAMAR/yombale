@@ -5,6 +5,7 @@ import {
   ArrowRight, Users, MessageSquare, CreditCard, Sparkles, HelpCircle,
   Clock, Award, ShoppingBag, Globe, RefreshCw
 } from 'lucide-react'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -90,11 +91,11 @@ export default function CreerBoutiquePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_SOFTWARE) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_SOFTWARE) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_FAQ) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
       />
 
       <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>

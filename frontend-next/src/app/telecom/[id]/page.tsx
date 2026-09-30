@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import SimilRow from '@/components/SimilRow'
 import { Scale } from 'lucide-react'
+import { safeJsonLd } from '@/lib/jsonld'
 
 interface Forfait {
   id: string
@@ -168,11 +169,11 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
     <div className="page-container" style={{ paddingTop: '2rem' }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(forfaitJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(forfaitJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }}
       />
       {/* Fil d'Ariane */}
       <p className="breadcrumb" style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>

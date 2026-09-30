@@ -36,7 +36,8 @@ router.get('/catalogues-standards', async (req, res) => {
   try {
     const fs = require('fs');
     const path = require('path');
-    const rawData = fs.readFileSync(path.join(__dirname, '../data/catalogues-standards.json'));
+    // Le fichier est dans backend/data (et non backend/routes/data) : deux niveaux au-dessus de ce module
+    const rawData = fs.readFileSync(path.join(__dirname, '../../data/catalogues-standards.json'));
     const catalogues = JSON.parse(rawData);
     res.json({ success: true, catalogues });
   } catch (err) {
@@ -215,7 +216,7 @@ router.post('/taf-taf', async (req, res) => {
 });
 
 // POST /api/boutiques/magic-import - Scraper un produit depuis URL (Dropshipping / Sourcing)
-router.post('/magic-import', limiterImport, async (req, res) => {
+router.post('/magic-import', verifierToken, limiterImport, async (req, res) => {
   try {
     const { url } = req.body;
     if (!url || typeof url !== 'string' || !url.trim()) {

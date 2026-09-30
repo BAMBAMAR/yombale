@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, Calendar, Eye, Tag, Share2, MessageCircle, Store } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { safeJsonLd } from '@/lib/jsonld'
 
 interface Article {
   id: string
@@ -123,7 +124,7 @@ export default async function BoutiqueArticleDetailPage({
       {/* Balisage JSON-LD pour Google */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
 
       <article style={{ maxWidth: 760, margin: '0 auto' }}>

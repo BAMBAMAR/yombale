@@ -78,6 +78,7 @@ import WebVitals from '@/components/WebVitals';
 import { CartProvider } from '@/context/CartContext';
 import { Suspense } from 'react';
 import { MessageCircle, Heart, Store, User, Zap, Package, Trash2, ShieldCheck, CheckCircle2, MapPin } from 'lucide-react';
+import { safeJsonLd } from '@/lib/jsonld'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -285,15 +286,15 @@ export default async function RootLayout({
         <meta name="facebook-domain-verification" content="cuulztpcqwrgoat2wfubj3cuerfwu0" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(ORG_JSON_LD) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_ENTITY_JSON_LD) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(ORG_ENTITY_JSON_LD) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_NAV_JSON_LD) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(SITE_NAV_JSON_LD) }}
         />
       </head>
       <body suppressHydrationWarning>

@@ -11,6 +11,7 @@ import SimilRow from '@/components/SimilRow';
 import ExternalImg from '@/components/ExternalImg';
 import { sanitizeImgUrl } from '@/lib/sanitizeImg';
 import PageHeader from '@/components/PageHeader';
+import { safeJsonLd } from '@/lib/jsonld';
 import { Scale, Building2 } from 'lucide-react';
 import { AgenceInfo, AgentInfo } from './BlocAgenceAnnonce';
 import FicheImmoSidebar from './FicheImmoSidebar';
@@ -105,7 +106,7 @@ function buildRealEstateJsonLd(annonce: AnnonceImmo): string {
       ],
     }
   ];
-  return JSON.stringify(data);
+  return safeJsonLd(data);
 }
 
 // ── generateMetadata ─────────────────────────────────────────────

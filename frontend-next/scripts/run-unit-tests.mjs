@@ -6,6 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { formatPhone, formatNomPropre, fcfa, formatNombre, decodeHtml, escapeHtml } from '../src/lib/format.ts'
 import { safeJsonParse } from '../src/lib/errorHandler.ts'
+import { safeJsonLd } from '../src/lib/jsonld.ts'
 import {
   calculerKpisCarnet,
   determinerActionClient,
@@ -1042,6 +1043,27 @@ it('creditCalculator: imputation FIFO et solde anticipé', async () => {
   const rSolde = solderCreditAnticipe({ id: 'p1', montant_total: 40000, solde_restant: 20000, statut: 'actif' }, echeances)
   assert.equal(rSolde.planUpdated.statut, 'solde')
   assert.equal(rSolde.echeancesUpdated[0].statut, 'soldee_par_anticipation')
+})
+
+console.log('\n📦 21. Sécurité JSON-LD (jsonld.ts) — AUD-025')
+it('safeJsonLd: une donnée utilisateur ne peut pas fermer la balise <script>', () => {
+  const hostile = 'X</script><script>window.__XSS_PROOF=1</script><!-- &   '
+  const html = safeJsonLd({ '@type': 'Product', name: hostile, nested: [{ description: hostile }] })
+  assert.equal(html.includes('</script'), false)
+  assert.equal(html.includes('<script'), false)
+  assert.equal(html.includes('<'), false)
+  assert.equal(html.includes('>'), false)
+  assert.equal(html.includes(' '), false)
+  assert.equal(html.includes(' '), false)
+  // Le JSON reste valide et se décode à l'identique
+  const back = JSON.parse(html)
+  assert.equal(back.name, hostile)
+  assert.equal(back.nested[0].description, hostile)
+})
+it('safeJsonLd: valeurs limites (undefined, null, tableaux, nombres)', () => {
+  assert.equal(safeJsonLd(undefined), 'null')
+  assert.equal(safeJsonLd(null), 'null')
+  assert.deepEqual(JSON.parse(safeJsonLd([1, 'a&b', { k: '<b>' }])), [1, 'a&b', { k: '<b>' }])
 })
 
 console.log('\n──────────────────────────────────────────────────────────')

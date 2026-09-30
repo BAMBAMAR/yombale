@@ -122,8 +122,11 @@ async function requireAdminAuth(req, res, next) {
           };
           return next();
         }
-        // Support pour super_admin technique break-glass généré par login
-        if (decoded.role === 'super_admin') {
+        // AUD-041 : un compte nominatif désactivé ou supprimé est révoqué immédiatement.
+        // Le rôle inscrit dans le jeton ne suffit jamais : seul le compte technique break-glass
+        // (identifiant nul, émis par login avec le secret maître) n'a pas de ligne en base.
+        const BREAK_GLASS_ID = '00000000-0000-0000-0000-000000000000';
+        if (decoded.role === 'super_admin' && decoded.adminId === BREAK_GLASS_ID && !rows[0]) {
           req.adminUser = {
             id: decoded.adminId || '00000000-0000-0000-0000-000000000000',
             nom: 'Super Administrateur',

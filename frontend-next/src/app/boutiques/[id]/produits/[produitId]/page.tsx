@@ -12,6 +12,7 @@ import PageHeader from '@/components/PageHeader'
 import BadgePaySafe from '@/components/BadgePaySafe'
 import { Store } from 'lucide-react'
 import TrackingPixels from '@/components/TrackingPixels'
+import { safeJsonLd } from '@/lib/jsonld'
 
 
 interface ProduitDetail {
@@ -190,11 +191,11 @@ export default async function FicheProduitPage(
     <div className="boutique-produit-page">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(productJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }}
       />
       <TrackingPixels
         metaPixelId={p.meta_pixel_id}

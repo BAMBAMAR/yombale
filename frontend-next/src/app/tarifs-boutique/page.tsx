@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import TarifsBoutiqueClient from './TarifsBoutiqueClient'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -56,7 +57,7 @@ export default async function TarifsBoutiquePage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_FAQ) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }} />
 
       <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', paddingBottom: 80, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         

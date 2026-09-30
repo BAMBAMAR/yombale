@@ -39,6 +39,7 @@ interface TelecomResponse {
 }
 
 import { breadcrumbSchema, itemListSchema } from '@/lib/schema-org'
+import { safeJsonLd } from '@/lib/jsonld'
 
 export default async function TelecomPage({
   searchParams,
@@ -87,12 +88,12 @@ export default async function TelecomPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbs) }}
       />
       {itemList && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(itemList) }}
         />
       )}
       <TelecomClient

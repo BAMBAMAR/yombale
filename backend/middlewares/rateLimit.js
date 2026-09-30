@@ -101,6 +101,15 @@ const limiterImport = rateLimit({
   message: { error: 'Trop de demandes d\'import rapide — réessayez dans 5 minutes' }
 });
 
+// AUD-027 : envoi de fiches WhatsApp — limite par compte (pas par IP), active aussi hors production
+const limiterWhatsappSend = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 5,
+  keyGenerator: (req) => `wa-send:${req.user?.userId || realIp(req)}`,
+  skip: () => process.env.NODE_ENV === 'test',
+  message: { success: false, error: 'Trop d’envois WhatsApp — réessayez dans 1 heure' },
+  standardHeaders: true,
+});
+
 // Limite les accès bulk (listes produits/immo/annonces) pour freiner le scraping
 // Exclut les IPs internes (serveur Next.js → Express en SSR) et les utilisateurs authentifiés
 const INTERNAL_IPS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
@@ -122,4 +131,4 @@ const limiterBulk = rateLimit({
   },
 });
 
-module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, blockScraperUA };
+module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, blockScraperUA };

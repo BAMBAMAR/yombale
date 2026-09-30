@@ -52,6 +52,7 @@ import {
   NB_CHAMBRES,
   VILLES_SN,
 } from './ImmoFiltresConfig'
+import { safeJsonLd } from '@/lib/jsonld'
 
 export default async function ImmoPage({
   searchParams,
@@ -166,12 +167,12 @@ export default async function ImmoPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbs) }}
       />
       {itemList && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(itemList) }}
         />
       )}
       <div className="page-container" style={{ paddingTop: '2rem' }}>

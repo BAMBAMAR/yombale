@@ -13,6 +13,7 @@ import {
   Clock,
   Download
 } from 'lucide-react'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -96,11 +97,11 @@ export default function LogicielGestionLocativePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_SOFTWARE) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_SOFTWARE) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_FAQ) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
       />
       <main
         style={{

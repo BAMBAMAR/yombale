@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Handshake, TrendingUp, Palette, CheckCircle2, ArrowRight } from 'lucide-react'
+import { safeJsonLd } from '@/lib/jsonld'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -41,7 +42,7 @@ export default function PartenairesLandingPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_PARTENAIRES) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_PARTENAIRES) }}
       />
       <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: 80 }}>
         

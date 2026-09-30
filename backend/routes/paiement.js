@@ -373,7 +373,7 @@ async function appliquerPaiementReussi(reference, montant, methode) {
 }
 
 // GET /api/paiement/server-ip — Renvoie l'IP publique sortante du serveur (utile pour la Liste Blanche IP Wave)
-router.get('/server-ip', async (req, res) => {
+router.get('/server-ip', requireAdminAuth, async (req, res) => { // AUD-014 : réservé à l'admin
   try {
     const ipRes = await axios.get('https://api.ipify.org?format=json', { timeout: 5000 });
     res.json({ outbound_ip: ipRes.data.ip, status: 'ok' });

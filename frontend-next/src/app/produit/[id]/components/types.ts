@@ -1,4 +1,5 @@
 import { fcfa, escapeHtml } from '@/lib/format'
+import { safeJsonLd } from '@/lib/jsonld'
 
 export interface Produit {
   id: number
@@ -122,7 +123,7 @@ export function buildJsonLd(produit: Produit, offres: Offre[]): string {
 
   const sku = String(produit.id)
 
-  return JSON.stringify({
+  return safeJsonLd({
     '@context': 'https://schema.org',
     '@type': 'Product',
     '@id': `https://nopalou.com/produit/${produit.id}`,
