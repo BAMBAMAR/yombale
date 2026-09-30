@@ -148,6 +148,7 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
     let totalArticles = 0;
     const articlesTraites = [];
     let reductionVal = 0;
+    let reductionSurLivraison = 0;
     let promoAppliquee = null;
     let promoIdUtilisee = null;
     let totalGeneral = 0;
@@ -276,6 +277,7 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
               } else if (p.type_remise === 'livraison_offerte') {
                 // AUD-084 : la remise porte sur la livraison, jamais sur le prix des articles
                 reductionVal = Math.min(fraisLiv, Number(p.valeur) || fraisLiv);
+                reductionSurLivraison = reductionVal;
               } else {
                 reductionVal = Math.min(totalArticles, Number(p.valeur || 0));
               }
@@ -307,7 +309,17 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
       // c'est ce montant que le client paie et que le webhook de paiement contrôle) + ses lignes dans
       // commandes_boutique_items. L'ancien code insérait une ligne par article avec la même référence, ce que
       // la contrainte UNIQUE(reference) refuse : tout panier de 2 articles ou plus échouait en 500.
-      totalGeneral = Math.max(0, totalArticles + fraisLiv - reductionVal);
+      // Remise Club VIP (AUD-084) : calculée ICI à partir du palier réel du téléphone (commandes livrées/encaissées),
+      // sur la livraison restant à payer après une éventuelle promo « livraison offerte ». Affichage = facturation.
+      const { statutClubVip, remiseLivraison } = require('../../lib/clubVip');
+      const fraisRestants = Math.max(0, fraisLiv - reductionSurLivraison);
+      const statutVip = fraisRestants > 0 ? await statutClubVip(pool, client_telephone) : null;
+      const remiseVip = statutVip ? remiseLivraison(statutVip, fraisRestants) : 0;
+      if (remiseVip > 0) {
+        const vipNote = `[Club VIP ${statutVip.palier} : -${remiseVip} FCFA sur la livraison]`;
+        finalNote = finalNote ? `${finalNote} | ${vipNote}` : vipNote;
+      }
+      totalGeneral = Math.max(0, totalArticles + fraisLiv - reductionVal - remiseVip);
       const totalQte = articlesTraites.reduce((s, a) => s + a.qte, 0);
       const plusieurs = articlesTraites.length > 1;
       const nomHeader = plusieurs
@@ -331,6 +343,10 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
           (social_post_id && UUID_RE.test(String(social_post_id))) ? social_post_id : null,
         ]
       );
+
+      if (remiseVip > 0) {
+        await client.query('UPDATE commandes_boutique SET remise_club_vip = $1 WHERE id = $2', [remiseVip, entete.id]);
+      }
 
       for (const item of articlesTraites) {
         await client.query(

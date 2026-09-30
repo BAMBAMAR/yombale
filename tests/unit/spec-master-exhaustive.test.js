@@ -137,6 +137,7 @@ describe('SPEC 02 — Checkout Web 1-Page Unifié & Cross-Sell Panier', () => {
         client_nom: 'Moussa Ndiaye',
         client_telephone: '771234567',
         zone_livraison_id: '8c1f7e7a-3b1d-4c77-9d57-3f0a1f3e9b21',
+        methode_paiement: 'cash', // indépendant des clés Wave du poste
         articles: [{ produit_id: prodId, quantite: 1, prix_unitaire: 12000 }]
       });
 

@@ -1269,7 +1269,7 @@ router.patch(
             if (mobile) {
               const commission = (b?.commission_rate > 0) ? (commande.montant_total * b.commission_rate / 100) : 0;
               const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
-              const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - commission - fraisWaveTotaux));
+              const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - commission - fraisWaveTotaux + (Number(commande.remise_club_vip) || 0))); // la remise Club VIP est supportée par Nopalou
               const wave = require('../services/wave');
               const payout = await wave.sendPayout({
                 amount: netAmount,
@@ -2056,7 +2056,7 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
     const { mode = 'wave_api', reference_manuelle } = req.body || {};
     const { rows: [commande] } = await pool.query(`
       SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut,
-             c.paiement_recu, c.payout_ref,
+             c.paiement_recu, c.payout_ref, COALESCE(c.remise_club_vip, 0) AS remise_club_vip,
              b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp
       FROM commandes_boutique c
       JOIN boutiques b ON b.id = c.boutique_id
@@ -2086,7 +2086,7 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
     }
 
     const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
-    const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - (Number(commande.montant_commission) || 0) - fraisWaveTotaux));
+    const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - (Number(commande.montant_commission) || 0) - fraisWaveTotaux + (Number(commande.remise_club_vip) || 0))); // la remise Club VIP est supportée par Nopalou
 
     let payoutResult = { id: `payout_${commande.reference}` };
 

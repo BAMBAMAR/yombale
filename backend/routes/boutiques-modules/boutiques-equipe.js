@@ -207,13 +207,7 @@ router.post('/:id/caissiers', tokenOptional, async (req, res) => {
         const boutique = bRes.rows[0];
         if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
           bq = boutique;
-        } else if (superviseur_pin) {
-          const supRes = await pool.query(
-            `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND (role = 'superviseur' OR role = 'admin') AND actif = TRUE`,
-            [boutique.id, String(superviseur_pin).trim()]
-          );
-          if (supRes.rows[0]) bq = boutique;
-        }
+        } // AUD-081 : un PIN superviseur (4 à 6 chiffres, sans limite d'essais) n'est jamais une authentification
       }
     }
     if (!bq) return res.status(403).json({ error: 'Accès refusé ou Boutique introuvable' });
@@ -266,13 +260,7 @@ router.put('/:id/caissiers/:caissierId', tokenOptional, async (req, res) => {
         const boutique = bRes.rows[0];
         if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
           bq = boutique;
-        } else if (superviseur_pin) {
-          const supRes = await pool.query(
-            `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND (role = 'superviseur' OR role = 'admin') AND actif = TRUE`,
-            [boutique.id, String(superviseur_pin).trim()]
-          );
-          if (supRes.rows[0]) bq = boutique;
-        }
+        } // AUD-081 : un PIN superviseur (4 à 6 chiffres, sans limite d'essais) n'est jamais une authentification
       }
     }
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
@@ -348,13 +336,7 @@ router.patch('/:id/caissiers/:caissierId', tokenOptional, async (req, res) => {
         const boutique = bRes.rows[0];
         if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
           bq = boutique;
-        } else if (superviseur_pin) {
-          const supRes = await pool.query(
-            `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND (role = 'superviseur' OR role = 'admin') AND actif = TRUE`,
-            [boutique.id, String(superviseur_pin).trim()]
-          );
-          if (supRes.rows[0]) bq = boutique;
-        }
+        } // AUD-081 : un PIN superviseur (4 à 6 chiffres, sans limite d'essais) n'est jamais une authentification
       }
     }
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
@@ -441,13 +423,7 @@ router.put('/:id/caissiers/:caissierId/pin', tokenOptional, async (req, res) => 
         const boutique = bRes.rows[0];
         if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
           bq = boutique;
-        } else if (superviseur_pin) {
-          const supRes = await pool.query(
-            `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND (role = 'superviseur' OR role = 'admin') AND actif = TRUE`,
-            [boutique.id, String(superviseur_pin).trim()]
-          );
-          if (supRes.rows[0]) bq = boutique;
-        }
+        } // AUD-081 : un PIN superviseur (4 à 6 chiffres, sans limite d'essais) n'est jamais une authentification
       }
     }
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });

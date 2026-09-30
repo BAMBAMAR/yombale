@@ -160,6 +160,7 @@ describe('POST /api/comptabilite/:boutiqueId/commandes avec Code Promo (Spec 03)
       .send({
         client_nom: 'Moussa Diop',
         client_telephone: '770001122',
+        methode_paiement: 'cash', // indépendant des clés Wave du poste
         items: [{ produit_id: produitId, quantite: 1, prix_unitaire: 1 }],
         code_promo: 'SOLDE2000',
         montant_reduction: 99999,

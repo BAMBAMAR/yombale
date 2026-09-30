@@ -214,6 +214,50 @@ describeIntegration('Panier réel — prix, stock, statuts, virement, suivi, cai
     expect(Number(pp.body.commande.montant_total)).toBe(2000);
   });
 
+  test('AUD-081 (équipe) : un PIN superviseur seul ne permet ni créer ni modifier un caissier', async () => {
+    const { rows: [sup] } = await pool.query("INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role, actif) VALUES ($1,'Sup','Test','5432','superviseur',true) RETURNING id", [bM]);
+    const creer = await api('post', `/api/boutiques/${bM}/caissiers`, { nom: 'Intrus', code_pin: '4821', superviseur_pin: '5432' });
+    expect(creer.status).toBe(403);
+    const modifier = await api('put', `/api/boutiques/${bM}/caissiers/${sup.id}`, { code_pin: '4822', superviseur_pin: '5432' });
+    expect(modifier.status).toBe(403);
+    expect((await pool.query("SELECT count(*)::int AS n FROM boutique_caissiers WHERE boutique_id=$1 AND nom='Intrus'", [bM])).rows[0].n).toBe(0);
+    // la session marchand continue de fonctionner
+    const ok = await api('post', `/api/boutiques/${bM}/caissiers`, { nom: 'Legitime', code_pin: '4821' }, M.token);
+    expect(ok.status).toBe(201);
+  });
+
+  test('AUD-084 (Club VIP) : palier réel calculé côté serveur, facturé à l\'identique, reversement non pénalisé', async () => {
+    const p = await produit(M, bM, { nom: 'Art vip', prix: 2000, stock_quantite: 50 });
+    const telVip = '770555123';
+    // deux commandes livrées => Silver (500 FCFA sur la livraison)
+    for (let i = 0; i < 2; i++) {
+      await pool.query(`INSERT INTO commandes_boutique (reference, boutique_id, nom_produit, quantite, prix_unitaire, montant_total, client_nom, client_telephone, statut, methode_paiement)
+                        VALUES ($1,$2,'x',1,2000,2000,'v',$3,'livree','cash')`, [`C-VIP${Date.now()}${i}`, bM, telVip]);
+    }
+    const st = await api('get', `/api/boutiques/club-vip/statut?telephone=${telVip}`);
+    expect(st.body.palier).toBe('Silver');
+    expect(st.body.reduction_livraison).toBe(500);
+    const inconnu = await api('get', '/api/boutiques/club-vip/statut?telephone=770999888');
+    expect(inconnu.body.palier).toBe('Bronze');
+
+    const cmd = await api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: telVip, methode_paiement: 'cash', zone_livraison_id: zone.id, frais_livraison: 0, articles: [{ produit_id: p.id, quantite: 1 }] });
+    expect(cmd.body.montant_total).toBe(4000); // 2000 + 2500 - 500
+    const row1 = (await pool.query('SELECT remise_club_vip, frais_livraison FROM commandes_boutique WHERE reference=$1', [cmd.body.reference])).rows[0];
+    expect(Number(row1.remise_club_vip)).toBe(500);
+    // un client Bronze ne reçoit rien, même en envoyant un montant de livraison réduit
+    const bronze = await api('post', '/api/boutiques/commandes/express', { boutique_id: bM, ...cli, client_telephone: '770999888', methode_paiement: 'cash', zone_livraison_id: zone.id, frais_livraison: 0, articles: [{ produit_id: p.id, quantite: 1 }] });
+    expect(bronze.body.montant_total).toBe(4500);
+
+    // reversement : le marchand reçoit comme s'il n'y avait pas de remise (supportée par Nopalou)
+    const avant = payouts.length;
+    const { rows: [paid] } = await pool.query(
+      `INSERT INTO commandes_boutique (reference, boutique_id, nom_produit, quantite, prix_unitaire, montant_total, remise_club_vip, client_nom, client_telephone, methode_paiement, statut, paiement_recu)
+       VALUES ('C-TESTVIP1', $1, 'x', 1, 99500, 99500, 500, 'c', '770009999', 'wave', 'payee', true) RETURNING id`, [bM]);
+    await patch(bM, paid.id, { statut: 'livree' }, M.token);
+    expect(payouts.length).toBe(avant + 1);
+    expect(payouts[payouts.length - 1].amount).toBe(98010); // 99500 - 1990 (2 %) + 500 pris en charge par Nopalou
+  });
+
   test('AUD-085 : PUT partiel conserve la description ; stock obsolète refusé', async () => {
     const p = await produit(M, bM, { nom: 'Art put', prix: 2000, stock_quantite: 10, description: 'Description importante' });
     const r = await api('put', `/api/boutiques/${bM}/produits/${p.id}`, { prix: 2100 }, M.token);
