@@ -351,3 +351,122 @@ Suites à ajouter (les scripts d'audit servent de base, à copier depuis le rép
 12. Phase 8 : régression globale, puis rapport de validation.
 
 AUDIT TERMINÉ → PLAN DE CORRECTION ÉTABLI → CORRECTIONS PRIORISÉES → DÉPENDANCES IDENTIFIÉES → TESTS DE VALIDATION DÉFINIS → RÉGRESSION PLANIFIÉE.
+
+---
+
+# Addendum — Lot Identité & Authentification (Phase 5, 30 septembre 2026 soir)
+
+Source : `docs/AUDIT-NOPALOU-2026-09-30.md`, section « Phase 5 » (AUD-052 à AUD-071, 20 fiches). Aucun code modifié pour produire cet addendum. Périmètre : inscription, connexion (mot de passe + OTP WhatsApp + lien magique), session/JWT, 2FA, profil, vérification/récupération de mot de passe, suppression RGPD. Deux correctifs déjà livrés ont été recoupés et confirmés tenus sans nouvelle action (AUD-002/AN-002, AUD-041/AUD-028 — voir rapport, section « Recoupement »).
+
+## A. Répartition par gravité
+
+| Gravité | Nombre | IDs |
+|---|---|---|
+| CRITIQUE | 3 | 052, 053, 054 |
+| MAJEUR | 8 | 055, 056, 057, 058, 059, 060, 066, 071 |
+| MOYEN | 6 | 061, 062, 063, 064, 065 (MOYEN reclassé — voir note), 066 |
+| MINEUR | 4 | 067, 068, 069, 070 |
+
+Note : AUD-065 (absence de route de changement de mot de passe) a un impact produit fort (comptes WhatsApp sans voie de récupération) mais aucune exploitation immédiate démontrée sans accès déjà légitime ; classé MOYEN, priorité P2.
+
+## B. Corrections racines transverses
+
+- **CR-ID-1 (couvre AUD-052, AUD-060)** — Rendre `utilisateurs.telephone` réellement unique et sa résolution déterministe. C'est la cause commune à la confusion d'authentification (P0) et à la casse du portail locataire (P1).
+- **CR-ID-2 (couvre AUD-053, AUD-055, AUD-056)** — Durcir `PUT /api/auth/profil` : changement d'e-mail traité comme une opération sensible (mot de passe requis, re-vérification, notification), namespace `@whatsapp.nopalou.com` réservé, normalisation cohérente entre écriture et lecture.
+- **CR-ID-3 (couvre AUD-061, AUD-059 partiellement)** — Harmoniser tous les jetons temporaires (lien magique, reset, 2FA) sur un seul principe : usage unique + révocation par `jwt_version` au moment de la vérification, pas seulement à l'émission.
+
+## C. Phases (ordonnées par risque et dépendance)
+
+### Phase ID-0 — Filet de tests (préalable, aucun risque de régression)
+- Étendre `scripts/audit/seed.js` : générer deux comptes partageant un numéro de téléphone (scénario de base d'AUD-052).
+- Écrire les tests qui doivent échouer sans les correctifs (un par anomalie ci-dessous), avant de coder quoi que ce soit (contrôle par mutation exigé par la méthodologie).
+- Effort : 0,5 j.
+
+### Phase ID-1 — P0 (CRITIQUE, à traiter avant tout déploiement)
+
+**AUD-052 — Confusion d'authentification par téléphone partagé**
+- Fichiers : migration SQL (nouvelle, `backend/migrate-inline.js`), `backend/routes/auth.js` (`PUT /profil` L.432-471, `whatsapp-otp-send` L.489, `whatsapp-otp-login` L.599-663, `whatsapp-otp-register` L.666-706).
+- Approche retenue : (1) en production, identifier et résoudre manuellement les doublons de téléphone existants (requête déjà écrite lors de l'audit : groupement par 9 derniers chiffres) — décision produit sur quel compte garde le numéro, à arbitrer par l'exploitant, voir section E ; (2) migration idempotente `CREATE UNIQUE INDEX IF NOT EXISTS idx_utilisateurs_telephone_unique ON utilisateurs (telephone) WHERE telephone IS NOT NULL` ; (3) `PUT /profil` : si `telephone` fourni, exiger un OTP de vérification (réutilise `services/otp.js`, action `verif_telephone`) avant d'accepter l'écriture, et attraper l'erreur `23505` pour répondre `409` explicite ; (4) au passage, retirer toute dépendance implicite à l'ordre de retour SQL (les requêtes `WHERE telephone=$1 OR ...` doivent échouer explicitement — pas choisir — si plus d'une ligne correspond une fois l'index posé, ce cas ne devrait alors plus jamais se produire).
+- Alternative écartée : se contenter de l'index unique sans exiger d'OTP sur `PUT /profil` — insuffisant, un attaquant resterait bloqué seulement une fois qu'un numéro est déjà pris par quelqu'un d'autre, pas empêché de le revendiquer en premier sur un numéro pas encore enregistré.
+- Risque de régression : les utilisateurs légitimes ayant aujourd'hui un téléphone en doublon perdront transitoirement la possibilité de se reconnecter par OTP tant que le doublon n'est pas résolu — communiquer avant migration, ou passer les doublons à `telephone=NULL` avec notification plutôt que bloquer la migration.
+- Test de validation : script de mutation — sans l'index, l'insertion d'un second compte avec le même numéro réussit (doit échouer après correctif) ; sans l'OTP sur `PUT /profil`, un compte B peut écrire le numéro du compte A (doit échouer après correctif, 403 tant que l'OTP n'est pas validé).
+- Critère d'acceptation : 0 doublon de téléphone en base ; `PUT /profil {telephone}` refuse sans OTP validé ; `idor.js`-like scénario A/B sur numéro partagé impossible à établir.
+- Retour arrière : `DROP INDEX IF EXISTS idx_utilisateurs_telephone_unique` (aucune perte de données, l'index est additif).
+- Effort : 1,5 j (dont 0,5 j d'assainissement des doublons de production sous supervision).
+
+**AUD-060 (dépend d'AUD-052)** — une fois l'index posé, le chemin `ON CONFLICT (telephone)` de `whatsapp-otp-login` (L.640-649) fonctionne nativement ; ajouter le test d'intégration qui l'exerce (absent jusqu'ici, cause de la non-détection). Effort : 0,25 j, inclus dans AUD-052.
+
+**AUD-053 — Changement d'e-mail sans re-vérification ni notification**
+- Fichiers : `backend/routes/auth.js:432-471` (`PUT /profil`), `backend/routes/auth.js:88-99` (`/verifier-email`, à faire évoluer pour lier le jeton à l'e-mail), `frontend-next/src/app/actions/auth.ts:updateProfil`.
+- Approche : dans la même transaction qu'un changement d'e-mail, (1) repasser `email_verifie=false` ; (2) émettre un jeton `verify` signé `{userId, email: nouvelleAdresse, type:'verify'}` (au lieu de `{userId,type:'verify'}` seul) et vérifier la correspondance d'adresse dans `/verifier-email` ; (3) envoyer un e-mail d'alerte de sécurité à l'ancienne adresse (si elle n'est pas fictive `@whatsapp.nopalou.com`) ; (4) exiger le mot de passe courant dans le corps de la requête pour tout changement d'e-mail (même garde que `supprimer-compte`).
+- Risque de régression : les jetons `verify` déjà émis avant le correctif (dans l'e-mail de bienvenue en attente) ne porteront pas le champ `email` — prévoir un repli compatible (si absent, vérifier l'e-mail actuel de l'utilisateur plutôt que rejeter, pendant une fenêtre de transition de 48 h après déploiement).
+- Test de validation : mutation — sans le correctif, changer l'e-mail laisse `email_verifie=true` sans courrier (le test actuel D5/D4c le montre) ; avec le correctif, `email_verifie=false` après changement, un courrier vers l'ancienne adresse, le jeton `verify` sans `email` lié rejeté après la fenêtre de transition.
+- Critère d'acceptation : 0 changement d'e-mail sans passage à `email_verifie=false` ; 100 % des changements d'e-mail génèrent une alerte vers l'ancienne adresse (hors adresses fictives WhatsApp).
+- Retour arrière : réactiver l'ancien comportement de `PUT /profil` est un simple retrait du garde — aucune donnée perdue.
+- Effort : 1 j.
+
+**AUD-054 — Création de compte non sollicitée (`POST /whatsapp-login`)**
+- Fichiers : `backend/routes/auth.js:709-753`.
+- Approche : transformer en flux à deux étapes comme `whatsapp-otp-register` : la route n'envoie plus le lien magique directement ; elle exige d'abord un OTP (`services/otp.js`) envoyé au numéro, et ne crée le compte + envoie le lien magique qu'après vérification du code. Alternative plus simple si le produit veut garder un flux en un clic : supprimer la création de compte à la volée et répondre 404 si le numéro n'existe pas encore (renvoyer vers l'inscription OTP classique).
+- Risque de régression : le parcours marketing « lien magique direct » présenté dans CLAUDE.md (« anti-mur de login WhatsApp ») change de forme — à valider avec le produit avant de couper complètement l'auto-création ; recommandation : garder l'auto-création mais seulement après OTP, pas avant.
+- Test de validation : mutation — sans correctif, un POST anonyme crée un compte vérifié (reproduit) ; avec correctif, aucun compte n'est créé sans code OTP validé.
+- Critère d'acceptation : 0 compte créé par `/whatsapp-login` sans OTP validé ; 0 message WhatsApp sortant déclenché par un appel non authentifié à ce point d'entrée avant vérification.
+- Retour arrière : retirer le garde OTP (régression fonctionnelle immédiate mais sans risque de sécurité supplémentaire par rapport à l'état actuel).
+- Effort : 0,75 j.
+
+### Phase ID-2 — P1 (MAJEUR)
+
+**AUD-055** — `backend/routes/auth.js:22-86` et `:432-471` : rejeter (400, message explicite) toute valeur d'e-mail se terminant par `@whatsapp.nopalou.com` sur `/inscription` et `PUT /profil` lorsqu'elle ne provient pas du code interne (`whatsapp-otp-register`, `whatsapp-login`). Test : tentative d'inscription/mise à jour avec cette forme d'adresse → 400. Effort : 0,25 j.
+
+**AUD-056** — Migration `UPDATE utilisateurs SET email = lower(email) WHERE email <> lower(email)` (vérifiée sans collision sur l'échantillon restauré : à rejouer sur `\d` de production avant application, `0` doublon attendu) ; puis remplacer toutes les comparaisons `WHERE email=$1` de connexion/reset par `WHERE lower(email)=lower($1)` ou poser un index fonctionnel unique `lower(email)`. Fichiers : `backend/routes/auth.js:101-161`, `:341-370`. Test : compte à casse mixte créé directement en base, connexion et reset fonctionnels après correctif. Rollback : migration additive, aucune perte ; le changement de requête est réversible par retour de commit. Effort : 0,5 j.
+
+**AUD-057** — Ajouter un identifiant unique consommable au jeton de reset (colonne `reset_tokens_utilises(jti)` ou réutiliser `jwt_version` : signer le jeton reset avec la valeur courante de `jwt_version` et l'incrémenter après usage réussi, de sorte qu'un rejeu échoue car la version ne correspond plus). Fichiers : `backend/routes/auth.js:340-398`. Dépend d'AUD-002 déjà en place (mécanisme `jwt_version` réutilisable). Test : rejouer un jeton de reset déjà consommé → 400. Effort : 0,5 j. Traiter en parallèle l'incohérence de révocation entre session backend et cookie `frontend-next` (voir Phase ID-3, CR-ID-3) : sans cela, la coupure de session sur reset reste partielle (E5b).
+
+**AUD-058** — `backend/services/email.js:templateEmail()` : échapper (`escapeHtml`) toute valeur interpolée dans `contenuHtml` provenant d'une donnée utilisateur, en commençant par `nom` dans `backend/routes/auth.js` (tous les appels à `templateEmail`). Auditer en suivi (hors ce lot, à planifier) les autres surfaces d'affichage de `nom` (commandes, admin, apporteur). Test : inscription avec `nom` contenant des balises → e-mail de bienvenue sans HTML actif. Effort : 0,5 j (email) + 1 j (audit des autres surfaces, hors lot).
+
+**AUD-059** — `backend/routes/auth.js:239-293` : exiger un OTP de vérification (`services/otp.js`) avant d'activer le 2FA sur un numéro ; refuser la connexion (ne pas fail-open) si `normalisePhone(a2f_telephone)` est vide, avec message clair invitant à contacter le support ; ajouter une voie de récupération (codes de secours à usage unique générés à l'activation, stockés hashés). Test : activation 2FA sans OTP → 400 ; connexion avec `a2f_telephone` invalide → refusée, pas de jeton émis. Effort : 1,5 j (inclut les codes de secours).
+
+**AUD-066** — Ajouter `body('nom').isString().isLength({max:200})`, `body('mot_de_passe').isString()` sur toutes les routes d'identité concernées (inscription e-mail, WhatsApp register/login). Test : entrées non conformes → 400 partout, plus aucun 500. Effort : 0,5 j.
+
+**AUD-071** — `backend/middlewares/auth.js:45-62` : rejeter si `rows[0].anonymise_le` est renseigné (même traitement que `suspendu`) ; vérifier et, si besoin, ajouter l'incrément de `jwt_version` dans `backend/routes/admin-utilisateurs.js:291-330` (`/purger`). Test : session ouverte, purge admin, rejeu du jeton → 401/403. Effort : 0,25 j.
+
+### Phase ID-3 — P2 (MOYEN)
+
+**CR-ID-3 (AUD-061, complète AUD-057/AUD-059)** — Lien magique : usage unique (registre `utilise_le` avec verrou transactionnel `SELECT ... FOR UPDATE`), durée réduite à 15 min, invalidation sur déconnexion/reset via vérification de `jwt_version` au moment de `magic-verify`. Fichiers : `backend/lib/magicAuthToken.js`, `backend/routes/auth.js:708-837`. Test : rejeu d'un lien déjà utilisé → 400 ; lien après déconnexion → 401. Effort : 1 j.
+
+**AUD-062** — `backend/services/otp.js:158-260` : dans `genererOtpPhone`, invalider systématiquement tout code non expiré du même `(telephone, action)` à chaque nouvel envoi (même logique que `genererOtp`) ; supprimer ou restreindre la fenêtre de rejeu de 60 s (`verifierOtpPhone`) à la requête d'origine (ex. empreinte de session/nonce transmis par le client, pas seulement le couple téléphone+code) ; restreindre la tolérance d'`action` aux paires documentées. Test : 2 envois successifs, l'ancien code ne doit plus être accepté ; rejeu du code consommé après succès → rejeté. Effort : 0,75 j.
+
+**AUD-063** — `backend/routes/auth.js:22-86` : capturer `err.code === '23505'` sur l'`INSERT` d'inscription et répondre `409`. Test : 12 inscriptions concurrentes du même e-mail → 1×201, 11×409, 0×500. Effort : 0,25 j.
+
+**AUD-064** — Plafond par compte/destinataire sur `/mot-de-passe-oublie` (ex. table ou cache avec compteur, 3 e-mails/heure/destinataire, indépendant de l'IP). Fichiers : `backend/routes/auth.js:341-370`. Test : 15 demandes vers la même victime → au plus 3 e-mails envoyés. Effort : 0,5 j.
+
+**AUD-065** — Ajouter `PUT /api/auth/mot-de-passe` (authentifié, exige l'ancien mot de passe ou un OTP) ; UX profil pour les comptes WhatsApp-only : proposer l'ajout d'un e-mail réel + mot de passe avec vérification effective. Fichiers : `backend/routes/auth.js` (nouvelle route), `frontend-next/src/app/actions/auth.ts`, page profil. Test : changement de mot de passe connecté sans repasser par l'e-mail, échoue si l'ancien mot de passe est faux. Effort : 1 j (backend + UI minimal).
+
+### Phase ID-4 — P3 (MINEUR)
+- **AUD-067** : retirer les options agressives de `normalizeEmail` (conserver seulement la mise en minuscule) ou afficher l'adresse réellement enregistrée après inscription. Effort : 0,25 j.
+- **AUD-068** : valider `telephone` avec `normalisePhone` sur `PUT /profil`, rejeter (400) si vide après normalisation. Effort : 0,25 j.
+- **AUD-069** : `backend/routes/auth.js:373-398` : vérifier `suspendu`/`anonymise_le` avant d'appliquer un nouveau mot de passe sur reset, répondre 403. Effort : 0,25 j.
+- **AUD-070** : décision produit — aligner ou non l'énumération par téléphone sur le traitement (accepté) de l'énumération par e-mail (AUD-022). Pas de code sans arbitrage. Effort : 0 j (décision), 0,25 j si alignement demandé.
+
+### Phase ID-5 — Régression globale du lot
+- Rejouer `node scripts/audit/verify-rbac.js` (aucune régression attendue, hors périmètre) et la suite complète des sondes de ce lot (`t1`/`t2`/`t3`, à committer sous `scripts/audit/` comme sondes réutilisables une fois nettoyées des valeurs codées en dur) pour confirmer que chaque `ANOMALIE` devient `OK`.
+- `tsc --noEmit`, suites Jest backend/frontend, `npm run lint:slop`.
+- Entrée en tête de `docs/JOURNAL-LIVRAISONS.md` une fois les corrections commitées (pas avant).
+
+## D. Stratégie de test
+- Unitaires : validateurs `express-validator` ajoutés (AUD-066, AUD-055) ; fonctions pures `genererOtpPhone`/`verifierOtpPhone` (AUD-062) ; `magicAuthToken` avec horloge simulée (AUD-061).
+- Intégration (base locale `nopalou_audit`) : chaque scénario ci-dessus rejoué contre PostgreSQL réel, avec assertion sur l'état en base (pas seulement le code HTTP) — c'est ce qui a été fait pendant l'audit et doit être conservé comme suite permanente.
+- Mutation : pour chaque correctif, désactiver le correctif et confirmer que le test dédié échoue, conformément à la règle d'or de la méthodologie.
+- Navigateur : non nécessaire pour ce lot (aucun rendu concerné) sauf AUD-065 (nouvelle UI de changement de mot de passe) et AUD-053 (message de notification affiché).
+
+## E. Actions d'exploitation (hors code, décision humaine requise)
+- **Résolution des doublons de téléphone en production** avant la migration d'index unique (AUD-052) : décider, pour chacun des 7 groupes mesurés sur l'échantillon restauré, quel compte garde le numéro (probablement celui avec l'activité la plus récente / le plus de commandes) — décision du responsable produit/support, pas automatisable sans risque métier.
+- **Communication utilisateurs** avant AUD-056 (normalisation d'e-mail) et AUD-052 (téléphone unique) si des comptes réels sont affectés en production — décision du responsable support.
+- **Revue du parcours marketing** « lien magique direct » (AUD-054) avec le produit avant de choisir entre OTP préalable et suppression pure de l'auto-création.
+
+## F. Indicateurs de sortie du lot
+- 0 doublon de téléphone en base, index unique posé et actif.
+- 0 changement d'e-mail sans repassage à `email_verifie=false` et sans alerte à l'ancienne adresse.
+- 0 création de compte par `/whatsapp-login` sans OTP validé.
+- Suite `t1`/`t2`/`t3` (nettoyée, committée sous `scripts/audit/`) : 100 % des cas passent en `OK`.
+- RBAC (`verify-rbac.js`) toujours 150/150 après le lot (non-régression).
