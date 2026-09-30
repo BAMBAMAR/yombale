@@ -1,5 +1,7 @@
 // Tests unitaires — Spec 02 : Checkout Web 1-Page Unifié & Cross-Sell
 process.env.JWT_SECRET = 'test-secret';
+// Hermétique : aucune clé Wave dans l'environnement, donc aucune initialisation de session Wave réelle
+delete process.env.WAVE_API_KEY;
 
 const mockClient = {
   query: jest.fn(),

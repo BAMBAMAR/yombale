@@ -14,6 +14,23 @@ module.exports = async function migrateInline(customConnStr = null) {
     connectionTimeoutMillis: 30000,   // 30s pour Render.com
     idleTimeoutMillis: 5000,          // Fermer les connexions idle rapidement
   });
+  // AUD-001 : exécuteur tolérant à l'ordre. Une instruction qui échoue parce qu'une table, une colonne, un type ou
+  // une fonction n'existe pas ENCORE (codes 42P01, 42703, 42704, 42883) est mise de côté et rejouée en fin de migration.
+  // Toutes les instructions sont idempotentes (IF NOT EXISTS). Sur une base déjà à jour (production), rien n'est différé.
+  const differees = [];
+  const requeteOriginale = pool.query.bind(pool);
+  const CODES_DEPENDANCE = new Set(['42P01', '42703', '42704', '42883']);
+  pool.query = async function (sql, params) {
+    try {
+      return await requeteOriginale(sql, params);
+    } catch (e) {
+      if (typeof sql === 'string' && CODES_DEPENDANCE.has(e.code) && differees.length < 1000) {
+        differees.push({ sql, params, erreur: e.message });
+        return { rows: [], rowCount: 0, differee: true };
+      }
+      throw e;
+    }
+  };
   try {
     await pool.query(`
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -247,6 +264,41 @@ module.exports = async function migrateInline(customConnStr = null) {
       CREATE INDEX IF NOT EXISTS idx_annonces_cat  ON annonces_classifiees(categorie_slug, actif, supprimee);
       CREATE INDEX IF NOT EXISTS idx_annonces_user ON annonces_classifiees(utilisateur_id);
 
+    `);
+    console.log('[MIGRATE] ✅ Tables de base (partie 1 : catalogue, annonces) OK');
+  } catch (err) {
+    console.error('[MIGRATE] ❌ (partie 1 : catalogue, annonces)', err.message);
+  }
+
+  // Colonnes ajoutées en cours de route — exécutées séparément pour garantir leur présence
+  // même si le bloc principal a partiellement échoué sur une autre instruction
+  // Table boutiques — créée en bloc séparé pour éviter l'échec global
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS boutiques (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id   UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        nom              VARCHAR(200) NOT NULL,
+        description      TEXT,
+        categorie        VARCHAR(100),
+        telephone        VARCHAR(30),
+        adresse          VARCHAR(300),
+        ville            VARCHAR(100) DEFAULT 'Dakar',
+        logo_url         TEXT,
+        actif            BOOLEAN DEFAULT TRUE,
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutiques_user ON boutiques(utilisateur_id);
+      CREATE INDEX IF NOT EXISTS idx_boutiques_actif ON boutiques(actif, ville);
+    `);
+    console.log('[MIGRATE] ✅ Table boutiques OK');
+  } catch (e) { console.warn('[MIGRATE] boutiques:', e.message); }
+
+  // AUD-001 : tables qui référencent boutiques / boutique_produits — séparées du premier bloc, qui échouait en
+  // entier sur une base vide (boutiques n'existe qu'après). Exécutées juste après la création de boutiques.
+  try {
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS boutique_utilisateurs (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
@@ -528,33 +580,8 @@ module.exports = async function migrateInline(customConnStr = null) {
 
     console.log('[MIGRATE] ✅ Tables OK, catégories et marchands insérés');
   } catch (err) {
-    console.error('[MIGRATE] ❌', err.message);
+    console.error('[MIGRATE] ❌ (partie 2 : tables liées aux boutiques)', err.message);
   }
-
-  // Colonnes ajoutées en cours de route — exécutées séparément pour garantir leur présence
-  // même si le bloc principal a partiellement échoué sur une autre instruction
-  // Table boutiques — créée en bloc séparé pour éviter l'échec global
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS boutiques (
-        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        utilisateur_id   UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
-        nom              VARCHAR(200) NOT NULL,
-        description      TEXT,
-        categorie        VARCHAR(100),
-        telephone        VARCHAR(30),
-        adresse          VARCHAR(300),
-        ville            VARCHAR(100) DEFAULT 'Dakar',
-        logo_url         TEXT,
-        actif            BOOLEAN DEFAULT TRUE,
-        created_at       TIMESTAMPTZ DEFAULT NOW(),
-        updated_at       TIMESTAMPTZ DEFAULT NOW()
-      );
-      CREATE INDEX IF NOT EXISTS idx_boutiques_user ON boutiques(utilisateur_id);
-      CREATE INDEX IF NOT EXISTS idx_boutiques_actif ON boutiques(actif, ville);
-    `);
-    console.log('[MIGRATE] ✅ Table boutiques OK');
-  } catch (e) { console.warn('[MIGRATE] boutiques:', e.message); }
 
   const colonnesSupplementaires = [
     `ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS caracteristiques JSONB DEFAULT '{}'`,
@@ -2646,5 +2673,201 @@ module.exports = async function migrateInline(customConnStr = null) {
   } catch (err) {
     console.warn('[MIGRATE] Écosystème Conversationnel échec:', err.message);
   }
+
+
+  // AUD-002 / AUD-032 : schéma que le code applicatif créait historiquement « à la volée » (dans les routes et services
+  // au premier appel) et que les migrations ne décrivaient pas. Déclaré ici pour qu'une base vide + migrations donne
+  // le même schéma que la production. Sources : lib/adminAuditLogger.js, lib/auditLoggerImmo.js, lib/featureFlags.js, routes/admin-audit-logs.js, routes/admin-migration.js, routes/affiliates.js, routes/boutiques-modules/boutiques-abtest.js, routes/boutiques-modules/boutiques-pos.js, routes/boutiques-modules/credits.js, routes/categories.js, routes/chat.js, routes/paiement-sequestre.js, routes/qualite.js, services/otp.js, services/prospection.js, services/relance-panier.js.
+  // Les créations à la volée restent en place (IF NOT EXISTS, sans effet) jusqu'à leur retrait (AUD-032).
+  const schemaHistorique = [
+    "CREATE TABLE IF NOT EXISTS admin_audit_logs ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), admin_nom VARCHAR(150) NOT NULL DEFAULT 'Admin', admin_role VARCHAR(50) NOT NULL DEFAULT 'super_admin', action VARCHAR(100) NOT NULL, cible_type VARCHAR(100) NOT NULL, cible_id VARCHAR(100), description TEXT NOT NULL, ancienne_valeur JSONB, nouvelle_valeur JSONB, ip_adresse VARCHAR(50), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS agence_logs ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), agence_id UUID NOT NULL REFERENCES agences_immo(id) ON DELETE CASCADE, utilisateur_id UUID REFERENCES utilisateurs(id) ON DELETE SET NULL, auteur_nom VARCHAR(100), type_action VARCHAR(50), description TEXT, metadonnees JSONB, ip_adresse VARCHAR(45), created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS feature_flags ( key VARCHAR(100) PRIMARY KEY, label VARCHAR(200) NOT NULL, description TEXT DEFAULT '', categorie VARCHAR(50) NOT NULL DEFAULT 'general', enabled BOOLEAN NOT NULL DEFAULT TRUE, scope VARCHAR(50) NOT NULL DEFAULT 'global', meta JSONB DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS boutique_clients ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), boutique_id UUID REFERENCES boutiques(id) ON DELETE CASCADE, nom VARCHAR(150) NOT NULL, telephone VARCHAR(50), adresse TEXT, solde_dette NUMERIC(12,2) DEFAULT 0, plafond_credit NUMERIC(12,2) DEFAULT 50000, notes TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS affiliate_clicks ( id SERIAL PRIMARY KEY, click_ref VARCHAR(255) NOT NULL, apporteur_code VARCHAR(100), geo VARCHAR(100), device VARCHAR(100), ip_hash VARCHAR(255), converted BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT NOW(), converted_at TIMESTAMPTZ )",
+    "CREATE TABLE IF NOT EXISTS boutique_ab_tests ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), boutique_id UUID NOT NULL, titre VARCHAR(255) NOT NULL, actif BOOLEAN DEFAULT true, repartition INTEGER DEFAULT 50, variante_a JSONB NOT NULL, variante_b JSONB NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS boutique_ab_test_events ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), boutique_id UUID NOT NULL, variante VARCHAR(10) NOT NULL, type_evenement VARCHAR(50) NOT NULL, session_id VARCHAR(100), created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS caisse_credit_plans ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE, client_id UUID NOT NULL REFERENCES caisse_clients_credits(id) ON DELETE CASCADE, commande_id UUID REFERENCES commandes_boutique(id) ON DELETE SET NULL, reference VARCHAR(100) UNIQUE NOT NULL, montant_total NUMERIC(12,2) NOT NULL, frais_dossier NUMERIC(12,2) NOT NULL DEFAULT 0, apport_initial NUMERIC(12,2) NOT NULL DEFAULT 0, montant_finance NUMERIC(12,2) NOT NULL, montant_paye NUMERIC(12,2) NOT NULL DEFAULT 0, montant_restant NUMERIC(12,2) NOT NULL, nb_echeances INT NOT NULL DEFAULT 3, frequence VARCHAR(30) NOT NULL DEFAULT 'mensuel', statut VARCHAR(30) NOT NULL DEFAULT 'en_cours', date_debut DATE NOT NULL DEFAULT CURRENT_DATE, snapshot_regles JSONB NOT NULL DEFAULT '{}'::jsonb, articles JSONB NOT NULL DEFAULT '[]'::jsonb, notes TEXT, idempotency_key VARCHAR(128), created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS caisse_credit_echeances ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), plan_id UUID NOT NULL REFERENCES caisse_credit_plans(id) ON DELETE CASCADE, boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE, client_id UUID NOT NULL REFERENCES caisse_clients_credits(id) ON DELETE CASCADE, numero_echeance INT NOT NULL, date_echeance DATE NOT NULL, montant_prevu NUMERIC(12,2) NOT NULL, montant_paye NUMERIC(12,2) NOT NULL DEFAULT 0, montant_restant NUMERIC(12,2) NOT NULL, statut VARCHAR(30) NOT NULL DEFAULT 'a_venir', date_paiement_complet TIMESTAMPTZ, derniere_relance_whatsapp TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS categories ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), nom VARCHAR(100) NOT NULL, slug VARCHAR(100) UNIQUE NOT NULL, icone VARCHAR(50) DEFAULT '📦', description TEXT, ordre INT DEFAULT 0, actif BOOLEAN DEFAULT TRUE, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS categories ( id TEXT PRIMARY KEY, nom VARCHAR(100) NOT NULL, slug VARCHAR(100) UNIQUE NOT NULL, icone VARCHAR(50) DEFAULT '📦', description TEXT, ordre INT DEFAULT 0, actif BOOLEAN DEFAULT TRUE, created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS chat_web_logs ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), message_client TEXT NOT NULL, intention VARCHAR(50), nb_resultats INT DEFAULT 0, temps_ms INT, ip VARCHAR(50), created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS reservations_sequestre_immo ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), reference VARCHAR(50) UNIQUE NOT NULL, bien_id TEXT, agence_id UUID, prospect_nom VARCHAR(120) NOT NULL, prospect_telephone VARCHAR(30) NOT NULL, prospect_email VARCHAR(120), type_reservation VARCHAR(40) NOT NULL DEFAULT 'caution_location', montant NUMERIC(14, 2) NOT NULL, statut_sequestre VARCHAR(30) NOT NULL DEFAULT 'bloque', sequestre_pin_hash VARCHAR(64), sequestre_pin_sel VARCHAR(32), sequestre_essais_restants INT DEFAULT 3, sequestre_date_deblocage TIMESTAMPTZ, notes TEXT, contact_crm_id UUID, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS quarantines_log ( id SERIAL PRIMARY KEY, offre_id INT NOT NULL, raison VARCHAR(255) NOT NULL, prix NUMERIC(12,2), prix_moyen_30j NUMERIC(12,2), status VARCHAR(50) DEFAULT 'quarantined', validated_by VARCHAR(100), validated_at TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS auth_otps ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), utilisateur_id UUID NOT NULL, action VARCHAR(64) NOT NULL, code_hash VARCHAR(64) NOT NULL, code_sel VARCHAR(32) NOT NULL, telephone VARCHAR(32) NOT NULL, essais_restants INT DEFAULT 3, expire_a TIMESTAMPTZ NOT NULL, utilise BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS auth_otp_phones ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), telephone VARCHAR(32) NOT NULL, action VARCHAR(64) NOT NULL, code_hash VARCHAR(64) NOT NULL, code_sel VARCHAR(32) NOT NULL, essais_restants INT DEFAULT 5, expire_a TIMESTAMPTZ NOT NULL, utilise BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS prospection_leads ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), nom_boutique VARCHAR(255) NOT NULL, contact_nom VARCHAR(150), telephone VARCHAR(50) NOT NULL UNIQUE, telephone_brut VARCHAR(100), operateur VARCHAR(50) DEFAULT 'Orange', email VARCHAR(255), categorie VARCHAR(100) DEFAULT 'mode', ville VARCHAR(100) DEFAULT 'Dakar', quartier VARCHAR(150), source VARCHAR(100) DEFAULT 'manuel', statut VARCHAR(50) DEFAULT 'nouveau', score INT DEFAULT 0, fit_score INT DEFAULT 0, notes TEXT, derniere_action_at TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS prospection_campagnes ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), titre VARCHAR(255) NOT NULL, canal VARCHAR(50) NOT NULL DEFAULT 'whatsapp', statut VARCHAR(50) NOT NULL DEFAULT 'brouillon', template_message TEXT NOT NULL, sujet_email VARCHAR(255), segment_cible VARCHAR(100), categorie_cible VARCHAR(100), zone_cible VARCHAR(100), source_cible VARCHAR(100), variante_message VARCHAR(50) DEFAULT 'variante_A', nb_total INT DEFAULT 0, nb_contactables INT DEFAULT 0, nb_envoyes INT DEFAULT 0, nb_succes INT DEFAULT 0, nb_echecs INT DEFAULT 0, nb_reponses INT DEFAULT 0, nb_reponses_positives INT DEFAULT 0, nb_reponses_negatives INT DEFAULT 0, nb_sans_reponse INT DEFAULT 0, nb_interesses INT DEFAULT 0, nb_inscrits INT DEFAULT 0, nb_boutiques_creees INT DEFAULT 0, nb_agences_creees INT DEFAULT 0, nb_boutiques_actives INT DEFAULT 0, nb_clients_payants INT DEFAULT 0, nb_optout INT DEFAULT 0, taux_delivrabilite NUMERIC(5,2) DEFAULT 0, taux_reponse NUMERIC(5,2) DEFAULT 0, taux_positif NUMERIC(5,2) DEFAULT 0, taux_conversion NUMERIC(5,2) DEFAULT 0, taux_optout NUMERIC(5,2) DEFAULT 0, diagnostic JSONB DEFAULT '{}', metadonnees JSONB DEFAULT '{}', date_debut TIMESTAMPTZ, date_fin TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS prospection_messages_log ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), campagne_id UUID, lead_id UUID, canal VARCHAR(50) NOT NULL, destinataire VARCHAR(255) NOT NULL, message_envoye TEXT NOT NULL, statut VARCHAR(50) DEFAULT 'envoye', variante VARCHAR(50) DEFAULT 'A', erreur TEXT, meta_message_id VARCHAR(100), created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS prospection_lead_events ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), lead_id UUID NOT NULL REFERENCES prospection_leads(id) ON DELETE CASCADE, campagne_id UUID REFERENCES prospection_campagnes(id) ON DELETE SET NULL, type_evenement VARCHAR(50) NOT NULL, canal VARCHAR(50) DEFAULT 'whatsapp', description TEXT, metadata JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS whatsapp_blacklist ( phone VARCHAR(50) PRIMARY KEY, reason VARCHAR(255) DEFAULT 'optout', created_at TIMESTAMPTZ DEFAULT NOW() )",
+    "CREATE TABLE IF NOT EXISTS cron_executions ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), nom_cron VARCHAR(100) NOT NULL, started_at TIMESTAMPTZ DEFAULT NOW(), ended_at TIMESTAMPTZ, statut VARCHAR(20) DEFAULT 'en_cours', stats JSONB DEFAULT '{}', erreur TEXT )",
+    "ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS logo_url TEXT",
+    "ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS plan_actif VARCHAR(50) DEFAULT 'pro'",
+    "ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS notes TEXT",
+    "ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS categorie VARCHAR(50)",
+    "ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}'",
+    "ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS en_stock BOOLEAN DEFAULT TRUE",
+    "ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_barre NUMERIC(12,2)",
+    "ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS echelonnement_actif BOOLEAN DEFAULT FALSE",
+    "ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS echelonnement_config JSONB DEFAULT '{ \"actif\": false, \"montant_min_vente\": 10000, \"montant_max_vente\": 5000000, \"apport_min_pct\": 20, \"apport_min_fcfa\": 5000, \"echeance_min_fcfa\": 5000, \"nb_echeances_autorisees\": [2, 3, 4, 6], \"frequences_autorisees\": [\"mensuel\", \"bimensuel\", \"hebdomadaire\"], \"delai_premiere_echeance_jours\": 30, \"frais_dossier_fixes\": 0, \"frais_pourcentage\": 0 }'::jsonb",
+    "ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS reference VARCHAR(128)",
+    "ALTER TABLE categories ADD COLUMN IF NOT EXISTS ordre INT DEFAULT 0",
+    "ALTER TABLE categories ADD COLUMN IF NOT EXISTS actif BOOLEAN DEFAULT TRUE",
+    "ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT",
+    "ALTER TABLE categories ADD COLUMN IF NOT EXISTS icone VARCHAR(50) DEFAULT '📦'",
+    "ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id UUID",
+    "ALTER TABLE categories ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()",
+    "ALTER TABLE categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()",
+    "ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS statut_sequestre VARCHAR(30) DEFAULT 'aucun'",
+    "ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS sequestre_pin_hash VARCHAR(64)",
+    "ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS sequestre_pin_sel VARCHAR(32)",
+    "ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS sequestre_essais_restants INT DEFAULT 3",
+    "ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS sequestre_date_deblocage TIMESTAMPTZ",
+    "ALTER TABLE auth_otp_phones ADD COLUMN IF NOT EXISTS verifie_le TIMESTAMPTZ",
+    "ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS crm_lead_id UUID",
+    "ALTER TABLE agences_immo ADD COLUMN IF NOT EXISTS crm_lead_id UUID",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS score INT DEFAULT 0",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS fit_score INT DEFAULT 0",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS engagement_score INT DEFAULT 0",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS conversion_score INT DEFAULT 0",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS contactability_score INT DEFAULT 100",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS priority_score INT DEFAULT 50",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS next_best_action VARCHAR(100) DEFAULT 'contacter'",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS scoring_details JSONB DEFAULT '{}'",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS contact_nom VARCHAR(150)",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone_brut VARCHAR(100)",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS operateur VARCHAR(50) DEFAULT 'Orange'",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS email VARCHAR(255)",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS notes TEXT",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS nb_contacts INT DEFAULT 0",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS dernier_contact_at TIMESTAMPTZ",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_reponse_at TIMESTAMPTZ",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ",
+    "ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS sous_profil VARCHAR(50)",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_agences_creees INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS segment_cible VARCHAR(100)",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS categorie_cible VARCHAR(100)",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS zone_cible VARCHAR(100)",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS source_cible VARCHAR(100)",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS variante_message VARCHAR(50) DEFAULT 'variante_A'",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_contactables INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_reponses INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_reponses_positives INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_reponses_negatives INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_sans_reponse INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_interesses INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_inscrits INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_boutiques_creees INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_boutiques_actives INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_clients_payants INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_optout INT DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_delivrabilite NUMERIC(5,2) DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_reponse NUMERIC(5,2) DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_positif NUMERIC(5,2) DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_conversion NUMERIC(5,2) DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_optout NUMERIC(5,2) DEFAULT 0",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS diagnostic JSONB DEFAULT '{}'",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS date_debut TIMESTAMPTZ",
+    "ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS date_fin TIMESTAMPTZ",
+    "ALTER TABLE prospection_messages_log ADD COLUMN IF NOT EXISTS variante VARCHAR(50) DEFAULT 'A'",
+    "ALTER TABLE prospection_messages_log ADD COLUMN IF NOT EXISTS meta_message_id VARCHAR(100)",
+    "ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS relance_panier_envoyee BOOLEAN DEFAULT FALSE",
+    "ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS date_relance_panier TIMESTAMPTZ",
+    "CREATE INDEX IF NOT EXISTS idx_agence_logs_agence ON agence_logs(agence_id)",
+    "CREATE INDEX IF NOT EXISTS idx_agence_logs_date ON agence_logs(created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_feature_flags_cat ON feature_flags(categorie)",
+    "CREATE INDEX IF NOT EXISTS idx_feature_flags_enabled ON feature_flags(enabled)",
+    "CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON admin_audit_logs(created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON admin_audit_logs(action)",
+    "CREATE INDEX IF NOT EXISTS idx_audit_logs_cible ON admin_audit_logs(cible_type, cible_id)",
+    "CREATE INDEX IF NOT EXISTS idx_boutique_clients_btq ON boutique_clients(boutique_id)",
+    "CREATE INDEX IF NOT EXISTS idx_aff_clicks_created ON affiliate_clicks(created_at DESC)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_caisse_docs_boutique_ref ON caisse_documents(boutique_id, reference)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_ventes_boutique_ref ON ventes(boutique_id, reference)",
+    "CREATE INDEX IF NOT EXISTS idx_credit_plans_bq_client ON caisse_credit_plans(boutique_id, client_id)",
+    "CREATE INDEX IF NOT EXISTS idx_credit_plans_statut ON caisse_credit_plans(boutique_id, statut)",
+    "CREATE INDEX IF NOT EXISTS idx_credit_plans_ref ON caisse_credit_plans(boutique_id, reference)",
+    "CREATE INDEX IF NOT EXISTS idx_credit_ech_plan ON caisse_credit_echeances(plan_id, numero_echeance)",
+    "CREATE INDEX IF NOT EXISTS idx_credit_ech_date ON caisse_credit_echeances(boutique_id, date_echeance, statut)",
+    "CREATE INDEX IF NOT EXISTS idx_credit_ech_client ON caisse_credit_echeances(client_id, statut)",
+    "CREATE INDEX IF NOT EXISTS idx_credit_hist_ref ON caisse_credit_historique(boutique_id, reference)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_hist_bq_ref_uniq ON caisse_credit_historique(boutique_id, reference) WHERE reference IS NOT NULL",
+    "CREATE INDEX IF NOT EXISTS idx_quarantines_status ON quarantines_log(status)",
+    "CREATE INDEX IF NOT EXISTS idx_auth_otps_user_action ON auth_otps(utilisateur_id, action, utilise)",
+    "CREATE INDEX IF NOT EXISTS idx_auth_otp_phones_tel_act ON auth_otp_phones(telephone, action, utilise)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_leads_tel ON prospection_leads(telephone)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_leads_statut ON prospection_leads(statut)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_leads_cat ON prospection_leads(categorie)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_leads_date ON prospection_leads(created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_leads_score ON prospection_leads(score DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_leads_priority ON prospection_leads(priority_score DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_leads_fit ON prospection_leads(fit_score DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_target ON prospection_leads(statut, categorie, quartier)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_campagnes_date ON prospection_campagnes(created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_log_campagne ON prospection_messages_log(campagne_id)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_log_lead ON prospection_messages_log(lead_id)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_log_date ON prospection_messages_log(created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_events_lead ON prospection_lead_events(lead_id)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_events_type ON prospection_lead_events(type_evenement)",
+    "CREATE INDEX IF NOT EXISTS idx_prospection_events_date ON prospection_lead_events(created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_cron_executions_nom ON cron_executions(nom_cron, started_at DESC)",
+  ];
+  for (const sql of schemaHistorique) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] schéma historique:', e.message, '::', sql.slice(0, 90)); }
+  }
+
+  // AUD-002 : éléments présents en production (observés dans la sauvegarde du 24/09/2026) mais décrits nulle part
+  // dans le dépôt : ajoutés à la main sur la base de production. Types déduits des données et du code qui les utilise.
+  const schemaProductionNonDecrit = [
+    `CREATE TABLE IF NOT EXISTS notifications_immo (
+       id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+       agence_id    UUID NOT NULL REFERENCES agences_immo(id) ON DELETE CASCADE,
+       type         VARCHAR(50) NOT NULL,
+       titre        VARCHAR(255) NOT NULL,
+       message      TEXT,
+       lien         VARCHAR(500),
+       priorite     VARCHAR(20) DEFAULT 'normale',
+       lu           BOOLEAN DEFAULT FALSE,
+       metadonnees  JSONB DEFAULT '{}'::jsonb,
+       created_at   TIMESTAMPTZ DEFAULT NOW(),
+       updated_at   TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_notifications_immo_agence ON notifications_immo(agence_id, lu, created_at DESC)`,
+    `ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS motif_rejet TEXT`,
+    `ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS visite_virtuelle TEXT`,
+    `ALTER TABLE feature_flags ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`,
+    `ALTER TABLE ventes ADD COLUMN IF NOT EXISTS prix_achat NUMERIC(12,2)`,
+    `ALTER TABLE alertes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`,
+  ];
+  for (const sql of schemaProductionNonDecrit) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] schéma production non décrit:', e.message, '::', sql.slice(0, 90)); }
+  }
+
+  // AUD-001 : rejeu des instructions différées jusqu'à stabilité (les tables visées existent désormais)
+  const nbDifferees = differees.length;
+  let restantes = differees.splice(0);
+  for (let passe = 1; passe <= 8 && restantes.length; passe++) {
+    const echecs = [];
+    for (const d of restantes) {
+      try { await requeteOriginale(d.sql, d.params); }
+      catch (e) { echecs.push({ ...d, erreur: e.message }); }
+    }
+    const progres = echecs.length < restantes.length;
+    restantes = echecs;
+    if (!progres) break;
+  }
+  if (restantes.length) {
+    console.warn(`[MIGRATE] ⚠️ ${restantes.length} instruction(s) en échec définitif (sur ${nbDifferees} différée(s)) :`);
+    restantes.slice(0, 25).forEach(d => console.warn('[MIGRATE]   -', d.erreur, '::', d.sql.replace(/\s+/g, ' ').trim().slice(0, 110)));
+    if (process.env.MIGRATE_STRICT === 'true') {
+      throw new Error(`${restantes.length} migration(s) en échec définitif : ${restantes[0].erreur}`);
+    }
+  } else if (nbDifferees > 0) {
+    console.log(`[MIGRATE] ✅ ${nbDifferees} instruction(s) différée(s) puis rejouée(s) avec succès (base vide ou schéma incomplet)`);
+  }
+  return { differees: nbDifferees, echecsDefinitifs: restantes.length };
 };
 

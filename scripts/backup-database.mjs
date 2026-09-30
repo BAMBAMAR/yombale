@@ -19,6 +19,7 @@ import zlib from 'zlib'
 import crypto from 'crypto'
 import { pipeline } from 'stream/promises'
 import { fileURLToPath } from 'url'
+import sqlDump from '../backend/lib/sqlDump.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -141,26 +142,13 @@ function purgerAnciensBackups() {
 /**
  * Formate une valeur JavaScript pour l'injection SQL sécurisée
  */
-function formaterValeurSql(val, udtName) {
-  if (val === null || val === undefined) return 'NULL'
-  if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE'
-  if (typeof val === 'number') {
-    if (Number.isNaN(val) || !Number.isFinite(val)) return 'NULL'
-    return val
-  }
-  if (val instanceof Date) return `'${val.toISOString()}'::timestamptz`
-  if (Array.isArray(val)) {
-    // Array PostgreSQL
-    const jsonArr = JSON.stringify(val).replace(/'/g, "''")
-    return `'${jsonArr}'::jsonb`
-  }
-  if (typeof val === 'object') {
-    const jsonStr = JSON.stringify(val).replace(/'/g, "''")
-    return `'${jsonStr}'::jsonb`
-  }
-  // String standard
-  const str = String(val).replace(/'/g, "''")
-  return `'${str}'`
+// AUD-031 : sérialisation déplacée dans backend/lib/sqlDump.js (testable) et corrigée pour les colonnes tableau
+const formaterValeurSql = sqlDump.formaterValeurSql
+
+// Décodeur de types : dates renvoyées telles quelles par PostgreSQL (chaînes), autres types inchangés
+const OID_DATES = new Set([1082, 1114, 1184]) // date, timestamp, timestamptz
+const typesDatesBrutes = {
+  getTypeParser: (oid, format) => (OID_DATES.has(oid) ? (v) => v : pg.types.getTypeParser(oid, format)),
 }
 
 /**
@@ -278,7 +266,9 @@ export async function executerSauvegarde({ destination = 'both', label = 'auto' 
         continue
       }
 
-      const rowsRes = await client.query(`SELECT * FROM "${table}";`)
+      // AUD-031 : date / timestamp / timestamptz lus en TEXTE (pas en objet Date) : conserve la précision à la
+      // microseconde et évite tout décalage de fuseau ou de jour lors de la restauration.
+      const rowsRes = await client.query({ text: `SELECT * FROM "${table}";`, types: typesDatesBrutes })
       const colsEscaped = columns.map(c => `"${c}"`).join(', ')
 
       // Batching d'inserts pour maximiser les performances de restauration
