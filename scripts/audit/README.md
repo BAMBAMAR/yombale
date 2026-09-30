@@ -8,6 +8,10 @@ Méthode : `docs/METHODOLOGIE-AUDIT.md`. Ce kit ne touche jamais la production :
 2. Créer `scripts/audit/.local/pgpass.txt` contenant uniquement le mot de passe local (le dossier `.local/` est ignoré par git : ne jamais le committer).
 3. Créer les bases : `nopalou_audit` (schéma : `node scripts/audit/freshmig.js 1` construit `nopalou_fresh` ; pour `nopalou_audit`, appliquer la même séquence), puis, si besoin de données réelles, `nopalou_audit_data` restaurée depuis une sauvegarde (contient des données personnelles).
 
+## Sauvegarde chiffrée du mot de passe (hors dépôt)
+
+`powershell -File scripts\audit\pgpass-backup.ps1 -Action save` chiffre `pgpass.txt` (DPAPI Windows) dans `%USERPROFILE%\.nopalou-audit\pgpass.dpapi`. Ce fichier n'est lisible que par le même compte Windows sur le même poste : il survit à un nouveau clone du dépôt, mais pas à la perte du poste ou du profil (conserver aussi le mot de passe dans un gestionnaire de mots de passe). `audit-env.ps1` et `check-pg.ps1` restaurent automatiquement `.local\pgpass.txt` depuis cette sauvegarde s'il manque ; `-Action status` indique l'état des deux fichiers. Refaire un `save` après toute réinitialisation du mot de passe.
+
 ## Mot de passe perdu ou `pgpass.txt` absent
 
 `.local/` n'est ni versionné ni sauvegardé : s'il disparaît, le kit refuse de démarrer (`check-pg.ps1` le signale). Réinitialisation, sans perte de données, pour cette instance locale uniquement (le rôle `postgres` du port 54329) :
@@ -15,7 +19,7 @@ Méthode : `docs/METHODOLOGIE-AUDIT.md`. Ce kit ne touche jamais la production :
 1. Sauvegarder `C:\Program Files\PostgreSQL\16\data\pg_hba.conf`, puis passer la ligne `host all all 127.0.0.1/32` de `scram-sha-256` à `trust` et recharger la configuration (`pg_ctl reload`, ou `Restart-Service postgresql-x64-16` en administrateur).
 2. `psql -h 127.0.0.1 -p 54329 -U postgres -c "ALTER USER postgres PASSWORD '<aléatoire>'"` et écrire ce mot de passe seul sur une ligne dans `scripts/audit/.local/pgpass.txt`.
 3. Restaurer `pg_hba.conf` **immédiatement** et vérifier que `psql -w` sans mot de passe est de nouveau refusé (`fe_sendauth: no password supplied`). Ne jamais laisser `trust` en place.
-4. `powershell -File scripts\audit\check-pg.ps1` doit afficher `OK`.
+4. `powershell -File scripts\audit\check-pg.ps1` doit afficher `OK`, puis `pgpass-backup.ps1 -Action save` pour renouveler la sauvegarde chiffrée.
 
 ## Utilisation
 

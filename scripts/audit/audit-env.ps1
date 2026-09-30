@@ -3,6 +3,7 @@
 # Le mot de passe PostgreSQL local est lu dans scripts\audit\.local\pgpass.txt (ignoré par git, jamais commité).
 $kit = Split-Path -Parent $MyInvocation.MyCommand.Path
 $pwFile = Join-Path $kit '.local\pgpass.txt'
+if (-not (Test-Path $pwFile)) { & (Join-Path $kit 'pgpass-backup.ps1') -Action restore | Out-Null }  # restauration automatique depuis la sauvegarde chiffrée, si elle existe
 if (-not (Test-Path $pwFile)) { throw "REFUS : $pwFile absent (voir scripts/audit/README.md, section Installation)" }
 $pw = (Get-Content $pwFile -Raw).Trim()
 $env:DATABASE_URL = "postgresql://postgres:$pw@127.0.0.1:54329/nopalou_audit"
