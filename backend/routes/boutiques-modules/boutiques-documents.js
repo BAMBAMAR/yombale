@@ -6,6 +6,7 @@ const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = r
 const { checkAbonnement, requireAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
 const { limiterPublication, limiterImport } = require('../../middlewares/rateLimit');
 const { uploadBuffer } = require('../../services/cloudinary');
+const { controlerFichiers, IMAGES_OU_PDF } = require('../../lib/fichiersAutorises'); // AUD-146
 const { scrapeProductFromUrl } = require('../../services/magic-import');
 const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog');
 const cfg = require('../../lib/settingsCache');
@@ -293,7 +294,7 @@ router.delete('/:id/documents/:docId', verifierToken, param('id').isUUID(), para
 });
 
 // ── GET /api/boutiques/:id/bons-achat/:code — Vérifier avoir
-router.post('/:id/upload-justificatif', verifierToken, param('id').isUUID(), uploadJustificatifAchat.single('justificatif'), async (req, res) => {
+router.post('/:id/upload-justificatif', verifierToken, param('id').isUUID(), uploadJustificatifAchat.single('justificatif'), controlerFichiers(IMAGES_OU_PDF), async (req, res) => {
   try {
     const idParam = req.params.id;
     const b = await checkBoutiqueAccess(idParam, req.user.userId);

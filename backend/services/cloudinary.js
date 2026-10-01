@@ -7,7 +7,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const { exigerTypes, IMAGES_OU_PDF, VIDEOS, DOCUMENTS } = require('../lib/fichiersAutorises'); // AUD-146 : contenu réel contrôlé avant tout envoi
+
 async function uploadBuffer(buffer, folder) {
+  exigerTypes(buffer, IMAGES_OU_PDF, 'image');
   return new Promise(function(resolve, reject) {
     var stream = cloudinary.uploader.upload_stream(
       {
@@ -39,6 +42,7 @@ async function uploadBuffer(buffer, folder) {
 }
 
 async function uploadVideoBuffer(buffer, folder) {
+  exigerTypes(buffer, VIDEOS, 'vidéo');
   return new Promise(function(resolve, reject) {
     var stream = cloudinary.uploader.upload_stream(
       {
@@ -56,6 +60,7 @@ async function uploadVideoBuffer(buffer, folder) {
 }
 
 async function uploadDocumentBuffer(buffer, folder, filename) {
+  exigerTypes(buffer, DOCUMENTS, 'document');
   return new Promise(function(resolve, reject) {
     var stream = cloudinary.uploader.upload_stream(
       {

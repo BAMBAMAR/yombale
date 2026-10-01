@@ -10,6 +10,7 @@ const { checkAbonnement, requireAbonnement } = require('../middlewares/checkAbon
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const { uploadBuffer } = require('../services/cloudinary');
+const { controlerFichiers, IMAGES_OU_PDF } = require('../lib/fichiersAutorises'); // AUD-146
 const { enregistrerAuditLog } = require('../lib/auditLogger');
 const { syncProduit } = require('../services/whatsapp-catalog');
 const { limiterCommandeExpress } = require('../middlewares/rateLimit');
@@ -1902,6 +1903,7 @@ router.post(
   param('boutiqueId').isUUID(),
   param('depenseId').isUUID(),
   upload.single('justificatif'),
+  controlerFichiers(IMAGES_OU_PDF),
   async (req, res) => {
     try {
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
@@ -1929,6 +1931,7 @@ router.post(
   param('boutiqueId').isUUID(),
   param('venteId').isUUID(),
   upload.single('justificatif'),
+  controlerFichiers(IMAGES_OU_PDF),
   async (req, res) => {
     try {
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);

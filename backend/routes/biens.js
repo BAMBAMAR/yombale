@@ -13,6 +13,7 @@ const uploadVideo = multer({
   limits: { fileSize: 50 * 1024 * 1024 }
 });
 const { uploadBuffer, uploadVideoBuffer } = require('../services/cloudinary');
+const { controlerFichiers, IMAGES, VIDEOS } = require('../lib/fichiersAutorises'); // AUD-146
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
@@ -270,7 +271,7 @@ router.post('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (re
 });
 
 // ── POST /api/biens/agence/:slugOrId/upload-photos — Téléversement de photos (multipart ou base64) ──
-router.post('/agence/:slugOrId/upload-photos', verifierToken, requireAgenceAccess(), upload.array('photos', 10), async (req, res) => {
+router.post('/agence/:slugOrId/upload-photos', verifierToken, requireAgenceAccess(), upload.array('photos', 10), controlerFichiers(IMAGES), async (req, res) => {
   try {
     const urls = [];
 
@@ -319,7 +320,7 @@ router.post('/agence/:slugOrId/upload-photos', verifierToken, requireAgenceAcces
 });
 
 // ── POST /api/biens/agence/:slugOrId/upload-video — Téléversement ou enregistrement d'une vidéo ──
-router.post('/agence/:slugOrId/upload-video', verifierToken, requireAgenceAccess(), uploadVideo.single('video'), async (req, res) => {
+router.post('/agence/:slugOrId/upload-video', verifierToken, requireAgenceAccess(), uploadVideo.single('video'), controlerFichiers(VIDEOS), async (req, res) => {
   try {
     let videoUrl = null;
 

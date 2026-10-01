@@ -13,6 +13,7 @@ const wave = require('../services/wave');
 const { alerterAdmin, alerterPaiementManuel, alerterAbonnement, alerterPaiementRecu } = require('../services/admin-alerts');
 const multer = require('multer');
 const { uploadBuffer } = require('../services/cloudinary');
+const { controlerFichiers, IMAGES_OU_PDF } = require('../lib/fichiersAutorises'); // AUD-146
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
 // Prix dynamiques — lus depuis la table settings (avec cache 5 min)
@@ -1075,7 +1076,7 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
 });
 
 // POST /api/paiement/manuel/declarer — le client déclare un dépôt Wave/Orange effectué manuellement
-router.post('/manuel/declarer', verifierToken, limiterEcriture, upload.single('preuve'), async (req, res) => {
+router.post('/manuel/declarer', verifierToken, limiterEcriture, upload.single('preuve'), controlerFichiers(IMAGES_OU_PDF), async (req, res) => {
   try {
     if (!(await cfg.getBool('paiement_manuel_actif'))) {
       return res.status(403).json({ error: 'Paiement manuel temporairement indisponible' });

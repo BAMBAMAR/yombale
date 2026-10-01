@@ -20,6 +20,7 @@ const uploadDoc = multer({
   limits: { fileSize: 15 * 1024 * 1024 },
 });
 const { uploadDocumentBuffer } = require('../services/cloudinary');
+const { controlerFichiers } = require('../lib/fichiersAutorises'); // AUD-146
 const crypto = require('crypto');
 const { validerLienBail } = require('../lib/bailLink');
 const { limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire } = require('../middlewares/rateLimit');
@@ -467,7 +468,7 @@ router.post('/agence/:slugOrId/baux/:bailId/signer', verifierToken, requireAgenc
 });
 
 // ── POST /api/locatif-immo/agence/:slugOrId/baux/:bailId/documents — Dépôt de pièce justificative (CNI, etc.) par l'agence ──
-router.post('/agence/:slugOrId/baux/:bailId/documents', verifierToken, requireAgenceAccess(), uploadDoc.single('file'), async (req, res) => {
+router.post('/agence/:slugOrId/baux/:bailId/documents', verifierToken, requireAgenceAccess(), uploadDoc.single('file'), controlerFichiers(), async (req, res) => {
   try {
     const agenceId = req.agence.id;
     const { bailId } = req.params;
@@ -1594,7 +1595,7 @@ router.post('/mes-locations/bail/:bailId/signer', verifierToken, async (req, res
 });
 
 // ── POST /api/locatif-immo/mes-locations/bail/:bailId/documents — Dépôt de pièce justificative (CNI...) locataire connecté ──
-router.post('/mes-locations/bail/:bailId/documents', verifierToken, uploadDoc.single('file'), async (req, res) => {
+router.post('/mes-locations/bail/:bailId/documents', verifierToken, uploadDoc.single('file'), controlerFichiers(), async (req, res) => {
   try {
     const { bailId } = req.params;
     const { type_piece = 'autre', label } = req.body;

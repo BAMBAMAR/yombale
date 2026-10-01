@@ -452,4 +452,27 @@ describeIntegration('Protection des données', () => {
       expect((await request(app).get('/api/settings').set('Cookie', `nopalou_admin=${forge}`)).status).toBe(401);
       expect((await post('/api/admin/auth/login', { secret: 'mauvais' })).status).toBe(401);
     });
+  });
+  describe('AUD-146 — téléversements : le contenu réel est contrôlé', () => {
+    test('un faux PDF (HTML renommé) est refusé en 400 sur la route de dépôt de pièces ; un vrai PDF passe le contrôle', async () => {
+      await pool.query('UPDATE contacts_immo SET utilisateur_id = $1 WHERE id = $2', [marchand.id, locataire]);
+      const url = `/api/locatif-immo/mes-locations/bail/${bailId}/documents`;
+      const faux = await request(app).post(url).set('Authorization', `Bearer ${marchand.token}`)
+        .field('type_piece', 'cni').attach('file', Buffer.from('<html><script>alert(1)</script></html>'), { filename: 'cni.pdf', contentType: 'application/pdf' });
+      expect(faux.status).toBe(400);
+      expect(faux.body.error).toMatch(/non autorisé/);
+      const vrai = await request(app).post(url).set('Authorization', `Bearer ${marchand.token}`)
+        .field('type_piece', 'cni').attach('file', Buffer.from('%PDF-1.7\n%test\n'), { filename: 'cni.pdf', contentType: 'application/pdf' });
+      expect(vrai.status).not.toBe(400); // le contrôle est passé ; l'envoi Cloudinary est neutralisé en test (échec 500 attendu)
+      const { rows } = await pool.query('SELECT pieces_jointes FROM baux_immo WHERE id = $1', [bailId]);
+      expect(JSON.stringify(rows[0].pieces_jointes || [])).not.toContain('cni.pdf'); // rien n'a été enregistré pour le faux fichier
+    });
+
+    test('le point de passage commun (service Cloudinary) refuse aussi un contenu non autorisé, même sans pré-contrôle', async () => {
+      const { uploadBuffer, uploadDocumentBuffer, uploadVideoBuffer } = require('../../backend/services/cloudinary');
+      const html = Buffer.from('<html>x</html>');
+      await expect(uploadBuffer(html, 'test')).rejects.toMatchObject({ status: 400 });
+      await expect(uploadDocumentBuffer(html, 'test', 'a.pdf')).rejects.toMatchObject({ status: 400 });
+      await expect(uploadVideoBuffer(Buffer.from('%PDF-1.7'), 'test')).rejects.toMatchObject({ status: 400 });
+    });
   });});
