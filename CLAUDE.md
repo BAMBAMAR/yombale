@@ -5,7 +5,7 @@
 ## 🛑 1. Déploiement & Git
 - **Bannissement du Push Automatique** : Ne **JAMAIS** exécuter de `git push` de sa propre initiative. Attendre un ordre explicite de l'utilisateur (ex: *"push"*, *"déploie"*).
 - **Documentation Systématique** : Ajouter le compte-rendu précis de chaque livraison/push en tête de `docs/JOURNAL-LIVRAISONS.md` (pas dans `CLAUDE.md`, chargé automatiquement dans chaque session).
-- **Authentification Git** : Utiliser le token `GITHUB_TOKEN` présent dans `.env` si nécessaire.
+- **Authentification Git** : jamais de jeton dans l'URL du remote (AUD-136). Le gestionnaire d'identifiants (`credential.helper manager` / `gh auth git-credential`) suffit ; à défaut, passer `GITHUB_TOKEN` (`.env`) par variable d'environnement : `git -c http.extraheader="AUTHORIZATION: bearer $env:GITHUB_TOKEN" push`.
 
 ## 🛡️ 2. Les 5 Règles d'Or Anti-IA-Slop & Standard Ingénieur Senior
 1. **Bannissement des Béquilles Emojis dans l'UI** : Utiliser exclusivement les icônes vectorielles SVG de `lucide-react` (dimensionnement précis 14px, 16px, 18px). Zéro émoji Unicode (`🏪`, `👑`, `⚡`, `💳`, `📦`) comme icônes d'interface ou de boutons. Linter : `npm run lint:slop`.

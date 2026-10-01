@@ -88,14 +88,15 @@ export default function BailLocataireCard({ bail, tenantPhone, onRefresh }: Prop
   const defaultNom = `${bail.locataire_prenom || ''} ${bail.locataire_nom || ''}`.trim()
 
   async function handleSaveSignature(signatureDataUrl: string, signerName: string, cachetDataUrl?: string | null) {
-    if (!tenantPhone) {
-      throw new Error('Numéro de téléphone introuvable pour valider la signature.')
+    // AUD-132 : signature authentifiée par le jeton du portail (code WhatsApp), plus par numéro seul
+    const token = localStorage.getItem('token_immo') || localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Session expirée : reconnectez-vous au portail avec votre code WhatsApp.')
     }
-    const res = await fetch(`/api/locatif-immo/public/bail/${bail.id}/signer`, {
+    const res = await fetch(`/api/locatif-immo/mes-locations/bail/${bail.id}/signer`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        tel: tenantPhone,
         signature: signatureDataUrl,
         cachet: cachetDataUrl || null,
         nom_signataire: signerName,

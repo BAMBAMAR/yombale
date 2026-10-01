@@ -119,6 +119,35 @@ const limiterWhatsappSend = rateLimit({
   standardHeaders: true,
 });
 
+// AUD-132 : codes OTP du portail locataire — actifs aussi hors production (un message WhatsApp part à chaque
+// demande : pas de spam vers des tiers, pas de recherche exhaustive de numéros). Désactivés seulement en test.
+const skipTestOtp = () => process.env.NODE_ENV === 'test' && !process.env.FORCE_RATE_LIMITS;
+const chiffresTel = (req) => String((req.body && req.body.tel) || '').replace(/\D/g, '').slice(-9);
+
+const limiterOtpLocataireIp = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 10,
+  keyGenerator: (req) => `otp-loc-ip:${realIp(req)}`,
+  skip: skipTestOtp,
+  message: { success: false, error: 'Trop de demandes de code — réessayez dans 1 heure.' },
+  standardHeaders: true,
+});
+
+const limiterOtpLocataireNumero = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 5,
+  keyGenerator: (req) => `otp-loc-tel:${chiffresTel(req) || realIp(req)}`,
+  skip: skipTestOtp,
+  message: { success: false, error: 'Trop de demandes de code pour ce numéro — réessayez dans 1 heure.' },
+  standardHeaders: true,
+});
+
+const limiterVerifOtpLocataire = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 30,
+  keyGenerator: (req) => `otp-loc-verif:${realIp(req)}`,
+  skip: skipTestOtp,
+  message: { success: false, error: 'Trop de tentatives — réessayez dans 1 heure.' },
+  standardHeaders: true,
+});
+
 // Limite les accès bulk (listes produits/immo/annonces) pour freiner le scraping
 // Exclut les IPs internes (serveur Next.js → Express en SSR) et les utilisateurs authentifiés
 const INTERNAL_IPS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
@@ -140,4 +169,4 @@ const limiterBulk = rateLimit({
   },
 });
 
-module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA };
+module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };

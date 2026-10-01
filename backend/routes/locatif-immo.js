@@ -21,6 +21,15 @@ const uploadDoc = multer({
 });
 const { uploadDocumentBuffer } = require('../services/cloudinary');
 const crypto = require('crypto');
+const { validerLienBail } = require('../lib/bailLink');
+const { limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire } = require('../middlewares/rateLimit');
+
+// AUD-132 : réponse des routes publiques par numéro seul, supprimées au profit du portail avec code WhatsApp
+const REPONSE_PORTAIL_OTP = {
+  success: false,
+  code: 'PORTAIL_OTP_REQUIS',
+  error: 'Cette fonction exige une connexion au portail locataire : saisissez votre numéro puis le code reçu par WhatsApp.',
+};
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { normalisePhone, sendWhatsAppTemplate, sendWhatsAppText } = require('../services/whatsapp');
@@ -1785,9 +1794,20 @@ router.get('/public/echeance/:echeanceId/bail.pdf', async (req, res) => {
 router.get('/public/bail/:bailId.pdf', async (req, res) => {
   try {
     const { bailId } = req.params;
-    const { tel } = req.query;
-    const cleanPh = tel ? String(tel).replace(/\D/g, '') : '';
+    // AUD-132 : accès par lien signé et expirant (`?lien=`). L'ancien accès par numéro de téléphone seul
+    // (voire sans aucun paramètre) est fermé ; `LOCATAIRE_LEGACY_LINKS=true` ne le rouvre que pour les
+    // liens déjà envoyés et exige alors un numéro non vide qui correspond au bail.
+    const lien = validerLienBail(req.query.lien, bailId);
+    const legacy = process.env.LOCATAIRE_LEGACY_LINKS === 'true';
+    const cleanPh = req.query.tel ? String(req.query.tel).replace(/\D/g, '') : '';
     const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+    if (!lien.valide && !(legacy && shortPh)) {
+      return res.status(401).json({
+        success: false,
+        error: 'Lien invalide ou expiré. Connectez-vous au portail locataire (code WhatsApp) pour obtenir votre contrat.',
+        code: 'LIEN_BAIL_INVALIDE',
+      });
+    }
 
     const { rows } = await pool.query(
       `SELECT bx.*,
@@ -1806,12 +1826,12 @@ router.get('/public/bail/:bailId.pdf', async (req, res) => {
        JOIN agences_immo a ON bx.agence_id = a.id
        WHERE bx.id = $1
          AND (
-           $2 = ''
+           $3::boolean
            OR RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $2
            OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $2
            OR RIGHT(REGEXP_REPLACE(COALESCE(p.telephone, ''), '[^0-9]', '', 'g'), 9) = $2
          )`,
-      [bailId, shortPh]
+      [bailId, shortPh, lien.valide]
     );
 
     if (rows.length === 0) {
@@ -1826,138 +1846,18 @@ router.get('/public/bail/:bailId.pdf', async (req, res) => {
   }
 });
 
-// ── POST /api/locatif-immo/public/bail/:bailId/signer — Signature électronique sans compte (par téléphone) ──
-router.post('/public/bail/:bailId/signer', async (req, res) => {
-  try {
-    const { bailId } = req.params;
-    const { tel, signature, cachet, nom_signataire } = req.body;
+// ── POST /api/locatif-immo/public/bail/:bailId/signer — FERMÉ (AUD-132) ──
+// Ancienne route autorisée par un simple numéro de téléphone (qui n'est pas un secret). Remplacée par les routes
+// authentifiées par le jeton du portail locataire (code WhatsApp) : /mes-locations/...
+router.post('/public/bail/:bailId/signer', (req, res) => res.status(410).json(REPONSE_PORTAIL_OTP));
 
-    if (!tel || !signature) {
-      return res.status(400).json({ success: false, error: 'Numéro de téléphone et signature requis' });
-    }
-
-    const cleanPh = String(tel).replace(/\D/g, '');
-    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
-
-    const { rows: check } = await pool.query(
-      `SELECT bx.id, bx.locataire_id, c.prenom, c.nom
-       FROM baux_immo bx
-       JOIN contacts_immo c ON bx.locataire_id = c.id
-       WHERE bx.id = $1
-         AND (
-           RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $2
-           OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $2
-         )`,
-      [bailId, shortPh]
-    );
-
-    if (check.length === 0) {
-      return res.status(404).json({ success: false, error: 'Bail introuvable ou numéro de téléphone non correspondant' });
-    }
-
-    const locName = nom_signataire || `${check[0].prenom || ''} ${check[0].nom || ''}`.trim() || 'Le Preneur';
-
-    const { rows: updated } = await pool.query(
-      `UPDATE baux_immo
-       SET signature_locataire = $1,
-           cachet_locataire = COALESCE($2, cachet_locataire),
-           date_signature_locataire = NOW(),
-           nom_signataire_locataire = $3,
-           statut_signature = CASE WHEN signature_bailleur IS NOT NULL THEN 'valide' ELSE 'signe_locataire' END,
-           updated_at = NOW()
-       WHERE id = $4
-       RETURNING *`,
-      [signature, cachet || null, locName, bailId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Contrat de bail signé électroniquement avec succès.',
-      bail: updated[0]
-    });
-  } catch (err) {
-    console.error('[POST /public/bail/:bailId/signer]', err.message);
-    res.status(500).json({ success: false, error: 'Erreur lors de la signature du contrat' });
-  }
-});
-
-// ── POST /api/locatif-immo/public/bail/:bailId/documents — Dépôt de pièce justificative (CNI...) sans compte ──
-router.post('/public/bail/:bailId/documents', uploadDoc.single('file'), async (req, res) => {
-  try {
-    const { bailId } = req.params;
-    const { tel, type_piece = 'autre', label } = req.body;
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ success: false, error: 'Fichier requis' });
-    }
-    if (!tel) {
-      return res.status(400).json({ success: false, error: 'Numéro de téléphone requis' });
-    }
-
-    const cleanPh = String(tel).replace(/\D/g, '');
-    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
-
-    const { rows: check } = await pool.query(
-      `SELECT bx.id, bx.locataire_id, bx.pieces_jointes
-       FROM baux_immo bx
-       JOIN contacts_immo c ON bx.locataire_id = c.id
-       WHERE bx.id = $1
-         AND (
-           RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $2
-           OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $2
-         )`,
-      [bailId, shortPh]
-    );
-
-    if (check.length === 0) {
-      return res.status(404).json({ success: false, error: 'Bail introuvable ou numéro de téléphone non correspondant' });
-    }
-
-    const secureUrl = await uploadDocumentBuffer(file.buffer, 'documents_locatif', file.originalname);
-
-    const docItem = {
-      id: require('crypto').randomUUID(),
-      type_piece,
-      label: label || type_piece,
-      nom_fichier: file.originalname,
-      url: secureUrl,
-      taille: file.size,
-      mimetype: file.mimetype,
-      uploaded_at: new Date().toISOString(),
-      uploaded_by: 'locataire',
-      statut: 'en_attente',
-      motif_rejet: null
-    };
-
-    const nextPieces = [...(check[0].pieces_jointes || []), docItem];
-
-    const { rows: updated } = await pool.query(
-      'UPDATE baux_immo SET pieces_jointes = $1::jsonb, updated_at = NOW() WHERE id = $2 RETURNING pieces_jointes',
-      [JSON.stringify(nextPieces), bailId]
-    );
-
-    if (check[0].locataire_id) {
-      await pool.query(
-        'UPDATE contacts_immo SET pieces_jointes = COALESCE(pieces_jointes, \'[]\'::jsonb) || $1::jsonb WHERE id = $2',
-        [JSON.stringify([docItem]), check[0].locataire_id]
-      );
-    }
-
-    res.json({
-      success: true,
-      message: 'Document versé avec succès. En attente de vérification par l\'agence.',
-      document: docItem,
-      pieces_jointes: updated[0].pieces_jointes
-    });
-  } catch (err) {
-    console.error('[POST /public/bail/:bailId/documents]', err.message);
-    res.status(500).json({ success: false, error: 'Erreur lors du versement du document' });
-  }
-});
+// ── POST /api/locatif-immo/public/bail/:bailId/documents — FERMÉ (AUD-132) ──
+// Ancienne route autorisée par un simple numéro de téléphone (qui n'est pas un secret). Remplacée par les routes
+// authentifiées par le jeton du portail locataire (code WhatsApp) : /mes-locations/...
+router.post('/public/bail/:bailId/documents', (req, res) => res.status(410).json(REPONSE_PORTAIL_OTP));
 
 // ── POST /api/locatif-immo/public/demander-otp — Envoi d'un code OTP WhatsApp de sécurisation portail locataire ──
-router.post('/public/demander-otp', async (req, res) => {
+router.post('/public/demander-otp', limiterOtpLocataireIp, limiterOtpLocataireNumero, async (req, res) => {
   try {
     const { tel } = req.body;
     if (!tel) {
@@ -1984,9 +1884,14 @@ router.post('/public/demander-otp', async (req, res) => {
     );
 
     if (contactRows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Aucun contrat de location associé à ce numéro. Veuillez vérifier votre numéro ou contacter votre agence.'
+      // AUD-132 : même réponse que pour un numéro connu (aucun code n'est envoyé) — plus d'oracle « ce numéro est locataire »
+      const norm = normalisePhone(tel);
+      const masque = norm.length > 6 ? `${norm.slice(0, 5)} *** ** ${norm.slice(-2)}` : norm;
+      return res.json({
+        success: true,
+        message: `Si un contrat est associé à ce numéro, un code de sécurité a été envoyé par WhatsApp au ${masque}.`,
+        telephoneMasque: masque,
+        telephone: norm,
       });
     }
 
@@ -2041,28 +1946,10 @@ router.post('/public/demander-otp', async (req, res) => {
 });
 
 // ── POST /api/locatif-immo/public/verifier-otp — Validation de l'OTP et déverrouillage de la session locataire ──
-router.post('/public/verifier-otp', async (req, res) => {
-  try {
-    const { tel, code } = req.body;
-    if (!tel || !code) {
-      return res.status(400).json({ success: false, error: 'Numéro de téléphone et code de sécurité requis.' });
-    }
-
-    const normPhone = normalisePhone(tel);
-    const cleanPh = String(tel).replace(/\D/g, '');
-    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
-
-    const verif = await verifierOtpPhone(normPhone, 'locataire_portal', code);
-    if (!verif.valide) {
-      return res.status(verif.tropDeTentatives ? 429 : 400).json({
-        success: false,
-        error: verif.error || 'Code de sécurité incorrect ou expiré.'
-      });
-    }
-
-    // 1. Trouver les baux associés à ce locataire
-    const { rows: baux } = await pool.query(
-      `SELECT bx.id, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance,
+// AUD-132 : lecture des baux d'un locataire, réservée aux routes qui ont vérifié le code WhatsApp (jeton portail)
+async function chargerBauxPortail(shortPh) {
+  const { rows } = await pool.query(
+    `SELECT bx.id, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance,
               bx.date_debut, bx.date_fin, bx.statut, bx.conditions,
               bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire, bx.cachet_locataire,
               bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.cachet_bailleur, bx.statut_signature,
@@ -2082,8 +1969,126 @@ router.post('/public/verifier-otp', async (req, res) => {
          OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $1
        )
        ORDER BY bx.created_at DESC`,
-      [shortPh]
-    );
+    [shortPh]
+  );
+  return rows;
+}
+
+async function chargerEcheancesPortail(bailIds) {
+  const { rows } = await pool.query(
+    `SELECT id, bail_id, periode, date_echeance, montant_du, montant_paye, montant_restant,
+              statut, quittance_url, date_paiement, mode_paiement
+       FROM loyers_echeances
+       WHERE bail_id = ANY($1)
+       ORDER BY date_echeance ASC`,
+    [bailIds]
+  );
+  return rows;
+}
+
+function formaterBauxPortail(baux, echeances, token) {
+  return baux.map(b => {
+      const eches = echeances.filter(e => e.bail_id === b.id);
+      return {
+        id: b.id,
+        bien_titre: b.bien_titre,
+        bien_adresse: b.bien_adresse,
+        bien_quartier: b.bien_quartier,
+        bien_ville: b.bien_ville,
+        bien_photos: b.bien_photos || [],
+        bien_ref: b.bien_ref,
+        loyer_mensuel: Number(b.loyer_mensuel),
+        charges: Number(b.charges || 0),
+        depot_garantie: Number(b.depot_garantie || 0),
+        jour_echeance: b.jour_echeance,
+        date_debut: b.date_debut,
+        date_fin: b.date_fin,
+        statut: b.statut,
+        conditions: b.conditions,
+        pieces_jointes: b.pieces_jointes || [],
+        signature_locataire: b.signature_locataire,
+        cachet_locataire: b.cachet_locataire,
+        date_signature_locataire: b.date_signature_locataire,
+        nom_signataire_locataire: b.nom_signataire_locataire,
+        signature_bailleur: b.signature_bailleur,
+        cachet_bailleur: b.cachet_bailleur,
+        date_signature_bailleur: b.date_signature_bailleur,
+        nom_signataire_bailleur: b.nom_signataire_bailleur,
+        statut_signature: b.statut_signature || 'en_attente',
+        contrat_pdf_url: `/api/locatif-immo/mes-locations/bail/${b.id}.pdf?token=${encodeURIComponent(token)}`,
+        agence: {
+          nom: b.agence_nom,
+          telephone: b.agence_tel,
+          whatsapp: b.agence_wa,
+          slug: b.agence_slug,
+          logo_url: b.agence_logo
+        },
+        echeances: eches.map(ech => ({
+          id: ech.id,
+          periode: ech.periode,
+          date_echeance: ech.date_echeance,
+          montant_du: Number(ech.montant_du),
+          montant_paye: Number(ech.montant_paye || 0),
+          montant_restant: Number(ech.montant_restant || 0),
+          statut: ech.statut,
+          quittance_url: ech.statut === 'paye' ? `/api/locatif-immo/mes-locations/quittance/${ech.id}.pdf?token=${encodeURIComponent(token)}` : null,
+          lien_paiement: `/payer-loyer/${ech.id}`
+        }))
+      };
+  });
+}
+
+/** Jeton du portail locataire (émis par verifier-otp) : renvoie le numéro vérifié ou null. */
+function telephonePortailVerifie(req) {
+  const u = req.user || {};
+  if (u.type !== 'locataire_portal' || !u.tel) return null;
+  const digits = String(u.tel).replace(/\D/g, '');
+  return digits.length >= 9 ? digits.slice(-9) : digits;
+}
+
+// ── GET /api/locatif-immo/public/mes-baux — Rechargement du portail avec le jeton émis après vérification du code WhatsApp (AUD-132) ──
+router.get('/public/mes-baux', verifierToken, async (req, res) => {
+  try {
+    const shortPh = telephonePortailVerifie(req);
+    if (!shortPh) {
+      return res.status(403).json({ success: false, error: 'Session portail locataire requise.', code: 'PORTAIL_OTP_REQUIS' });
+    }
+    const baux = await chargerBauxPortail(shortPh);
+    if (baux.length === 0) return res.status(404).json({ success: false, error: 'Aucun contrat trouvé.' });
+    const echeances = await chargerEcheancesPortail(baux.map(b => b.id));
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    res.json({
+      success: true,
+      locataire: { nom: baux[0].locataire_nom, prenom: baux[0].locataire_prenom, telephone: baux[0].locataire_tel, whatsapp: baux[0].locataire_wa },
+      baux: formaterBauxPortail(baux, echeances, token),
+    });
+  } catch (err) {
+    console.error('[GET /public/mes-baux]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors du rechargement des contrats' });
+  }
+});
+
+router.post('/public/verifier-otp', limiterVerifOtpLocataire, async (req, res) => {
+  try {
+    const { tel, code } = req.body;
+    if (!tel || !code) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone et code de sécurité requis.' });
+    }
+
+    const normPhone = normalisePhone(tel);
+    const cleanPh = String(tel).replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const verif = await verifierOtpPhone(normPhone, 'locataire_portal', code);
+    if (!verif.valide) {
+      return res.status(verif.tropDeTentatives ? 429 : 400).json({
+        success: false,
+        error: verif.error || 'Code de sécurité incorrect ou expiré.'
+      });
+    }
+
+    // 1. Trouver les baux associés à ce locataire
+    const baux = await chargerBauxPortail(shortPh);
 
     if (baux.length === 0) {
       return res.status(404).json({
@@ -2092,15 +2097,7 @@ router.post('/public/verifier-otp', async (req, res) => {
       });
     }
 
-    const bailIds = baux.map(b => b.id);
-    const { rows: echeances } = await pool.query(
-      `SELECT id, bail_id, periode, date_echeance, montant_du, montant_paye, montant_restant,
-              statut, quittance_url, date_paiement, mode_paiement
-       FROM loyers_echeances
-       WHERE bail_id = ANY($1)
-       ORDER BY date_echeance ASC`,
-      [bailIds]
-    );
+    const echeances = await chargerEcheancesPortail(baux.map(b => b.id));
 
     // 2. Provisioning / Liaison compte utilisateur pour session sécurisée JWT
     const contact = baux[0];
@@ -2184,55 +2181,7 @@ router.post('/public/verifier-otp', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    const bauxAvecEcheances = baux.map(b => {
-      const eches = echeances.filter(e => e.bail_id === b.id);
-      return {
-        id: b.id,
-        bien_titre: b.bien_titre,
-        bien_adresse: b.bien_adresse,
-        bien_quartier: b.bien_quartier,
-        bien_ville: b.bien_ville,
-        bien_photos: b.bien_photos || [],
-        bien_ref: b.bien_ref,
-        loyer_mensuel: Number(b.loyer_mensuel),
-        charges: Number(b.charges || 0),
-        depot_garantie: Number(b.depot_garantie || 0),
-        jour_echeance: b.jour_echeance,
-        date_debut: b.date_debut,
-        date_fin: b.date_fin,
-        statut: b.statut,
-        conditions: b.conditions,
-        pieces_jointes: b.pieces_jointes || [],
-        signature_locataire: b.signature_locataire,
-        cachet_locataire: b.cachet_locataire,
-        date_signature_locataire: b.date_signature_locataire,
-        nom_signataire_locataire: b.nom_signataire_locataire,
-        signature_bailleur: b.signature_bailleur,
-        cachet_bailleur: b.cachet_bailleur,
-        date_signature_bailleur: b.date_signature_bailleur,
-        nom_signataire_bailleur: b.nom_signataire_bailleur,
-        statut_signature: b.statut_signature || 'en_attente',
-        contrat_pdf_url: `/api/locatif-immo/mes-locations/bail/${b.id}.pdf?token=${encodeURIComponent(token)}`,
-        agence: {
-          nom: b.agence_nom,
-          telephone: b.agence_tel,
-          whatsapp: b.agence_wa,
-          slug: b.agence_slug,
-          logo_url: b.agence_logo
-        },
-        echeances: eches.map(ech => ({
-          id: ech.id,
-          periode: ech.periode,
-          date_echeance: ech.date_echeance,
-          montant_du: Number(ech.montant_du),
-          montant_paye: Number(ech.montant_paye || 0),
-          montant_restant: Number(ech.montant_restant || 0),
-          statut: ech.statut,
-          quittance_url: ech.statut === 'paye' ? `/api/locatif-immo/mes-locations/quittance/${ech.id}.pdf?token=${encodeURIComponent(token)}` : null,
-          lien_paiement: `/payer-loyer/${ech.id}`
-        }))
-      };
-    });
+    const bauxAvecEcheances = formaterBauxPortail(baux, echeances, token);
 
     res.json({
       success: true,
@@ -2253,126 +2202,10 @@ router.post('/public/verifier-otp', async (req, res) => {
   }
 });
 
-// ── GET /api/locatif-immo/public/locataire-lookup — Consultation portail locataire par téléphone ──
-router.get('/public/locataire-lookup', async (req, res) => {
-  try {
-    const { tel } = req.query;
-    if (!tel) {
-      return res.status(400).json({ success: false, error: 'Veuillez renseigner un numéro de téléphone' });
-    }
-
-    const cleanPh = String(tel).replace(/\D/g, '');
-    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
-
-    if (shortPh.length < 8) {
-      return res.status(400).json({ success: false, error: 'Numéro de téléphone incomplet' });
-    }
-
-    const { rows: baux } = await pool.query(
-      `SELECT bx.id, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance,
-              bx.date_debut, bx.date_fin, bx.statut, bx.conditions,
-              bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire, bx.cachet_locataire,
-              bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.cachet_bailleur, bx.statut_signature,
-              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
-              b.ville AS bien_ville, b.photos AS bien_photos, b.reference AS bien_ref,
-              c.id AS contact_id, c.nom AS locataire_nom, c.prenom AS locataire_prenom,
-              c.telephone AS locataire_tel, c.whatsapp AS locataire_wa,
-              a.nom AS agence_nom, a.telephone AS agence_tel, a.whatsapp AS agence_wa,
-              a.slug AS agence_slug, a.logo_url AS agence_logo
-       FROM baux_immo bx
-       JOIN contacts_immo c ON bx.locataire_id = c.id
-       JOIN biens_immo b ON bx.bien_id = b.id
-       JOIN agences_immo a ON bx.agence_id = a.id
-       WHERE (
-         RIGHT(REGEXP_REPLACE(COALESCE(c.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
-         OR RIGHT(REGEXP_REPLACE(COALESCE(c.whatsapp, ''), '[^0-9]', '', 'g'), 9) = $1
-       )
-       ORDER BY bx.created_at DESC`,
-      [shortPh]
-    );
-
-    if (baux.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Aucun contrat de location actif ou historique trouvé pour ce numéro de téléphone.'
-      });
-    }
-
-    const bailIds = baux.map(b => b.id);
-    const { rows: echeances } = await pool.query(
-      `SELECT id, bail_id, periode, date_echeance, montant_du, montant_paye, montant_restant,
-              statut, quittance_url, date_paiement, mode_paiement
-       FROM loyers_echeances
-       WHERE bail_id = ANY($1)
-       ORDER BY date_echeance ASC`,
-      [bailIds]
-    );
-
-    const bauxAvecEcheances = baux.map(b => {
-      const eches = echeances.filter(e => e.bail_id === b.id);
-      return {
-        id: b.id,
-        bien_titre: b.bien_titre,
-        bien_adresse: b.bien_adresse,
-        bien_quartier: b.bien_quartier,
-        bien_ville: b.bien_ville,
-        bien_photos: b.bien_photos || [],
-        bien_ref: b.bien_ref,
-        loyer_mensuel: Number(b.loyer_mensuel),
-        charges: Number(b.charges || 0),
-        depot_garantie: Number(b.depot_garantie || 0),
-        jour_echeance: b.jour_echeance,
-        date_debut: b.date_debut,
-        date_fin: b.date_fin,
-        statut: b.statut,
-        conditions: b.conditions,
-        pieces_jointes: b.pieces_jointes || [],
-        signature_locataire: b.signature_locataire,
-        cachet_locataire: b.cachet_locataire,
-        date_signature_locataire: b.date_signature_locataire,
-        nom_signataire_locataire: b.nom_signataire_locataire,
-        signature_bailleur: b.signature_bailleur,
-        cachet_bailleur: b.cachet_bailleur,
-        date_signature_bailleur: b.date_signature_bailleur,
-        nom_signataire_bailleur: b.nom_signataire_bailleur,
-        statut_signature: b.statut_signature || 'en_attente',
-        contrat_pdf_url: `/api/locatif-immo/public/bail/${b.id}.pdf?tel=${encodeURIComponent(shortPh)}`,
-        agence: {
-          nom: b.agence_nom,
-          telephone: b.agence_tel,
-          whatsapp: b.agence_wa,
-          slug: b.agence_slug,
-          logo_url: b.agence_logo
-        },
-        echeances: eches.map(ech => ({
-          id: ech.id,
-          periode: ech.periode,
-          date_echeance: ech.date_echeance,
-          montant_du: Number(ech.montant_du),
-          montant_paye: Number(ech.montant_paye || 0),
-          montant_restant: Number(ech.montant_restant || 0),
-          statut: ech.statut,
-          quittance_url: ech.statut === 'paye' ? `/api/locatif-immo/public/quittance/${ech.id}.pdf` : null,
-          lien_paiement: `/payer-loyer/${ech.id}`
-        }))
-      };
-    });
-
-    res.json({
-      success: true,
-      locataire: {
-        nom: baux[0].locataire_nom,
-        prenom: baux[0].locataire_prenom,
-        telephone: baux[0].locataire_tel,
-        whatsapp: baux[0].locataire_wa
-      },
-      baux: bauxAvecEcheances
-    });
-  } catch (err) {
-    console.error('[GET /api/locatif-immo/public/locataire-lookup]', err.message);
-    res.status(500).json({ success: false, error: 'Erreur lors de la recherche des baux du locataire' });
-  }
-});
+// ── GET /api/locatif-immo/public/locataire-lookup — FERMÉ (AUD-132) ──
+// Ancienne route autorisée par un simple numéro de téléphone (qui n'est pas un secret). Remplacée par les routes
+// authentifiées par le jeton du portail locataire (code WhatsApp) : /mes-locations/...
+router.get('/public/locataire-lookup', (req, res) => res.status(410).json(REPONSE_PORTAIL_OTP));
 
 // ── GET /api/locatif-immo/public/quittance/:loyerId.pdf — Téléchargement Quittance public certifié ──
 router.get('/public/quittance/:loyerId.pdf', async (req, res) => {

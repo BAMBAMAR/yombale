@@ -3,6 +3,7 @@
 
 const { pool } = require('../models/db');
 const { sendWhatsAppNotification, sendWhatsAppText, normalisePhone } = require('./whatsapp');
+const { genererLienBail } = require('../lib/bailLink');
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.BASE_URL || 'https://nopalou.com';
 
@@ -384,7 +385,7 @@ async function notifierNouveauBailLocataireWhatsApp({ bailId }) {
     const lienPortail = `${SITE_URL}/payer-loyer?tel=${cleanPh}`;
     const lienContratPdf = firstEchId
       ? `${SITE_URL}/api/locatif-immo/public/echeance/${firstEchId}/bail.pdf`
-      : `${SITE_URL}/api/locatif-immo/public/bail/${b.id}.pdf?tel=${cleanPh}`;
+      : `${SITE_URL}/api/locatif-immo/public/bail/${b.id}.pdf?lien=${genererLienBail(b.id)}`; // AUD-132 : lien signé, plus de ?tel=
 
     const msgLocataire = [
       `🏠 *FÉLICITATIONS ! VOTRE CONTRAT DE LOCATION EST VALIDÉ*`,

@@ -64,10 +64,8 @@ export default function DossierPiecesModal({
         endpoint = `/api/locatif-immo/agence/${agencySlug}/baux/${bailId}/documents`
         const token = localStorage.getItem('token_immo') || localStorage.getItem('token')
         if (token) headers['Authorization'] = `Bearer ${token}`
-      } else if (tenantPhone) {
-        endpoint = `/api/locatif-immo/public/bail/${bailId}/documents`
-        formData.append('tel', tenantPhone)
       } else {
+        // AUD-132 : dépôt authentifié par le jeton du portail locataire (plus de dépôt par numéro seul)
         endpoint = `/api/locatif-immo/mes-locations/bail/${bailId}/documents`
         const token = localStorage.getItem('token_immo') || localStorage.getItem('token')
         if (token) headers['Authorization'] = `Bearer ${token}`

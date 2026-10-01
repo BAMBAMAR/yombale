@@ -115,11 +115,11 @@ export default function PortailLocataireClient() {
   async function handleRefreshBaux() {
     if (!verifiedPhone) return
     try {
+      // AUD-132 : rechargement par le jeton émis après vérification du code WhatsApp (plus de lecture par numéro seul)
       const token = localStorage.getItem('token_immo') || localStorage.getItem('token')
-      const cleanPh = verifiedPhone.replace(/\D/g, '')
-      const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh
-      const res = await fetch(`/api/locatif-immo/public/locataire-lookup?tel=${encodeURIComponent(shortPh)}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      if (!token) return
+      const res = await fetch('/api/locatif-immo/public/mes-baux', {
+        headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
       if (data.success && data.baux) {
