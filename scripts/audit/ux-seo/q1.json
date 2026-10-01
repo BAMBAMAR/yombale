@@ -1,0 +1,9 @@
+{
+ "produits_total": "select count(*) n, count(*) filter (where description is null or trim(description)='') desc_vide, count(*) filter (where description = nom) desc_egale_nom, count(*) filter (where image_url is null or trim(image_url)='' ) sans_image, count(*) filter (where nb_offres = 0 or nb_offres is null) sans_offre from produits",
+ "titres_dupl": "select count(*) filter (where c>1) nb_titres_dupliques, sum(c) filter (where c>1) fiches_concernees from (select lower(nom) n, count(*) c from produits group by 1) t",
+ "boutiques": "select count(*) n, count(*) filter (where actif) actives, count(*) filter (where actif and (description is null or length(description)<40)) actives_desc_courte, count(*) filter (where actif and (logo_url is null or logo_url='')) actives_sans_logo from boutiques",
+ "bp": "select count(*) n, count(*) filter (where en_stock) en_stock, count(*) filter (where en_stock and (description is null or length(description)<30)) desc_courte from boutique_produits",
+ "immo": "select count(*) n, count(*) filter (where actif and not coalesce(rejete,false)) actives, count(*) filter (where actif and not coalesce(rejete,false) and coalesce(prix,0)>=10000) actives_prix from annonces_immo",
+ "annonces": "select count(*) n, count(*) filter (where actif) actives, count(*) filter (where actif and (description is null or length(description)<30)) desc_courte, count(*) filter (where actif and source like 'facebook%') fb from annonces_classifiees",
+ "agences": "select count(*) n, count(*) filter (where actif) actives from agences"
+}

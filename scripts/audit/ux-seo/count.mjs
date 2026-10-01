@@ -1,0 +1,12 @@
+﻿import fs from 'node:fs'
+const r = JSON.parse(fs.readFileSync(process.argv[2],'utf8')).filter(x=>x.status===200)
+const idx = r.filter(x=>x.robots!=='noindex'&&!/noindex/.test(x.robots||'')&&!/^\/(admin|produit\/0000|boutiques\/inexistante|immo\/0000|annonces\/0000|telecom\/forfaits)/.test(x.p))
+console.log('pages 200', r.length, 'indexables (hors 404 soft/admin/noindex)', idx.length)
+const dbl = idx.filter(x=>x.title && (x.title.match(/Nopalou/g)||[]).length>=2 && /\| Nopalou(?: Immo)? \| Nopalou$|Nopalou \| Nopalou$/.test(x.title))
+console.log('titre se terminant par "| Nopalou | Nopalou"', dbl.length)
+console.log('titres >65 car', idx.filter(x=>x.title&&x.title.length>65).length, ' >60', idx.filter(x=>x.title&&x.title.length>60).length)
+console.log('desc >160', idx.filter(x=>x.desc&&x.desc.length>160).length, ' <70', idx.filter(x=>x.desc&&x.desc.length<70).length)
+console.log('sans canonical (indexables)', idx.filter(x=>!x.canonical).map(x=>x.p).join(', '))
+console.log('sans og:image (indexables)', idx.filter(x=>!x.ogImage).length)
+console.log('sans H1', idx.filter(x=>x.h1.length===0).map(x=>x.p).join(', '))
+console.log('liens internes max', Math.max(...idx.map(x=>x.nInternal)), 'median', idx.map(x=>x.nInternal).sort((a,b)=>a-b)[Math.floor(idx.length/2)])
