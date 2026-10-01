@@ -1,6 +1,7 @@
 // backend/services/prospection.js — Moteur d'automatisation et de collecte de leads (Nopalou)
 const { pool } = require('../models/db');
 const cfg = require('../lib/settingsCache');
+const { extraireCodeMeta, classerEchec, CODE_PLAFOND_MARKETING, SEUIL_PLAFOND_CONSECUTIF, JOURS_PAUSE_PLAFOND } = require('../lib/prospectionEchecs');
 const { sendWhatsAppText, sendWhatsAppNotification, sendWhatsAppProspectionDirecte, normalisePhone, estDesinscrit } = require('./whatsapp');
 
 // ── Normalisation des numéros de téléphone pour le Sénégal ───────────────────
@@ -2535,6 +2536,8 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
   let nbIgnores = 0;
   let index = 0;
   const numerosTraitesCeRun = new Set();
+  let echecsPlafondConsecutifs = 0; // AUD-113
+  let arretPlafondMeta = false;
 
   for (const lead of leads) {
     index++;
@@ -2608,12 +2611,30 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       }
     }
 
+    // 5d. AUD-113 : un lead qui a atteint le plafond marketing Meta (131049) est laissé au repos plusieurs jours
+    if (!simulation && canal === 'whatsapp') {
+      const { rows: plafonne } = await pool.query(
+        `SELECT 1 FROM prospection_messages_log
+          WHERE (destinataire = $1 OR destinataire = $2)
+            AND statut = 'echec' AND erreur LIKE $3
+            AND created_at > NOW() - ($4 || ' days')::interval
+          LIMIT 1`,
+        [normTel.national, normTel.local, `%${CODE_PLAFOND_MARKETING}%`, String(JOURS_PAUSE_PLAFOND)]
+      );
+      if (plafonne.length > 0) {
+        console.log(`[PROSPECTION PLAFOND META] Ignoré : ${lead.telephone} a atteint le plafond marketing Meta il y a moins de ${JOURS_PAUSE_PLAFOND} jours.`);
+        nbIgnores++;
+        continue;
+      }
+    }
+
     // Résolution contextuelle du template (Persona matching)
     const templateAdapte = resoudreTemplatePourLead(templateMessage, lead);
     const messageFinal = interpolerMessage(templateAdapte, lead);
     let statutEnvoi = simulation ? 'simule' : 'echec';
     let erreurEnvoi = null;
     let metaMessageId = null;
+    let codeEchec = null;
 
     if (!simulation) {
       if (canal === 'whatsapp') {
@@ -2650,6 +2671,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           } else {
             statutEnvoi = 'echec';
             erreurEnvoi = metaResponse?.reason || 'Échec délivrance Meta (template rejeté)';
+            codeEchec = extraireCodeMeta(erreurEnvoi);
             nbEchecs++;
             console.warn(`[PROSPECTION ❌] ${lead.telephone}: ${erreurEnvoi}`);
           }
@@ -2658,6 +2680,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           erreurEnvoi = metaErr?.message || err.message;
           // Catégorisation de l'erreur pour diagnostic
           const errCode = metaErr?.code;
+          codeEchec = extraireCodeMeta(erreurEnvoi, errCode);
           if (errCode === 131047) {
             console.warn(`[PROSPECTION ⚠️ 24H] ${lead.telephone}: Fenêtre 24h fermée ET template rejeté`);
           } else if (errCode === 131026 || errCode === 131051) {
@@ -2718,6 +2741,25 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       console.error('[PROSPECTION LOG ERR]:', dbErr.message);
     }
 
+    // AUD-113 : suite donnée à un échec d'envoi (numéro non WhatsApp → invalide ; plafond Meta → arrêt de la campagne)
+    if (statutEnvoi === 'echec' && canal === 'whatsapp' && !simulation) {
+      const nature = classerEchec(codeEchec);
+      if (nature === 'numero_invalide') {
+        await pool.query(
+          "UPDATE prospection_leads SET statut = 'invalide', notes = COALESCE(notes, '') || ' | Numéro non WhatsApp (Meta ' || $2 || ')', updated_at = NOW() WHERE id = $1 AND statut = 'nouveau'",
+          [lead.id, String(codeEchec)]
+        ).catch(() => {});
+      }
+      echecsPlafondConsecutifs = nature === 'plafond_marketing' ? echecsPlafondConsecutifs + 1 : 0;
+    } else if (statutEnvoi === 'envoye') {
+      echecsPlafondConsecutifs = 0;
+    }
+    if (echecsPlafondConsecutifs >= SEUIL_PLAFOND_CONSECUTIF) {
+      console.warn(`[PROSPECTION PLAFOND META] ${echecsPlafondConsecutifs} refus consécutifs (${CODE_PLAFOND_MARKETING}) : campagne interrompue pour protéger la qualité du numéro.`);
+      arretPlafondMeta = true;
+      break;
+    }
+
     // Cadence Anti-Ban intelligente (Pacing humain & respectueux des plafonds Meta)
     if (!simulation && canal === 'whatsapp') {
       // Pause de respiration de 40s tous les 10 envois réels pour éviter l'alerte Meta 131049
@@ -2752,7 +2794,9 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       const logLus = statsLogs[0]?.lus ?? 0;
       const logLivres = statsLogs[0]?.livres ?? 0;
 
-      let msgDiag = nbIgnores > 0 && logTotal === 0
+      let msgDiag = arretPlafondMeta
+        ? `Campagne interrompue : plafond marketing Meta atteint (${SEUIL_PLAFOND_CONSECUTIF} refus consécutifs). Reprendre dans ${JOURS_PAUSE_PLAFOND} jours.`
+        : nbIgnores > 0 && logTotal === 0
         ? `Tous les ${nbIgnores} prospects ciblés avaient déjà été contactés (anti-doublon).`
         : logEchecs > 0
           ? `${logSucces} délivrés (${logLus} lus, ${logLivres} livrés) • ${logEchecs} rejetés par Meta`
