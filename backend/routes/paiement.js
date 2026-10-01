@@ -951,24 +951,15 @@ router.post('/orange/initier', verifierToken, limiterEcriture, async (req, res) 
     if (!(await cfg.getBool('paiement_orange'))) {
       return res.status(403).json({ error: 'Paiement Orange Money temporairement indisponible' });
     }
-    const tokenRes = await axios.post(
-      'https://api.orange.com/oauth/v3/token',
-      'grant_type=client_credentials',
-      { auth: { username: process.env.ORANGE_CLIENT_ID, password: process.env.ORANGE_CLIENT_SECRET } }
-    );
     const { montant, commande_id } = req.body;
-    const payRes = await axios.post(
-      'https://api.orange.com/orange-money-webpay/dev/v1/webpayment',
-      {
-        merchant_key: process.env.ORANGE_MERCHANT_KEY,
-        currency: 'OAF', order_id: commande_id, amount: montant,
-        return_url: `${process.env.FRONTEND_URL}/retour-paiement`,
-        notif_url:  `${process.env.BACKEND_URL}/api/paiement/orange/webhook`,
-        lang: 'fr'
-      },
-      { headers: { Authorization: `Bearer ${tokenRes.data.access_token}` } }
-    );
-    res.json({ pay_url: payRes.data.payment_url });
+    const omService = require('../services/orange-money');
+    const result = await omService.createWebPayment({
+      amount: montant,
+      order_id: commande_id,
+      return_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/retour-paiement?ref=${encodeURIComponent(commande_id)}`,
+      notif_url: `${process.env.BACKEND_URL || 'https://nopalou.onrender.com'}/api/paiement/orange/webhook`,
+    });
+    res.json({ pay_url: result.payment_url || result.om_url });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

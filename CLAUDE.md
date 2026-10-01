@@ -34,6 +34,15 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Intégration Officielle Orange Money Sénégal / Sonatel OM Pay API (`backend/services/orange-money.js`, `backend/routes/paiement.js`, `tests/unit/payment-gateways-production.test.js`)** :
+  - **Support Natif du Portail Développeur Sonatel (`developer.orange-sonatel.com`)** :
+    - Migration de l'ancien connecteur global (`api.orange.com`) vers la passerelle officielle Sonatel OM Pay (`api.sandbox.orange-sonatel.com` et `api.orange-sonatel.com`).
+    - Implémentation du flux OAuth 2.0 Sonatel (`POST /oauth/token` avec mise en cache du token et gestion sécurisée des identifiants `OM_CLIENT_ID` et `OM_CLIENT_SECRET`).
+    - Implémentation de la préparation de paiement OM Pay (`POST /v1/onlinePayment/prepare` avec `merchantCode`, `sitename`, `amount`, `reference`, `successUrl`, `cancelUrl`, `callbackUrl`).
+  - **Unification de la Route `/api/paiement/orange/initier`** : Raccordement au service unifié `orange-money.js` avec gestion automatique des callbacks et webhooks.
+  - **Résilience & Rétro-compatibilité Totale** : Conservation du repli silencieux en simulation Sandbox/locale (`om_sim_...`) pour préserver les tests automatisés et la tolérance aux pannes réseau.
+  - **Tests Unitaires Validés (5/5)** : Ajout d'un test dédié simulant le flux Sonatel OM Pay et validation de l'ensemble de la suite de tests de paiement (`tests/unit/payment-gateways-production.test.js`).
+
 - **Assainissement des Zones de Livraison & Éradication du Faux Libellé « Gratuit » (`CheckoutStep1Info.tsx`, `CommanderFormView.tsx`, `useCommander.ts`, `DrawerCartCheckout.tsx`, `useDrawerCartCheckout.ts`, `checkout-express/page.tsx`, `whatsapp-chatbot.js`)** :
   - **Suppression du Libellé « Gratuit » sur « Frais à convenir »** : L'option `Livraison (Frais à convenir avec le vendeur)` ayant techniquement un prix de 0 en base avant accord, l'interface lui accolait faussement `— Gratuit`, trompant le client. Seul le *Retrait en boutique* affiche désormais `Gratuit` ; l'option à convenir affiche son libellé exact sans suffixe de prix.
   - **Suppression des Fausses Zones Géographiques par Défaut (Dakar / Banlieue / Régions)** : Lorsqu'un marchand n'a pas configuré de zones de livraison, le système n'injecte plus arbitrairement des zones fictives avec des tarifs inventés (1 000 F, 1 500 F, 2 200 F). Seules les deux options universelles sont présentées : `Livraison (Frais à convenir avec le vendeur)` et `Retrait gratuit en boutique`.

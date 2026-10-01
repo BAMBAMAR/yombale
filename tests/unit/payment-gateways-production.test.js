@@ -28,6 +28,43 @@ describe('Passerelles de Paiement Production (Orange Money & Stripe)', () => {
       expect(status.verified).toBe(true);
       expect(status.status).toBe('SUCCESS');
     });
+
+    it('initialise un paiement Sonatel OM Pay API (/v1/onlinePayment/prepare) avec token OAuth', async () => {
+      const axios = require('axios');
+      const originalPost = axios.post;
+      axios.post = jest.fn().mockImplementation((url) => {
+        if (url.includes('/oauth/token')) {
+          return Promise.resolve({ data: { access_token: 'fake_sonatel_token', expires_in: 3600 } });
+        }
+        if (url.includes('/v1/onlinePayment/prepare')) {
+          return Promise.resolve({ data: { paymentUrl: 'https://om-pay.com/checkout/sonatel-999' } });
+        }
+        return Promise.reject(new Error(`URL non mockée: ${url}`));
+      });
+
+      process.env.OM_CLIENT_ID = 'test_client_id';
+      process.env.OM_CLIENT_SECRET = 'test_client_secret';
+      process.env.OM_MERCHANT_CODE = '467652';
+      process.env.OM_BASE_URL = 'https://api.sandbox.orange-sonatel.com';
+
+      const session = await orangeMoney.createWebPayment({
+        amount: 25000,
+        currency: 'XOF',
+        order_id: 'CMD-SONATEL-001',
+      });
+
+      expect(session.success).toBe(true);
+      expect(session.payment_url).toBe('https://om-pay.com/checkout/sonatel-999');
+      expect(session.om_url).toBe('https://om-pay.com/checkout/sonatel-999');
+      expect(session.mode).toBe('sandbox');
+
+      // Cleanup
+      axios.post = originalPost;
+      delete process.env.OM_CLIENT_ID;
+      delete process.env.OM_CLIENT_SECRET;
+      delete process.env.OM_MERCHANT_CODE;
+      delete process.env.OM_BASE_URL;
+    });
   });
 
   describe('Stripe Checkout & Cartes Bancaires (International / Diaspora)', () => {
