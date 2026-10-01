@@ -3,6 +3,8 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
+const settingsCache = require('../lib/settingsCache');
+const { activerKalpe } = require('../lib/kalpeEssai');
 
 // Toutes les routes exigent une authentification stricte
 router.use(verifierToken);
@@ -57,21 +59,13 @@ router.post('/activer', async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const { rows } = await pool.query(
-      `INSERT INTO kalpe_abonnements (utilisateur_id, statut, type_acces, is_trial, debut, fin)
-       VALUES ($1, 'actif', 'standard', true, NOW(), NOW() + INTERVAL '365 days')
-       ON CONFLICT (utilisateur_id) DO UPDATE SET
-         statut = 'actif',
-         fin = GREATEST(kalpe_abonnements.fin, NOW() + INTERVAL '365 days'),
-         updated_at = NOW()
-       RETURNING *`,
-      [userId]
-    );
+    // Durée = réglage admin `kalpe_essai_jours` (plus de 365 jours en dur) ; réactiver ne prolonge pas l'essai
+    const abonnement = await activerKalpe(pool, userId, await settingsCache.get('kalpe_essai_jours'));
 
     res.json({
       success: true,
       message: 'Sama Xaalis activé avec succès ! Bienvenue dans votre portefeuille.',
-      abonnement: rows[0],
+      abonnement,
     });
   } catch (err) {
     console.error('[KALPE_ACTIVER_ERR]', err);

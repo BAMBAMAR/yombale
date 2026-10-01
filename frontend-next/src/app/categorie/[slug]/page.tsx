@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api'
 import CardActions from '@/app/CardActions'
 import ExternalImg from '@/components/ExternalImg'
 import BadgeSponsorise from '@/components/BadgeSponsorise'
+import MentionClassement from '@/components/MentionClassement'
 import { sponsoringActif } from '@/lib/sponsoring'
 import CompareFilterBanner from '@/components/CompareFilterBanner'
 import PageHeader from '@/components/PageHeader'
@@ -263,6 +264,8 @@ export default async function CategoriePage({
             </Link>
           </div>
         ) : (
+          <>
+          <MentionClassement produits={produits} />
           <div id="resultats" className="grid-produits">
             {produits.map(p => (
               <article key={p.id} className="card-produit">
@@ -295,6 +298,7 @@ export default async function CategoriePage({
               </article>
             ))}
           </div>
+          </>
         )}
 
         {/* Pagination */}

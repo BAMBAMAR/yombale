@@ -5,6 +5,7 @@ import { fcfa } from '@/lib/format'
 import CardActions from '@/app/CardActions'
 import ExternalImg from '@/components/ExternalImg'
 import BadgeSponsorise from '@/components/BadgeSponsorise'
+import MentionClassement from '@/components/MentionClassement'
 import { sponsoringActif } from '@/lib/sponsoring'
 import JsonLd from '@/components/JsonLd'
 import { breadcrumbSchema } from '@/lib/schema-org'
@@ -169,6 +170,8 @@ export default async function SousCategoriePage({
             </Link>
           </div>
         ) : (
+          <>
+          <MentionClassement produits={produits} />
           <div className="grid-produits">
             {produits.map(p => (
               <article key={p.id} className="card-produit">
@@ -199,6 +202,7 @@ export default async function SousCategoriePage({
               </article>
             ))}
           </div>
+          </>
         )}
 
         {pages > 1 && (

@@ -7,6 +7,7 @@ import CardActions from './CardActions'
 import ExternalImg from '@/components/ExternalImg'
 import { sponsoringActif } from '@/lib/sponsoring'
 import BadgeSponsorise from '@/components/BadgeSponsorise'
+import MentionClassement from '@/components/MentionClassement'
 import { Loader2, ChevronDown, ShoppingBag, RotateCw } from 'lucide-react'
 
 interface Produit {
@@ -151,6 +152,7 @@ export default function ProduitsListe({
         </p>
       )}
 
+      <MentionClassement produits={produits} />
       <div className="grid-produits">
         {(() => { let promoIdx = 0; return produits.filter(p => isValidPhoto(p.image_url)).map((p) => {
           const ecartConstate = !!(p.prix_min && p.prix_max && p.prix_max > p.prix_min * 1.1);

@@ -233,6 +233,21 @@ describe('AUD-161 : le positionnement présente l\'écosystème (textes validés
   });
 });
 
+describe('Classement : la priorité donnée aux boutiques Nopalou est signalée', () => {
+  test.each([
+    'app/ProduitsListe.tsx',
+    'app/categorie/[slug]/page.tsx',
+    'app/categorie/[slug]/[sousCategorie]/page.tsx',
+  ])('%s affiche la mention au-dessus des résultats', (rel) => {
+    expect(lire(rel)).toMatch(/<MentionClassement produits=\{/);
+  });
+
+  test('la mention ne s\'affiche que s\'il y a au moins un produit de boutique', () => {
+    expect(lire('components/MentionClassement.tsx')).toMatch(/!produits\.some\(\(p\) => p\.boutique_id\)|if \(!produits\.some/);
+    expect(lire('components/MentionClassement.tsx')).toMatch(/Les boutiques Nopalou sont affichées en premier/);
+  });
+});
+
 describe('AUD-168 : retours d\'interface', () => {
   test('checkout étape 1 : le motif du bouton inactif est affiché', () => {
     const src = lire('app/boutiques/[id]/commander/CheckoutStep1Info.tsx');
