@@ -3,6 +3,7 @@
 
 const router = require('express').Router();
 const { pool } = require('../models/db');
+const { PAYANT } = require('../lib/abonnementsSql');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 
 const { requireAdminAccess } = require('../middlewares/admin-rbac');
@@ -30,9 +31,9 @@ router.get('/stats', async (req, res) => {
       `),
       pool.query(`
         SELECT
-          COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = FALSE) AS abonnements_payes_periode,
+          COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND ${PAYANT}) AS abonnements_payes_periode,
           COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = TRUE) AS abonnements_trial_periode,
-          COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = FALSE), 0) AS ca_abonnements_periode
+          COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW() AND ${PAYANT}), 0) AS ca_abonnements_periode
         FROM abonnements
         WHERE statut = 'actif' AND fin > NOW() AND ${dateFilter}
       `),

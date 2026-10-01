@@ -138,3 +138,30 @@ describe('AUD-111 : la durée d\'essai annoncée vient du réglage admin', () =>
     expect(textes).not.toMatch(/1er mois/);
   });
 });
+
+describe('AUD-110 / AUD-117 : indicateurs fiables', () => {
+  const fs = require('fs');
+  const lire = (p) => fs.readFileSync(require('path').join(__dirname, '../..', p), 'utf8');
+
+  test('PAYANT exige une référence d\'encaissement abmt_ ; les attributions admin sont isolées', () => {
+    const { PAYANT, ATTRIBUE_ADMIN } = require('../../backend/lib/abonnementsSql');
+    expect(PAYANT).toMatch(/commande_ref LIKE 'abmt\\_%'/);
+    expect(PAYANT).toMatch(/is_trial = FALSE/);
+    expect(ATTRIBUE_ADMIN).toMatch(/commande_ref LIKE 'admin\\_%'/);
+  });
+
+  test.each([
+    'backend/routes/abonnements.js',
+    'backend/routes/admin-dashboard.js',
+    'backend/routes/admin-paiements.js',
+  ])('%s ne compte plus tout is_trial = FALSE comme revenu', (p) => {
+    const src = lire(p);
+    expect(src).not.toMatch(/AND is_trial = FALSE\)/);
+    expect(src).toMatch(/\$\{PAYANT\}/);
+  });
+
+  test('le tableau de bord marchand compte les commandes web écrites par le serveur', () => {
+    const src = lire('backend/routes/analytics.js');
+    expect(src).toMatch(/FILTER \(WHERE type='commande_web'\)\s+AS commandes_web_total/);
+  });
+});

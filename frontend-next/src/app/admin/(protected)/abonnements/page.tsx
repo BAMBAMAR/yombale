@@ -16,6 +16,9 @@ interface Stats {
   decouverte_actifs?: string
   mrr: string
   mrr_potentiel: string
+  mrr_attributions_admin?: string
+  essais_termines?: string
+  essais_convertis?: string
   expires: string
   nouveaux_ce_mois: string
 }
@@ -68,7 +71,12 @@ export default async function AdminAbonnementsPage() {
             <div style={{ background: '#fff', border: '2px solid #16a34a', borderRadius: 12, padding: '16px 20px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', marginBottom: 4 }}>MRR Réel</div>
               <div style={{ fontSize: 24, fontWeight: 800, color: '#16a34a' }}>{fcfa(stats.mrr)}</div>
-              <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>{stats.payants} payant(s)</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>{stats.payants} payant(s) encaissé(s)</div>
+              {parseFloat(stats.mrr_attributions_admin || '0') > 0 && (
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                  + {fcfa(stats.mrr_attributions_admin || 0)} attribués manuellement (hors revenu)
+                </div>
+              )}
             </div>
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 4 }}>MRR Potentiel</div>
@@ -90,6 +98,13 @@ export default async function AdminAbonnementsPage() {
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>Nouveaux ce mois</div>
               <div style={{ fontSize: 24, fontWeight: 800, color: '#0284c7' }}>{stats.nouveaux_ce_mois}</div>
+            </div>
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>Essais → payants</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#1e293b' }}>
+                {stats.essais_convertis ?? '0'}<span style={{ fontSize: 14, fontWeight: 400, opacity: 0.6 }}>/{stats.essais_termines ?? '0'}</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>essais terminés devenus payants</div>
             </div>
           </div>
           {/* Ligne 2 : détail par plan */}

@@ -3,6 +3,7 @@
 
 const router = require('express').Router();
 const { pool } = require('../models/db');
+const { PAYANT } = require('../lib/abonnementsSql');
 const { adminSecretOnly } = require('../middlewares/auth');
 
 router.get('/stats', adminSecretOnly, async (req, res) => {
@@ -45,16 +46,16 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       pool.query(`
         SELECT
           -- MRR réel : abonnements payants uniquement (is_trial=false)
-          COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = FALSE), 0) AS mrr,
+          COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW() AND ${PAYANT}), 0) AS mrr,
           -- Total actifs (payants + trials)
           COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW()) AS abonnements_actifs,
           -- Payants uniquement (is_trial=false)
-          COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = FALSE) AS abonnements_payants,
+          COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND ${PAYANT}) AS abonnements_payants,
           -- Trials en cours
           COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = TRUE) AS abonnements_trial,
           COUNT(*) FILTER (WHERE ${dateFilterSql}) AS nouveaux_abonnements_periode,
           COUNT(*) FILTER (WHERE plan = 'business' AND statut = 'actif' AND fin > NOW()) AS abonnements_business,
-          COUNT(*) FILTER (WHERE plan = 'business' AND statut = 'actif' AND fin > NOW() AND is_trial = FALSE) AS abonnements_business_payants,
+          COUNT(*) FILTER (WHERE plan = 'business' AND statut = 'actif' AND fin > NOW() AND ${PAYANT}) AS abonnements_business_payants,
           COUNT(*) FILTER (WHERE plan = 'pro' AND statut = 'actif' AND fin > NOW()) AS abonnements_pro,
           COUNT(*) FILTER (WHERE plan = 'decouverte' AND statut = 'actif' AND fin > NOW()) AS abonnements_decouverte
         FROM abonnements

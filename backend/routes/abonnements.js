@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
+const { PAYANT, ATTRIBUE_ADMIN } = require('../lib/abonnementsSql');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
@@ -125,22 +126,32 @@ router.get('/admin/stats', requireAdminAuth, requireAdminRole('super_admin', 'fi
     const { rows } = await pool.query(`
       SELECT
         COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW())                                        AS actifs,
-        COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW() AND is_trial = FALSE)                   AS payants,
+        COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW() AND ${PAYANT})                   AS payants,
         COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW() AND is_trial = TRUE)                    AS trials,
         COUNT(*) FILTER (WHERE plan='pro' AND statut='actif' AND fin > NOW())                         AS pro_actifs,
-        COUNT(*) FILTER (WHERE plan='pro' AND statut='actif' AND fin > NOW() AND is_trial = FALSE)    AS pro_payants,
+        COUNT(*) FILTER (WHERE plan='pro' AND statut='actif' AND fin > NOW() AND ${PAYANT})    AS pro_payants,
         COUNT(*) FILTER (WHERE plan='business' AND statut='actif' AND fin > NOW())                    AS business_actifs,
-        COUNT(*) FILTER (WHERE plan='business' AND statut='actif' AND fin > NOW() AND is_trial = FALSE) AS business_payants,
+        COUNT(*) FILTER (WHERE plan='business' AND statut='actif' AND fin > NOW() AND ${PAYANT}) AS business_payants,
         COUNT(*) FILTER (WHERE plan='decouverte' AND statut='actif' AND fin > NOW())                  AS decouverte_actifs,
         -- MRR réel : payants uniquement (is_trial=false)
-        COALESCE(SUM(prix_mensuel) FILTER (WHERE statut='actif' AND fin > NOW() AND is_trial = FALSE), 0) AS mrr,
+        COALESCE(SUM(prix_mensuel) FILTER (WHERE statut='actif' AND fin > NOW() AND ${PAYANT}), 0) AS mrr,
         -- MRR fictif (si tout le monde payait) — informatif uniquement
         COALESCE(SUM(prix_mensuel) FILTER (WHERE statut='actif' AND fin > NOW()), 0) AS mrr_potentiel,
         COUNT(*) FILTER (WHERE statut='expire' OR (statut='actif' AND fin <= NOW()))  AS expires,
         COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('month', NOW()))              AS nouveaux_ce_mois
       FROM abonnements
     `);
-    res.json(rows[0]);
+    // AUD-110 : attributions manuelles de l'admin (hors revenu) et conversion essai → payant.
+    const { rows: [extra] } = await pool.query(`
+      SELECT
+        COALESCE(SUM(prix_mensuel) FILTER (WHERE statut='actif' AND fin > NOW() AND ${ATTRIBUE_ADMIN}), 0) AS mrr_attributions_admin,
+        (SELECT COUNT(DISTINCT utilisateur_id) FROM abonnements WHERE is_trial = TRUE AND fin <= NOW()) AS essais_termines,
+        (SELECT COUNT(DISTINCT t.utilisateur_id) FROM abonnements t
+          WHERE t.is_trial = TRUE AND t.fin <= NOW()
+            AND EXISTS (SELECT 1 FROM abonnements p WHERE p.utilisateur_id = t.utilisateur_id AND p.${PAYANT})) AS essais_convertis
+      FROM abonnements
+    `);
+    res.json({ ...rows[0], ...extra });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

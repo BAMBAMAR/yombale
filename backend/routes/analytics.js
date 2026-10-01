@@ -68,7 +68,9 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
         COUNT(*) FILTER (WHERE type='vue_boutique' AND created_at >= NOW() - INTERVAL '7 days') AS vues_7j,
         COUNT(*) FILTER (WHERE type='clic_telephone')                                        AS clics_tel_total,
         COUNT(*) FILTER (WHERE type='clic_telephone' AND ${periodeStatsSql})                 AS clics_tel_mois,
-        COUNT(*) FILTER (WHERE type='commande_confirmee')                                    AS commandes_web_total,
+        -- AUD-117 : 'commande_web' est écrit par le serveur à chaque commande (web et bot WhatsApp) ;
+        -- 'commande_confirmee' (navigateur) fait doublon quand il existe et manque hors navigateur.
+        COUNT(*) FILTER (WHERE type='commande_web')                                          AS commandes_web_total,
         COUNT(*) FILTER (WHERE type='vue_annonce')                                           AS vues_annonces_total,
         COUNT(*) FILTER (WHERE type='vue_annonce' AND ${periodeStatsSql})                    AS vues_annonces_mois
       FROM analytics_events
