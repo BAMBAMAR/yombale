@@ -61,6 +61,19 @@ try {
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV || 'development',
       tracesSampleRate: 0.1, // 10% des requêtes
+      // AUD-144 : aucune donnée sensible dans les rapports d'erreur
+      beforeSend(event) {
+        try {
+          const { redigerUrl } = require('./lib/redactUrl');
+          if (event.request) {
+            if (event.request.url) event.request.url = redigerUrl(event.request.url);
+            delete event.request.query_string;
+            delete event.request.cookies;
+            if (event.request.headers) { delete event.request.headers.authorization; delete event.request.headers.cookie; delete event.request.headers['x-api-key']; delete event.request.headers['x-admin-secret']; }
+          }
+        } catch { /* le rapport part sans modification plutôt que d'être perdu */ }
+        return event;
+      },
     });
   } else {
     Sentry = null;
@@ -217,10 +230,12 @@ app.use((req, res, next) => {
 });
 
 morgan.token('id', (req) => req.id || '-');
+// AUD-144 : l'URL journalisée ne contient plus de clé API, de jeton, de code ni de numéro de téléphone
+morgan.token('safeurl', (req) => require('./lib/redactUrl').redigerUrl(req.originalUrl || req.url));
 app.use(morgan(
   process.env.NODE_ENV === 'production'
-    ? '[:id] :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
-    : '[:id] :method :url :status :response-time ms - :res[content-length]'
+    ? '[:id] :remote-addr - :remote-user [:date[clf]] ":method :safeurl HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
+    : '[:id] :method :safeurl :status :response-time ms - :res[content-length]'
 ));
 
 // ── Protection pages admin ────────────────────────────────────

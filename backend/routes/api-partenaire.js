@@ -9,6 +9,11 @@ const QUOTA_GRATUIT = 1000; // req/mois
 // Vérification de la clé API (header X-Api-Key ou ?api_key=)
 async function requireApiKey(req, res, next) {
   const rawKey = req.headers['x-api-key'] || req.query.api_key;
+  // AUD-144 : une clé dans l'URL finit dans les journaux ; l'en-tête X-Api-Key est la voie recommandée
+  if (!req.headers['x-api-key'] && req.query.api_key) {
+    res.set('Deprecation', 'true');
+    res.set('Warning', '299 - "api_key dans l\'URL sera retiré le 15/11/2026 ; utilisez l\'en-tête X-Api-Key"');
+  }
   if (!rawKey) return res.status(401).json({ error: 'Clé API requise. Header: X-Api-Key' });
 
   const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
