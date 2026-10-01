@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 import QRCode from 'qrcode-svg'
 import { getEssaiJours } from '@/lib/essai'
+import { paramsLibres } from '@/lib/asset-params'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,7 @@ function qrDataUri(text: string) {
 // Flyer A5 Haute Définition (1240 × 1748 px) — Démarchage Commercial Terrain
 export async function GET(request: Request) {
   const essai = await getEssaiJours()
-  const { searchParams } = new URL(request.url)
+  const searchParams = await paramsLibres(request) // AUD-133 : textes libres réservés aux utilisateurs connectés
   const codeAgent = searchParams.get('code') || 'DIRECT'
   const agentPhone = searchParams.get('phone') || '+221 70 871 79 42'
   const agentNom = searchParams.get('nom') || 'Conseiller Nopalou'

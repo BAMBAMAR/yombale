@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { getEssaiJours } from '@/lib/essai'
+import { paramsLibres, urlImageAutorisee } from '@/lib/asset-params'
 
 export const runtime = 'edge'
 
@@ -29,14 +30,14 @@ function NopalouLogoMark({ size = 60 }: { size?: number }) {
 
 export async function GET(request: Request) {
   const essai = await getEssaiJours()
-  const { searchParams } = new URL(request.url)
+  const searchParams = await paramsLibres(request) // AUD-133 : textes libres réservés aux utilisateurs connectés
 
   const type = searchParams.get('type') || 'forfait_pro'
   const nom = searchParams.get('nom') || ''
   const prixRaw = searchParams.get('prix') || ''
   const prixBarreRaw = searchParams.get('prixBarre') || ''
   const boutique = searchParams.get('boutique') || ''
-  const image = searchParams.get('image') || null
+  const image = urlImageAutorisee(searchParams.get('image')) // AUD-133 : hôte de confiance seulement (SSRF)
 
   const prix = formatPrix(prixRaw)
   const prixBarre = formatPrix(prixBarreRaw)
@@ -599,7 +600,7 @@ export async function GET(request: Request) {
   const nomFontSize = nomAffichage.length > 50 ? 28 : nomAffichage.length > 30 ? 34 : 40
   const nomLineHeight = nomAffichage.length > 50 ? 1.15 : 1.2
 
-  const boutiqueAffichage = boutique || 'Vendeur Vérifié Nopalou'
+  const boutiqueAffichage = boutique || 'Boutique partenaire'
   const boutiqueFontSize = boutiqueAffichage.length > 25 ? 15 : 18
 
   return new ImageResponse(

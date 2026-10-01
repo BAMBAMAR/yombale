@@ -1,10 +1,11 @@
 import { ImageResponse } from 'next/og'
+import { paramsLibres } from '@/lib/asset-params'
 
 export const dynamic = 'force-dynamic'
 
 // Fiche Mémo Format Poche (1050 × 1485 px) — Guide Rapide de Survie Terrain Commercial
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
+  const searchParams = await paramsLibres(request) // AUD-133 : textes libres réservés aux utilisateurs connectés
   const agentNom = searchParams.get('nom') || 'Commercial Terrain'
   const codeAgent = searchParams.get('code') || 'AGENT-221'
 

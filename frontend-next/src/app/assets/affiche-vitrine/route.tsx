@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import QRCode from 'qrcode-svg'
+import { paramsLibres } from '@/lib/asset-params'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,7 @@ function qrDataUri(text: string) {
 
 // Affiche Vitrine & Comptoir (1240 × 1748 px) — À poser chez les commerçants partenaires
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
+  const searchParams = await paramsLibres(request) // AUD-133 : textes libres réservés aux utilisateurs connectés
   const boutiqueNom = searchParams.get('boutique') || 'VOTRE BOUTIQUE'
   const boutiqueSlug = searchParams.get('slug') || 'boutique'
   const boutiquePhone = searchParams.get('phone') || '+221 70 871 79 42'
