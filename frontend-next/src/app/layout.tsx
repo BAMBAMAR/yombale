@@ -537,7 +537,7 @@ export default async function RootLayout({
           <div className="footer-trust">
             <div className="footer-trust-item">
               <ShieldCheck size={16} style={{ color: 'var(--price, #0A5C36)', flexShrink: 0 }} />
-              <span><strong>Impartial</strong> &amp; 0% commission</span>
+              <span><strong>0% commission</strong> acheteur</span>
             </div>
             <div className="footer-trust-item">
               <CheckCircle2 size={16} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />

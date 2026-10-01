@@ -7,7 +7,7 @@ import path from 'node:path'
 import { formatPhone, formatNomPropre, fcfa, formatNombre, decodeHtml, escapeHtml } from '../src/lib/format.ts'
 import { safeJsonParse } from '../src/lib/errorHandler.ts'
 import { safeJsonLd } from '../src/lib/jsonld.ts'
-import { ESSAI_DEFAUT, essaiJoursValide } from '../src/lib/essai-format.ts'
+import { ESSAI_DEFAUT, essaiJoursValide, KALPE_ESSAI_DEFAUT, KALPE_PRIX_DEFAUT, kalpeEssaiJoursValide, kalpePrixMensuelValide } from '../src/lib/essai-format.ts'
 import {
   nettoyerTexteAnnonce,
   nettoyerTitreAnnonce,
@@ -1160,6 +1160,28 @@ it('sponsoringActif: faux si drapeau baissé, date passée ou invalide', () => {
   assert.equal(sponsoringActif(true, '2026-09-30T00:00:00Z', maintenant), false)
   assert.equal(sponsoringActif(true, 'pas-une-date', maintenant), false)
   assert.equal(LIBELLE_SPONSORISE, 'Sponsorisé')
+})
+// AUD-160 : Sama Xaalis a ses propres réglages (kalpe_essai_jours, kalpe_prix_mensuel), jamais écrits en dur dans la page
+console.log('\n📦 AUD-160. Réglages Sama Xaalis (essai-format.ts)')
+it('kalpeEssaiJoursValide: valeur du réglage, repli sur 30', () => {
+  assert.equal(KALPE_ESSAI_DEFAUT, 30)
+  assert.equal(kalpeEssaiJoursValide('14'), 14)
+  assert.equal(kalpeEssaiJoursValide(45), 45)
+  assert.equal(kalpeEssaiJoursValide(undefined), 30)
+  assert.equal(kalpeEssaiJoursValide('abc'), 30)
+  assert.equal(kalpeEssaiJoursValide(0), 30)
+  assert.equal(kalpeEssaiJoursValide(999), 30)
+})
+it('kalpePrixMensuelValide: prix entier positif, repli sur 1000', () => {
+  assert.equal(KALPE_PRIX_DEFAUT, 1000)
+  assert.equal(kalpePrixMensuelValide('1500'), 1500)
+  assert.equal(kalpePrixMensuelValide(2000), 2000)
+  assert.equal(kalpePrixMensuelValide(' 750 '), 750)
+  assert.equal(kalpePrixMensuelValide(undefined), 1000)
+  assert.equal(kalpePrixMensuelValide('0'), 1000)
+  assert.equal(kalpePrixMensuelValide('-5'), 1000)
+  assert.equal(kalpePrixMensuelValide('gratuit'), 1000)
+  assert.equal(kalpePrixMensuelValide(99999999), 1000)
 })
 await Promise.all(enAttente)
 

@@ -6,10 +6,15 @@ import {
   ArrowDownLeft, BarChart3, Lock, Bell
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getKalpeReglages } from '@/lib/essai'
+import { formatNombre } from '@/lib/format'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-export const metadata: Metadata = {
+// La durée d'essai et le prix viennent des réglages admin Sama Xaalis (`kalpe_essai_jours`, `kalpe_prix_mensuel`)
+export async function generateMetadata(): Promise<Metadata> {
+  const { essaiJours } = await getKalpeReglages()
+  return {
   title: 'Sama Xaalis (Kalpé) | Gestion de Budget, Dépenses & Épargne au Sénégal',
   description: 'Prenez le contrôle de vos finances en Francs CFA : suivi des dépenses quotidiennes, gestion des dettes et créances, objectifs d\'épargne et bilan commerçant à Dakar.',
   keywords: [
@@ -34,11 +39,12 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Sama Xaalis | Gestion de Budget & Épargne au Sénégal',
-    description: 'Suivez vos entrées, dépenses et dettes en Francs CFA. 30 jours offerts.',
+    description: `Suivez vos entrées, dépenses et dettes en Francs CFA. ${essaiJours} jours offerts.`,
   },
+  }
 }
 
-const FAQ_ITEMS = [
+const faqItems = (essaiJours: number, prixMensuel: number) => [
   {
     q: "Qu'est-ce que Sama Xaalis (Kalpé) sur Nopalou ?",
     a: "Sama Xaalis est votre portefeuille et carnet financier numérique personnel et professionnel. Il vous permet de noter en quelques secondes chaque entrée et dépense d'argent (espèces, Wave, Orange Money), de suivre qui vous doit de l'argent et de programmer des objectifs d'épargne concrets en FCFA."
@@ -57,11 +63,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Combien coûte l'utilisation de Sama Xaalis ?",
-    a: "Vous bénéficiez de 30 jours d'essai 100% gratuits sans engagement. Ensuite, l'abonnement est de seulement 1 000 FCFA/mois réglable directement par Wave ou Orange Money (inclus sans surcoût pour les marchands ayant un forfait Pro actif)."
+    a: `Vous bénéficiez de ${essaiJours} jours d'essai 100% gratuits sans engagement. Ensuite, l'abonnement est de seulement ${formatNombre(prixMensuel)} FCFA/mois réglable directement par Wave ou Orange Money (inclus sans surcoût pour les marchands ayant un forfait Pro actif).`
   }
 ]
 
-const JSON_LD_SOFTWARE = {
+const jsonLdSoftware = (prixMensuel: number) => ({
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: 'Sama Xaalis — Gestion Financière & Épargne Sénégal',
@@ -69,16 +75,16 @@ const JSON_LD_SOFTWARE = {
   applicationCategory: 'FinanceApplication',
   offers: {
     '@type': 'Offer',
-    price: '1000',
+    price: String(prixMensuel),
     priceCurrency: 'XOF',
     description: 'Gestion de budget, dépenses, créances et objectifs d\'épargne en FCFA.',
   },
-}
+})
 
-const JSON_LD_FAQ = {
+const jsonLdFaq = (faq: ReturnType<typeof faqItems>) => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: FAQ_ITEMS.map(item => ({
+  mainEntity: faq.map(item => ({
     '@type': 'Question',
     name: item.q,
     acceptedAnswer: {
@@ -86,18 +92,20 @@ const JSON_LD_FAQ = {
       text: item.a,
     },
   })),
-}
+})
 
-export default function SamaXaalisLandingPage() {
+export default async function SamaXaalisLandingPage() {
+  const { essaiJours, prixMensuel } = await getKalpeReglages()
+  const FAQ_ITEMS = faqItems(essaiJours, prixMensuel)
   return (
     <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_SOFTWARE) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLdSoftware(prixMensuel)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLdFaq(FAQ_ITEMS)) }}
       />
 
       {/* ── 1. HERO BANNER ── */}
@@ -155,7 +163,7 @@ export default function SamaXaalisLandingPage() {
                 boxShadow: '0 10px 25px rgba(199,91,0,0.4)', transition: 'all 0.2s ease'
               }}
             >
-              <span>Ouvrir mon Sama Xaalis (30j offerts)</span>
+              <span>Ouvrir mon Sama Xaalis ({essaiJours} jours offerts)</span>
               <ArrowRight size={18} />
             </Link>
             <Link
@@ -235,8 +243,8 @@ export default function SamaXaalisLandingPage() {
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: 28, fontWeight: 900, color: 'var(--price, #0A5C36)', display: 'block' }}>1 000 F</span>
-            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>CFA / mois après 30j offerts</span>
+            <span style={{ fontSize: 28, fontWeight: 900, color: 'var(--price, #0A5C36)', display: 'block' }}>{formatNombre(prixMensuel)} F</span>
+            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>CFA / mois après {essaiJours} jours offerts</span>
           </div>
         </div>
       </section>
@@ -266,7 +274,7 @@ export default function SamaXaalisLandingPage() {
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           <h2 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 12px' }}>Commencez dès aujourd&apos;hui à maîtriser votre budget</h2>
           <p style={{ fontSize: 15, color: '#cbd5e1', margin: '0 0 28px', lineHeight: 1.6 }}>
-            Activez votre Kalpé en 30 secondes avec votre numéro de téléphone et profitez de 30 jours complets d&apos;essai gratuit.
+            Activez votre Kalpé en 30 secondes avec votre numéro de téléphone et profitez de {essaiJours} jours complets d&apos;essai gratuit.
           </p>
           <Link
             href="/inscription?role=particulier&redirect=/compte?tab=kalpe"

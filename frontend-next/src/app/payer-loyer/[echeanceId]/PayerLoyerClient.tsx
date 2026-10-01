@@ -16,7 +16,6 @@ import {
   ExternalLink
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
-import BadgePaySafe from '@/components/BadgePaySafe'
 import PayerLoyerContratCard from './components/PayerLoyerContratCard'
 import PayerLoyerSuccesCard from './components/PayerLoyerSuccesCard'
 
@@ -433,9 +432,6 @@ export default function PayerLoyerClient({ echeanceId, initialData, initialError
           </form>
         )}
       </div>
-
-      {/* Sceau de Confiance Nopalou Pay Safe */}
-      <BadgePaySafe type="immo" />
 
       {/* Raccourci vers le portail global sans compte */}
       {echeance.locataire.telephone && (

@@ -25,9 +25,23 @@ describe('AUD-160 : la durée d\'essai et les allégations ne sont jamais écrit
     expect(trouve(/\b1 ?m offert|(?:1er|premier) mois (?:est |d'essai )?(?:100 ?% )?(?:offert|gratuit)|1 mois offert/i)).toEqual([]);
   });
 
-  test('aucune durée d\'essai en chiffres dans les textes (hors Sama Xaalis, essai propre `kalpe_essai_jours`)', () => {
-    const re = /\b\d{1,3} ?jours? ?(?:offerts?|gratuits?|d['’]essai)|essai gratuit (?:de )?\d+ ?jours?|\b\d{1,3} ?j offerts?/i;
-    expect(trouve(re, (p) => p.startsWith('app/sama-xaalis/'))).toEqual([]);
+  test('aucune durée d\'essai en chiffres dans les textes, Sama Xaalis compris', () => {
+    const re = /\b\d{1,3} ?jours? ?(?:offerts?|gratuits?|d['’]essai)|essai gratuit (?:de )?\d+ ?jours?|\b\d{1,3} ?j offerts?|\b\d{1,3} jours complets d['’&apos;]*essai/i;
+    expect(trouve(re)).toEqual([]);
+  });
+
+  test('Sama Xaalis lit sa durée d\'essai et son prix dans ses réglages admin (kalpe_essai_jours, kalpe_prix_mensuel)', () => {
+    const src = lire('app/sama-xaalis/page.tsx');
+    expect(src).toMatch(/getKalpeReglages\(\)/);
+    expect(src).not.toMatch(/\b1 ?000 F\b/);
+    expect(src).not.toMatch(/price: '1000'/);
+    expect(src).not.toMatch(/export const metadata/);
+    expect(lire('lib/essai.ts')).toMatch(/kalpe_essai_jours/);
+    expect(lire('lib/essai.ts')).toMatch(/kalpe_prix_mensuel/);
+  });
+
+  test('le pied de page ne revendique plus « Impartial »', () => {
+    expect(trouve(/Impartial/)).toEqual([]);
   });
 
   test('plus de « 100% hors-ligne », « le plus consulté/visité », « Plateforme Officielle »', () => {
@@ -111,6 +125,10 @@ describe('AUD-159 : plus de promesse Pay Safe hors des parcours qui l\'activent'
     'app/boutiques/[id]/commander/CheckoutStep2Recap.tsx',
     'app/boutiques/[id]/produits/[produitId]/page.tsx',
     'app/boutique/ProductTourModal.tsx',
+    // Décision D1 étendue à l'immobilier : aucune preuve que les fonds y soient bloqués non plus
+    'app/immo/[id]/FicheImmoSidebar.tsx',
+    'app/payer-loyer/[echeanceId]/PayerLoyerClient.tsx',
+    'app/assistant-whatsapp/page.tsx',
   ];
   const PROMESSE = /Pay Safe|PaySafe|séquestre|sequestre/i;
 

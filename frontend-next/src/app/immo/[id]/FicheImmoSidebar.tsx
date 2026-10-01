@@ -6,7 +6,6 @@ import { Scale, ExternalLink } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import BlocAgenceAnnonce, { AgenceInfo, AgentInfo } from './BlocAgenceAnnonce'
 import SponsoringImmoBtn from './SponsoringImmoBtn'
-import BadgePaySafe from '@/components/BadgePaySafe'
 
 interface FicheImmoSidebarProps {
   annonce: {
@@ -132,13 +131,6 @@ export default function FicheImmoSidebar({
             <Scale size={16} />
             <span>Comparaison détaillée côte à côte</span>
           </Link>
-        )}
-
-        {/* Sceau de confiance Nopalou Pay Safe Immo — UNIQUEMENT pour agences Nopalou certifiées */}
-        {annonce.agence?.id && (
-          <div style={{ marginTop: 14, marginBottom: 12 }}>
-            <BadgePaySafe type="immo" compact={true} />
-          </div>
         )}
 
         {/* Carte Agence Certifiée ou Vendeur Particulier */}

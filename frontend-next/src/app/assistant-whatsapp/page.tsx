@@ -231,7 +231,7 @@ export default function AssistantWhatsAppPage() {
                 <strong>2 biens vérifiés trouvés :</strong><br/>
                 1. F3 Meublé Almadies vue mer<br/>
                 Loyer : <strong>350 000 FCFA/mois</strong> (Agence Teranga)<br/>
-                Lien direct avec photos HD et réservation certifiée Nopalou Pay Safe
+                Lien direct avec photos HD et contact de l&apos;agence
 
               </div>
             </div>
