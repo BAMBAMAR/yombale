@@ -3,7 +3,6 @@
 import React from 'react'
 import {
   ChevronLeft,
-  ShieldCheck,
   ShoppingBag,
   Tag,
   X,
@@ -236,12 +235,6 @@ export default function CheckoutStep2Recap({
           boutiqueId={boutiqueId}
           onFormuleChoisie={onFormuleChoisie}
         />
-      </div>
-
-      {/* Badge de Réassurance Sécurisée */}
-      <div className="checkout-security-badge">
-        <ShieldCheck size={16} color="var(--price)" style={{ flexShrink: 0 }} />
-        <span>Paiement 100% sécurisé via Pay Safe Séquestre Nopalou. Le commerçant n'est crédité qu'après livraison.</span>
       </div>
 
       {/* Bouton de Soumission Final */}

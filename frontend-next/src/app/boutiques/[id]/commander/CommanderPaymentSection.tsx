@@ -31,8 +31,8 @@ interface CommanderPaymentSectionProps {
 }
 
 const MODES_PAIEMENT = [
-  { value: 'wave', label: 'Wave', badge: 'Pay Safe Instantané', activeClass: 'active-wave' },
-  { value: 'orange_money', label: 'Orange Money', badge: 'Pay Safe Instantané', activeClass: 'active-om' },
+  { value: 'wave', label: 'Wave', badge: 'Paiement mobile instantané', activeClass: 'active-wave' },
+  { value: 'orange_money', label: 'Orange Money', badge: 'Paiement mobile instantané', activeClass: 'active-om' },
   { value: 'carte_bancaire', label: 'Carte Bancaire', badge: 'Stripe 3D-Secure', activeClass: 'active-wave' },
   { value: 'cash', label: 'Espèces', badge: 'À la livraison', activeClass: 'active-cash' },
   { value: 'credit', label: 'Paiement Échelonné / Crédit', badge: 'Carnet Commerçant', activeClass: 'active-wave' },
@@ -87,24 +87,6 @@ export default function CommanderPaymentSection({
             </button>
           )
         })}
-      </div>
-
-      <div
-        style={{
-          marginTop: 10,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          background: '#f0fdf4',
-          border: '1px solid #bbf7d0',
-          borderRadius: 12,
-          padding: '10px 14px',
-        }}
-      >
-        <ShieldCheck size={20} color="#166534" style={{ flexShrink: 0 }} />
-        <div style={{ fontSize: 12, color: '#166534', lineHeight: 1.4 }}>
-          <strong>Protection Nopalou Pay Safe incluse :</strong> vos fonds restent sécurisés sous séquestre et ne sont transmis au vendeur que lorsque vous confirmez la bonne réception de votre colis.
-        </div>
       </div>
 
       {paiement === 'credit' && (

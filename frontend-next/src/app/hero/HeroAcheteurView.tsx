@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   Check,
   MessageCircle,
-  Lock,
   Building2,
   ArrowRight,
   Store,
@@ -179,18 +178,6 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
                     </div>
                   </div>
                 </div>
-
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#DBEAFE', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                    <Lock size={13} strokeWidth={2.5} />
-                  </div>
-                  <div style={{ fontSize: 12, lineHeight: 1.3 }}>
-                    <strong style={{ color: '#1E40AF' }}>Nopalou Pay Safe (Paiement Séquestre)</strong>
-                    <div style={{ color: 'var(--text2, #5A4E42)', fontSize: 11 }}>
-                      Fonds bloqués jusqu&apos;à vérification physique du colis ou remise des clés.
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -223,10 +210,6 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
               <span className="hero-guarantee-chip">
                 <MessageCircle size={11} strokeWidth={2.5} style={{ color: '#16A34A' }} />
                 WhatsApp Direct
-              </span>
-              <span className="hero-guarantee-chip chip-safe">
-                <Lock size={11} strokeWidth={2.5} />
-                Pay Safe Séquestre
               </span>
             </div>
             <div className="hero-guarantee-mobile-links">

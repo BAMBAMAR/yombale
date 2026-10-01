@@ -265,7 +265,7 @@ export default function ProductTourModal({
             >
               <ShieldCheck size={18} style={{ color: '#0284c7', flexShrink: 0 }} />
               <span style={{ fontSize: 12.5, color: '#334155', fontWeight: 600 }}>
-                Encaissements directs à 0% de commission et sécurisation des livraisons avec le paiement séquestre Pay Safe.
+                Encaissements directs à 0% de commission et suivi des livraisons depuis votre tableau de bord.
               </span>
             </div>
           </div>

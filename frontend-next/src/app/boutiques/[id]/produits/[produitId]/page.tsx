@@ -9,7 +9,6 @@ import ProduitCTA from './ProduitCTA'
 import BoutonPartager from '@/components/BoutonPartager'
 import CardActions from '@/app/CardActions'
 import PageHeader from '@/components/PageHeader'
-import BadgePaySafe from '@/components/BadgePaySafe'
 import { Store } from 'lucide-react'
 import TrackingPixels from '@/components/TrackingPixels'
 import { safeJsonLd } from '@/lib/jsonld'
@@ -282,9 +281,8 @@ export default async function FicheProduitPage(
             uniteVente={p.unite_vente}
           />
 
-          {/* Sceau de confiance Nopalou Pay Safe & Partage */}
+          {/* Partage */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-            <BadgePaySafe type="produit" />
             <BoutonPartager
               lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}
               message={`${p.nom}${p.prix ? ` — ${fcfa(p.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}

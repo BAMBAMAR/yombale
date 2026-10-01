@@ -62,6 +62,8 @@ function CheckoutExpressContent() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [useSequestre, setUseSequestre] = useState<boolean>(true)
   const [sequestrePin, setSequestrePin] = useState<string | null>(null)
+  // AUD-159 : vrai seulement si le serveur a confirmé l'activation (sinon aucune promesse de protection n'est affichée)
+  const [sequestreActif, setSequestreActif] = useState<boolean>(false)
 
   const autoParam = searchParams.get('auto') === '1'
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
@@ -262,6 +264,7 @@ function CheckoutExpressContent() {
             }),
           }).catch(() => null)
           if (seqRes && seqRes.ok) {
+            setSequestreActif(true)
             const seqData = await seqRes.json().catch(() => ({}))
             if (seqData.pin) {
               setSequestrePin(seqData.pin)
@@ -342,14 +345,14 @@ function CheckoutExpressContent() {
             <p style={{ margin: 0, color: '#334155' }}>• Tél: {clientTel}</p>
           </div>
 
-          {useSequestre && (
+          {sequestreActif && (
             <div style={{ background: '#FFF3E8', borderRadius: 14, padding: 18, border: '2px solid #C75B00', margin: '16px 0', textAlign: 'center' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#C75B00', fontWeight: 800, fontSize: 13.5, marginBottom: 8 }}>
                 <ShieldCheck size={18} />
-                <span>Protection Séquestre Nopalou Pay Safe Active</span>
+                <span>Code de confirmation de livraison activé</span>
               </div>
               <p style={{ margin: '0 0 10px', fontSize: 13, color: '#1A1612' }}>
-                Vos fonds sont retenus en sécurité. Voici votre code secret de déblocage :
+                Votre code secret de livraison :
               </p>
               {sequestrePin ? (
                 <div style={{ display: 'inline-block', letterSpacing: '0.25em', fontSize: 24, fontWeight: 900, background: '#fff', color: '#1C2B4A', padding: '8px 20px', borderRadius: 10, border: '2px dashed #C75B00', marginBottom: 8 }}>
@@ -637,14 +640,14 @@ function CheckoutExpressContent() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                     <ShieldCheck size={16} color="var(--accent, #C75B00)" />
                     <strong style={{ fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>
-                      Activer Nopalou Pay Safe (Séquestre Anti-Arnaque)
+                      Code de confirmation de livraison (anti-arnaque)
                     </strong>
                     <span style={{ fontSize: 9.5, fontWeight: 900, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8 }}>
                       GRATUIT
                     </span>
                   </div>
                   <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
-                    Fonds bloqués et versés au marchand uniquement après confirmation de livraison avec votre code PIN secret.
+                    Un code secret vous est envoyé sur WhatsApp. Ne le donnez au livreur qu&apos;après avoir vérifié votre colis.
                   </p>
                 </div>
               </div>
