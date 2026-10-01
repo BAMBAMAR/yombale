@@ -8,6 +8,7 @@ process.env.FORCE_RATE_LIMITS = '1'; // les limiteurs OTP du portail locataire r
 if (HAS_DB_TEST) process.env.DATABASE_URL = process.env.DATABASE_URL_TEST;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'integration-jwt-secret';
 process.env.SSR_SECRET = 'integration-ssr-secret';
+process.env.ADMIN_SECRET = 'integration-admin-secret';
 
 jest.mock('../../backend/services/whatsapp', () => new Proxy({ estDesinscrit: async () => false, normalisePhone: (t) => `221${String(t).replace(/\D/g, '').slice(-9)}` }, {
   get: (t, p) => (p in t ? t[p] : async () => ({ ok: true })),
@@ -319,5 +320,108 @@ describeIntegration('Protection des données', () => {
       expect(codes.slice(0, 10).every((c) => c === 200)).toBe(true);
       expect(codes.slice(10)).toEqual([429, 429]);
       expect((await request(app).post(`/api/immo/${immoId}/contact`).set(PUBLIC(61))).status).toBe(200);
+    });
+  });
+  describe('AUD-140 / AUD-141 — badge « vérifié » sur critères réels, noms de marque réservés', () => {
+    const { recalculerVerification } = require('../../backend/lib/verificationBoutique');
+    const { marqueReservee } = require('../../backend/lib/nomsReserves');
+    let m, b, abonnementId;
+    const statut = async () => (await pool.query('SELECT statut_verification FROM boutiques WHERE id=$1', [b.id])).rows[0].statut_verification;
+    const commandes = async (n, extra = {}) => {
+      for (let i = 0; i < n; i++) {
+        await pool.query(
+          `INSERT INTO commandes_boutique (reference, boutique_id, nom_produit, quantite, prix_unitaire, montant_total, client_nom, client_telephone, statut, source, groupe_commande)
+           VALUES ($1,$2,'Article test',1,5000,5000,$3,$4,'livree',$5,gen_random_uuid())`,
+          [`PROT-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`, b.id, extra.nom || 'Client réel', extra.tel || `7755${String(10000 + i)}`, extra.source || 'web']
+        );
+      }
+    };
+
+    beforeAll(async () => {
+      const reg = await post('/api/auth/inscription', { nom: 'Marchand Badge', email: `badge.${Date.now()}@integration.test`, mot_de_passe: PW });
+      m = { token: reg.body.token, id: reg.body.user.id };
+      const r = await post('/api/boutiques', { nom: `Boutique Badge ${Date.now()}`, telephone: '771119001', ville: 'Dakar', categorie: 'mode' }, m.token);
+      b = r.body.boutique || r.body;
+    });
+    afterAll(async () => {
+      await pool.query('DELETE FROM signalements WHERE cible_id = $1', [b.id]).catch(() => {});
+      await pool.query('DELETE FROM commandes_boutique WHERE boutique_id = $1', [b.id]).catch(() => {});
+      await pool.query('DELETE FROM abonnements WHERE utilisateur_id = $1', [m.id]).catch(() => {});
+      await pool.query('DELETE FROM boutiques WHERE id = $1', [b.id]).catch(() => {});
+      await pool.query('DELETE FROM utilisateurs WHERE id = $1', [m.id]).catch(() => {});
+    });
+
+    test('une boutique neuve n\'a aucun badge (API publique et liste)', async () => {
+      expect(await statut()).toBe('non_verifie');
+      const fiche = await request(app).get(`/api/boutiques/${b.id}`);
+      expect(fiche.body.statut_verification).toBe('non_verifie');
+      const liste = await request(app).get('/api/boutiques/?limit=50&q=Boutique%20Badge');
+      expect(liste.body.boutiques.find((x) => x.id === b.id).statut_verification).toBe('non_verifie');
+    });
+
+    test('essai, attribution admin ou abonnement récent ne donnent pas le badge, même avec 20 commandes', async () => {
+      await commandes(20);
+      for (const [ref, trial, age] of [['abmt_essai', true, 40], ['admin_grant_x', false, 40], ['abmt_recent', false, 5]]) {
+        await pool.query('DELETE FROM abonnements WHERE utilisateur_id = $1', [m.id]);
+        await pool.query(`INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref, is_trial, created_at)
+                          VALUES ($1,'pro','actif',5000, NOW() + INTERVAL '20 days', $2, $3, NOW() - ($4 || ' days')::interval)`, [m.id, ref, trial, String(age)]);
+        await recalculerVerification(b.id);
+        expect([ref, await statut()]).toEqual([ref, 'non_verifie']);
+      }
+    });
+
+    test('abonnement payant réel de 30 jours + 20 commandes livrées à des tiers : badge « verifie » ; 19 commandes : non', async () => {
+      await pool.query('DELETE FROM abonnements WHERE utilisateur_id = $1', [m.id]);
+      abonnementId = (await pool.query(`INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref, is_trial, created_at)
+        VALUES ($1,'pro','actif',5000, NOW() + INTERVAL '20 days','abmt_reel_1', false, NOW() - INTERVAL '40 days') RETURNING id`, [m.id])).rows[0].id;
+      await recalculerVerification(b.id);
+      expect(await statut()).toBe('verifie');
+      expect((await request(app).get(`/api/boutiques/${b.slug}/verification`)).body).toMatchObject({ success: true, statut: 'verifie' });
+      await pool.query(`DELETE FROM commandes_boutique WHERE id = (SELECT id FROM commandes_boutique WHERE boutique_id=$1 LIMIT 1)`, [b.id]);
+      await recalculerVerification(b.id);
+      expect(await statut()).toBe('non_verifie'); // 19 commandes : le badge est retiré
+    });
+
+    test('les commandes du marchand lui-même, de test, ou hors livraison ne comptent pas ; un signalement ouvert retire le badge', async () => {
+      await pool.query('DELETE FROM commandes_boutique WHERE boutique_id = $1', [b.id]);
+      await commandes(10);
+      await commandes(10, { tel: '771119001' });             // passées avec le numéro de la boutique
+      await commandes(10, { nom: 'Client TEST' });            // commandes de test
+      await commandes(10, { source: 'web_test' });
+      await recalculerVerification(b.id);
+      expect(await statut()).toBe('non_verifie');
+      await commandes(10);                                    // 20 vraies commandes de tiers
+      await recalculerVerification(b.id);
+      expect(await statut()).toBe('verifie');
+      await pool.query(`INSERT INTO signalements (type_cible, cible_id, motif, statut) VALUES ('boutique', $1, 'test', 'nouveau')`, [b.id]);
+      await recalculerVerification(b.id);
+      expect(await statut()).toBe('non_verifie');
+    });
+
+    test('l\'admin décide : certifie sans critères, retire malgré les critères, puis rend la main au calcul (journalisé)', async () => {
+      const admin = (mode) => request(app).post(`/api/admin/marchands/boutique/${b.id}/verification`).set('X-Admin-Secret', 'integration-admin-secret').send({ mode, motif: 'test' });
+      expect((await admin('admin_oui')).body).toMatchObject({ success: true, statut_verification: 'certifie' });
+      expect(await statut()).toBe('certifie');
+      await recalculerVerification(b.id); // le cron ne défait pas la décision de l'admin
+      expect(await statut()).toBe('certifie');
+      expect((await admin('admin_non')).body.statut_verification).toBe('non_verifie');
+      expect((await admin('auto')).body.statut_verification).toBe('non_verifie'); // signalement encore ouvert
+      expect((await admin('nimporte')).status).toBe(400);
+      // sans identification admin : refusé
+      expect((await request(app).post(`/api/admin/marchands/boutique/${b.id}/verification`).send({ mode: 'admin_oui' })).status).toBe(401);
+    });
+
+    test('noms réservés : variantes de « Nopalou » refusées à la création et au renommage, noms ordinaires acceptés', async () => {
+      for (const n of ['Nopalou Officiel - Support Paiement', 'N0palou Support', 'n.o.p.a.l.o.u', 'NÖPALOU', 'Nopa1ou Shop', 'Yombalé Pay']) {
+        expect([n, marqueReservee(n) !== null]).toEqual([n, true]);
+      }
+      for (const n of ['Palou Mode', 'Boutique Aminata', 'Nopal Cactus', 'Dakar Style']) expect([n, marqueReservee(n)]).toEqual([n, null]);
+      const cree = await post('/api/boutiques', { nom: 'Nopalou Officiel Support', telephone: '771119002', ville: 'Dakar', categorie: 'mode' }, m.token);
+      expect(cree.status).toBe(400);
+      expect(cree.body.error).toMatch(/réservé/);
+      const renomme = await request(app).put(`/api/boutiques/${b.id}`).set('Authorization', `Bearer ${m.token}`).send({ nom: 'N0palou Support Paiement' });
+      expect(renomme.status).toBe(400);
+      const ok = await request(app).put(`/api/boutiques/${b.id}`).set('Authorization', `Bearer ${m.token}`).send({ nom: 'Boutique Badge Renommee' });
+      expect(ok.status).toBe(200);
     });
   });});

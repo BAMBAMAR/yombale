@@ -77,7 +77,7 @@ const SLIDES = [
     badgeColor: '#0369a1',
     badgeBorder: '1px solid #bae6fd',
     badgeText: 'CONFIANCE',
-    title: 'Vendeurs Vérifiés',
+    title: 'Vendeurs partenaires',
     desc: 'Achetez en toute confiance. Nos marchands "Pro" et "Business" sont rigoureusement vérifiés.',
     features: [
       'Identité du vendeur confirmée',

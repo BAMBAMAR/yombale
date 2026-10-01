@@ -254,7 +254,7 @@ const SITE_NAV_JSON_LD = {
       '@type': 'SiteNavigationElement',
       position: 7,
       name: 'Boutiques & Marchands',
-      description: 'Découvrez les boutiques vérifiées et vendeurs pro au Sénégal',
+      description: 'Découvrez les boutiques partenaires et vendeurs pro au Sénégal',
       url: 'https://nopalou.com/boutiques',
     },
   ],
@@ -401,7 +401,7 @@ export default async function RootLayout({
                 <Image src="/icons/logo-mark.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
                 <span className="footer-logo-name"><span style={{ color: '#fff' }}>Nopa</span><span style={{ color: '#C75B00' }}>lou</span></span>
               </a>
-              <p className="footer-tagline">La plateforme de commerce digital au Sénégal : comparez les offres au meilleur prix, achetez auprès de boutiques vérifiées et propulsez votre activité commerciale.</p>
+              <p className="footer-tagline">La plateforme de commerce digital au Sénégal : comparez les offres au meilleur prix, achetez auprès de boutiques partenaires et propulsez votre activité commerciale.</p>
               <div className="footer-social" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
                 <a href="https://www.tiktok.com/@nopalou.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok Officiel" className="footer-social-link footer-social-link--tiktok">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-5.2-1.74 2.89 2.89 0 0 1 2.31-2.85V7.6a6.34 6.34 0 0 0-5.1 6.2 6.34 6.34 0 1 0 10.9-4.38v-3.7a8.16 8.16 0 0 0 4.31 1.25v-3.28a4.85 4.85 0 0 1-.03-.01z"/></svg>

@@ -49,7 +49,7 @@ const FONCTIONS: GroupeFonctions[] = [
         icon: Search,
         couleur: '#1d4ed8',
         titre: 'Rechercher un produit, une marque ou une annonce',
-        texte: "Tapez le nom d'un produit (ex : \"iPhone 15\", \"climatiseur Inverter\") : le bot NLP répond avec les prix trouvés chez les marchands partenaires et boutiques vérifiées, avec le lien direct.",
+        texte: "Tapez le nom d'un produit (ex : \"iPhone 15\", \"climatiseur Inverter\") : le bot NLP répond avec les prix trouvés chez les marchands partenaires et boutiques Nopalou, avec le lien direct.",
       },
       {
         icon: Building2,

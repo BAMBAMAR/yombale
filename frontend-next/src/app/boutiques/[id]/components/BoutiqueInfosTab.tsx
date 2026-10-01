@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Info, Check, Globe, Phone, MessageCircle, MapPin, Clock } from 'lucide-react'
+import { Info, Globe, Phone, MessageCircle, MapPin, Clock } from 'lucide-react'
+import BadgeVerification from '@/components/BadgeVerification'
 import AvisClients from '@/components/AvisClients'
 import { BoutiqueData } from './types'
 
@@ -50,25 +51,12 @@ export default function BoutiqueInfosTab({ boutique }: BoutiqueInfosTabProps) {
           >
             <Info size={18} /> À propos de {boutique.nom}
           </p>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              padding: '4px 12px',
-              borderRadius: 20,
-            }}
-          >
-            <Check size={14} style={{ color: '#16a34a', strokeWidth: 3 }} />
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#15803d' }}>Vendeur Vérifié Nopalou</span>
-          </div>
+          <BadgeVerification statut={boutique.statut_verification} slug={boutique.slug} />
         </div>
 
         <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.7, color: '#334155' }}>
           {boutique.description ||
-            `Bienvenue sur la boutique officielle de ${boutique.nom} sur Nopalou. Retrouvez tout notre catalogue de produits au Sénégal, comparez nos prix et contactez-nous directement.`}
+            `Bienvenue sur la boutique de ${boutique.nom} sur Nopalou. Retrouvez tout notre catalogue de produits au Sénégal, comparez nos prix et contactez-nous directement.`}
         </p>
 
         {/* Réseaux Sociaux & Site Web */}

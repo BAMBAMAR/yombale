@@ -340,7 +340,7 @@ export default function PayerCreditClient({ token, initialData, initialError }: 
             </div>
             <div style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Phone size={12} />
-              {dossier.boutique.telephone || 'Boutique vérifiée'}
+              {dossier.boutique.telephone || 'Boutique partenaire'}
             </div>
           </div>
         </div>

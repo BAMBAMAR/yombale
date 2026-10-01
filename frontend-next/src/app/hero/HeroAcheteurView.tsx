@@ -65,7 +65,7 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
                 maxWidth: '100%'
               }}
             >
-              Comparez des milliers d&apos;offres réelles de boutiques vérifiées à Dakar
+              Comparez des milliers d&apos;offres réelles de boutiques partenaires à Dakar
               • Zéro commission acheteur • Livraison Tiak-Tiak rapide
             </p>
           </div>
@@ -218,7 +218,7 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
             <div className="hero-guarantee-mobile-chips">
               <span className="hero-guarantee-chip">
                 <Check size={11} strokeWidth={3} style={{ color: '#16A34A' }} />
-                Boutiques Vérifiées
+                Boutiques partenaires
               </span>
               <span className="hero-guarantee-chip">
                 <MessageCircle size={11} strokeWidth={2.5} style={{ color: '#16A34A' }} />

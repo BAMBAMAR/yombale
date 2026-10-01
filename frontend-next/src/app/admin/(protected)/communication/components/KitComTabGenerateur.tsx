@@ -78,7 +78,7 @@ export default function KitComTabGenerateur({
   } else if (typeVisuel === 'chatbot_wa') {
     legendePublication = `Nopalou dans votre WhatsApp 24h/24 !\n\nEnvie de connaître le prix d'un produit sans scroller pendant des heures ?\n\nEnvoyez "MENU" au +221 70 871 79 42\nNotre IA vous donne les meilleurs prix du Sénégal en 2 secondes !\n100% Gratuit et sans application à télécharger.`
   } else if (typeVisuel === 'immo') {
-    legendePublication = `Marre des courtiers fantômes à Dakar ?\n\nTrouvez votre prochain appartement ou terrain directement sur Nopalou Immo.\n- Annonces 100% vérifiées\n- Contacts directs sans intermédiaires cachés\n\nDécouvrez les offres du jour : nopalou.com/immo`
+    legendePublication = `Marre des courtiers fantômes à Dakar ?\n\nTrouvez votre prochain appartement ou terrain directement sur Nopalou Immo.\n- Annonces consultables en détail\n- Contacts directs sans intermédiaires cachés\n\nDécouvrez les offres du jour : nopalou.com/immo`
   } else if (typeVisuel === 'telecom') {
     legendePublication = `Arrêtez de gaspiller votre crédit !\n\nOrange, Free, Expresso... Lequel offre le meilleur pass internet aujourd'hui ?\nDécouvrez notre comparateur magique qui calcule le VRAI coût au Go.\n\nFaites le test gratuit : nopalou.com/telecom`
   } else if (typeVisuel === 'apporteur') {
@@ -86,7 +86,7 @@ export default function KitComTabGenerateur({
   } else if (typeVisuel === 'comparatif_paliers') {
     legendePublication = `3 Façons de booster votre commerce avec Nopalou :\n\n1. Taf Taf (${fcfa(prixDecouverte)}/m) : Pour vendre vite sur WhatsApp\n2. Pro (${fcfa(prixPro)}/m) : La caisse enregistreuse tactile complète\n3. Business (${fcfa(prixBusiness)}/m) : Pour gérer vos employés et fournisseurs\n\nTestez la solution de votre choix GRATUITEMENT pendant ${essai} jours !\nVoir les détails : nopalou.com/boutique`
   } else {
-    legendePublication = `BON PLAN DU JOUR !\n\n${genNom}\nPRIX CHOC : ${fcfa(parseInt(genPrix, 10) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre, 10) || 0)})\nVendeur vérifié : ${genBoutique}\n\nCommandez vite avant rupture sur nopalou.com !`
+    legendePublication = `BON PLAN DU JOUR !\n\n${genNom}\nPRIX CHOC : ${fcfa(parseInt(genPrix, 10) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre, 10) || 0)})\nVendeur : ${genBoutique}\n\nCommandez vite avant rupture sur nopalou.com !`
   }
 
   return (

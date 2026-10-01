@@ -395,7 +395,7 @@ export default async function PublicAgencesDirectoryPage({
               <div className="hero-trust-item">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <ShieldCheck size={14} style={{ color: '#10b981', flexShrink: 0 }} />
-                  <span style={{ fontSize: 11.5, fontWeight: 800, color: '#0f172a' }}>Agréments Contrôlés</span>
+                  <span style={{ fontSize: 11.5, fontWeight: 800, color: '#0f172a' }}>Numéro d'agrément affiché</span>
                 </div>
                 <span style={{ fontSize: 10.5, color: '#64748b', lineHeight: 1.25 }}>Agences & cartes pro certifiées</span>
               </div>

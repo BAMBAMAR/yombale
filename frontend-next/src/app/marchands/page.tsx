@@ -363,7 +363,7 @@ export default async function MarchandsLandingPage() {
               Bénéficiez du trafic naturel du comparateur de prix Nopalou : vos produits peuvent apparaître dans les résultats des acheteurs qui comparent les prix.
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13.5, color: '#334155', fontWeight: 700, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✓</span> Badge Vendeur Vérifié &amp; Certifié</li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✓</span> Badge Vendeur vérifié (abonnement payant et commandes livrées)</li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✓</span> Référencement Google automatique (SEO)</li>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✓</span> Nouveaux clients sans budget publicitaire</li>
             </ul>

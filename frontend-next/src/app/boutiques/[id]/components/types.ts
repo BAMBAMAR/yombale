@@ -53,6 +53,7 @@ export interface BoutiqueData {
   categorie: string | null
   description: string | null
   plan_actif: 'pro' | 'business' | null
+  statut_verification?: 'non_verifie' | 'verifie' | 'certifie'
   couleur_theme?: string | null
   couleur_secondaire?: string | null
   slogan?: string | null

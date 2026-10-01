@@ -13,6 +13,7 @@ const { checkAbonnement, requireAbonnement, requireBusiness } = require('../../m
 const { limiterPublication, limiterImport, limiterBudget } = require('../../middlewares/rateLimit');
 const { clampPagination } = require('../../lib/pagination');
 const { protegerContact } = require('../../lib/contactPublic');
+const { erreurNomReserve } = require('../../lib/nomsReserves');
 const { uploadBuffer } = require('../../services/cloudinary');
 const { scrapeProductFromUrl } = require('../../services/magic-import');
 const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog');
@@ -193,6 +194,9 @@ router.post('/taf-taf', async (req, res) => {
 
     // 2. Créer la boutique
     const crypto = require('crypto');
+    const nomReserveTaf = erreurNomReserve(nom); // AUD-141
+    if (nomReserveTaf) return res.status(400).json({ error: nomReserveTaf });
+
     const caisseToken = crypto.randomBytes(24).toString('hex');
     const insertBoutique = await pool.query(
       `INSERT INTO boutiques (utilisateur_id, nom, telephone, ville, categorie, couleur_theme, apporteur_id, caisse_token, actif)
@@ -364,7 +368,7 @@ router.get('/', tokenOptional, limiterBudget, async (req, res) => {
       conds.push(`(b.whatsapp IS NOT NULL AND TRIM(b.whatsapp) != '')`);
     }
     if (certifie === '1' || certifie === 'true') {
-      conds.push(`(a.plan IN ('pro', 'business') OR (b.rccm IS NOT NULL AND TRIM(b.rccm) != '') OR (b.ninea IS NOT NULL AND TRIM(b.ninea) != ''))`);
+      conds.push(`b.statut_verification <> 'non_verifie'`); // AUD-140 : filtre « certifié » = badge réel
     }
 
     // Filtres de Budget & Prix personnalisés
@@ -486,6 +490,7 @@ router.get('/', tokenOptional, limiterBudget, async (req, res) => {
         `SELECT b.id, b.slug, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
                 b.logo_url, b.cover_url, b.horaires, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
                 COALESCE(a.plan, 'gratuit') AS plan_actif,
+                b.statut_verification,
                 COALESCE(ROUND(av.note_avg::numeric, 1), 5.0) AS note_moyenne,
                 COALESCE(av.total_cnt, 0) AS total_avis,
                 COALESCE(p_agg.total_produits, 0)::int AS total_produits,
@@ -562,7 +567,7 @@ router.get('/mine', verifierToken, async (req, res) => {
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
-              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, COALESCE(b.mentions_legales_publiques, false) AS mentions_legales_publiques, b.conditions_vente, b.pied_de_page_document,
+              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.statut_verification, COALESCE(b.mentions_legales_publiques, false) AS mentions_legales_publiques, b.conditions_vente, b.pied_de_page_document,
               b.message_bas_ticket,
               COALESCE(b.pos_remise_max_caissier, 10.00) AS pos_remise_max_caissier,
               COALESCE(b.pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
@@ -741,7 +746,7 @@ const CHAMPS_PUBLICS_BOUTIQUE = [
   'site_web', 'facebook', 'instagram', 'tiktok', 'youtube', 'horaires', 'slug', 'created_at', 'actif',
   'couleur_theme', 'slogan', 'theme_style', 'couleur_secondaire', 'forme_boutons', 'bandeau_promo',
   'bandeau_promo_actif', 'message_accueil', 'disposition_catalogue', 'devise_defaut',
-  'meta_pixel_id', 'tiktok_pixel_id', 'ga4_id', 'conditions_vente', 'plan_actif', 'mode_fonctionnement', // mode (hybride_pos / pure_player) : sans risque, lu par la vitrine
+  'meta_pixel_id', 'tiktok_pixel_id', 'ga4_id', 'conditions_vente', 'plan_actif', 'statut_verification', 'mode_fonctionnement', // mode (hybride_pos / pure_player) : sans risque, lu par la vitrine
 ];
 const CHAMPS_MENTIONS_LEGALES = ['rccm', 'ninea', 'forme_juridique'];
 
@@ -784,7 +789,7 @@ router.get('/:id', tokenOptional, async (req, res) => {
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
-              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, COALESCE(b.mentions_legales_publiques, false) AS mentions_legales_publiques, b.conditions_vente, b.pied_de_page_document,
+              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.statut_verification, COALESCE(b.mentions_legales_publiques, false) AS mentions_legales_publiques, b.conditions_vente, b.pied_de_page_document,
               b.message_bas_ticket,
               COALESCE(b.pos_remise_max_caissier, 10.00) AS pos_remise_max_caissier,
               COALESCE(b.pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
@@ -816,6 +821,19 @@ router.get('/:id', tokenOptional, async (req, res) => {
     const row = r.rows[0];
     res.json((await peutVoirDonneesGestion(row, req.user && req.user.userId)) ? row : versBoutiquePublique(row));
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── GET /api/boutiques/:idOrSlug/verification — statut public d'une boutique (AUD-140 : « vérifier ce vendeur »)
+router.get('/:id/verification', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT nom, slug, statut_verification, verifie_le FROM boutiques
+       WHERE (id::text = $1 OR LOWER(slug) = LOWER($1)) AND actif = true`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Boutique introuvable' });
+    res.json({ success: true, nom: rows[0].nom, slug: rows[0].slug, statut: rows[0].statut_verification, depuis: rows[0].verifie_le });
+  } catch (err) { res.status(500).json({ success: false, error: 'Erreur serveur' }); }
 });
 
 // ── GET /api/boutiques/:idOrSlug/annonces — annonces du propriétaire de la boutique (AUD-134 : remplace le filtre
@@ -1007,6 +1025,10 @@ router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo
       try { cover_url = await uploadBuffer(req.files.cover[0].buffer, 'boutiques_cover'); } catch {}
     }
 
+    // AUD-141 : la marque de la plateforme n'est pas revendicable (nom ni adresse)
+    const nomReserve = erreurNomReserve(nom, slugInput);
+    if (nomReserve) return res.status(400).json({ error: nomReserve });
+
     // Générer le slug
     const slugBase = slugInput?.trim() ? slugify(slugInput.trim()) : slugify(nom.trim());
     const slug = await uniqueSlug(slugBase);
@@ -1102,6 +1124,14 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
       bandeau_promo_actif, message_accueil, disposition_catalogue, cover_url: coverUrlBody,
       theme_id
     } = req.body;
+
+    // AUD-141 : renommer vers un nom de marque réservé est refusé (nom inchangé accepté ; boutique certifiée par l'admin exemptée)
+    if (existing.rows[0].verification_mode !== 'admin_oui') {
+      const nomChange = nom !== undefined && String(nom).trim() !== String(existing.rows[0].nom || '').trim();
+      const slugChange = slugInput && String(slugInput).trim() && String(slugInput).trim() !== String(existing.rows[0].slug || '');
+      const nomReserve = erreurNomReserve(nomChange ? nom : null, slugChange ? slugInput : null);
+      if (nomReserve) return res.status(400).json({ error: nomReserve });
+    }
 
     let logo_url = existing.rows[0].logo_url;
     if (req.files?.logo?.[0]) {

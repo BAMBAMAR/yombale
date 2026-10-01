@@ -1,6 +1,6 @@
 import React, { useState, useTransition } from 'react'
-import { Store, X, CheckCircle2, AlertCircle } from 'lucide-react'
-import { modererBoutique, activerSponsoringBoutique } from '@/app/actions/admin'
+import { Store, X, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react'
+import { modererBoutique, activerSponsoringBoutique, definirVerificationBoutique } from '@/app/actions/admin'
 import { activerPlanTest } from '../../abonnements/actions'
 import { Boutique, isSponsorActif } from './types'
 
@@ -43,6 +43,19 @@ export default function ModalGestionMarchand({
           onClose()
         }, 1200)
       }
+    })
+  }
+
+  function handleVerification(mode: 'auto' | 'admin_oui' | 'admin_non') {
+    setMsg(null)
+    startTransition(async () => {
+      const res = await definirVerificationBoutique(boutique.id, mode)
+      if (res.error) {
+        setMsg({ type: 'err', text: res.error })
+        return
+      }
+      setMsg({ type: 'ok', text: `Badge mis à jour : ${res.statut === 'certifie' ? 'certifiée' : res.statut === 'verifie' ? 'vérifiée' : 'aucun badge'}` })
+      onRefresh()
     })
   }
 
@@ -231,6 +244,40 @@ export default function ModalGestionMarchand({
             >
               {pending ? 'Activation en cours…' : `Accorder l'Abonnement ${planSelect.toUpperCase()}`}
             </button>
+          </div>
+
+          {/* Section Badge vérifié (AUD-140) : calcul sur critères réels, l'admin peut forcer ou retirer */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid var(--border, #e2e8f0)',
+              borderRadius: 14,
+              padding: 18,
+              marginBottom: 20,
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ShieldCheck size={16} /> Badge « Vendeur vérifié »
+            </div>
+            <p style={{ margin: '0 0 12px', fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>
+              Statut actuel : <strong>{boutique.statut_verification === 'certifie' ? 'certifiée' : boutique.statut_verification === 'verifie' ? 'vérifiée' : 'aucun badge'}</strong>
+              {' '}({boutique.verification_mode === 'admin_oui' ? 'décision admin : certifier' : boutique.verification_mode === 'admin_non' ? 'décision admin : retiré' : 'calcul automatique'}).
+              Calcul automatique : abonnement payant actif depuis 30 jours, 20 commandes livrées à des tiers, aucun signalement ouvert.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <button type="button" disabled={pending} onClick={() => handleVerification('admin_oui')}
+                style={{ padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 700, border: 'none', background: '#dcfce7', color: '#166534', cursor: 'pointer' }}>
+                Certifier
+              </button>
+              <button type="button" disabled={pending} onClick={() => handleVerification('admin_non')}
+                style={{ padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 700, border: 'none', background: '#fee2e2', color: '#991b1b', cursor: 'pointer' }}>
+                Retirer
+              </button>
+              <button type="button" disabled={pending} onClick={() => handleVerification('auto')}
+                style={{ padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 700, border: '1px solid #cbd5e1', background: '#fff', color: '#334155', cursor: 'pointer' }}>
+                Calcul auto
+              </button>
+            </div>
           </div>
 
           {/* Section Modération Rapide */}

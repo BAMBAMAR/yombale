@@ -186,7 +186,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           </a>
           <a href="/boutiques" className="mobile-nav-link" onClick={close}>
             <Store size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
-            <span>Boutiques Vérifiées</span>
+            <span>Boutiques</span>
             <span style={{ marginLeft: 'auto', background: 'var(--navy, #1C2B4A)', color: '#fff', fontSize: 9.5, padding: '1px 5px', borderRadius: 6, fontWeight: 800 }}>PRO</span>
           </a>
           <a href="/immo" className="mobile-nav-link" onClick={close}>

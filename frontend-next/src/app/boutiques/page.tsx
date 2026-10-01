@@ -19,7 +19,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: 'Boutiques Partenaires & Vendeurs Vérifiés au Sénégal — Nopalou',
+  title: 'Boutiques Partenaires & Vendeurs au Sénégal — Nopalou',
   description: `Découvrez les meilleures boutiques et vendeurs professionnels au Sénégal : smartphones, mode, électroménager, univers maison, contact direct et livraison.`,
   alternates: { canonical: `${BASE}/boutiques` },
 }
@@ -423,7 +423,7 @@ export default async function BoutiquesPage({
             <div>
               <div className="hero-badge-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', color: '#c75b00', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5', width: 'fit-content' }}>
                 <Sparkles size={13} style={{ color: '#C75B00' }} />
-                <span>Hub officiel des commerçants vérifiés</span>
+                <span>Annuaire des commerçants du Sénégal</span>
               </div>
 
               <h1 className="hero-main-title" style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 23, fontWeight: 900, margin: '0 0 5px', lineHeight: 1.15, color: '#0f172a' }}>
@@ -448,7 +448,7 @@ export default async function BoutiquesPage({
                   <Store size={12} style={{ color: '#C75B00' }} /> <b>{total > 0 ? total : '70+'} boutiques</b>
                 </span>
                 <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <ShieldCheck size={12} style={{ color: '#16a34a' }} /> <b>100% vérifiés</b>
+                  <ShieldCheck size={12} style={{ color: '#16a34a' }} /> <b>Badge sur critères réels</b>
                 </span>
               </div>
             </div>
@@ -458,7 +458,7 @@ export default async function BoutiquesPage({
               <div className="hero-trust-item">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <ShieldCheck size={14} style={{ color: '#10b981', flexShrink: 0 }} />
-                  <span style={{ fontSize: 11.5, fontWeight: 800, color: '#0f172a' }}>Commerçants Vérifiés</span>
+                  <span style={{ fontSize: 11.5, fontWeight: 800, color: '#0f172a' }}>Badge Vendeur vérifié</span>
                 </div>
                 <span style={{ fontSize: 10.5, color: '#64748b', lineHeight: 1.25 }}>Boutique physique & identité validée</span>
               </div>
@@ -523,7 +523,7 @@ export default async function BoutiquesPage({
                 </div>
                 <div>
                   <p style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>100%</p>
-                  <p style={{ margin: '1px 0 0', fontSize: 10.5, color: '#64748b', fontWeight: 600 }}>Vendeurs vérifiés</p>
+                  <p style={{ margin: '1px 0 0', fontSize: 10.5, color: '#64748b', fontWeight: 600 }}>Vendeurs partenaires</p>
                 </div>
               </div>
             </div>

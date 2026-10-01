@@ -5,6 +5,7 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
+const { recalculerVerification, MODES, SEUIL_COMMANDES, ANCIENNETE_JOURS } = require('../lib/verificationBoutique');
 const { envoyerEmail } = require('../services/email');
 const { sendWhatsAppNotification } = require('../services/whatsapp');
 
@@ -120,6 +121,38 @@ router.get('/:id/fiche', async (req, res) => {
   } catch (err) {
     console.error('[ADMIN_MARCHAND_FICHE_ERR]', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/admin/marchands/boutique/:boutiqueId/verification — décision de l'admin sur le badge (AUD-140)
+// mode : 'admin_oui' (certifiée), 'admin_non' (badge retiré), 'auto' (retour au calcul sur critères réels)
+router.post('/boutique/:boutiqueId/verification', async (req, res) => {
+  try {
+    const { boutiqueId } = req.params;
+    const { mode, motif } = req.body || {};
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boutiqueId)) {
+      return res.status(400).json({ error: 'Identifiant de boutique invalide' });
+    }
+    if (!MODES.includes(mode)) return res.status(400).json({ error: `mode attendu : ${MODES.join(', ')}` });
+    const avant = await pool.query('SELECT nom, statut_verification, verification_mode FROM boutiques WHERE id = $1', [boutiqueId]);
+    if (!avant.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const parQui = (req.adminUser && (req.adminUser.nom || req.adminUser.email)) || 'admin';
+    await pool.query('UPDATE boutiques SET verification_mode = $1, verifie_par = $2 WHERE id = $3', [mode, String(parQui).slice(0, 150), boutiqueId]);
+    await recalculerVerification(boutiqueId);
+    const apres = await pool.query('SELECT statut_verification, verification_mode, verifie_le FROM boutiques WHERE id = $1', [boutiqueId]);
+    await enregistrerAdminLog({
+      action: 'boutique_verification',
+      cibleType: 'boutique',
+      cibleId: boutiqueId,
+      description: `Badge de la boutique « ${avant.rows[0].nom} » : ${avant.rows[0].statut_verification} → ${apres.rows[0].statut_verification} (mode ${mode}). Motif : ${motif || 'non précisé'}`,
+      ancienneValeur: avant.rows[0],
+      nouvelleValeur: apres.rows[0],
+      req,
+    });
+    res.json({ success: true, ...apres.rows[0], criteres: { seuil_commandes: SEUIL_COMMANDES, anciennete_jours: ANCIENNETE_JOURS } });
+  } catch (err) {
+    console.error('[ADMIN_BOUTIQUE_VERIFICATION_ERR]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 

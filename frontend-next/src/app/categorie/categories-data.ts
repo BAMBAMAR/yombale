@@ -73,7 +73,7 @@ export const CATEGORIES: Record<string, {
     exemples: 'Vêtements, chaussures, sacs, accessoires',
     contenu: [
       `Vêtements, chaussures, sacs et parfums : la mode en ligne au Sénégal se partage entre les grandes plateformes et les vendeurs Instagram/WhatsApp. Nopalou regroupe les offres des marchands en ligne établis pour comparer les prix réels, notamment sur les sneakers et les parfums où les écarts sont les plus forts.`,
-      `Attention aux contrefaçons sur les articles de marque : un prix anormalement bas (moins de 30% du prix boutique) est un signal d'alerte. Privilégiez les vendeurs notés et les boutiques vérifiées.`,
+      `Attention aux contrefaçons sur les articles de marque : un prix anormalement bas (moins de 30% du prix boutique) est un signal d'alerte. Privilégiez les vendeurs notés et ceux qui portent le badge Vendeur vérifié.`,
     ],
   },
   maison: {

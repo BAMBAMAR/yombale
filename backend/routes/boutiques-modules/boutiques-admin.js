@@ -72,6 +72,7 @@ router.get('/admin/toutes', requireAdminAuth, async (req, res) => {
     const { rows } = await pool.query(
       `SELECT b.id, b.nom, b.slug, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
               b.logo_url, b.actif, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
+              b.statut_verification, b.verification_mode,
               b.derniere_relance_catalogue_at, COALESCE(b.nb_relances_catalogue, 0) AS nb_relances_catalogue,
               (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits,
               u.nom AS proprietaire_nom, split_part(u.nom, ' ', 1) AS proprietaire_prenom, u.email AS proprietaire_email,

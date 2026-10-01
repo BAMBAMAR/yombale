@@ -26,11 +26,11 @@ function resolveCategory(slug: string) {
     emoji: catEmoji,
     h1: `${catLabel} au Sénégal`,
     intro: `Comparez les prix et trouvez les meilleures offres de ${catLabel.toLowerCase()} au Sénégal sur Nopalou.`,
-    description: `Comparez les prix de ${catLabel.toLowerCase()} au Sénégal. Retrouvez les meilleures offres de boutiques vérifiées à Dakar et partout au Sénégal.`,
+    description: `Comparez les prix de ${catLabel.toLowerCase()} au Sénégal. Retrouvez les meilleures offres de boutiques partenaires à Dakar et partout au Sénégal.`,
     keywords: [catLabel.toLowerCase(), 'Sénégal', 'Dakar', 'prix', 'achat'],
     exemples: catLabel,
     contenu: [
-      `Retrouvez une sélection de produits dans la catégorie ${catLabel.toLowerCase()} proposés par des boutiques vérifiées au Sénégal.`,
+      `Retrouvez une sélection de produits dans la catégorie ${catLabel.toLowerCase()} proposés par des boutiques partenaires au Sénégal.`,
       `Comparez les prix, vérifiez la disponibilité en stock et contactez directement les marchands en ligne.`
     ]
   }

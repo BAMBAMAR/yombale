@@ -8,6 +8,7 @@ import {
   ShoppingBag, Sparkles, Check
 } from 'lucide-react'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
+import BadgeVerification from '@/components/BadgeVerification'
 
 export interface ProduitApercu {
   id: string
@@ -34,6 +35,7 @@ export interface BoutiqueItem {
   sponsorise: boolean
   sponsor_jusqu_au: string | null
   plan_actif: 'pro' | 'business' | null
+  statut_verification?: 'non_verifie' | 'verifie' | 'certifie'
   note_moyenne?: number | string
   total_avis?: number
   total_produits?: number
@@ -170,13 +172,7 @@ export default function BoutiqueCard({
                 {Number(b.note_moyenne).toFixed(1)} / 5 ({b.total_avis})
               </span>
             </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#f8fafc', padding: '3px 8px', borderRadius: 10, border: '1px solid #e2e8f0' }}>
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: '#64748b' }}>
-                Vendeur vérifié
-              </span>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* NOM DE LA BOUTIQUE */}
@@ -185,6 +181,12 @@ export default function BoutiqueCard({
             {b.nom}
           </Link>
         </h3>
+        {/* AUD-140 : badge seulement si attribué par Nopalou */}
+        {(b.statut_verification === 'verifie' || b.statut_verification === 'certifie') && (
+          <div style={{ margin: '0 0 6px' }}>
+            <BadgeVerification statut={b.statut_verification} compact />
+          </div>
+        )}
 
         {/* DESCRIPTION COURTE */}
         {b.description && (

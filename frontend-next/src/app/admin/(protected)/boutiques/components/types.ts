@@ -14,6 +14,8 @@ export interface Boutique {
   sponsor_jusqu_au: string | null
   plan_actif: 'pro' | 'business' | null
   plan_fin: string | null
+  statut_verification?: 'non_verifie' | 'verifie' | 'certifie'
+  verification_mode?: 'auto' | 'admin_oui' | 'admin_non'
   created_at: string
   derniere_relance_catalogue_at?: string | null
   nb_relances_catalogue?: number

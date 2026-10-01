@@ -1436,6 +1436,19 @@ module.exports = async function migrateInline(customConnStr = null) {
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS forme_juridique VARCHAR(50);
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS capital_social VARCHAR(50);
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS mentions_legales_publiques BOOLEAN DEFAULT FALSE; -- AUD-134 : RCCM/NINEA publics sur option du marchand
+      -- AUD-140 : badge « Vendeur Vérifié » fondé sur des critères réels (calcul auto) ou décidé par l'admin
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS statut_verification VARCHAR(20) NOT NULL DEFAULT 'non_verifie';
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS verification_mode VARCHAR(12) NOT NULL DEFAULT 'auto';
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS verifie_le TIMESTAMPTZ;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS verifie_par VARCHAR(150);
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'boutiques_statut_verification_chk') THEN
+          ALTER TABLE boutiques ADD CONSTRAINT boutiques_statut_verification_chk CHECK (statut_verification IN ('non_verifie','verifie','certifie'));
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'boutiques_verification_mode_chk') THEN
+          ALTER TABLE boutiques ADD CONSTRAINT boutiques_verification_mode_chk CHECK (verification_mode IN ('auto','admin_oui','admin_non'));
+        END IF;
+      END $$;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS compte_bancaire TEXT;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS conditions_vente TEXT;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS pied_de_page_document TEXT;

@@ -25,6 +25,26 @@ export async function modererBoutique(
   return {}
 }
 
+// ── Badge « Vendeur Vérifié » (AUD-140) : décision de l'admin ou retour au calcul sur critères réels ──
+export async function definirVerificationBoutique(
+  id: string,
+  mode: 'auto' | 'admin_oui' | 'admin_non'
+): Promise<{ error?: string; statut?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/admin/marchands/boutique/${encodeURIComponent(id)}/verification`, {
+    method: 'POST',
+    headers: adminHeaders(secret),
+    body: JSON.stringify({ mode }),
+    cache: 'no-store',
+  })
+  if (!r.ok) return { error: 'Erreur lors de la mise à jour du badge' }
+  const data = await r.json().catch(() => ({}))
+  return { statut: data.statut_verification }
+}
+
 // ── Sponsoriser boutique ─────────────────────────────────────────────
 export async function activerSponsoringBoutique(
   id: string,
