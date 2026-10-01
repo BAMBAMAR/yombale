@@ -5,6 +5,7 @@ const axios   = require('axios');
 const cheerio = require('cheerio');
 const { pool } = require('../models/db');
 const { RunCollecte, noterRequeteCourante } = require('../lib/scrapingRun');
+const { plafondPagesImmo } = require('../lib/scrapePagination');
 
 const BASE  = 'https://www.expat-dakar.com';
 const DELAY = 1500;
@@ -251,7 +252,7 @@ async function scraperImmoMesure({ dryRun = false } = {}, run) {
 
   for (const sec of SECTIONS) {
     let totalSection = 0;
-    for (let pg = 1; pg <= 5; pg++) {
+    for (let pg = 1; pg <= plafondPagesImmo(); pg++) { // AUD-174 : plafond de sécurité réglable (ancien plafond fixe : 5)
       // Expat-Dakar : pagination via ?page=N
       const url = pg === 1
         ? `${BASE}${sec.path}`

@@ -5,6 +5,7 @@ const cron     = require('node-cron');
 const { pool } = require('../models/db');
 const scrapingLock = require('../lib/scrapingLock');
 const { RunCollecte, noterRequeteCourante, strict: statutsStricts } = require('../lib/scrapingRun');
+const { plafondPages } = require('../lib/scrapePagination');
 const matching = require('./matching');
 
 const UA = [
@@ -212,9 +213,12 @@ async function fetchPage(url, retries=3) {
     }catch(err){
       const st=err.response?.status;
       noterRequeteCourante(st || err.code || 'none'); // AUD-173 : code HTTP (ou cause réseau) rattaché au passage en cours
-      if (st === 404) throw err;
+      if (st === 404 || st === 403) throw err; // AUD-174 : 404 = fin ; 403 = refus, on n'insiste pas
       console.warn(`[HTTP] Tentative ${i+1}/${retries} — ${st||err.code} — ${url}`);
-      if(i<retries-1) await sleep(st===429||st===403 ? 12000*(i+1) : 3000*(i+1));
+      if(i<retries-1) {
+        const attente = st===429 ? Math.min(60000, (parseInt(err.response?.headers?.['retry-after'],10) || 12*(i+1)) * 1000) : 3000*(i+1);
+        await sleep(attente);
+      }
       else throw err;
     }
   }
@@ -223,6 +227,7 @@ async function fetchPage(url, retries=3) {
 async function scraperExpatDakar(categorie='telephones', maxPages=4) {
   const resultats=[], base=`https://www.expat-dakar.com/${categorie}`;
   console.log(`\n[EXPAT] ${base}`);
+  let erreursConsec=0;
   for(let page=1;page<=maxPages;page++){
     const url=page===1?base:`${base}?page=${page}`;
     try{
@@ -288,7 +293,7 @@ async function scraperExpatDakar(categorie='telephones', maxPages=4) {
       }
     }catch(err){
       console.error(`[EXPAT] Page ${page}:`,err.message);
-      if (err.response?.status === 404 || page === 1) break;
+      if (err.response?.status === 404 || page === 1 || ++erreursConsec >= 2) break;
     }
     await sleep(2000+Math.random()*1000);
   }
@@ -322,6 +327,7 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
   const resultats=[], base=`https://www.jumia.sn/${categorie}/`;
   console.log(`\n[JUMIA] ${base}`);
 
+  let erreursConsec=0;
   for(let page=1;page<=maxPages;page++){
     const url=page===1?base:`${base}?page=${page}#catalog-listing`;
     let found=0;
@@ -410,7 +416,7 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
       }
     }catch(err){
       console.error(`[JUMIA] Page ${page}:`,err.message);
-      if (err.response?.status === 404) break;
+      if (err.response?.status === 404 || ++erreursConsec >= 2) break;
     }
     await sleep(2500+Math.random()*1500);
   }
@@ -420,6 +426,7 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
 async function scraperCoinAfrique(categorie='telephones-et-tablettes', maxPages=4) {
   const resultats=[], base=`https://sn.coinafrique.com/categorie/${categorie}`;
   console.log(`\n[COIN] ${base}`);
+  let erreursConsec=0;
   for(let page=1;page<=maxPages;page++){
     const url=page===1?base:`${base}?page=${page}`;
     try{
@@ -444,7 +451,7 @@ async function scraperCoinAfrique(categorie='telephones-et-tablettes', maxPages=
       if(found===0){ console.warn(`[COIN] Page ${page}: 0 résultat`); break; }
     }catch(err){
       console.error(`[COIN] Page ${page}:`,err.message);
-      if (err.response?.status === 404 || page === 1) break;
+      if (err.response?.status === 404 || page === 1 || ++erreursConsec >= 2) break;
     }
     await sleep(2000+Math.random()*1000);
   }
@@ -455,6 +462,7 @@ async function scraperKaynoo(categorie='produits-hightech', maxPages=3) {
   const resultats = [];
   const base = `https://www.kaynoo.sn/${categorie}`;
   console.log(`\n[KAYNOO] ${base}`);
+  let erreursConsec = 0;
   for (let page = 1; page <= maxPages; page++) {
     const url = page === 1 ? `${base}.html` : `${base}.html?p=${page}`;
     try {
@@ -481,7 +489,7 @@ async function scraperKaynoo(categorie='produits-hightech', maxPages=3) {
       }
     } catch (err) {
       console.error(`[KAYNOO] Page ${page}:`, err.message);
-      if (err.response?.status === 404 || page === 1) break;
+      if (err.response?.status === 404 || page === 1 || ++erreursConsec >= 2) break;
     }
     await sleep(2000 + Math.random() * 1000);
   }
@@ -492,6 +500,7 @@ async function scraperAuchan(categorie='137-boissons', maxPages=3) {
   const resultats = [];
   const base = `https://www.auchan.sn/${categorie}`;
   console.log(`\n[AUCHAN] ${base}`);
+  let erreursConsec = 0;
   for (let page = 1; page <= maxPages; page++) {
     const url = page === 1 ? base : `${base}?page=${page}`;
     try {
@@ -542,7 +551,7 @@ async function scraperAuchan(categorie='137-boissons', maxPages=3) {
       }
     } catch (err) {
       console.error(`[AUCHAN] Page ${page}:`, err.message);
-      if (err.response?.status === 404 || page === 1) break;
+      if (err.response?.status === 404 || page === 1 || ++erreursConsec >= 2) break;
     }
     await sleep(2000 + Math.random() * 1000);
   }
@@ -587,6 +596,7 @@ async function scraperDecathlon(categorie = '3745-tous-les-sports', maxPages = 3
   }
 
   // Stratégie 2–4 — Scraping HTML page par page
+  let erreursConsec = 0;
   for (let page = 1; page <= maxPages; page++) {
     const url = page === 1 ? base : `${base}?page=${page}`;
     try {
@@ -673,6 +683,7 @@ async function scraperDecathlon(categorie = '3745-tous-les-sports', maxPages = 3
 async function scraperJiji(categorie = 'mobile-phones', maxPages = 4) {
   const resultats = [], base = `https://jiji.sn/${categorie}`;
   console.log(`\n[JIJI] ${base}`);
+  let erreursConsec = 0;
   for (let page = 1; page <= maxPages; page++) {
     const url = page === 1 ? base : `${base}?page=${page}`;
     try {
@@ -1218,7 +1229,7 @@ async function lancerScraping(sources=['expat','jumia','coinafrique','auchan','k
 
       for(const cat of c.cats){
         try{
-          const items=await run.executer(() => c.fn(cat,4));
+          const items=await run.executer(() => c.fn(cat,plafondPages())); // AUD-174 : plafond de sécurité réglable (SCRAPE_MAX_PAGES), plus de 4 pages fixes
           stats.scrapes+=items.length;
           run.noterCategorie(cat, items.length);
           if(items.length>0){

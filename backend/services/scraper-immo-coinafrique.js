@@ -5,6 +5,7 @@ const axios   = require('axios');
 const cheerio = require('cheerio');
 const { pool } = require('../models/db');
 const { RunCollecte, noterRequeteCourante } = require('../lib/scrapingRun');
+const { plafondPagesImmo } = require('../lib/scrapePagination');
 
 const BASE  = 'https://sn.coinafrique.com';
 const DELAY = 3000; // CoinAfrique est lent — respecter un délai plus long
@@ -297,7 +298,7 @@ async function scraperImmoMesure({ dryRun = false } = {}, run) {
 
   for (const sec of SECTIONS) {
     let totalSection = 0;
-    for (let pg = 1; pg <= 5; pg++) {
+    for (let pg = 1; pg <= plafondPagesImmo(); pg++) { // AUD-174 : plafond de sécurité réglable (ancien plafond fixe : 5)
       const url = pg === 1 ? `${BASE}${sec.path}` : `${BASE}${sec.path}?page=${pg}`;
       console.log(`[COIN-IMMO] ${url}`);
 

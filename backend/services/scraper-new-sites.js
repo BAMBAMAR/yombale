@@ -16,6 +16,7 @@
 
 const axios   = require('axios');
 const { noterRequeteCourante } = require('../lib/scrapingRun');
+const { plafondPages, plafondPagesWoo } = require('../lib/scrapePagination');
 const cheerio = require('cheerio');
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -287,7 +288,7 @@ async function scraperSite(config) {
   console.log(`[NEW] ${nom}  (${baseUrl})`);
 
   // 1. Tenter WooCommerce Store API (le plus efficace, JSON pur)
-  let res = await scraperWooStoreAPI(baseUrl, nom, 8);
+  let res = await scraperWooStoreAPI(baseUrl, nom, plafondPagesWoo()); // AUD-174 : 100 pages de 100 articles (ancien plafond fixe : 8)
   if (res.length >= 5) {
     console.log(`[NEW] ${nom} ✅ WC-Store API → ${res.length} produits`);
     return res;
@@ -304,7 +305,7 @@ async function scraperSite(config) {
   console.log(`[NEW] ${nom} — APIs KO, tentative HTML scraping...`);
   const shopUrls = await decouvririURLsShop(baseUrl);
   await sleep(1500);
-  res = await scraperHTML(baseUrl, nom, shopUrls, 3);
+  res = await scraperHTML(baseUrl, nom, shopUrls, plafondPages());
 
   if (res.length > 0) {
     console.log(`[NEW] ${nom} ✅ HTML → ${res.length} produits`);
@@ -337,7 +338,7 @@ async function diagnosticNouveauSite(siteId) {
   if (!config) {
     throw new Error(`Site inconnu: "${siteId}". Disponibles: ${SITES_CONFIG.map(s => s.id).join(', ')}`);
   }
-  const items = await enveloppe(config, () => scraperSite(config));
+  const items = await scraperSite(config);
   return {
     site: config.nom, url: config.baseUrl,
     nb_resultats: items.length,
