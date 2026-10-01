@@ -2,6 +2,7 @@
 const { pool } = require('../models/db');
 const { genererMagicToken } = require('../lib/magicAuthToken');
 const { executerTacheCron } = require('../lib/cronLogger');
+const cfg = require('../lib/settingsCache');
 let sendWhatsAppNotification;
 let estDesinscrit;
 try {
@@ -31,6 +32,14 @@ async function traiterRelancesMarchands() {
   }
 
   try {
+    // Prix et remise lus dans les réglages admin (AUD-122/124), jamais écrits en dur dans les relances
+    const fmt = (n) => Number(n).toLocaleString('fr-FR');
+    const prixDepart = fmt((await cfg.getNum('plan_decouverte_prix')) || 2500);
+    const prixPro = fmt((await cfg.getNum('plan_pro_prix')) || 5000);
+    const remiseAnnuelle = (await cfg.getNum('reduc_12_mois')) || 25;
+    // Interrupteur admin des alertes d'abonnement (J-3, J-1, J+1 expiré)
+    const alertesAbo = (await cfg.get('alertes_abonnement_whatsapp')) !== 'false';
+
     // ── 1. Relance J+1 : Partage Statut WhatsApp (Créée il y a ~24h) ───────────
     const qJ1 = `
       SELECT b.id, b.nom, b.slug, b.utilisateur_id, COALESCE(b.whatsapp, b.telephone) AS telephone, u.nom AS gerant_nom
@@ -190,7 +199,7 @@ async function traiterRelancesMarchands() {
             AND message_envoye LIKE '%Fin dans 3 jours%'
         )
     `;
-    const resJMoins3 = await pool.query(qJMoins3);
+    const resJMoins3 = alertesAbo ? await pool.query(qJMoins3) : { rows: [] };
 
     for (const a of resJMoins3.rows) {
       if (!a.telephone) continue;
@@ -199,9 +208,9 @@ async function traiterRelancesMarchands() {
       const msg =
         `Salam ${a.nom} ! ⏳\n\n` +
         `Votre période d'essai gratuit sur Nopalou se termine dans 3 jours.\n\n` +
-        `Pour continuer à encaisser vos clients sur votre caisse POS et garder votre vitrine active sans interruption, choisissez votre formule à partir de 2 500 FCFA/mois :\n` +
+        `Pour continuer à encaisser vos clients sur votre caisse POS et garder votre vitrine active sans interruption, choisissez votre formule à partir de ${prixDepart} FCFA/mois :\n` +
         `👉 ${SITE}/tarifs-boutique\n\n` +
-        `🎁 Remise annuelle : -25% (3 mois offerts) si vous réglez par an !\n\n` +
+        `🎁 Remise annuelle : -${remiseAnnuelle}% si vous réglez par an !\n\n` +
         `_Pour ne plus recevoir de rappel, répondez STOP._`;
 
       if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
@@ -209,7 +218,7 @@ async function traiterRelancesMarchands() {
           const res = await sendWhatsAppNotification(a.telephone, {
             textMessage: msg,
             title: `⏳ Fin dans 3 jours — ${a.nom}`.slice(0, 60),
-            montant: 'Dès 2 500 F',
+            montant: `Dès ${prixDepart} F`,
             detail: `Votre essai se termine dans 3 jours. Choisissez votre plan pour continuer : ${SITE}/tarifs-boutique`,
             url: `${SITE}/tarifs-boutique`,
             buttonParam: 'tarifs-boutique',
@@ -243,7 +252,7 @@ async function traiterRelancesMarchands() {
             AND message_envoye LIKE '%Dernier jour%'
         )
     `;
-    const resJMoins1 = await pool.query(qJMoins1);
+    const resJMoins1 = alertesAbo ? await pool.query(qJMoins1) : { rows: [] };
 
     for (const a of resJMoins1.rows) {
       if (!a.telephone) continue;
@@ -251,8 +260,8 @@ async function traiterRelancesMarchands() {
 
       const msg =
         `Salam ${a.nom} ! ⚠️ *Dernier jour d'essai gratuit sur Nopalou !*\n\n` +
-        `Dès demain, l'encaissement sur votre Caisse POS et votre catalogue seront suspendus.\n\n` +
-        `Ne perdez pas vos habitudes : activez votre abonnement Pro (5 000 FCFA/mois) en 1 clic pour continuer à vendre sereinement :\n` +
+        `Dès demain, l'encaissement sur votre Caisse POS sera suspendu.\n\n` +
+        `Ne perdez pas vos habitudes : activez votre abonnement Pro (${prixPro} FCFA/mois) en 1 clic pour continuer à vendre sereinement :\n` +
         `👉 ${SITE}/boutique/abonnement\n\n` +
         `_Pour ne plus recevoir de rappel, répondez STOP._`;
 
@@ -261,7 +270,7 @@ async function traiterRelancesMarchands() {
           const res = await sendWhatsAppNotification(a.telephone, {
             textMessage: msg,
             title: `⚠️ Dernier jour d'essai — ${a.nom}`.slice(0, 60),
-            montant: 'Plan Pro',
+            montant: `Plan Pro ${prixPro} F`,
             detail: `Dès demain la caisse sera suspendue. Activez votre plan en 1 clic : ${SITE}/boutique/abonnement`,
             url: `${SITE}/boutique/abonnement`,
             buttonParam: 'boutique/abonnement',
@@ -298,7 +307,7 @@ async function traiterRelancesMarchands() {
             AND message_envoye LIKE '%Réactivez votre boutique%'
         )
     `;
-    const resJPlus1 = await pool.query(qJPlus1);
+    const resJPlus1 = alertesAbo ? await pool.query(qJPlus1) : { rows: [] };
 
     for (const a of resJPlus1.rows) {
       if (!a.telephone) continue;
@@ -352,7 +361,7 @@ if (process.env.NODE_ENV !== 'test') {
     traiterRelancesMarchands().catch(() => {});
     setInterval(() => {
       traiterRelancesMarchands().catch(() => {});
-    }, 24 * 60 * 60 * 1000); // 24 heures
+    }, 60 * 60 * 1000); // AUD-122 : toutes les heures (la plage 09h-21h et la déduplication évitent les doublons)
   }, 15000);
 }
 
