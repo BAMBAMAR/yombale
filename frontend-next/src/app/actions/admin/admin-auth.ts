@@ -119,18 +119,8 @@ export async function adminLogin(formData: FormData): Promise<void> {
 
   // 2. Authentification par Secret Master (Break-glass & E2E Tests)
   if (secret) {
-    const envSecret = process.env.ADMIN_SECRET
-    if (envSecret && secret === envSecret) {
-      jar.set(COOKIE_SECRET, secret, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: sevenDays,
-      })
-      redirect('/admin')
-    }
-
+    // AUD-143 : le secret maître n'est plus jamais copié dans un cookie. Le backend le vérifie (comparaison à temps
+    // constant, verrou anti-devinette) et renvoie un jeton nominatif court : c'est lui seul qui est conservé.
     try {
       const res = await fetch(`${BACKEND}/api/admin/auth/login`, {
         method: 'POST',
@@ -150,7 +140,7 @@ export async function adminLogin(formData: FormData): Promise<void> {
             path: '/',
             maxAge: sevenDays,
           })
-          jar.set(COOKIE_SECRET, secret, {
+          jar.set(COOKIE_SECRET, data.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
@@ -159,37 +149,14 @@ export async function adminLogin(formData: FormData): Promise<void> {
           })
           redirect('/admin')
         }
-      } else if (res.status === 401 || res.status === 403) {
+      } else if (res.status === 401 || res.status === 403 || res.status === 429) {
         redirect('/admin/login?error=secret_incorrect')
       }
     } catch (err: any) {
       if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
     }
 
-    // Fallback de compatibilité (si le backend distant n'est pas encore redéployé)
-    try {
-      const r = await fetch(`${BACKEND}/api/annonces/admin/en-attente`, {
-        headers: { 'X-Admin-Secret': secret },
-        cache: 'no-store',
-        signal: AbortSignal.timeout(2000),
-      })
-
-      if (r.status === 401 || r.status === 403) redirect('/admin/login?error=secret_incorrect')
-      if (r.ok) {
-        jar.set(COOKIE_SECRET, secret, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 60 * 60 * 8,
-        })
-        redirect('/admin')
-      }
-    } catch (err: any) {
-      if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
-    }
-
-    redirect('/admin/login?error=secret_incorrect')
+    redirect('/admin/login?error=erreur_serveur')
   }
 
   redirect('/admin/login?error=secret_requis')

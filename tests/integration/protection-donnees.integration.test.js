@@ -424,4 +424,32 @@ describeIntegration('Protection des données', () => {
       const ok = await request(app).put(`/api/boutiques/${b.id}`).set('Authorization', `Bearer ${m.token}`).send({ nom: 'Boutique Badge Renommee' });
       expect(ok.status).toBe(200);
     });
+  });
+  describe('AUD-143 — le secret maître administrateur n\'est plus copié dans un cookie', () => {
+    const SECRET = 'integration-admin-secret';
+    const cookiesDe = (r) => [].concat(r.headers['set-cookie'] || []);
+
+    test('connexion par secret (nominative et historique) : aucun cookie ne contient le secret, un jeton signé le remplace', async () => {
+      for (const url of ['/api/admin/auth/login', '/api/admin/login']) {
+        const r = await post(url, { secret: SECRET });
+        expect([url, r.status]).toEqual([url, 200]);
+        const cookies = cookiesDe(r);
+        expect(cookies.length).toBeGreaterThan(0);
+        for (const c of cookies) expect(decodeURIComponent(c)).not.toContain(SECRET);
+        const admin = cookies.find((c) => c.startsWith('nopalou_admin='));
+        expect(admin).toBeDefined();
+        const jeton = admin.split(';')[0].split('=')[1];
+        expect(jeton.startsWith('eyJ')).toBe(true);
+        expect(jwt.verify(jeton, process.env.JWT_SECRET)).toMatchObject({ scope: 'nopalou_admin', role: 'super_admin' });
+      }
+    });
+
+    test('le cookie jeton ouvre bien les routes administrateur ; un jeton forgé ou le secret en cookie nu fonctionnent comme avant seulement via l\'en-tête', async () => {
+      const r = await post('/api/admin/auth/login', { secret: SECRET });
+      const jeton = cookiesDe(r).find((c) => c.startsWith('nopalou_admin=')).split(';')[0].split('=')[1];
+      expect((await request(app).get('/api/settings').set('Cookie', `nopalou_admin=${jeton}`)).status).toBe(200);
+      const forge = jwt.sign({ adminId: 'x', role: 'super_admin', scope: 'nopalou_admin' }, 'autre-secret');
+      expect((await request(app).get('/api/settings').set('Cookie', `nopalou_admin=${forge}`)).status).toBe(401);
+      expect((await post('/api/admin/auth/login', { secret: 'mauvais' })).status).toBe(401);
+    });
   });});

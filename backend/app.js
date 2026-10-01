@@ -187,6 +187,7 @@ app.use('/api/auth/inscription', authLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/admin/login', authLimiter);
+app.use('/api/admin/auth/login', authLimiter); // AUD-143/148 : limite aussi la connexion administrative nominative et par secret
 app.use('/api/paiement/', (req, res, next) => {
   if (req.path.includes('/webhook')) return next();
   return authLimiter(req, res, next);
@@ -235,7 +236,13 @@ function adminPageGuard(req, res, next) {
   const cookieSecret = getAdminCookie(req);
   const headerSecret = req.headers['x-admin-secret'];
   const secret = cookieSecret || headerSecret;
-  if (process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {
+  // AUD-143 : le cookie contient désormais un jeton administrateur signé (plus le secret maître)
+  let jetonValide = false;
+  try {
+    const d = require('jsonwebtoken').verify(String(cookieSecret || ''), process.env.JWT_SECRET);
+    jetonValide = d && d.scope === 'nopalou_admin';
+  } catch { jetonValide = false; }
+  if (!jetonValide && process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {
     const page = req.path.replace('/', '');
     return res.status(401).send(
       '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Accès refusé</title>' +
@@ -279,9 +286,16 @@ app.post('/api/admin/login', (req, res) => {
     return res.status(401).json({ error: 'Secret invalide' });
   }
   const isSecure = process.env.NODE_ENV === 'production';
-  res.setHeader('Set-Cookie',
-    `nopalou_admin=${encodeURIComponent(secret)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`
+  // AUD-143 : on dépose un jeton administrateur de 8 h, jamais le secret maître lui-même
+  const token = require('jsonwebtoken').sign(
+    { adminId: '00000000-0000-0000-0000-000000000000', email: process.env.ADMIN_EMAIL || 'contact@nopalou.com', role: 'super_admin', scope: 'nopalou_admin' },
+    process.env.JWT_SECRET,
+    { expiresIn: '8h' }
   );
+  res.setHeader('Set-Cookie', [
+    `nopalou_admin_jwt=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`,
+    `nopalou_admin=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`,
+  ]);
   res.json({ ok: true });
 });
 

@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
       const isSecure = process.env.NODE_ENV === 'production';
       res.setHeader('Set-Cookie', [
         `nopalou_admin_jwt=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${7 * 86400}${isSecure ? '; Secure' : ''}`,
-        `nopalou_admin=${encodeURIComponent(secret)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${7 * 86400}${isSecure ? '; Secure' : ''}`,
+        `nopalou_admin=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${7 * 86400}${isSecure ? '; Secure' : ''}`, // AUD-143 : jeton, jamais le secret maître
       ]);
 
       await enregistrerAdminLog({
