@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import CardActions from '@/app/CardActions'
 import ExternalImg from '@/components/ExternalImg'
+import BadgeSponsorise from '@/components/BadgeSponsorise'
+import { sponsoringActif } from '@/lib/sponsoring'
 import JsonLd from '@/components/JsonLd'
 import { breadcrumbSchema } from '@/lib/schema-org'
 import { CATEGORIES } from '../../categories-data'
@@ -25,6 +27,9 @@ interface Produit {
   prix_min: number | null
   nb_offres: number | null
   image_url: string | null
+  boutique_id?: string | null
+  sponsorise?: boolean | null
+  sponsor_jusqu_au?: string | null
 }
 
 interface ApiResponse { produits?: Produit[]; data?: Produit[]; total?: number }
@@ -176,6 +181,8 @@ export default async function SousCategoriePage({
                 >
                   <div className="card-img">
                     <ExternalImg src={p.image_url} alt={p.nom} fallback={emoji} fallbackClassName="card-img-placeholder" />
+                    {/* AUD-160 : un placement payant est toujours signalé (les produits de boutique ne sont pas des placements payants) */}
+                    <BadgeSponsorise actif={!p.boutique_id && sponsoringActif(p.sponsorise, p.sponsor_jusqu_au)} />
                   </div>
                   {p.marque && <p className="marque">{p.marque}</p>}
                   <p className="nom">{p.nom}</p>

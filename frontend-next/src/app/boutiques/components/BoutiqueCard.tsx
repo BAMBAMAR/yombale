@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import BadgeVerification from '@/components/BadgeVerification'
+import { sponsoringActif } from '@/lib/sponsoring'
+import BadgeSponsorise from '@/components/BadgeSponsorise'
 
 export interface ProduitApercu {
   id: string
@@ -85,7 +87,7 @@ export default function BoutiqueCard({
   searchQuery?: string
 }) {
   const b = boutique
-  const sponsorActif = b.sponsorise && (!b.sponsor_jusqu_au || new Date(b.sponsor_jusqu_au) > new Date())
+  const sponsorActif = sponsoringActif(b.sponsorise, b.sponsor_jusqu_au)
   const estPro = b.plan_actif === 'pro'
   const estBusiness = b.plan_actif === 'business'
   const statutOuverture = estOuvertActuellement(b.horaires)
@@ -149,6 +151,8 @@ export default function BoutiqueCard({
             Vendeur Pro
           </div>
         )}
+        {/* AUD-160 : un placement payant est toujours signalé */}
+        <BadgeSponsorise actif={sponsorActif} style={{ bottom: 8, left: 10 }} />
       </div>
 
       {/* ── CORPS DE CARTE ── */}

@@ -17,6 +17,12 @@ const {
 } = require('./whatsapp');
 const { creerCommandeBoutique, notifierVendeurCommande } = require('./commande-service');
 const cfg = require('../lib/settingsCache');
+
+// AUD-160 : durée de l'essai gratuit = réglage admin `abonnement_essai_jours` (1 à 365), repli sur 30.
+async function dureeEssaiJours() {
+  const n = Math.round(await cfg.getNum('abonnement_essai_jours'));
+  return Number.isFinite(n) && n >= 1 && n <= 365 ? n : 30;
+}
 const { checkBoutiqueQuotas } = require('../routes/boutiques-modules/helpers');
 const { detecterIntentionImmo, traiterMessageImmo, trouverAgenceAgentParTelephone } = require('./immo-chatbot');
 const {
@@ -3891,7 +3897,7 @@ async function handleIncomingInternal(msg) {
       const essaiJours = (await cfg.getNum('abonnement_essai_jours')) || 30;
 
       const msgText = `💎 *Forfaits & Abonnements Boutiques Nopalou*\n\n` +
-        `🎁 *1er MOIS (${essaiJours} JOURS) 100% OFFERT SUR TOUS LES FORFAITS !*\n` +
+        `🎁 *${essaiJours} JOURS 100% OFFERTS SUR TOUS LES FORFAITS !*\n` +
         `⚡ *Accès Total VIP inclus :* Vous profitez immédiatement de 100% des fonctionnalités (Caisse POS, Saisie Express, Factures PDF, Comptabilité & Catalogue illimité) sans restriction dès la création de votre boutique !\n\n` +
         `🌱 *${labelDecouverte} (${prixFmt(pxDecouverte)}/mois)*\n` +
         `• Catalogue produits illimité\n` +
@@ -4118,7 +4124,7 @@ async function handleIncomingInternal(msg) {
         const essaiJours = (await cfg.getNum('abonnement_essai_jours')) || 30;
 
         const msgText = `💎 *Forfaits & Abonnements Boutiques Nopalou*\n\n` +
-          `🎁 *1er MOIS (${essaiJours} JOURS) 100% OFFERT SUR TOUS LES FORFAITS !*\n` +
+          `🎁 *${essaiJours} JOURS 100% OFFERTS SUR TOUS LES FORFAITS !*\n` +
           `⚡ *Accès Total VIP inclus :* Vous profitez immédiatement de 100% des fonctionnalités (Caisse POS, Saisie Express, Factures PDF, Comptabilité & Catalogue illimité) sans restriction dès la création de votre boutique !\n\n` +
           `🌱 *${labelDecouverte} (${prixFmt(pxDecouverte)}/mois)*\n` +
           `• Catalogue produits illimité\n` +
@@ -5445,8 +5451,9 @@ async function handleIncomingInternal(msg) {
         console.warn('[STARTER PACK WA WARN]:', ePack.message);
       }
 
-      // 4. Créer l'abonnement d'essai de 30 jours offerts
-      const finEssai = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      // 4. Créer l'abonnement d'essai (durée = réglage admin `abonnement_essai_jours`, jamais écrite en dur)
+      const essaiJours = await dureeEssaiJours();
+      const finEssai = new Date(Date.now() + essaiJours * 24 * 60 * 60 * 1000);
       try {
         await pool.query(
           `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
@@ -5466,7 +5473,7 @@ async function handleIncomingInternal(msg) {
         `🎉 *FÉLICITATIONS ! VOTRE BOUTIQUE EST CRÉÉE !* 🎉\n\n` +
         `🏪 *${bqCreee.nom}*\n` +
         `📍 ${quartier} — 0% de commission\n` +
-        `🎁 *1er mois (30 jours) 100% OFFERT avec ACCÈS TOTAL VIP !*\n` +
+        `🎁 *${essaiJours} jours 100% OFFERTS avec ACCÈS TOTAL VIP !*\n` +
         `Toutes les fonctionnalités sont débloquées : Caisse POS, Saisie Express, Factures PDF, Comptabilité & Catalogue illimité !\n\n` +
         `🌐 *Lien de votre vitrine web :*\n${SITE}/boutiques/${bqCreee.slug}\n\n` +
         `🎨 *Personnalisez votre vitrine (couleurs, slogan, bannière) :*\n${SITE}/boutique?tab=personnaliser\n\n` +
@@ -5634,8 +5641,9 @@ async function handleIncomingInternal(msg) {
         console.warn('[CRM CONVERSION HOOK IMMO ERR]:', errConv.message);
       }
 
-      // 6. Abonnement d'essai 30 jours offerts
-      const finEssai = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      // 6. Abonnement d'essai (durée = réglage admin `abonnement_essai_jours`, jamais écrite en dur)
+      const essaiJours = await dureeEssaiJours();
+      const finEssai = new Date(Date.now() + essaiJours * 24 * 60 * 60 * 1000);
       try {
         await pool.query(
           `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
@@ -5662,7 +5670,7 @@ async function handleIncomingInternal(msg) {
         `• Publier vos premiers biens (appartements, villas, terrains)\n` +
         `• Partager votre lien d'agence directement avec vos clients sur WhatsApp\n` +
         `• Gérer vos mandats et baux de location\n\n` +
-        `🎁 *30 jours d'essai 100% offerts activés.*\n\n` +
+        `🎁 *${essaiJours} jours d'essai 100% offerts activés.*\n\n` +
         `Tapez *MENU* à tout moment pour revenir à l'accueil.`
       );
       return;

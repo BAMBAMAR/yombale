@@ -33,12 +33,12 @@ const OBJECTIONS = (essai: number) => [
   {
     q: "« Que se passe-t-il si la connexion internet ou le réseau coupe ? »",
     peur: "Instabilité des réseaux télécoms et électricité.",
-    r: "« Notre caisse POS continue de fonctionner à 100% hors-ligne. Vous continuez d'encaisser vos clients au comptoir, et dès que le réseau revient, tout se synchronise automatiquement. »",
+    r: "« Notre caisse POS est conçue pour les coupures de réseau : vous continuez d'encaisser vos clients au comptoir, et dès que le réseau revient, les ventes se synchronisent. »",
   },
   {
     q: "« C'est cher pour mon petit commerce. »",
     peur: "Sensibilité au prix et méconnaissance du retour sur investissement.",
-    r: "« À 2 500 FCFA/mois, cela revient à moins de 85 FCFA par jour. Si Nopalou vous permet de récupérer une seule dette oubliée ou de faire une vente de plus par mois, l'outil est déjà 100% rentabilisé. Et le premier mois est entièrement gratuit. »",
+    r: "« À 2 500 FCFA/mois, cela revient à moins de 85 FCFA par jour. Si Nopalou vous permet de récupérer une seule dette oubliée ou de faire une vente de plus par mois, l'outil est déjà 100% rentabilisé. Et l'essai est entièrement gratuit. »",
   },
   {
     q: "« Je n'ai pas beaucoup d'articles (moins de 15 produits). »",

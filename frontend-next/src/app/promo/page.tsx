@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PromoPage() {
+  const essaiJours = await getEssaiJours()
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
   let s = { plan_decouverte_prix: 2500, plan_pro_prix: 5000, plan_business_prix: 10000 }
   
@@ -130,7 +131,7 @@ export default async function PromoPage() {
         {/* CTA OFFER */}
         <div className="animate-fade-up delay-2" style={{ background: '#ffffff', borderRadius: 32, padding: '60px 20px', color: '#0f172a', marginTop: 80, position: 'relative', overflow: 'hidden' }}>
           <h2 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, margin: '0 0 20px' }}>
-            Votre Premier Mois est <span style={{ color: '#C75B00' }}>100% Offert.</span>
+            Vos {essaiJours} premiers jours sont <span style={{ color: '#C75B00' }}>100% offerts.</span>
           </h2>
           <p style={{ fontSize: 20, color: '#475569', marginBottom: 40, fontWeight: 500 }}>
             Aucun risque. Pas d'engagement. Créez votre boutique en 2 minutes.

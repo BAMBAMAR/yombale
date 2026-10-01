@@ -90,7 +90,7 @@ const COMPARATIFS = [
     nopalou: [
       "Fonctionne sur le smartphone ou la tablette que vous avez déjà (0 F de matériel)",
       "Stock synchronisé en temps réel entre votre magasin physique et votre vitrine web",
-      "Fonctionne 100% hors-ligne lors des coupures de réseau",
+      "Conçu pour continuer d'encaisser pendant les coupures de réseau",
       "Factures et devis officiels OHADA partageables par WhatsApp"
     ],
     autre: [

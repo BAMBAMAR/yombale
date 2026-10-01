@@ -107,7 +107,7 @@ export const PALIERS_BOUTIQUE = (essai: number) => [
     couleur: '#f59e0b',
     avantages: [
       'Tout le contenu du forfait Taf Taf',
-      'Caisse POS tactile 100% hors-ligne & scan caméra EAN-13',
+      'Caisse POS tactile conçue pour les coupures de réseau & scan caméra EAN-13',
       'Impression de tickets et stickers thermiques (58/80mm)',
       'Relances WhatsApp 1-clic avec lien direct Wave',
       'Facturation & devis PDF aux normes OHADA',

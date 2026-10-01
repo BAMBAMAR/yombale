@@ -180,7 +180,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       {card('Plans d\'abonnement boutiques', <>
         {field('plan_decouverte_label', 'Nom plan Taf Taf (Découverte)', 'text')}
         {field('plan_decouverte_prix', 'Prix plan Taf Taf (mensuel)', 'number', 'FCFA/mois')}
-        {field('abonnement_essai_jours', 'Durée essai gratuit / 1er mois offert', 'number', 'jours')}
+        {field('abonnement_essai_jours', 'Durée de l\'essai gratuit', 'number', 'jours')}
         <div style={{ margin: '14px 0', borderTop: '1px dashed #e5e7eb' }} />
         {field('plan_pro_label', 'Nom plan Boutique Pro', 'text')}
         {field('plan_pro_prix', 'Prix plan Boutique Pro (mensuel)', 'number', 'FCFA/mois')}

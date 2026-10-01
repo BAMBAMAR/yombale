@@ -35,7 +35,7 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
           <div className="hero-header-text" style={{ width: '100%' }}>
             <div className="hero-badge-wrap" style={{ marginBottom: 6 }}>
               <span className="badge-npl badge-npl-accent" style={{ fontSize: 11 }}>
-                Plateforme Officielle · Comparateur &amp; Boutiques Dakar
+                Comparateur, boutiques, immobilier et annonces
               </span>
             </div>
 

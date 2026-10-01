@@ -260,7 +260,7 @@ Factures Proforma, Devis & Factures Définitives en PDF professionnel
 Conversion immédiate de Devis en Facture après encaissement
 Envoi instantané du PDF par WhatsApp ou E-mail au client
 
-1er mois d'essai 100% gratuit sans engagement !
+Essai 100% gratuit sans engagement !
 Créez votre compte sur nopalou.com/boutique
 
 #Nopalou #FacturationOHADA #PMEsenegal #Comptabilite #Dakar #Entreprendre`,

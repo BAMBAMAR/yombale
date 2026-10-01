@@ -61,7 +61,7 @@ const IMMO_FAQ = [
   },
   {
     q: "Combien coûte le logiciel de gestion locative Nopalou au Sénégal ?",
-    a: "La formule Agence Essentiel est 100% offerte sans engagement. Pour les cabinets et gestionnaires locatifs gérant les relances automatiques et les encaissements directs Wave/OM, la formule Agence Pro est à 10 000 FCFA/mois avec le premier mois 100% offert."
+    a: "La formule Agence Essentiel est 100% offerte sans engagement. Pour les cabinets et gestionnaires locatifs gérant les relances automatiques et les encaissements directs Wave/OM, la formule Agence Pro est à 10 000 FCFA/mois avec un essai gratuit."
   }
 ]
 

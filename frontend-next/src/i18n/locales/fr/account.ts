@@ -175,7 +175,7 @@ export const account = {
   step3Title: 'Vous touchez votre commission',
   step3Detail: 'Dès qu\'il passe en abonnement Pro ou Business payant, vous touchez un pourcentage chaque mois, tant qu\'il reste abonné.',
   pitchTitle: 'Quoi dire à un commerçant',
-  pitchDetail: '« Je te recommande Nopalou — ça te permet d\'avoir une boutique en ligne et de recevoir tes commandes directement sur WhatsApp, l\'outil que tu utilises déjà. Le premier mois est gratuit, sans engagement, et il n\'y a pas de commission cachée. Je peux t\'aider à la créer maintenant si tu veux, ça prend 5 minutes. »',
+  pitchDetail: '« Je te recommande Nopalou — ça te permet d\'avoir une boutique en ligne et de recevoir tes commandes directement sur WhatsApp, l\'outil que tu utilises déjà. L\'essai est gratuit, sans engagement, et il n\'y a pas de commission cachée. Je peux t\'aider à la créer maintenant si tu veux, ça prend 5 minutes. »',
   pitchNote: 'Un argumentaire plus complet et un script de présentation détaillé sont disponibles auprès de l\'équipe Nopalou si vous démarchez régulièrement.',
   recruitedShops: 'Boutiques recrutées',
   noRecruitedShops: 'Aucune boutique recrutée pour l\'instant.',

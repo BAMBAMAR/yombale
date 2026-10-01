@@ -1,4 +1,5 @@
 'use client'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 import React from 'react'
 import Link from 'next/link'
@@ -25,6 +26,7 @@ interface AgenceLandingPublicViewProps {
 }
 
 export function AgenceLandingPublicView({ hideHero = false }: AgenceLandingPublicViewProps = {}) {
+  const essai = useEssaiJours()
   return (
     <div style={{ width: '100%', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -89,7 +91,7 @@ export function AgenceLandingPublicView({ hideHero = false }: AgenceLandingPubli
                 transition: 'all 0.15s ease'
               }}
             >
-              <span>Créer mon agence (30 jours offerts)</span>
+              <span>Créer mon agence ({essai} jours offerts)</span>
               <ArrowRight size={17} />
             </Link>
 
@@ -250,7 +252,7 @@ export function AgenceLandingPublicView({ hideHero = false }: AgenceLandingPubli
             Modernisez la gestion de votre agence dès aujourd&apos;hui
           </h2>
           <p style={{ fontSize: 14.5, color: '#94a3b8', margin: '0 auto 26px', maxWidth: 580, lineHeight: 1.5 }}>
-            Rejoignez les administrateurs de biens et cabinets immobiliers qui font confiance à Nopalou au Sénégal. 0 frais d&apos;installation, 30 jours offerts.
+            Rejoignez les administrateurs de biens et cabinets immobiliers qui font confiance à Nopalou au Sénégal. 0 frais d&apos;installation, {essai} jours offerts.
           </p>
           <Link
             href="/inscription?role=agence&redirect=/agence"

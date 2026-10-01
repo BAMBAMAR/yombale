@@ -24,7 +24,8 @@ function slugify(text) {
 router.get('/public', async (req, res) => {
   try {
     const plans = await plansCache.getAllPlans(true);
-    res.json({ plans });
+    const jours = require('../lib/settingsCache').getSync('abonnement_essai_jours');
+    res.json({ plans: plans.map(p => ({ ...p, avantages: plansCache.avantagesAvecEssai(p.avantages, jours) })) });
   } catch (err) {
     res.status(500).json({ error: erreurPublique(err, req) });
   }

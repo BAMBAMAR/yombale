@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import CardActions from './CardActions'
 import ExternalImg from '@/components/ExternalImg'
+import { sponsoringActif } from '@/lib/sponsoring'
+import BadgeSponsorise from '@/components/BadgeSponsorise'
 import { Loader2, ChevronDown, ShoppingBag, RotateCw } from 'lucide-react'
 
 interface Produit {
@@ -18,6 +20,10 @@ interface Produit {
   image_url: string | null
   boutique_id?: string
   boutique_slug?: string
+  // Le serveur marque `sponsorise = true` pour tout produit de boutique (priorité d'affichage, pas un achat de placement) :
+  // seuls les produits du comparateur (sans boutique_id) portent un vrai sponsoring.
+  sponsorise?: boolean | null
+  sponsor_jusqu_au?: string | null
 }
 
 interface Props {
@@ -181,6 +187,8 @@ export default function ProduitsListe({
                     </span>
                   )}
                   <ExternalImg src={p.image_url} alt={p.nom} fallbackClassName="card-img-placeholder" />
+                  {/* AUD-160 : un placement payant est toujours signalé */}
+                  <BadgeSponsorise actif={!p.boutique_id && sponsoringActif(p.sponsorise, p.sponsor_jusqu_au)} />
                 </div>
                 {p.marque && <p className="marque">{p.marque}</p>}
                 <p className="nom">{p.nom}</p>

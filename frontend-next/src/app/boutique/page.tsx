@@ -61,7 +61,7 @@ export default async function BoutiquePage({
       .then(r => r.ok ? r.json() : null)
       .then((d: { abonnement: { plan: string; is_trial?: boolean; plan_effectif?: string } | null } | null) => {
         if (d?.abonnement) {
-          // Pendant l'essai gratuit 1er mois, accès effectif total 'business'
+          // Pendant l'essai gratuit, accès effectif total 'business'
           planActif = d.abonnement.is_trial ? 'business' : (d.abonnement.plan_effectif || d.abonnement.plan)
         }
       })

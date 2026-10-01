@@ -7,7 +7,7 @@ export function getMatriceData(prixPro: number, essai: number): Record<Categorie
       label: 'Mode, Prêt-à-Porter & Chaussures',
       category: 'mode',
       sans_app: {
-        pitch: `« Bonjour ! Vous vendez de magnifiques vêtements. Aujourd'hui, quand une cliente vous demande vos modèles et tailles sur WhatsApp, vous perdez du temps à chercher et renvoyer les photos une par une. Avec Nopalou, vous avez votre vitrine en ligne avec vos tailles/couleurs, et vos clientes commandent directement sur votre WhatsApp. Le 1er mois est 100% offert, je vous montre en 1 minute ? »`,
+        pitch: `« Bonjour ! Vous vendez de magnifiques vêtements. Aujourd'hui, quand une cliente vous demande vos modèles et tailles sur WhatsApp, vous perdez du temps à chercher et renvoyer les photos une par une. Avec Nopalou, vous avez votre vitrine en ligne avec vos tailles/couleurs, et vos clientes commandent directement sur votre WhatsApp. L'essai est 100% offert, je vous montre en 1 minute ? »`,
         diagnostic: [
           'Combien de temps passez-vous par jour à envoyer photos et prix sur WhatsApp ?',
           "Comment gérez-vous les réservations de robes ou chaussures qui ne sont finalement pas récupérées ?",
@@ -53,7 +53,7 @@ export function getMatriceData(prixPro: number, essai: number): Record<Categorie
         closing: '« On scanne 2 téléphones pour tester la vitesse de caisse ? Ça prend 30 secondes chrono. »',
       },
       avec_app: {
-        pitch: `« Bonjour ! Vous avez déjà un système de caisse, mais êtes-vous référencé sur le comparateur de prix le plus visité du Sénégal ? Nopalou vous apporte de nouveaux clients qualifiés prêts à acheter et offre 3 scanners (Caméra, Cloud, USB) à seulement ${fcfa(prixPro)}/mois. »`,
+        pitch: `« Bonjour ! Vous avez déjà un système de caisse, mais êtes-vous référencé sur le comparateur de prix Nopalou ? Nopalou vous apporte de nouveaux clients qualifiés prêts à acheter et offre 3 scanners (Caméra, Cloud, USB) à seulement ${fcfa(prixPro)}/mois. »`,
         diagnostic: [
           'Votre outil actuel vous amène-t-il de nouveaux clients chaque jour ?',
           'Fonctionne-t-il sur smartphone sans avoir besoin d\'un gros PC allumé ?',

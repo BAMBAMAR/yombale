@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { logout } from '@/app/actions/auth'
+import { useEssaiJours } from '@/components/EssaiProvider'
 import {
   Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
   Bell, Heart, Users, BookOpen, Sparkles, Plus, LogOut, ChevronDown,
@@ -20,6 +21,7 @@ interface Props {
 
 
 export default function MobileNav({ isLoggedIn, nom }: Props) {
+  const essai = useEssaiJours()
   const [open, setOpen] = useState(false)
   const [guidesOpen, setGuidesOpen] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -134,7 +136,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
               >
                 <Store size={15} />
                 <span>Ouvrir une Boutique Pro</span>
-                <span style={{ background: '#16A34A', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 8, fontWeight: 900 }}>1m Offert</span>
+                <span style={{ background: '#16A34A', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 8, fontWeight: 900 }}>{essai} j offerts</span>
               </a>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <a
@@ -215,7 +217,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           {/* ── 2.5 SOLUTIONS MARCHANDS & FORFAITS ── */}
           <div className="mobile-nav-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span>Solutions Commerçants &amp; POS</span>
-            <span style={{ fontSize: 10, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8, fontWeight: 800 }}>1m Offert</span>
+            <span style={{ fontSize: 10, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8, fontWeight: 800 }}>{essai} j offerts</span>
           </div>
           <a href="/tarifs-boutique" className="mobile-nav-link" onClick={close}>
             <Zap size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />

@@ -1,10 +1,12 @@
 'use client'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 import React from 'react'
 import Link from 'next/link'
 import { ArrowRight, Sparkles, UploadCloud, Users } from 'lucide-react'
 
 export default function TarifsComparatifShopify() {
+  const essai = useEssaiJours()
   return (
     <>
       {/* ── COMPARATIF DIRECT NOPALOU VS SHOPIFY & WOOCOMMERCE ── */}
@@ -28,7 +30,7 @@ export default function TarifsComparatifShopify() {
             <tbody>
               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={{ padding: '16px 24px', fontWeight: 700, color: '#475569' }}>Coût d&apos;entrée</td>
-                <td style={{ padding: '16px 24px', fontWeight: 900, color: '#10b981', background: '#fff7ed' }}>Dès 2.500 FCFA (1m offert)</td>
+                <td style={{ padding: '16px 24px', fontWeight: 900, color: '#10b981', background: '#fff7ed' }}>Dès 2.500 FCFA ({essai} jours offerts)</td>
                 <td style={{ padding: '16px 24px', color: '#64748b' }}>29$ / mois (~18.000 FCFA)</td>
               </tr>
               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>

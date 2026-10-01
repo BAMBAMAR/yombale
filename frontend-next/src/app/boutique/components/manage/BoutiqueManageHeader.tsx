@@ -112,7 +112,7 @@ export default function BoutiqueManageHeader({
         </div>
       )}
 
-      {/* BANDEAU 1ER MOIS GRATUIT — ACCÈS TOTAL VIP */}
+      {/* BANDEAU ESSAI GRATUIT — ACCÈS TOTAL VIP */}
       {isTrialActive && (
         <div
           style={{

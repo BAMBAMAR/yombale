@@ -1,4 +1,5 @@
 'use client'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 import React from 'react'
 import { XCircle, CheckCircle2, Scale, ArrowRight } from 'lucide-react'
@@ -44,6 +45,7 @@ const COMPARISONS: ComparisonRow[] = [
 ]
 
 export function AgenceComparativeTable() {
+  const essai = useEssaiJours()
   return (
     <section style={{ maxWidth: 1100, margin: '0 auto 70px', padding: '0 16px' }}>
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -258,7 +260,7 @@ export function AgenceComparativeTable() {
             boxShadow: '0 4px 14px rgba(28, 43, 74, 0.15)'
           }}
         >
-          <span>Moderniser mon cabinet (1er mois offert)</span>
+          <span>Moderniser mon cabinet ({essai} jours offerts)</span>
           <ArrowRight size={15} />
         </Link>
       </div>

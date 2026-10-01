@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Handshake, TrendingUp, Palette, CheckCircle2, ArrowRight } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -37,7 +38,8 @@ const JSON_LD_PARTENAIRES = {
   },
 }
 
-export default function PartenairesLandingPage() {
+export default async function PartenairesLandingPage() {
+  const essai = await getEssaiJours()
   return (
     <>
       <script
@@ -140,7 +142,7 @@ export default function PartenairesLandingPage() {
               </div>
               <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 12 }}>Vente ultra-simple</h3>
               <p style={{ color: '#475569', lineHeight: 1.6, fontSize: 15 }}>
-                Nopalou se vend tout seul : le 1er mois est <strong>100% offert</strong> sans carte bancaire pour le marchand. Il vous suffit de partager votre lien d&apos;affiliation.
+                Nopalou se vend tout seul : les {essai} premiers jours sont <strong>100% offerts</strong> sans carte bancaire pour le marchand. Il vous suffit de partager votre lien d&apos;affiliation.
               </p>
             </div>
 

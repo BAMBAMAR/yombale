@@ -14,6 +14,7 @@ import {
   titreAffichableAnnonce,
   descriptionMetaAnnonce,
 } from '../src/lib/annonce-texte.ts'
+import { sponsoringActif, LIBELLE_SPONSORISE } from '../src/lib/sponsoring.ts'
 import {
   calculerKpisCarnet,
   determinerActionClient,
@@ -1142,6 +1143,23 @@ it('descriptionMetaAnnonce: sans numéro, coupée proprement, repli si trop cour
   const longue = 'Villa spacieuse '.repeat(30)
   const c = descriptionMetaAnnonce(longue, 'Repli.')
   assert.ok(c.length <= 156 && c.endsWith('…'), c)
+})
+// AUD-160 : étiquette « Sponsorisé » (sponsoring.ts)
+console.log('\n📦 AUD-160. Sponsoring actif (sponsoring.ts)')
+it('sponsoringActif: drapeau levé, date absente ou future', () => {
+  const maintenant = Date.parse('2026-10-01T12:00:00Z')
+  assert.equal(sponsoringActif(true, null, maintenant), true)
+  assert.equal(sponsoringActif(true, undefined, maintenant), true)
+  assert.equal(sponsoringActif(true, '2026-10-02T00:00:00Z', maintenant), true)
+})
+it('sponsoringActif: faux si drapeau baissé, date passée ou invalide', () => {
+  const maintenant = Date.parse('2026-10-01T12:00:00Z')
+  assert.equal(sponsoringActif(false, null, maintenant), false)
+  assert.equal(sponsoringActif(null, null, maintenant), false)
+  assert.equal(sponsoringActif(undefined, '2027-01-01T00:00:00Z', maintenant), false)
+  assert.equal(sponsoringActif(true, '2026-09-30T00:00:00Z', maintenant), false)
+  assert.equal(sponsoringActif(true, 'pas-une-date', maintenant), false)
+  assert.equal(LIBELLE_SPONSORISE, 'Sponsorisé')
 })
 await Promise.all(enAttente)
 

@@ -1,10 +1,12 @@
 'use client'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 import React, { useState } from 'react'
 import { TrendingUp, Clock, ShieldCheck, CheckCircle2, ArrowRight, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 export function AgenceSimulatorSection() {
+  const essai = useEssaiJours()
   const [lots, setLots] = useState<number>(40)
 
   // Formules de calcul réalistes
@@ -152,7 +154,7 @@ export function AgenceSimulatorSection() {
                 {lots <= 3 ? 'Formule Starter' : lots <= 25 ? 'Formule Croissance' : 'Formule Cabinet Pro'}
               </div>
               <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 4 }}>
-                Sans engagement · 1er mois offert
+                Sans engagement · {essai} jours offerts
               </div>
             </div>
           </div>
@@ -174,7 +176,7 @@ export function AgenceSimulatorSection() {
                 boxShadow: '0 8px 24px rgba(199,91,0,0.4)'
               }}
             >
-              <span>Activer mon agence (Essai gratuit 30 jours)</span>
+              <span>Activer mon agence (Essai gratuit {essai} jours)</span>
               <ArrowRight size={17} />
             </Link>
           </div>

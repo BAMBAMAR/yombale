@@ -41,7 +41,7 @@ export function AgencePlansPricingSection() {
               description: p.description || '',
               recommande: Boolean(p.slug === 'immo_pro' || (p.badge && p.badge.toLowerCase().includes('recommandé'))),
               features: Array.isArray(p.avantages) && p.avantages.length > 0 ? p.avantages : [],
-              ctaText: Number(p.prix_mensuel) === 0 ? 'Créer mon agence gratuite' : 'Activer cette formule (30 jours offerts)',
+              ctaText: Number(p.prix_mensuel) === 0 ? 'Créer mon agence gratuite' : `Activer cette formule (${essai} jours offerts)`,
               ctaHref: `/inscription?role=agence&plan=${p.slug}&redirect=/agence`,
             })))
           }
@@ -456,7 +456,7 @@ export function AgencePlansPricingSection() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <CheckCircle2 size={15} color="#10b981" />
-          <span>30 jours d&apos;essai gratuit sans engagement</span>
+          <span>{essai} jours d&apos;essai gratuit sans engagement</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <ShieldCheck size={15} color="#10b981" />

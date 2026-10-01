@@ -2,8 +2,79 @@
 const fs = require('fs');
 const path = require('path');
 
-const RACINE = path.join(__dirname, '..', '..', 'frontend-next', 'src');
+// Racines surchargeables (UXSEO_FRONT_ROOT, UXSEO_BACK_ROOT) pour rejouer les gardes sur une copie de l'ancien code
+const RACINE = process.env.UXSEO_FRONT_ROOT || path.join(__dirname, '..', '..', 'frontend-next', 'src');
+const RACINE_BACK = process.env.UXSEO_BACK_ROOT || path.join(__dirname, '..', '..', 'backend');
 const lire = (rel) => fs.readFileSync(path.join(RACINE, rel), 'utf8');
+const lireBack = (rel) => fs.readFileSync(path.join(RACINE_BACK, rel), 'utf8');
+
+function sources(dir, sortie = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) sources(p, sortie);
+    else if (/\.(ts|tsx)$/.test(e.name)) sortie.push(p);
+  }
+  return sortie;
+}
+
+describe('AUD-160 : la durée d\'essai et les allégations ne sont jamais écrites en dur', () => {
+  const FICHIERS = () => sources(RACINE).map((p) => ({ p: path.relative(RACINE, p).replace(/\\/g, '/'), src: fs.readFileSync(p, 'utf8') }));
+  const trouve = (re, exclure = () => false) => FICHIERS().filter((f) => !exclure(f.p) && re.test(f.src)).map((f) => f.p);
+
+  test('aucun « 1m offert », « 1er mois offert », « premier mois gratuit » dans le frontend', () => {
+    expect(trouve(/\b1 ?m offert|(?:1er|premier) mois (?:est |d'essai )?(?:100 ?% )?(?:offert|gratuit)|1 mois offert/i)).toEqual([]);
+  });
+
+  test('aucune durée d\'essai en chiffres dans les textes (hors Sama Xaalis, essai propre `kalpe_essai_jours`)', () => {
+    const re = /\b\d{1,3} ?jours? ?(?:offerts?|gratuits?|d['’]essai)|essai gratuit (?:de )?\d+ ?jours?|\b\d{1,3} ?j offerts?/i;
+    expect(trouve(re, (p) => p.startsWith('app/sama-xaalis/'))).toEqual([]);
+  });
+
+  test('plus de « 100% hors-ligne », « le plus consulté/visité », « Plateforme Officielle »', () => {
+    expect(trouve(/100 ?% hors[- ]ligne/i)).toEqual([]);
+    expect(trouve(/le plus (?:consulté|visité)/i)).toEqual([]);
+    expect(trouve(/Plateforme Officielle/i)).toEqual([]);
+  });
+
+  test('le bot WhatsApp crée l\'essai avec le réglage admin, pas 30 jours en dur', () => {
+    const src = lireBack('services/whatsapp-chatbot.js');
+    expect(src).not.toMatch(/Date\.now\(\) \+ 30 \* 24/);
+    expect(src).not.toMatch(/30 jours d'essai/);
+    expect(src).toMatch(/dureeEssaiJours\(\)/);
+  });
+
+  test('les avantages publics des forfaits affichent la durée réelle de l\'essai', () => {
+    const { avantagesAvecEssai } = require(path.join(RACINE_BACK, 'lib', 'plansCache.js'));
+    expect(avantagesAvecEssai(['Tout le contenu Taf Taf', '1er mois 100% OFFERT'], 14)).toEqual(['Tout le contenu Taf Taf', '14 jours 100% OFFERTS']);
+    expect(avantagesAvecEssai(['Premier mois offert'], '30')).toEqual(['30 jours 100% OFFERTS']);
+    expect(avantagesAvecEssai(['-25% (3 mois offerts)', 'Caisse POS'], 14)).toEqual(['-25% (3 mois offerts)', 'Caisse POS']);
+    expect(avantagesAvecEssai(['1er mois offert'], 'abc')).toEqual(['30 jours 100% OFFERTS']);
+    expect(avantagesAvecEssai(null, 14)).toEqual([]);
+    expect(lireBack('routes/plans.js')).toMatch(/avantagesAvecEssai/);
+  });
+});
+
+describe('AUD-160 : les contenus sponsorisés sont étiquetés « Sponsorisé »', () => {
+  test.each([
+    'app/boutiques/components/BoutiqueCard.tsx',
+    'app/ProduitsListe.tsx',
+    'app/categorie/[slug]/page.tsx',
+    'app/categorie/[slug]/[sousCategorie]/page.tsx',
+  ])('%s affiche le badge via sponsoringActif', (rel) => {
+    const src = lire(rel);
+    expect(src).toMatch(/<BadgeSponsorise actif=\{/);
+    expect(src).toMatch(/sponsoringActif\(/);
+  });
+
+  test('les produits de boutique (sponsorise = true par construction du serveur) ne sont pas étiquetés', () => {
+    expect(lire('app/ProduitsListe.tsx')).toMatch(/!p\.boutique_id && sponsoringActif/);
+  });
+
+  test('le badge affiche le libellé « Sponsorisé »', () => {
+    expect(lire('components/BadgeSponsorise.tsx')).toMatch(/LIBELLE_SPONSORISE/);
+    expect(lire('lib/sponsoring.ts')).toMatch(/LIBELLE_SPONSORISE = 'Sponsorisé'/);
+  });
+});
 
 describe('AUD-155 : le texte importé des annonces passe par le nettoyage avant tout affichage public', () => {
   const page = () => lire('app/annonces/[id]/page.tsx');

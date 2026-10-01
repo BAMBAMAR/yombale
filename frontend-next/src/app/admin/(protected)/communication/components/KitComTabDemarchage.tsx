@@ -44,7 +44,7 @@ export default function KitComTabDemarchage({
     },
     {
       t: `${essai} Jours 100% Offerts & Remises -25%`,
-      d: `Démarrez sans payer le 1er mois. Formule Pro à ${fcfa(prixPro)}/mois ou Business à ${fcfa(prixBusiness)}/mois avec jusqu'à 3 mois offerts sur l'abonnement annuel.`,
+      d: `Démarrez sans payer pendant l'essai. Formule Pro à ${fcfa(prixPro)}/mois ou Business à ${fcfa(prixBusiness)}/mois avec jusqu'à 3 mois offerts sur l'abonnement annuel.`,
     },
   ]
 

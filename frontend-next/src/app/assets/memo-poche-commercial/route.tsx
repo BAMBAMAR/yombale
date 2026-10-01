@@ -65,7 +65,7 @@ export async function GET(request: Request) {
               PITCH ÉCLAIR (30 SECONDES) :
             </span>
             <p style={{ fontSize: 13.5, color: '#1C2B4A', margin: '6px 0 0', lineHeight: 1.45, fontWeight: 650 }}>
-              « Bonjour ! Je suis avec Nopalou. On aide les boutiques du quartier à digitaliser leur caisse sur leur propre smartphone, gérer les dettes clients par WhatsApp et avoir une vitrine en ligne sans commission. Le 1er mois est 100% offert, je vous montre en 1 minute ? »
+              « Bonjour ! Je suis avec Nopalou. On aide les boutiques du quartier à digitaliser leur caisse sur leur propre smartphone, gérer les dettes clients par WhatsApp et avoir une vitrine en ligne sans commission. L'essai est 100% offert, je vous montre en 1 minute ? »
             </p>
           </div>
 
@@ -116,7 +116,7 @@ export async function GET(request: Request) {
               },
               {
                 obj: '« C\'est payant ? »',
-                rep: '« Le 1er mois est 100% offert sans carte. Ensuite seulement 2 500 ou 5 000 F/mois. »',
+                rep: '« L\'essai est 100% offert sans carte. Ensuite seulement 2 500 ou 5 000 F/mois. »',
               },
               {
                 obj: '« J\'ai peur des impôts »',

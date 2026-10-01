@@ -398,7 +398,7 @@ export default async function MarchandsLandingPage() {
             <tbody>
               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={{ padding: '16px 24px', fontWeight: 700, color: '#334155' }}>Prix d'accès</td>
-                <td style={{ padding: '16px 24px', fontWeight: 900, color: '#059669', background: '#fff7ed' }}>Dès 2 500 F/mois (1m offert)</td>
+                <td style={{ padding: '16px 24px', fontWeight: 900, color: '#059669', background: '#fff7ed' }}>Dès 2 500 F/mois ({essai} jours offerts)</td>
                 <td style={{ padding: '16px 24px', color: '#64748b' }}>18 000 F à 50 000 F/mois</td>
                 <td style={{ padding: '16px 24px', color: '#059669' }}>Gratuit</td>
               </tr>

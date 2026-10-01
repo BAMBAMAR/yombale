@@ -1,10 +1,12 @@
 'use client'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 import React from 'react'
 import Link from 'next/link'
 import { Building2, ArrowRight, ShieldCheck, CreditCard, Sparkles, CheckCircle2, Crown } from 'lucide-react'
 
 export default function HeroAgenceHeaderView() {
+  const essai = useEssaiJours()
   return (
     <div style={{ width: '100%', textAlign: 'center', maxWidth: 840, margin: '0 auto 16px' }}>
       <div
@@ -70,7 +72,7 @@ export default function HeroAgenceHeaderView() {
             gap: 6
           }}
         >
-          <span>Créer mon agence (30 jours offerts)</span>
+          <span>Créer mon agence ({essai} jours offerts)</span>
           <ArrowRight size={15} />
         </Link>
 

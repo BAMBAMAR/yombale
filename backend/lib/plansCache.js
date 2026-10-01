@@ -122,9 +122,21 @@ function invalidate() {
   lastLoaded = 0;
 }
 
+// AUD-160 : l'avantage « 1er mois 100% OFFERT » est stocké en base ; à l'affichage public on le remplace par la
+// durée réelle de l'essai (réglage admin `abonnement_essai_jours`). La liste stockée n'est pas modifiée.
+const RE_AVANTAGE_ESSAI = /^\s*(?:1er|premier)\s+mois\b.*offert/i;
+
+function avantagesAvecEssai(avantages, jours) {
+  if (!Array.isArray(avantages)) return [];
+  const n = Math.round(Number(jours));
+  const duree = Number.isFinite(n) && n >= 1 && n <= 365 ? n : 30;
+  return avantages.map(a => (typeof a === 'string' && RE_AVANTAGE_ESSAI.test(a) ? `${duree} jours 100% OFFERTS` : a));
+}
+
 module.exports = {
   getPlan,
   getAllPlans,
   invalidate,
+  avantagesAvecEssai,
   DEFAULT_PLANS,
 };

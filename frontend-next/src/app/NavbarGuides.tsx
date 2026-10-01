@@ -1,4 +1,5 @@
 'use client'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
@@ -8,6 +9,7 @@ import {
 } from 'lucide-react'
 
 export default function NavbarGuides() {
+  const essai = useEssaiJours()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -101,7 +103,7 @@ export default function NavbarGuides() {
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: 'var(--accent)' }}>
                 Tarifs &amp; Forfaits Vendeurs <span style={{ background: '#C75B00', color: '#FFF', fontSize: 9.5, padding: '1px 6px', borderRadius: 10 }}>OFFRE</span>
               </span>
-              <span style={{ fontWeight: 500, fontSize: 11.5, color: 'var(--text2)' }}>Créer ma boutique en ligne (1m offert)</span>
+              <span style={{ fontWeight: 500, fontSize: 11.5, color: 'var(--text2)' }}>Créer ma boutique en ligne ({essai} jours offerts)</span>
             </span>
           </Link>
           <Link href="/guide-creer-boutique" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>

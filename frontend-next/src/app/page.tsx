@@ -14,6 +14,7 @@ import CompareFilterBanner from '@/components/CompareFilterBanner'
 import { apiFetch } from '@/lib/api'
 import JsonLd from '@/components/JsonLd'
 import { organizationSchema, websiteSchema } from '@/lib/schema-org'
+import { getEssaiJours } from '@/lib/essai'
 
 import HeroWhatsAppCarousel from './HeroWhatsAppCarousel'
 import HomeDualTrackContainer from './HomeDualTrackContainer'
@@ -134,6 +135,7 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ q?: string; categorie?: string; prixMin?: string; prixMax?: string; etat?: string; page?: string; tri?: string; sousType?: string }> | { q?: string; categorie?: string; prixMin?: string; prixMax?: string; etat?: string; page?: string; tri?: string; sousType?: string }
 }) {
+  const essaiJours = await getEssaiJours()
   const sp        = await Promise.resolve(searchParams)
   const q         = sp?.q         ?? ''
   const categorie = sp?.categorie ?? ''
@@ -506,7 +508,7 @@ export default async function HomePage({
                     <Store size={22} />
                   </div>
                   <p style={{ margin: 0, color: 'var(--text-body, #4A3F36)', fontSize: 14, lineHeight: 1.7 }}>
-                    Pour les <strong>commerçants</strong>, Nopalou offre une suite complète pour réussir : création de boutique en ligne en 2 minutes, <strong>caisse tactile POS 100% hors-ligne</strong> pour votre magasin, synchronisation de stocks, carnet de crédits/dettes avec relances Wave, et visibilité automatique de vos produits sur le comparateur de prix le plus consulté du Sénégal.
+                    Pour les <strong>commerçants</strong>, Nopalou offre une suite complète pour réussir : création de boutique en ligne en 2 minutes, <strong>caisse tactile POS conçue pour les coupures de réseau</strong> dans votre magasin, synchronisation de stocks, carnet de crédits/dettes avec relances Wave, et visibilité de vos produits sur Nopalou.
                   </p>
                 </div>
               </div>
@@ -524,7 +526,7 @@ export default async function HomePage({
                 <p className="chip-row-label">Solutions Vendeurs, Business &amp; Commerce au Sénégal</p>
                 <div className="chip-row" style={{ marginBottom: 24 }}>
                   {[
-                    { href: '/creer-boutique', label: 'Créer sa boutique en ligne (1m offert)', icon: Store },
+                    { href: '/creer-boutique', label: `Créer sa boutique en ligne (${essaiJours} jours offerts)`, icon: Store },
                     { href: '/guide-sourcing-revente', label: 'Sourcing Alibaba, AliExpress & Shein', icon: ShoppingBag },
                     { href: '/compte/apporteur', label: 'Programme Apporteur (20% récurrent à vie)', icon: Sparkles },
                     { href: '/tarifs-boutique', label: 'Tarifs & Forfaits Vendeurs Sénégal', icon: Tag },

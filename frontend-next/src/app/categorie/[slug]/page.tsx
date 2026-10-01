@@ -5,6 +5,8 @@ import { fcfa } from '@/lib/format'
 import { apiFetch } from '@/lib/api'
 import CardActions from '@/app/CardActions'
 import ExternalImg from '@/components/ExternalImg'
+import BadgeSponsorise from '@/components/BadgeSponsorise'
+import { sponsoringActif } from '@/lib/sponsoring'
 import CompareFilterBanner from '@/components/CompareFilterBanner'
 import PageHeader from '@/components/PageHeader'
 import FiltresBar from '@/components/FiltresBar'
@@ -52,6 +54,9 @@ interface Produit {
   nb_offres: number | null
   image_url: string | null
   categorie_nom: string | null
+  boutique_id?: string | null
+  sponsorise?: boolean | null
+  sponsor_jusqu_au?: string | null
 }
 
 interface ApiResponse {
@@ -271,6 +276,8 @@ export default async function CategoriePage({
                 >
                   <div className="card-img">
                     <ExternalImg src={p.image_url} alt={p.nom} fallback={cat.emoji} fallbackClassName="card-img-placeholder" />
+                    {/* AUD-160 : un placement payant est toujours signalé (les produits de boutique ne sont pas des placements payants) */}
+                    <BadgeSponsorise actif={!p.boutique_id && sponsoringActif(p.sponsorise, p.sponsor_jusqu_au)} />
                   </div>
                   {p.marque && <p className="marque">{p.marque}</p>}
                   <p className="nom">{p.nom}</p>

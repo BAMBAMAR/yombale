@@ -519,7 +519,7 @@ export default function AdminSystemClient({
               </label>
               <input
                 type="text"
-                placeholder="Ex: Offre spéciale Tabaski : 1er mois offert sur tous les forfaits !"
+                placeholder="Ex: Offre spéciale Tabaski : essai prolongé sur tous les forfaits !"
                 value={bannerText}
                 onChange={e => setBannerText(e.target.value)}
                 style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 13 }}

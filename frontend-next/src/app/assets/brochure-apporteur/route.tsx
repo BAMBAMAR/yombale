@@ -418,7 +418,7 @@ export async function GET() {
   <h2 style="font-size:14px; font-weight:700; color:${COULEURS.marine}; margin:0 0 10px;">Quoi dire à un commerçant</h2>
   <div style="border:1px solid ${COULEURS.bordure}; border-radius:10px; padding:16px 20px; background:${COULEURS.fondClair};">
     <p style="font-size:13px; color:${COULEURS.marine}; margin:0; line-height:1.7;">
-      « Je te recommande Nopalou — ça te donne une Caisse Tactile POS complète pour ton magasin (avec 3 scanners, carnet de dettes et relance WhatsApp 1-clic) ainsi qu'une boutique en ligne pour recevoir tes commandes directement sur WhatsApp. Le premier mois est gratuit ! Tu peux aussi tester la démo en 1 clic sur nopalou.com/demo. »
+      « Je te recommande Nopalou — ça te donne une Caisse Tactile POS complète pour ton magasin (avec 3 scanners, carnet de dettes et relance WhatsApp 1-clic) ainsi qu'une boutique en ligne pour recevoir tes commandes directement sur WhatsApp. L'essai est gratuit ! Tu peux aussi tester la démo en 1 clic sur nopalou.com/demo. »
     </p>
   </div>
   ${PagePiedString(10)}
