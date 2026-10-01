@@ -35,7 +35,7 @@ const mkErr = s => Object.assign(new Error('HTTP ' + s), { response: { status: s
   comportement = () => { throw mkErr(500); };
   requetes = [];
   const e2 = await expat.scraperImmo({ dryRun: true });
-  out('I2 expat-immo HTTP 500 partout: annonces', e2.scrapes, '| erreurs comptées', e2.erreurs.length, '| requêtes', requetes.length, '(1 par section, aucun retry)');
+  out('I2 expat-immo HTTP 500 partout: annonces', e2.scrapes, '| erreurs comptées', e2.erreurs.length, '| requêtes', requetes.length, '(avant AUD-179 : 8 requêtes et 0 erreur ; après : 3 tentatives par section, erreurs comptées)');
 
   // ── CoinAfrique immo : upsert d'une annonce existante sans téléphone (cas de TOUS les scrapes, car extraireContactDetail n'est jamais appelé)
   const coin = require(R + 'backend/services/scraper-immo-coinafrique.js');

@@ -4,6 +4,7 @@
 const axios   = require('axios');
 const cheerio = require('cheerio');
 const { pool } = require('../models/db');
+const { RunCollecte, noterRequeteCourante } = require('../lib/scrapingRun');
 
 const BASE  = 'https://www.expat-dakar.com';
 const DELAY = 1500;
@@ -32,16 +33,28 @@ function proxyUrl(url) {
   return `${proxy}${encodeURIComponent(url)}`;
 }
 
-async function fetchPage(url) {
+// AUD-179 : nouvelles tentatives sur les erreurs transitoires (5xx, 429, réseau) ; 403 et 404 ne sont jamais insistés.
+// Chaque réponse (ou cause réseau) est rattachée au passage en cours.
+async function fetchPage(url, retries = 2) {
   const target = proxyUrl(url);
-  const res = await axios.get(target, {
-    headers: { 'User-Agent': UA, 'Accept-Language': 'fr-FR,fr;q=0.9' },
-    timeout: 30000,
-    maxRedirects: 5,
-  });
-  return cheerio.load(res.data);
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await axios.get(target, {
+        headers: { 'User-Agent': UA, 'Accept-Language': 'fr-FR,fr;q=0.9' },
+        timeout: 30000,
+        maxRedirects: 5,
+      });
+      noterRequeteCourante(res.status || 200);
+      return cheerio.load(res.data);
+    } catch (err) {
+      const st = err.response?.status;
+      noterRequeteCourante(st || err.code || 'none');
+      const transitoire = !st || st >= 500 || st === 429;
+      if (!transitoire || i === retries) throw err;
+      await sleep(st === 429 ? 12000 * (i + 1) : 3000 * (i + 1));
+    }
+  }
 }
-
 function parsePrix(txt) {
   if (!txt) return null;
   const clean = txt.replace(/[^0-9]/g, '');
@@ -160,6 +173,7 @@ async function scraperPage(url, type_bien, transaction) {
     });
   } catch (err) {
     console.warn(`[EXPAT-IMMO] Erreur page ${url}: ${err.message}`);
+    throw err; // AUD-179 : l'erreur n'est plus confondue avec une page vide ; scraperImmo la compte
   }
   return annonces;
 }
@@ -225,12 +239,18 @@ async function upsertAnnonce(a) {
   ]);
 }
 
-async function scraperImmo({ dryRun = false } = {}) {
+async function scraperImmo(options = {}) {
+  const run = new RunCollecte({ source: 'expat-dakar', systeme: 'immo', categoriesCibles: SECTIONS.length });
+  return run.executer(() => scraperImmoMesure(options, run));
+}
+
+// AUD-179 / AUD-173 : une erreur HTTP est comptée (jamais « page vide ») ; le passage est évalué et persisté par RunCollecte.
+async function scraperImmoMesure({ dryRun = false } = {}, run) {
   const stats = { scrapes: 0, inseres: 0, ignores: 0, erreurs: [], dryRun };
-  const tDebut = Date.now();
-  let pagesOk = 0, pagesErreur = 0;
+  let erreursUpsert = 0;
 
   for (const sec of SECTIONS) {
+    let totalSection = 0;
     for (let pg = 1; pg <= 5; pg++) {
       // Expat-Dakar : pagination via ?page=N
       const url = pg === 1
@@ -238,14 +258,22 @@ async function scraperImmo({ dryRun = false } = {}) {
         : `${BASE}${sec.path}?page=${pg}`;
 
       console.log(`[EXPAT-IMMO] ${url}`);
-      const annonces = await scraperPage(url, sec.type_bien, sec.transaction);
+      let annonces;
+      try {
+        annonces = await scraperPage(url, sec.type_bien, sec.transaction);
+      } catch (err) {
+        const st = err.response?.status;
+        if (st === 404 && pg > 1) break; // fin de pagination
+        stats.erreurs.push(`${sec.path} page ${pg}: ${st || err.code || err.message}`);
+        break; // après les nouvelles tentatives de fetchPage
+      }
 
       if (!annonces.length) {
         console.log(`[EXPAT-IMMO] Page vide → arrêt section ${sec.path}`);
         break;
       }
 
-      pagesOk++;
+      totalSection += annonces.length;
       stats.scrapes += annonces.length;
 
       for (const a of annonces) {
@@ -260,41 +288,25 @@ async function scraperImmo({ dryRun = false } = {}) {
         } catch (e) {
           console.warn(`  Erreur upsert: ${e.message}`);
           stats.erreurs.push(e.message);
+          erreursUpsert++;
         }
       }
 
       await sleep(DELAY);
     }
+    run.noterCategorie(sec.path, totalSection);
   }
 
   console.log(`[EXPAT-IMMO ${dryRun ? 'DRY' : 'RÉEL'}] scrapes: ${stats.scrapes}, insérés: ${stats.inseres}, ignorés: ${stats.ignores}, erreurs: ${stats.erreurs.length}`);
 
-  // Persister les métriques dans scraping_runs
   if (!dryRun) {
-    pool.query(
-      `INSERT INTO scraping_runs
-         (source, systeme, pages_cibles, pages_ok, pages_erreur,
-          items_extraits, items_inseres, items_filtres,
-          duree_ms, statut, erreur_msg, ended_at)
-       VALUES ($1,'immo',$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())`,
-      [
-        'expat-dakar',
-        SECTIONS.length * 5,
-        pagesOk,
-        pagesErreur,
-        stats.scrapes,
-        stats.inseres,
-        stats.ignores,
-        Date.now() - tDebut,
-        stats.erreurs.length > 0 ? 'erreur_partielle' : 'ok',
-        stats.erreurs.length > 0 ? stats.erreurs.slice(0, 3).join(' | ') : null,
-      ]
-    ).catch(e => console.warn('[SCRAPING_RUN WARN]', e.message));
+    const verdict = await run.cloturer(pool, { itemsExtraits: stats.scrapes, itemsInseres: stats.inseres, itemsFiltres: stats.ignores, erreursSauvegarde: erreursUpsert });
+    stats.statut = verdict.statut;
+    stats.motifs = verdict.motifs;
   }
 
   return stats;
 }
-
 module.exports = {
   scraperImmo,
   extraireContactDetail,

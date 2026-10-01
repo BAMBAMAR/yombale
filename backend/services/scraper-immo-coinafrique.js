@@ -4,6 +4,7 @@
 const axios   = require('axios');
 const cheerio = require('cheerio');
 const { pool } = require('../models/db');
+const { RunCollecte, noterRequeteCourante } = require('../lib/scrapingRun');
 
 const BASE  = 'https://sn.coinafrique.com';
 const DELAY = 3000; // CoinAfrique est lent — respecter un délai plus long
@@ -23,6 +24,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// AUD-179 : nouvelles tentatives sur les erreurs transitoires (5xx, 429, réseau) ; 403 et 404 ne sont jamais insistés.
 async function fetchPage(url, retries = 2) {
   for (let i = 0; i <= retries; i++) {
     try {
@@ -30,17 +32,17 @@ async function fetchPage(url, retries = 2) {
         headers: { 'User-Agent': UA, 'Accept-Language': 'fr-FR,fr;q=0.9' },
         timeout: 30000,
       });
+      noterRequeteCourante(res.status || 200);
       return cheerio.load(res.data);
     } catch (err) {
       const status = err.response?.status;
-      if ((status === 502 || status === 503 || status === 504) && i < retries) {
-        await sleep(4000); continue;
-      }
-      throw err;
+      noterRequeteCourante(status || err.code || 'none');
+      const transitoire = !status || status >= 500 || status === 429;
+      if (!transitoire || i === retries) throw err;
+      await sleep(status === 429 ? 12000 * (i + 1) : 4000 * (i + 1));
     }
   }
 }
-
 // Détecte location/vente depuis le slug de l'URL
 // ex: /annonce/appartements/vente-appartement-xxx → 'vente'
 //     /annonce/appartements/location-appartement-xxx → 'location'
@@ -209,13 +211,21 @@ async function scraperPage(url, type_bien_defaut) {
     });
   } catch (err) {
     console.warn(`[COIN-IMMO] Erreur page ${url}: ${err.message}`);
+    throw err; // AUD-179 : l'erreur n'est plus confondue avec une page vide ; scraperImmo la compte
   }
   return annonces;
 }
 
+// AUD-175 : un re-scrape ne modifie JAMAIS le statut d'une annonce déjà connue (publiée ou rejetée). Une annonce
+// nouvelle sans téléphone direct naît inactive avec le motif `a_completer` (rejete reste vrai pour ne pas encombrer la
+// file de modération « en attente » de l'administration) ; elle est activée plus tard, et seulement alors, si un
+// téléphone et un prix sont obtenus (motif `a_completer` ou ancien motif de rejet automatique).
+const MOTIF_A_COMPLETER = 'a_completer';
+const ANCIEN_MOTIF_AUTO = 'Données scrapées sans contact téléphonique direct ou sans prix';
+
 async function upsertAnnonce(a) {
   const isActif = Boolean(a.contact_tel && a.contact_tel.length >= 7 && a.prix && a.prix > 0);
-  const motifRejet = !isActif ? 'Données scrapées sans contact téléphonique direct ou sans prix' : null;
+  const motifRejet = !isActif ? MOTIF_A_COMPLETER : null;
 
   await pool.query(`
     INSERT INTO annonces_immo
@@ -236,9 +246,12 @@ async function upsertAnnonce(a) {
       description = COALESCE(EXCLUDED.description, annonces_immo.description),
       contact_nom = COALESCE(EXCLUDED.contact_nom, annonces_immo.contact_nom),
       contact_tel = COALESCE(EXCLUDED.contact_tel, annonces_immo.contact_tel),
-      actif       = EXCLUDED.actif,
-      rejete      = EXCLUDED.rejete,
-      motif_rejet = EXCLUDED.motif_rejet,
+      actif       = CASE WHEN EXCLUDED.actif AND annonces_immo.motif_rejet IN ('${MOTIF_A_COMPLETER}', '${ANCIEN_MOTIF_AUTO}')
+                         THEN true ELSE annonces_immo.actif END,
+      rejete      = CASE WHEN EXCLUDED.actif AND annonces_immo.motif_rejet IN ('${MOTIF_A_COMPLETER}', '${ANCIEN_MOTIF_AUTO}')
+                         THEN false ELSE annonces_immo.rejete END,
+      motif_rejet = CASE WHEN EXCLUDED.actif AND annonces_immo.motif_rejet IN ('${MOTIF_A_COMPLETER}', '${ANCIEN_MOTIF_AUTO}')
+                         THEN NULL ELSE annonces_immo.motif_rejet END,
       updated_at  = NOW()
   `, [
     a.titre, a.type_bien, a.transaction, a.prix || null, null,
@@ -248,39 +261,62 @@ async function upsertAnnonce(a) {
     isActif, !isActif, motifRejet
   ]);
 }
+async function scraperImmo(options = {}) {
+  const run = new RunCollecte({ source: 'coinafrique', systeme: 'immo', categoriesCibles: SECTIONS.length });
+  return run.executer(() => scraperImmoMesure(options, run));
+}
 
-async function scraperImmo({ dryRun = false } = {}) {
+// AUD-179 / AUD-173 : une erreur HTTP est comptée (jamais « page vide ») ; le passage est évalué et persisté par RunCollecte.
+async function scraperImmoMesure({ dryRun = false } = {}, run) {
   const stats = { scrapes: 0, inseres: 0, ignores: 0, erreurs: [], dryRun };
-  const tDebut = Date.now();
-  let pagesOk = 0, pagesErreur = 0;
+  let erreursUpsert = 0;
+
+  const cloturer = async () => {
+    if (dryRun) return;
+    const verdict = await run.cloturer(pool, { itemsExtraits: stats.scrapes, itemsInseres: stats.inseres, itemsFiltres: stats.ignores, erreursSauvegarde: erreursUpsert });
+    stats.statut = verdict.statut;
+    stats.motifs = verdict.motifs;
+  };
 
   // Test de connectivité rapide
   try {
-    await axios.get(`${BASE}/categorie/immobilier`, {
+    const rep = await axios.get(`${BASE}/categorie/immobilier`, {
       headers: { 'User-Agent': UA }, timeout: 15000,
     });
+    noterRequeteCourante(rep.status || 200);
   } catch (err) {
     const status = err.response?.status;
+    noterRequeteCourante(status || err.code || 'none');
     if (status === 502 || status === 503 || status === 504 || err.code === 'ECONNABORTED') {
       console.warn(`[COIN-IMMO] Site indisponible (${status || err.code}) — sync ignorée`);
       stats.erreurs.push(`Site indisponible: ${status || err.code}`);
+      await cloturer(); // le passage « echec » est enregistré (et alerté s'il se répète)
       return stats;
     }
   }
 
   for (const sec of SECTIONS) {
+    let totalSection = 0;
     for (let pg = 1; pg <= 5; pg++) {
       const url = pg === 1 ? `${BASE}${sec.path}` : `${BASE}${sec.path}?page=${pg}`;
       console.log(`[COIN-IMMO] ${url}`);
 
-      const annonces = await scraperPage(url, sec.type_bien);
+      let annonces;
+      try {
+        annonces = await scraperPage(url, sec.type_bien);
+      } catch (err) {
+        const st = err.response?.status;
+        if (st === 404 && pg > 1) break; // fin de pagination
+        stats.erreurs.push(`${sec.path} page ${pg}: ${st || err.code || err.message}`);
+        break; // après les nouvelles tentatives de fetchPage
+      }
 
       if (!annonces.length) {
         console.log(`[COIN-IMMO] Page vide → arrêt ${sec.path}`);
         break;
       }
 
-      pagesOk++;
+      totalSection += annonces.length;
       stats.scrapes += annonces.length;
 
       for (const a of annonces) {
@@ -294,41 +330,19 @@ async function scraperImmo({ dryRun = false } = {}) {
           stats.inseres++;
         } catch (e) {
           stats.erreurs.push(e.message);
+          erreursUpsert++;
         }
       }
 
       await sleep(DELAY);
     }
+    run.noterCategorie(sec.path, totalSection);
   }
 
   console.log(`[COIN-IMMO ${dryRun ? 'DRY' : 'RÉEL'}] scrapes: ${stats.scrapes}, insérés: ${stats.inseres}, ignorés: ${stats.ignores}, erreurs: ${stats.erreurs.length}`);
-
-  // Persister les métriques dans scraping_runs (seulement en mode réel)
-  if (!dryRun) {
-    pool.query(
-      `INSERT INTO scraping_runs
-         (source, systeme, pages_cibles, pages_ok, pages_erreur,
-          items_extraits, items_inseres, items_filtres,
-          duree_ms, statut, erreur_msg, ended_at)
-       VALUES ($1,'immo',$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())`,
-      [
-        'coinafrique',
-        SECTIONS.length * 5,
-        pagesOk,
-        pagesErreur,
-        stats.scrapes,
-        stats.inseres,
-        stats.ignores,
-        Date.now() - tDebut,
-        stats.erreurs.length > 0 ? 'erreur_partielle' : 'ok',
-        stats.erreurs.length > 0 ? stats.erreurs.slice(0, 3).join(' | ') : null,
-      ]
-    ).catch(e => console.warn('[SCRAPING_RUN WARN]', e.message));
-  }
-
+  await cloturer();
   return stats;
 }
-
 module.exports = {
   scraperImmo,
   extraireContactDetail,

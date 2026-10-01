@@ -130,10 +130,16 @@ describe('AUD-172 : la table scraping_runs est créée par les migrations', () =
     expect(ddl()).not.toBe('');
   });
 
+  test('les scrapers passent par RunCollecte (une seule écriture de passage, pas d\'INSERT en double)', () => {
+    for (const f of ['services/scraper.js', 'services/scraper-immo-expat.js', 'services/scraper-immo-coinafrique.js']) {
+      const src = lire(f);
+      expect(src).toMatch(/RunCollecte/);
+      expect(src).not.toMatch(/INSERT INTO scraping_runs/);
+    }
+  });
+
   test.each([
     'lib/scrapingRun.js',
-    'services/scraper-immo-expat.js',
-    'services/scraper-immo-coinafrique.js',
   ])('toutes les colonnes écrites par %s existent dans la table', (fichier) => {
     const m = lire(fichier).match(/INSERT INTO scraping_runs\s*\(([\s\S]*?)\)\s*VALUES/);
     expect(m).not.toBeNull();
