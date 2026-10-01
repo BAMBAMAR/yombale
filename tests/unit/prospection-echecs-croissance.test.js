@@ -97,3 +97,28 @@ describe('AUD-113 : lancerCampagne face aux échecs', () => {
     expect(envoyer).toHaveBeenCalledTimes(3);
   });
 });
+
+describe('AUD-112 : traçabilité de ce qui est réellement envoyé et suivi des liens', () => {
+  const { ajouterSuiviUtm, contenuGabaritEnvoye } = require('../../backend/lib/prospectionSuivi');
+
+  test('ajouterSuiviUtm ajoute source, support, campagne et lead courts', () => {
+    const url = ajouterSuiviUtm('agence', { campagneId: '7b318174-517e-4546-9b3c-db4781cc9819', leadId: 'e45eee45-818a-456e-be67-c9148fceb3a1' });
+    expect(url).toBe('agence?utm_source=prospection&utm_medium=whatsapp&utm_campaign=7b318174&l=e45eee45');
+  });
+
+  test('ne double pas un suivi existant, tolère un chemin vide et gère un ? déjà présent', () => {
+    expect(ajouterSuiviUtm('x?utm_source=autre')).toBe('x?utm_source=autre');
+    expect(ajouterSuiviUtm('')).toBe('');
+    expect(ajouterSuiviUtm('p?a=1', {})).toMatch(/^p\?a=1&utm_source=prospection&utm_medium=whatsapp&utm_campaign=sans_campagne$/);
+  });
+
+  test('contenuGabaritEnvoye reflète les deux paramètres du gabarit Meta', () => {
+    expect(contenuGabaritEnvoye({ features: 'Vendez par Wave', googleProof: '30 jours offerts' })).toBe('Vendez par Wave\n30 jours offerts');
+  });
+});
+
+test('AUD-112 : le journal de prospection enregistre le contenu du gabarit réellement envoyé', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../../backend/services/prospection.js'), 'utf8');
+  expect(src).toMatch(/contenuEnvoye \|\| messageFinal, statutEnvoi, contenuEnvoye \? 'gabarit_meta'/);
+  expect(src).toMatch(/buttonParam: ajouterSuiviUtm\(metaParams\.buttonParam/);
+});

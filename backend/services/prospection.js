@@ -1,6 +1,7 @@
 // backend/services/prospection.js — Moteur d'automatisation et de collecte de leads (Nopalou)
 const { pool } = require('../models/db');
 const cfg = require('../lib/settingsCache');
+const { ajouterSuiviUtm, contenuGabaritEnvoye } = require('../lib/prospectionSuivi');
 const { extraireCodeMeta, classerEchec, CODE_PLAFOND_MARKETING, SEUIL_PLAFOND_CONSECUTIF, JOURS_PAUSE_PLAFOND } = require('../lib/prospectionEchecs');
 const { sendWhatsAppText, sendWhatsAppNotification, sendWhatsAppProspectionDirecte, normalisePhone, estDesinscrit } = require('./whatsapp');
 
@@ -2635,12 +2636,14 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     let erreurEnvoi = null;
     let metaMessageId = null;
     let codeEchec = null;
+    let contenuEnvoye = null; // AUD-112 : ce que le destinataire reçoit réellement (gabarit Meta), pas le texte libre
 
     if (!simulation) {
       if (canal === 'whatsapp') {
         try {
           // Pour la prospection à froid (fenêtre 24h fermée), on résout dynamiquement le persona
           const metaParams = resoudreParametresMetaTemplate(lead);
+          contenuEnvoye = contenuGabaritEnvoye(metaParams);
           let metaResponse = null;
           try {
             metaResponse = await sendWhatsAppProspectionDirecte(lead.telephone, {
@@ -2657,7 +2660,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
               title: metaParams.title,
               detail: metaParams.detail,
               url: metaParams.url,
-              buttonParam: metaParams.buttonParam,
+              buttonParam: ajouterSuiviUtm(metaParams.buttonParam, { campagneId, leadId: lead.id }),
               templateOnly: true,
             });
           }
@@ -2709,7 +2712,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
         INSERT INTO prospection_messages_log (
           campagne_id, lead_id, canal, destinataire, message_envoye, statut, variante, erreur, meta_message_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      `, [campagneId || null, lead.id, canal, lead.telephone || lead.email, messageFinal, statutEnvoi, 'variante_A', erreurEnvoi, metaMessageId]);
+      `, [campagneId || null, lead.id, canal, lead.telephone || lead.email, contenuEnvoye || messageFinal, statutEnvoi, contenuEnvoye ? 'gabarit_meta' : 'variante_A', erreurEnvoi, metaMessageId]);
 
       // Mettre à jour le statut du lead et sa timeline si envoyé avec succès
       if (statutEnvoi === 'envoye') {
@@ -2734,7 +2737,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           campagneId || null,
           canal,
           `Message de prospection envoyé sur WhatsApp (${lead.categorie || 'commerce'})`,
-          JSON.stringify({ simulation, destinataire: lead.telephone, extrait: messageFinal.slice(0, 120) })
+          JSON.stringify({ simulation, destinataire: lead.telephone, extrait: (contenuEnvoye || messageFinal).slice(0, 120) })
         ]);
       }
     } catch (dbErr) {
