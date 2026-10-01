@@ -549,4 +549,68 @@ describeIntegration('Protection des données', () => {
         await pool.query(`DELETE FROM annonces_immo WHERE source = 'test-sitemap'`);
       }
     });
+  });
+  describe('AUD-142 — champs internes retirés des réponses publiques', () => {
+    let m, b, prodId;
+    beforeAll(async () => {
+      const reg = await post('/api/auth/inscription', { nom: 'Marchand Stock', email: `stock.${Date.now()}@integration.test`, mot_de_passe: PW });
+      m = { token: reg.body.token, id: reg.body.user.id };
+      const r = await post('/api/boutiques', { nom: `Boutique Stock ${Date.now()}`, telephone: '771119003', ville: 'Dakar', categorie: 'mode' }, m.token);
+      b = r.body.boutique || r.body;
+      prodId = (await pool.query(
+        `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock, stock_quantite, code_barre)
+         VALUES ($1, 'Article stock test', 5000, ARRAY['https://res.cloudinary.com/x/a.jpg'], true, 37, '6001234567890') RETURNING id`, [b.id])).rows[0].id;
+      await pool.query(`INSERT INTO boutique_produit_variantes (produit_id, sku, code_barre, attributs, prix, stock_quantite, actif) VALUES ($1, 'SKU-1', '6009999999999', '{"taille":"M"}', 5000, 12, true)`, [prodId]).catch(() => {});
+    });
+    afterAll(async () => {
+      await pool.query('DELETE FROM boutique_produit_variantes WHERE produit_id = $1', [prodId]).catch(() => {});
+      await pool.query('DELETE FROM boutique_produits WHERE boutique_id = $1', [b.id]).catch(() => {});
+      await pool.query('DELETE FROM boutiques WHERE id = $1', [b.id]).catch(() => {});
+      await pool.query('DELETE FROM utilisateurs WHERE id = $1', [m.id]).catch(() => {});
+    });
+    const INTERNES = ['statut_moderation', 'motif_moderation', 'modere_le', 'whatsapp_sync_statut', 'whatsapp_sync_erreur', 'partage_le', 'code_barre'];
+
+    test('public : ni quantité exacte, ni données de gestion ; la vitrine garde de quoi afficher « en stock »', async () => {
+      const liste = await request(app).get(`/api/boutiques/${b.slug}/produits`);
+      const p = liste.body.produits.find((x) => x.id === prodId);
+      expect(p).toBeDefined();
+      for (const k of INTERNES) expect(p).not.toHaveProperty(k);
+      expect(p.stock_quantite).toBe(1);               // drapeau « disponible », pas 37
+      expect(p.stock_etat).toBe('disponible');
+      expect(p.en_stock).toBe(true);
+      expect(JSON.stringify(liste.body)).not.toMatch(/6001234567890|6009999999999|\b37\b/);
+      const fiche = await request(app).get(`/api/boutiques/${b.slug}/produits/${prodId}`);
+      for (const k of INTERNES) expect(fiche.body.produit).not.toHaveProperty(k);
+      expect(fiche.body.produit.stock_quantite).toBe(1);
+      for (const sku of fiche.body.produit.variantes_skus) { expect(sku).not.toHaveProperty('code_barre'); expect(sku.stock_quantite).toBe(1); }
+    });
+
+    test('rupture et stock faible exprimés par un état, sans chiffre', async () => {
+      await pool.query('UPDATE boutique_produits SET stock_quantite = 3 WHERE id = $1', [prodId]);
+      let p = (await request(app).get(`/api/boutiques/${b.slug}/produits/${prodId}`)).body.produit;
+      expect([p.stock_etat, p.stock_quantite]).toEqual(['faible', 1]);
+      await pool.query('UPDATE boutique_produits SET stock_quantite = 0 WHERE id = $1', [prodId]);
+      p = (await request(app).get(`/api/boutiques/${b.slug}/produits/${prodId}`)).body.produit;
+      expect([p.stock_etat, p.stock_quantite, p.en_stock]).toEqual(['rupture', 0, false]);
+      await pool.query('UPDATE boutique_produits SET stock_quantite = 37 WHERE id = $1', [prodId]);
+    });
+
+    test('le propriétaire et son équipe gardent la vue complète (quantité exacte, code-barres, modération)', async () => {
+      const r = await request(app).get(`/api/boutiques/${b.id}/produits`).set('Authorization', `Bearer ${m.token}`);
+      const p = r.body.produits.find((x) => x.id === prodId);
+      expect(p.stock_quantite).toBe(37);
+      expect(p.code_barre).toBe('6001234567890');
+      expect(p).toHaveProperty('statut_moderation');
+      const fiche = await request(app).get(`/api/boutiques/${b.id}/produits/${prodId}`).set('Authorization', `Bearer ${m.token}`);
+      expect(fiche.body.produit.stock_quantite).toBe(37);
+    });
+
+    test('settings publics : plus de seuils anti-abus par téléphone ni de réglages d\'alertes internes', async () => {
+      const r = await request(app).get('/api/settings/public');
+      expect(r.status).toBe(200);
+      for (const k of ['max_boutiques_par_telephone', 'max_agences_par_telephone', 'alertes_abonnement_jours_avant', 'alertes_abonnement_whatsapp', 'alertes_abonnement_email']) {
+        expect(r.body).not.toHaveProperty(k);
+      }
+      expect(r.body).toHaveProperty('plan_pro_prix'); // les prix restent publics
+    });
   });});

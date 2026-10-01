@@ -65,10 +65,10 @@ router.get('/public', async (req, res) => {
                   'paiement_wave','paiement_orange','paiement_manuel_actif',
                   'paiement_manuel_numero_wave','paiement_manuel_numero_om',
                   'apporteur_taux_commission', 'commission_business',
-                  'max_boutiques_par_compte', 'max_boutiques_par_telephone',
-                  'max_agences_par_compte', 'max_agences_par_telephone',
+                  // AUD-142 : seuils anti-abus par téléphone et réglages d'alertes internes retirés de l'API publique
+                  'max_boutiques_par_compte',
+                  'max_agences_par_compte',
                   'tarif_agence_supplementaire', 'immo_multi_agence_label', 'prix_sponsoring_agence',
-                  'alertes_abonnement_jours_avant', 'alertes_abonnement_whatsapp', 'alertes_abonnement_email',
                   'kalpe_prix_mensuel', 'kalpe_essai_jours', 'kalpe_gratuit_boutiques',
                   'contrat_vendeur_requis', 'contrat_vendeur_texte', 'nopalou_social_links'];
     const result = {};

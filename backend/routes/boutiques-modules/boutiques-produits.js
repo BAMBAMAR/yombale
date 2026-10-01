@@ -24,6 +24,7 @@ const {
 } = require('./helpers');
 const { cacheGet, cacheSet, cacheInvalidatePattern } = require('../../services/redis-cache');
 const plansCache = require('../../lib/plansCache');
+const { versProduitPublic } = require('../../lib/produitPublic'); // AUD-142
 
 // ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand (Cache < 10ms)
 router.get('/:id/produits', tokenOptional, async (req, res) => {
@@ -38,7 +39,8 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
     const filtrer = (liste) => (estGestionnaire ? liste : liste.filter(p => !p.statut_moderation || p.statut_moderation === 'actif'));
     const cachedData = await cacheGet(cacheKey);
     if (cachedData) {
-      return res.json({ produits: filtrer(cachedData), cached: true });
+      const vue = filtrer(cachedData);
+      return res.json({ produits: estGestionnaire ? vue : vue.map(versProduitPublic), cached: true });
     }
 
     const { rows } = await pool.query(
@@ -66,7 +68,8 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
     );
 
     await cacheSet(cacheKey, rows, 120); // Cache 2 minutes (liste complète ; le filtrage public est appliqué à la lecture)
-    res.json({ produits: filtrer(rows) });
+    const vue = filtrer(rows);
+    res.json({ produits: estGestionnaire ? vue : vue.map(versProduitPublic) }); // AUD-142 : le public ne voit ni stock exact ni données de gestion
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
@@ -108,7 +111,11 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
       [req.params.prodId, idParam]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
-    res.json({ produit: rows[0] });
+    let gestionnaire = false;
+    if (req.user?.userId) {
+      try { gestionnaire = !!(await checkBoutiqueAccess(idParam, req.user.userId)); } catch { gestionnaire = false; }
+    }
+    res.json({ produit: gestionnaire ? rows[0] : versProduitPublic(rows[0]) }); // AUD-142
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
