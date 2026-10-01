@@ -39,7 +39,7 @@ Chaque mécanisme de ce plan doit laisser ce tableau **vert** (test automatisé 
 
 ## 3. Phases
 
-**Statut au 01/10/2026 (branche `fix/protection-donnees`, commits locaux)** : Phase 0 faite ; AUD-132, 133, 134, 135 corrigées et prouvées (voir `JOURNAL-LIVRAISONS.md`) ; AUD-136 faite côté dépôt, révocation du jeton à la charge du propriétaire ; Phase 2 et suivantes non commencées. Écarts par rapport au plan : AUD-133 protège les textes libres par la session (cookie) plutôt que par signature HMAC ; AUD-134 conserve `plan_actif` public (badges de vitrine).
+**Statut au 01/10/2026 (branche `fix/protection-donnees`, commits locaux)** : Phase 0 faite ; AUD-132, 133, 134, 135 corrigées et prouvées (voir `JOURNAL-LIVRAISONS.md`) ; AUD-136 faite côté dépôt, révocation du jeton à la charge du propriétaire ; Phase 2 : AUD-137, 138, 139, 140, 141, 142 (partielle), 143 (partielle), 144, 146 corrigées et prouvées ; restent la Phase 3 (AUD-145, 147 à 152) et la configuration Cloudflare. Écarts par rapport au plan : AUD-133 protège les textes libres par la session (cookie) plutôt que par signature HMAC ; AUD-134 conserve `plan_actif` public (badges de vitrine).
 
 | Phase | Contenu | Dépendances |
 |---|---|---|
