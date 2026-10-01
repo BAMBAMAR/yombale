@@ -5,12 +5,13 @@ import {
   Sparkles, HelpCircle, Users, Bell, DollarSign, Clock, ShieldCheck
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
-  title: 'Cahier Bor & Carnet de Dettes Commerçant au Sénégal (2026) | Nopalou',
+  title: 'Cahier Bor & Carnet de Dettes Commerçant au Sénégal (2026)',
   description: 'Digitalisez votre cahier de dettes commerçant ("Bor") et vos stocks au Sénégal. Suivi des crédits clients en temps réel, alertes d\'impayés et relances WhatsApp avec lien Wave.',
   keywords: [
     'cahier bor sénégal',
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${BASE}/gestion-stock-carnet-dettes`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Cahier Bor & Carnet de Dettes Commerçant au Sénégal | Nopalou',
     description: 'Ne perdez plus jamais un franc dans vos dettes clients. Gestion du Bor, relances WhatsApp et stocks en temps réel.',
     url: `${BASE}/gestion-stock-carnet-dettes`,

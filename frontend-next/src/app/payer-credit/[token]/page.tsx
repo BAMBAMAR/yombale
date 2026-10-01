@@ -11,7 +11,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params
   return {
-    title: `Règlement Sécurisé Carnet de Crédit — Nopalou`,
+    title: `Règlement Sécurisé Carnet de Crédit`,
     description: `Réglez votre solde boutique en 1 clic par Wave ou Orange Money et obtenez votre reçu instantanément.`,
   }
 }

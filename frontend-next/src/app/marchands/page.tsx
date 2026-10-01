@@ -6,7 +6,8 @@ import {
   Award, Clock, Lock, Sparkles, HelpCircle, ChevronRight, FileText,
   BadgePercent, Layers, Receipt, ShoppingCart, DollarSign
 } from 'lucide-react'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 export async function generateMetadata(): Promise<Metadata> {
   const essai = await getEssaiJours()
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: 'https://nopalou.com/marchands',
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Nopalou Marchands — Vendez partout, encaissez direct, gérez tranquille.',
     description: 'La solution tout-en-un pour commerçants africains. Vitrine WhatsApp, caisse tactile hors-ligne, carnet de dettes et encaissements Wave.',
     url: 'https://nopalou.com/marchands',

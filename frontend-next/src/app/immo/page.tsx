@@ -14,7 +14,7 @@ import SeoCard from '@/components/SeoCard'
 import { breadcrumbSchema, itemListSchema } from '@/lib/schema-org'
 
 export const metadata: Metadata = {
-  title: 'Immobilier Sénégal : Locations & Ventes à Dakar | Nopalou',
+  title: 'Immobilier Sénégal : Locations & Ventes à Dakar',
   description:
     'Annonces immobilières vérifiées au Sénégal : appartements, chambres au mois dès 25 000 FCFA, studios, villas et terrains avec titres fonciers à Dakar et régions.',
   keywords: [

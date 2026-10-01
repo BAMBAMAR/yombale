@@ -5,7 +5,8 @@ import {
   CheckCircle2, Sparkles, HelpCircle, QrCode, Lock, DollarSign
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -28,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: `${BASE}/paiement-en-ligne-senegal`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Paiement en Ligne au Sénégal : Wave & Orange Money pour Commerçants',
     description: `La solution simple pour encaisser par Wave et Orange Money sans commission bancaire. ${essai} jours offerts.`,
     url: `${BASE}/paiement-en-ligne-senegal`,

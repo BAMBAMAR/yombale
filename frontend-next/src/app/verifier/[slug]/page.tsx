@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api'
 // AUD-140/141 : page publique « vérifier ce vendeur ». Le statut vient du serveur ; elle sert aussi à rappeler
 // les seuls canaux officiels de Nopalou pour repérer une usurpation.
 export const metadata: Metadata = {
-  title: 'Vérifier un vendeur | Nopalou',
+  title: 'Vérifier un vendeur',
   robots: { index: false, follow: false },
 }
 

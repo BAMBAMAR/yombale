@@ -2,17 +2,18 @@ import type { Metadata } from 'next'
 import TarifsBoutiqueClient from './TarifsBoutiqueClient'
 import { safeJsonLd } from '@/lib/jsonld'
 import { getEssaiJours } from '@/lib/essai'
+import { OG_IMAGES } from '@/lib/social'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
-  title: 'Tarifs & Forfaits Vendeurs & Agences Immobilières | Nopalou Sénégal',
+  title: 'Tarifs & Forfaits Vendeurs & Agences Immobilières au Sénégal',
   description: 'Découvrez nos forfaits d’abonnement pour boutiques (dès 2.500 FCFA/mois) et agences immobilières (dès 0 FCFA). 0% de commission, paiement Wave et Orange Money.',
   keywords: ['tarifs boutique en ligne sénégal', 'forfait vendeur dakar', 'tarifs agence immobilière sénégal', 'gestion locative sénégal wave', 'logiciel agence dakar', 'alternative shopify sénégal', 'nopalou tarifs'],
   alternates: {
     canonical: `${BASE}/tarifs-boutique`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Tarifs & Formules Nopalou — Boutiques & Agences Immobilières',
     description: 'Boutiques en ligne & Gestion locative immobilière au Sénégal. 0% de commission, paiements Wave & Orange Money.',
     url: `${BASE}/tarifs-boutique`,

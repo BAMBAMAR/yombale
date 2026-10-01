@@ -7,13 +7,14 @@ import {
 } from 'lucide-react'
 import { PosDouchetteBanner } from './components/PosDouchetteBanner'
 import { PosFaqSection } from './components/PosFaqSection'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 
 export async function generateMetadata(): Promise<Metadata> {
   const essai = await getEssaiJours()
   return {
-  title: 'Caisse Enregistreuse Dakar & Prix Sénégal | Nopalou POS pour Petit Commerce',
+  title: 'Caisse Enregistreuse Dakar & Prix Sénégal | POS pour Petit Commerce',
   description: `La caisse enregistreuse tactile à Dakar pour petit commerce, boutique et magasin. Conçue pour les coupures de réseau, avec la formule Boutique Pro. ${essai} jours offerts.`,
   keywords: [
     'caisse enregistreuse dakar',
@@ -27,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
     'terminal point de vente sénégal',
     'nopalou pos'
   ],
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Caisse Enregistreuse Dakar & Sénégal — Nopalou POS',
     description: `La solution de caisse enregistreuse tactile pour commerce au Sénégal avec la formule Pro. ${essai} jours offerts.`,
     url: 'https://nopalou.com/pos',

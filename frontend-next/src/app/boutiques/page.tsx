@@ -19,7 +19,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: 'Boutiques Partenaires & Vendeurs au Sénégal — Nopalou',
+  title: 'Boutiques Partenaires & Vendeurs au Sénégal',
   description: `Découvrez les meilleures boutiques et vendeurs professionnels au Sénégal : smartphones, mode, électroménager, univers maison, contact direct et livraison.`,
   alternates: { canonical: `${BASE}/boutiques` },
 }

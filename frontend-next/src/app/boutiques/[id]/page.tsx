@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { notFound, redirect } from 'next/navigation'
+import { introuvableOuRedirection } from '@/lib/introuvable'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
 import { type SocialPost, type SocialAccount } from './SocialShopFeed'
@@ -68,8 +69,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
     const ogImageUrl = `${siteUrl}/assets/boutique/${b.id}/og`
     const villeTxt = b.ville ? ` à ${b.ville}` : ' au Sénégal'
-    const catTxt = b.categorie ? ` (${b.categorie})` : ''
-    const titre = `${b.nom}${villeTxt} — Boutique & Catalogue en Ligne${catTxt} | Nopalou`
+    // Sans marque (AUD-154, ajoutée par le gabarit du layout) ni identifiant de catégorie brut (AUD-166 : « (tv-electro) »)
+    const titre = `${b.nom}${villeTxt} — Boutique & Catalogue en Ligne`
     const desc = b.description
       ? b.description.slice(0, 160)
       : `Découvrez le catalogue, les nouveautés, prix et coordonnées WhatsApp de la boutique ${b.nom}${villeTxt}. Commandez directement en ligne.`
@@ -81,7 +82,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         canonical: `${siteUrl}/boutiques/${b.slug || b.id}`,
       },
       openGraph: {
-        title: titre,
+        title: `${titre} | Nopalou`,
         description: desc,
         url: `${siteUrl}/boutiques/${b.slug || b.id}`,
         siteName: b.nom,
@@ -104,7 +105,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       },
     }
   } catch {
-    return { title: 'Vitrine Boutique' }
+    // AUD-153 : 404 réel (ou redirection d'alias) dès les métadonnées, hors du try pour que la levée ne soit pas avalée
+    const { id } = await params
+    return introuvableOuRedirection(id, `/boutiques/${id}`)
   }
 }
 

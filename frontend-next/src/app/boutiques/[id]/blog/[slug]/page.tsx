@@ -44,7 +44,7 @@ export async function generateMetadata({
     const bSlug = data.boutique?.slug || data.boutique?.id || id
     const canonicalUrl = `${BASE}/boutiques/${bSlug}/blog/${art.slug}`
     return {
-      title: `${art.titre} — ${bNom} | Nopalou`,
+      title: `${art.titre} — ${bNom}`,
       description: art.extrait || art.contenu.slice(0, 160),
       alternates: {
         canonical: canonicalUrl,

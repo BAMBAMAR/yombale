@@ -15,6 +15,9 @@ import {
   descriptionMetaAnnonce,
 } from '../src/lib/annonce-texte.ts'
 import { sponsoringActif, LIBELLE_SPONSORISE } from '../src/lib/sponsoring.ts'
+import { BUDGETS_PAGES, budgetAutorise } from '../src/lib/budgets-categorie.ts'
+import { localiteImmo, descriptionMetaImmo } from '../src/lib/immo-texte.ts'
+import { descriptionProduitUtile, descriptionMetaProduit } from '../src/lib/produit-texte.ts'
 import {
   calculerKpisCarnet,
   determinerActionClient,
@@ -1182,6 +1185,60 @@ it('kalpePrixMensuelValide: prix entier positif, repli sur 1000', () => {
   assert.equal(kalpePrixMensuelValide('-5'), 1000)
   assert.equal(kalpePrixMensuelValide('gratuit'), 1000)
   assert.equal(kalpePrixMensuelValide(99999999), 1000)
+})
+// AUD-158 : pages « moins de N FCFA » limitées à une liste blanche
+console.log('\n📦 AUD-158. Budgets de catégorie (budgets-categorie.ts)')
+it('budgetAutorise: seuls 50 000 et 100 000 ont une page', () => {
+  assert.deepEqual([...BUDGETS_PAGES], [50000, 100000])
+  assert.equal(budgetAutorise(50000), true)
+  assert.equal(budgetAutorise(100000), true)
+  for (const n of [12345, 0, 1000, 99999, 100001, NaN]) assert.equal(budgetAutorise(n), false)
+})
+// AUD-156 : titre et description des fiches immo
+console.log('\n📦 AUD-156. Texte des fiches immo (immo-texte.ts)')
+it('localiteImmo: un quartier qui est un prix est ignoré, pas de « Dakar » inventé', () => {
+  assert.equal(localiteImmo('40 000 000CFA', 'Dakar'), 'Dakar')
+  assert.equal(localiteImmo('1 100 000 FCFA', null), '')
+  assert.equal(localiteImmo('Almadies', 'Dakar'), 'Almadies, Dakar')
+  assert.equal(localiteImmo(null, 'Thiès'), 'Thiès')
+  assert.equal(localiteImmo('', ''), '')
+  assert.equal(localiteImmo('12345', 'Mbour'), 'Mbour')
+})
+it('descriptionMetaImmo: grammaire correcte selon la transaction', () => {
+  assert.equal(descriptionMetaImmo({ descriptionPropre: '', typeBien: 'terrain', transaction: 'vente', localite: 'Mbour', prixTexte: '40 000 000 FCFA' }),
+    'Terrain à vendre à Mbour. Prix : 40 000 000 FCFA.')
+  assert.equal(descriptionMetaImmo({ descriptionPropre: '', typeBien: 'studio', transaction: 'location', localite: 'Ouakam, Dakar', prixTexte: '150 000 FCFA' }),
+    'Studio à louer à Ouakam, Dakar. Prix : 150 000 FCFA.')
+  assert.equal(descriptionMetaImmo({ descriptionPropre: '', typeBien: null, transaction: null, localite: '', prixTexte: '75 000 FCFA' }),
+    'Bien immobilier au Sénégal. Prix : 75 000 FCFA.')
+})
+it('descriptionMetaImmo: description longue nettoyée et coupée, courte remplacée', () => {
+  const longue = 'Belle villa de 5 chambres avec jardin, appelez le 77 123 45 67 pour une visite, titre foncier disponible. '.repeat(3)
+  const d = descriptionMetaImmo({ descriptionPropre: nettoyerTexteAnnonce(longue), typeBien: 'villa', transaction: 'vente', localite: 'Dakar', prixTexte: '90 000 000 FCFA' })
+  assert.ok(d.length <= 156 && !/77 123 45 67/.test(d), d)
+  assert.ok(descriptionMetaImmo({ descriptionPropre: nettoyerTexteAnnonce('Villa'), typeBien: 'villa', transaction: 'vente', localite: 'Dakar', prixTexte: 'x' }).startsWith('Villa à vendre à Dakar'))
+})
+// AUD-162 : description des fiches produit
+console.log('\n📦 AUD-162. Description des fiches produit (produit-texte.ts)')
+it('descriptionProduitUtile: une description égale au nom est écartée', () => {
+  assert.equal(descriptionProduitUtile('Congélateur smart technology 102l', 'Congélateur smart technology 102l'), '')
+  assert.equal(descriptionProduitUtile('Congélateur smart technology 102l', 'congelateur  Smart Technology 102L'), '')
+  assert.equal(descriptionProduitUtile('iPhone 13', null), '')
+  assert.equal(descriptionProduitUtile('iPhone 13', 'Neuf'), '')
+})
+it('descriptionProduitUtile: une vraie description est conservée', () => {
+  const d = 'Écran OLED 6,1 pouces, 128 Go de stockage, double caméra 12 Mpx, garantie 12 mois.'
+  assert.equal(descriptionProduitUtile('iPhone 13', d), d)
+})
+it('descriptionMetaProduit: repli sur le texte de comparaison, avec nombre de vendeurs et prix', () => {
+  const m = descriptionMetaProduit({ nom: 'Smart TV LG 55', description: 'Smart TV LG 55', prixMinTexte: '350 000 FCFA', nbOffres: 4 })
+  assert.equal(m, 'Comparez le prix de Smart TV LG 55 chez 4 vendeurs au Sénégal à partir de 350 000 FCFA. Meilleure offre à Dakar et partout au Sénégal.')
+  assert.ok(descriptionMetaProduit({ nom: 'X', description: null, prixMinTexte: null, nbOffres: 1 }).includes('chez les vendeurs'))
+})
+it('descriptionMetaProduit: description utile coupée à 155 caractères', () => {
+  const longue = 'Machine à laver automatique à chargement frontal, 8 kg, classe énergétique A+++, 1400 tours par minute. '.repeat(4)
+  const m = descriptionMetaProduit({ nom: 'Machine', description: longue, prixMinTexte: null, nbOffres: 2 })
+  assert.ok(m.length <= 156 && m.endsWith('…'), m)
 })
 await Promise.all(enAttente)
 

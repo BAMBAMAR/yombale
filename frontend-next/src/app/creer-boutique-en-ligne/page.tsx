@@ -6,7 +6,8 @@ import {
   Clock, Award, ShoppingBag, Globe, RefreshCw
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -30,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: `${BASE}/creer-boutique-en-ligne`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Créer une Boutique en Ligne au Sénégal | Nopalou',
     description: 'La solution la plus simple pour vendre en ligne à Dakar et partout au Sénégal. Sans carte bancaire, avec Wave et WhatsApp.',
     url: `${BASE}/creer-boutique-en-ligne`,

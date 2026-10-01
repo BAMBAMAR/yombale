@@ -14,7 +14,7 @@ import {
 import PortailLocataireClient from './components/PortailLocataireClient'
 
 export const metadata: Metadata = {
-  title: 'Portail Locataire Sécurisé — Contrat de Bail & Paiement Loyer (Wave & OM) — Nopalou Immo',
+  title: 'Portail Locataire Sécurisé — Contrat de Bail & Paiement Loyer (Wave & OM)',
   description: 'Portail officiel locataire au Sénégal : consultez votre contrat de bail conforme, réglez en 1 clic avec Wave ou Orange Money et téléchargez vos quittances sans mot de passe.',
   keywords: [
     'payer loyer dakar',

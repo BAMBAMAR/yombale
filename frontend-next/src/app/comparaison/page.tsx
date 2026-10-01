@@ -6,7 +6,7 @@ import ExternalImg from '@/components/ExternalImg'
 import { Scale } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Comparaison produits | Nopalou',
+  title: 'Comparaison produits',
   description: 'Comparez côte à côte les prix et offres de plusieurs produits au Sénégal.',
   robots: {
     index: false,

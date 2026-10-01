@@ -6,7 +6,8 @@ import {
   Layers, RefreshCw, AlertCircle
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${BASE}/alternative-shopify-senegal`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Nopalou vs Shopify au Sénégal : Le Comparatif Factuel',
     description: 'Pourquoi les commerçants sénégalais choisissent Nopalou face à Shopify. Tarifs en FCFA, Wave direct et zéro commission.',
     url: `${BASE}/alternative-shopify-senegal`,

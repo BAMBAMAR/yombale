@@ -6,7 +6,8 @@ import {
   Bell, Bot, Send, CheckCheck, Smartphone, Share2
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -29,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: `${BASE}/vendre-sur-whatsapp`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Vendre sur WhatsApp au Sénégal avec Nopalou',
     description: `Transformez vos statuts WhatsApp en commandes réelles. ${essai} jours offerts et zéro commission.`,
     url: `${BASE}/vendre-sur-whatsapp`,

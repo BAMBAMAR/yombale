@@ -5,7 +5,8 @@ import {
   Store, Smartphone, CreditCard, Receipt, TrendingUp, ShieldCheck,
   Zap, Award, Users, Scale, Monitor
 } from 'lucide-react'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: `${BASE}/pourquoi-nopalou`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Pourquoi choisir Nopalou ? Le comparatif complet.',
     description: 'Comparez Nopalou aux solutions existantes (Shopify, WhatsApp seul, carnet papier, caisse classique).',
     url: `${BASE}/pourquoi-nopalou`,

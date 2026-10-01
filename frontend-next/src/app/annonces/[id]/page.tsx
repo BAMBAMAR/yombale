@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api'
 import PageHeader from '@/components/PageHeader'
 import { safeJsonLd } from '@/lib/jsonld'
 import { sanitizeImgUrl } from '@/lib/sanitizeImg'
+import { introuvableOuRedirection } from '@/lib/introuvable'
 import { nettoyerTexteAnnonce, titreAffichableAnnonce, descriptionMetaAnnonce } from '@/lib/annonce-texte'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
@@ -90,7 +91,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim()
 
   const annonce = await fetchAnnonce(cleanId || id)
-  if (!annonce) return { title: 'Annonce introuvable' }
+  // AUD-153 : 404 réel (ou redirection d'alias) dès les métadonnées, sinon le statut reste 200
+  if (!annonce) return introuvableOuRedirection(cleanId || id, `/annonces/${rawId}`)
 
   const { titre, descriptionMeta: desc } = vueTexteAnnonce(annonce)
   // URL d'image Facebook/Instagram à signature expirée : écartée (aperçu cassé sinon)

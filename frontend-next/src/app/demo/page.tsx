@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import DemoClient from './DemoClient';
-import { apiFetch } from '@/lib/api';
+import { apiFetch } from '@/lib/api';import { OG_IMAGES } from '@/lib/social'
+
 
 export const metadata: Metadata = {
   title: 'Démo Commerciale Interactive | Nopalou — Le Super-Écosystème E-commerce au Sénégal',
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     'Apporteur d affaires Sénégal',
     'Boutique en ligne Dakar',
   ],
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Démo Commerciale Interactive Nopalou',
     description: 'Explorez les 3 parcours interactifs : Acheteur, Marchand et Apporteur d\'affaires. Testez la caisse POS, le comparateur et gagnez des commissions récurrentes.',
     url: 'https://nopalou.com/demo',

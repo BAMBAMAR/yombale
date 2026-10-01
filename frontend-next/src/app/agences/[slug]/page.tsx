@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { apiFetch } from '@/lib/api'
 import AgenceVitrinePubliquePage from '../../agence/[slug]/vitrine/page'
 import { safeJsonLd } from '@/lib/jsonld'
+import { introuvableOuRedirection } from '@/lib/introuvable'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -41,14 +42,11 @@ export async function generateMetadata({
   const { slug } = await params
   const agence = await getAgence(slug)
 
-  if (!agence) {
-    return {
-      title: 'Agence Immobilière au Sénégal — Nopalou Immo',
-      description: 'Découvrez la vitrine officielle et le catalogue de biens de cette agence immobilière partenaire.',
-    }
-  }
+  // AUD-153 : 404 réel (ou redirection d'alias) dès les métadonnées
+  if (!agence) return introuvableOuRedirection(slug, `/agences/${slug}`)
 
-  const titre = `${agence.nom} — Agence Immobilière à ${agence.ville || 'Dakar'} | Nopalou Immo`
+  // Sans marque : le gabarit du layout ajoute « | Nopalou » au <title> (AUD-154)
+  const titre = `${agence.nom} — Agence Immobilière à ${agence.ville || 'Dakar'}`
   const description = agence.description
     ? agence.description.slice(0, 155)
     : `Consultez les offres immobilières, appartements et villas à louer et à vendre de ${agence.nom} à ${agence.ville || 'Dakar'}.`
@@ -60,7 +58,7 @@ export async function generateMetadata({
       canonical: `${BASE}/agences/${slug}`,
     },
     openGraph: {
-      title: titre,
+      title: `${titre} | Nopalou Immo`,
       description,
       url: `${BASE}/agences/${slug}`,
       images: agence.logo_url ? [{ url: agence.logo_url }] : undefined,
@@ -68,7 +66,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: titre,
+      title: `${titre} | Nopalou Immo`,
       description,
     },
   }

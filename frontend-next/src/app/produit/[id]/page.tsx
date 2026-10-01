@@ -6,6 +6,8 @@ import { ArrowLeftRight } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import { getOptionalSession } from '@/lib/dal'
+import { introuvableOuRedirection } from '@/lib/introuvable'
+import { descriptionMetaProduit, descriptionProduitUtile } from '@/lib/produit-texte'
 import TrackRecent from './TrackRecent'
 
 import {
@@ -37,18 +39,22 @@ export async function generateMetadata({
     const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim()
 
     const p = await apiFetch<Produit>(`/produits/${cleanId || id}`)
-    const titre = `${p.nom}${p.marque ? ` ${p.marque}` : ''} — Prix Sénégal | Nopalou`
-    const prixStr = p.prix_min ? ` à partir de ${fcfa(p.prix_min)}` : ''
-    const description = p.description
-      ? p.description.slice(0, 155)
-      : `Comparez le prix de ${p.nom} chez tous les vendeurs au Sénégal${prixStr}. Meilleure offre à Dakar et partout au Sénégal.`
+    // Sans marque : le gabarit du layout ajoute « | Nopalou » au <title> (AUD-154) ; les titres sociaux la reçoivent ci-dessous
+    const titre = `${p.nom}${p.marque ? ` ${p.marque}` : ''} — Prix Sénégal`
+    // AUD-162 : une description égale au nom (valeur de repli du scraper) est écartée au profit du texte de comparaison
+    const description = descriptionMetaProduit({
+      nom: p.nom,
+      description: p.description,
+      prixMinTexte: p.prix_min ? fcfa(p.prix_min) : null,
+      nbOffres: (p as { nb_offres?: number | null }).nb_offres,
+    })
     const canonical = `${BASE}/produit/${cleanId || id}`
     return {
       title: titre,
       description,
       alternates: { canonical },
       openGraph: {
-        title: titre,
+        title: `${titre} | Nopalou`,
         description,
         type: 'website',
         url: canonical,
@@ -56,13 +62,15 @@ export async function generateMetadata({
       },
       twitter: {
         card: 'summary_large_image',
-        title: titre,
+        title: `${titre} | Nopalou`,
         description,
         ...(p.image_url ? { images: [p.image_url] } : {}),
       },
     }
   } catch {
-    return { title: 'Produit introuvable', robots: 'noindex' }
+    // AUD-153 : 404 réel (ou redirection d'alias) dès les métadonnées, hors du try pour que la levée ne soit pas avalée
+    const { id } = await params
+    return introuvableOuRedirection(id, `/produit/${id}`)
   }
 }
 
@@ -248,7 +256,9 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
             />
 
             {/* Description */}
-            {produit.description && <p className="fiche-desc">{produit.description}</p>}
+            {descriptionProduitUtile(produit.nom, produit.description) && (
+              <p className="fiche-desc">{descriptionProduitUtile(produit.nom, produit.description)}</p>
+            )}
 
             {/* Liste des offres */}
             <ProduitOffresList valides={valides} prixMin={prixMin} nbExclues={nbExclues} />

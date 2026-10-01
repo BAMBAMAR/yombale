@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { introuvableOuRedirection } from '@/lib/introuvable'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import SimilRow from '@/components/SimilRow'
 import { Scale } from 'lucide-react'
-import { safeJsonLd } from '@/lib/jsonld'
+import { safeJsonLd } from '@/lib/jsonld'import { OG_IMAGES } from '@/lib/social'
+
 
 interface Forfait {
   id: string
@@ -72,12 +74,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const desc = `Forfait ${f.operateur} ${f.nom} à ${fcfa(f.prix)}${f.data_mo ? ` — ${formatData(f.data_mo)} internet` : ''}${f.minutes === -1 ? ', appels illimités' : f.minutes ? `, ${f.minutes} min d'appels` : ''}. Tarifs officiels ARTP Sénégal.`
 
     return {
-      title: `${f.nom} — Forfait ${f.operateur} Sénégal | Nopalou`,
+      title: `${f.nom} — Forfait ${f.operateur} Sénégal`,
       description: desc,
       alternates: {
         canonical: canonicalUrl,
       },
-      openGraph: {
+      openGraph: { images: OG_IMAGES,
         title: `${f.nom} — Forfait ${f.operateur} | Nopalou`,
         description: desc,
         url: canonicalUrl,
@@ -89,7 +91,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       },
     }
   } catch {
-    return { title: 'Forfait introuvable | Nopalou' }
+    // AUD-153 : 404 réel dès les métadonnées (hors du try : la levée ne doit pas être avalée)
+    const { id } = await params
+    return introuvableOuRedirection(id, `/telecom/${id}`)
   }
 }
 

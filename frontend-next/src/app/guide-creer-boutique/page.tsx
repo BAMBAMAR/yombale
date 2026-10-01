@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { safeJsonLd } from '@/lib/jsonld'
+import { safeJsonLd } from '@/lib/jsonld'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
-  title: 'Guide 2026 : Comment Créer sa Boutique en Ligne au Sénégal | Nopalou',
+  title: 'Guide 2026 : Comment Créer sa Boutique en Ligne au Sénégal',
   description:
     'Guide complet 2026 pour lancer son commerce au Sénégal : sourcing Alibaba/AliExpress, création 100% WhatsApp en 30s, import Shopify/Excel, paiements Wave & Orange Money et carnet de dettes.',
   keywords: [
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${BASE}/guide-creer-boutique`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Guide complet pour créer sa boutique en ligne au Sénégal (2026)',
     description:
       'Toutes les étapes pour réussir son commerce en ligne à Dakar : sourcing, création WhatsApp en 30s, import 1-clic, paiement Wave/Orange Money et caisse POS.',

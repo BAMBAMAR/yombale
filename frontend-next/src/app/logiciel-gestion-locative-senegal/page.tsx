@@ -13,7 +13,8 @@ import {
   Clock,
   Download
 } from 'lucide-react'
-import { safeJsonLd } from '@/lib/jsonld'
+import { safeJsonLd } from '@/lib/jsonld'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${BASE}/logiciel-gestion-locative-senegal`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Logiciel de Gestion Locative au Sénégal — Nopalou Immo',
     description: 'Automatisez vos baux, quittances PDF certifiées et la collecte des loyers Wave à Dakar. Démarrez gratuitement.',
     url: `${BASE}/logiciel-gestion-locative-senegal`,

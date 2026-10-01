@@ -6,7 +6,8 @@ import {
   TrendingUp, Award, Layers, Globe, FileText
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${BASE}/guide-sourcing-revente`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Acheter sur Alibaba, AliExpress & Shein pour revendre au Sénégal',
     description: 'Le guide étape par étape : Sourcing Chine, groupage Afrety/transit, boutique Nopalou et encaissement Wave direct.',
     url: `${BASE}/guide-sourcing-revente`,

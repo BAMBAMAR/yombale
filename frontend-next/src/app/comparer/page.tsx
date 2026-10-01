@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Comparaison de produits | Nopalou',
+  title: 'Comparaison de produits',
   robots: {
     index: false,
     follow: false,

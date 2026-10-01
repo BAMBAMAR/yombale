@@ -6,7 +6,8 @@ import JsonLd from '@/components/JsonLd'
 import { breadcrumbSchema } from '@/lib/schema-org'
 import ImmoCard, { type AnnonceImmo } from './ImmoCard'
 import { IMMO_LANDINGS } from './landing-data'
-import { safeJsonLd } from '@/lib/jsonld'
+import { safeJsonLd } from '@/lib/jsonld'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -18,7 +19,7 @@ export function immoLandingMetadata(slug: string): Metadata {
     description: cfg.description,
     keywords: cfg.keywords,
     alternates: { canonical },
-    openGraph: { title: `${cfg.h1} — Nopalou`, description: cfg.description, type: 'website', url: canonical },
+    openGraph: { images: OG_IMAGES, title: `${cfg.h1} — Nopalou`, description: cfg.description, type: 'website', url: canonical },
   }
 }
 

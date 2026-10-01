@@ -26,7 +26,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: 'Agences Immobilières Partenaires au Sénégal — Nopalou Immo',
+  title: 'Agences Immobilières Partenaires au Sénégal',
   description: 'Découvrez les meilleures agences immobilières vérifiées et agréées au Sénégal : villas, appartements, studios, terrains à louer et à vendre à Dakar, Saly et Thiès.',
   alternates: { canonical: `${BASE}/agences` },
 }

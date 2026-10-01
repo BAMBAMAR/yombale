@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
 import { ReactNode } from 'react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export async function generateMetadata(): Promise<Metadata> {
   const essai = await getEssaiJours()
   return {
-  title: 'Créer une Boutique en Ligne au Sénégal | Tarifs & Forfaits Vendeurs | Nopalou',
+  title: 'Créer une Boutique en Ligne au Sénégal | Tarifs & Forfaits Vendeurs',
   description:
     'Lancez votre boutique en ligne et votre commerce sur WhatsApp au Sénégal en 2 minutes. Découvrez nos forfaits (Taf Taf dès 2.500 FCFA/mois, Vendeur Pro, Business VIP). Alternative à Shopify, adaptée à Wave et Orange Money.',
   keywords: [
@@ -28,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: `${BASE}/creer-boutique`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: `Créer une Boutique en Ligne au Sénégal | ${essai} Jours Offerts | Nopalou`,
     description:
       'Créez votre commerce en ligne et vendez sur WhatsApp sans carte bancaire avec paiement Wave & Orange Money. Découvrez nos formules d’abonnement dès 2.500 FCFA/mois.',

@@ -5,7 +5,8 @@ import {
   CheckCircle2, ArrowRight, Sparkles, HelpCircle, PhoneCall,
   Bell, Bot, Send, CheckCheck
 } from 'lucide-react'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 export async function generateMetadata(): Promise<Metadata> {
   const essai = await getEssaiJours()
@@ -16,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     'vendre sur whatsapp sénégal', 'commandes whatsapp dakar', 'bot whatsapp e-commerce dakar',
     'relance dette whatsapp dakar', 'assistant whatsapp commerçant sénégal', 'nopalou whatsapp'
   ],
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Nopalou WhatsApp — Votre commerce automatisé sur WhatsApp.',
     description: 'Recevez des commandes prêtes à livrer, relancez vos clients et obtenez votre bilan du jour par un simple message WhatsApp.',
     url: 'https://nopalou.com/whatsapp',

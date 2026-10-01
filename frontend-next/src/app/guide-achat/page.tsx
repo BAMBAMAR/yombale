@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import '@/styles/guides.css'
-import GuideAchatPage from './GuideAchatContent'
+import GuideAchatPage from './GuideAchatContent'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -11,7 +12,7 @@ const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SE
 export const metadata: Metadata = {
   title: 'Guide d\'achat — Trouver le meilleur produit au Sénégal',
   description: 'Outil de scoring personnalisé pour choisir le meilleur produit selon votre budget, vos specs et votre profil d\'achat. Comparez smartphones, TV, informatique au Sénégal.',
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Guide d\'achat intelligent — Nopalou',
     description: 'Scoring personnalisé pour trouver le meilleur produit selon votre budget et vos critères.',
     type: 'website',

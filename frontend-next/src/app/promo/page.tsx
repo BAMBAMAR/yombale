@@ -5,7 +5,7 @@ import { getEssaiJours } from '@/lib/essai'
 export async function generateMetadata(): Promise<Metadata> {
   const essai = await getEssaiJours()
   return {
-  title: 'Offre Spéciale Vendeurs & Boutiques au Sénégal | Nopalou',
+  title: 'Offre Spéciale Vendeurs & Boutiques au Sénégal',
   description: `Lancez votre boutique en ligne et votre caisse tactile au Sénégal. ${essai} jours offerts, 0% de commission, paiements Wave et Orange Money.`,
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/promo`,

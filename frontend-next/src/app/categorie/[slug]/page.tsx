@@ -15,7 +15,8 @@ import SearchWithAnchor from '@/app/SearchWithAnchor'
 import { CATEGORIES } from '../categories-data'
 import { CATEGORIES as LIB_CATEGORIES } from '@/lib/categories'
 import { SOUS_CATEGORIES } from '../sous-categories-data'
-import { safeJsonLd } from '@/lib/jsonld'
+import { safeJsonLd } from '@/lib/jsonld'import { OG_IMAGES } from '@/lib/social'
+
 
 function resolveCategory(slug: string) {
   if (CATEGORIES[slug]) return CATEGORIES[slug]
@@ -74,13 +75,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const cat = resolveCategory(slug)
-  if (!cat) return { title: 'Catégorie introuvable' }
+  if (!cat) {
+    // AUD-153 : 404 réel dès les métadonnées ; les trois rubriques qui ont leur propre page restent redirigées
+    if (slug === 'immo' || slug === 'annonces' || slug === 'telecom') redirect(`/${slug}`)
+    notFound()
+  }
 
   return {
     title: `${cat.label} au Sénégal — Comparer les prix`,
     description: cat.description,
     keywords: cat.keywords,
-    openGraph: {
+    openGraph: { images: OG_IMAGES,
       title: `${cat.label} au Sénégal — Nopalou`,
       description: cat.description,
       type: 'website',

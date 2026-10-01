@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { introuvableOuRedirection } from '@/lib/introuvable'
 import { apiFetch } from '@/lib/api'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import { fcfa } from '@/lib/format'
@@ -69,7 +70,7 @@ export async function generateMetadata(
     const desc = produit.description ? produit.description.slice(0, 160) : `${produit.nom} disponible chez ${produit.boutique_nom} à ${produit.boutique_ville}.`
 
     return {
-      title: `${produit.nom} — ${produit.boutique_nom} | Nopalou`,
+      title: `${produit.nom} — ${produit.boutique_nom}`,
       description: desc,
       alternates: {
         canonical: canonicalUrl,
@@ -98,7 +99,9 @@ export async function generateMetadata(
       },
     }
   } catch {
-    return { title: 'Produit introuvable | Nopalou' }
+    // AUD-153 : 404 réel (ou redirection d'alias) dès les métadonnées, hors du try pour que la levée ne soit pas avalée
+    const { id, produitId } = await params
+    return introuvableOuRedirection(produitId, `/boutiques/${id}/produits/${produitId}`)
   }
 }
 

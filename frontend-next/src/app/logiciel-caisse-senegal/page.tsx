@@ -6,14 +6,15 @@ import {
   CreditCard, BarChart2, Laptop, Clock
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export async function generateMetadata(): Promise<Metadata> {
   const essai = await getEssaiJours()
   return {
-  title: 'Logiciel de Caisse Enregistreuse au Sénégal (2026) | Nopalou POS Dakar',
+  title: 'Logiciel de Caisse Enregistreuse au Sénégal (2026) | POS Dakar',
   description: `Le logiciel de caisse enregistreuse tactile au Sénégal pour boutique et magasin. Conçu pour les coupures de réseau, encaisse Wave & OM, dès 5 000 FCFA/mois (${essai} jours offerts).`,
   keywords: [
     'logiciel de caisse sénégal',
@@ -30,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: `${BASE}/logiciel-caisse-senegal`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Logiciel de Caisse Enregistreuse au Sénégal | Nopalou POS',
     description: `La solution de caisse enregistreuse tactile pour commerces au Sénégal. Fonctionne hors-ligne dès 5 000 FCFA/mois avec ${essai} jours offerts.`,
     url: `${BASE}/logiciel-caisse-senegal`,

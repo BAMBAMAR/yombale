@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { SOUS_CATEGORIES } from './categorie/sous-categories-data'
 import { IMMO_LANDINGS } from './immo/landing-data'
 import { TELECOM_LANDINGS } from './telecom/landing-data'
+import { BUDGETS_PAGES } from '@/lib/budgets-categorie'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 // AUD-135/139 : les appels serveur portent le jeton SSR (listes protégées par le filtre anti-bots et les budgets)
@@ -14,7 +15,7 @@ const CATEGORY_SLUGS = [
   'maison', 'auto-moto', 'jeux',
 ]
 
-const BUDGETS_SITEMAP = [50000, 100000]
+const BUDGETS_SITEMAP = BUDGETS_PAGES
 
 const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/`,              changeFrequency: 'daily',   priority: 1.0 },

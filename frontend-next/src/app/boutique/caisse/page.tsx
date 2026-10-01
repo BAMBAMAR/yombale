@@ -4,7 +4,7 @@ import { verifySession } from '@/lib/dal'
 import CaisseClient from './CaisseClient'
 
 export const metadata: Metadata = {
-  title: 'Caisse Enregistreuse POS — Nopalou',
+  title: 'Caisse Enregistreuse POS',
   description: 'Point de vente physique et caisse enregistreuse connectée aux lecteurs code-barres et imprimantes thermiques.',
 }
 

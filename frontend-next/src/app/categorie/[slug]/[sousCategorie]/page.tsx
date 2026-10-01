@@ -11,6 +11,8 @@ import { breadcrumbSchema } from '@/lib/schema-org'
 import { CATEGORIES } from '../../categories-data'
 import { SOUS_CATEGORIES } from '../../sous-categories-data'
 import { safeJsonLd } from '@/lib/jsonld'
+import { budgetAutorise } from '@/lib/budgets-categorie'import { OG_IMAGES } from '@/lib/social'
+
 
 export const revalidate = 600
 
@@ -39,7 +41,11 @@ function resolve(params: PageParams) {
   const cat = CATEGORIES[params.slug]
   if (!cat) return null
   const budgetMatch = params.sousCategorie.match(BUDGET_RE)
-  if (budgetMatch) return { kind: 'budget' as const, cat, budget: Number(budgetMatch[1]) }
+  if (budgetMatch) {
+    // AUD-158 : liste blanche, sinon chaque nombre serait une page indexable
+    const budget = Number(budgetMatch[1])
+    return budgetAutorise(budget) ? { kind: 'budget' as const, cat, budget } : null
+  }
   const sousCat = SOUS_CATEGORIES[`${params.slug}/${params.sousCategorie}`]
   if (sousCat) return { kind: 'souscat' as const, cat, sousCat }
   return null
@@ -56,7 +62,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
       title: `${r.cat.label} à moins de ${fcfa(r.budget)} au Sénégal`,
       description: `Découvrez les ${r.cat.label.toLowerCase()} à moins de ${fcfa(r.budget)} au Sénégal. Comparez les meilleurs prix à Dakar, mis à jour toutes les 6h.`,
       alternates: { canonical },
-      openGraph: { title: `${r.cat.label} à moins de ${fcfa(r.budget)} — Nopalou`, type: 'website', url: canonical },
+      openGraph: { images: OG_IMAGES, title: `${r.cat.label} à moins de ${fcfa(r.budget)} — Nopalou`, type: 'website', url: canonical },
     }
   }
   return {
@@ -64,7 +70,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     description: r.sousCat.description,
     keywords: r.sousCat.keywords,
     alternates: { canonical },
-    openGraph: { title: `${r.sousCat.h1} — Nopalou`, description: r.sousCat.description, type: 'website', url: canonical },
+    openGraph: { images: OG_IMAGES, title: `${r.sousCat.h1} — Nopalou`, description: r.sousCat.description, type: 'website', url: canonical },
   }
 }
 

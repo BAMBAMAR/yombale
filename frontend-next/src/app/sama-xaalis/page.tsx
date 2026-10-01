@@ -8,6 +8,7 @@ import {
 import { safeJsonLd } from '@/lib/jsonld'
 import { getKalpeReglages } from '@/lib/essai'
 import { formatNombre } from '@/lib/format'
+import { OG_IMAGES } from '@/lib/social'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -30,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: `${BASE}/sama-xaalis`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Sama Xaalis — Votre Kalpé Intelligent pour Gérer votre Argent à Dakar',
     description: 'Suivi des dépenses, gestion des dettes clients, objectifs d\'épargne et trésorerie commerçante en FCFA.',
     url: `${BASE}/sama-xaalis`,

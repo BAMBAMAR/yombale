@@ -382,7 +382,7 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                   if (navigator.share) {
                     navigator
                       .share({
-                        title: `${agence.nom} — Nopalou`,
+                        title: `${agence.nom}`,
                         url: window.location.href,
                       })
                       .catch(() => {});

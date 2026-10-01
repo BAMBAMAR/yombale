@@ -7,7 +7,7 @@ import PageHeader from '@/components/PageHeader'
 import { Building2 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Comparaison immobilier | Nopalou',
+  title: 'Comparaison immobilier',
   robots: {
     index: false,
     follow: true,

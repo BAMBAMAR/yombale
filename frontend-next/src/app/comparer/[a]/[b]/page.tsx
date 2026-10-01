@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<PageParams>
   const b = decodeURIComponent(p.b);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com';
   return {
-    title: `Comparer ${a} vs ${b} au Sénégal | Nopalou`,
+    title: `Comparer ${a} vs ${b} au Sénégal`,
     description: `Comparaison détaillée : ${a} vs ${b}. Trouvez le meilleur prix au Sénégal.`,
     alternates: {
       canonical: `${siteUrl}/comparer/${p.a}/${p.b}`,

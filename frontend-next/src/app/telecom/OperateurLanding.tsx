@@ -4,7 +4,8 @@ import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import JsonLd from '@/components/JsonLd'
 import { breadcrumbSchema, itemListSchema } from '@/lib/schema-org'
-import { TELECOM_LANDINGS } from './landing-data'
+import { TELECOM_LANDINGS } from './landing-data'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -16,7 +17,7 @@ export function telecomLandingMetadata(slug: string): Metadata {
     description: cfg.description,
     keywords: cfg.keywords,
     alternates: { canonical },
-    openGraph: { title: `${cfg.h1} — Nopalou`, description: cfg.description, type: 'website', url: canonical },
+    openGraph: { images: OG_IMAGES, title: `${cfg.h1} — Nopalou`, description: cfg.description, type: 'website', url: canonical },
   }
 }
 

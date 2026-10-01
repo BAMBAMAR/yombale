@@ -90,6 +90,100 @@ describe('AUD-160 : les contenus sponsorisés sont étiquetés « Sponsorisé »
   });
 });
 
+describe('AUD-154 : un titre de page ne porte pas déjà la marque ajoutée par le gabarit du layout', () => {
+  const { analyser } = require(path.join(__dirname, '..', '..', 'scripts', 'audit', 'ux-seo', 'titres-marque.cjs'));
+
+  test('le gabarit du layout ajoute « | Nopalou »', () => {
+    expect(lire('app/layout.tsx')).toMatch(/template: '%s \| Nopalou'/);
+  });
+
+  test('aucun titre de premier niveau ne se termine par « Nopalou » ou « Nopalou Immo »', () => {
+    expect(analyser(path.join(RACINE, 'app'), false).map((x) => x.f)).toEqual([]);
+  });
+
+  test('les titres construits en variable (produit, fiche immo, boutique) n\'ajoutent plus la marque', () => {
+    expect(lire('app/produit/[id]/page.tsx')).not.toMatch(/const titre = `[^`]*\| Nopalou`/);
+    expect(lire('app/immo/[id]/page.tsx')).not.toMatch(/const titre = `[^`]*\| Nopalou Immo`/);
+    expect(lire('app/boutiques/[id]/page.tsx')).not.toMatch(/const titre = `[^`]*\| Nopalou`/);
+  });
+});
+
+describe('AUD-153 : une fiche inconnue répond 404 dès generateMetadata (sinon le statut reste 200)', () => {
+  test.each([
+    'app/annonces/[id]/page.tsx',
+    'app/boutiques/[id]/page.tsx',
+    'app/boutiques/[id]/produits/[produitId]/page.tsx',
+    'app/agences/[slug]/page.tsx',
+    'app/produit/[id]/page.tsx',
+    'app/immo/[id]/page.tsx',
+    'app/telecom/[id]/page.tsx',
+  ])('%s appelle introuvableOuRedirection et ne renvoie plus un titre « introuvable »', (rel) => {
+    const src = lire(rel);
+    expect(src).toMatch(/introuvableOuRedirection\(/);
+    expect(src).not.toMatch(/title: '[^']*introuvable/i);
+    expect(src).not.toMatch(/title: 'Vitrine Boutique'/);
+  });
+
+  test('la catégorie inconnue appelle notFound() dès les métadonnées', () => {
+    const src = lire('app/categorie/[slug]/page.tsx');
+    expect(src).not.toMatch(/title: 'Catégorie introuvable'/);
+    expect(src).toMatch(/if \(!cat\) \{[\s\S]{0,260}notFound\(\)/);
+  });
+
+  test('l\'utilitaire redirige un alias connu et sinon répond 404, sans jamais retourner', () => {
+    const src = lire('lib/introuvable.ts');
+    expect(src).toMatch(/redirect\(cible\)/);
+    expect(src).toMatch(/notFound\(\)/);
+    expect(src).toMatch(/Promise<never>/);
+  });
+});
+
+describe('AUD-156 : titre et description des fiches immo', () => {
+  test('la fiche utilise localiteImmo et descriptionMetaImmo, plus de « à ${annonce.transaction} » brut', () => {
+    const src = lire('app/immo/[id]/page.tsx');
+    expect(src).toMatch(/localiteImmo\(annonce\.quartier, annonce\.ville\)/);
+    expect(src).toMatch(/descriptionMetaImmo\(/);
+    expect(src).not.toMatch(/à \$\{annonce\.transaction \?\? /);
+    expect(src).not.toMatch(/description: annonce\.description \?\? undefined/);
+  });
+});
+
+describe('AUD-163 : toute page qui définit openGraph y met des images (sinon le lien partagé n\'a pas de visuel)', () => {
+  const { analyser } = require(path.join(__dirname, '..', '..', 'scripts', 'audit', 'ux-seo', 'og-images.cjs'));
+
+  test('aucun objet openGraph sans images', () => {
+    expect(analyser(RACINE, false)).toEqual([]);
+  });
+
+  test('le twitter du layout ne force plus un titre et une description génériques sur toutes les pages', () => {
+    const layout = lire('app/layout.tsx');
+    const bloc = /twitter: \{[\s\S]*?\n  \},/.exec(layout)[0];
+    expect(bloc).not.toMatch(/title:/);
+    expect(bloc).not.toMatch(/description:/);
+    expect(bloc).toMatch(/images:/);
+  });
+});
+
+describe('AUD-162 : la fiche produit n\'affiche pas une description égale au nom', () => {
+  test('méta-description et paragraphe passent par produit-texte', () => {
+    const src = lire('app/produit/[id]/page.tsx');
+    expect(src).toMatch(/descriptionMetaProduit\(/);
+    expect(src).toMatch(/descriptionProduitUtile\(produit\.nom, produit\.description\)/);
+    expect(src).not.toMatch(/p\.description\.slice\(0, 155\)/);
+    expect(src).not.toMatch(/\{produit\.description && <p/);
+  });
+});
+
+describe('AUD-158 : les pages « moins de N FCFA » ont une liste blanche', () => {
+  test('la route refuse tout budget hors liste et le sitemap utilise la même liste', () => {
+    const route = lire('app/categorie/[slug]/[sousCategorie]/page.tsx');
+    expect(route).toMatch(/budgetAutorise\(budget\)/);
+    expect(route).toMatch(/if \(!r\) notFound\(\)/);
+    expect(lire('app/sitemap.ts')).toMatch(/BUDGETS_PAGES/);
+    expect(lire('app/sitemap.ts')).not.toMatch(/\[50000, 100000\]/);
+  });
+});
+
 describe('AUD-155 : le texte importé des annonces passe par le nettoyage avant tout affichage public', () => {
   const page = () => lire('app/annonces/[id]/page.tsx');
 

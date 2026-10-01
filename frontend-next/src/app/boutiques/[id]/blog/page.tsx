@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const data = await apiFetch<ArticlesResponse>(`/boutiques/${id}/articles`)
     const bNom = data.boutique?.nom || 'Boutique'
     return {
-      title: `Blog & Conseils — ${bNom} | Nopalou`,
+      title: `Blog & Conseils — ${bNom}`,
       description: `Découvrez tous les articles, astuces et guides d'achat de la boutique ${bNom}.`
     }
   } catch {

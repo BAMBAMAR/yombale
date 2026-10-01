@@ -5,6 +5,9 @@ import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
 import { fcfa } from '@/lib/format';
 import { getOptionalSession } from '@/lib/dal';
+import { introuvableOuRedirection } from '@/lib/introuvable';
+import { localiteImmo, descriptionMetaImmo } from '@/lib/immo-texte';
+import { nettoyerTexteAnnonce, nettoyerTitreAnnonce } from '@/lib/annonce-texte';
 import { cloudinaryHQ } from '@/lib/cloudinary';
 import BoutonWhatsApp from '@/components/BoutonWhatsApp';
 import SimilRow from '@/components/SimilRow';
@@ -74,8 +77,8 @@ function buildRealEstateJsonLd(annonce: AnnonceImmo): string {
     {
       '@context': 'https://schema.org',
       '@type': 'RealEstateListing',
-      name: annonce.titre,
-      description: annonce.description ?? undefined,
+      name: nettoyerTitreAnnonce(annonce.titre) || 'Bien immobilier',
+      description: nettoyerTexteAnnonce(annonce.description) || undefined,
       url: `${siteUrl}/immo/${annonce.id}`,
       ...(annonce.prix ? {
         offers: {
@@ -91,7 +94,7 @@ function buildRealEstateJsonLd(annonce: AnnonceImmo): string {
         addressLocality: annonce.ville ?? 'Dakar',
         addressRegion: annonce.ville ?? 'Dakar',
         addressCountry: 'SN',
-        ...(annonce.quartier ? { streetAddress: annonce.quartier } : {}),
+        ...(localiteImmo(annonce.quartier, null) ? { streetAddress: localiteImmo(annonce.quartier, null) } : {}),
       },
       ...(Array.isArray(annonce.photos) && annonce.photos[0] ? {
         image: annonce.photos,
@@ -103,7 +106,7 @@ function buildRealEstateJsonLd(annonce: AnnonceImmo): string {
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${siteUrl}/` },
         { '@type': 'ListItem', position: 2, name: 'Immobilier Sénégal', item: `${siteUrl}/immo` },
-        { '@type': 'ListItem', position: 3, name: annonce.titre, item: `${siteUrl}/immo/${annonce.id}` },
+        { '@type': 'ListItem', position: 3, name: nettoyerTitreAnnonce(annonce.titre) || 'Bien immobilier', item: `${siteUrl}/immo/${annonce.id}` },
       ],
     }
   ];
@@ -127,12 +130,17 @@ export async function generateMetadata({
       return { title: 'Mes commandes' };
     }
     const annonce = await apiFetch<AnnonceImmo>(`/immo/${cleanId || id}`);
-    const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
-    const titre = `${annonce.titre}${localisation ? ` — ${localisation}` : ''} | Nopalou Immo`;
-    const description =
-      annonce.description
-        ? annonce.description.slice(0, 155)
-        : `${annonce.type_bien ?? 'Bien'} à ${annonce.transaction ?? 'louer/vendre'} à ${localisation || 'Sénégal'}. Prix : ${fcfa(annonce.prix)}.`;
+    // AUD-156 : un quartier qui est un prix est ignoré, aucune ville inventée ; AUD-155 : texte sans numéro ni lien
+    const localisation = localiteImmo(annonce.quartier, annonce.ville);
+    // Sans marque : le gabarit du layout ajoute « | Nopalou » au <title> (AUD-154)
+    const titre = `${nettoyerTitreAnnonce(annonce.titre) || 'Bien immobilier'}${localisation ? ` — ${localisation}` : ''}`;
+    const description = descriptionMetaImmo({
+      descriptionPropre: nettoyerTexteAnnonce(annonce.description),
+      typeBien: annonce.type_bien,
+      transaction: annonce.transaction,
+      localite: localisation,
+      prixTexte: fcfa(annonce.prix),
+    });
     const mainPhoto = Array.isArray(annonce.photos) ? annonce.photos[0] : null;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com';
     const canonicalUrl = `${siteUrl}/immo/${cleanId || id}`;
@@ -144,7 +152,7 @@ export async function generateMetadata({
         canonical: canonicalUrl,
       },
       openGraph: {
-        title: titre,
+        title: `${titre} | Nopalou Immo`,
         description,
         url: canonicalUrl,
         type: 'website',
@@ -152,27 +160,18 @@ export async function generateMetadata({
       },
       twitter: {
         card: 'summary_large_image',
-        title: titre,
+        title: `${titre} | Nopalou Immo`,
         description,
         ...(mainPhoto ? { images: [mainPhoto] } : {}),
       },
     };
   } catch {
-    try {
-      const { id: rawId } = await params;
-      let id = rawId || '';
-      try { id = decodeURIComponent(id); } catch {}
-      const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim();
-      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(cleanId || id)}`);
-      if (resolved?.found) {
-        return {
-          title: 'Redirection en cours... | Nopalou',
-        };
-      }
-    } catch (err) { console.warn('[Nopalou:page:L126]', err); }
-    return {
-      title: 'Annonce immobilière introuvable | Nopalou',
-    };
+    // AUD-153 : 404 réel (ou redirection d'alias) dès les métadonnées, hors du try pour que la levée ne soit pas avalée
+    const { id: rawId } = await params;
+    let id = rawId || '';
+    try { id = decodeURIComponent(id); } catch {}
+    const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim();
+    return introuvableOuRedirection(cleanId || id, `/immo/${rawId}`);
   }
 }
 

@@ -7,7 +7,7 @@ import { AlertCircle, ArrowRight } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Connexion Magique | Nopalou',
+  title: 'Connexion Magique',
   description: 'Authentification sécurisée par lien magique Nopalou.',
 }
 

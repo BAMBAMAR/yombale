@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: "Conditions Générales d'Utilisation — Nopalou",
+  title: "Conditions Générales d'Utilisation",
   description: "Conditions générales d'utilisation de la plateforme de commerce digital Nopalou (comparateur, boutiques en ligne et services marchands).",
 }
 

@@ -3,16 +3,17 @@ import Link from 'next/link'
 import { Handshake, TrendingUp, Palette, CheckCircle2, ArrowRight } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
 import { getEssaiJours } from '@/lib/essai'
+import { OG_IMAGES } from '@/lib/social'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
-  title: 'Programme Partenaires & Apporteurs d\'Affaires | Nopalou',
+  title: 'Programme Partenaires & Apporteurs d\'Affaires',
   description: 'Devenez Apporteur d\'Affaires Nopalou. Gagnez jusqu\'à 20% de commission récurrente sur chaque abonnement SaaS (Boutique & POS) vendu. Inscrivez-vous maintenant.',
   alternates: {
     canonical: `${BASE}/partenaires`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Programme Partenaires & Apporteurs d\'Affaires | Nopalou',
     description: 'Touchez 20% de commission récurrente chaque mois en recommandant Nopalou aux commerçants et agences du Sénégal.',
     url: `${BASE}/partenaires`,

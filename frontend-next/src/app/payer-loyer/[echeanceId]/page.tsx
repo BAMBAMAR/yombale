@@ -11,7 +11,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { echeanceId } = await params
   return {
-    title: `Paiement de Loyer Sécurisé — Nopalou Immo`,
+    title: `Paiement de Loyer Sécurisé`,
     description: `Réglez votre loyer en 1 clic par Wave ou Orange Money et téléchargez votre quittance officielle instantanément.`,
   }
 }

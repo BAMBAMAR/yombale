@@ -116,8 +116,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@nopalou_sn',
-    title: 'Nopalou — Commerce Digital au Sénégal : Acheter, Vendre & Développer',
-    description: 'Découvrez des boutiques, comparez les offres au meilleur prix et développez votre commerce au Sénégal.',
+    // Pas de titre ni de description ici (AUD-163) : hérités par toutes les pages, ils masquaient ceux de la page.
+    // X utilise alors og:title et og:description de chaque page.
     images: ['/api/og-image'],
   },
   manifest: '/manifest.json',

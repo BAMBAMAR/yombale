@@ -5,7 +5,8 @@ import {
   ArrowRight, Sparkles, HelpCircle, RefreshCw, Smartphone, Clock,
   FileCheck, Database, Zap
 } from 'lucide-react'
-import { getEssaiJours } from '@/lib/essai'
+import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -30,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   alternates: {
     canonical: `${BASE}/migration`,
   },
-  openGraph: {
+  openGraph: { images: OG_IMAGES,
     title: 'Passez à Nopalou sans recommencer votre boutique.',
     description: `Transférez vos produits, photos et stocks depuis Shopify, WooCommerce ou Excel en 1 clic. ${essai} jours offerts.`,
     url: `${BASE}/migration`,
