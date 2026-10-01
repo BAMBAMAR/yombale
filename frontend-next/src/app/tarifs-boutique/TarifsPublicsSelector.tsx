@@ -145,7 +145,8 @@ export default function TarifsPublicsSelector({
     onSecteurChange?.(s)
   }
 
-  const [duree, setDuree] = useState<number>(12) // 12 mois par défaut
+  // AUD-169 : le tarif mensuel (« dès 2 500 F ») s'affiche d'abord ; l'annuel (-25 %) reste un choix
+  const [duree, setDuree] = useState<number>(1)
   const [allPlans, setAllPlans] = useState<DynamicPlan[]>(initialPlans || FALLBACK_PLANS(essai))
   const [dureesOptions, setDureesOptions] = useState<DureeOption[]>(DUREES_INITIALES)
 

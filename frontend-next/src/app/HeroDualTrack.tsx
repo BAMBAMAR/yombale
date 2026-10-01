@@ -74,8 +74,7 @@ export default function HeroDualTrack({
         className={`hero-mode-tab-btn${activeTab === 'acheteur' ? ' active' : ''}`}
       >
         <ShoppingBag size={16} color={activeTab === 'acheteur' ? '#FED7AA' : 'var(--accent, #C75B00)'} />
-        <span className="tab-label-full">Acheteur &amp; Comparateur</span>
-        <span className="tab-label-short">Acheteur</span>
+<span>Acheter</span>
       </button>
 
       <button
@@ -85,7 +84,8 @@ export default function HeroDualTrack({
         className={`hero-mode-tab-btn${activeTab === 'marchand' ? ' active' : ''}`}
       >
         <Store size={16} color={activeTab === 'marchand' ? '#FED7AA' : 'currentColor'} />
-        <span>Caisse</span>
+        <span className="tab-label-full">Vendre : boutique et caisse</span>
+        <span className="tab-label-short">Vendre</span>
         <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
       </button>
 
@@ -96,8 +96,8 @@ export default function HeroDualTrack({
         className={`hero-mode-tab-btn${activeTab === 'agence' ? ' active' : ''}`}
       >
         <Building2 size={16} color={activeTab === 'agence' ? '#FED7AA' : 'var(--price, #0A5C36)'} />
-        <span className="tab-label-full">Agences Immo</span>
-        <span className="tab-label-short">Immo</span>
+        <span className="tab-label-full">Agences immo</span>
+        <span className="tab-label-short">Agences</span>
         <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
       </button>
     </div>

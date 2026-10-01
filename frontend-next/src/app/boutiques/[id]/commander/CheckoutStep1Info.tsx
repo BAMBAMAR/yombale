@@ -33,7 +33,8 @@ export default function CheckoutStep1Info({
   setNote,
   onNext,
 }: CheckoutStep1InfoProps) {
-  const canProceed = nom.trim().length >= 2 && tel.trim().length >= 9
+  // Au moins 9 chiffres (formats « +221 77 123 45 67 », « 77 123 45 67 » acceptés)
+  const canProceed = nom.trim().length >= 2 && tel.replace(/\D/g, '').length >= 9
 
   return (
     <div className="checkout-step-container">
@@ -119,6 +120,13 @@ export default function CheckoutStep1Info({
             placeholder="Ex: Appeler à l'arrivée"
           />
         </div>
+      )}
+
+      {/* AUD-168 : le motif du bouton inactif est dit, pas laissé à deviner */}
+      {!canProceed && (
+        <p role="status" style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--text2, #5A4E42)' }}>
+          Renseignez votre nom et un numéro de téléphone (9 chiffres) pour continuer.
+        </p>
       )}
 
       <button

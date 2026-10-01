@@ -50,7 +50,7 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
                 letterSpacing: '-0.02em'
               }}
             >
-              Achetez au meilleur prix au Sénégal. Commandez sur{' '}
+              Produits, boutiques, logements et forfaits au Sénégal : comparez, puis commandez sur{' '}
               <span style={{ color: 'var(--price, #0A5C36)' }}>WhatsApp</span>.
             </h1>
 
@@ -64,8 +64,8 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
                 maxWidth: '100%'
               }}
             >
-              Comparez des milliers d&apos;offres réelles de boutiques partenaires à Dakar
-              • Zéro commission acheteur • Livraison Tiak-Tiak rapide
+              Prix relevés auprès de marchands et de boutiques à Dakar et dans tout le pays
+              • Zéro commission acheteur
             </p>
           </div>
 

@@ -14,11 +14,12 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Produits', exact: true },
-  { href: '/boutiques', label: 'Boutiques', badge: 'PRO' },
+  { href: '/boutiques', label: 'Boutiques' },
   { href: '/immo', label: 'Immobilier' },
   { href: '/agences', label: 'Agences Immo', badge: 'PRO' },
   { href: '/telecom', label: 'Télécoms' },
   { href: '/annonces', label: 'Annonces' },
+  { href: '/marchands', label: 'Vendre' },
 ]
 
 export default function NavbarLinksNav() {

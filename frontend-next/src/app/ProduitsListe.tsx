@@ -234,6 +234,19 @@ export default function ProduitsListe({
               </button>
             )}
           </div>
+          {/* AUD-168 : une recherche sans résultat propose les autres rubriques au lieu d'une impasse */}
+          {hasFiltre && (
+            <p style={{ margin: '18px 0 0', fontSize: 13, color: 'var(--text-subtle)', lineHeight: 1.9 }}>
+              Ou cherchez dans :{' '}
+              <a href="/boutiques" style={{ color: 'var(--accent)', fontWeight: 700 }}>Boutiques</a>
+              {' · '}
+              <a href="/annonces" style={{ color: 'var(--accent)', fontWeight: 700 }}>Annonces</a>
+              {' · '}
+              <a href="/immo" style={{ color: 'var(--accent)', fontWeight: 700 }}>Immobilier</a>
+              {' · '}
+              <a href="/assistant-whatsapp" style={{ color: 'var(--accent)', fontWeight: 700 }}>Assistant WhatsApp</a>
+            </p>
+          )}
         </div>
       )}
 

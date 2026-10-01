@@ -108,6 +108,73 @@ describe('AUD-154 : un titre de page ne porte pas déjà la marque ajoutée par 
   });
 });
 
+describe('AUD-161 : le positionnement présente l\'écosystème (textes validés par le propriétaire)', () => {
+  test('titre et description de l\'accueil citent produits, boutiques, immobilier, forfaits et annonces (≤ 160 car.)', () => {
+    const src = lire('app/page.tsx');
+    expect(src).toMatch(/title: 'Nopalou : produits, boutiques, immobilier, forfaits au Sénégal'/);
+    const d = /description:\s*\n?\s*'([^']+)'/.exec(src)[1];
+    expect(d.length).toBeLessThanOrEqual(160);
+    for (const mot of [/prix/, /WhatsApp/, /logement/, /forfait/, /annonce/, /boutique/]) expect(d).toMatch(mot);
+    expect(lire('app/layout.tsx')).toMatch(/logement, un forfait ou une annonce/);
+  });
+
+  test('le H1 de l\'accueil nomme produits, boutiques, logements et forfaits', () => {
+    const src = lire('app/hero/HeroAcheteurView.tsx');
+    expect(src).toMatch(/Produits, boutiques, logements et forfaits au Sénégal/);
+    expect(src).not.toMatch(/Achetez au meilleur prix au Sénégal/);
+  });
+
+  test('onglets « Acheter », « Vendre » et « Agences immo » ; plus « Caisse » ni « Acheteur & Comparateur »', () => {
+    const src = lire('app/HeroDualTrack.tsx');
+    expect(src).toMatch(/>Acheter</);
+    expect(src).toMatch(/Vendre/);
+    expect(src).toMatch(/Agences immo/);
+    expect(src).not.toMatch(/<span>Caisse<\/span>/);
+    expect(src).not.toMatch(/Acheteur &amp; Comparateur/);
+  });
+
+  test('menu : pas de badge PRO sur « Boutiques », lien « Vendre » vers /marchands', () => {
+    const src = lire('app/components/NavbarLinksNav.tsx');
+    expect(src).not.toMatch(/label: 'Boutiques', badge/);
+    expect(src).toMatch(/href: '\/marchands', label: 'Vendre'/);
+  });
+
+  test('inscription et chatbot', () => {
+    expect(lire('app/inscription/page.tsx')).toMatch(/publiez vos annonces/);
+    const chat = lire('components/chat/ChatbotWidget.tsx');
+    expect(chat).toMatch(/label: 'Annonces'/);
+    expect(chat).toMatch(/label: 'Forfaits télécom'/);
+    expect(chat).not.toMatch(/Caisse POS commerçant/);
+    expect(chat).toMatch(/Vendre avec Nopalou/);
+  });
+});
+
+describe('AUD-168 : retours d\'interface', () => {
+  test('checkout étape 1 : le motif du bouton inactif est affiché', () => {
+    const src = lire('app/boutiques/[id]/commander/CheckoutStep1Info.tsx');
+    expect(src).toMatch(/Renseignez votre nom et un numéro de téléphone/);
+    expect(src).toMatch(/!canProceed &&/);
+  });
+
+  test('état vide de recherche : passerelles vers boutiques, annonces, immobilier', () => {
+    const src = lire('app/ProduitsListe.tsx');
+    expect(src).toMatch(/href="\/boutiques"/);
+    expect(src).toMatch(/href="\/annonces"/);
+    expect(src).toMatch(/href="\/immo"/);
+  });
+
+  test('/immo : un seul accès « Payer mon loyer » dans le corps de la page', () => {
+    const src = lire('app/immo/page.tsx');
+    expect((src.match(/href="\/payer-loyer"/g) || []).length).toBe(1);
+  });
+});
+
+describe('AUD-169 : /tarifs-boutique affiche d\'abord le prix mensuel', () => {
+  test('la durée par défaut est 1 mois', () => {
+    expect(lire('app/tarifs-boutique/TarifsPublicsSelector.tsx')).toMatch(/useState<number>\(1\)/);
+  });
+});
+
 describe('AUD-153 : une fiche inconnue répond 404 dès generateMetadata (sinon le statut reste 200)', () => {
   test.each([
     'app/annonces/[id]/page.tsx',

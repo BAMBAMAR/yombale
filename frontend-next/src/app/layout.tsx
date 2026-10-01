@@ -95,7 +95,7 @@ export const metadata: Metadata = {
     template: '%s | Nopalou',
   },
   description:
-    'La plateforme de commerce digital au Sénégal : découvrez des boutiques, comparez les offres au meilleur prix, commandez sur WhatsApp et propulsez votre commerce avec notre boutique en ligne et caisse tactile POS.',
+    'Comparez les prix, commandez sur WhatsApp, trouvez un logement, un forfait ou une annonce. Commerçants et agences : boutique, caisse et loyers par Wave/OM.',
   keywords: [
     'commerce digital sénégal', 'comparateur prix sénégal', 'boutique en ligne sénégal',
     'caisse pos dakar', 'vendre sur whatsapp', 'Dakar', 'achat en ligne',

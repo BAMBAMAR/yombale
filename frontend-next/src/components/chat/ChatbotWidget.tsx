@@ -28,8 +28,10 @@ const INITIAL_MESSAGE: ChatMessage = {
     { label: 'Locations Almadies', url: 'Location appartement Almadies' },
     { label: 'Boutiques partenaires', url: '/boutiques' },
     { label: 'Agences immobilières', url: '/agences' },
+    { label: 'Annonces', url: '/annonces' },
+    { label: 'Forfaits télécom', url: '/telecom' },
     { label: 'Suivre ma commande', url: '/suivi-commande' },
-    { label: 'Caisse POS commerçant', url: '/boutique/caisse' },
+    { label: 'Vendre avec Nopalou', url: '/marchands' },
     { label: 'Créer ma boutique', url: '/creer-boutique' },
   ],
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { Building2, List, MapPin, CreditCard } from 'lucide-react'
+import { Building2, List, MapPin } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ImmoClientWrapper from './ImmoClientWrapper'
 import ImmoQuartierInput from './ImmoQuartierInput'
@@ -259,26 +259,7 @@ export default async function ImmoPage({
             Agences Immobilières
           </Link>
 
-          <Link
-            href="/payer-loyer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '9px 16px',
-              borderRadius: 8,
-              background: '#DCFCE7',
-              border: '1.5px solid #BBF7D0',
-              color: '#15803D',
-              fontWeight: 800,
-              fontSize: 13,
-              textDecoration: 'none',
-              boxShadow: '0 1px 3px rgba(16,185,129,0.1)',
-            }}
-          >
-            <CreditCard size={15} color="#16a34a" />
-            <span>Payer mon Loyer</span>
-          </Link>
+          {/* AUD-168 : « Payer mon loyer » n'a plus qu'un accès ici (bandeau Espace Locataires ci-dessous) */}
           <ImmoClientWrapper />
         </div>
       </div>
