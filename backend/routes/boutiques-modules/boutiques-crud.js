@@ -1,4 +1,4 @@
-﻿// backend/routes/boutiques-modules/boutiques-crud.js
+// backend/routes/boutiques-modules/boutiques-crud.js
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const { body, param, query, validationResult } = require('express-validator');
@@ -560,7 +560,7 @@ router.get('/mine', verifierToken, async (req, res) => {
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
-              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
+              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, COALESCE(b.mentions_legales_publiques, false) AS mentions_legales_publiques, b.conditions_vente, b.pied_de_page_document,
               b.message_bas_ticket,
               COALESCE(b.pos_remise_max_caissier, 10.00) AS pos_remise_max_caissier,
               COALESCE(b.pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
@@ -731,8 +731,39 @@ router.get('/:id/catalog.json', async (req, res) => {
   }
 });
 
+// ── AUD-134 : la fiche publique ne publie que ce qu'une vitrine affiche. Les données de gestion (compte bancaire,
+// régime fiscal, plafonds de remise des caisses, fidélité, identifiant du propriétaire…) restent réservées au
+// propriétaire et à l'équipe de la boutique. RCCM / NINEA / forme juridique : seulement si le marchand l'a choisi.
+const CHAMPS_PUBLICS_BOUTIQUE = [
+  'id', 'nom', 'description', 'categorie', 'telephone', 'adresse', 'ville', 'logo_url', 'cover_url', 'whatsapp',
+  'site_web', 'facebook', 'instagram', 'tiktok', 'youtube', 'horaires', 'slug', 'created_at', 'actif',
+  'couleur_theme', 'slogan', 'theme_style', 'couleur_secondaire', 'forme_boutons', 'bandeau_promo',
+  'bandeau_promo_actif', 'message_accueil', 'disposition_catalogue', 'devise_defaut',
+  'meta_pixel_id', 'tiktok_pixel_id', 'ga4_id', 'conditions_vente', 'plan_actif', 'mode_fonctionnement', // mode (hybride_pos / pure_player) : sans risque, lu par la vitrine
+];
+const CHAMPS_MENTIONS_LEGALES = ['rccm', 'ninea', 'forme_juridique'];
+
+function versBoutiquePublique(row) {
+  const out = {};
+  for (const k of CHAMPS_PUBLICS_BOUTIQUE) if (k in row) out[k] = row[k];
+  if (row.mentions_legales_publiques === true) {
+    for (const k of CHAMPS_MENTIONS_LEGALES) out[k] = row[k] ?? null;
+  }
+  return out;
+}
+
+async function peutVoirDonneesGestion(row, userId) {
+  if (!userId) return false;
+  if (row.utilisateur_id && row.utilisateur_id === userId) return true;
+  const { rows } = await pool.query(
+    'SELECT 1 FROM boutique_utilisateurs WHERE boutique_id = $1 AND utilisateur_id = $2 LIMIT 1',
+    [row.id, userId]
+  );
+  return rows.length > 0;
+}
+
 // ── GET /api/boutiques/:idOrSlug — fiche publique (UUID ou slug)
-router.get('/:id', async (req, res) => {
+router.get('/:id', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
     // Recherche universelle par UUID ou par slug (toujours accessible via lien direct ou QR Code)
@@ -751,7 +782,7 @@ router.get('/:id', async (req, res) => {
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
-              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
+              b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, COALESCE(b.mentions_legales_publiques, false) AS mentions_legales_publiques, b.conditions_vente, b.pied_de_page_document,
               b.message_bas_ticket,
               COALESCE(b.pos_remise_max_caissier, 10.00) AS pos_remise_max_caissier,
               COALESCE(b.pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
@@ -780,7 +811,30 @@ router.get('/:id', async (req, res) => {
       [r.rows[0].id]
     ).catch(() => {});
 
-    res.json(r.rows[0]);
+    const row = r.rows[0];
+    res.json((await peutVoirDonneesGestion(row, req.user && req.user.userId)) ? row : versBoutiquePublique(row));
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── GET /api/boutiques/:idOrSlug/annonces — annonces du propriétaire de la boutique (AUD-134 : remplace le filtre
+// public par utilisateur_id, l'identifiant du propriétaire n'étant plus publié)
+router.get('/:id/annonces', async (req, res) => {
+  try {
+    const { rows: b } = await pool.query(
+      'SELECT utilisateur_id FROM boutiques WHERE (id::text = $1 OR LOWER(slug) = LOWER($1)) AND actif = true',
+      [req.params.id]
+    );
+    if (!b[0] || !b[0].utilisateur_id) return res.json({ annonces: [] });
+    const { rows } = await pool.query(
+      `SELECT id, categorie_slug, titre, description, prix, ville, quartier, contact_nom, contact_tel, photos,
+              caracteristiques, source, boost_until, created_at
+       FROM annonces_classifiees
+       WHERE utilisateur_id = $1 AND actif = true AND supprimee = false
+       ORDER BY (boost_until IS NOT NULL AND boost_until > NOW()) DESC, created_at DESC
+       LIMIT 24`,
+      [b[0].utilisateur_id]
+    );
+    res.json({ annonces: rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
@@ -1119,7 +1173,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
               rccm, ninea, forme_juridique, capital_social, compte_bancaire, conditions_vente, pied_de_page_document,
               message_bas_ticket, pos_remise_max_caissier, pos_remise_seuil_auto_montant, pos_remise_seuil_auto_pct, pos_remise_motifs,
               fidelite_actif, fidelite_type, fidelite_taux_cashback, fidelite_tampons_max, fidelite_seuil_tampon,
-              mode_fonctionnement, meta_pixel_id, tiktok_pixel_id, ga4_id, actif } = req.body;
+              mode_fonctionnement, meta_pixel_id, tiktok_pixel_id, ga4_id, actif, mentions_legales_publiques } = req.body;
 
       const parseBoolVal = (v) => {
         if (v === undefined || v === null || v === '') return null;
@@ -1159,8 +1213,9 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
          fidelite_type=COALESCE($32, fidelite_type),
          fidelite_taux_cashback=COALESCE($33, fidelite_taux_cashback),
          fidelite_tampons_max=COALESCE($34, fidelite_tampons_max),
-         fidelite_seuil_tampon=COALESCE($35, fidelite_seuil_tampon)
-         WHERE id=$36`,
+         fidelite_seuil_tampon=COALESCE($35, fidelite_seuil_tampon),
+         mentions_legales_publiques=CASE WHEN $36::boolean IS NOT NULL THEN $36::boolean ELSE mentions_legales_publiques END
+         WHERE id=$37`,
         [
           cover_url||null, whatsapp||null, site_web||null, fbUrl,
           igUrl, ttUrl, ytUrl, horairesJson, newSlug,
@@ -1185,6 +1240,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
           fidelite_taux_cashback !== undefined && fidelite_taux_cashback !== '' ? Number(fidelite_taux_cashback) : null,
           fidelite_tampons_max !== undefined && fidelite_tampons_max !== '' ? Number(fidelite_tampons_max) : null,
           fidelite_seuil_tampon !== undefined && fidelite_seuil_tampon !== '' ? Number(fidelite_seuil_tampon) : null,
+          parseBoolVal(mentions_legales_publiques),
           req.params.id
         ]
       );

@@ -118,4 +118,71 @@ describeIntegration('Protection des données', () => {
       expect(r.body.baux[0].id).toBe(bailId);
     });
   });
-});
+
+  describe('AUD-134 — la fiche boutique publique ne publie plus les données de gestion', () => {
+    let boutique, autre;
+    const INTERDITS = ['compte_bancaire', 'utilisateur_id', 'pos_remise_max_caissier', 'pos_remise_seuil_auto_montant', 'pos_remise_seuil_auto_pct',
+      'pos_remise_motifs', 'regime_fiscal', 'tva_taux_defaut', 'timbre_fiscal_applicable', 'prix_tva_incluse', 'capital_social', 'message_bas_ticket',
+      'pied_de_page_document', 'fidelite_actif', 'fidelite_type', 'fidelite_taux_cashback', 'fidelite_tampons_max', 'fidelite_seuil_tampon'];
+
+    beforeAll(async () => {
+      const b = await post('/api/boutiques', { nom: `Boutique Protection ${Date.now()}`, telephone: '771110501', ville: 'Dakar', categorie: 'mode' }, marchand.token);
+      boutique = b.body.boutique || b.body;
+      const reg = await post('/api/auth/inscription', { nom: 'Autre Marchand', email: `autre.${Date.now()}@integration.test`, mot_de_passe: PW });
+      autre = { token: reg.body.token, id: reg.body.user.id };
+      const put = await request(app).put(`/api/boutiques/${boutique.id}`).set('Authorization', `Bearer ${marchand.token}`)
+        .send({ rccm: 'SN-TEST-2026', ninea: '0099999TEST', forme_juridique: 'SARL', capital_social: '1000000', compte_bancaire: 'TEST-COMPTE-FICTIF', pos_remise_max_caissier: 25 });
+      expect(put.status).toBe(200);
+    });
+
+    afterAll(async () => {
+      await pool.query('DELETE FROM boutiques WHERE id = $1', [boutique.id]).catch(() => {});
+      await pool.query('DELETE FROM utilisateurs WHERE id = $1', [autre.id]).catch(() => {});
+    });
+
+    test('anonyme (par id et par slug) : aucune donnée de gestion, fiche vitrine intacte', async () => {
+      for (const ref of [boutique.id, boutique.slug]) {
+        const r = await request(app).get(`/api/boutiques/${ref}`);
+        expect(r.status).toBe(200);
+        for (const k of INTERDITS) expect(r.body).not.toHaveProperty(k);
+        for (const k of ['rccm', 'ninea', 'forme_juridique']) expect(r.body).not.toHaveProperty(k); // sans opt-in
+        expect(r.body).toMatchObject({ id: boutique.id, slug: boutique.slug });
+        expect(r.body).toEqual(expect.objectContaining({ nom: expect.any(String), plan_actif: expect.any(String) }));
+      }
+    });
+
+    test('un autre marchand connecté voit la fiche publique, pas les données de gestion', async () => {
+      const r = await request(app).get(`/api/boutiques/${boutique.id}`).set('Authorization', `Bearer ${autre.token}`);
+      expect(r.status).toBe(200);
+      expect(r.body).not.toHaveProperty('compte_bancaire');
+      expect(r.body).not.toHaveProperty('utilisateur_id');
+    });
+
+    test('le propriétaire voit toujours tout (compte bancaire, plafond de remise, identifiant)', async () => {
+      const r = await request(app).get(`/api/boutiques/${boutique.id}`).set('Authorization', `Bearer ${marchand.token}`);
+      expect(r.status).toBe(200);
+      expect(r.body.compte_bancaire).toBe('TEST-COMPTE-FICTIF');
+      expect(r.body.utilisateur_id).toBe(marchand.id);
+      expect(Number(r.body.pos_remise_max_caissier)).toBe(25);
+      const mine = await request(app).get('/api/boutiques/mine').set('Authorization', `Bearer ${marchand.token}`);
+      expect(mine.body.boutiques.find((b) => b.id === boutique.id)).toMatchObject({ compte_bancaire: 'TEST-COMPTE-FICTIF', mentions_legales_publiques: false });
+    });
+
+    test('opt-in du marchand : RCCM, NINEA et forme juridique deviennent publics, jamais le compte bancaire', async () => {
+      const put = await request(app).put(`/api/boutiques/${boutique.id}`).set('Authorization', `Bearer ${marchand.token}`).send({ mentions_legales_publiques: true });
+      expect(put.status).toBe(200);
+      const r = await request(app).get(`/api/boutiques/${boutique.slug}`);
+      expect(r.body).toMatchObject({ rccm: 'SN-TEST-2026', ninea: '0099999TEST', forme_juridique: 'SARL' });
+      expect(r.body).not.toHaveProperty('compte_bancaire');
+      expect(r.body).not.toHaveProperty('capital_social');
+      await request(app).put(`/api/boutiques/${boutique.id}`).set('Authorization', `Bearer ${marchand.token}`).send({ mentions_legales_publiques: false });
+      expect((await request(app).get(`/api/boutiques/${boutique.slug}`)).body).not.toHaveProperty('rccm');
+    });
+
+    test('annonces du propriétaire : route publique par boutique (remplace le filtre utilisateur_id)', async () => {
+      const r = await request(app).get(`/api/boutiques/${boutique.slug}/annonces`);
+      expect(r.status).toBe(200);
+      expect(Array.isArray(r.body.annonces)).toBe(true);
+      expect((await request(app).get('/api/boutiques/inexistant-protection/annonces')).body.annonces).toEqual([]);
+    });
+  });});

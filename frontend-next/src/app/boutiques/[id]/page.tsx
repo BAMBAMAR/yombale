@@ -150,7 +150,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
     apiFetch<{ produits: Produit[] }>(`/boutiques/${b.id}/produits`)
       .then(d => { produits = d.produits ?? [] })
       .catch(() => {}),
-    apiFetch<{ annonces: Annonce[] }>(`/annonces?utilisateur_id=${b.utilisateur_id}&limit=24`)
+    apiFetch<{ annonces: Annonce[] }>(`/boutiques/${b.id}/annonces`) // AUD-134 : l'identifiant du propriétaire n'est plus publié
       .then(d => { annonces = d.annonces ?? [] })
       .catch(() => {}),
     apiFetch<{ posts: SocialPost[]; comptes_sociaux: SocialAccount[] }>(`/boutiques/${b.id}/social/posts`)

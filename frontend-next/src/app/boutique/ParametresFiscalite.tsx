@@ -240,6 +240,20 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
               />
             </div>
           </div>
+
+          {/* AUD-134 : RCCM, NINEA et forme juridique ne sont publics que sur choix du marchand ; le compte bancaire ne l'est jamais */}
+          <div>
+            <label style={labelStyle}>Afficher RCCM, NINEA et forme juridique sur ma vitrine</label>
+            <select
+              name="mentions_legales_publiques"
+              defaultValue={boutique.mentions_legales_publiques === true ? 'true' : 'false'}
+              style={inputStyle}
+            >
+              <option value="false">Non : visibles uniquement sur mes documents</option>
+              <option value="true">Oui : visibles par mes clients</option>
+            </select>
+            <p style={helpText}>Vos coordonnées bancaires ne sont jamais affichées publiquement.</p>
+          </div>
         </div>
 
         {/* ══════════ SECTION 3 — COORDONNÉES BANCAIRES ══════════ */}

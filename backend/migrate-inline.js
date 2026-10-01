@@ -1435,6 +1435,7 @@ module.exports = async function migrateInline(customConnStr = null) {
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS ninea VARCHAR(50);
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS forme_juridique VARCHAR(50);
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS capital_social VARCHAR(50);
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS mentions_legales_publiques BOOLEAN DEFAULT FALSE; -- AUD-134 : RCCM/NINEA publics sur option du marchand
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS compte_bancaire TEXT;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS conditions_vente TEXT;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS pied_de_page_document TEXT;
