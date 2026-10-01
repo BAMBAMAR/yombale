@@ -218,4 +218,22 @@ function limiterBudget(req, res, next) {
   next();
 }
 
-module.exports = { isSsrRequest, limiterBudget, limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };
+// AUD-137 : révélation d'un numéro de particulier. 10 par heure et par IP, 40 par jour et par compte connecté.
+// Actifs aussi hors production (désactivés seulement en test sans FORCE_RATE_LIMITS).
+const limiterRevelationIp = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 10,
+  keyGenerator: (req) => `rev-ip:${realIp(req)}`,
+  skip: skipTestOtp,
+  message: { success: false, error: 'Trop de numéros consultés — réessayez dans 1 heure ou contactez-nous par WhatsApp.' },
+  standardHeaders: true,
+});
+const limiterRevelationCompte = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, max: 40,
+  keyGenerator: (req) => `rev-user:${req.user && (req.user.userId || req.user.id)}`,
+  skip: (req) => skipTestOtp() || !req.user,
+  message: { success: false, error: 'Limite quotidienne de numéros consultés atteinte.' },
+  standardHeaders: true,
+});
+const limiterRevelation = [limiterRevelationIp, limiterRevelationCompte];
+
+module.exports = { limiterRevelation, isSsrRequest, limiterBudget, limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };

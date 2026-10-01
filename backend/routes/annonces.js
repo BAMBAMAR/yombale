@@ -6,8 +6,9 @@ const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = require('../middlewares/auth');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
-const { limiterPublication, limiterEcriture, limiterBulk, limiterBudget, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
+const { limiterPublication, limiterEcriture, limiterBulk, limiterBudget, limiterRevelation, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
 const { clampPagination } = require('../lib/pagination');
+const { protegerContact, nationalNeuf } = require('../lib/contactPublic');
 const { uploadBuffer } = require('../services/cloudinary');
 const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/whatsapp');
 const cfg = require('../lib/settingsCache');
@@ -221,7 +222,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async
       ),
       pool.query(`SELECT COUNT(*) FROM annonces_classifiees a ${where}`, vals),
     ]);
-    res.json({ annonces: rows.rows, total: parseInt(cnt.rows[0].count), page: parseInt(page) });
+    res.json({ annonces: rows.rows.map((r) => protegerContact(r, { liste: true })), total: parseInt(cnt.rows[0].count), page }); // AUD-137 : numéro masqué
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
@@ -396,8 +397,23 @@ router.get('/:id', async (req, res) => {
       [id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
-    res.json(r.rows[0]);
+    res.json(protegerContact(r.rows[0])); // AUD-137 : numéro masqué
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── POST /api/annonces/:id/contact — révélation du numéro (AUD-137) : limitée par IP et par compte, journalisée
+router.post('/:id/contact', tokenOptional, ...limiterRevelation, async (req, res) => {
+  try {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.id)) {
+      return res.status(404).json({ success: false, error: 'Annonce introuvable' });
+    }
+    const r = await pool.query('SELECT id, contact_tel FROM annonces_classifiees WHERE id=$1 AND actif=true AND supprimee=false', [req.params.id]);
+    const n = r.rows.length ? nationalNeuf(r.rows[0].contact_tel) : '';
+    if (!n) return res.status(404).json({ success: false, error: 'Aucun numéro disponible pour cette annonce' });
+    pool.query("INSERT INTO analytics_events (type, annonce_id) VALUES ('contact_revele_annonce', $1)", [r.rows[0].id]).catch(() => {});
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, telephone: `${n.slice(0, 2)} ${n.slice(2, 5)} ${n.slice(5, 7)} ${n.slice(7)}`, whatsapp: `221${n}` });
+  } catch (err) { res.status(500).json({ success: false, error: 'Erreur serveur' }); }
 });
 
 // ── POST /api/annonces — créer annonce (auth, multipart, photos, quota)

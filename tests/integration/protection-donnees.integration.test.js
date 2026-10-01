@@ -255,4 +255,69 @@ describeIntegration('Protection des données', () => {
         expect([u, r.status]).toEqual([u, 200]);
       }
     });
+  });
+  describe('AUD-137 — le numéro d\'un particulier n\'est plus envoyé : masqué, révélé au clic', () => {
+    const TEL = '771234567';
+    const PUBLIC = (n) => ({ 'X-Forwarded-For': `203.0.113.${n}` });
+    let immoId, annonceId;
+
+    beforeAll(async () => {
+      immoId = (await pool.query(`INSERT INTO annonces_immo (titre, type_bien, transaction, prix, ville, source, actif, supprimee, rejete, contact_tel)
+        VALUES ('Villa test numero', 'villa', 'location', 250000, 'Dakar', 'test-contact', true, false, false, $1) RETURNING id`, [TEL])).rows[0].id;
+      annonceId = (await pool.query(`INSERT INTO annonces_classifiees (categorie_slug, titre, contact_tel, actif, supprimee, source)
+        VALUES ('divers', 'Annonce test numero', $1, true, false, 'test-contact') RETURNING id`, ['77 123 45 67'])).rows[0].id;
+    });
+    afterAll(async () => {
+      await pool.query(`DELETE FROM annonces_immo WHERE source = 'test-contact'`).catch(() => {});
+      await pool.query(`DELETE FROM annonces_classifiees WHERE source = 'test-contact'`).catch(() => {});
+    });
+
+    const sansNumero = (corps) => {
+      const texte = JSON.stringify(corps);
+      expect(texte).not.toContain(TEL);
+      expect(texte).not.toContain('77 123 45 67');
+      expect(texte).not.toContain('contact_tel"');
+    };
+
+    test('immo : liste et fiche renvoient le numéro masqué, jamais le numéro', async () => {
+      const liste = await request(app).get('/api/immo/?source=test-contact').set(PUBLIC(51));
+      expect(liste.status).toBe(200);
+      sansNumero(liste.body);
+      expect(liste.body.annonces[0]).toMatchObject({ contact_tel_masque: '77 123 •• ••', contact_tel_disponible: true });
+      for (const k of ['utilisateur_id', 'ref_externe', 'motif_rejet', 'rejete', 'supprimee']) expect(liste.body.annonces[0]).not.toHaveProperty(k);
+      const fiche = await request(app).get(`/api/immo/${immoId}`).set(PUBLIC(51));
+      expect(fiche.status).toBe(200);
+      sansNumero(fiche.body);
+      expect(fiche.body.contact_tel_masque).toBe('77 123 •• ••');
+    });
+
+    test('annonces classifiées : liste et fiche sans numéro', async () => {
+      const liste = await request(app).get('/api/annonces/?limit=50').set(PUBLIC(52));
+      const mine = liste.body.annonces.find((a) => a.id === annonceId);
+      expect(mine).toMatchObject({ contact_tel_masque: '77 123 •• ••', contact_tel_disponible: true });
+      sansNumero(mine);
+      const fiche = await request(app).get(`/api/annonces/${annonceId}`).set(PUBLIC(52));
+      sansNumero(fiche.body);
+    });
+
+    test('révélation : renvoie le numéro (immo et annonces), journalise le contact, refuse une annonce inconnue', async () => {
+      const a = await request(app).post(`/api/immo/${immoId}/contact`).set(PUBLIC(53));
+      expect(a.status).toBe(200);
+      expect(a.body).toMatchObject({ success: true, telephone: '77 123 45 67', whatsapp: '221771234567' });
+      expect(a.headers['cache-control']).toMatch(/no-store/);
+      const b = await request(app).post(`/api/annonces/${annonceId}/contact`).set(PUBLIC(53));
+      expect(b.body).toMatchObject({ success: true, telephone: '77 123 45 67' });
+      expect((await request(app).post('/api/immo/00000000-0000-4000-8000-000000000001/contact').set(PUBLIC(53))).status).toBe(404);
+      expect((await request(app).post('/api/immo/pas-un-uuid/contact').set(PUBLIC(53))).status).toBe(404);
+      const { rows } = await pool.query(`SELECT count(*)::int AS n FROM analytics_events WHERE type IN ('contact_revele_immo','contact_revele_annonce') AND annonce_id IN ($1,$2)`, [immoId, annonceId]);
+      expect(rows[0].n).toBe(2);
+    });
+
+    test('révélation : 10 par heure et par IP puis 429 ; une autre IP n\'est pas touchée', async () => {
+      const codes = [];
+      for (let i = 0; i < 12; i++) codes.push((await request(app).post(`/api/immo/${immoId}/contact`).set(PUBLIC(60))).status);
+      expect(codes.slice(0, 10).every((c) => c === 200)).toBe(true);
+      expect(codes.slice(10)).toEqual([429, 429]);
+      expect((await request(app).post(`/api/immo/${immoId}/contact`).set(PUBLIC(61))).status).toBe(200);
+    });
   });});

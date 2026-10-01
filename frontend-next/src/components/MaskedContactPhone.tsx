@@ -1,60 +1,65 @@
 'use client'
 
 import { useState } from 'react'
+import { Eye } from 'lucide-react'
 
+// AUD-137 : le numéro n'est plus présent dans la page. Le serveur fournit la version masquée ; un clic appelle
+// POST /api/annonces/:id/contact (limité par IP et par compte, journalisé) qui renvoie le numéro.
 interface MaskedContactPhoneProps {
-  phone: string
+  masque: string | null
+  annonceId: string | number
   titre?: string
   prix?: number
-  annonceId?: string | number
   baseUrl?: string
 }
 
-function maskPhoneNumber(phone: string): string {
-  const digits = phone.replace(/\D/g, '')
-  if (digits.length >= 9) {
-    const prefix = digits.slice(0, 3)
-    const suffix = digits.slice(-2)
-    return `+${prefix.slice(0, 3)} *** ** ${suffix}`
-  }
-  return 'Voir le numéro'
-}
-
 export default function MaskedContactPhone({
-  phone,
+  masque,
+  annonceId,
   titre = '',
   prix,
-  annonceId,
   baseUrl = 'https://nopalou.com',
 }: MaskedContactPhoneProps) {
-  const [revealed, setRevealed] = useState(false)
-
-  const cleanDigits = phone.replace(/\D/g, '')
-  const maskedDisplay = maskPhoneNumber(phone)
+  const [tel, setTel] = useState<{ telephone: string; whatsapp: string } | null>(null)
+  const [erreur, setErreur] = useState<string | null>(null)
+  const [chargement, setChargement] = useState(false)
   const formatPrix = (p?: number) => (p ? `${p.toLocaleString('fr-FR')} FCFA` : '')
 
-  const handleReveal = () => {
-    setRevealed(true)
-    // Traçage d'intention de contact (Lead tracking)
+  async function reveler() {
+    setErreur(null)
+    setChargement(true)
     try {
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        ;(window as any).gtag('event', 'show_phone_number', {
-          event_category: 'Contact',
-          event_label: titre,
-        })
+      const res = await fetch(`/api/annonces/${annonceId}/contact`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) {
+        setErreur(data.error || 'Numéro indisponible pour le moment.')
+        return
       }
-    } catch (err) { console.warn('[Nopalou:MaskedContactPhone:L46]', err); }
+      setTel({ telephone: data.telephone, whatsapp: data.whatsapp })
+      try {
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+          ;(window as any).gtag('event', 'show_phone_number', { event_category: 'Contact', event_label: titre })
+        }
+      } catch (err) {
+        console.warn('[Nopalou:MaskedContactPhone]', err)
+      }
+    } catch {
+      setErreur('Connexion impossible, réessayez.')
+    } finally {
+      setChargement(false)
+    }
   }
 
-  if (!revealed) {
+  if (!tel) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
         <button
           type="button"
-          onClick={handleReveal}
+          onClick={reveler}
+          disabled={chargement}
           className="annonce-contact-tel"
           style={{
-            cursor: 'pointer',
+            cursor: chargement ? 'wait' : 'pointer',
             border: 'none',
             display: 'flex',
             alignItems: 'center',
@@ -64,23 +69,29 @@ export default function MaskedContactPhone({
           }}
           title="Cliquez pour afficher le numéro de téléphone complet"
         >
-          {maskedDisplay}
-          <span style={{ fontSize: 12, opacity: 0.85, fontWeight: 500, background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: 12 }}>
-            👁️ Afficher
+          {masque || 'Voir le numéro'}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, opacity: 0.85, fontWeight: 500, background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: 12 }}>
+            <Eye size={12} />
+            Afficher
           </span>
         </button>
+        {erreur && (
+          <p role="alert" style={{ margin: 0, fontSize: 12, color: 'var(--danger, #B42318)' }}>
+            {erreur}
+          </p>
+        )}
       </div>
     )
   }
 
   return (
     <>
-      <a href={`tel:${phone}`} className="annonce-contact-tel">
-        {phone}
+      <a href={`tel:+${tel.whatsapp}`} className="annonce-contact-tel">
+        {tel.telephone}
       </a>
       <a
-        href={`https://wa.me/${cleanDigits}?text=${encodeURIComponent(
-          `Bonjour, je suis intéressé(e) par votre annonce :\n\n*${titre}*${prix ? ` — ${formatPrix(prix)}` : ''}\n\n${baseUrl}/annonces/${annonceId || ''}`
+        href={`https://wa.me/${tel.whatsapp}?text=${encodeURIComponent(
+          `Bonjour, je suis intéressé(e) par votre annonce :\n\n*${titre}*${prix ? ` — ${formatPrix(prix)}` : ''}\n\n${baseUrl}/annonces/${annonceId}`
         )}`}
         target="_blank"
         rel="noopener noreferrer"

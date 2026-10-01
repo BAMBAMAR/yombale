@@ -12,6 +12,7 @@ const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = r
 const { checkAbonnement, requireAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
 const { limiterPublication, limiterImport, limiterBudget } = require('../../middlewares/rateLimit');
 const { clampPagination } = require('../../lib/pagination');
+const { protegerContact } = require('../../lib/contactPublic');
 const { uploadBuffer } = require('../../services/cloudinary');
 const { scrapeProductFromUrl } = require('../../services/magic-import');
 const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog');
@@ -835,7 +836,7 @@ router.get('/:id/annonces', async (req, res) => {
        LIMIT 24`,
       [b[0].utilisateur_id]
     );
-    res.json({ annonces: rows });
+    res.json({ annonces: rows.map((r) => protegerContact(r, { liste: true })) });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 

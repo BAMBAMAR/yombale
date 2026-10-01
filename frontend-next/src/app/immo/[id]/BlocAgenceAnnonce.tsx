@@ -76,7 +76,8 @@ interface BlocAgenceAnnonceProps {
   quartier: string | null;
   ville: string | null;
   typeBien: string | null;
-  contactTel: string | null;
+  contactTelMasque: string | null; // AUD-137 : le numéro d'un particulier n'est révélé qu'au clic (serveur)
+  contactTelDisponible: boolean;
   contactNom: string | null;
   agence: AgenceInfo | null;
   agent: AgentInfo | null;
@@ -91,7 +92,8 @@ export default function BlocAgenceAnnonce({
   transaction,
   quartier,
   ville,
-  contactTel,
+  contactTelMasque,
+  contactTelDisponible,
   contactNom,
   agence,
   agent,
@@ -100,12 +102,39 @@ export default function BlocAgenceAnnonce({
 }: BlocAgenceAnnonceProps) {
   const [showModalVisite, setShowModalVisite] = useState(false);
   const [telRevealed, setTelRevealed] = useState(false);
+  const [telPrive, setTelPrive] = useState<{ telephone: string; whatsapp: string } | null>(null);
+  const [revelationErreur, setRevelationErreur] = useState<string | null>(null);
   const isAgence = Boolean(agence?.id);
 
-  // Numéro WhatsApp prioritaire : WhatsApp agence > WhatsApp agent > téléphone contact
-  const rawWa = agence?.whatsapp || agence?.telephone || agent?.telephone || contactTel || '';
+  // Numéro officiel de l'agence (public) ; à défaut, numéro d'un particulier révélé au clic par le serveur (AUD-137)
+  const officiel = agence?.whatsapp || agence?.telephone || agent?.telephone || '';
+  const aTelPrive = !officiel && contactTelDisponible;
+  const rawWa = officiel || telPrive?.whatsapp || '';
   const cleanWa = rawWa.replace(/\D/g, '');
-  const telFormat = formaterNumeroMasque(cleanWa || rawWa);
+  const telFormat = officiel
+    ? formaterNumeroMasque(cleanWa || rawWa)
+    : { masque: contactTelMasque || '•• ••• •• ••', complet: telPrive?.telephone || '' };
+
+  async function revelerTelPrive() {
+    setRevelationErreur(null);
+    try {
+      const res = await fetch(`/api/immo/${annonceId}/contact`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setRevelationErreur(data.error || 'Numéro indisponible pour le moment.');
+        return;
+      }
+      setTelPrive({ telephone: data.telephone, whatsapp: data.whatsapp });
+      setTelRevealed(true);
+      try {
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+          (window as any).gtag('event', 'show_phone_number_immo', { event_category: 'ImmoContact', event_label: titre });
+        }
+      } catch (_) {}
+    } catch {
+      setRevelationErreur('Connexion impossible, réessayez.');
+    }
+  }
 
   const waText = encodeURIComponent(
     `Bonjour ${agence?.nom ? agence.nom : ''},\n\nJe vous contacte au sujet du bien vu sur Nopalou :\n*${titre}*${prix ? ` — ${fcfa(prix)}` : ''}\n📍 ${[quartier, ville].filter(Boolean).join(', ')}\n🔗 https://nopalou.com/immo/${annonceId}\n\nEst-il toujours disponible ?`
@@ -307,11 +336,13 @@ export default function BlocAgenceAnnonce({
       {/* ── Corps : Coordonnées & Actions ── */}
       <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* Téléphone direct masqué en partie par défaut avec révélation au clic */}
-        {cleanWa && (
+        {(cleanWa || aTelPrive) && (
           <button
             type="button"
             onClick={() => {
-              if (!telRevealed) {
+              if (!telRevealed && aTelPrive) {
+                void revelerTelPrive();
+              } else if (!telRevealed) {
                 setTelRevealed(true);
                 try {
                   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -322,7 +353,7 @@ export default function BlocAgenceAnnonce({
                   }
                 } catch (_) {}
               } else {
-                window.location.href = `tel:${cleanWa}`;
+                window.location.href = `tel:${cleanWa || (telPrive?.whatsapp ?? '')}`;
               }
             }}
             style={{
@@ -396,7 +427,11 @@ export default function BlocAgenceAnnonce({
         )}
 
         {/* Conciergerie Chasseur Nopalou si aucun numéro direct disponible */}
-        {!cleanWa && !isAgence && (
+        {revelationErreur && (
+          <p role="alert" style={{ margin: 0, fontSize: 12, color: 'var(--danger, #B42318)' }}>{revelationErreur}</p>
+        )}
+
+        {!cleanWa && !aTelPrive && !isAgence && (
           <div
             style={{
               padding: '13px 14px',

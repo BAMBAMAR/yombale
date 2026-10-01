@@ -36,7 +36,9 @@ interface Annonce {
   categorie_slug: string
   photos: string[]
   contact_nom: string | null
-  contact_tel: string
+  contact_tel_masque?: string | null
+  contact_tel_disponible?: boolean
+  contact_sur_facebook?: boolean
   url_source: string | null
   caracteristiques: Record<string, string> | null
   created_at: string
@@ -226,7 +228,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
             {annonce.contact_nom && (
               <p className="annonce-contact-nom">{annonce.contact_nom}</p>
             )}
-            {annonce.contact_tel === 'Voir sur Facebook' ? (
+            {annonce.contact_sur_facebook ? (
               annonce.url_source && (
                 <a
                   href={annonce.url_source}
@@ -237,15 +239,15 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
                   📘 Voir sur Facebook
                 </a>
               )
-            ) : (
+            ) : annonce.contact_tel_disponible ? (
               <MaskedContactPhone
-                phone={annonce.contact_tel}
+                masque={annonce.contact_tel_masque ?? null}
                 titre={annonce.titre}
                 prix={annonce.prix ?? undefined}
                 annonceId={annonce.id}
                 baseUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}
               />
-            )}
+            ) : null}
             <p className="annonce-contact-warn">
               Ne payez jamais à l&apos;avance sans avoir vu le produit.
             </p>

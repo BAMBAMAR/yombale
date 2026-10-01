@@ -20,7 +20,8 @@ interface FicheImmoSidebarProps {
     quartier: string | null
     ville: string | null
     type_bien: string | null
-    contact_tel: string | null
+    contact_tel_masque?: string | null
+    contact_tel_disponible?: boolean
     contact_nom: string | null
     url_source: string | null
     videos?: string[] | null
@@ -149,7 +150,8 @@ export default function FicheImmoSidebar({
           quartier={annonce.quartier}
           ville={annonce.ville}
           typeBien={annonce.type_bien}
-          contactTel={annonce.contact_tel}
+          contactTelMasque={annonce.contact_tel_masque ?? null}
+          contactTelDisponible={Boolean(annonce.contact_tel_disponible)}
           contactNom={annonce.contact_nom}
           agence={annonce.agence || null}
           agent={annonce.agent || null}

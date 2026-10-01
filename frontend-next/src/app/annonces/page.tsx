@@ -78,7 +78,7 @@ interface Annonce {
   categorie_slug: string
   photos: string[]
   contact_nom: string | null
-  contact_tel: string
+  contact_tel_masque?: string | null
   boost_until?: string | null
   created_at: string
 }

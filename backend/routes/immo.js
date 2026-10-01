@@ -6,8 +6,9 @@ const multer  = require('multer');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = require('../middlewares/auth');
-const { limiterPublication, limiterImmo, limiterBulk, limiterBudget, blockScraperUA } = require('../middlewares/rateLimit');
+const { limiterPublication, limiterImmo, limiterBulk, limiterBudget, limiterRevelation, blockScraperUA } = require('../middlewares/rateLimit');
 const { clampPagination } = require('../lib/pagination');
+const { protegerContact, nationalNeuf } = require('../lib/contactPublic');
 const { notifierModerationImmo } = require('../services/notifications');
 const { uploadBuffer } = require('../services/cloudinary');
 
@@ -112,7 +113,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async
 
     res.json({
       success: true,
-      annonces: result.rows,
+      annonces: result.rows.map((r) => protegerContact(r, { liste: true })), // AUD-137/142 : numéro masqué, champs internes retirés
       page: +page, limit: +limit,
       total, pages: Math.ceil(total / limit) || 1,
     });
@@ -426,13 +427,13 @@ router.get('/:id', async (req, res) => {
         } : null;
         const photos = Array.isArray(b.photos) ? b.photos : (b.photos ? [b.photos] : []);
         const videos = Array.isArray(b.videos) ? b.videos : [];
-        return res.json({
+        return res.json(protegerContact({
           ...b,
           photos,
           videos,
           agence,
           agent
-        });
+        }));
       }
       return res.status(404).json({ error: 'Annonce introuvable' });
     }
@@ -466,14 +467,37 @@ router.get('/:id', async (req, res) => {
       : (Array.isArray(row.bien_photos) ? row.bien_photos : []);
     const videos = Array.isArray(row.bien_videos) ? row.bien_videos : [];
 
-    res.json({
+    res.json(protegerContact({
       ...row,
       photos,
       videos,
       agence,
       agent
-    });
+    }));
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/immo/:id/contact — révélation du numéro d'un particulier (AUD-137) : limitée par IP et par compte,
+// comptée comme un contact réel (événement `contact_revele_immo`).
+router.post('/:id/contact', tokenOptional, ...limiterRevelation, async (req, res) => {
+  try {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.id)) {
+      return res.status(404).json({ success: false, error: 'Annonce introuvable' });
+    }
+    const { rows } = await pool.query(
+      `SELECT id, contact_tel FROM annonces_immo
+       WHERE id = $1 AND actif = true AND (supprimee IS NULL OR supprimee = false) AND (rejete IS NULL OR rejete = false)`,
+      [req.params.id]
+    );
+    const n = rows.length ? nationalNeuf(rows[0].contact_tel) : '';
+    if (!n) return res.status(404).json({ success: false, error: 'Aucun numéro disponible pour cette annonce' });
+    pool.query("INSERT INTO analytics_events (type, annonce_id) VALUES ('contact_revele_immo', $1)", [rows[0].id]).catch(() => {});
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, telephone: `${n.slice(0, 2)} ${n.slice(2, 5)} ${n.slice(5, 7)} ${n.slice(7)}`, whatsapp: `221${n}` });
+  } catch (err) {
+    console.error('[POST /api/immo/:id/contact]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
 });
 
 // POST /api/immo/public — annonce gratuite déposée par un utilisateur

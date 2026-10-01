@@ -36,7 +36,8 @@ interface AnnonceImmo {
   description: string | null;
   url_source: string | null;
   contact_nom: string | null;
-  contact_tel: string | null;
+  contact_tel_masque?: string | null;
+  contact_tel_disponible?: boolean;
   created_at: string | null;
   photos: string[] | null;
   videos?: string[] | null;
