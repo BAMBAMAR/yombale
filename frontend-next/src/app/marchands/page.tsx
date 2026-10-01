@@ -8,8 +8,8 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Nopalou Marchands | La Plateforme E-Commerce & Caisse POS N°1 au Sénégal',
-  description: 'Tout votre commerce dans votre poche : Boutique en ligne, Caisse POS utilisable sans Internet, Commandes WhatsApp et paiements Wave & Orange Money sans commission. 30 jours offerts sans carte bancaire.',
+  title: 'Nopalou Marchands | La Plateforme E-Commerce & Caisse POS au Sénégal',
+  description: 'Tout votre commerce dans votre poche : Boutique en ligne, Caisse POS conçue pour les coupures de réseau, Commandes WhatsApp et paiements Wave & Orange Money sans commission. 30 jours offerts sans carte bancaire.',
   keywords: [
     'boutique en ligne sénégal', 'caisse enregistreuse dakar', 'caisse pos sénégal',
     'vendre sur whatsapp dakar', 'alternative shopify sénégal', 'logiciel commerce dakar',
@@ -92,7 +92,7 @@ export default function MarchandsLandingPage() {
             lineHeight: 1.15,
             letterSpacing: '-0.03em'
           }}>
-            Boutique en ligne, Caisse POS &amp; WhatsApp — la plateforme e-commerce N°1 au <span style={{ color: '#C75B00' }}>Sénégal</span>
+            Boutique en ligne, Caisse POS &amp; WhatsApp — la plateforme e-commerce au <span style={{ color: '#C75B00' }}>Sénégal</span>
           </h1>
 
           {/* Sous-titre orienté bénéfice */}
@@ -355,7 +355,7 @@ export default function MarchandsLandingPage() {
             </div>
             <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', marginBottom: 10 }}>Trafic &amp; Visibilité Comparateur</h3>
             <p style={{ color: '#475569', fontSize: 14.5, lineHeight: 1.6, marginBottom: 20, flex: 1 }}>
-              Bénéficiez du trafic naturel du comparateur de prix N°1 au Sénégal. Vos produits sont automatiquement suggérés aux milliers d'acheteurs actifs à Dakar.
+              Bénéficiez du trafic naturel du comparateur de prix Nopalou : vos produits peuvent apparaître dans les résultats des acheteurs qui comparent les prix.
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13.5, color: '#334155', fontWeight: 700, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#10b981' }}>✓</span> Badge Vendeur Vérifié &amp; Certifié</li>

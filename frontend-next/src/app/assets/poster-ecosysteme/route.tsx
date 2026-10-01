@@ -42,7 +42,7 @@ export async function GET() {
             background: '#FFF7ED', border: '2px solid #C75B00',
             borderRadius: 9999, padding: '10px 24px', fontSize: 17, fontWeight: 900, color: '#C75B00', display: 'flex',
           }}>
-            🇸🇳 N°1 AU SÉNÉGAL
+            🇸🇳 AU SÉNÉGAL
           </div>
         </div>
 

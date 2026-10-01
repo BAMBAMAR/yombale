@@ -20,11 +20,11 @@ const MARCHAND_CARDS = [
     icon: Zap,
     iconBg: 'rgba(199, 91, 0, 0.12)',
     iconColor: 'var(--accent, #C75B00)',
-    badge: '100% HORS-LIGNE',
+    badge: 'PENSÉE POUR LES COUPURES',
     badgeBg: 'rgba(16, 185, 129, 0.12)',
     badgeColor: '#0A5C36',
     title: 'Caisse POS Tactile',
-    desc: 'Encaissez au comptoir même sans Internet. Scan par caméra smartphone, tickets WhatsApp et clôtures Z.',
+    desc: 'Encaissez au comptoir avec un mode conçu pour les coupures de réseau. Scan par caméra smartphone, tickets WhatsApp et clôtures Z.',
     href: '/pos',
     ctaText: 'Découvrir la caisse',
     isPrimary: true,
@@ -96,7 +96,7 @@ export default function HeroMarchandView({
           }}
         >
           <Zap size={13} color="var(--accent, #C75B00)" />
-          <span>Le Système d&apos;Exploitation du Commerçant Sénégalais</span>
+          <span>Pour les commerçants du Sénégal</span>
         </div>
 
         <h2
@@ -122,7 +122,7 @@ export default function HeroMarchandView({
             lineHeight: 1.5
           }}
         >
-          Caisse tactile 100% hors-ligne sur votre téléphone, carnet de dettes avec relance Wave automatique et boutique web sans commission.
+          Caisse tactile sur votre téléphone, conçue pour les coupures de réseau, carnet de dettes avec relance Wave automatique et boutique web sans commission.
         </p>
 
         {/* Bannière Pro Connecté si session active */}

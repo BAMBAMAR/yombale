@@ -56,7 +56,7 @@ export async function GET() {
           </div>
 
           <p style={{ fontSize: 26, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>
-            Comparateur de prix N°1 au Sénégal
+            Comparateur de prix au Sénégal
           </p>
           <p style={{ fontSize: 18, color: '#94A3B8', margin: '0 0 32px' }}>
             Produits · Immobilier · Télécom

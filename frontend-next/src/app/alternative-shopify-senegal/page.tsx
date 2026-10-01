@@ -221,7 +221,7 @@ export default function AlternativeShopifyPage() {
               {
                 critere: 'Caisse magasin (Point de Vente POS)',
                 detail: 'Vente physique en boutique',
-                nopalou: 'Inclus • Fonctionne 100% sans Internet',
+                nopalou: 'Inclus • Conçue pour les coupures de réseau',
                 shopify: 'Nécessite abonnement POS Pro + matériel spécifique',
                 nopalouOk: true,
                 shopifyOk: false

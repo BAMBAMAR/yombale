@@ -32,7 +32,7 @@ const MATRICE_SECTIONS: FeatureSection[] = [
     categorie: 'Caisse Enregistreuse POS (Magasin Physique)',
     items: [
       { nom: 'Caisse tactile magasin (POS)', detail: 'Sur smartphone, tablette ou ordinateur PC', gratuit: false, tafTaf: false, pro: true, business: true },
-      { nom: 'Mode 100% Hors-Ligne (Offline-First)', detail: 'Fonctionne même lors des coupures de courant ou d\'Internet', gratuit: false, tafTaf: false, pro: true, business: true },
+      { nom: 'Mode coupure réseau (Offline-First)', detail: 'Conçu pour continuer à encaisser lors des coupures de courant ou d\'Internet', gratuit: false, tafTaf: false, pro: true, business: true },
       { nom: 'Scan codes-barres par caméra', detail: 'Reconnaissance EAN-13 / Code 128 avec l\'appareil photo', gratuit: false, tafTaf: false, pro: true, business: true },
       { nom: 'Impression tickets thermiques (58/80mm)', detail: 'Compatible imprimantes Bluetooth et USB', gratuit: false, tafTaf: false, pro: true, business: true },
       { nom: 'Multi-Caissiers & Codes PIN', detail: 'Accès vendeur individuel et traçabilité des encaissements', gratuit: false, tafTaf: false, pro: '3 caissiers', business: '10 caissiers' },

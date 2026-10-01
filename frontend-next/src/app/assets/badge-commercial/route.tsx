@@ -107,7 +107,7 @@ export async function GET(request: Request) {
             borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 16,
           }}>
             <span style={{ fontSize: 13, color: '#94A3B8' }}>
-              Plateforme N°1 de Commerce &amp; Caisse POS au Sénégal · nopalou.com
+              Plateforme de Commerce &amp; Caisse POS au Sénégal · nopalou.com
             </span>
             <span style={{ fontSize: 13, color: '#F97316', fontWeight: 800 }}>
               Scannez pour valider l&apos;accréditation

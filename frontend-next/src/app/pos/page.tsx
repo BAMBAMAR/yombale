@@ -11,7 +11,7 @@ import { PosFaqSection } from './components/PosFaqSection'
 
 export const metadata: Metadata = {
   title: 'Caisse Enregistreuse Dakar & Prix Sénégal | Nopalou POS pour Petit Commerce',
-  description: 'La caisse enregistreuse tactile N°1 à Dakar pour petit commerce, boutique et magasin. Fonctionne 100% hors-ligne sans Internet avec la formule Boutique Pro. 30 jours offerts.',
+  description: 'La caisse enregistreuse tactile à Dakar pour petit commerce, boutique et magasin. Conçue pour les coupures de réseau, avec la formule Boutique Pro. 30 jours offerts.',
   keywords: [
     'caisse enregistreuse dakar',
     'caisse enregistreuse prix sénégal',

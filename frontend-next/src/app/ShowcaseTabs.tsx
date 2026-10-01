@@ -280,7 +280,7 @@ export default function ShowcaseTabs({
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Caisse POS Tactile (100% Hors-Ligne) :</strong> Sur smartphone, tablette ou ordinateur PC</span>
+                <span><strong>Caisse POS Tactile (conçue pour les coupures de réseau) :</strong> Sur smartphone, tablette ou ordinateur PC</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />

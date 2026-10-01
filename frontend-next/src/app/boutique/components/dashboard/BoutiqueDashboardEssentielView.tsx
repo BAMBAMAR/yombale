@@ -80,7 +80,7 @@ export default function BoutiqueDashboardEssentielView({
                 fontWeight: 800,
               }}
             >
-              100% Hors-Ligne
+              Mode coupure réseau
             </span>
           </div>
           <h3 style={{ margin: '0 0 6px', fontSize: 19, fontWeight: 850, color: 'var(--navy, #1C2B4A)' }}>

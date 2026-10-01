@@ -27,7 +27,7 @@ const CRITERIA: CriterionData[] = [
   {
     id: 'caisse',
     label: 'Caisse POS Hors-Ligne (Sans Net)',
-    nopalou: { val: '100% Hors-Ligne (PWA)', positive: true },
+    nopalou: { val: 'Mode coupure réseau (PWA)', positive: true },
     whatsapp: { val: "Dépend d'Internet", positive: false },
     cahier: { val: 'Manuel', positive: true },
     shopify: { val: 'Connexion requise', positive: false },

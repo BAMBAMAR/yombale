@@ -19,7 +19,7 @@ const FAQ_COMMERCE_ITEMS = [
   },
   {
     q: 'Pourquoi Nopalou est la meilleure alternative à Shopify au Sénégal ?',
-    a: 'Contrairement à Shopify qui exige une carte bancaire en dollars ($29/mois + frais de transaction) et n’intègre pas nativement Wave ou Orange Money, Nopalou est 100% conçu pour le Sénégal : paiements locaux directs, commandes WhatsApp, caisse tactile POS magasin et référencement gratuit sur le comparateur de prix N°1.'
+    a: 'Contrairement à Shopify qui exige une carte bancaire en dollars ($29/mois + frais de transaction) et n’intègre pas nativement Wave ou Orange Money, Nopalou est 100% conçu pour le Sénégal : paiements locaux directs, commandes WhatsApp, caisse tactile POS magasin et référencement gratuit sur le comparateur de prix Nopalou.'
   },
   {
     q: 'Puis-je migrer mon catalogue Shopify, WooCommerce ou Excel en 1 clic ?',

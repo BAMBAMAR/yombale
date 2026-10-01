@@ -7,7 +7,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 export const metadata: Metadata = {
   title: 'Créer une Boutique en Ligne au Sénégal | Tarifs & Forfaits Vendeurs | Nopalou',
   description:
-    'Lancez votre boutique en ligne et votre commerce sur WhatsApp au Sénégal en 2 minutes. Découvrez nos forfaits (Taf Taf 5.000 FCFA/mois, Vendeur Pro, Business VIP). Alternative N°1 à Shopify, adaptée à Wave et Orange Money.',
+    'Lancez votre boutique en ligne et votre commerce sur WhatsApp au Sénégal en 2 minutes. Découvrez nos forfaits (Taf Taf dès 2.500 FCFA/mois, Vendeur Pro, Business VIP). Alternative à Shopify, adaptée à Wave et Orange Money.',
   keywords: [
     'créer boutique en ligne Sénégal',
     'lancer son commerce Dakar',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Créer une Boutique en Ligne au Sénégal | 1 Mois Offert | Nopalou',
     description:
-      'Créez votre commerce en ligne et vendez sur WhatsApp sans carte bancaire avec paiement Wave & Orange Money. Découvrez nos formules d’abonnement dès 5.000 FCFA/mois.',
+      'Créez votre commerce en ligne et vendez sur WhatsApp sans carte bancaire avec paiement Wave & Orange Money. Découvrez nos formules d’abonnement dès 2.500 FCFA/mois.',
     url: `${BASE}/creer-boutique`,
     siteName: 'Nopalou',
     locale: 'fr_SN',

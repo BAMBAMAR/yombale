@@ -48,7 +48,7 @@ export async function GET() {
         {/* HERO TITLE */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 32 }}>
           <span style={{ background: '#7C3AED', color: '#FFFFFF', padding: '6px 22px', borderRadius: 9999, fontSize: 15, fontWeight: 900, letterSpacing: 1.5, marginBottom: 12, display: 'flex' }}>
-            PROGRAMME DE PARRAINAGE N°1 AU SÉNÉGAL
+            PROGRAMME APPORTEURS NOPALOU
           </span>
           <h1 style={{ fontSize: 48, fontWeight: 900, color: '#1C2B4A', margin: 0, lineHeight: 1.15, letterSpacing: -1.5 }}>
             Gagnez un Revenu Récurrent Mensuel

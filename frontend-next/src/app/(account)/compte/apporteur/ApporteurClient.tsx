@@ -174,7 +174,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
       label: 'Téléphonie & High-Tech',
       emoji: '',
       sans_app: {
-        pitch: `« Bonjour chef ! Soyez visible sur le comparateur N°1 au Sénégal, scannez les codes-barres par caméra et gérez vos garanties sans carnet papier. 1er mois offert : ${lien} »`,
+        pitch: `« Bonjour chef ! Soyez visible sur le comparateur de prix Nopalou, scannez les codes-barres par caméra et gérez vos garanties sans carnet papier. 1er mois offert : ${lien} »`,
         demo: 'Scanner un code-barres par caméra en 0.5s pour afficher le prix.',
         objection: 'Sécurise vos ventes et stocks même quand vous n\'êtes pas au magasin.',
       },
@@ -188,9 +188,9 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
       label: 'Supérette & Alimentation',
       emoji: '',
       sans_app: {
-        pitch: `« Salam alaykoum ! Transformez votre smartphone en Caisse tactile ultrarapide qui marche même sans connexion internet, avec carnet de dettes et relance WhatsApp 1-clic : ${lien} »`,
+        pitch: `« Salam alaykoum ! Transformez votre smartphone en Caisse tactile ultrarapide conçue pour les coupures de connexion, avec carnet de dettes et relance WhatsApp 1-clic : ${lien} »`,
         demo: 'Faire une vente hors-ligne en mode avion et relancer une dette par WhatsApp.',
-        objection: 'Fonctionne 100% sans internet grâce au mode Offline First.',
+        objection: 'Conçue pour continuer à encaisser pendant une coupure de réseau (mode Offline First).',
       },
       avec_app: {
         pitch: `« Bonjour ! Caisse tactile moderne avec codes PIN multi-caissiers et compatibilité douchette USB à seulement 5 000 F/mois : ${lien} »`,

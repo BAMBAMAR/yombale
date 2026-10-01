@@ -24,7 +24,9 @@ export default function ModalBoutiqueCreeeSucces({
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
   const lienBoutique = `${siteUrl}/boutiques/${slug || boutiqueId}`
 
-  const messageWhatsapp = `Bonjour à tous !\n\nDécouvrez notre nouvelle vitrine officielle en ligne chez *${nom}* !\n\nRetrouvez tous nos articles avec prix et stock à jour, et commandez directement sur WhatsApp ou par Wave :\n${lienBoutique}\n\nLivraison rapide partout au Sénégal !`
+  const lienPartage = `${lienBoutique}?utm_source=whatsapp&utm_medium=partage_vitrine&utm_campaign=creation_boutique`
+
+  const messageWhatsapp = `Bonjour à tous !\n\nDécouvrez notre nouvelle vitrine officielle en ligne chez *${nom}* !\n\nRetrouvez tous nos articles avec prix et stock à jour, et commandez directement sur WhatsApp ou par Wave :\n${lienPartage}`
 
   const qrSvgString = useMemo(() => {
     try {

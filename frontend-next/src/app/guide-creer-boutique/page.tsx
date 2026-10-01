@@ -156,7 +156,7 @@ export default function GuideCreerBoutiquePage() {
               <li><strong>La barrière technique :</strong> Configurer des thèmes, plugins et passerelles de paiement prend des semaines.</li>
             </ul>
             <p style={{ fontSize: 15, color: '#334155', lineHeight: 1.7 }}>
-              C&apos;est pourquoi <strong>Nopalou</strong> a été conçu pour l&apos;Afrique : votre boutique est immédiatement connectée au <strong>comparateur de prix N°1 au Sénégal</strong> (trafic gratuit) avec encaissement direct Wave/Orange Money et 0% de commission.
+              C&apos;est pourquoi <strong>Nopalou</strong> a été conçu pour l&apos;Afrique : votre boutique est immédiatement connectée au <strong>comparateur de prix de Nopalou</strong> (trafic gratuit) avec encaissement direct Wave/Orange Money et 0% de commission.
             </p>
           </section>
 

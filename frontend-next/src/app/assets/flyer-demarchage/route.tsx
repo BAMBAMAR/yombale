@@ -56,7 +56,7 @@ export async function GET() {
               Vos clients sur WhatsApp.
             </span>
             <p style={{ fontSize: 26, color: '#64748B', marginTop: 20, lineHeight: 1.5, fontWeight: 600 }}>
-              Rejoignez Nopalou, le super-comparateur de prix et caisse POS N°1 au Sénégal
+              Rejoignez Nopalou, le comparateur de prix et caisse POS pour le Sénégal
             </p>
           </div>
 

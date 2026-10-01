@@ -58,7 +58,7 @@ export const PLANS_BOUTIQUES_CONFIG: PlanConfig[] = [
     recommande: true,
     features: [
       'Tout le contenu de la formule Taf Taf (Catalogue étendu jusqu\'à 300 produits)',
-      'Caisse enregistreuse POS tactile magasin (Mode 100% Hors-Ligne)',
+      'Caisse enregistreuse POS tactile magasin (mode conçu pour les coupures de réseau)',
       'Scan des codes-barres par caméra smartphone & Impression tickets',
       'Relances WhatsApp 1-Clic personnalisées avec lien Wave prérempli',
       'Factures & Devis PDF professionnels (Normes OHADA)',

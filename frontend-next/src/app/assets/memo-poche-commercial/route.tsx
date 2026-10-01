@@ -111,7 +111,7 @@ export async function GET(request: Request) {
               },
               {
                 obj: '« Internet coupe souvent »',
-                rep: '« Notre Caisse PWA fonctionne 100% hors-ligne. Vous encaissez même sans réseau. »',
+                rep: '« Notre Caisse PWA est conçue pour les coupures de réseau : vos ventes sont enregistrées puis synchronisées au retour de la connexion. »',
               },
               {
                 obj: '« C\'est payant ? »',

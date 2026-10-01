@@ -39,7 +39,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
       label: 'Téléphonie, High-Tech & Accessoires',
       category: 'tech',
       sans_app: {
-        pitch: `« Bonjour chef ! Dans la téléphonie, les prix changent vite et la concurrence est rude à Dakar. Avec Nopalou, votre boutique est visible sur le comparateur N°1 au Sénégal, vous scannez les codes-barres par caméra et vous gérez vos garanties et dettes clients sans carnet papier. 1er mois offert ! »`,
+        pitch: `« Bonjour chef ! Dans la téléphonie, les prix changent vite et la concurrence est rude à Dakar. Avec Nopalou, votre boutique est visible sur le comparateur de prix de Nopalou, vous scannez les codes-barres par caméra et vous gérez vos garanties et dettes clients sans carnet papier. 1er mois offert ! »`,
         diagnostic: [
           'Comment faites-vous pour que les acheteurs de Dakar trouvent vos prix face aux autres boutiques ?',
           'Comment enregistrez-vous les numéros IMEI et les garanties des téléphones vendus ?',

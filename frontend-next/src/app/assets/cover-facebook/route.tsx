@@ -58,7 +58,7 @@ export async function GET() {
           fontSize: 30, color: '#CBD5E1', margin: 0,
           textAlign: 'center', letterSpacing: 0.5,
         }}>
-          Comparateur de prix N°1 au Sénégal
+          Comparateur de prix au Sénégal
         </p>
 
         {/* Stats */}

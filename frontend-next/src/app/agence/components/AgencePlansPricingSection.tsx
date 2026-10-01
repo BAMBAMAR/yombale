@@ -405,7 +405,7 @@ export function AgencePlansPricingSection() {
               }}
             >
               <Sparkles size={11} color="#b45309" />
-              Option Visibilité Annuaire N°1
+              Option Visibilité en tête d'annuaire
             </span>
           </div>
           <h4 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 900, color: '#78350f' }}>

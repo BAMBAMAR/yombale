@@ -19,7 +19,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
   title: 'Logiciel Gestion Locative Sénégal & Dakar | Baux, Quittances & Loyers Wave',
-  description: 'Le logiciel N°1 de gestion locative au Sénégal pour agences et bailleurs : baux conformes OHADA, quittances certifiées PDF et encaissement des loyers par Wave & Orange Money sans commission.',
+  description: 'Le logiciel de gestion locative au Sénégal pour agences et bailleurs : baux conformes OHADA, quittances certifiées PDF et encaissement des loyers par Wave & Orange Money sans commission.',
   keywords: [
     'logiciel gestion locative dakar',
     'logiciel agence immobiliere senegal',

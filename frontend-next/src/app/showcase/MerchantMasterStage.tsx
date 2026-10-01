@@ -181,7 +181,7 @@ export default function MerchantMasterStage() {
             <div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DCFCE7', color: '#15803D', padding: '4px 12px', borderRadius: 20, fontSize: 11.5, fontWeight: 900, marginBottom: 12 }}>
                 <Store size={13} />
-                <span>ALTERNATIVE N°1 À SHOPIFY AU SÉNÉGAL • 0% COMMISSION</span>
+                <span>ALTERNATIVE À SHOPIFY AU SÉNÉGAL • 0% COMMISSION</span>
               </div>
               <h3 style={{ fontSize: 24, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '0 0 10px', lineHeight: 1.25 }}>
                 Votre Boutique en Ligne &amp; Vitrine Mobile Clé en Main

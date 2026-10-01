@@ -98,8 +98,8 @@ Voulez-vous que je vous active votre lien test gratuit aujourd'hui ?` + FOOTER_O
 
 Dans la téléphonie & tech à Dakar, les prix changent vite et les clients comparent tout.
 
-Avec Nopalou, votre boutique est référencée sur le comparateur N°1 au Sénégal :
-✅ Visibilité directe auprès de milliers d'acheteurs à Dakar
+Avec Nopalou, votre boutique est référencée sur le comparateur de prix de Nopalou :
+✅ Visibilité directe auprès des acheteurs qui comparent les prix sur Nopalou
 ✅ Caisse tactile avec scanner de codes-barres par caméra
 ✅ Importez tout votre catalogue existant (Excel / Shopify) en 1 seconde
 ✅ Devis & Factures OHADA proformas en PDF en 10 secondes
@@ -121,7 +121,7 @@ Vous vendez des véhicules à Dakar ? Les clients demandent sans cesse le kilom�
 Avec Nopalou (https://nopalou.com), partagez votre parc auto en 1 seul lien pro :
 ✅ Fiches véhicules complètes (photos HD, transmission, carburant, prix)
 ✅ Prise de rendez-vous et contact direct sur votre WhatsApp
-✅ Référencement sur le portail auto n°1 au Sénégal
+✅ Référencement sur le portail auto de Nopalou
 🎁 {essai_jours} jours 100% OFFERTS sans aucun engagement !
 
 Découvrez un exemple de vitrine : https://nopalou.com/annonces
@@ -218,7 +218,7 @@ Je me permets de vous contacter car j'apprécie la qualité du portefeuille immo
 
 Aujourd'hui au Sénégal, les acquéreurs et locataires privilégient l'accès direct sur smartphone et le contact WhatsApp immédiat. Nopalou Immo (https://nopalou.com/immo) est la suite logicielle dédiée aux agences et cabinets immobiliers sénégalais :
 
-• Vitrine Web Officielle personnalisée à vos couleurs (référencée N°1 au Sénégal)
+• Vitrine Web Officielle personnalisée à vos couleurs
 • Fiches biens interactives avec plans et photos haute définition, sans commission
 • Module de gestion locative : baux certifiés OHADA et quittances automatiques Wave / Orange Money
 • Bons de visite numériques et suivi des mandats de vos négociateurs

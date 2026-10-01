@@ -126,7 +126,7 @@ export async function GET(request: Request) {
                 Vitrine propulsée par Nopalou.com
               </span>
               <span style={{ fontSize: 16, color: '#94A3B8' }}>
-                Le comparateur de prix &amp; plateforme marchande N°1 au Sénégal
+                Le comparateur de prix &amp; plateforme marchande au Sénégal
               </span>
             </div>
           </div>

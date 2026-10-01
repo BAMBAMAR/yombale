@@ -193,7 +193,7 @@ export default function GuideSourcingReventePage() {
           {/* SECTION 3 : SHOPIFY VS NOPALOU POUR LA REVENTE */}
           <section style={{ marginBottom: 44 }}>
             <h2 style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', marginBottom: 16 }}>
-              3. Pourquoi Nopalou est l'Alternative N°1 à Shopify au Sénégal
+              3. Pourquoi Nopalou est une alternative à Shopify au Sénégal
             </h2>
             <p style={{ fontSize: 15, color: '#334155', lineHeight: 1.7, marginBottom: 20 }}>
               Vouloir lancer un site Shopify pour revendre ses articles Alibaba à Dakar est l'erreur la plus coûteuse des débutants :

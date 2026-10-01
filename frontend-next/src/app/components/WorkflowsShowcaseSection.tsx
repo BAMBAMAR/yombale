@@ -147,7 +147,7 @@ export default function WorkflowsShowcaseSection() {
                 fontSize: 11, fontWeight: 800, marginBottom: 10
               }}>
                 <WifiOff size={13} />
-                <span>FONCTIONNE SANS INTERNET (100% HORS-LIGNE)</span>
+                <span>CONÇUE POUR LES COUPURES DE RÉSEAU</span>
               </div>
               <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '0 0 10px' }}>
                 Votre smartphone devient une caisse tactile et une douchette sans fil

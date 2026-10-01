@@ -11,7 +11,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
   title: 'Logiciel de Caisse Enregistreuse au Sénégal (2026) | Nopalou POS Dakar',
-  description: 'Le logiciel de caisse enregistreuse tactile n°1 au Sénégal pour boutique et magasin. Fonctionne 100% hors-ligne sans Internet, encaisse Wave & OM, dès 5 000 FCFA/mois (30 jours offerts).',
+  description: 'Le logiciel de caisse enregistreuse tactile au Sénégal pour boutique et magasin. Conçu pour les coupures de réseau, encaisse Wave & OM, dès 5 000 FCFA/mois (30 jours offerts).',
   keywords: [
     'logiciel de caisse sénégal',
     'caisse enregistreuse dakar',
@@ -126,7 +126,7 @@ export default function LogicielCaisseSenegalPage() {
               lineHeight: 1.15,
               letterSpacing: '-0.03em'
             }}>
-              La caisse enregistreuse tactile N°1 pour les <span style={{ color: '#fed7aa' }}>commerces du Sénégal</span>
+              La caisse enregistreuse tactile pour les <span style={{ color: '#fed7aa' }}>commerces du Sénégal</span>
             </h1>
 
             <p style={{

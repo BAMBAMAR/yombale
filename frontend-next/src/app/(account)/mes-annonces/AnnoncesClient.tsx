@@ -390,7 +390,7 @@ export default function AnnoncesClient({
             Vous n&apos;avez aucune annonce en ligne pour le moment
           </h3>
           <p style={{ margin: '0 auto 20px', maxWidth: 460, fontSize: 13.5, color: '#64748B', lineHeight: 1.5 }}>
-            Vendez des téléphones, du mobilier, des véhicules ou de la mode auprès de milliers d&apos;acheteurs vérifiés à Dakar et dans tout le Sénégal !
+            Vendez des téléphones, du mobilier, des véhicules ou de la mode auprès des acheteurs de Dakar et de tout le Sénégal !
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>

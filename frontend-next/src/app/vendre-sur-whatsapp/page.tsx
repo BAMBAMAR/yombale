@@ -94,7 +94,7 @@ export default function VendreSurWhatsappPage() {
               letterSpacing: '0.04em'
             }}>
               <MessageSquare size={14} color="#25D366" />
-              <span>COMMERCE CONVERSATIONNEL N°1 AU SÉNÉGAL</span>
+              <span>COMMERCE CONVERSATIONNEL AU SÉNÉGAL</span>
             </div>
 
             <h1 style={{

@@ -51,7 +51,7 @@ export async function GET() {
             </div>
           </div>
           <span style={{ fontSize: 24, color: '#94A3B8', marginTop: 14, fontWeight: 700 }}>
-            Super-Comparateur de prix N°1 au Sénégal
+            Comparateur de prix au Sénégal
           </span>
         </div>
 

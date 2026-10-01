@@ -232,3 +232,40 @@ describe('AUD-121 : Orange Money sans simulation en production', () => {
     expect(src).toMatch(/return_url: `\$\{process\.env\.FRONTEND_URL \|\| 'https:\/\/nopalou\.com'\}\/paiement\/succes\?ref=\$\{encodeURIComponent\(commande_id\)\}&methode=orange`/);
   });
 });
+
+describe('AUD-115 / AUD-124 / AUD-126 : textes sans allégation non prouvée ni prix faux', () => {
+  const fs = require('fs'), path = require('path');
+  const racine = path.join(__dirname, '../..');
+  const parcourir = (dir, out = []) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (['node_modules', '.next', '__tests__'].includes(e.name)) continue;
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) parcourir(p, out);
+      else if (/\.(tsx?|js)$/.test(e.name)) out.push(p);
+    }
+    return out;
+  };
+  const sources = [...parcourir(path.join(racine, 'frontend-next/src')), path.join(racine, 'backend/services/prospection.js')];
+  const contenus = sources.map(f => [path.relative(racine, f), fs.readFileSync(f, 'utf8')]);
+  const fautifs = (re) => contenus.filter(([, s]) => re.test(s)).map(([f]) => f);
+
+  test('aucune allégation « N°1 au Sénégal / à Dakar / à Shopify » dans les pages, supports et gabarits', () => {
+    expect(fautifs(/N°\s?1[\s ]+(au|à)[\s ]+(Sénégal|Dakar|Shopify)|comparateur N°1|portail auto n°1|logiciel N°1|plateforme e-commerce N°1/i)).toEqual([]);
+  });
+
+  test('la méta de /creer-boutique ne annonce plus Taf Taf à 5.000 FCFA', () => {
+    const layout = contenus.find(([f]) => f.replace(/\\/g, '/').endsWith('creer-boutique/layout.tsx'))[1];
+    expect(layout).not.toMatch(/Taf Taf 5\.000/);
+    expect(layout).not.toMatch(/dès 5\.000 FCFA/);
+  });
+
+  test('le message de partage de vitrine ne promet plus la livraison et porte un suivi UTM', () => {
+    const modal = contenus.find(([f]) => f.replace(/\\/g, '/').endsWith('ModalBoutiqueCreeeSucces.tsx'))[1];
+    expect(modal).not.toMatch(/Livraison rapide partout/);
+    expect(modal).toMatch(/utm_medium=partage_vitrine/);
+  });
+
+  test('les accroches « 100 % hors-ligne » absolues sont retirées des vitrines marchandes principales', () => {
+    expect(fautifs(/100% HORS-LIGNE|100% Hors-Ligne|100% hors-ligne sans Internet|FONCTIONNE SANS INTERNET \(100% HORS-LIGNE\)/)).toEqual([]);
+  });
+});
