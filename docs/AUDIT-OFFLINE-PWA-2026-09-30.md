@@ -6,6 +6,35 @@ Complète `AUDIT-NOPALOU-2026-09-30.md` (qui listait « PWA hors-ligne », « pa
 
 ---
 
+## Statut de correction (mise à jour du 01/10/2026, branche `fix/offline-pwa-audit`)
+
+Corrigé = correctif rejoué par le test indiqué sur le build de production, dans l'environnement isolé (pas d'appareil réel). Détail, écarts au plan et reste à faire : `JOURNAL-LIVRAISONS.md`.
+
+| ID | Statut | Preuve rejouée |
+|---|---|---|
+| AUD-087 | Corrigé | `t05e` : 0 rechargement sur 6 essais ; `t07` (a) : ticket conservé |
+| AUD-088 | Corrigé | `t07` (b) : entrée `syncing` réclamée, renvoyée, 1 seule vente en base |
+| AUD-089 | Corrigé | `t09` (refus en ligne), `t23` (refus hors-ligne : `failed` visible, « Renvoyer ») |
+| AUD-090 | Corrigé | `t10` : client unique, dette avec le bon `client_id`, file vide |
+| AUD-091 | Corrigé (partiel : voir journal) | `t08` : `localStorage`/IndexedDB/caches purgés ; pages privées inaccessibles hors-ligne. Non fait : purge sur expiration de session sans déconnexion |
+| AUD-092 | Corrigé | `t01b` (précache conservé), `t01c` (page interactive hors-ligne, cache HTTP vidé) |
+| AUD-093 | Corrigé | `t05b` (session et `session_id` en base), `t22` (clôture Z : `cloturee`, écart calculé) |
+| AUD-094 | Corrigé | `t13`, `t13b` : confirmation reçue, 1 notification, pas de doublon |
+| AUD-095 | Corrigé | `t12` S1 (référence = base, `en_attente`), `t12c` S3b (créée à la reconnexion) |
+| AUD-096 | Corrigé | `t05b` : `created_at` = heure de la vente ; `client-date.test.js` |
+| AUD-097 | Corrigé (D1 : accepter et signaler) | `t05b` : écart consigné dans `stock_ecarts`, vente acceptée |
+| AUD-098 | Corrigé | `t01` : recherche non visitée → page de secours |
+| AUD-099 | Corrigé (contenu périmé signalé, délais SW inchangés) | `t12c` S4b : écart de prix détecté, total 16 000 = base |
+| AUD-100 | Corrigé (lien omis pour les paniers multi-articles) | `t13d` |
+| AUD-101 | Corrigé | `t13` : « 2x Robe — 30 000 », `prix_unitaire` 15 000, « Retrait en boutique » |
+| AUD-102 | Corrigé | note « transmise » seulement si livrée ; `notification_echecs` alimentée |
+| AUD-103 | Corrigé | lien du carnet corrigé dans la page de secours du SW |
+| AUD-104 | Partiel | Background Sync enregistré par l'application ; **NON VALIDÉ — TEST RÉEL IMPOSSIBLE** en headless ; repli applicatif (démarrage, 60 s, transition) prouvé par `t05e`/`t07` |
+| AUD-105 | Corrigé | `t14` : 6 envois simultanés → 1 vente, 0 erreur 500 |
+| AUD-106 | Corrigé | libellé et badge selon l'état réseau (code ; non rejoué en navigateur) |
+| AUD-107 | Corrigé | icônes `maskable` déclarées (ressources 200) |
+
+---
 ## 1. Résumé
 
 - **21 anomalies** : 9 en P1, 9 en P2, 3 en P3. Aucune P0 : pas de perte d'argent exploitable sans authentification, pas de fuite inter-tenant, pas d'arrêt de service.

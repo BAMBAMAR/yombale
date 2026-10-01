@@ -27,6 +27,11 @@ Environnement isolé obligatoire (voir `../README.md`) : base locale `nopalou_au
 | `t12`, `t12b` | panier → commande → message WhatsApp, prix périmé |
 | `t13`, `t13b`, `t13c` (+ `bot-harness.js`) | chatbot WhatsApp réel contre la base locale, envoi Meta capturé |
 | `t14` | idempotence sous concurrence |
+| `t12c` | commande « WhatsApp Direct » hors-ligne puis reconnexion, prix modifié avant validation |
+| `t13d` | lien 1-clic du bot (panier de plusieurs articles / d'un article) |
+| `t22` | clôture Z par l'interface |
+| `t23` | vente hors-ligne refusée à la synchronisation : bannière, « Renvoyer » |
+| `restock.js` | remet le stock des produits de test (à lancer avant les tests de panier) |
 | `t20a` à `t20g`, `t21` | E2E : inscription, recherche, pages, annonce, chat, Wave, administration, immobilier, impression |
 
 ## Limites connues

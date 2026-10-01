@@ -1,0 +1,13 @@
+import { launch, BASE, state } from './lib.mjs';
+const T = process.env.AUDIT_TMP; const S = state(); const slug = S.M.boutique.slug;
+const { browser, ctx, page } = await launch();
+await ctx.addInitScript(() => { window.__opened = []; window.open = (u) => { window.__opened.push(String(u)); return null; }; });
+await page.goto(BASE + `/boutiques/${slug}/produits/${S.prod.A.id}`, { waitUntil: 'load' }); await page.waitForTimeout(2500);
+await page.getByRole('button', { name: /Ajouter au panier/i }).first().click(); await page.waitForTimeout(1200);
+await ctx.setOffline(true); await page.waitForTimeout(800);
+await page.getByRole('button', { name: /Commander via WhatsApp Direct/ }).click(); await page.waitForTimeout(3500);
+const t = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+console.log('modal:', t.match(/(Commande|COMMANDE|ATTENTE|RÉF)[^]{0,200}/)?.[0]);
+console.log('liens ouverts:', (await page.evaluate(() => window.__opened)).length);
+await page.screenshot({ path: T + '/wa-offline-modal.png' });
+await browser.close();

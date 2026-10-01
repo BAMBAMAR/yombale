@@ -59,31 +59,41 @@ export default function DrawerCart() {
     totalGlobal,
   } = useDrawerCartCheckout()
 
-  // AUD-099 : closeCart est recréée à chaque rendu du contexte panier. En dépendance de l'effet ci-dessous, toute mise à jour
-  // du panier (prix actualisé, quantité) relançait l'effet, dont le nettoyage appelle history.back() : le tiroir se fermait
-  // tout seul et le message d'erreur disparaissait. On lit donc les callbacks par référence.
+  // AUD-099 : `closeCart` est recréée à chaque rendu du contexte panier, et `orderSuccessData` change à la validation.
+  // En dépendances de l'effet, chaque changement relançait l'effet dont le nettoyage appelle history.back() : le
+  // `popstate` qui en résultait fermait le tiroir ou le modal de confirmation tout seul (message d'erreur ou succès
+  // qui disparaît). L'effet ne dépend donc plus que de la visibilité ; les callbacks et l'état sont lus par référence,
+  // et un retour d'historique provoqué par le nettoyage lui-même n'est pas pris pour un « Retour » de l'utilisateur.
   const closeCartRef = useRef(closeCart)
   const setOrderSuccessDataRef = useRef(setOrderSuccessData)
+  const orderSuccessRef = useRef(orderSuccessData)
+  const retourInterne = useRef(false)
   closeCartRef.current = closeCart
   setOrderSuccessDataRef.current = setOrderSuccessData
+  orderSuccessRef.current = orderSuccessData
+  const estVisible = isCartOpen || !!orderSuccessData
 
   // Interception du bouton Retour Mobile (Android / iOS) et touche Échap Desktop
   useEffect(() => {
-    const isVisible = isCartOpen || !!orderSuccessData
-    if (!isVisible || typeof window === 'undefined') return
+    if (!estVisible || typeof window === 'undefined') return
 
     window.history.pushState({ modal: 'nopalou_cart' }, '')
 
-    const handlePopState = () => {
-      if (orderSuccessData) setOrderSuccessDataRef.current(null)
+    const fermer = () => {
+      if (orderSuccessRef.current) setOrderSuccessDataRef.current(null)
       closeCartRef.current()
     }
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (orderSuccessData) setOrderSuccessDataRef.current(null)
-        closeCartRef.current()
+    const handlePopState = () => {
+      if (retourInterne.current) {
+        retourInterne.current = false
+        return
       }
+      fermer()
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') fermer()
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -93,11 +103,11 @@ export default function DrawerCart() {
       window.removeEventListener('popstate', handlePopState)
       window.removeEventListener('keydown', handleKeyDown)
       if (window.history.state?.modal === 'nopalou_cart') {
+        retourInterne.current = true
         window.history.back()
       }
     }
-  }, [isCartOpen, !!orderSuccessData]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, [estVisible])
   // 1. Modale de confirmation / succès de commande
   if (orderSuccessData) {
     return (
