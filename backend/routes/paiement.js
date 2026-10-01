@@ -958,11 +958,14 @@ router.post('/orange/initier', verifierToken, limiterEcriture, async (req, res) 
     const result = await omService.createWebPayment({
       amount: montant,
       order_id: commande_id,
-      return_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/retour-paiement?ref=${encodeURIComponent(commande_id)}`,
+      // AUD-121 : Sonatel n'ajoute ni `status` ni `order_id` au successUrl ; /retour-paiement les exigeait et
+      // renvoyait donc vers /paiement/erreur même après un paiement réussi. On pointe directement la page de succès
+      // (le type est déduit du préfixe de la référence) ; l'annulation reste sur /paiement/erreur.
+      return_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/succes?ref=${encodeURIComponent(commande_id)}&methode=orange`,
       notif_url: `${process.env.BACKEND_URL || 'https://nopalou.onrender.com'}/api/paiement/orange/webhook`,
     });
     res.json({ pay_url: result.payment_url || result.om_url });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(503).json({ error: err.message }); }
 });
 
 // POST /api/paiement/orange/webhook — notification de paiement Orange Money

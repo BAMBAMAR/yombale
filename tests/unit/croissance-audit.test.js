@@ -198,3 +198,37 @@ describe('AUD-120 : paiements initiés tracés et relancés', () => {
     expect(lire('backend/routes/paiement.js')).toMatch(/await marquerPaye\(pool, reference\)/);
   });
 });
+
+describe('AUD-121 : Orange Money sans simulation en production', () => {
+  const chargerOm = (env) => {
+    jest.resetModules();
+    jest.doMock('../../backend/lib/settingsCache', () => ({ get: jest.fn(async () => null), getNum: jest.fn(), getBool: jest.fn() }));
+    const avant = { NODE_ENV: process.env.NODE_ENV, OM_BASE_URL: process.env.OM_BASE_URL, OM_CLIENT_ID: process.env.OM_CLIENT_ID, OM_CLIENT_SECRET: process.env.OM_CLIENT_SECRET };
+    Object.assign(process.env, env);
+    for (const k of ['OM_CLIENT_ID', 'OM_CLIENT_SECRET', 'OM_BASE_URL']) if (env[k] === undefined) delete process.env[k];
+    const om = require('../../backend/services/orange-money');
+    return { om, restaurer: () => Object.entries(avant).forEach(([k, v]) => (v === undefined ? delete process.env[k] : (process.env[k] = v))) };
+  };
+
+  test('production sans identifiants : refus explicite, aucune URL simulée', async () => {
+    const { om, restaurer } = chargerOm({ NODE_ENV: 'production' });
+    try {
+      await expect(om.createWebPayment({ amount: 100, order_id: 'ann_1', return_url: 'https://x/ok' }))
+        .rejects.toThrow(/momentanément indisponible/);
+    } finally { restaurer(); }
+  });
+
+  test('hors production : la simulation reste disponible (tests, développement)', async () => {
+    const { om, restaurer } = chargerOm({ NODE_ENV: 'test' });
+    try {
+      const r = await om.createWebPayment({ amount: 100, order_id: 'ann_1', return_url: 'https://x/ok' });
+      expect(r.mode).toBe('sandbox_simulation');
+    } finally { restaurer(); }
+  });
+
+  test('le lien de retour pointe la page de succès (et non /retour-paiement sans status)', () => {
+    const fs = require('fs'), path = require('path');
+    const src = fs.readFileSync(path.join(__dirname, '../../backend/routes/paiement.js'), 'utf8');
+    expect(src).toMatch(/return_url: `\$\{process\.env\.FRONTEND_URL \|\| 'https:\/\/nopalou\.com'\}\/paiement\/succes\?ref=\$\{encodeURIComponent\(commande_id\)\}&methode=orange`/);
+  });
+});

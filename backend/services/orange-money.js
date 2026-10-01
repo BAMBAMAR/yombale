@@ -98,7 +98,20 @@ async function createWebPayment({
   const defaultCancel = cancel_url || `${SITE}/paiement/erreur?ref=${encodeURIComponent(order_id)}&type=commande-express`;
   const defaultNotif = notif_url || `${process.env.BACKEND_URL || 'https://nopalou.onrender.com'}/api/paiement/orange/webhook`;
 
-  // Si pas de credentials en production, bascule élégante sur la passerelle simulée
+  // AUD-121 : en production, ni simulation ni sandbox. Une simulation renvoie le client vers la page de retour
+  // sans qu'aucun paiement n'ait eu lieu ; on préfère un refus explicite que le client peut contourner (Wave).
+  if (process.env.NODE_ENV === 'production') {
+    if (!token || (!merchantKey && !merchantCode) || String(merchantKey || '').includes('xxxxxxxx')) {
+      console.error(`[ORANGE MONEY] Identifiants absents ou invalides en production : commande ${order_id} refusée.`);
+      throw new Error('Orange Money est momentanément indisponible. Payez par Wave ou réessayez plus tard.');
+    }
+    if (OM_BASE_URL.includes('sandbox')) {
+      console.error('[ORANGE MONEY] OM_BASE_URL pointe vers le sandbox en production : définir https://api.orange-sonatel.com');
+      throw new Error('Orange Money est momentanément indisponible. Payez par Wave ou réessayez plus tard.');
+    }
+  }
+
+  // Hors production : si pas de credentials, bascule sur la passerelle simulée (tests, développement)
   if (!token || (!merchantKey && !merchantCode) || String(merchantKey || '').includes('xxxxxxxx')) {
     console.log(`[ORANGE MONEY SANDBOX] Commande ${order_id} : initialisation simulée (${amount} ${currency})`);
     return {

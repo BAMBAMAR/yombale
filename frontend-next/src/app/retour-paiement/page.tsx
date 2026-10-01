@@ -9,10 +9,11 @@ export const metadata: Metadata = {
 export default function RetourPaiementPage({
   searchParams,
 }: {
-  searchParams: { status?: string; order_id?: string; token?: string }
+  searchParams: { status?: string; order_id?: string; ref?: string; token?: string }
 }) {
   const status   = searchParams.status ?? ''
-  const orderId  = searchParams.order_id ?? ''
+  // AUD-121 : certains retours portent `ref` (nos liens) et non `order_id`
+  const orderId  = searchParams.order_id ?? searchParams.ref ?? ''
 
   let type = 'annonce'
   if (orderId.startsWith('CMD-') || orderId.startsWith('cmd_') || orderId.startsWith('pm_')) {
