@@ -15,6 +15,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 const axios   = require('axios');
+const { noterRequeteCourante } = require('../lib/scrapingRun');
 const cheerio = require('cheerio');
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -59,10 +60,15 @@ function buildHeaders(referer = '') {
 }
 
 async function fetchHtml(url, referer = '', timeout = 20000) {
-  const { data } = await axios.get(url, {
-    headers: buildHeaders(referer), timeout, maxRedirects: 5,
-    responseType: 'text',
-  });
+  let reponse;
+  try {
+    reponse = await axios.get(url, {
+      headers: buildHeaders(referer), timeout, maxRedirects: 5,
+      responseType: 'text',
+    });
+  } catch (err) { noterRequeteCourante(err.response?.status || err.code || 'none'); throw err; }
+  noterRequeteCourante(reponse.status || 200);
+  const data = reponse.data;
   if (!data || data.length < 50 || data.includes('Account Suspended')) {
     throw new Error(`Page invalide ou site suspendu (${url})`);
   }
@@ -70,11 +76,14 @@ async function fetchHtml(url, referer = '', timeout = 20000) {
 }
 
 async function fetchJson(url, timeout = 15000) {
-  const { data } = await axios.get(url, {
-    headers: { 'User-Agent': randUA(), 'Accept': 'application/json' },
-    timeout, maxRedirects: 3,
-  });
-  return data;
+  try {
+    const { data, status } = await axios.get(url, {
+      headers: { 'User-Agent': randUA(), 'Accept': 'application/json' },
+      timeout, maxRedirects: 3,
+    });
+    noterRequeteCourante(status || 200);
+    return data;
+  } catch (err) { noterRequeteCourante(err.response?.status || err.code || 'none'); throw err; }
 }
 
 // ── AUTO-DÉCOUVERTE URLs shop depuis la homepage ─────────────
@@ -328,7 +337,7 @@ async function diagnosticNouveauSite(siteId) {
   if (!config) {
     throw new Error(`Site inconnu: "${siteId}". Disponibles: ${SITES_CONFIG.map(s => s.id).join(', ')}`);
   }
-  const items = await scraperSite(config);
+  const items = await enveloppe(config, () => scraperSite(config));
   return {
     site: config.nom, url: config.baseUrl,
     nb_resultats: items.length,
@@ -347,7 +356,7 @@ async function diagnosticNouveauSite(siteId) {
 // l'insertion en base au fil de l'eau — évite d'accumuler les produits
 // de tous les sites (jusqu'à ~800 par site) en mémoire simultanément,
 // cause identifiée d'un dépassement mémoire sur le plan gratuit Render.
-async function scraperTousNouveauxSites(siteIds = null, onSiteScrape = null) {
+async function scraperTousNouveauxSites(siteIds = null, onSiteScrape = null, enveloppe = (config, f) => f()) {
   const configs = siteIds
     ? SITES_CONFIG.filter(s => siteIds.includes(s.id))
     : SITES_CONFIG;
@@ -358,7 +367,7 @@ async function scraperTousNouveauxSites(siteIds = null, onSiteScrape = null) {
   for (const config of configs) {
     let items = [];
     try {
-      items = await scraperSite(config);
+      items = await enveloppe(config, () => scraperSite(config));
     } catch (err) {
       console.error(`[NEW-SITES] ${config.nom}: ${err.message}`);
     }

@@ -4,6 +4,7 @@ const cheerio  = require('cheerio');
 const cron     = require('node-cron');
 const { pool } = require('../models/db');
 const scrapingLock = require('../lib/scrapingLock');
+const { RunCollecte, noterRequeteCourante, strict: statutsStricts } = require('../lib/scrapingRun');
 const matching = require('./matching');
 
 const UA = [
@@ -202,13 +203,15 @@ async function getMarchandId(nom,siteUrl=null) {
 async function fetchPage(url, retries=3) {
   for(let i=0;i<retries;i++){
     try{
-      const {data}=await axios.get(url,{
+      const {data,status}=await axios.get(url,{
         headers:{'User-Agent':randUA(),'Accept':'text/html,application/xhtml+xml','Accept-Language':'fr-FR,fr;q=0.9','Cache-Control':'no-cache'},
         timeout:20000, maxRedirects:5
       });
+      noterRequeteCourante(status || 200);
       return data;
     }catch(err){
       const st=err.response?.status;
+      noterRequeteCourante(st || err.code || 'none'); // AUD-173 : code HTTP (ou cause réseau) rattaché au passage en cours
       if (st === 404) throw err;
       console.warn(`[HTTP] Tentative ${i+1}/${retries} — ${st||err.code} — ${url}`);
       if(i<retries-1) await sleep(st===429||st===403 ? 12000*(i+1) : 3000*(i+1));
@@ -1210,14 +1213,14 @@ async function lancerScraping(sources=['expat','jumia','coinafrique','auchan','k
     for(const src of sources){
       const c=conf[src]; if(!c) continue;
       const stats={inseres:0,mis_a_jour:0,erreurs:0,scrapes:0,filtres:0};
-      const tDebut = Date.now();
-      const pagesOk = [], pagesErr = [];
+      // AUD-173 : un passage est évalué sur ce qu'il a réellement rapporté (couverture, codes HTTP, volume), pas sur l'absence de crash
+      const run = new RunCollecte({ source: c.nom, systeme: 'produits', categoriesCibles: c.cats.length });
 
       for(const cat of c.cats){
         try{
-          const items=await c.fn(cat,4);
+          const items=await run.executer(() => c.fn(cat,4));
           stats.scrapes+=items.length;
-          pagesOk.push(cat);
+          run.noterCategorie(cat, items.length);
           if(items.length>0){
             const r=await sauvegarderProduits(items,c.nom,c.url);
             stats.inseres+=r.inseres;
@@ -1228,39 +1231,20 @@ async function lancerScraping(sources=['expat','jumia','coinafrique','auchan','k
         }catch(err){
           console.error(`[SCRAPER] ${src}/${cat}:`,err.message);
           stats.erreurs++;
-          pagesErr.push(cat);
+          run.noterCategorie(cat, 0);
         }
         await sleep(4000);
       }
 
+      const verdict = await run.cloturer(pool, { itemsExtraits: stats.scrapes, itemsInseres: stats.inseres, itemsMaj: stats.mis_a_jour, itemsFiltres: stats.filtres, erreursSauvegarde: stats.erreurs });
+      stats.statut = verdict.statut;
       rapport.sources[src]=stats;
-      const dureeSrc = Date.now() - tDebut;
 
-      // Persister les métriques de ce run dans scraping_runs
-      pool.query(
-        `INSERT INTO scraping_runs
-           (source, systeme, pages_cibles, pages_ok, pages_erreur,
-            items_extraits, items_inseres, items_maj, items_filtres,
-            duree_ms, statut, erreur_msg, ended_at)
-         VALUES ($1,'produits',$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW())`,
-        [
-          c.nom,
-          c.cats.length,
-          pagesOk.length,
-          pagesErr.length,
-          stats.scrapes,
-          stats.inseres,
-          stats.mis_a_jour,
-          stats.filtres,
-          dureeSrc,
-          stats.erreurs > 0 ? 'erreur_partielle' : 'ok',
-          pagesErr.length > 0 ? pagesErr.join(',') : null,
-        ]
-      ).catch(e => console.warn('[SCRAPING_RUN WARN]', e.message));
-
-      await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1',[c.nom]).catch(e => console.warn('[MARCHAND SYNC WARN]', e.message));
-      console.log(`[SCRAPER] ${c.nom}: ${stats.scrapes} scrapés → ${stats.inseres} nouveaux, ${stats.mis_a_jour} màj, ${stats.filtres} filtrés, ${stats.erreurs} erreurs`);
-      await sleep(5000);
+      // derniere_sync ne signifie « synchronisé » que si des articles sont réellement arrivés (échec : inchangée)
+      if (verdict.statut !== 'echec' || !statutsStricts()) {
+        await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1',[c.nom]).catch(e => console.warn('[MARCHAND SYNC WARN]', e.message));
+      }
+      console.log(`[SCRAPER] ${c.nom}: ${verdict.statut.toUpperCase()}${verdict.motifs.length ? ' (' + verdict.motifs.join(', ') + ')' : ''} : ${stats.scrapes} scrapés → ${stats.inseres} nouveaux, ${stats.mis_a_jour} màj, ${stats.filtres} filtrés, ${stats.erreurs} erreurs`);      await sleep(5000);
     }
     rapport.fin=new Date(); rapport.duree_s=Math.round((rapport.fin-rapport.debut)/1000);
     console.log(`[SCRAPER] ══════ FIN ${rapport.duree_s}s ══════`);
@@ -1284,20 +1268,36 @@ async function lancerScrapingNouveauxSites(siteIds = null) {
   try {
     invaliderCatCache();
     const stats = { inseres: 0, mis_a_jour: 0, erreurs: 0, scrapes: 0 };
+    // AUD-173 : un passage par site, évalué comme les autres sources (codes HTTP, volume, alerte après deux échecs consécutifs)
+    const runs = new Map();
+    const enveloppe = (config, scraperLeSite) => {
+      const run = new RunCollecte({ source: config.nom, systeme: 'produits', categoriesCibles: 1 });
+      runs.set(config.id, run);
+      return run.executer(scraperLeSite);
+    };
     await scraperTousNouveauxSites(siteIds, async (config, items) => {
-      if (!items.length) return;
+      const run = runs.get(config.id) || new RunCollecte({ source: config.nom, systeme: 'produits', categoriesCibles: 1 });
+      run.noterCategorie(config.nom, items.length);
       stats.scrapes += items.length;
-      try {
-        const r = await sauvegarderProduits(items, config.nom, config.baseUrl);
-        stats.inseres += r.inseres;
-        stats.mis_a_jour += r.mis_a_jour;
-        stats.erreurs += r.erreurs;
-        await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1', [config.nom]);
-        console.log(`[NEW-SITES] ${config.nom}: ${items.length} scrapés → ${r.inseres} nouveaux, ${r.mis_a_jour} màj`);
-      } catch (err) {
-        console.error(`[NEW-SITES] ${config.nom} sauvegarde:`, err.message);
+      let r = { inseres: 0, mis_a_jour: 0, erreurs: 0, filtres: 0 };
+      if (items.length) {
+        try {
+          r = await sauvegarderProduits(items, config.nom, config.baseUrl);
+          stats.inseres += r.inseres;
+          stats.mis_a_jour += r.mis_a_jour;
+          stats.erreurs += r.erreurs;
+          console.log(`[NEW-SITES] ${config.nom}: ${items.length} scrapés → ${r.inseres} nouveaux, ${r.mis_a_jour} màj`);
+        } catch (err) {
+          console.error(`[NEW-SITES] ${config.nom} sauvegarde:`, err.message);
+        }
       }
-    });
+      const verdict = await run.cloturer(pool, { itemsExtraits: items.length, itemsInseres: r.inseres, itemsMaj: r.mis_a_jour, itemsFiltres: r.filtres || 0, erreursSauvegarde: r.erreurs });
+      if (items.length) {
+        await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1', [config.nom]).catch(() => {});
+      } else {
+        console.warn(`[NEW-SITES] ${config.nom}: ${verdict.statut.toUpperCase()} (aucun article), derniere_sync inchangée`);
+      }
+    }, enveloppe);
 
     return stats;
   } finally {

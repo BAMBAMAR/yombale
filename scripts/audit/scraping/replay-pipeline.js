@@ -35,7 +35,7 @@ const jumiaHtml = (cat, page, n = 40) => '<html><script type="application/ld+jso
   const _q = pool.query.bind(pool);
   pool.query = (s, p) => {
     if (typeof s === 'string' && s.includes('INSERT INTO scraping_runs')) {
-      runsCaptures.push({ source: p[0], pages_cibles: p[1], pages_ok: p[2], pages_erreur: p[3], extraits: p[4], statut: p[9] });
+      runsCaptures.push({ source: p[0], categories_cibles: p[3], categories_avec_articles: p[4], http_codes: p[6], extraits: p[8], statut: p[13] }); // ordre des colonnes de lib/scrapingRun.js (AUD-173)
       return _q(s, p).catch(e => { runsCaptures.push('ECHEC SQL: ' + e.message); throw e; });
     }
     return _q(s, p);

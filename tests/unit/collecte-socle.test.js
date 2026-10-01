@@ -131,7 +131,7 @@ describe('AUD-172 : la table scraping_runs est créée par les migrations', () =
   });
 
   test.each([
-    'services/scraper.js',
+    'lib/scrapingRun.js',
     'services/scraper-immo-expat.js',
     'services/scraper-immo-coinafrique.js',
   ])('toutes les colonnes écrites par %s existent dans la table', (fichier) => {
