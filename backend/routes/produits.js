@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly } = require('../middlewares/auth');
 const { blockScraperUA, limiterRecherche, limiterBulk, limiterBudget } = require('../middlewares/rateLimit');
@@ -161,7 +162,7 @@ router.get('/categories-actives', async (req, res) => {
     res.json(activeSlugs);
   } catch (err) {
     console.error('[GET /api/produits/categories-actives]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -454,7 +455,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async
     res.json(responsePayload);
   } catch (err) {
     console.error('[GET /api/produits]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -478,7 +479,7 @@ router.get('/admin/sponsorises', ...adminAccess('produits'), async (req, res) =>
       LIMIT 100
     `, [q || null]);
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PUT /api/produits/admin/:id/sponsoring — activer/désactiver/configurer sponsoring (admin)
@@ -494,7 +495,7 @@ router.put('/admin/:id/sponsoring', ...adminAccess('produits'), async (req, res)
     if (!rows.length) return res.status(404).json({ error: 'Produit introuvable' });
     await cacheInvalidatePattern('prod:');
     res.json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/produits/:id — détail d'un produit
@@ -546,7 +547,7 @@ router.get('/:id', checkUUID, async (req, res) => {
     }
     await cacheSet(cacheKey, rows[0], 300);
     res.json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/produits/:id/offres — triées par prix croissant
@@ -628,7 +629,7 @@ router.get('/:id/offres', checkUUID, async (req, res) => {
 
     await cacheSet(cacheKey, rows, 180);
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // Mots indiquant un accessoire plutôt qu'un appareil principal — un téléphone et sa
@@ -760,7 +761,7 @@ router.get('/:id/similaires', checkUUID, async (req, res) => {
     }
 
     res.json({ produits: rows, source: src[0], mots_cles: motsClesRecherche, specs });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/produits/:id/historique — 90 derniers jours
@@ -777,7 +778,7 @@ router.get('/:id/historique', checkUUID, async (req, res) => {
       [req.params.id]
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/produits — créer (admin)
@@ -790,7 +791,7 @@ router.post('/', ...adminAccess('produits'), async (req, res) => {
     );
     await cacheInvalidatePattern('prod:');
     res.status(201).json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/produits/instantanee — Auto-complétion instantanée visuelle (Typeahead)

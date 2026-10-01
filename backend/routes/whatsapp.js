@@ -4,6 +4,7 @@ const crypto  = require('crypto');
 const whatsappHealth = require('../services/whatsapp-health');
 const cfg = require('../lib/settingsCache');
 const router  = express.Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 
 // ── Vérification signature HMAC-SHA256 Meta ──────────────────────────────────
 function verifyHmac(req, res, next) {
@@ -287,7 +288,7 @@ router.get('/admin/status', ...adminAccess('whatsapp'), async (req, res) => {
         messages_24h:    parseInt(processed.rows[0].total),
       },
     });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/whatsapp/admin/toggle — activer/désactiver WhatsApp ou chatbot
@@ -301,7 +302,7 @@ router.post('/admin/toggle', ...adminAccess('whatsapp'), async (req, res) => {
     await cfg.set(key, !current);
     cfg.invalidate();
     res.json({ [key]: !current });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/whatsapp/admin/test — envoyer un message de test (admin)
@@ -312,7 +313,7 @@ router.post('/admin/test', ...adminAccess('whatsapp'), async (req, res) => {
     const { sendWhatsAppText } = require('../services/whatsapp');
     await sendWhatsAppText(phone, `[TEST ADMIN] ${message}`);
     res.json({ success: true, to: phone });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // DELETE /api/whatsapp/admin/sessions — vider toutes les sessions chatbot
@@ -320,7 +321,7 @@ router.delete('/admin/sessions', ...adminAccess('whatsapp'), async (req, res) =>
   try {
     const { rowCount } = await pool.query('DELETE FROM whatsapp_sessions');
     res.json({ deleted: rowCount });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/whatsapp/admin/sessions — liste des sessions actives
@@ -332,7 +333,7 @@ router.get('/admin/sessions', ...adminAccess('whatsapp'), async (req, res) => {
        ORDER BY updated_at DESC LIMIT 50`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/whatsapp/admin/support — liste des demandes de rappel / support
@@ -344,7 +345,7 @@ router.get('/admin/support', ...adminAccess('whatsapp'), async (req, res) => {
        ORDER BY created_at DESC LIMIT 100`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PATCH /api/whatsapp/admin/support/:id — mise à jour du statut d'une demande de support
@@ -363,7 +364,7 @@ router.patch('/admin/support/:id', ...adminAccess('whatsapp', { edit: 'whatsapp:
     );
     if (!rows.length) return res.status(404).json({ error: 'Demande introuvable' });
     res.json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 module.exports = router;

@@ -3,6 +3,8 @@
 // "produit comparable entre marchands" mais une offre unique d'un opérateur,
 // avec plusieurs dimensions (data, appels, SMS, validité) plutôt qu'un simple prix.
 const router = require('express').Router();
+const UUID_TELECOM = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { pool } = require('../models/db');
 const { adminSecretOnly, tokenOptional } = require('../middlewares/auth');
 const { limiterBudget } = require('../middlewares/rateLimit');
@@ -45,7 +47,7 @@ router.get('/', tokenOptional, limiterBudget, async (req, res) => {
     });
   } catch (err) {
     console.error('[GET /api/telecom]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -56,11 +58,12 @@ router.get('/operateurs', async (req, res) => {
       `SELECT DISTINCT operateur FROM forfaits_telecom WHERE actif = true ORDER BY operateur`
     );
     res.json(rows.map(r => r.operateur));
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/telecom/:id/similaires — alternatives tous opérateurs, même type, budget proche
 router.get('/:id/similaires', async (req, res) => {
+  if (!UUID_TELECOM.test(req.params.id)) return res.status(404).json({ error: 'Forfait introuvable' }); // AUD-145
   try {
     const { limit = 8 } = req.query;
     const { rows: src } = await pool.query(
@@ -86,16 +89,17 @@ router.get('/:id/similaires', async (req, res) => {
     );
 
     res.json({ forfaits: rows, source: src[0] });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/telecom/:id — détail
 router.get('/:id', async (req, res) => {
+  if (!UUID_TELECOM.test(req.params.id)) return res.status(404).json({ error: 'Forfait introuvable' }); // AUD-145
   try {
     const { rows } = await pool.query('SELECT * FROM forfaits_telecom WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Forfait introuvable' });
     res.json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/telecom — créer (admin)
@@ -113,7 +117,7 @@ router.post('/', ...adminAccess('produits'), async (req, res) => {
       [operateur, nom, type, data_mo || null, minutes || null, sms || null, validite_jours || null, prix, description || null, image_url || null, source || null]
     );
     res.status(201).json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PUT /api/telecom/:id — modifier (admin)
@@ -141,7 +145,7 @@ router.put('/:id', ...adminAccess('produits'), async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Forfait introuvable' });
     res.json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/telecom/sync-artp — scraper ARTP en arrière-plan (admin)
@@ -166,7 +170,7 @@ router.delete('/:id', ...adminAccess('produits'), async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Forfait introuvable' });
     res.json({ success: true, id: rows[0].id });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 module.exports = router;

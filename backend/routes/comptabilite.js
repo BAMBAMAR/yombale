@@ -1,5 +1,6 @@
 // backend/routes/comptabilite.js — Comptabilité boutique (stock, zones de livraison, ventes, factures PDF)
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { body, param, validationResult } = require('express-validator');
 const PDFDocument = require('pdfkit');
 const axios = require('axios');
@@ -2058,7 +2059,7 @@ router.get('/admin/reversements-dus', requireAdminAuth, requireAdminRole('super_
     `);
     res.json({ reversements: rows });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -2257,7 +2258,7 @@ router.post('/admin/reversements/valider-lot', requireAdminAuth, requireAdminRol
     res.json({ success: true, count: r.rowCount, ids: r.rows.map(row => row.id) });
   } catch (err) {
     console.error('[ADMIN VALIDATION LOT ERR]', err);
-    res.status(500).json({ error: err.message || 'Erreur lors de la validation du lot' });
+    res.status(500).json({ error: erreurPublique(err, req) || 'Erreur lors de la validation du lot' });
   }
 });
 

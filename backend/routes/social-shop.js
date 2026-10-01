@@ -3,6 +3,7 @@
 
 const express = require('express');
 const router = express.Router({ mergeParams: true });
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { limiterGeneral } = require('../middlewares/rateLimit');
@@ -151,7 +152,7 @@ router.post(['/explore-profile', '/social/explore-profile'], limiterGeneral, asy
     });
   } catch (err) {
     console.error('[SOCIAL_EXPLORE_PROFILE_ERR]', err);
-    res.status(500).json({ success: false, error: 'Erreur exploration profil : ' + err.message });
+    res.status(500).json({ success: false, error: 'Erreur exploration profil : ' + erreurPublique(err, req) });
   }
 });
 
@@ -597,7 +598,7 @@ router.post(['/:id/social/admin/import-url', '/boutiques/:id/social/admin/import
     });
   } catch (err) {
     console.error('[SOCIAL_IMPORT_URL_ERR]', err);
-    res.status(500).json({ error: 'Erreur lors de l\'importation de la publication : ' + err.message });
+    res.status(500).json({ error: 'Erreur lors de l\'importation de la publication : ' + erreurPublique(err, req) });
   }
 });
 
@@ -1011,7 +1012,7 @@ router.post(['/:id/social/admin/import-batch', '/boutiques/:id/social/admin/impo
     });
   } catch (err) {
     console.error('[SOCIAL_IMPORT_BATCH_ERR]', err);
-    res.status(500).json({ error: 'Erreur lors de l\'importation en lot : ' + err.message });
+    res.status(500).json({ error: 'Erreur lors de l\'importation en lot : ' + erreurPublique(err, req) });
   }
 });
 
@@ -1122,7 +1123,7 @@ router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/e
     });
   } catch (err) {
     console.error('[SOCIAL_EXPLORE_PROFILE_ERR]', err);
-    res.status(500).json({ error: 'Erreur exploration profil : ' + err.message });
+    res.status(500).json({ error: 'Erreur exploration profil : ' + erreurPublique(err, req) });
   }
 });
 
@@ -1223,7 +1224,7 @@ router.post(['/:id/social/admin/sync-account/:accountId', '/boutiques/:id/social
     });
   } catch (err) {
     console.error('[SOCIAL_SYNC_ACCOUNT_ERR]', err);
-    res.status(500).json({ error: 'Erreur synchronisation du compte : ' + err.message });
+    res.status(500).json({ error: 'Erreur synchronisation du compte : ' + erreurPublique(err, req) });
   }
 });
 
@@ -1366,7 +1367,7 @@ router.post(['/:id/social/admin/import-media', '/boutiques/:id/social/admin/impo
     });
   } catch (err) {
     console.error('[SOCIAL_IMPORT_MEDIA_ERR]', err);
-    res.status(500).json({ error: 'Erreur lors de l\'importation des médias : ' + err.message });
+    res.status(500).json({ error: 'Erreur lors de l\'importation des médias : ' + erreurPublique(err, req) });
   }
 });
 
@@ -1401,7 +1402,7 @@ router.post(['/:id/social/admin/accounts/:accountId/refresh-token', '/boutiques/
     });
   } catch (err) {
     console.error('[SOCIAL_REFRESH_TOKEN_ERR]', err);
-    res.status(500).json({ error: 'Erreur rafraîchissement du jeton : ' + err.message });
+    res.status(500).json({ error: 'Erreur rafraîchissement du jeton : ' + erreurPublique(err, req) });
   }
 });
 

@@ -613,4 +613,23 @@ describeIntegration('Protection des données', () => {
       }
       expect(r.body).toHaveProperty('plan_pro_prix'); // les prix restent publics
     });
+  });
+  describe('AUD-145 — aucune erreur interne ne renvoie son message au client', () => {
+    const PUBLIC = { 'X-Forwarded-For': '203.0.113.120', 'User-Agent': 'Mozilla/5.0 Chrome/122.0' };
+    test('entrées invalides : jamais de texte PostgreSQL, jamais de 500', async () => {
+      const urls = ['/api/telecom/not-a-uuid', '/api/telecom/?limit=abc', '/api/immo/?limit=abc', '/api/offres/?produit_id=zzz', '/api/annonces/?page=abc',
+        '/api/boutiques/?page=abc', '/api/produits/?limit=abc', '/api/produits/not-a-uuid', '/api/immo/not-a-uuid', '/api/categories/zzz'];
+      for (const u of urls) {
+        const r = await request(app).get(u).set(PUBLIC);
+        expect([u, r.status < 500]).toEqual([u, true]);
+        expect(JSON.stringify(r.body)).not.toMatch(/syntaxe|invalid input|bigint|uuid|syntax|relation|column|colonne|pg_/i);
+      }
+    });
+    test('l\'assistant erreurPublique journalise et renvoie un message générique', () => {
+      const { erreurPublique } = require('../../backend/lib/safeError');
+      const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      expect(erreurPublique(new Error('relation "secret" does not exist'), { id: 'r1', method: 'GET', baseUrl: '/api/x', path: '/y' })).toBe('Erreur serveur');
+      expect(spy.mock.calls[0].join(' ')).toMatch(/r1.*GET \/api\/x\/y.*relation "secret"/);
+      spy.mockRestore();
+    });
   });});

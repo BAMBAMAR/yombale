@@ -1,5 +1,6 @@
 // backend/routes/boutiques-modules/boutiques-crud.js
 const router = require('express').Router();
+const { erreurPublique } = require('../../lib/safeError'); // AUD-145
 const jwt = require('jsonwebtoken');
 const { body, param, query, validationResult } = require('express-validator');
 const { normalisePhone } = require('../../services/whatsapp');
@@ -242,7 +243,7 @@ router.post('/taf-taf', async (req, res) => {
     res.json({ success: true, boutiqueId, boutique: { id: boutiqueId, caisse_token: caisseToken }, caisse_token: caisseToken, token });
   } catch (err) {
     console.error('[TAF TAF]', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

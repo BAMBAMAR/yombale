@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { limiterGeneral } = require('../middlewares/rateLimit');
@@ -33,7 +34,7 @@ router.post('/event', limiterGeneral, async (req, res) => {
       [type, actualBoutiqueId, annonce_id ?? null]
     );
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 
@@ -270,7 +271,7 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
         montant_total: Number(r.montant_total),
       })),
     });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/analytics/boutique/:id/funnel — entonnoir de conversion complet
@@ -332,7 +333,7 @@ router.get('/boutique/:id/funnel', verifierToken, async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

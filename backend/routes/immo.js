@@ -2,6 +2,7 @@
 // Verticale distincte : une annonce = un bien unique chez un propriétaire/agence,
 // pas un produit multi-marchands.
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const multer  = require('multer');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
@@ -119,7 +120,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async
     });
   } catch (err) {
     console.error('[GET /api/immo]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -164,7 +165,7 @@ router.get('/villes', async (req, res) => {
        GROUP BY ville ORDER BY nb DESC`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/immo/stats — stats rapides pour le dashboard
@@ -181,7 +182,7 @@ router.get('/stats', async (req, res) => {
       FROM annonces_immo WHERE actif = true
     `);
     res.json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/immo/mine — mes annonces publiées (utilisateur connecté)
@@ -192,7 +193,7 @@ router.get('/mine', verifierToken, async (req, res) => {
       [req.user.userId]
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PUT /api/immo/mine/:id — modifier sa propre annonce
@@ -220,7 +221,7 @@ router.put('/mine/:id', verifierToken, validationAnnonce, async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
     res.json({ success: true, message: 'Annonce mise à jour.' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // DELETE /api/immo/mine/:id — supprimer sa propre annonce
@@ -233,7 +234,7 @@ router.delete('/mine/:id', verifierToken, async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
     res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/immo/:id/demande-sponsorisation — demander la mise en avant (utilisateur, propriétaire)
@@ -256,7 +257,7 @@ router.post('/:id/demande-sponsorisation', verifierToken, async (req, res) => {
     }).catch(() => {});
 
     res.json({ success: true, message: 'Demande envoyée. Nous vous contacterons pour le paiement et l\'activation.' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/immo/admin/en-attente (admin) — toutes les annonces utilisateurs non supprimées
@@ -270,7 +271,7 @@ router.get('/admin/en-attente', ...adminAccess('immo', {'edit':'immo:moderate'})
        ORDER BY ai.created_at DESC`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/immo/admin/demandes-sponsorisation — demandes de mise en avant (admin)
@@ -284,7 +285,7 @@ router.get('/admin/demandes-sponsorisation', ...adminAccess('immo', {'edit':'imm
        ORDER BY ai.updated_at DESC`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/immo/:id/similaires — biens comparables : même secteur + type + transaction, prix proche
@@ -335,7 +336,7 @@ router.get('/:id/similaires', async (req, res) => {
     }
 
     res.json({ annonces: rows, source: src[0] });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/immo/:id — détail
@@ -474,7 +475,7 @@ router.get('/:id', async (req, res) => {
       agence,
       agent
     }));
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/immo/:id/contact — révélation du numéro d'un particulier (AUD-137) : limitée par IP et par compte,
@@ -545,7 +546,7 @@ router.post('/public', limiterPublication, verifierToken, requireEmailVerifie, u
     });
   } catch (err) {
     console.error('[POST /api/immo/public]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -581,7 +582,7 @@ router.post('/', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req, r
        source, ref_externe || null]
     );
     res.status(201).json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PUT /api/immo/:id — modifier (admin)
@@ -628,7 +629,7 @@ router.put('/:id', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req,
       notifierModerationImmo(rows[0]).catch(() => {});
     }
     res.json(rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // DELETE /api/immo/:id — désactiver (pas de suppression physique)
@@ -640,7 +641,7 @@ router.delete('/:id', ...adminAccess('immo', {'edit':'immo:moderate'}), async (r
     );
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
     res.json({ success: true, id: rows[0].id });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/immo/sync/:source — déclencher scraping en arrière-plan (admin)

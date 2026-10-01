@@ -1,5 +1,6 @@
 // backend/routes/partenaires.js — Demandes "Devenir partenaire"
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken } = require('../middlewares/auth');
@@ -54,7 +55,7 @@ router.post('/',
     }
   } catch (err) {
     console.error('[POST /api/partenaires]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -66,7 +67,7 @@ router.get('/mine', verifierToken, async (req, res) => {
       [req.user.userId]
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/partenaires/admin/en-attente — demandes à traiter (admin)
@@ -76,7 +77,7 @@ router.get('/admin/en-attente', ...adminAccess('immo', {'edit':'immo:moderate'})
       `SELECT * FROM demandes_partenaires WHERE statut = 'en_attente' ORDER BY created_at DESC`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PUT /api/partenaires/:id — approuver / rejeter (admin)
@@ -107,7 +108,7 @@ router.put('/:id', ...adminAccess('immo', {'edit':'immo:moderate'}), async (req,
     }
   } catch (err) {
     console.error('[PUT /api/partenaires/:id]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -119,7 +120,7 @@ router.delete('/:id', ...adminAccess('immo', {'edit':'immo:moderate'}), async (r
     res.json({ success: true });
   } catch (err) {
     console.error('[DELETE /api/partenaires/:id]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

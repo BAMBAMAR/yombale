@@ -1,5 +1,6 @@
 // backend/routes/annonces.js — Annonces classifiées multi-catégories
 const router  = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const multer  = require('multer');
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
@@ -182,7 +183,7 @@ router.get('/categories-actives', async (req, res) => {
     res.json(activeSlugs);
   } catch (err) {
     console.error('[GET /api/annonces/categories-actives]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -371,7 +372,7 @@ router.post('/admin/:id/boost', ...adminAccess('annonces', {'edit':'annonces:mod
     res.json({ success: true, annonce: rows[0] });
   } catch (err) {
     console.error('[ADMIN BOOST ANNONCE]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

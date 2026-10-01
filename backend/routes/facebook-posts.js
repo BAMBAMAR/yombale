@@ -1,6 +1,7 @@
 // backend/routes/facebook-posts.js — Gestion des publications Facebook + Instagram
 const express = require('express');
 const router  = express.Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { pool } = require('../models/db');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const settingsCache = require('../lib/settingsCache');
@@ -90,7 +91,7 @@ router.post('/token', async (req, res) => {
     await setToken(token);
     res.json({ ok: true, name: data.name, id: data.id });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: erreurPublique(e, req) });
   }
 });
 
@@ -127,7 +128,7 @@ router.post('/token-exchange', async (req, res) => {
     await setToken(pgData.access_token);
     res.json({ ok: true, name: pgData.name, permanent: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: erreurPublique(e, req) });
   }
 });
 
@@ -426,7 +427,7 @@ router.get('/generer/:type', async (req, res) => {
     if (!result) return res.status(404).json({ error: 'Aucun contenu trouvé pour ce type' });
     res.json(result);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: erreurPublique(e, req) });
   }
 });
 
@@ -436,7 +437,7 @@ router.get('/', async (req, res) => {
   try {
     const { rows } = await pool.query(`SELECT * FROM facebook_posts ORDER BY created_at DESC LIMIT 100`);
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { res.status(500).json({ error: erreurPublique(e, req) }); }
 });
 
 // POST /api/facebook-posts — créer un brouillon
@@ -450,7 +451,7 @@ router.post('/', async (req, res) => {
       [message, lien || null, image_url || null, !!publier_instagram, date_publication || null]
     );
     res.status(201).json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { res.status(500).json({ error: erreurPublique(e, req) }); }
 });
 
 // PATCH /api/facebook-posts/:id — modifier
@@ -476,7 +477,7 @@ router.patch('/:id', async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Post introuvable ou déjà publié' });
     res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { res.status(500).json({ error: erreurPublique(e, req) }); }
 });
 
 // DELETE /api/facebook-posts/:id
@@ -484,7 +485,7 @@ router.delete('/:id', async (req, res) => {
   try {
     await pool.query(`DELETE FROM facebook_posts WHERE id = $1 AND statut != 'publie'`, [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { res.status(500).json({ error: erreurPublique(e, req) }); }
 });
 
 // POST /api/facebook-posts/:id/publier — publication immédiate
@@ -508,7 +509,7 @@ router.post('/:id/publier', async (req, res) => {
 
     if (results.erreur && !results.fb_id) return res.status(502).json({ error: results.erreur });
     res.json({ ok: true, fb_id: results.fb_id, ig_id: results.ig_id });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { res.status(500).json({ error: erreurPublique(e, req) }); }
 });
 
 // ── Fonctions de publication ──────────────────────────────────────────────────

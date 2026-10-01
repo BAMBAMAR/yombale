@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const axios  = require('axios');
 const crypto = require('crypto');
 const { pool } = require('../models/db');
@@ -381,7 +382,7 @@ router.get('/server-ip', requireAdminAuth, async (req, res) => { // AUD-014 : r�
     const ipRes = await axios.get('https://api.ipify.org?format=json', { timeout: 5000 });
     res.json({ outbound_ip: ipRes.data.ip, status: 'ok' });
   } catch (err) {
-    res.status(500).json({ error: 'Impossible de déterminer l\'IP sortante', message: err.message });
+    res.status(500).json({ error: 'Impossible de déterminer l\'IP sortante', message: erreurPublique(err, req) });
   }
 });
 
@@ -633,7 +634,7 @@ router.post('/stripe/initier', limiterEcriture, async (req, res) => {
     });
   } catch (err) {
     console.error('[STRIPE INITIER ERR]:', err.message);
-    res.status(500).json({ error: 'Erreur lors de l’initialisation Stripe', detail: err.message });
+    res.status(500).json({ error: 'Erreur lors de l’initialisation Stripe', detail: erreurPublique(err, req) });
   }
 });
 
@@ -812,7 +813,7 @@ router.post('/confirmer-succes', async (req, res) => {
       statut: rows[0].statut,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -1036,7 +1037,7 @@ router.get('/stats', requireAdminAuth, requireAdminRole('super_admin', 'finance'
     `);
 
     res.json({ ...rows[0], recentes });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/paiement/boost/initier — boost annonce 7 jours (500 FCFA, Wave)
@@ -1158,7 +1159,7 @@ router.get('/manuel/liste', requireAdminAuth, requireAdminRole('super_admin', 'f
       [statut]
     );
     res.json({ paiements: rows });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/paiement/manuel/:id/valider — valide un dépôt déclaré et applique l'effet (admin)
@@ -1217,7 +1218,7 @@ router.post('/manuel/:id/rejeter', requireAdminAuth, requireAdminRole('super_adm
     });
 
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 module.exports = router;

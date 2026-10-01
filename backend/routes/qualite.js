@@ -8,6 +8,7 @@ const { adminSecretOnly } = require('../middlewares/auth');
 
 const { adminAccess } = require('../middlewares/admin-rbac');
 const router = express.Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 
 let quarantinesTableEnsured = false;
 async function ensureQuarantinesTable() {
@@ -61,7 +62,7 @@ router.get('/quarantines', ...adminAccess('produits', {'edit':'produits:moderate
     res.json(result.rows);
   } catch (err) {
     console.error('[qualite/quarantines]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -88,7 +89,7 @@ router.post('/quarantines/:offre_id/validate', ...adminAccess('produits', {'edit
     res.json({ success: true, message: 'Offre validée et restaurée' });
   } catch (err) {
     console.error('[qualite/validate]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -112,7 +113,7 @@ router.post('/quarantines/:offre_id/reject', ...adminAccess('produits', {'edit':
     res.json({ success: true, message: 'Offre rejetée et maintenue en quarantine' });
   } catch (err) {
     console.error('[qualite/reject]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

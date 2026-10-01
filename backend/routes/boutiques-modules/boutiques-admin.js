@@ -1,5 +1,6 @@
 // backend/routes/boutiques-modules/boutiques-admin.js
 const router = require('express').Router();
+const { erreurPublique } = require('../../lib/safeError'); // AUD-145
 const { body, param, query, validationResult } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../../middlewares/auth');
@@ -118,7 +119,7 @@ router.post('/admin/relance-catalogue', ...adminAccess('boutiques'), async (req,
     return res.status(400).json({ error: 'boutiqueId ou boutiqueIds (tableau) requis' });
   } catch (err) {
     console.error('[POST /api/boutiques/admin/relance-catalogue]', err.message);
-    res.status(500).json({ error: err.message || 'Erreur lors de l\'envoi de la relance catalogue' });
+    res.status(500).json({ error: erreurPublique(err, req) || 'Erreur lors de l\'envoi de la relance catalogue' });
   }
 });
 
@@ -196,7 +197,7 @@ router.post('/admin/relance-catalogue/executer-cron', ...adminAccess('boutiques'
     res.json({ success: true, count: boutiques.length, ...result });
   } catch (err) {
     console.error('[POST /api/boutiques/admin/relance-catalogue/executer-cron]', err.message);
-    res.status(500).json({ error: err.message || 'Erreur lors de l\'exécution manuelle du cron' });
+    res.status(500).json({ error: erreurPublique(err, req) || 'Erreur lors de l\'exécution manuelle du cron' });
   }
 });
 

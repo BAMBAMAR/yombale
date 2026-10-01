@@ -2,6 +2,7 @@
 // CRUD complet des forfaits et abonnements marchands (100% administrable)
 
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { pool } = require('../models/db');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const plansCache = require('../lib/plansCache');
@@ -25,7 +26,7 @@ router.get('/public', async (req, res) => {
     const plans = await plansCache.getAllPlans(true);
     res.json({ plans });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -61,7 +62,7 @@ router.get('/admin/tous', ...adminAccess('plans'), async (req, res) => {
 
     res.json({ plans: enriched });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -112,7 +113,7 @@ router.post('/admin', requireAdminAuth, requireAdminRole('super_admin', 'finance
     if (err.code === '23505') {
       return res.status(400).json({ error: 'Un forfait avec cet identifiant technique (slug) existe déjà.' });
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -164,7 +165,7 @@ router.put('/admin/:id', requireAdminAuth, requireAdminRole('super_admin', 'fina
 
     res.json({ success: true, plan: rows[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -211,7 +212,7 @@ router.delete('/admin/:id', requireAdminAuth, requireAdminRole('super_admin', 'f
 
     res.json({ success: true, deleted: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

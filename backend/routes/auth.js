@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const bcrypt = require('bcryptjs');
 const jwt    = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
@@ -265,7 +266,7 @@ router.get('/2fa/statut', verifierToken, async (req, res) => {
       telephone: rows[0].a2f_telephone || rows[0].telephone || null,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -297,7 +298,7 @@ router.post('/2fa/activer',
 
       res.json({ success: true, message: 'Authentification à double facteur (2FA) WhatsApp activée avec succès.' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: erreurPublique(err, req) });
     }
   }
 );
@@ -322,7 +323,7 @@ router.post('/2fa/desactiver', verifierToken, async (req, res) => {
 
     res.json({ success: true, message: 'Authentification à double facteur désactivée.' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -368,7 +369,7 @@ router.post('/renvoyer-verification', limiterAuth, verifierToken, async (req, re
       }),
     });
     res.json({ success: true, message: 'Email de vérification renvoyé.' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // AUD-064 : plafond de demandes de réinitialisation PAR COMPTE (limiterAuth ne plafonne que par IP ;
@@ -450,7 +451,7 @@ router.post('/mot-de-passe-oublie', limiterAuth, body('email').isEmail().normali
         }),
       }).catch(e => console.warn('[EMAIL RESET]', e.message));
     }
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/auth/reinitialiser-mot-de-passe — appliquer le nouveau mot de passe
@@ -490,7 +491,7 @@ router.post('/reinitialiser-mot-de-passe',
     // Incrémente jwt_version pour déconnecter tous les appareils existants ET invalider ce jeton
     await pool.query('UPDATE utilisateurs SET mot_de_passe_hash=$1, jwt_version=COALESCE(jwt_version, 1) + 1 WHERE id=$2', [hash, payload.userId]);
     res.json({ success: true, message: 'Mot de passe mis à jour avec succès.' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/auth/parrainage — code de parrainage + compteur de filleuls
@@ -509,7 +510,7 @@ router.get('/parrainage', verifierToken, async (req, res) => {
       filleuls_total:  parseInt(rows[0].filleuls_total),
       recompense_seuil: 3,
     });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/auth/profil — obtenir les informations du profil utilisateur
@@ -521,7 +522,7 @@ router.get('/profil', verifierToken, async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
     res.json({ user: rows[0] });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PUT /api/auth/profil — modifier nom, email et/ou telephone
@@ -634,7 +635,7 @@ router.put('/profil',
       res.json({ user: rows[0] });
     } catch (err) {
       if (err.code === '23505') return res.status(409).json({ error: 'Cette valeur est déjà utilisée par un autre compte.' });
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: erreurPublique(err, req) });
     }
   }
 );
@@ -944,7 +945,7 @@ router.post('/whatsapp-login', limiterAuth, async (req, res) => {
     res.json({ success: true, message: 'Lien magique envoyé sur WhatsApp' });
   } catch (err) {
     console.error('[AUTH WHATSAPP]', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -986,7 +987,7 @@ router.post('/magic-login', limiterAuth, async (req, res) => {
     user.en_cours_de_suppression = enCoursDeSuppression;
     res.json({ user, token: sessionToken });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -1028,7 +1029,7 @@ router.post('/magic-verify', limiterAuth, async (req, res) => {
     user.en_cours_de_suppression = enCoursDeSuppression;
     res.json({ success: true, user, token: sessionToken });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -1045,7 +1046,7 @@ router.post('/2fa/demander', verifierToken, async (req, res) => {
     await envoyerOtpWhatsApp(rows[0].telephone, code, label);
     res.json({ success: true, message: 'Code de sécurité envoyé sur votre WhatsApp', telephone_masque: rows[0].telephone.slice(-4) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -1061,7 +1062,7 @@ router.post('/2fa/valider', verifierToken, async (req, res) => {
     }
     res.json({ success: true, message: 'Opération validée avec succès' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -1224,7 +1225,7 @@ router.get('/statut-suppression', verifierToken, async (req, res) => {
       date_limite: dateLimite,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

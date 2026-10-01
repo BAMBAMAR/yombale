@@ -1,5 +1,6 @@
 // backend/routes/api-partenaire.js — API publique payante pour partenaires externes
 const router  = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const crypto  = require('crypto');
 const { pool } = require('../models/db');
 const rateLimit = require('express-rate-limit');
@@ -61,7 +62,7 @@ router.get('/prix', limiter, requireApiKey, async (req, res) => {
       [produit || null, categorie || null, Math.min(parseInt(limit) || 20, 100)]
     );
     res.json({ data: rows, count: rows.length });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/v1/boutiques?categorie=mode — liste des boutiques
@@ -82,7 +83,7 @@ router.get('/boutiques', limiter, requireApiKey, async (req, res) => {
       [categorie || null, ville || null, Math.min(parseInt(limit) || 20, 100)]
     );
     res.json({ data: rows, count: rows.length });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/v1/keys — créer une clé API (authentification utilisateur requise)
@@ -101,7 +102,7 @@ router.post('/keys', verifierToken, async (req, res) => {
       quota_mensuel: QUOTA_GRATUIT,
       warning: 'Conservez cette clé — elle ne sera plus affichée.',
     });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 module.exports = router;

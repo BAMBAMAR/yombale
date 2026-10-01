@@ -2,6 +2,7 @@
 // CRUD complet et administration des catégories de la plateforme Nopalou
 
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const crypto = require('crypto');
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
@@ -162,7 +163,7 @@ router.get('/', async (req, res) => {
       return res.json({ categories: mapped });
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -204,7 +205,7 @@ router.get('/admin/toutes', ...adminAccess('produits'), async (req, res) => {
     }
     res.json({ categories });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -247,7 +248,7 @@ router.post('/admin', ...adminAccess('produits'), async (req, res) => {
     invalidateCategoriesCache();
     res.json({ success: true, categorie: row });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -268,7 +269,7 @@ router.put('/admin/reordonner', ...adminAccess('produits'), async (req, res) => 
     invalidateCategoriesCache();
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -305,7 +306,7 @@ router.put('/admin/:id', ...adminAccess('produits'), async (req, res) => {
     if (err.code === '23505') {
       return res.status(400).json({ error: 'Ce slug de catégorie est déjà utilisé par une autre catégorie.' });
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -346,7 +347,7 @@ router.delete('/admin/:id', ...adminAccess('produits'), async (req, res) => {
     await pool.query('DELETE FROM categories WHERE id = $1', [cat.id]);
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

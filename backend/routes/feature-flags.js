@@ -2,6 +2,7 @@
 // API d'administration et d'interrogation des Feature Flags
 
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { adminSecretOnly } = require('../middlewares/auth');
 const featureFlags = require('../lib/featureFlags');
 
@@ -12,7 +13,7 @@ router.get('/public', async (req, res) => {
     const flags = await featureFlags.getPublicFlags();
     res.json(flags);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -22,7 +23,7 @@ router.get('/admin/tous', ...adminAccess('settings'), async (req, res) => {
     const flags = await featureFlags.getAllFlags();
     res.json({ flags });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -34,7 +35,7 @@ router.put('/admin/:key', ...adminAccess('settings'), async (req, res) => {
     const updated = await featureFlags.setFlag(key, { enabled, label, description, categorie, scope, meta });
     res.json({ success: true, flag: updated });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -56,7 +57,7 @@ router.post('/admin', ...adminAccess('settings'), async (req, res) => {
     });
     res.json({ success: true, flag: created });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -67,7 +68,7 @@ router.delete('/admin/:key', ...adminAccess('settings'), async (req, res) => {
     await featureFlags.deleteFlag(key);
     res.json({ success: true, deletedKey: key });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

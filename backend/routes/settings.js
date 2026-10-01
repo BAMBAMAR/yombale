@@ -1,5 +1,6 @@
 // backend/routes/settings.js — Configuration dynamique (prix, promo, WhatsApp, paiement)
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { adminSecretOnly } = require('../middlewares/auth');
 const s = require('../lib/settingsCache');
 
@@ -33,7 +34,7 @@ router.get('/', ...adminAccess('settings'), async (req, res) => {
   try {
     const all = await s.getAll();
     res.json(maskSettings(all));
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PUT /api/settings — mettre à jour une ou plusieurs clés (admin seulement)
@@ -50,7 +51,7 @@ router.put('/', ...adminAccess('settings'), async (req, res) => {
     await s.setMany(updates);
     s.invalidate();
     res.json({ updated: updates });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/settings/public — sous-ensemble public (prix affichés sur le site)
@@ -74,7 +75,7 @@ router.get('/public', async (req, res) => {
     const result = {};
     for (const k of keys) result[k] = await s.get(k);
     res.json(result);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 module.exports = router;

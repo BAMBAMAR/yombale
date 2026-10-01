@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
@@ -11,7 +12,7 @@ router.get('/user/:userId', verifierToken, async (req, res) => {
       [req.params.userId]
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 router.post('/',
@@ -38,7 +39,7 @@ router.post('/',
     res.status(201).json(rows[0]);
   } catch (err) {
     console.error('[ALERTES POST]', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -49,7 +50,7 @@ router.delete('/:id', verifierToken, async (req, res) => {
       [req.params.id, req.user.userId]
     );
     res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 module.exports = router;

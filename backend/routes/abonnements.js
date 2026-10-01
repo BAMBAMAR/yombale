@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { pool } = require('../models/db');
 const { PAYANT, ATTRIBUE_ADMIN } = require('../lib/abonnementsSql');
 const { enregistrerInitiation } = require('../lib/paiementsInities');
@@ -55,7 +56,7 @@ router.get('/mon-plan', verifierToken, async (req, res) => {
         acces_total: isTrial || abo.plan === 'business',
       }
     });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/abonnements/initier — lancer le paiement Wave pour un abonnement
@@ -120,7 +121,7 @@ router.get('/admin', adminSecretOnly, async (req, res) => {
       LIMIT 300
     `);
     res.json({ abonnements: rows });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // GET /api/abonnements/admin/stats — stats abonnements (admin)
@@ -155,7 +156,7 @@ router.get('/admin/stats', requireAdminAuth, requireAdminRole('super_admin', 'fi
       FROM abonnements
     `);
     res.json({ ...rows[0], ...extra });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // POST /api/abonnements/admin/activer — activer un plan directement (test/admin)
@@ -195,7 +196,7 @@ router.post('/admin/activer', requireAdminAuth, requireAdminRole('super_admin', 
     res.json({ success: true, abonnement: rows[0] });
   } catch (err) {
     console.error('[ABONNEMENTS ADMIN ACTIVER]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -217,7 +218,7 @@ router.put('/admin/:id/annuler', requireAdminAuth, requireAdminRole('super_admin
     });
 
     res.json({ abonnement: rows[0] });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 // PUT /api/abonnements/admin/:id/prolonger — prolonger un abonnement (admin)
@@ -243,7 +244,7 @@ router.put('/admin/:id/prolonger', requireAdminAuth, requireAdminRole('super_adm
     });
 
     res.json({ abonnement: rows[0] });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 module.exports = router;

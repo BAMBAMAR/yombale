@@ -9,6 +9,7 @@ const { adminSecretOnly } = require('../middlewares/auth');
 
 const { adminAccess } = require('../middlewares/admin-rbac');
 const router = express.Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 
 let affiliateClicksTableEnsured = false;
 async function ensureAffiliateClicksTable() {
@@ -62,7 +63,7 @@ router.get('/clicks', ...adminAccess('finances'), async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('[affiliates/clicks]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -100,7 +101,7 @@ router.post('/track', async (req, res) => {
     res.status(201).json({ success: true, click: result.rows[0] });
   } catch (err) {
     console.error('[affiliates/track]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 
@@ -152,7 +153,7 @@ router.post('/:click_ref/convert', ...adminAccess('finances'), async (req, res) 
     res.json({ success: true, click });
   } catch (err) {
     console.error('[affiliates/convert]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
 

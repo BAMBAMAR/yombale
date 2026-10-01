@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 const { limiterGeneral } = require('../middlewares/rateLimit');
@@ -76,7 +77,7 @@ router.get('/stats/admin', ...adminAccess('finances'), async (req, res) => {
     `);
 
     res.json({ total: total[0], par_marchand: parMarchand, par_jour: parJour });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
 module.exports = router;
