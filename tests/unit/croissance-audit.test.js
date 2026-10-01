@@ -269,3 +269,46 @@ describe('AUD-115 / AUD-124 / AUD-126 : textes sans allégation non prouvée ni 
     expect(fautifs(/100% HORS-LIGNE|100% Hors-Ligne|100% hors-ligne sans Internet|FONCTIONNE SANS INTERNET \(100% HORS-LIGNE\)/)).toEqual([]);
   });
 });
+
+
+describe("AUD-111 : plus aucun texte d'essai gratuit écrit en dur dans les pages et composants", () => {
+  const fs2 = require('fs'), path2 = require('path');
+  const racine2 = path2.join(__dirname, '../..', 'frontend-next/src');
+  // Hors périmètre : suppression de compte (30 j de grâce), Sama Xaalis (réglage kalpe_essai_jours), mise en avant payante (30 j),
+  // agences immobilières (plans propres), libellés d'administration du réglage lui-même.
+  const EXCLUS = /SupprimerCompte|kalpe|Kalpe|sama-xaalis|[\\/]agence[\\/]|SponsoringImmo|paiement[\\/]succes|HeroAgence|MarketingBoutique|GuidePrix|logiciel-gestion-locative|AdminSystemClient|TarifsClient|__tests__|essai-format/;
+  const RE = /(?:30|1)\s*(?:jours?|j\b)[^.\n]{0,25}?(?:offerts?|gratuits?|d['’]essai|d&apos;essai)|(?:1er|1|premier)\s*mois\s*(?:100\s?%\s*)?(?:offert|gratuit)|1 MOIS OFFERT|pendant 30\s?j|30j\s*offerts|1ER MOIS 100% OFFERT|1er Mois Offert/gi;
+  const lister = (d, out = []) => {
+    for (const e of fs2.readdirSync(d, { withFileTypes: true })) {
+      if (['node_modules', '.next'].includes(e.name)) continue;
+      const p = path2.join(d, e.name);
+      if (e.isDirectory()) lister(p, out); else if (/\.(tsx?|mjs)$/.test(e.name)) out.push(p);
+    }
+    return out;
+  };
+
+  test('aucune occurrence littérale (le texte doit utiliser la variable essai du réglage admin)', () => {
+    const fautifs = [];
+    for (const f of lister(racine2)) {
+      if (EXCLUS.test(f)) continue;
+      const lignes = fs2.readFileSync(f, 'utf8').split(/\r?\n/);
+      lignes.forEach((l, i) => { if (!/^\s*(\/\/|\*|\{\/\*)/.test(l) && RE.test(l)) fautifs.push(path2.relative(racine2, f) + ':' + (i + 1)); RE.lastIndex = 0; });
+    }
+    expect(fautifs).toEqual([]);
+  });
+
+  test("le layout racine fournit la durée d'essai du réglage admin aux composants clients", () => {
+    const layout = fs2.readFileSync(path2.join(racine2, 'app/layout.tsx'), 'utf8');
+    expect(layout).toMatch(/getEssaiJours\(\)/);
+    expect(layout).toMatch(/<EssaiProvider jours=\{essaiJours\}>/);
+  });
+
+  test("aucun composant client n'importe le helper serveur (server-only)", () => {
+    const fautifs = [];
+    for (const f of lister(racine2)) {
+      const s2 = fs2.readFileSync(f, 'utf8');
+      if (/from '@\/lib\/essai'/.test(s2) && /^[\s\uFEFF]*['"]use client['"]/.test(s2.slice(0, 400))) fautifs.push(path2.relative(racine2, f));
+    }
+    expect(fautifs).toEqual([]);
+  });
+});

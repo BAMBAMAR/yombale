@@ -1,5 +1,6 @@
 import { RefreshCw, Sparkles, Zap, Send, MessageSquare, Store, PackagePlus, Ban } from 'lucide-react'
 import type { ScrapingResult, RelancesResult } from './types'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface Props {
   loadingCronData: boolean
@@ -32,6 +33,7 @@ export default function ProspectionTabControl({
   onRunRelances,
   cronData,
 }: Props) {
+  const essai = useEssaiJours()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Top Actions & Refresh */}
@@ -265,7 +267,7 @@ export default function ProspectionTabControl({
               <strong style={{ fontSize: 14, color: '#1E293B' }}>Création de Boutique en 30s</strong>
             </div>
             <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 8px', lineHeight: 1.5 }}>
-              Un commerçant tape <code>créer boutique</code> sur WhatsApp. Le bot lui demande son nom, quartier et secteur, puis génère automatiquement sa vitrine en ligne avec 30 jours offerts.
+              Un commerçant tape <code>créer boutique</code> sur WhatsApp. Le bot lui demande son nom, quartier et secteur, puis génère automatiquement sa vitrine en ligne avec {essai} jours offerts.
             </p>
             <span style={{ fontSize: 11, fontWeight: 800, color: '#16A34A', background: '#DCFCE7', padding: '3px 8px', borderRadius: 6 }}>
               Opérationnel 24h/24

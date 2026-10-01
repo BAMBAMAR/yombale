@@ -1,7 +1,9 @@
 import React from 'react'
 import { TrendingUp, MapPin, Store } from 'lucide-react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 export default function ForceDeVenteTabStrategie() {
+  const essai = useEssaiJours()
   const steps = [
     {
       step: '1',
@@ -30,7 +32,7 @@ export default function ForceDeVenteTabStrategie() {
     {
       step: '5',
       title: 'Suivi J+1 & J+7',
-      desc: 'Message WhatsApp de félicitations à J+1, relance téléphonique à J+7 pour accompagner le 1er mois offert.',
+      desc: `Message WhatsApp de félicitations à J+1, relance téléphonique à J+7 pour accompagner le ${essai} jours offerts.`,
       color: '#F59E0B',
     },
   ]

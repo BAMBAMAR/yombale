@@ -1,5 +1,6 @@
 import React from 'react'
 import { Download } from 'lucide-react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface ForceDeVenteTabSupportsProps {
   agentCode: string
@@ -12,11 +13,12 @@ export default function ForceDeVenteTabSupports({
   agentPhone,
   agentNom,
 }: ForceDeVenteTabSupportsProps) {
+  const essai = useEssaiJours()
   const supports = [
     {
       title: 'Flyer Démarchage A5',
       format: '1240 × 1748 px (A5 HD)',
-      desc: 'Flyer prospect pour commerçants : 30j offerts, Caisse Offline, 0% com, QR démo.',
+      desc: `Flyer prospect pour commerçants : ${essai}j offerts, Caisse Offline, 0% com, QR démo.`,
       url: `/assets/flyer-commercial-a5?code=${agentCode}&phone=${agentPhone}&nom=${encodeURIComponent(agentNom)}`,
     },
     {

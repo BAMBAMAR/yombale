@@ -1,10 +1,10 @@
 import React from 'react'
 import Link from 'next/link'
 import { ArrowRight, Zap } from 'lucide-react'
-import { getEssaiJours } from '@/lib/essai'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
-export default async function MerchantCtaBanner() {
-  const essai = await getEssaiJours()
+export default function MerchantCtaBanner() {
+  const essai = useEssaiJours()
   return (
     <div
       style={{

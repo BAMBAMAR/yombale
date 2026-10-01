@@ -1,6 +1,7 @@
 import React from 'react'
 import { Copy, Download, QrCode, Store, CheckCircle2 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface KitComTabDemarchageProps {
   prixPro: number
@@ -15,6 +16,7 @@ export default function KitComTabDemarchage({
   scriptOralPerso,
   onCopy,
 }: KitComTabDemarchageProps) {
+  const essai = useEssaiJours()
   const argumentsVente = [
     {
       t: 'Caisse Enregistreuse POS Tactile & 3 Scanners',
@@ -41,7 +43,7 @@ export default function KitComTabDemarchage({
       d: 'Chaque vendeur a son code PIN. Historique des ventes, contrôle des écarts de caisse et clôture Z automatique.',
     },
     {
-      t: '1er Mois 100% Offert & Remises -25%',
+      t: `${essai} Jours 100% Offerts & Remises -25%`,
       d: `Démarrez sans payer le 1er mois. Formule Pro à ${fcfa(prixPro)}/mois ou Business à ${fcfa(prixBusiness)}/mois avec jusqu'à 3 mois offerts sur l'abonnement annuel.`,
     },
   ]

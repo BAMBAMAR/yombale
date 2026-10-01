@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link2, MessageSquare, Copy } from 'lucide-react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface ForceDeVenteTabGenerateurProps {
   agentNom: string
@@ -20,8 +21,9 @@ export default function ForceDeVenteTabGenerateur({
   onAgentCodeChange,
   onCopy,
 }: ForceDeVenteTabGenerateurProps) {
+  const essai = useEssaiJours()
   const affiliateUrl = `https://nopalou.com/creer-boutique?ref=${agentCode}`
-  const whatsappMessage = `Bonjour ! C'est ${agentNom}, conseiller Nopalou. Digitalisez votre boutique à Dakar avec notre Caisse POS tactile hors-ligne, carnet de dettes WhatsApp et factures OHADA. 1er mois 100% offert : ${affiliateUrl}`
+  const whatsappMessage = `Bonjour ! C'est ${agentNom}, conseiller Nopalou. Digitalisez votre boutique à Dakar avec notre Caisse POS tactile hors-ligne, carnet de dettes WhatsApp et factures OHADA. ${essai} jours 100% offerts : ${affiliateUrl}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

@@ -1,7 +1,7 @@
 import { fcfa } from '@/lib/format'
 import { CategorieCommerce, MatriceCommerce, QuizQuestion } from './types'
 
-export function getMatriceData(prixPro: number): Record<CategorieCommerce, MatriceCommerce> {
+export function getMatriceData(prixPro: number, essai: number): Record<CategorieCommerce, MatriceCommerce> {
   return {
     mode: {
       label: 'Mode, Prêt-à-Porter & Chaussures',
@@ -18,7 +18,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
           q: '« Je vends très bien sur mon statut WhatsApp actuel »',
           r: '« C\'est justement un outil pour décupler vos ventes WhatsApp ! En 1 clic, vos clientes commandent directement sur votre numéro, et vous demandez votre bilan de la journée en tapant simplement « Bilan » sur WhatsApp. »',
         },
-        closing: '« On active votre boutique par WhatsApp en 30 secondes chrono ? C\'est 100% offert pendant 30 jours ! »',
+        closing: `« On active votre boutique par WhatsApp en 30 secondes chrono ? C'est 100% offert pendant ${essai} jours ! »`,
       },
       avec_app: {
         pitch: `« Bonjour ! Vous utilisez déjà un site ou un logiciel (Shopify, WooCommerce, Excel...), mais vous perdez du temps avec des outils complexes et des commissions élevées. Avec Nopalou, vous importez tout votre catalogue en 1 seul clic sans aucune ressaisie, et vous encaissez directement par Wave en FCFA avec 0% de commission. »`,
@@ -30,7 +30,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
         demo: 'Démonstration de l\'import intelligent multi-plateformes : glisser-déposer un export Shopify/Excel et voir tous les articles créés en 3 secondes.',
         objection: {
           q: '« Je ne veux pas perdre mon catalogue existant »',
-          r: '« Vous ne perdez rien du tout ! Notre moteur d\'import intelligent transfère automatiquement tous vos produits, prix et photos en 1 clic. Vous pouvez tester en parallèle pendant 30 jours sans risque. »',
+          r: `« Vous ne perdez rien du tout ! Notre moteur d'import intelligent transfère automatiquement tous vos produits, prix et photos en 1 clic. Vous pouvez tester en parallèle pendant ${essai} jours sans risque. »`,
         },
         closing: '« Importons votre fichier de produits maintenant : vous verrez votre vitrine Nopalou prête dans 1 minute ! »',
       },
@@ -39,7 +39,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
       label: 'Téléphonie, High-Tech & Accessoires',
       category: 'tech',
       sans_app: {
-        pitch: `« Bonjour chef ! Dans la téléphonie, les prix changent vite et la concurrence est rude à Dakar. Avec Nopalou, votre boutique est visible sur le comparateur de prix de Nopalou, vous scannez les codes-barres par caméra et vous gérez vos garanties et dettes clients sans carnet papier. 1er mois offert ! »`,
+        pitch: `« Bonjour chef ! Dans la téléphonie, les prix changent vite et la concurrence est rude à Dakar. Avec Nopalou, votre boutique est visible sur le comparateur de prix de Nopalou, vous scannez les codes-barres par caméra et vous gérez vos garanties et dettes clients sans carnet papier. ${essai} jours offerts ! »`,
         diagnostic: [
           'Comment faites-vous pour que les acheteurs de Dakar trouvent vos prix face aux autres boutiques ?',
           'Comment enregistrez-vous les numéros IMEI et les garanties des téléphones vendus ?',
@@ -64,7 +64,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
           q: '« Mon logiciel actuel me convient »',
           r: '« Gardez-le pour le magasin si vous voulez ! Utilisez Nopalou comme votre canal de visibilité et d\'acquisition de nouveaux clients sur WhatsApp à 0% de commission. »',
         },
-        closing: '« Activons votre vitrine comparateur aujourd\'hui avec les 30 jours offerts pour mesurer le nombre d\'appels que vous recevez. »',
+        closing: `« Activons votre vitrine comparateur aujourd'hui avec les ${essai} jours offerts pour mesurer le nombre d'appels que vous recevez. »`,
       },
     },
     superette: {
@@ -82,7 +82,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
           q: '« La connexion internet coupe tout le temps chez nous »',
           r: '« C\'est exactement pour cela qu\'on a créé le mode Hors-Ligne ! Notre caisse fonctionne 100% sans internet. Vos ventes sont enregistrées et rien ne bloque. »',
         },
-        closing: '« Testons la caisse hors-ligne tout de suite sur votre propre téléphone pendant 30 jours gratuits. »',
+        closing: `« Testons la caisse hors-ligne tout de suite sur votre propre téléphone pendant ${essai} jours gratuits. »`,
       },
       avec_app: {
         pitch: `« Bonjour ! Vous avez un logiciel de caisse, mais que payez-vous en maintenance ou matériel ? Nopalou fonctionne sur n\'importe quel écran, gère les codes PIN multi-caissiers, scanne avec vos douchettes USB existantes et coûte seulement ${fcfa(prixPro)}/mois tout compris. »`,
@@ -102,7 +102,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
       label: 'Quincailleries & Matériaux de Construction',
       category: 'quincaillerie',
       sans_app: {
-        pitch: `« Bonjour chef ! Dans les matériaux, les clients demandent constamment des devis et des factures avec NINEA et RCCM pour les chantiers et entreprises. Nopalou vous permet de générer des factures légales OHADA en PDF en 10 secondes et de suivre les gros crédits clients. 1er mois offert ! »`,
+        pitch: `« Bonjour chef ! Dans les matériaux, les clients demandent constamment des devis et des factures avec NINEA et RCCM pour les chantiers et entreprises. Nopalou vous permet de générer des factures légales OHADA en PDF en 10 secondes et de suivre les gros crédits clients. ${essai} jours offerts ! »`,
         diagnostic: [
           'Perdez-vous des contrats avec des entreprises parce que vous n\'avez pas de factures avec NINEA/TVA ?',
           'Comment suivez-vous les livraisons partielles de sacs de ciment ou de fer sur les chantiers ?',
@@ -125,7 +125,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
           q: '« Mon logiciel actuel fait déjà la facturation »',
           r: '« Mais vous permet-il d\'envoyer la facture en 1 clic sur WhatsApp au client sur le chantier et d\'avoir le paiement Wave instantané sans double travail ? »',
         },
-        closing: '« Testez le module Facturation & Fournisseurs pendant 30 jours sans engagement. »',
+        closing: `« Testez le module Facturation & Fournisseurs pendant ${essai} jours sans engagement. »`,
       },
     },
     cosmetique: {
@@ -154,7 +154,7 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
           q: '« Je vends déjà sur Instagram »',
           r: '« Nopalou vous donne le lien unique à mettre en bio Instagram pour que vos abonnées commandent en 1 clic sans passer 20 minutes en DM ! »',
         },
-        closing: '« Ajoutez le lien Nopalou dans votre bio Instagram pendant 30 jours d\'essai pour voir la différence. »',
+        closing: `« Ajoutez le lien Nopalou dans votre bio Instagram pendant ${essai} jours d'essai pour voir la différence. »`,
       },
     },
     resto: {
@@ -183,14 +183,14 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
           q: '« Les applications de livraison m\'apportent des clients »',
           r: '« Gardez-les pour les nouveaux, mais faites commander vos clients fidèles sur votre propre lien Nopalou pour garder 100% de vos marges ! »',
         },
-        closing: '« Mettez en place votre commande directe à 0% dès aujourd\'hui avec les 30 jours offerts. »',
+        closing: `« Mettez en place votre commande directe à 0% dès aujourd'hui avec les ${essai} jours offerts. »`,
       },
     },
     grossiste: {
       label: 'Grossistes & Semi-Grossistes',
       category: 'grossiste',
       sans_app: {
-        pitch: `« Salam alaykoum grand patron ! Gérer des centaines de cartons et des millions de FCFA de dettes clients sur des cahiers est risqué. Nopalou sécurise votre commerce : import de catalogue par lot, gestion multi-caissiers PIN, et factures OHADA en PDF. 1er mois offert ! »`,
+        pitch: `« Salam alaykoum grand patron ! Gérer des centaines de cartons et des millions de FCFA de dettes clients sur des cahiers est risqué. Nopalou sécurise votre commerce : import de catalogue par lot, gestion multi-caissiers PIN, et factures OHADA en PDF. ${essai} jours offerts ! »`,
         diagnostic: [
           'Comment contrôlez-vous la caisse exacte de vos différents vendeurs en fin de journée ?',
           'Quel est le montant total des dettes clients qui dorment dehors en ce moment ?',
@@ -212,13 +212,20 @@ export function getMatriceData(prixPro: number): Record<CategorieCommerce, Matri
           q: '« Nous avons besoin d\'une sécurité stricte pour les vendeurs »',
           r: '« Chaque caissier a son code PIN dédié avec des permissions restreintes (interdiction d\'annuler une vente ou de modifier les prix sans validation). »',
         },
-        closing: '« Testez la formule Business VIP avec vos vendeurs pendant 30 jours sans risque. »',
+        closing: `« Testez la formule Business VIP avec vos vendeurs pendant ${essai} jours sans risque. »`,
       },
     },
   }
 }
 
-export const QUIZ_QUESTIONS: QuizQuestion[] = [
+// Options de la question sur la durée d'essai : la bonne réponse est la valeur du réglage admin.
+function optionsEssai(essai: number) {
+  const distracteurs = [7, 14, 21, 30, 45, 60].filter(n => n !== essai).slice(0, 2)
+  const jours = [...distracteurs, essai].sort((a, b) => a - b)
+  return { options: jours.map(n => `${n} jours`), correct: jours.indexOf(essai) }
+}
+
+export const getQuizQuestions = (essai: number): QuizQuestion[] => [
   {
     id: 1,
     q: "Quel est l'avantage majeur de la Caisse POS Nopalou face aux coupures internet au Sénégal ?",
@@ -255,12 +262,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: 4,
     q: "Combien de temps dure l'essai gratuit offert à tout nouveau commerçant ?",
-    options: [
-      '7 jours',
-      '14 jours',
-      '30 jours (1er mois 100% offert sans carte bancaire)',
-    ],
-    correct: 2,
-    explication: "30 jours d'essai complets sans engagement pour tester toutes les fonctionnalités Pro.",
+    options: optionsEssai(essai).options,
+    correct: optionsEssai(essai).correct,
+    explication: `${essai} jours d'essai complets sans engagement pour tester toutes les fonctionnalités Pro.`,
   },
 ]

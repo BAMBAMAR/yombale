@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Download, Share2, Copy, Info, Sparkles } from 'lucide-react'
 import { fcfa } from '@/lib/format'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface KitComTabGenerateurProps {
   prixDecouverte: number
@@ -46,6 +47,7 @@ export default function KitComTabGenerateur({
   onPublishFb,
   publiEnCours,
 }: KitComTabGenerateurProps) {
+  const essai = useEssaiJours()
   const [typeVisuel, setTypeVisuel] = useState<TypeVisuel>('forfait_pro')
   const [genNom, setGenNom] = useState('iPhone 15 Pro Max 256 Go')
   const [genPrix, setGenPrix] = useState('750000')
@@ -68,11 +70,11 @@ export default function KitComTabGenerateur({
   // Légende automatique associée au visuel
   let legendePublication = ''
   if (typeVisuel === 'forfait_pro') {
-    legendePublication = `STOP AUX GESTIONS BROUILLONNES ! Digitalisez votre magasin aujourd'hui.\n\nFini les carnets perdus et les dettes oubliées. Pour seulement ${fcfa(prixPro)}/mois, transformez votre téléphone en véritable Caisse Tactile :\n\n- Mode Hors-Ligne (Même sans réseau !)\n- Scannez les codes-barres avec votre caméra\n- Éditez des factures et devis pros (PDF)\n- Encaissez par Wave/OM sans commission\n\nOFFRE SPÉCIALE : 30 Jours 100% OFFERTS (Sans carte bancaire)\nCliquez ici pour créer votre boutique : nopalou.com/boutique (Code : ${agentCodeFormatted})`
+    legendePublication = `STOP AUX GESTIONS BROUILLONNES ! Digitalisez votre magasin aujourd'hui.\n\nFini les carnets perdus et les dettes oubliées. Pour seulement ${fcfa(prixPro)}/mois, transformez votre téléphone en véritable Caisse Tactile :\n\n- Mode Hors-Ligne (Même sans réseau !)\n- Scannez les codes-barres avec votre caméra\n- Éditez des factures et devis pros (PDF)\n- Encaissez par Wave/OM sans commission\n\nOFFRE SPÉCIALE : ${essai} Jours 100% OFFERTS (Sans carte bancaire)\nCliquez ici pour créer votre boutique : nopalou.com/boutique (Code : ${agentCodeFormatted})`
   } else if (typeVisuel === 'forfait_taftaf') {
     legendePublication = `Votre vitrine en ligne prête en 30 secondes chrono !\n\nVous vendez sur WhatsApp ? Ne perdez plus de temps à répondre aux mêmes questions. Pour ${fcfa(prixDecouverte)}/mois :\n\n- Lien personnalisé pour vos clients\n- Commandes pré-remplies directement sur WhatsApp\n- Zéro commission, l'argent tombe sur votre Wave/OM\n\nTESTEZ GRATUITEMENT pendant 1 mois !\nCréez votre boutique : nopalou.com/creer-boutique`
   } else if (typeVisuel === 'forfait_business') {
-    legendePublication = `GESTION VIP POUR GROSSISTES ET GRANDES ENSEIGNES\n\nVous avez plusieurs employés ou boutiques ? Sécurisez votre business :\n\n- Accès caissiers sécurisés par code PIN\n- Clôtures de caisse automatiques\n- Gestion multi-magasins\n\n1er mois 100% OFFERT !\nDemandez une démo : nopalou.com/boutique`
+    legendePublication = `GESTION VIP POUR GROSSISTES ET GRANDES ENSEIGNES\n\nVous avez plusieurs employés ou boutiques ? Sécurisez votre business :\n\n- Accès caissiers sécurisés par code PIN\n- Clôtures de caisse automatiques\n- Gestion multi-magasins\n\n${essai} jours 100% OFFERTS !\nDemandez une démo : nopalou.com/boutique`
   } else if (typeVisuel === 'chatbot_wa') {
     legendePublication = `Nopalou dans votre WhatsApp 24h/24 !\n\nEnvie de connaître le prix d'un produit sans scroller pendant des heures ?\n\nEnvoyez "MENU" au +221 70 871 79 42\nNotre IA vous donne les meilleurs prix du Sénégal en 2 secondes !\n100% Gratuit et sans application à télécharger.`
   } else if (typeVisuel === 'immo') {
@@ -82,7 +84,7 @@ export default function KitComTabGenerateur({
   } else if (typeVisuel === 'apporteur') {
     legendePublication = `REVENUS PASSIFS : Devenez Partenaire Nopalou\n\nRecommandez le meilleur outil de gestion aux commerçants et gagnez ${tauxApporteur}% de commission CHAQUE MOIS sur leurs abonnements !\n\n- 0 FCFA d'investissement\n- Paiement assuré par Wave/OM le 5 du mois\n\nRejoignez l'équipe : nopalou.com/compte/apporteur`
   } else if (typeVisuel === 'comparatif_paliers') {
-    legendePublication = `3 Façons de booster votre commerce avec Nopalou :\n\n1. Taf Taf (${fcfa(prixDecouverte)}/m) : Pour vendre vite sur WhatsApp\n2. Pro (${fcfa(prixPro)}/m) : La caisse enregistreuse tactile complète\n3. Business (${fcfa(prixBusiness)}/m) : Pour gérer vos employés et fournisseurs\n\nTestez la solution de votre choix GRATUITEMENT pendant 30 jours !\nVoir les détails : nopalou.com/boutique`
+    legendePublication = `3 Façons de booster votre commerce avec Nopalou :\n\n1. Taf Taf (${fcfa(prixDecouverte)}/m) : Pour vendre vite sur WhatsApp\n2. Pro (${fcfa(prixPro)}/m) : La caisse enregistreuse tactile complète\n3. Business (${fcfa(prixBusiness)}/m) : Pour gérer vos employés et fournisseurs\n\nTestez la solution de votre choix GRATUITEMENT pendant ${essai} jours !\nVoir les détails : nopalou.com/boutique`
   } else {
     legendePublication = `BON PLAN DU JOUR !\n\n${genNom}\nPRIX CHOC : ${fcfa(parseInt(genPrix, 10) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre, 10) || 0)})\nVendeur vérifié : ${genBoutique}\n\nCommandez vite avant rupture sur nopalou.com !`
   }

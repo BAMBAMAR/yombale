@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import KitComClient from './KitComClient'
+import { getEssaiJours } from '@/lib/essai'
 
 export const metadata = { title: 'Kit communication — Admin Nopalou' }
 
@@ -163,7 +164,7 @@ const TEXTES = [
   },
 ]
 
-const POST_TEMPLATES = [
+const POST_TEMPLATES = (essai: number) => [
   {
     titre: 'Post Création de Boutique 100% WhatsApp en 30s (Zéro PC)',
     texte: `Ouvrez votre boutique en ligne sur WhatsApp en 30 secondes chrono ! 🇸🇳
@@ -176,7 +177,7 @@ Pas besoin d'ordinateur ni de compétences techniques. Sur Nopalou, tout se fait
 
 Paiements directs Wave & Orange Money (0% commission)
 Demandez votre bilan du jour par message : tapez « Bilan » et recevez vos ventes en direct !
-1er mois 100% OFFERT sans aucun engagement !
+${essai} jours 100% OFFERTS sans aucun engagement !
 
 Lancez-vous gratuitement sur nopalou.com/creer-boutique ou écrivez-nous sur WhatsApp !
 
@@ -193,7 +194,7 @@ Reconnaissance automatique de vos titres, prix, stocks et photos
 Import direct de vos clients et carnet de dettes
 Encaissements locaux en FCFA via Wave & Orange Money sans frais de passerelle
 
-Testez l'import gratuit sur nopalou.com/tarifs-boutique (1 mois offert)
+Testez l'import gratuit sur nopalou.com/tarifs-boutique (${essai} jours offerts)
 
 #Nopalou #AlternativeShopify #EcommerceDakar #MigrationBoutique #Senegal`,
   },
@@ -227,7 +228,7 @@ Vous gérez une boutique à Dakar ? Nopalou vous offre la Caisse Enregistreuse T
 Multi-Caissiers sécurisés par code PIN & Clôtures de Caisse Z
 Stickers & Codes-Barres EAN-13 GS1 Modulo 10
 
-30 jours d'essai gratuit sans engagement !
+${essai} jours d'essai gratuit sans engagement !
 Démo et création sur nopalou.com/boutique
 
 #NopalouPOS #MarchandDakar #CaisseEnregistreuse #CommerceSenegal #Dakar`,
@@ -312,6 +313,7 @@ Suivez notre Canal WhatsApp pour ne rater aucun bon plan : https://whatsapp.com/
 ]
 
 export default async function CommunicationPage() {
+  const essai = await getEssaiJours()
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
   const jar   = await cookies()
   const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
@@ -353,7 +355,7 @@ export default async function CommunicationPage() {
     <KitComClient
       visuels={VISUELS}
       textes={TEXTES}
-      postTemplates={POST_TEMPLATES}
+      postTemplates={POST_TEMPLATES(essai)}
       prixDecouverte={prixDecouverte}
       prixPro={prixPro}
       prixBusiness={prixBusiness}

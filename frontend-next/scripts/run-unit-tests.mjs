@@ -7,6 +7,7 @@ import path from 'node:path'
 import { formatPhone, formatNomPropre, fcfa, formatNombre, decodeHtml, escapeHtml } from '../src/lib/format.ts'
 import { safeJsonParse } from '../src/lib/errorHandler.ts'
 import { safeJsonLd } from '../src/lib/jsonld.ts'
+import { ESSAI_DEFAUT, essaiJoursValide } from '../src/lib/essai-format.ts'
 import {
   calculerKpisCarnet,
   determinerActionClient,
@@ -1070,6 +1071,19 @@ it('safeJsonLd: valeurs limites (undefined, null, tableaux, nombres)', () => {
   assert.equal(safeJsonLd(undefined), 'null')
   assert.equal(safeJsonLd(null), 'null')
   assert.deepEqual(JSON.parse(safeJsonLd([1, 'a&b', { k: '<b>' }])), [1, 'a&b', { k: '<b>' }])
+})
+
+it("essaiJoursValide: valeur du réglage admin, repli sur 30 si absente ou invalide", () => {
+  assert.equal(ESSAI_DEFAUT, 30)
+  assert.equal(essaiJoursValide('45'), 45)
+  assert.equal(essaiJoursValide(14), 14)
+  assert.equal(essaiJoursValide(' 21 '), 21)
+  assert.equal(essaiJoursValide(undefined), 30)
+  assert.equal(essaiJoursValide(''), 30)
+  assert.equal(essaiJoursValide('abc'), 30)
+  assert.equal(essaiJoursValide(0), 30)
+  assert.equal(essaiJoursValide(-5), 30)
+  assert.equal(essaiJoursValide(400), 30)
 })
 
 await Promise.all(enAttente)

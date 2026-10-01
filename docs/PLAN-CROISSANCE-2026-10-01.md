@@ -16,7 +16,7 @@ Rapport source : [`AUDIT-CROISSANCE-2026-10-01.md`](AUDIT-CROISSANCE-2026-10-01.
 | AUD-108 | **Corrigé** | rejeu : 6 échecs sur l'ancienne route, tout vert après ; test unitaire à mutation |
 | AUD-109 | **Corrigé** | idem (rejeu 3 appels = 1 essai ; abonnement payant jamais annulé) |
 | AUD-110 | **Corrigé** | SQL validé sur la copie : MRR 65 000 → 0, attributions admin 65 000 isolées, essais convertis 0/13 |
-| AUD-111 | **Partiel** | backend, bot, FAQ, prospection : réglage admin (défaut 30). **Reste** : ~60 textes statiques des pages publiques, exacts tant que le réglage vaut 30 (`generateMetadata` + helper serveur à prévoir) |
+| AUD-111 | **Corrigé** | durée d'essai lue dans le réglage admin partout (backend, bot, FAQ, prospection, wizard, pages publiques, méta, JSON-LD, supports, kits de vente) ; vérifié avec le réglage à 45 (15 pages) ; garde-fou en test. Hors périmètre : agences immobilières, Sama Xaalis, mises en avant payantes ; 3 images d'assets non rendues en environnement isolé |
 | AUD-112 | **Partiel** | conversion CRM après contact réel, journal fidèle au gabarit envoyé, UTM sur le bouton de repli. **Reste** : bouton URL dynamique dans le gabarit Meta `nopalou_acces_direct` (action d'exploitation), compteurs de campagne `nb_interesses/nb_inscrits/nb_optout`, noms de campagne |
 | AUD-113 | **Corrigé** | test à mutation (3 échecs sans correctif) |
 | AUD-114 | Non traité | décision produit : lot `osm_places` à tester, dépend d'AUD-112 |

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Printer, Copy, Send, HelpCircle, ShieldAlert, CheckCircle2 } from 'lucide-react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface KitComTabBattlecardProps {
   agentNameFormatted: string
@@ -8,7 +9,7 @@ interface KitComTabBattlecardProps {
   onCopy: (txt: string, label: string) => void
 }
 
-const OBJECTIONS = [
+const OBJECTIONS = (essai: number) => [
   {
     q: "« C'est trop compliqué, je ne maîtrise pas l'informatique. »",
     peur: "Peur de la technologie et de l'échec.",
@@ -62,7 +63,7 @@ const OBJECTIONS = [
   {
     q: "« Je veux continuer mon système actuel. »",
     peur: "Inertie générale.",
-    r: "« Vous pouvez garder votre système actuel et tester Nopalou en parallèle pendant 30 jours sans risque. Si au bout d'un mois vous ne gagnez pas de temps, vous arrêtez sans payer un seul franc. On l'active ensemble ? »",
+    r: `« Vous pouvez garder votre système actuel et tester Nopalou en parallèle pendant ${essai} jours sans risque. Si au bout d'un mois vous ne gagnez pas de temps, vous arrêtez sans payer un seul franc. On l'active ensemble ? »`,
   },
 ]
 
@@ -72,10 +73,11 @@ export default function KitComTabBattlecard({
   agentCodeFormatted,
   onCopy,
 }: KitComTabBattlecardProps) {
+  const essai = useEssaiJours()
   const scriptsWhatsApp = [
     {
       titre: '1. Premier Contact Froid (Prospection)',
-      msg: `« Bonjour [Nom_Boutique] ! \n\nJ'ai vu votre superbe collection sur les réseaux. Nous aidons les commerçants à Dakar à automatiser leurs commandes WhatsApp et à tenir leur caisse magasin sur téléphone sans cahier papier.\n\nExemple de vitrine en 30s : nopalou.com/demo\n\nVous bénéficiez de 30 jours 100% offerts sans engagement. Souhaitez-vous que je configure vos premiers articles gratuitement aujourd'hui ? »`,
+      msg: `« Bonjour [Nom_Boutique] ! \n\nJ'ai vu votre superbe collection sur les réseaux. Nous aidons les commerçants à Dakar à automatiser leurs commandes WhatsApp et à tenir leur caisse magasin sur téléphone sans cahier papier.\n\nExemple de vitrine en 30s : nopalou.com/demo\n\nVous bénéficiez de ${essai} jours 100% offerts sans engagement. Souhaitez-vous que je configure vos premiers articles gratuitement aujourd'hui ? »`,
     },
     {
       titre: '2. Relance Démo (Commerçant Intéressé)',
@@ -87,7 +89,7 @@ export default function KitComTabBattlecard({
     },
     {
       titre: "4. Fin d'Essai (Conversion Payante Wave)",
-      msg: `« Bonjour ! Votre période d'essai gratuit de 30 jours sur Nopalou se termine dans 3 jours.\n\nPour continuer à profiter de votre caisse POS et de vos commandes WhatsApp sans interruption, vous pouvez renouveler votre formule en 1 clic par Wave ici : [Lien_Paiement_Wave]\n\nMerci pour votre fidélité ! »`,
+      msg: `« Bonjour ! Votre période d'essai gratuit de ${essai} jours sur Nopalou se termine dans 3 jours.\n\nPour continuer à profiter de votre caisse POS et de vos commandes WhatsApp sans interruption, vous pouvez renouveler votre formule en 1 clic par Wave ici : [Lien_Paiement_Wave]\n\nMerci pour votre fidélité ! »`,
     },
     {
       titre: '5. Message de Parrainage (Pour vos Commerçants Actifs)',
@@ -171,7 +173,7 @@ export default function KitComTabBattlecard({
                   borderRadius: 20,
                 }}
               >
-                1ER MOIS 100% OFFERT
+                {essai} JOURS 100% OFFERTS
               </span>
               <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>Zéro carte bancaire requise</div>
             </div>
@@ -223,7 +225,7 @@ export default function KitComTabBattlecard({
               Conseiller : <strong>{agentNameFormatted}</strong> · WhatsApp : <strong>{agentPhoneFormatted}</strong>
             </div>
             <div>
-              Code Partenaire : <strong style={{ color: 'var(--accent, #C75B00)' }}>{agentCodeFormatted}</strong> (1 mois offert)
+              Code Partenaire : <strong style={{ color: 'var(--accent, #C75B00)' }}>{agentCodeFormatted}</strong> ({essai} jours offerts)
             </div>
           </div>
         </div>
@@ -239,7 +241,7 @@ export default function KitComTabBattlecard({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {OBJECTIONS.map((obj, idx) => (
+          {OBJECTIONS(essai).map((obj, idx) => (
             <div
               key={idx}
               style={{

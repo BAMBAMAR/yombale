@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
 import { ShieldCheck, HelpCircle } from 'lucide-react'
-import { QUIZ_QUESTIONS } from './matriceData'
+import { getQuizQuestions } from './matriceData'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 export default function ForceDeVenteTabFormation() {
+  const essai = useEssaiJours()
+  const QUIZ_QUESTIONS = getQuizQuestions(essai)
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({})
   const [quizScore, setQuizScore] = useState<number | null>(null)
 
@@ -24,7 +27,7 @@ export default function ForceDeVenteTabFormation() {
     { num: '3', title: 'Zéro Jargon Technique', desc: 'Ne parlez pas de "SaaS", "cloud" ou "API". Parlez de "Caisse sur téléphone", "Dettes WhatsApp" et "0 commission".' },
     { num: '4', title: "Démonstration par l'Action", desc: "Ne décrivez pas l'application : montrez-la en direct en scannant un vrai produit sous ses yeux." },
     { num: '5', title: 'Écoute Active (80/20)', desc: 'Laissez le commerçant parler 80% du temps de ses difficultés quotidiennes de caisse et de dettes.' },
-    { num: '6', title: 'Mise en avant du 1er Mois Offert', desc: 'Désarmez la peur de payer en rappelant que le 1er mois est 100% gratuit sans engagement.' },
+    { num: '6', title: `Mise en avant des ${essai} jours offerts`, desc: `Désarmez la peur de payer en rappelant que les ${essai} premiers jours sont 100% gratuits sans engagement.` },
     { num: '7', title: 'Onboarding Immédiat 30s', desc: "Ne laissez jamais le commerçant s'inscrire \"plus tard\". Ouvrez sa boutique par WhatsApp en 30s ou uploadez son fichier Excel/Shopify." },
     { num: '8', title: 'Création de Valeur Tangible', desc: "Envoyez 1 article avec photo et prix au bot WhatsApp pour qu'il voie immédiatement sa vitrine web active." },
     { num: '9', title: 'Preuve Sociale Locale', desc: 'Citez des boutiques voisines du même quartier déjà inscrites pour rassurer.' },

@@ -17,6 +17,7 @@ import {
   ForceDeVenteTabGenerateur,
   ForceDeVenteTabSimulateur,
 } from './components'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 export default function ForceDeVenteClient({
   prixDecouverte = 2500,
@@ -46,7 +47,8 @@ export default function ForceDeVenteClient({
     showToast(`${label} copié dans le presse-papier !`)
   }
 
-  const matriceData = useMemo(() => getMatriceData(prixPro), [prixPro])
+  const essai = useEssaiJours()
+  const matriceData = useMemo(() => getMatriceData(prixPro, essai), [prixPro, essai])
 
   return (
     <div

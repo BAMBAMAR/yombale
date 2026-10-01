@@ -61,7 +61,7 @@ export default function ProspectionCrmTable({
                 const st = STATUT_LABELS[lead.statut] || STATUT_LABELS.nouveau
                 const op = OPERATEUR_COLORS[lead.operateur] || OPERATEUR_COLORS.Autre
                 const waDirectUrl = `https://wa.me/${lead.telephone}?text=${encodeURIComponent(
-                  `Salam ${lead.nom_boutique} ! J'ai vu vos magnifiques articles. Avez-vous pensé à créer votre boutique en ligne avec paiement Wave direct et 0% commission ? 30 jours offerts : https://nopalou.com`
+                  `Salam ${lead.nom_boutique} ! J'ai vu vos magnifiques articles. Avez-vous pensé à créer votre boutique en ligne avec paiement Wave direct et 0% commission ? {essai} jours offerts : https://nopalou.com`
                 )}`
 
                 const sc = lead.score || 0
