@@ -52,7 +52,7 @@ function signalerAutomate(req, res, next) {
   const ip = realIp(req);
   if (INTERNAL_IPS.has(ip) || isPrivateIp(ip)) return next();
   const ua = String(req.headers['user-agent'] || '').trim();
-  req.botSignal = !ua || UA_AUTOMATE.test(ua);
+  req.botSignal = !ua || UA_AUTOMATE.test(ua) || require('../lib/detectionScraping').estSuspecte(ip); // AUD-150 : IP ayant touché un piège
   if (req.botSignal && process.env.BOT_UA_BLOCK === 'true' && process.env.NODE_ENV === 'production') {
     return res.status(429).json({ error: 'Accès automatisé non autorisé' });
   }
@@ -210,7 +210,11 @@ function limiterBudget(req, res, next) {
     budgets.set(cle, b);
   }
   if (b.lignes >= max) {
-    if (!b.signale) { b.signale = true; console.warn('[BUDGET] ' + cle + ' a atteint ' + max + ' lignes en 15 min (' + req.method + ' ' + req.baseUrl + ')'); }
+    if (!b.signale) {
+      b.signale = true;
+      console.warn('[BUDGET] ' + cle + ' a atteint ' + max + ' lignes en 15 min (' + req.method + ' ' + req.baseUrl + ')');
+      require('../lib/detectionScraping').signalerSecurite(req, ip, 'budget_lignes_depasse', { cle, max, route: req.baseUrl }); // AUD-150
+    }
     // SCRAPE_BUDGET_ENFORCE=false : journalise sans refuser (utile pour valider l'IP vue par le backend avant d'appliquer)
     if (process.env.SCRAPE_BUDGET_ENFORCE === 'false') return next();
     res.set('Retry-After', String(Math.ceil((b.debut + FENETRE_BUDGET_MS - now) / 1000)));
@@ -242,4 +246,12 @@ const limiterRevelationCompte = rateLimit({
 });
 const limiterRevelation = [limiterRevelationIp, limiterRevelationCompte];
 
-module.exports = { signalerAutomate, limiterRevelation, isSsrRequest, limiterBudget, limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };
+// AUD-150 : photo des plus gros consommateurs de lignes (pour le tableau de bord administrateur)
+function topConsommateurs(n = 10) {
+  return [...budgets.entries()]
+    .map(([cle, b]) => ({ cle: cle.replace(/^u:/, 'compte:'), lignes: b.lignes, depuis: new Date(b.debut).toISOString() }))
+    .sort((a, b) => b.lignes - a.lignes)
+    .slice(0, n);
+}
+
+module.exports = { topConsommateurs, signalerAutomate, limiterRevelation, isSsrRequest, limiterBudget, limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };

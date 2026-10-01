@@ -814,7 +814,8 @@ router.get('/:id', tokenOptional, async (req, res) => {
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
 
-    pool.query(
+    // AUD-150 : les robots et automates ne comptent pas comme des vues de boutique
+    if (!req.botSignal) pool.query(
       `INSERT INTO analytics_events (type, boutique_id) VALUES ('vue_boutique',$1)`,
       [r.rows[0].id]
     ).catch(() => {});

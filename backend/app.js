@@ -133,7 +133,7 @@ app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    callback(new Error('CORS non autorisé pour : ' + origin));
+    callback(null, false); // AUD-151 : origine étrangère = pas d'en-têtes CORS (le navigateur bloque), plus de 500
   },
   credentials: true,
 }));
@@ -362,7 +362,16 @@ app.use('/api/comptabilite',    require('./routes/comptabilite'));
 app.use('/api/kalpe',           require('./routes/kalpe'));
 app.use('/api/admin/kalpe',     require('./routes/admin-kalpe'));
 app.use('/api/search',          require('./routes/search'));
-app.use('/api/sitemap',         require('./routes/sitemap')); // AUD-139 : identifiants pour le sitemap (rendu serveur uniquement)
+app.use('/api/sitemap',         require('./routes/sitemap'));
+// AUD-150 : pièges. Ces URL n'existent dans aucune page, sont interdites par robots.txt (/api/) : seul un aspirateur les visite.
+const piege = (req, res) => {
+  const ip = req.ip;
+  const det = require('./lib/detectionScraping');
+  det.marquerSuspecte(ip);
+  det.signalerSecurite(req, ip, 'piege_scraping', { url: req.originalUrl.split('?')[0] });
+  res.json({ success: true, items: [], total: 0 });
+};
+app.get(['/api/catalogue-complet', '/api/export/produits', '/api/export/annonces', '/api/v1/export'], piege); // AUD-139 : identifiants pour le sitemap (rendu serveur uniquement)
 app.use('/api/v1',              require('./routes/api-partenaire'));
 app.use('/api/settings',        require('./routes/settings'));
 app.use('/api/apporteurs',      require('./routes/apporteurs'));

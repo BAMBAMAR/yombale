@@ -388,6 +388,22 @@ router.get('/data-health', requireAdminAuth, async (req, res) => {
 });
 
 // ── GET /api/admin/system/incidents — Journal consolidé des incidents & alertes
+// AUD-150 : consommation de données (gros consommateurs, pièges touchés, dépassements de budget sur 24 h)
+router.get('/consommation', requireAdminAuth, async (req, res) => {
+  try {
+    const { topConsommateurs } = require('../middlewares/rateLimit');
+    const { rows } = await pool.query(
+      `SELECT event_type, COUNT(*)::int AS nb, COUNT(DISTINCT ip_address)::int AS ips, MAX(created_at) AS dernier
+       FROM security_audit_vault
+       WHERE event_type IN ('piege_scraping','budget_lignes_depasse') AND created_at > NOW() - INTERVAL '24 hours'
+       GROUP BY event_type`
+    );
+    res.json({ success: true, top: topConsommateurs(10), evenements_24h: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
+});
+
 router.get('/incidents', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     const [cronsEnErreur, webhooksInactifs, logsCritiques] = await Promise.all([

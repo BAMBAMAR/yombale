@@ -654,4 +654,66 @@ describeIntegration('Protection des données', () => {
       expect((await t(70)).status).toBe(429);
       expect((await request(app).post('/api/auth/connexion').set('X-Forwarded-For', '198.51.100.80').send({ email: 'autre.compte@integration.test', mot_de_passe: 'x' })).status).toBe(401);
     });
+  });
+  describe('AUD-150 / AUD-151 — détection de l\'aspiration, vues de boutique, CORS', () => {
+    const NAV = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0 Safari/537.36';
+    let b;
+    beforeAll(async () => {
+      await pool.query(`INSERT INTO annonces_immo (titre, type_bien, transaction, prix, ville, source, actif, supprimee, rejete)
+        SELECT 'Annonce piege ' || g, 'studio', 'location', 90000 + g, 'Dakar', 'test-piege', true, false, false FROM generate_series(1, 60) g`);
+      const reg = await post('/api/auth/inscription', { nom: 'Marchand Vues', email: `vues.${Date.now()}@integration.test`, mot_de_passe: PW });
+      const r = await post('/api/boutiques', { nom: `Boutique Vues ${Date.now()}`, telephone: '771119004', ville: 'Dakar', categorie: 'mode' }, reg.body.token);
+      b = { ...(r.body.boutique || r.body), uid: reg.body.user.id };
+    });
+    afterAll(async () => {
+      await pool.query(`DELETE FROM annonces_immo WHERE source = 'test-piege'`).catch(() => {});
+      await pool.query('DELETE FROM analytics_events WHERE boutique_id = $1', [b.id]).catch(() => {});
+      await pool.query('DELETE FROM boutiques WHERE id = $1', [b.id]).catch(() => {});
+      await pool.query('DELETE FROM utilisateurs WHERE id = $1', [b.uid]).catch(() => {});
+      await pool.query(`DELETE FROM security_audit_vault WHERE ip_address LIKE '203.0.113.13%'`).catch(() => {});
+    });
+
+    test('piège : une visite est journalisée (une fois par IP et par heure) et réduit le budget de cette IP', async () => {
+      const ip = '203.0.113.131';
+      const h = { 'X-Forwarded-For': ip, 'User-Agent': NAV };
+      process.env.SCRAPE_BUDGET_ANON = '200';
+      try {
+        const p = await request(app).get('/api/catalogue-complet').set(h);
+        expect(p.status).toBe(200);
+        expect(p.body.items).toEqual([]);
+        await request(app).get('/api/export/produits').set(h);   // deuxième visite : pas de doublon
+        await new Promise((r) => setTimeout(r, 300));
+        const { rows } = await pool.query(`SELECT count(*)::int AS n FROM security_audit_vault WHERE event_type='piege_scraping' AND ip_address=$1`, [ip]);
+        expect(rows[0].n).toBe(1);
+        const url = '/api/immo/?limit=50&source=test-piege';
+        expect((await request(app).get(url).set(h)).status).toBe(200);
+        expect((await request(app).get(url).set(h)).status).toBe(429);        // budget 200/4 = 50 lignes pour cette IP
+        expect((await request(app).get(url).set({ 'X-Forwarded-For': '203.0.113.132', 'User-Agent': NAV })).status).toBe(200); // autre IP : normal
+      } finally { delete process.env.SCRAPE_BUDGET_ANON; }
+    });
+
+    test('les automates ne comptent pas comme des vues de boutique ; un navigateur oui', async () => {
+      const compte = async () => (await pool.query(`SELECT count(*)::int AS n FROM analytics_events WHERE type='vue_boutique' AND boutique_id=$1`, [b.id])).rows[0].n;
+      await request(app).get(`/api/boutiques/${b.id}`).set({ 'X-Forwarded-For': '203.0.113.133', 'User-Agent': 'python-requests/2.31' });
+      await request(app).get(`/api/boutiques/${b.id}`).set({ 'X-Forwarded-For': '203.0.113.133', 'User-Agent': '' });
+      await new Promise((r) => setTimeout(r, 200));
+      expect(await compte()).toBe(0);
+      await request(app).get(`/api/boutiques/${b.id}`).set({ 'X-Forwarded-For': '203.0.113.134', 'User-Agent': NAV });
+      await new Promise((r) => setTimeout(r, 200));
+      expect(await compte()).toBe(1);
+    });
+
+    test('tableau de bord administrateur : consommation (accès réservé)', async () => {
+      expect((await request(app).get('/api/admin/system/consommation')).status).toBe(401);
+      const r = await request(app).get('/api/admin/system/consommation').set('X-Admin-Secret', 'integration-admin-secret');
+      expect(r.status).toBe(200);
+      expect(Array.isArray(r.body.top)).toBe(true);
+      expect(r.body.evenements_24h.find((e) => e.event_type === 'piege_scraping')).toBeDefined();
+    });
+
+    test('CORS : une origine étrangère n\'obtient aucun en-tête d\'autorisation et plus d\'erreur 500', async () => {
+      const r = await request(app).get('/api/boutiques/?limit=1').set({ Origin: 'https://evil.example', 'X-Forwarded-For': '203.0.113.135', 'User-Agent': NAV });
+      expect(r.status).toBe(200);
+      expect(r.headers['access-control-allow-origin']).toBeUndefined();
+    });
   });});
