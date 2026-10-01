@@ -2124,14 +2124,18 @@ async function traiterPanierMeta(phone, order) {
 
   const itemsBoutique = itemsValides.filter(it => it.boutique_id === boutiqueId);
   const premierProduit = itemsBoutique[0];
-  const expressLink = `${SITE}/checkout-express?produit=${premierProduit.produit_id}&boutique=${boutique.id}&phone=${phone}`;
+  // AUD-100 : la page express ne gère qu'UN produit. Pour un panier de plusieurs articles le lien ne portait que le
+  // premier (55 000 FCFA annoncés, 15 000 FCFA à payer) : il n'est proposé que pour un article unique, avec sa quantité.
+  const expressLink = itemsBoutique.length === 1
+    ? `${SITE}/checkout-express?produit=${premierProduit.produit_id}&boutique=${boutique.id}&phone=${phone}&q=${premierProduit.quantite}`
+    : null;
   const totalPanier = itemsBoutique.reduce((s, it) => s + (it.prix * it.quantite), 0);
 
   const detailArticles = itemsBoutique.map(it => `• *${it.nom_produit}* × ${it.quantite} — ${prixFmt(it.prix * it.quantite)}`).join('\n');
   await sendWhatsAppText(
     phone,
     `🛒 *Panier reçu (${itemsBoutique.length} article${itemsBoutique.length > 1 ? 's' : ''})*\n\n${detailArticles}\n💰 *Total articles : ${prixFmt(totalPanier)}*\n\n` +
-    `⚡ *Lien direct Web (Paiement 1-Clic)* :\n👉 ${expressLink}\n\n` +
+    (expressLink ? `⚡ *Lien direct Web (Paiement 1-Clic)* :\n👉 ${expressLink}\n\n` : '') +
     `👇 *Sélectionnez votre formule de livraison & paiement (Zéro saisie) :*`
   );
 
