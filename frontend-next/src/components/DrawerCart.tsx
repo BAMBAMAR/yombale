@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useCart } from '@/context/CartContext'
 import { useTranslation } from '@/i18n/context'
 import { ShoppingBag, Trash2, Store, X } from 'lucide-react'
@@ -59,6 +59,14 @@ export default function DrawerCart() {
     totalGlobal,
   } = useDrawerCartCheckout()
 
+  // AUD-099 : closeCart est recréée à chaque rendu du contexte panier. En dépendance de l'effet ci-dessous, toute mise à jour
+  // du panier (prix actualisé, quantité) relançait l'effet, dont le nettoyage appelle history.back() : le tiroir se fermait
+  // tout seul et le message d'erreur disparaissait. On lit donc les callbacks par référence.
+  const closeCartRef = useRef(closeCart)
+  const setOrderSuccessDataRef = useRef(setOrderSuccessData)
+  closeCartRef.current = closeCart
+  setOrderSuccessDataRef.current = setOrderSuccessData
+
   // Interception du bouton Retour Mobile (Android / iOS) et touche Échap Desktop
   useEffect(() => {
     const isVisible = isCartOpen || !!orderSuccessData
@@ -67,14 +75,14 @@ export default function DrawerCart() {
     window.history.pushState({ modal: 'nopalou_cart' }, '')
 
     const handlePopState = () => {
-      if (orderSuccessData) setOrderSuccessData(null)
-      closeCart()
+      if (orderSuccessData) setOrderSuccessDataRef.current(null)
+      closeCartRef.current()
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (orderSuccessData) setOrderSuccessData(null)
-        closeCart()
+        if (orderSuccessData) setOrderSuccessDataRef.current(null)
+        closeCartRef.current()
       }
     }
 
@@ -88,7 +96,7 @@ export default function DrawerCart() {
         window.history.back()
       }
     }
-  }, [isCartOpen, !!orderSuccessData, closeCart, setOrderSuccessData])
+  }, [isCartOpen, !!orderSuccessData]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 1. Modale de confirmation / succès de commande
   if (orderSuccessData) {

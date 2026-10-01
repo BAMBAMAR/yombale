@@ -96,9 +96,11 @@ export default function RegisterSW() {
     let refreshing = false
     const hadControllerOnLoad = !!navigator.serviceWorker.controller
     const handleControllerChange = () => {
+      // AUD-087 : ne jamais recharger de force (ticket, formulaire ou synchronisation en cours) :
+      // on propose la mise à jour, l'utilisateur recharge quand il a terminé.
       if (hadControllerOnLoad && !refreshing) {
         refreshing = true
-        window.location.reload()
+        setSwUpdateAvailable(true)
       }
     }
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange)
@@ -155,6 +157,48 @@ export default function RegisterSW() {
     }
   }, [])
 
+  // AUD-088/104 : la synchronisation ne dépend plus de la seule transition « hors-ligne → en ligne » d'une page
+  // restée ouverte. Elle s'exécute au démarrage (application rouverte déjà en ligne), à intervalle, et quand le
+  // Service Worker la demande (Background Sync). Chaque cycle est protégé par un verrou inter-onglets.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isOnline) return
+    const lancer = () => {
+      let userId: string | null = null
+      try {
+        userId = localStorage.getItem('nopalou_user_id')
+      } catch {
+        /* stockage indisponible */
+      }
+      // Un acheteur non connecté peut aussi avoir une commande « WhatsApp Direct » en attente (AUD-095)
+      if (!userId) userId = 'anonyme'
+      import('@/lib/sync-manager')
+        .then(({ syncToutesLesBoutiquesEnAttente }) => syncToutesLesBoutiquesEnAttente(userId as string))
+        .catch(() => {})
+    }
+    const demarrage = setTimeout(lancer, 2500)
+    const intervalle = setInterval(lancer, 60_000)
+    const surMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === 'NOPALOU_SYNC') lancer()
+    }
+    navigator.serviceWorker?.addEventListener('message', surMessage)
+    return () => {
+      clearTimeout(demarrage)
+      clearInterval(intervalle)
+      navigator.serviceWorker?.removeEventListener('message', surMessage)
+    }
+  }, [isOnline])
+
+  // AUD-099 : le Service Worker signale qu'une page vient du cache (réseau absent ou lent) : on l'écrit à l'écran.
+  const [affichageCache, setAffichageCache] = useState(false)
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.serviceWorker) return
+    const surMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === 'NOPALOU_CACHE_HIT') setAffichageCache(true)
+    }
+    navigator.serviceWorker.addEventListener('message', surMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', surMessage)
+  }, [])
+
   const [showOfflineToast, setShowOfflineToast] = useState(false)
 
   // Détecter les transitions offline / online pour afficher des toasts discrets et temporaires
@@ -175,7 +219,7 @@ export default function RegisterSW() {
       // Déclencher la synchronisation automatique de toutes les opérations hors-ligne en attente
       if (typeof window !== 'undefined') {
         try {
-          const userId = localStorage.getItem('nopalou_user_id')
+          const userId = localStorage.getItem('nopalou_user_id') || 'anonyme'
           if (userId) {
             import('@/lib/sync-manager').then(({ syncToutesLesBoutiquesEnAttente }) => {
               syncToutesLesBoutiquesEnAttente(userId).catch((err) => {
@@ -304,6 +348,47 @@ export default function RegisterSW() {
               padding: 0,
               flexShrink: 0,
             }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {affichageCache && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            left: 12,
+            right: 12,
+            bottom: 12,
+            zIndex: 99997,
+            background: 'var(--navy)',
+            color: '#fff',
+            borderRadius: 10,
+            padding: '8px 12px',
+            fontSize: 12.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            boxSizing: 'border-box',
+          }}
+        >
+          <span style={{ flex: 1 }}>
+            Page affichée depuis la mémoire de l’appareil (réseau absent ou lent) : prix et stocks peuvent avoir changé.
+          </span>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, padding: '4px 10px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            Actualiser
+          </button>
+          <button
+            type="button"
+            aria-label="Fermer l’avertissement"
+            onClick={() => setAffichageCache(false)}
+            style={{ background: 'transparent', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14 }}
           >
             ✕
           </button>

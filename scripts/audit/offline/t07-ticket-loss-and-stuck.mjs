@@ -23,11 +23,12 @@ await page.evaluate(async ({ bid, uid }) => {
 }, { bid, uid: S.M.uid });
 const posts = []; page.on('request', r => { if (r.method() === 'POST' && /pos-vente/.test(r.url())) posts.push(r.url()); });
 await ctx.setOffline(true); await page.waitForTimeout(3000); await ctx.setOffline(false); await page.waitForTimeout(3000);
-await page.goto(BASE + '/boutique/caisse', { waitUntil: 'load' }); await page.waitForTimeout(45000);
+await page.goto(BASE + '/boutique/caisse', { waitUntil: 'load' }); await page.waitForTimeout(80000);
 res.b_file = (await readIDB(page, ['ventes_queue'])).ventes_queue.map(v => ({ id: v.id_temporaire, status: v.status, total: v.total }));
 res.b_posts_pos_vente_envoyes = posts.length;
 res.b_vente_en_base = sql(`SELECT count(*) n FROM ventes WHERE boutique_id='${bid}' AND nom_produit='Article libre injecté'`)[0].n;
 const ui = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
 res.b_indicateur_ui = /en attente de synchronisation|vente\(s\) hors-ligne|non synchronis/i.test(ui) ? 'oui' : 'AUCUN indicateur de vente non synchronisée';
 out(res); await browser.close();
+
 

@@ -1,4 +1,4 @@
-﻿import { launch, BASE, login, state, readIDB, out } from './lib.mjs';
+import { launch, BASE, login, state, readIDB, out } from './lib.mjs';
 import { openPos } from './t05a-pos-online.mjs';
 import { execSync } from 'node:child_process';
 const T = process.env.AUDIT_TMP; const S = state(); const res = {};
@@ -32,7 +32,7 @@ const q1 = await readIDB(page, ['ventes_queue']);
 res.C_queue_apres_ventes = q1.ventes_queue.map(v => ({ id: v.id_temporaire, total: v.total, items: v.items.map(i => `${i.quantite}x ${i.nom} @${i.prix}`), modePaiement: v.modePaiement, session_id: v.session_id, status: v.status, date: v.date, caissier_id: v.caissier_id }));
 res.C_stock_local = await page.evaluate(() => { const r = JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('nopalou_pos_produits_')) || '[]') || '[]'); return r.filter(p => /Off$/.test(p.nom)).map(p => `${p.nom}: stock ${p.stock}`); });
 // D. autre appareil : vente du dernier exemplaire côté serveur pendant la coupure
-const r = await fetch('http://127.0.0.1:4100/api/boutiques/' + bid + '/pos-vente', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + S.M.token }, body: JSON.stringify({ idempotency_key: 'AUD-AUTRE-APPAREIL-' + S.sfx, items: [{ id: S.prod.L.id, nom: 'Dernier Article Off', quantite: 1, prix: 4000 }], modePaiement: 'especes' }) });
+const r = await fetch('http://127.0.0.1:4100/api/boutiques/' + bid + '/pos-vente', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + S.M.token }, body: JSON.stringify({ idempotency_key: 'AUD-AUTRE-APPAREIL-' + Date.now(), items: [{ id: S.prod.L.id, nom: 'Dernier Article Off', quantite: 1, prix: 4000 }], modePaiement: 'especes' }) });
 res.D_vente_autre_appareil = { http: r.status, body: (await r.text()).slice(0, 120) };
 res.D_stock_serveur_avant_sync = sql(`SELECT nom, stock_quantite, en_stock FROM boutique_produits WHERE boutique_id='${bid}' AND nom LIKE '%Off' ORDER BY nom`);
 // E. fermeture / réouverture de l'application (hors-ligne)
@@ -48,6 +48,7 @@ const q3 = await readIDB(page2, ['ventes_queue']);
 res.F_queue_apres_reconnexion = q3.ventes_queue.map(v => ({ id: v.id_temporaire, status: v.status }));
 res.G_ventes_en_base = sql(`SELECT reference, nom_produit, quantite, montant_total, methode_paiement, session_id, created_at FROM ventes WHERE boutique_id='${bid}' ORDER BY created_at`);
 res.G_stock_final = sql(`SELECT nom, stock_quantite, en_stock FROM boutique_produits WHERE boutique_id='${bid}' AND nom LIKE '%Off' ORDER BY nom`);
+res.G_ecarts_de_stock = sql(`SELECT produit_nom, stock_avant, quantite_vendue, quantite_manquante, vente_reference FROM stock_ecarts WHERE boutique_id='${bid}' AND created_at > now() - interval '10 minutes'`);
 res.G_horodatage = { vente_hors_ligne_a: q1.ventes_queue[0] && q1.ventes_queue[0].date, reconnexion_a: tReco.toISOString() };
 out(res); console.log('logs:', logs.slice(0, 8)); await browser.close();
 

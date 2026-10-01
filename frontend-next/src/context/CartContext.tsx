@@ -46,6 +46,8 @@ interface CartContextType {
   removeFromCart: (boutiqueId: string, productId: string) => void
   updateQuantity: (boutiqueId: string, productId: string, delta: number) => void
   clearCart: (boutiqueId: string) => void
+  /** AUD-099 : remplace les prix figés du panier par les prix serveur courants (clé : identifiant produit). */
+  actualiserPrix: (boutiqueId: string, prixParProduit: Record<string, number>) => void
   clearAllCarts: () => void
   setActiveBoutiqueId: (boutiqueId: string) => void
   getCartTotal: (boutiqueId: string, alternateId?: string) => number
@@ -235,6 +237,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
+  function actualiserPrix(boutiqueId: string, prixParProduit: Record<string, number>) {
+    setCarts(prev => {
+      const existing = prev[boutiqueId]
+      if (!existing) return prev
+      const items = existing.items.map(i => {
+        const nouveau = prixParProduit[i.produitId || i.id]
+        return typeof nouveau === 'number' && Number.isFinite(nouveau) && nouveau > 0 ? { ...i, prix: nouveau } : i
+      })
+      return { ...prev, [boutiqueId]: { ...existing, items } }
+    })
+  }
+
   function clearAllCarts() {
     setCarts({})
     setActiveBoutiqueId(null)
@@ -267,6 +281,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeFromCart,
       updateQuantity,
       clearCart,
+      actualiserPrix,
       clearAllCarts,
       setActiveBoutiqueId,
       getCartTotal,

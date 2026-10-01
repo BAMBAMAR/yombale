@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { listCommandes, updateStatutCommande } from '../../actions'
 import { fcfa } from '@/lib/format'
 import { useToast } from '@/context/ToastContext'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import { sauvegarderClientsLocaux, obtenirClientsLocaux, ajouterNouveauClientHorsLigne } from '@/lib/db-offline'
 import type { ClientCredit, TransactionCredit, ProduitBoutique, BoutiqueCarnetInfo } from '../types'
 
@@ -12,6 +13,7 @@ interface UseCarnetClientsProps {
 }
 
 export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
+  const appEnLigne = useOnlineStatus()
   const { toast, confirmModal } = useToast()
   const [clients, setClients] = useState<ClientCredit[]>(() => {
     if (typeof window !== 'undefined' && boutique?.id) {
@@ -190,7 +192,9 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
 
   const handleCreerClient = useCallback(
     async (clientData: { nom: string; telephone: string; adresse?: string; plafond_max?: number; note_client?: string }) => {
-      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
+      // AUD-090 : `navigator.onLine` affirme « en ligne » sans connectivité réelle ; l'état applicatif (ping) fait foi.
+      // En cas d'échec réseau malgré tout, le repli hors-ligne ci-dessous prend le relais.
+      const isOffline = (typeof navigator !== 'undefined' && !navigator.onLine) || !appEnLigne
       let res: any = null
 
       if (!isOffline) {
@@ -258,7 +262,7 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
       toast.info(`Client "${nouveauClientLocal.nom}" créé hors-ligne. Il sera synchronisé dès la reconnexion.`, 'Mode Hors-Ligne')
       return { ok: true, client: nouveauClientLocal }
     },
-    [boutique.id, (boutique as any)?.utilisateur_id, (boutique as any)?.user_id, chargerDonnees, ouvrirFicheClient, toast]
+    [boutique.id, (boutique as any)?.utilisateur_id, (boutique as any)?.user_id, chargerDonnees, ouvrirFicheClient, toast, appEnLigne]
   )
 
   const handleEnregistrerEditClient = useCallback(

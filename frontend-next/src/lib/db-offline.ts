@@ -9,7 +9,7 @@
  */
 
 const DB_NAME = 'nopalou_pos_offline';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 /**
  * Hache un code PIN à l'aide de SHA-256 avec l'ID de la boutique comme sel.
@@ -57,7 +57,7 @@ export interface OfflineSale {
   client_id?: string | null;
   total: number;
   date: string;
-  status: 'pending' | 'syncing' | 'done'; // Verrou de synchronisation
+  status: 'pending' | 'syncing' | 'done' | 'failed'; // Verrou de synchronisation
 }
 
 export interface OfflineDebtTransaction {
@@ -73,7 +73,7 @@ export interface OfflineDebtTransaction {
   date_echeance?: string | null;
   relance_auto_whatsapp?: boolean;
   date: string;
-  status: 'pending' | 'syncing' | 'done';
+  status: 'pending' | 'syncing' | 'done' | 'failed';
 }
 
 export interface OfflineExpense {
@@ -85,7 +85,7 @@ export interface OfflineExpense {
   description?: string | null;
   date_depense?: string | null;
   date: string;
-  status: 'pending' | 'syncing' | 'done';
+  status: 'pending' | 'syncing' | 'done' | 'failed';
 }
 
 export interface OfflineNewClient {
@@ -98,7 +98,7 @@ export interface OfflineNewClient {
   plafond_max?: number | null;
   note_client?: string | null;
   date: string;
-  status: 'pending' | 'syncing' | 'done';
+  status: 'pending' | 'syncing' | 'done' | 'failed';
 }
 
 export interface OfflineClotureSession {
@@ -115,7 +115,7 @@ export interface OfflineClotureSession {
   nb_ventes?: number;
   caissier_nom?: string;
   date: string;
-  status: 'pending' | 'syncing' | 'done';
+  status: 'pending' | 'syncing' | 'done' | 'failed';
 }
 
 export function initialiserBaseLocale(): Promise<IDBDatabase> {
@@ -191,6 +191,18 @@ export function initialiserBaseLocale(): Promise<IDBDatabase> {
         const ncStore = db.createObjectStore('nouveaux_clients_queue', { keyPath: 'id_temporaire' });
         ncStore.createIndex('by_boutique_status', ['boutique_id', 'status'], { unique: false });
         ncStore.createIndex('by_user_boutique', ['user_id', 'boutique_id'], { unique: false });
+      }
+
+      // Store v7 (AUD-093) : sessions de caisse ouvertes hors-ligne, à créer côté serveur avant leurs ventes
+      if (!db.objectStoreNames.contains('sessions_queue')) {
+        const sStore = db.createObjectStore('sessions_queue', { keyPath: 'id_temporaire' });
+        sStore.createIndex('by_boutique_status', ['boutique_id', 'status'], { unique: false });
+      }
+
+      // Store v7 (AUD-095) : commandes « WhatsApp Direct » passées hors-ligne
+      if (!db.objectStoreNames.contains('commandes_queue')) {
+        const cmdStore = db.createObjectStore('commandes_queue', { keyPath: 'id_temporaire' });
+        cmdStore.createIndex('by_boutique_status', ['boutique_id', 'status'], { unique: false });
       }
     };
   });
@@ -341,6 +353,7 @@ export async function ajouterVenteHorsLigne(vente: Omit<OfflineSale, 'status'>):
     const store = tx.objectStore('ventes_queue');
     const payload = { ...vente, status: 'pending' as const };
     store.put(payload);
+    demanderSyncArrierePlan();
 
     tx.oncomplete = () => {
       resolve();
@@ -386,7 +399,7 @@ export async function marquerVenteSyncing(id_temporaire: string): Promise<void> 
 
     getReq.onsuccess = () => {
       if (getReq.result) {
-        store.put({ ...getReq.result, status: 'syncing' });
+        store.put({ ...getReq.result, status: 'syncing', syncing_since: Date.now() });
       }
     };
 
@@ -436,6 +449,7 @@ export async function ajouterDetteHorsLigne(dette: Omit<OfflineDebtTransaction, 
     const store = tx.objectStore('dettes_queue');
     const payload = { ...dette, status: 'pending' as const };
     store.put(payload);
+    demanderSyncArrierePlan();
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => {
@@ -479,7 +493,7 @@ export async function marquerDetteSyncing(id_temporaire: string): Promise<void> 
 
     getReq.onsuccess = () => {
       if (getReq.result) {
-        store.put({ ...getReq.result, status: 'syncing' });
+        store.put({ ...getReq.result, status: 'syncing', syncing_since: Date.now() });
       }
     };
 
@@ -609,6 +623,7 @@ export async function ajouterClotureHorsLigne(cloture: OfflineClotureSession): P
     const store = tx.objectStore('clotures_queue');
     const payload = { ...cloture, status: 'pending' as const };
     store.put(payload);
+    demanderSyncArrierePlan();
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => {
@@ -647,7 +662,7 @@ export async function marquerClotureSyncing(id_temporaire: string): Promise<void
 
     getReq.onsuccess = () => {
       if (getReq.result) {
-        store.put({ ...getReq.result, status: 'syncing' });
+        store.put({ ...getReq.result, status: 'syncing', syncing_since: Date.now() });
       }
     };
 
@@ -695,6 +710,7 @@ export async function ajouterDepenseHorsLigne(depense: Omit<OfflineExpense, 'sta
     const store = tx.objectStore('depenses_queue');
     const payload = { ...depense, status: 'pending' as const };
     store.put(payload);
+    demanderSyncArrierePlan();
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => {
@@ -738,7 +754,7 @@ export async function marquerDepenseSyncing(id_temporaire: string): Promise<void
 
     getReq.onsuccess = () => {
       if (getReq.result) {
-        store.put({ ...getReq.result, status: 'syncing' });
+        store.put({ ...getReq.result, status: 'syncing', syncing_since: Date.now() });
       }
     };
 
@@ -786,6 +802,7 @@ export async function ajouterNouveauClientHorsLigne(client: Omit<OfflineNewClien
     const store = tx.objectStore('nouveaux_clients_queue');
     const payload = { ...client, status: 'pending' as const };
     store.put(payload);
+    demanderSyncArrierePlan();
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => {
@@ -829,7 +846,7 @@ export async function marquerNouveauClientSyncing(id_temporaire: string): Promis
 
     getReq.onsuccess = () => {
       if (getReq.result) {
-        store.put({ ...getReq.result, status: 'syncing' });
+        store.put({ ...getReq.result, status: 'syncing', syncing_since: Date.now() });
       }
     };
 
@@ -1007,3 +1024,360 @@ export async function purgerCacheUtilisateur(userId: string): Promise<void> {
   });
 }
 
+
+// ════════════════════════════════════════════════════════════════════════════
+// Modèle commun des files hors-ligne (AUD-088/089/090/093/095)
+//   pending → syncing (bail `syncing_since`) → supprimée une fois confirmée par le serveur
+//   failed  : erreur métier (4xx) conservée avec son message, visible et traitable par le marchand
+// ════════════════════════════════════════════════════════════════════════════
+
+export const FILES_HORS_LIGNE = [
+  'ventes_queue',
+  'dettes_queue',
+  'clotures_queue',
+  'depenses_queue',
+  'nouveaux_clients_queue',
+  'sessions_queue',
+  'commandes_queue',
+] as const;
+export type NomFile = (typeof FILES_HORS_LIGNE)[number];
+
+/** Durée au-delà de laquelle une entrée `syncing` est considérée abandonnée (page rechargée ou fermée en plein envoi). */
+export const BAIL_SYNCING_MS = 60_000;
+
+/** Demande une synchronisation en arrière-plan (Chromium) ; sans effet ailleurs, le repli est applicatif (RegisterSW). */
+export function demanderSyncArrierePlan(): void {
+  try {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.ready
+      .then((reg: any) => (reg && reg.sync ? reg.sync.register('nopalou-sync') : undefined))
+      .catch(() => {});
+  } catch {
+    /* non bloquant */
+  }
+}
+
+/** Remet en `pending` toute entrée `syncing` dont le bail a expiré. À appeler au début de chaque cycle. */
+export async function reclamerEntreesPerimees(): Promise<number> {
+  const db = await initialiserBaseLocale();
+  let reclamees = 0;
+  const now = Date.now();
+  await Promise.all(
+    FILES_HORS_LIGNE.map(
+      (nom) =>
+        new Promise<void>((resolve) => {
+          if (!db.objectStoreNames.contains(nom)) return resolve();
+          const tx = db.transaction(nom, 'readwrite');
+          const store = tx.objectStore(nom);
+          const req = store.openCursor();
+          req.onsuccess = () => {
+            const cursor = req.result;
+            if (!cursor) return;
+            const v = cursor.value;
+            if (v && v.status === 'syncing' && (!v.syncing_since || now - v.syncing_since > BAIL_SYNCING_MS)) {
+              cursor.update({ ...v, status: 'pending', syncing_since: null });
+              reclamees++;
+            }
+            cursor.continue();
+          };
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        })
+    )
+  );
+  return reclamees;
+}
+
+/** Passe une entrée en `failed` en conservant le message du serveur. */
+export async function marquerEntreeEchec(nom: NomFile, id: string, erreur: string, code?: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(nom, 'readwrite');
+    const store = tx.objectStore(nom);
+    const g = store.get(id);
+    g.onsuccess = () => {
+      if (g.result) store.put({ ...g.result, status: 'failed', syncing_since: null, last_error: erreur, last_error_code: code || null, failed_at: new Date().toISOString() });
+    };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+  });
+}
+
+export interface EntreeEchouee {
+  file: NomFile;
+  id: string;
+  boutique_id: string;
+  libelle: string;
+  montant: number | null;
+  erreur: string;
+  code: string | null;
+  date: string;
+}
+
+function libelleEntree(nom: NomFile, v: any): { libelle: string; montant: number | null } {
+  switch (nom) {
+    case 'ventes_queue':
+      return { libelle: `Vente (${(v.items || []).map((i: any) => `${i.quantite}x ${i.nom}`).join(', ')})`, montant: Number(v.total) || null };
+    case 'dettes_queue':
+      return { libelle: v.type === 'remboursement' ? 'Remboursement de dette' : 'Dette client', montant: Number(v.montant) || null };
+    case 'depenses_queue':
+      return { libelle: `Dépense (${v.categorie || 'divers'})`, montant: Number(v.montant) || null };
+    case 'clotures_queue':
+      return { libelle: 'Clôture de caisse (Z)', montant: Number(v.ventes_total) || null };
+    case 'nouveaux_clients_queue':
+      return { libelle: `Nouveau client ${v.nom || ''}`.trim(), montant: null };
+    case 'sessions_queue':
+      return { libelle: 'Ouverture de session de caisse', montant: Number(v.fond_caisse) || null };
+    default:
+      return { libelle: 'Commande WhatsApp', montant: Number(v.total) || null };
+  }
+}
+
+/** Entrées en erreur métier, à traiter par le marchand (réessayer ou abandonner). */
+export async function obtenirEntreesEchouees(boutiqueId?: string): Promise<EntreeEchouee[]> {
+  const db = await initialiserBaseLocale();
+  const out: EntreeEchouee[] = [];
+  await Promise.all(
+    FILES_HORS_LIGNE.map(
+      (nom) =>
+        new Promise<void>((resolve) => {
+          if (!db.objectStoreNames.contains(nom)) return resolve();
+          const req = db.transaction(nom, 'readonly').objectStore(nom).getAll();
+          req.onsuccess = () => {
+            for (const v of req.result || []) {
+              if (v.status !== 'failed') continue;
+              if (boutiqueId && v.boutique_id !== boutiqueId) continue;
+              const l = libelleEntree(nom, v);
+              out.push({ file: nom, id: v.id_temporaire, boutique_id: v.boutique_id, libelle: l.libelle, montant: l.montant, erreur: v.last_error || 'Erreur inconnue', code: v.last_error_code || null, date: v.date || v.failed_at });
+            }
+            resolve();
+          };
+          req.onerror = () => resolve();
+        })
+    )
+  );
+  return out.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+
+export async function reessayerEntreeEchouee(nom: NomFile, id: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(nom, 'readwrite');
+    const store = tx.objectStore(nom);
+    const g = store.get(id);
+    g.onsuccess = () => {
+      if (g.result) store.put({ ...g.result, status: 'pending', last_error: null, last_error_code: null });
+    };
+    tx.oncomplete = () => {
+      demanderSyncArrierePlan();
+      resolve();
+    };
+    tx.onerror = () => resolve();
+  });
+}
+
+export async function abandonnerEntreeEchouee(nom: NomFile, id: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(nom, 'readwrite');
+    tx.objectStore(nom).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+  });
+}
+
+/** Nombre total d'entrées non terminées (pending, syncing, failed) pour un utilisateur, toutes boutiques. */
+export async function compterEntreesEnAttente(): Promise<number> {
+  const db = await initialiserBaseLocale();
+  let n = 0;
+  await Promise.all(
+    FILES_HORS_LIGNE.map(
+      (nom) =>
+        new Promise<void>((resolve) => {
+          if (!db.objectStoreNames.contains(nom)) return resolve();
+          const req = db.transaction(nom, 'readonly').objectStore(nom).count();
+          req.onsuccess = () => {
+            n += req.result || 0;
+            resolve();
+          };
+          req.onerror = () => resolve();
+        })
+    )
+  );
+  return n;
+}
+
+// ── Correspondance identifiant local → identifiant serveur (clients, sessions) ──────────────
+const CLE_MAP_IDS = 'nopalou_idmap';
+
+export function enregistrerCorrespondanceId(idLocal: string, idServeur: string): void {
+  try {
+    const m = JSON.parse(localStorage.getItem(CLE_MAP_IDS) || '{}');
+    m[idLocal] = idServeur;
+    localStorage.setItem(CLE_MAP_IDS, JSON.stringify(m));
+  } catch {
+    /* stockage indisponible */
+  }
+}
+
+/** Renvoie l'identifiant serveur d'un identifiant local (cli_temp_…, loc_…) ou l'identifiant reçu tel quel. */
+export function resoudreId<T extends string | null | undefined>(id: T): T {
+  if (!id) return id;
+  try {
+    const m = JSON.parse(localStorage.getItem(CLE_MAP_IDS) || '{}');
+    return (m[id as string] || id) as T;
+  } catch {
+    return id;
+  }
+}
+
+/** Réécrit `champ` dans les entrées en attente des files données quand il vaut `idLocal`. */
+export async function remapperReferences(files: NomFile[], champ: string, idLocal: string, idServeur: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  await Promise.all(
+    files.map(
+      (nom) =>
+        new Promise<void>((resolve) => {
+          if (!db.objectStoreNames.contains(nom)) return resolve();
+          const tx = db.transaction(nom, 'readwrite');
+          const store = tx.objectStore(nom);
+          const req = store.openCursor();
+          req.onsuccess = () => {
+            const cursor = req.result;
+            if (!cursor) return;
+            if (cursor.value && cursor.value[champ] === idLocal) cursor.update({ ...cursor.value, [champ]: idServeur });
+            cursor.continue();
+          };
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        })
+    )
+  );
+  enregistrerCorrespondanceId(idLocal, idServeur);
+}
+
+// ── Sessions et commandes hors-ligne (nouvelles files v7) ────────────────────────────────────
+export interface OfflineSessionOpen {
+  id_temporaire: string; // `loc_…` : identifiant local de session, aussi clé d'idempotence serveur
+  boutique_id: string;
+  user_id: string;
+  caissier_id?: string | null;
+  caissier_nom: string;
+  fond_caisse: number;
+  date: string;
+  status: 'pending' | 'syncing' | 'done' | 'failed';
+}
+
+export interface OfflineCommande {
+  id_temporaire: string; // clé d'idempotence serveur
+  boutique_id: string;
+  user_id: string;
+  payload: Record<string, unknown>;
+  total: number;
+  date: string;
+  status: 'pending' | 'syncing' | 'done' | 'failed';
+}
+
+async function ajouterDansFile(nom: NomFile, valeur: any): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(nom, 'readwrite');
+    tx.objectStore(nom).put({ ...valeur, status: 'pending' });
+    demanderSyncArrierePlan();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function lireFile<T>(nom: NomFile, boutiqueId?: string): Promise<T[]> {
+  const db = await initialiserBaseLocale();
+  return new Promise<T[]>((resolve, reject) => {
+    const req = db.transaction(nom, 'readonly').objectStore(nom).getAll();
+    req.onsuccess = () => {
+      let list: any[] = req.result || [];
+      if (boutiqueId) list = list.filter((v) => v.boutique_id === boutiqueId);
+      resolve(list.filter((v) => v.status === 'pending'));
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function changerEtat(nom: NomFile, id: string, etat: 'syncing' | 'pending'): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(nom, 'readwrite');
+    const store = tx.objectStore(nom);
+    const g = store.get(id);
+    g.onsuccess = () => {
+      if (!g.result) return;
+      if (etat === 'syncing') store.put({ ...g.result, status: 'syncing', syncing_since: Date.now() });
+      else if (g.result.status === 'syncing') store.put({ ...g.result, status: 'pending', syncing_since: null });
+    };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+  });
+}
+
+async function supprimerDeFile(nom: NomFile, id: string): Promise<void> {
+  const db = await initialiserBaseLocale();
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(nom, 'readwrite');
+    tx.objectStore(nom).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+  });
+}
+
+export const ajouterSessionHorsLigne = (s: Omit<OfflineSessionOpen, 'status'>) => ajouterDansFile('sessions_queue', s);
+export const obtenirSessionsHorsLigne = (boutiqueId?: string) => lireFile<OfflineSessionOpen>('sessions_queue', boutiqueId);
+export const marquerSessionSyncing = (id: string) => changerEtat('sessions_queue', id, 'syncing');
+export const revertSessionSyncing = (id: string) => changerEtat('sessions_queue', id, 'pending');
+export const supprimerSessionHorsLigne = (id: string) => supprimerDeFile('sessions_queue', id);
+
+export const ajouterCommandeHorsLigne = (c: Omit<OfflineCommande, 'status'>) => ajouterDansFile('commandes_queue', c);
+export const obtenirCommandesHorsLigne = (boutiqueId?: string) => lireFile<OfflineCommande>('commandes_queue', boutiqueId);
+export const marquerCommandeSyncing = (id: string) => changerEtat('commandes_queue', id, 'syncing');
+export const revertCommandeSyncing = (id: string) => changerEtat('commandes_queue', id, 'pending');
+export const supprimerCommandeHorsLigne = (id: string) => supprimerDeFile('commandes_queue', id);
+
+// ── Purge complète des données locales privées (AUD-091) ─────────────────────────────────────
+const PREFIXES_LOCALSTORAGE_PRIVES = ['nopalou_offline_', 'nopalou_pos_', 'nopalou_bilan_', 'nopalou_plan', 'nopalou_user_id', 'nopalou_client_', CLE_MAP_IDS];
+
+/**
+ * À appeler et ATTENDRE avant toute déconnexion ou changement de compte : Cache Storage des pages et API
+ * authentifiées, `localStorage` privé, catalogue/clients/caissiers/boutiques d'IndexedDB. Les files
+ * d'opérations non synchronisées sont conservées (sinon perte de ventes) : elles restent filtrées par utilisateur.
+ */
+export async function purgerDonneesLocalesPrivees(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    if ('caches' in window) {
+      const noms = await caches.keys();
+      await Promise.all(noms.filter((n) => /^nopalou-(api|html|rsc)-cache/.test(n)).map((n) => caches.delete(n)));
+    }
+  } catch {
+    /* non bloquant */
+  }
+  try {
+    const cles: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && PREFIXES_LOCALSTORAGE_PRIVES.some((p) => k.startsWith(p))) cles.push(k);
+    }
+    cles.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* non bloquant */
+  }
+  try {
+    const db = await initialiserBaseLocale();
+    const stores = ['produits', 'clients', 'caissiers', 'marchand_boutiques'];
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction(stores, 'readwrite');
+      stores.forEach((s) => tx.objectStore(s).clear());
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  } catch {
+    /* non bloquant */
+  }
+}

@@ -21,6 +21,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
+import { useLogoutSubmit } from '@/lib/deconnexion'
 
 interface DrawerItem {
   href: string
@@ -51,6 +52,7 @@ export default function AccountMobileDrawer({
   isOpen,
   onClose,
 }: AccountMobileDrawerProps) {
+  const onLogoutSubmit = useLogoutSubmit()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const currentTab = searchParams.get('tab') || 'accueil'
@@ -356,7 +358,7 @@ export default function AccountMobileDrawer({
 
         {/* Pied du Tiroir : Déconnexion */}
         <div style={{ padding: '12px 16px', borderTop: '1px solid #F1F5F9', background: '#FAFAFA' }}>
-          <form action={logout} style={{ margin: 0, width: '100%' }}>
+          <form action={logout} onSubmit={onLogoutSubmit} style={{ margin: 0, width: '100%' }}>
             <button
               type="submit"
               onClick={onClose}

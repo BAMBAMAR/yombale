@@ -8,6 +8,8 @@ import PosTicketPrintView from './PosTicketPrintView'
 import PosMaterielGuideModal from './PosMaterielGuideModal'
 import type { CaissierItem } from './PosChangerCaissierModal'
 import type { PosModalsState } from '../hooks/usePosModalsState'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
+import { ajouterSessionHorsLigne } from '@/lib/db-offline'
 
 interface PosModalsHostProps {
   // Session & Auth
@@ -152,6 +154,72 @@ export default function PosModalsHost(props: PosModalsHostProps) {
   const [noteTransCarnet, setNoteTransCarnet] = useState('')
   const html5QrcodeScannerRef = useRef<any>(null)
 
+  const enLigne = useOnlineStatus()
+
+  /**
+   * AUD-093 : la session est créée côté serveur (POST /pos-sessions/ouvrir, idempotent). Hors-ligne ou serveur
+   * injoignable : session locale `loc_…` placée en file ; ses ventes et sa clôture sont rattachées à l'identifiant
+   * serveur à la synchronisation. Abonnement refusé (403) : la caisse ne s'ouvre pas.
+   * Terminal sans session marchand (401) : session locale seule, comportement historique.
+   */
+  async function ouvrirSessionCaisse() {
+    const fond = Number(fondDeCaisseSaisi) || 50000
+    const dateIso = new Date().toISOString()
+    const idLocal = `loc_${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 8)}`
+    let idSession = idLocal
+    let aMettreEnFile = false
+
+    if (enLigne) {
+      try {
+        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/ouvrir`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ caissierNom, fondDeCaisse: fond, idempotency_key: idLocal, client_date: dateIso }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (res.ok && data.session?.id) {
+          idSession = data.session.id
+        } else if (res.status === 403) {
+          showToast(data.error || 'Abonnement requis pour ouvrir la caisse.', 'warning')
+          return
+        } else if (res.status !== 401) {
+          aMettreEnFile = true
+        }
+      } catch {
+        aMettreEnFile = true
+      }
+    } else {
+      aMettreEnFile = true
+    }
+
+    if (aMettreEnFile) {
+      const userId = (() => {
+        try {
+          return localStorage.getItem('nopalou_user_id') || 'commercant'
+        } catch {
+          return 'commercant'
+        }
+      })()
+      await ajouterSessionHorsLigne({
+        id_temporaire: idLocal,
+        boutique_id: boutiqueActiveId,
+        user_id: userId,
+        caissier_nom: caissierNom,
+        fond_caisse: fond,
+        date: dateIso,
+      }).catch(() => {})
+    }
+
+    setSession({
+      id: idSession,
+      dateOuverture: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      fondDeCaisse: fond,
+      caissierNom,
+      statut: 'ouverte',
+      ventes: { total: 0, especes: 0, wave: 0, orangeMoney: 0, carte: 0, mixte: 0, nbVentes: 0 },
+    })
+    setModalSessionOuverture(false)
+  }
   return (
     <>
       <PosModalGestionPins
@@ -205,17 +273,7 @@ export default function PosModalsHost(props: PosModalsHostProps) {
         caissierNom={caissierNom}
         fondDeCaisseSaisi={fondDeCaisseSaisi}
         setFondDeCaisseSaisi={setFondDeCaisseSaisi}
-        ouvrirSession={() => {
-          setSession({
-            id: `SESS-${Date.now()}`,
-            dateOuverture: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            fondDeCaisse: Number(fondDeCaisseSaisi) || 50000,
-            caissierNom,
-            statut: 'ouverte',
-            ventes: { total: 0, especes: 0, wave: 0, orangeMoney: 0, carte: 0, mixte: 0, nbVentes: 0 },
-          })
-          setModalSessionOuverture(false)
-        }}
+        ouvrirSession={ouvrirSessionCaisse}
         formatPrice={formatPrice}
         modalClotureZ={modalClotureZ}
         setModalClotureZ={setModalClotureZ}

@@ -4,6 +4,7 @@ import { Zone, OrderSuccessData } from './types'
 import { useCart } from '@/context/CartContext'
 import { fcfa } from '@/lib/format'
 import { getSavedUtm, trackAnalyticsEvent } from '@/lib/analytics'
+import { ajouterCommandeHorsLigne } from '@/lib/db-offline'
 
 const DEFAULT_ZONES: Zone[] = [
   { id: 'a-convenir', nom: 'Livraison (Frais à convenir avec le vendeur)', prix: 0 },
@@ -16,6 +17,7 @@ export function useDrawerCartCheckout() {
     activeBoutiqueId,
     clearCart,
     getCartTotal,
+    actualiserPrix,
   } = useCart()
 
   const [zones, setZones] = useState<Zone[]>(DEFAULT_ZONES)
@@ -237,6 +239,37 @@ export function useDrawerCartCheckout() {
     return `https://wa.me/${clean}?text=${encodeURIComponent(message)}`
   }
 
+  /**
+   * AUD-099 : le panier fige le prix à l'ajout. Avant toute commande, les prix sont relus auprès du serveur ; en cas
+   * d'écart le panier est mis à jour et la validation s'arrête pour que le client confirme le nouveau total.
+   * Sans réseau la vérification est ignorée (le serveur recalcule de toute façon le prix à l'enregistrement).
+   */
+  async function prixPanierInchanges(): Promise<boolean> {
+    if (!activeBoutiqueId) return true
+    const cibles = items.filter((i) => !i.varianteId && (i.produitId || i.id))
+    try {
+      const relus = await Promise.all(
+        cibles.map(async (i) => {
+          const pid = i.produitId || i.id
+          const r = await fetch(`${backendUrl}/api/boutiques/${activeBoutiqueId}/produits/${pid}`, { cache: 'no-store' })
+          if (!r.ok) return null
+          const d = await r.json()
+          const p = d.produit || d
+          const prix = Number(p.prix)
+          return Number.isFinite(prix) && prix > 0 ? { item: i, pid, prix } : null
+        })
+      )
+      const ecarts = relus.filter((x): x is { item: (typeof items)[number]; pid: string; prix: number } => !!x && Number(x.item.prix) !== x.prix)
+      if (ecarts.length === 0) return true
+      actualiserPrix(activeBoutiqueId, Object.fromEntries(ecarts.map((e) => [e.pid, e.prix])))
+      setErrorMsg(
+        `Le prix a changé depuis l’ajout au panier : ${ecarts.map((e) => `${e.item.nom} ${fcfa(Number(e.item.prix))} → ${fcfa(e.prix)}`).join(', ')}. Vérifiez le nouveau total puis validez à nouveau.`
+      )
+      return false
+    } catch {
+      return true
+    }
+  }
   async function validerCommandeEnLigne(e: React.FormEvent) {
     e.preventDefault()
     if (!clientNom.trim() || !clientTel.trim()) {
@@ -247,6 +280,10 @@ export function useDrawerCartCheckout() {
     setLoadingCheckout(true)
 
     try {
+      if (!(await prixPanierInchanges())) {
+        setLoadingCheckout(false)
+        return
+      }
       try {
         if (clientNom.trim()) localStorage.setItem('nopalou_client_nom', clientNom.trim())
         if (clientTel.trim()) localStorage.setItem('nopalou_client_tel', clientTel.trim())
@@ -318,8 +355,9 @@ export function useDrawerCartCheckout() {
         boutiqueNom: currentBoutiqueNom,
         boutiqueId: currentBoutiqueId,
         whatsapp: currentWhatsapp,
-        reference: data.commande?.reference || `CMD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        total: currentTotal,
+        // AUD-095/099 : référence et total affichés = ceux ENREGISTRÉS par le serveur, jamais inventés ni recalculés
+        reference: data.commande?.reference || '',
+        total: Number(data.commande?.montant_total) > 0 ? Number(data.commande.montant_total) : currentTotal,
         sousTotal: currentSousTotal,
         fraisLivraison: currentFraisLiv,
         reduction: currentReduction,
@@ -348,6 +386,7 @@ export function useDrawerCartCheckout() {
 
   async function handleCommanderViaWhatsappDirect() {
     setLoadingCheckout(true)
+    setErrorMsg(null)
     const currentBoutiqueId = activeBoutiqueId!
     const currentBoutiqueNom = activeCart?.boutiqueNom || 'Boutique'
     const currentWhatsapp = activeCart?.whatsapp || null
@@ -359,6 +398,8 @@ export function useDrawerCartCheckout() {
     const currentTotal = totalGlobal
 
     try {
+      if (!(await prixPanierInchanges())) return
+
       try {
         if (clientNom.trim()) localStorage.setItem('nopalou_client_nom', clientNom.trim())
         if (clientTel.trim()) localStorage.setItem('nopalou_client_tel', clientTel.trim())
@@ -376,45 +417,81 @@ export function useDrawerCartCheckout() {
         quantite: i.quantite,
       }))
 
+      // AUD-095 : clé d'idempotence générée au clic. La commande est créée UNE fois (en ligne, ou à la reconnexion
+      // si le réseau manque) et la référence affichée est celle du serveur, jamais une référence inventée.
+      // Aucune passerelle de paiement : ce parcours est un échange WhatsApp, le règlement se convient avec le vendeur.
+      const cleIdem = `WA-${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10)}`
+      const payloadCommande = {
+        nom_produit: currentItems
+          .map((i) => `${i.quantite}x ${i.nom}${i.detailsVariante ? ` (${i.detailsVariante})` : ''}`)
+          .join(', '),
+        prix_unitaire: currentSousTotal,
+        quantite: 1,
+        client_nom: clientNom.trim() || 'Client WhatsApp',
+        client_telephone: clientTel.trim() || 'Via WhatsApp',
+        client_adresse: clientAdresse.trim() || undefined,
+        methode_paiement: 'cash',
+        note: '[À confirmer sur WhatsApp]',
+        zone_livraison_id: zoneId && zoneId.length === 36 ? zoneId : undefined,
+        frais_livraison: currentFraisLiv,
+        source: 'whatsapp_panier',
+        items: formattedItems,
+        code_promo: currentPromoCode || undefined,
+        montant_reduction: currentReduction > 0 ? currentReduction : undefined,
+        ...getSavedUtm(),
+      }
+
       let finalReference: string | null = null
+      let montantEnregistre: number | null = null
+      let enAttenteEnvoi = false
       try {
         const res = await fetch(`${backendUrl}/api/comptabilite/${currentBoutiqueId}/commandes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nom_produit: currentItems
-              .map((i) => `${i.quantite}x ${i.nom}${i.detailsVariante ? ` (${i.detailsVariante})` : ''}`)
-              .join(', '),
-            prix_unitaire: currentSousTotal,
-            quantite: 1,
-            client_nom: clientNom.trim() || 'Client WhatsApp',
-            client_telephone: clientTel.trim() || 'Via WhatsApp',
-            client_adresse: clientAdresse.trim() || undefined,
-            methode_paiement: 'wave',
-            zone_livraison_id: zoneId && zoneId.length === 36 ? zoneId : undefined,
-            frais_livraison: currentFraisLiv,
-            source: 'whatsapp_panier',
-            items: formattedItems,
-            code_promo: currentPromoCode || undefined,
-            montant_reduction: currentReduction > 0 ? currentReduction : undefined,
-            ...getSavedUtm(),
-          }),
+          body: JSON.stringify({ ...payloadCommande, idempotency_key: cleIdem }),
         })
-        if (res.ok) {
-          const data = await res.json()
-          if (data?.commande?.reference) {
-            finalReference = data.commande.reference
-          }
+        const data = await res.json().catch(() => ({}))
+        if (res.ok && data?.commande?.reference) {
+          finalReference = data.commande.reference
+          montantEnregistre = Number(data.commande.montant_total) || null
+        } else if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) {
+          // Refus métier (stock insuffisant, produit indisponible…) : on l'explique, on n'ouvre pas WhatsApp
+          setErrorMsg(data?.error || 'Commande refusée par la boutique.')
+          return
+        } else {
+          enAttenteEnvoi = true
         }
       } catch (err) {
         console.warn('[Nopalou:DrawerCart:StorageWA:API]', err)
+        enAttenteEnvoi = true
       }
 
-      const activeRef = finalReference || `CMD-WA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+      if (enAttenteEnvoi) {
+        let userId = 'anonyme'
+        try {
+          userId = localStorage.getItem('nopalou_user_id') || 'anonyme'
+        } catch {
+          /* stockage indisponible */
+        }
+        try {
+          await ajouterCommandeHorsLigne({
+            id_temporaire: cleIdem,
+            boutique_id: currentBoutiqueId,
+            user_id: userId,
+            payload: payloadCommande,
+            total: currentTotal,
+            date: new Date().toISOString(),
+          })
+        } catch {
+          setErrorMsg('Impossible d’enregistrer votre commande sur cet appareil. Réessayez.')
+          return
+        }
+      }
 
+      const totalAffiche = montantEnregistre ?? currentTotal
       const waLink = getLienWhatsapp(
         currentWhatsapp,
-        getMessageWhatsapp(currentBoutiqueNom, currentItems, currentSousTotal, currentFraisLiv, currentReduction, currentPromoCode, currentTotal, activeRef)
+        getMessageWhatsapp(currentBoutiqueNom, currentItems, currentSousTotal, currentFraisLiv, currentReduction, currentPromoCode, totalAffiche, finalReference || undefined)
       )
       window.open(waLink, '_blank')
 
@@ -422,8 +499,8 @@ export function useDrawerCartCheckout() {
         boutiqueNom: currentBoutiqueNom,
         boutiqueId: currentBoutiqueId,
         whatsapp: currentWhatsapp,
-        reference: activeRef,
-        total: currentTotal,
+        reference: finalReference || '',
+        total: totalAffiche,
         sousTotal: currentSousTotal,
         fraisLivraison: currentFraisLiv,
         reduction: currentReduction,
@@ -440,13 +517,12 @@ export function useDrawerCartCheckout() {
         })),
       })
 
-      trackAnalyticsEvent('commande_confirmee', currentBoutiqueId, { valeur: currentTotal })
+      trackAnalyticsEvent('commande_confirmee', currentBoutiqueId, { valeur: totalAffiche })
       clearCart(currentBoutiqueId)
     } finally {
       setLoadingCheckout(false)
     }
   }
-
   return {
     zones,
     zoneId,

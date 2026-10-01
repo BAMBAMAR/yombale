@@ -6,6 +6,7 @@ import Link from 'next/link'
 import AccountNavLinks from './AccountNavLinks'
 import { useTranslation } from '@/i18n/context'
 import { logout } from '@/app/actions/auth'
+import { useLogoutSubmit } from '@/lib/deconnexion'
 import { BookOpen, Store, LogOut, ChevronRight, ExternalLink, User } from 'lucide-react'
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function AccountSidebarClient({ nom, email, initiale }: Props) {
+  const onLogoutSubmit = useLogoutSubmit()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const tab = searchParams.get('tab') || undefined
@@ -166,7 +168,7 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
           <ExternalLink size={12} style={{ color: '#94A3B8' }} />
         </Link>
 
-        <form action={logout} style={{ width: '100%', margin: 0 }}>
+        <form action={logout} onSubmit={onLogoutSubmit} style={{ width: '100%', margin: 0 }}>
           <button
             type="submit"
             style={{

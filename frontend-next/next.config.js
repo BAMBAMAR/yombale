@@ -14,6 +14,10 @@ const withSerwist = require('@serwist/next').default({
   swDest: 'public/sw.js',
   // Désactivé en dev ou sur demande pour isoler les builds
   disable: process.env.NODE_ENV === 'development' || process.env.DISABLE_SW === 'true',
+  // AUD-087 : par défaut Serwist fait `location.reload()` à chaque événement `online`, ce qui détruit
+  // le ticket de caisse en cours et interrompt la synchronisation. La reconnexion déclenche la
+  // synchronisation (RegisterSW / usePosSyncNotifications), jamais un rechargement de page.
+  reloadOnOnline: false,
 });
 
 /** @type {import('next').NextConfig} */

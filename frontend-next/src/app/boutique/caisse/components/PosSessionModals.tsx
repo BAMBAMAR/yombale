@@ -8,7 +8,7 @@ import PosBilanRapportXModal from './PosBilanRapportXModal'
 import PosChangerCaissierModal from './PosChangerCaissierModal'
 import PosHistoriqueModal from './PosHistoriqueModal'
 import PosTicketPrintView from './PosTicketPrintView'
-import { ajouterClotureHorsLigne } from '@/lib/db-offline'
+import { ajouterClotureHorsLigne, resoudreId } from '@/lib/db-offline'
 
 export interface PosSessionModalsProps {
   modalSessionOuverture: boolean
@@ -159,9 +159,25 @@ export default function PosSessionModals(props: PosSessionModalsProps) {
               const res = await fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/cloturer`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payloadCloture),
+                body: JSON.stringify({ ...payloadCloture, sessionId: resoudreId(session.id) }),
               })
-              if (!res.ok) throw new Error(`HTTP ${res.status}`)
+              if (!res.ok) {
+                const corps = await res.json().catch(() => ({}))
+                // AUD-093 : session inconnue du serveur (ouverte avant la correction) : rien à persister, clôture locale
+                if (corps.code === 'SESSION_INVALIDE' || corps.code === 'SESSION_INTROUVABLE') {
+                  showToast('Session ouverte avant la mise à jour : clôture locale uniquement (non enregistrée sur le serveur).', 'warning')
+                  setSession(null)
+                  setEspecesComptees('')
+                  setModalClotureZ(false)
+                  return
+                }
+                // Refus métier (4xx hors session expirée / limitation) : on ne ferme pas et on ne prétend pas avoir clôturé
+                if (res.status >= 400 && res.status < 500 && res.status !== 401 && res.status !== 408 && res.status !== 429) {
+                  showToast(corps.error || 'Clôture refusée par le serveur.', 'warning')
+                  return
+                }
+                throw new Error(`HTTP ${res.status}`)
+              }
               showToast('Session de caisse fermée avec succès ! Rapport Z imprimé.', 'success')
             } catch (e) {
               console.warn('[PosSessionModals] Mode offline, mise en file d\'attente de la clôture:', e)

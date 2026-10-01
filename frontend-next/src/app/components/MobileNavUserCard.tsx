@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { logout } from '@/app/actions/auth'
 import { Store, ShoppingCart, LogOut, Building2, Wallet } from 'lucide-react'
-import { purgerCacheUtilisateur } from '@/lib/db-offline'
+import { preparerDeconnexion } from '@/lib/deconnexion'
 
 interface MobileNavUserCardProps {
   displayName: string
@@ -15,6 +15,18 @@ export default function MobileNavUserCard({ displayName, initiale, onClose }: Mo
   const [hasAgence, setHasAgence] = useState(false)
   const [agenceSlug, setAgenceSlug] = useState<string | null>(null)
   const [hasBoutique, setHasBoutique] = useState(false)
+  const purgeFaite = React.useRef(false)
+
+  // AUD-091 : la purge des données locales est ATTENDUE avant la soumission du formulaire de déconnexion
+  async function handleDeconnexion(e: React.MouseEvent<HTMLButtonElement>) {
+    if (purgeFaite.current) return
+    e.preventDefault()
+    const form = e.currentTarget.form
+    if (await preparerDeconnexion()) {
+      purgeFaite.current = true
+      form?.requestSubmit()
+    }
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -84,32 +96,7 @@ export default function MobileNavUserCard({ displayName, initiale, onClose }: Mo
         <form action={logout} style={{ margin: 0 }}>
           <button
             type="submit"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                try {
-                  const uid = localStorage.getItem('nopalou_user_id')
-                  if (uid) purgerCacheUtilisateur(uid).catch(() => {})
-                  localStorage.removeItem('nopalou_user_id')
-                  localStorage.removeItem('nopalou_pos_active_boutique_id')
-                  localStorage.removeItem('nopalou_plan_actif')
-                  const toRemove: string[] = []
-                  for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i)
-                    if (key && (key.includes(uid || '') || key.startsWith('nopalou_offline_immo_mine'))) {
-                      toRemove.push(key)
-                    }
-                  }
-                  toRemove.forEach((k) => localStorage.removeItem(k))
-                } catch (e) {
-                  console.warn('[Mobile Logout purge]', e)
-                }
-              }
-              if (typeof document !== 'undefined') {
-                document.cookie = 'nopalou_locale=fr; path=/; max-age=31536000; SameSite=Lax'
-                document.documentElement.lang = 'fr'
-                document.documentElement.dir = 'ltr'
-              }
-            }}
+            onClick={handleDeconnexion}
             title="Se déconnecter"
             style={{
               display: 'inline-flex',

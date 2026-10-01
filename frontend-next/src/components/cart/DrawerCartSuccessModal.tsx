@@ -18,7 +18,7 @@ export default function DrawerCartSuccessModal({
   const isCredit = orderSuccessData.methodePaiement === 'credit'
   const isWa = orderSuccessData.methodePaiement === 'whatsapp'
 
-  const waMsgSuccess = `Bonjour ${orderSuccessData.boutiqueNom} ! Je viens de valider ma commande réf: *${orderSuccessData.reference}* d'un montant de *${fcfa(orderSuccessData.total)}* sur votre boutique Nopalou.\n\nPouvons-nous confirmer les détails de livraison ?`
+  const waMsgSuccess = `Bonjour ${orderSuccessData.boutiqueNom} ! Je viens de valider ma commande${orderSuccessData.reference ? ` réf: *${orderSuccessData.reference}*` : ''} d'un montant de *${fcfa(orderSuccessData.total)}* sur votre boutique Nopalou.\n\nPouvons-nous confirmer les détails de livraison ?`
   const waLinkDirect = `https://wa.me/${(orderSuccessData.whatsapp || '221777202086').replace(/\D/g, '')}?text=${encodeURIComponent(waMsgSuccess)}`
 
   return (
@@ -103,7 +103,7 @@ export default function DrawerCartSuccessModal({
               letterSpacing: '0.04em',
             }}
           >
-            RÉF : {orderSuccessData.reference}
+            {orderSuccessData.reference ? `RÉF : ${orderSuccessData.reference}` : 'EN ATTENTE D’ENVOI (réseau indisponible)'}
           </span>
           <h3
             style={{

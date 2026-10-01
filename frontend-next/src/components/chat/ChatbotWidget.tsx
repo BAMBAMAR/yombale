@@ -9,6 +9,7 @@ import {
   BadgeCheck,
 } from 'lucide-react'
 import ChatbotMessageItem, { type ChatMessage } from './ChatbotMessageItem'
+import { useOnlineStatus } from '@/lib/useOnlineStatus'
 
 const WA_OFFICIAL_URL = 'https://wa.me/221708717942?text=' + encodeURIComponent('Bonjour Nopalou')
 
@@ -39,6 +40,8 @@ export default function ChatbotWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  // AUD-106 : l'assistant exige le serveur ; hors-ligne on le dit au lieu d'accuser des « serveurs occupés »
+  const enLigne = useOnlineStatus()
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
@@ -134,9 +137,11 @@ export default function ChatbotWidget() {
       const errorMsg: ChatMessage = {
         id: 'err-' + Date.now(),
         sender: 'bot',
-        text: "Nos serveurs sont momentanément occupés. Vous pouvez poursuivre directement avec notre équipe sur WhatsApp :",
+        text: enLigne
+          ? "Nos serveurs sont momentanément occupés. Vous pouvez poursuivre directement avec notre équipe sur WhatsApp :"
+          : "Vous êtes hors-ligne : l'assistant a besoin d'une connexion Internet. Réessayez dès que le réseau revient.",
         time: getCurrentTime(),
-        whatsappUrl: `https://wa.me/221708717942?text=${encodeURIComponent(query)}`,
+        whatsappUrl: enLigne ? `https://wa.me/221708717942?text=${encodeURIComponent(query)}` : undefined,
       }
       setMessages((prev) => [...prev, errorMsg])
     } finally {
@@ -236,7 +241,7 @@ export default function ChatbotWidget() {
                 </div>
                 <div className="npl-chat-header-sub">
                   <span className="npl-chat-status-dot" />
-                  <span>Assistant certifié • En ligne</span>
+                  <span>{enLigne ? 'Assistant certifié • En ligne' : 'Assistant certifié • Hors-ligne'}</span>
                 </div>
               </div>
             </div>

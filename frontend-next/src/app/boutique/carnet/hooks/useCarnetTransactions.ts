@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useToast } from '@/context/ToastContext'
-import { ajouterDetteHorsLigne } from '@/lib/db-offline'
+import { ajouterDetteHorsLigne, resoudreId } from '@/lib/db-offline'
 import type { ClientCredit } from '../types'
 
 interface UseCarnetTransactionsParams {
@@ -67,7 +67,12 @@ export function useCarnetTransactions({
     }) => {
       const txIdempotency = `DEBT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
       try {
-        const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${params.client.id}/transaction`, {
+        // AUD-090 : un client créé hors-ligne (cli_temp_…) n'existe pas encore sur le serveur : la dette est mise en
+        // file et rattachée à son identifiant serveur à la synchronisation. Un client déjà synchronisé est retrouvé
+        // via la correspondance d'identifiants.
+        const idClient = resoudreId(params.client.id)
+        if (idClient.startsWith('cli_temp_')) throw new Error('Client pas encore synchronisé avec le serveur')
+        const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${idClient}/transaction`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

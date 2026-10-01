@@ -24,6 +24,7 @@ import PosLockScreen from './components/PosLockScreen'
 import PosNonAutoriseScreen from './components/PosNonAutoriseScreen'
 import PosModalGestionPins from './components/PosModalGestionPins'
 import PosModalsHost from './components/PosModalsHost'
+import PosSyncEchecsBanner from './components/PosSyncEchecsBanner'
 import PosToast from './components/PosToast'
 import { usePosWebOrdersAlert } from './hooks/usePosWebOrdersAlert'
 import './caisse.css'
@@ -316,6 +317,8 @@ export default function CaisseClient({
         onVerrouillerCaisseManuellement={() => authLock.setVerrouille(true)}
         onSeDeconnecterCompte={() => (window.location.href = '/')}
       />
+
+      {boutiqueActiveId && <PosSyncEchecsBanner boutiqueId={boutiqueActiveId} userId={userId} onChange={rafraichirCompteurOffline} />}
 
       <PosTicketsAttenteBar tickets={ticketsEnAttente} onReprendre={reprendreTicketEnAttente} />
 

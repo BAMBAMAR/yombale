@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Bell, Plus, User, Store, Building2, Heart, Users, LogOut, ChevronDown, Menu, BookOpen, HelpCircle } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
+import { useLogoutSubmit } from '@/lib/deconnexion'
 
 interface AccountTopNavbarProps {
   nom?: string
@@ -27,6 +28,7 @@ export default function AccountTopNavbar({
   customCta,
   onOpenMenu,
 }: AccountTopNavbarProps) {
+  const onLogoutSubmit = useLogoutSubmit()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -459,7 +461,7 @@ export default function AccountTopNavbar({
               </div>
 
               <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 6 }}>
-                <form action={logout} style={{ margin: 0, width: '100%' }}>
+                <form action={logout} onSubmit={onLogoutSubmit} style={{ margin: 0, width: '100%' }}>
                   <button
                     type="submit"
                     style={{

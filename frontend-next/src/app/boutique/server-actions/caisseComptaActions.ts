@@ -299,7 +299,15 @@ export async function getPosHistorique(boutiqueId: string): Promise<any[]> {
   }
 }
 
-export async function creerPosVente(boutiqueId: string, body: any): Promise<ActionState> {
+/**
+ * AUD-089 : le statut HTTP et le code d'erreur du serveur sont transmis à la caisse, qui distingue ainsi une
+ * panne réseau ou 5xx (vente mise en file) d'un refus métier 4xx (abonnement expiré, validation : vente non
+ * présentée comme réussie). Sans statut (`status` absent) : le serveur n'a pas été joint.
+ */
+export async function creerPosVente(
+  boutiqueId: string,
+  body: any
+): Promise<ActionState & { status?: number; code?: string; conflits?: Array<{ produit_nom: string; quantite_manquante: number }> }> {
   try {
     const res = await backendFetch(`/api/boutiques/${boutiqueId}/pos-vente`, {
       method: 'POST',
@@ -307,11 +315,12 @@ export async function creerPosVente(boutiqueId: string, body: any): Promise<Acti
     })
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))
-      const errorMsg = d.detail ? `${d.error} — ${d.detail}` : (d.error ?? 'Impossible d\'enregistrer la vente')
+      const errorMsg = d.detail && res.status >= 500 ? `${d.error} — ${d.detail}` : (d.error ?? 'Impossible d\'enregistrer la vente')
       console.error('[CREER_POS_VENTE]', res.status, errorMsg)
-      return { error: errorMsg }
+      return { error: errorMsg, status: res.status, code: d.code }
     }
-    return { success: true }
+    const d = await res.json().catch(() => ({}))
+    return { success: true, status: res.status, conflits: Array.isArray(d.conflits) ? d.conflits : [] }
   } catch (err) {
     console.error('[CREER_POS_VENTE_ERR]', err)
     return { error: 'Erreur de connexion au serveur' }

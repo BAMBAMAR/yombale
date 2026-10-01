@@ -1,0 +1,21 @@
+﻿import { launch, BASE, login, state, out } from './lib.mjs';
+import { openPos } from './t05a-pos-online.mjs';
+import { execSync } from 'node:child_process';
+const T = process.env.AUDIT_TMP; const S = state(); const res = {};
+const sql = (q) => JSON.parse(execSync(`node "${T}/q.js" "${q.replace(/"/g, '\\"')}"`, { env: process.env }).toString());
+const bid = S.M.boutique.id;
+const { browser, ctx, page } = await launch();
+await ctx.addInitScript(() => { window.open = () => null; window.print = () => {}; });
+await login(page, S.M.email, S.pw); await openPos(page, S); await page.waitForTimeout(3000);
+res.session_avant = sql(`SELECT id, statut FROM boutique_pos_sessions WHERE boutique_id='${bid}' ORDER BY date_ouverture DESC LIMIT 1`)[0];
+await page.getByRole('button', { name: /Clôture Z/ }).first().click(); await page.waitForTimeout(1500);
+await page.screenshot({ path: T + '/cloture.png' });
+res.modal_inputs = await page.$$eval('input', is => is.filter(i => i.offsetParent).map(i => ({ t: i.type, ph: i.placeholder, n: i.name })));
+res.modal_boutons = await page.$$eval('button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim().replace(/\s+/g, ' ')).filter(Boolean).slice(-8));
+const champ = page.locator('input[type="number"]:visible').first();
+if (await champ.count()) { await champ.fill('99999'); }
+await page.locator('button', { hasText: /Valider|Clôturer|Confirmer|Terminer/ }).last().click().catch(e => { res.erreur_clic = String(e.message).split('\n')[0]; });
+await page.waitForTimeout(3500);
+res.apres = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ').match(/(fermée|clôtur|Clôtur|refus|Erreur)[^]{0,100}/)?.[0];
+res.session_apres = sql(`SELECT id, statut, especes_comptees, ecart_caisse, date_cloture IS NOT NULL AS cloturee_le FROM boutique_pos_sessions WHERE boutique_id='${bid}' ORDER BY date_ouverture DESC LIMIT 1`)[0];
+out(res); await browser.close();

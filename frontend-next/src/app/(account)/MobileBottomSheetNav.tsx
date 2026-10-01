@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { BookOpen, LogOut, ShoppingBag, ChevronRight, X } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
+import { useLogoutSubmit } from '@/lib/deconnexion'
 
 export interface NavLinkItem {
   href: string
@@ -39,6 +40,7 @@ export default function MobileBottomSheetNav({
   sheetTitle: string
   variant: 'account' | 'boutique'
 }) {
+  const onLogoutSubmit = useLogoutSubmit()
   const [isOpen, setIsOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
 
@@ -178,7 +180,7 @@ export default function MobileBottomSheetNav({
                 </Link>
               </div>
 
-              <form action={logout} style={{ width: '100%', margin: 0 }}>
+              <form action={logout} onSubmit={onLogoutSubmit} style={{ width: '100%', margin: 0 }}>
                 <button
                   type="submit"
                   className="mobile-bs-footer-link"

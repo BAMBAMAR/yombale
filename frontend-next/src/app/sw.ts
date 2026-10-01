@@ -151,7 +151,7 @@ const FALLBACK_HTML = `<!DOCTYPE html>
       </svg>
     </div>
     <h1>Connexion Internet Interrompue</h1>
-    <p>Votre terminal n'a pas accès au réseau. Vos outils commerçants (Caisse POS et Carnet de dettes) restent pleinement opérationnels hors-ligne avec enregistrement local instantané.</p>
+    <p>Votre terminal n'a pas accès au réseau. Cette page n'a pas été enregistrée sur votre appareil. Les ventes et les dettes saisies dans la caisse ou le carnet déjà ouverts sont conservées localement et envoyées à la reconnexion.</p>
     <div class="btn-group">
       <button onclick="location.reload()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -169,7 +169,7 @@ const FALLBACK_HTML = `<!DOCTYPE html>
         </svg>
         Ouvrir la Caisse POS
       </a>
-      <a href="/boutique/carnet" class="btn btn-sec">
+      <a id="lien-carnet" href="/boutique" class="btn btn-sec">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -187,6 +187,11 @@ const FALLBACK_HTML = `<!DOCTYPE html>
   </div>
   <script>
     window.addEventListener('online', function() { location.reload(); });
+    // AUD-103 : le carnet de dettes n'a pas de route propre (/boutique/carnet n'existe pas) : onglet de l'espace boutique.
+    try {
+      var b = localStorage.getItem('nopalou_pos_active_boutique_id');
+      if (b) document.getElementById('lien-carnet').href = '/boutique?manage=' + encodeURIComponent(b) + '&tab=carnet';
+    } catch (e) {}
   </script>
 </body>
 </html>`;
@@ -216,6 +221,37 @@ function isExternalTrackerOrSocialMedia(url: URL): boolean {
     h.includes('youtube.com') ||
     h.includes('ytimg.com')
   );
+}
+
+// AUD-099 : quand une page est servie depuis le cache (réseau absent ou trop lent), les pages ouvertes en sont
+// averties pour afficher « prix et stocks peuvent avoir changé » : le cache ne doit jamais se faire passer pour
+// la version à jour.
+async function avertirPageDepuisCache(url: string) {
+  try {
+    const liste = await (self as any).clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const c of liste) c.postMessage({ type: "NOPALOU_CACHE_HIT", url });
+  } catch {
+    /* non bloquant */
+  }
+}
+
+const signalerCache = {
+  cachedResponseWillBeUsed: async ({ cachedResponse, request }: any) => {
+    if (cachedResponse && request && request.mode === "navigate") avertirPageDepuisCache(request.url);
+    return cachedResponse;
+  },
+};
+// Vrai si l'URL ne porte aucun paramètre, ou seulement des paramètres de suivi (utm_*, fbclid, gclid…).
+function onlyTrackingParams(rawUrl: string): boolean {
+  try {
+    const u = new URL(rawUrl);
+    for (const key of u.searchParams.keys()) {
+      if (!/^(utm_|fbclid$|gclid$|_rsc$|ref$)/i.test(key)) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Filtrer le manifest pour exclure les chunks d'administration volumineux non nécessaires pour le fonctionnement PWA hors-ligne
@@ -260,6 +296,7 @@ const serwist = new Serwist({
         cacheName: `nopalou-html-cache-${CACHE_VERSION}`,
         networkTimeoutSeconds: 3,
         plugins: [
+          signalerCache,
           new ExpirationPlugin({
             maxEntries: 60,
             maxAgeSeconds: 24 * 60 * 60 * 7,
@@ -410,7 +447,9 @@ self.addEventListener("activate", (event: any) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      const toDelete = keys.filter((key) => !CACHE_NAMES.includes(key));
+      // AUD-092 : on ne purge que les caches Nopalou des versions précédentes. Le précache de Serwist
+      // (`serwist-precache-*`) est géré par Serwist lui-même : le supprimer privait la page de ses scripts hors-ligne.
+      const toDelete = keys.filter((key) => key.startsWith('nopalou-') && !CACHE_NAMES.includes(key));
 
       if (toDelete.length > 0) {
         console.log(`[SW ${CACHE_VERSION}] Purge automatique de ${toDelete.length} cache(s) obsolète(s):`, toDelete);
@@ -431,8 +470,13 @@ serwist.setCatchHandler(async ({ request }: any) => {
     request.mode === "navigate" ||
     request.headers?.get("accept")?.includes("text/html")
   ) {
-    const cached = await caches.match(request, { ignoreSearch: true });
-    if (cached) return cached;
+    // AUD-098 : correspondance exacte d'abord ; on ne tolère une URL différente que si seuls des
+    // paramètres de suivi changent. Sinon /recherche?q=boubou affichait les résultats de ?q=robe.
+    const cached = (await caches.match(request)) || (onlyTrackingParams(request.url) ? await caches.match(request, { ignoreSearch: true }) : undefined);
+    if (cached) {
+      avertirPageDepuisCache(request.url);
+      return cached;
+    }
     const fallback = await caches.match("/offline.html", { ignoreSearch: true });
     if (fallback) return fallback;
     return new Response(FALLBACK_HTML, {
@@ -502,23 +546,19 @@ self.addEventListener("message", (event: any) => {
 });
 
 // ── Synchronisation en Arrière-Plan (Background Sync) ─────────────────────
+// AUD-104 : l'application enregistre le tag 'nopalou-sync' à chaque mise en file (lib/db-offline.ts).
+// Le SW délègue la synchronisation à une page ouverte (seule à connaître la logique des files
+// IndexedDB). Sans page ouverte, l'événement échoue volontairement : le navigateur le rejoue plus tard.
+// Sur les navigateurs sans Background Sync (iOS/Safari), l'application synchronise à son démarrage et
+// à intervalle régulier (RegisterSW).
 self.addEventListener("sync", (event: any) => {
-  if (event.tag === "nopalou-sync-offline-sales" || event.tag === "nopalou-sync-orders") {
+  if (event.tag === "nopalou-sync") {
     event.waitUntil(
-      caches.open(`nopalou-api-cache-${CACHE_VERSION}`).then(async () => {
-        console.log(`[SW Sync] Synchronisation des opérations hors-ligne (${event.tag})...`);
-      }).catch(() => {})
-    );
-  }
-});
-
-// ── Synchronisation Périodique en Arrière-Plan (Periodic Background Sync) ──
-self.addEventListener("periodicsync", (event: any) => {
-  if (event.tag === "nopalou-price-alerts-sync" || event.tag === "nopalou-daily-catalog-sync") {
-    event.waitUntil(
-      caches.open(`nopalou-api-cache-${CACHE_VERSION}`).then(async () => {
-        console.log(`[SW PeriodicSync] Mise à jour périodique des alertes prix (${event.tag})...`);
-      }).catch(() => {})
+      (async () => {
+        const clientList = await (self as any).clients.matchAll({ type: "window", includeUncontrolled: true });
+        if (!clientList.length) throw new Error("Aucune page ouverte pour synchroniser");
+        for (const c of clientList) c.postMessage({ type: "NOPALOU_SYNC" });
+      })()
     );
   }
 });
