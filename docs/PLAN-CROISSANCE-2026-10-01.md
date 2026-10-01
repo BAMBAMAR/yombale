@@ -9,6 +9,39 @@ Rapport source : [`AUDIT-CROISSANCE-2026-10-01.md`](AUDIT-CROISSANCE-2026-10-01.
 - Correctifs de code : branche dédiée, commits locaux `fix(zone): AUD-NNN …`, test qui échoue sans le correctif, migrations idempotentes, pas de `git push` sans ordre.
 - **Actions d'exploitation (hors code)** listées en fin de document.
 
+## Statut de correction (mis à jour le 2026-10-01, branche `fix/croissance-audit`)
+
+| ID | Statut | Preuve / reste à faire |
+|---|---|---|
+| AUD-108 | **Corrigé** | rejeu : 6 échecs sur l'ancienne route, tout vert après ; test unitaire à mutation |
+| AUD-109 | **Corrigé** | idem (rejeu 3 appels = 1 essai ; abonnement payant jamais annulé) |
+| AUD-110 | **Corrigé** | SQL validé sur la copie : MRR 65 000 → 0, attributions admin 65 000 isolées, essais convertis 0/13 |
+| AUD-111 | **Partiel** | backend, bot, FAQ, prospection : réglage admin (défaut 30). **Reste** : ~60 textes statiques des pages publiques, exacts tant que le réglage vaut 30 (`generateMetadata` + helper serveur à prévoir) |
+| AUD-112 | **Partiel** | conversion CRM après contact réel, journal fidèle au gabarit envoyé, UTM sur le bouton de repli. **Reste** : bouton URL dynamique dans le gabarit Meta `nopalou_acces_direct` (action d'exploitation), compteurs de campagne `nb_interesses/nb_inscrits/nb_optout`, noms de campagne |
+| AUD-113 | **Corrigé** | test à mutation (3 échecs sans correctif) |
+| AUD-114 | Non traité | décision produit : lot `osm_places` à tester, dépend d'AUD-112 |
+| AUD-115 | **Corrigé** | test de non-régression sur toutes les sources publiques |
+| AUD-116 | **Corrigé** | rejeu 7/7 ; migration validée sur base vide. **Reste** : carte admin pour lire la synthèse (l'API existe) ; GA4 non accessible |
+| AUD-117 | **Partiel** | commandes web corrigées. **Reste** : « vues boutique » = appels API (nécessite un événement côté page publique) |
+| AUD-118 | **Corrigé** | rejeu 6/6 (4 échecs avant) ; **action d'exploitation** : `scripts/marquer-starter-existants.js` sur la production |
+| AUD-119 | Non traité | décision produit (statut apporteur par défaut, e-mail facultatif) |
+| AUD-120 | **Corrigé** | rejeu sur pile isolée + tests ; relance couverte par test. Le chemin `initie` → `paye` est testé par mocks (Wave réel interdit) |
+| AUD-121 | **Partiel** | simulation/sandbox refusés en production, retour vers la page de succès. **Reste** : retour réel Sonatel à valider en sandbox (NON VALIDÉ ici) |
+| AUD-122 | **Corrigé** | test à mutation (4 échecs sans correctif). Découverte : la tâche tournait une fois par 24 h à l'heure du démarrage. `alertes_abonnement_jours_avant` reste sans effet (décision produit : J-3 conservé) |
+| AUD-123 | **Corrigé** | renvoi du code, 6 chiffres. Mesure d'abandon : via AUD-116 |
+| AUD-124 | **Partiel** | méta `/creer-boutique`, prix des relances ; documents internes (`STRATEGIE-COMMERCIALE.md`, `PLAN-MARKETING.md`) **non mis à jour** (tarifs 15 000/35 000 et commission 2 % obsolètes) |
+| AUD-125 | **Partiel** | accroches absolues remplacées ; recette Android toujours à jouer |
+| AUD-126 | **Corrigé** | accroche marchand et description `/inscription` |
+| AUD-127 | **Corrigé** | message de partage sans livraison, avec UTM |
+| AUD-128, 129, 130 | Non traité | données ou décisions requises (voir fiches) |
+| AUD-131 | Nouveau, **corrigé** (voir ci-dessous) | journal de prospection ≠ message délivré |
+
+### AUD-131 — Le journal de prospection n'enregistrait pas le message réellement délivré (P2)
+- **Preuve** : VÉRIFIÉ par lecture : en envoi à froid, `lancerCampagne` appelle `sendWhatsAppProspectionDirecte` (gabarit Meta à deux paramètres `features` et `googleProof`) ; `messageFinal` (gabarit libre à 5 lignes) n'est utilisé que pour le journal.
+- **Impact** : les messages « testés » ne sont pas ceux reçus ; une comparaison de variantes de texte est impossible ; l'étiquette `variante_A` n'a aucun sens.
+- **Correction livrée** : le journal enregistre le contenu du gabarit remis, étiqueté `gabarit_meta`.
+- **Reste** : pour tester des formulations, varier les paramètres du gabarit (ou créer un second gabarit Meta) et mesurer par `utm_campaign`.
+
 ## Ordre d'exécution
 
 | Phase | Contenu |

@@ -113,6 +113,7 @@ Numérotation à la suite des audits précédents (dernier : AUD-107). Détail, 
 | AUD-127 | Viralité | P2 | Message de partage de vitrine : promesse de livraison non conditionnelle, lien sans suivi | VÉRIFIÉ |
 | AUD-128 | Données | P3 | `recherches_logs` dominé par 4 requêtes aux volumes uniformes | VÉRIFIÉ / cause HYPOTHÈSE |
 | AUD-129 | Marketing | P2 | Aucun canal social attribuable (0 commande avec UTM, 4 posts sociaux) | VÉRIFIÉ |
+| AUD-131 | Prospection / mesure | P2 | Le journal enregistre un texte libre que le destinataire ne reçoit pas (il reçoit un gabarit Meta à deux paramètres) | VÉRIFIÉ (lecture) |
 | AUD-130 | Paiement / commande | P2 | 26 commandes Wave sur 27 sans paiement enregistré, 44 % annulées | VÉRIFIÉ / cause À CONFIRMER |
 
 ## 4. Analyse par axe
