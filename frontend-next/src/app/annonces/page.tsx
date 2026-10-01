@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '@/styles/annonces.css'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
+import { nettoyerTitreAnnonce } from '@/lib/annonce-texte'
 import { Tag } from 'lucide-react'
 import CardActions from '@/app/CardActions'
 import PageHeader from '@/components/PageHeader'
@@ -260,6 +261,8 @@ export default async function AnnoncesPage({
           {(annonces as Annonce[]).map(a => {
             const photo = Array.isArray(a.photos) ? a.photos[0] : null
             const isBooste = a.boost_until && new Date(a.boost_until) > new Date()
+            // AUD-155 : pas de numéro ni de préfixe de localité dans le titre affiché
+            const titreAffiche = nettoyerTitreAnnonce(a.titre) || `Annonce ${catLabel(a.categorie_slug)}`
             return (
               <article key={a.id} className="annonce-pub-card">
                 <Link href={`/annonces/${a.id}`} className="annonce-pub-link">
@@ -278,7 +281,7 @@ export default async function AnnoncesPage({
                     )}
                     {photo
                       // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={cloudinaryHQ(photo, { width: 400 })} alt={a.titre} className="annonce-pub-img" />
+                      ? <img src={cloudinaryHQ(photo, { width: 400 })} alt={titreAffiche} className="annonce-pub-img" />
                       : <div className="annonce-pub-img annonce-pub-img--vide" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <Tag size={24} style={{ color: '#94a3b8' }} />
                         </div>
@@ -286,7 +289,7 @@ export default async function AnnoncesPage({
                     <span className="annonce-pub-cat">{catLabel(a.categorie_slug)}</span>
                   </div>
                   <div className="annonce-pub-body">
-                    <p className="annonce-pub-titre">{a.titre}</p>
+                    <p className="annonce-pub-titre">{titreAffiche}</p>
                     <p className="annonce-pub-prix">{formatPrix(a.prix)}</p>
                     <div className="annonce-pub-meta">
                       <span>{a.quartier ? `${a.quartier}, ` : ''}{a.ville ?? 'Dakar'}</span>
@@ -295,7 +298,7 @@ export default async function AnnoncesPage({
                   </div>
                 </Link>
                 <div className="annonce-pub-card-actions">
-                  <CardActions id={a.id} nom={a.titre} type="annonce" />
+                  <CardActions id={a.id} nom={titreAffiche} type="annonce" />
                 </div>
               </article>
             )

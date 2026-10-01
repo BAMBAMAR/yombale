@@ -6,6 +6,8 @@ import MaskedContactPhone from '@/components/MaskedContactPhone'
 import { apiFetch } from '@/lib/api'
 import PageHeader from '@/components/PageHeader'
 import { safeJsonLd } from '@/lib/jsonld'
+import { sanitizeImgUrl } from '@/lib/sanitizeImg'
+import { nettoyerTexteAnnonce, titreAffichableAnnonce, descriptionMetaAnnonce } from '@/lib/annonce-texte'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''
@@ -55,6 +57,19 @@ function formatPrix(p: number | null) {
   return new Intl.NumberFormat('fr-SN').format(p) + ' FCFA'
 }
 
+// AUD-155 : titre et description publics = texte nettoyé (sans numéro, lien ni lettres éparpillées)
+function vueTexteAnnonce(annonce: Annonce) {
+  const lieu = annonce.ville ?? 'Dakar'
+  const categorie = CAT_LABELS[annonce.categorie_slug] ?? annonce.categorie_slug
+  const titre = titreAffichableAnnonce(annonce.titre, annonce.description, `Annonce ${categorie} à ${lieu}`)
+  const description = nettoyerTexteAnnonce(annonce.description)
+  const descriptionMeta = descriptionMetaAnnonce(
+    annonce.description,
+    `${titre} à ${lieu}. ${formatPrix(annonce.prix)}. Contactez l'annonceur sur Nopalou.`,
+  )
+  return { titre, description, descriptionMeta }
+}
+
 const MOIS_LONGS = [
   'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
   'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
@@ -77,10 +92,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const annonce = await fetchAnnonce(cleanId || id)
   if (!annonce) return { title: 'Annonce introuvable' }
 
-  const titre = annonce.titre
-  const desc = annonce.description?.slice(0, 155) ??
-    `${annonce.titre} — ${annonce.ville ?? 'Dakar'}, ${formatPrix(annonce.prix)}`
-  const mainPhoto = annonce.photos?.[0] ?? null
+  const { titre, descriptionMeta: desc } = vueTexteAnnonce(annonce)
+  // URL d'image Facebook/Instagram à signature expirée : écartée (aperçu cassé sinon)
+  const mainPhoto = sanitizeImgUrl(annonce.photos?.[0])
   const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
   return {
@@ -99,22 +113,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 function buildAnnonceJsonLd(annonce: Annonce): string {
   const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  const { titre, description } = vueTexteAnnonce(annonce)
+  const image = sanitizeImgUrl(annonce.photos?.[0])
   return safeJsonLd({
     '@context': 'https://schema.org',
     '@type': 'ItemPage',
-    name: annonce.titre,
-    description: annonce.description ?? undefined,
+    name: titre,
+    description: description || undefined,
     url: `${BASE}/annonces/${annonce.id}`,
-    ...(annonce.photos?.[0] ? { image: annonce.photos[0] } : {}),
+    ...(image ? { image } : {}),
     ...(annonce.prix ? {
       offers: {
         '@type': 'Offer',
         price: annonce.prix,
         priceCurrency: 'XOF',
         availability: 'https://schema.org/InStock',
+        // Le nom d'un particulier n'est pas publié dans les données structurées
         seller: {
           '@type': 'Person',
-          name: annonce.contact_nom ?? 'Vendeur particulier',
+          name: 'Vendeur particulier',
         },
       },
     } : {}),
@@ -123,7 +140,7 @@ function buildAnnonceJsonLd(annonce: Annonce): string {
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${BASE}/` },
         { '@type': 'ListItem', position: 2, name: 'Annonces', item: `${BASE}/annonces` },
-        { '@type': 'ListItem', position: 3, name: annonce.titre },
+        { '@type': 'ListItem', position: 3, name: titre },
       ],
     },
   })
@@ -157,6 +174,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
     redirect('/annonces')
   }
 
+  const { titre, description } = vueTexteAnnonce(annonce)
   const photos = Array.isArray(annonce.photos) ? annonce.photos : []
   const car = annonce.caracteristiques ?? {}
   const carEntries = Object.entries(car).filter(([, v]) => v && String(v).trim())
@@ -168,16 +186,16 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
           { label: 'Accueil', href: '/' },
           { label: 'Annonces', href: '/annonces' },
           { label: CAT_LABELS[annonce.categorie_slug] ?? annonce.categorie_slug, href: `/annonces?categorie=${annonce.categorie_slug}` },
-          { label: annonce.titre.length > 40 ? `${annonce.titre.slice(0, 40)}…` : annonce.titre }
+          { label: titre.length > 40 ? `${titre.slice(0, 40)}…` : titre }
         ]}
-        titre={annonce.titre}
+        titre={titre}
       />
 
       <div className="annonce-detail-layout">
         {/* Colonne gauche — contenu */}
         <div className="annonce-detail-main">
           {/* Galerie photos */}
-          <AnnonceGallery photos={photos} titre={annonce.titre} />
+          <AnnonceGallery photos={photos} titre={titre} />
 
           {/* Titre + meta */}
           <div className="annonce-detail-header" style={{ marginTop: 16 }}>
@@ -196,10 +214,10 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
           </div>
 
           {/* Description */}
-          {annonce.description && (
+          {description && (
             <div className="annonce-detail-section">
               <h2 className="annonce-detail-section-titre">Description</h2>
-              <p className="annonce-detail-description">{annonce.description}</p>
+              <p className="annonce-detail-description">{description}</p>
             </div>
           )}
 
@@ -242,7 +260,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
             ) : annonce.contact_tel_disponible ? (
               <MaskedContactPhone
                 masque={annonce.contact_tel_masque ?? null}
-                titre={annonce.titre}
+                titre={titre}
                 prix={annonce.prix ?? undefined}
                 annonceId={annonce.id}
                 baseUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}

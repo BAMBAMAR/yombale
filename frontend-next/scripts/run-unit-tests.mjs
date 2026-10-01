@@ -9,6 +9,12 @@ import { safeJsonParse } from '../src/lib/errorHandler.ts'
 import { safeJsonLd } from '../src/lib/jsonld.ts'
 import { ESSAI_DEFAUT, essaiJoursValide } from '../src/lib/essai-format.ts'
 import {
+  nettoyerTexteAnnonce,
+  nettoyerTitreAnnonce,
+  titreAffichableAnnonce,
+  descriptionMetaAnnonce,
+} from '../src/lib/annonce-texte.ts'
+import {
   calculerKpisCarnet,
   determinerActionClient,
   filtrerClientsCarnet,
@@ -1086,6 +1092,57 @@ it("essaiJoursValide: valeur du réglage admin, repli sur 30 si absente ou inval
   assert.equal(essaiJoursValide(400), 30)
 })
 
+// AUD-155 : texte importé d'annonces (titre, description, JSON-LD) sans numéro, lien ni lettres éparpillées
+console.log('\n📦 AUD-155. Texte d\'annonce importé (annonce-texte.ts)')
+const DESC_BROUILLEE_1 = 'Fallou Sall S r s e t p o o n d h u h 2 m 0 6 1 8 i 2 8 4 4 t c l 9 9 2 t 3 6 g 2 h 2 l 0 g f h 0 i i a 5 5 1 i 7 0 i 6 u 3 t 2 8 · HYUNDAI ELANTRA 2014 ES'
+const DESC_BROUILLEE_2 = 'Tymfa Sn · Suivre s r n d S t p o e o a 0 u 0 2 t h 2 1 4 t 4 t 0 a u i c 4 6 0 6 1 9 h 5 f u 1 9 f 3 a 9 a t a 9 7 t i 9 c h g 8 3 f a · Clim LG 3CV neuf'
+const DESC_AVEC_TEL = 'Fa Fayee · Sony 40 pouce simple 19 volt consommation faible venant avec garantie 771224076 65000fcfa https://wa.me/221771224076 65 000 CFA · DAKAR, SÉNÉGAL'
+it('nettoyerTexteAnnonce: lettres éparpillées et nom d\'auteur retirés', () => {
+  assert.equal(nettoyerTexteAnnonce(DESC_BROUILLEE_1), 'HYUNDAI ELANTRA 2014 ES')
+  assert.equal(nettoyerTexteAnnonce(DESC_BROUILLEE_2), 'Clim LG 3CV neuf')
+})
+it('nettoyerTexteAnnonce: numéros sénégalais et liens retirés, prix conservés', () => {
+  const t = nettoyerTexteAnnonce(DESC_AVEC_TEL)
+  assert.ok(!/771224076|wa\.me|https?:/.test(t), t)
+  assert.ok(t.includes('65000fcfa') && t.includes('65 000 CFA'), t)
+  assert.equal(nettoyerTexteAnnonce('Appelez +221 77 123 45 67 ou 33 821 00 00 ou 78.123.45.67 ou 701234567'), 'Appelez ou ou ou')
+  assert.equal(nettoyerTexteAnnonce('Contact : www.exemple.sn/annonce'), 'Contact')
+})
+it('nettoyerTexteAnnonce: texte légitime avec chiffres inchangé', () => {
+  for (const s of [
+    'Villa 4 chambres, 250 m², 150 000 FCFA/mois, titre foncier 2019',
+    'iPhone 13 128 Go 350000 FCFA batterie 91%',
+    'Terrain 300 m² à 4 500 000 FCFA',
+    'Loyer 770 000 FCFA, caution 2 mois',
+    'Appartement F3 de 2 à 5 pièces, 1 salon, 2 sdb',
+  ]) assert.equal(nettoyerTexteAnnonce(s), s)
+})
+it('nettoyerTexteAnnonce: valeurs vides', () => {
+  assert.equal(nettoyerTexteAnnonce(null), '')
+  assert.equal(nettoyerTexteAnnonce(undefined), '')
+  assert.equal(nettoyerTexteAnnonce('   '), '')
+})
+it('nettoyerTitreAnnonce: préfixe de ville en majuscules et numéro retirés', () => {
+  assert.equal(nettoyerTitreAnnonce('DAKAR, SÉNÉGAL Hyundai elantra 2014'), 'Hyundai elantra 2014')
+  assert.equal(nettoyerTitreAnnonce('DAKAR, SÉNÉGAL Des articles en bon état disponible 77 962 66 80'), 'Des articles en bon état disponible')
+  assert.equal(nettoyerTitreAnnonce('Samsung A54 128 Go'), 'Samsung A54 128 Go')
+})
+it('titreAffichableAnnonce: un titre qui est un nom d\'auteur est remplacé par le contenu, sinon repli', () => {
+  const t = titreAffichableAnnonce('Fa Fayee', DESC_AVEC_TEL, 'Annonce Téléphones à Dakar')
+  assert.ok(t.startsWith('Sony 40 pouce simple 19 volt'), t)
+  assert.ok(t.length <= 75, t)
+  assert.equal(titreAffichableAnnonce('77 962 66 80', null, 'Annonce Téléphones à Dakar'), 'Annonce Téléphones à Dakar')
+  assert.equal(titreAffichableAnnonce('Hyundai elantra 2014 automatique', null, 'x'), 'Hyundai elantra 2014 automatique')
+})
+it('descriptionMetaAnnonce: sans numéro, coupée proprement, repli si trop courte', () => {
+  const d = descriptionMetaAnnonce(DESC_AVEC_TEL, 'Repli.')
+  assert.ok(!/771224076|wa\.me/.test(d) && d.length <= 156, d)
+  assert.equal(descriptionMetaAnnonce(DESC_BROUILLEE_1, 'Repli complet.'), 'Repli complet.')
+  assert.equal(descriptionMetaAnnonce(null, 'Repli complet.'), 'Repli complet.')
+  const longue = 'Villa spacieuse '.repeat(30)
+  const c = descriptionMetaAnnonce(longue, 'Repli.')
+  assert.ok(c.length <= 156 && c.endsWith('…'), c)
+})
 await Promise.all(enAttente)
 
 console.log('\n──────────────────────────────────────────────────────────')
