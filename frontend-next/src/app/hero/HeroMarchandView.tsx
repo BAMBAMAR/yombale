@@ -1,5 +1,6 @@
 'use client'
 
+import { useEssaiJours } from '@/components/EssaiProvider'
 import React from 'react'
 import Link from 'next/link'
 import {
@@ -74,6 +75,7 @@ export default function HeroMarchandView({
   prixTafTaf = 2500,
   activeBoutiqueNom
 }: HeroMarchandViewProps) {
+  const essai = useEssaiJours()
   return (
     <div style={{ width: '100%', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -264,7 +266,7 @@ export default function HeroMarchandView({
             Formule Boutique Taf-Taf :
           </span>
           <span style={{ color: 'var(--text-subtle, #5A4E42)' }}>
-            Dès <strong style={{ color: 'var(--accent, #C75B00)' }}>{prixTafTaf.toLocaleString('fr-FR')} FCFA/mois</strong> après 30 jours d&apos;essai gratuit • 0% de commission sur vos ventes • Sans engagement
+            Dès <strong style={{ color: 'var(--accent, #C75B00)' }}>{prixTafTaf.toLocaleString('fr-FR')} FCFA/mois</strong> après {essai} jours d&apos;essai gratuit • 0% de commission sur vos ventes • Sans engagement
           </span>
         </div>
 

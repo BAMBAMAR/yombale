@@ -6,10 +6,13 @@ import {
   Bell, Bot, Send, CheckCheck, Smartphone, Share2
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Vendre sur WhatsApp au Sénégal (2026) : Boutique & Commandes Automatisées',
   description: 'Créez votre catalogue et boutique WhatsApp au Sénégal en 30s. Recevez des commandes pré-remplies, relancez vos clients et encaissez par Wave sans commission.',
   keywords: [
@@ -28,10 +31,11 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Vendre sur WhatsApp au Sénégal avec Nopalou',
-    description: 'Transformez vos statuts WhatsApp en commandes réelles. 30 jours offerts et zéro commission.',
+    description: `Transformez vos statuts WhatsApp en commandes réelles. ${essai} jours offerts et zéro commission.`,
     url: `${BASE}/vendre-sur-whatsapp`,
     type: 'website',
   },
+  }
 }
 
 const WA_FAQ = [
@@ -66,7 +70,8 @@ const JSON_LD_FAQ = {
   })),
 }
 
-export default function VendreSurWhatsappPage() {
+export default async function VendreSurWhatsappPage() {
+  const essai = await getEssaiJours()
   return (
     <>
       <script
@@ -166,7 +171,7 @@ export default function VendreSurWhatsappPage() {
                 <CheckCircle2 size={16} color="#25D366" /> Commandes avec adresse et montant précis
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <CheckCircle2 size={16} color="#25D366" /> 30 jours offerts sans engagement
+                <CheckCircle2 size={16} color="#25D366" /> {essai} jours offerts sans engagement
               </span>
             </div>
           </div>

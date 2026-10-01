@@ -24,8 +24,10 @@ import {
 } from 'lucide-react'
 import { FeatureTab } from './types'
 import StageMockups from './StageMockups'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 export default function MerchantMasterStage() {
+  const essai = useEssaiJours()
   const [activeFeature, setActiveFeature] = useState<FeatureTab>('pos')
 
   const tabs: { id: FeatureTab; label: string; icon: React.ComponentType<any>; badge: string }[] = [
@@ -222,7 +224,7 @@ export default function MerchantMasterStage() {
                     boxShadow: '0 3px 10px rgba(199,91,0,0.3)'
                   }}
                 >
-                  <span>Créer ma Boutique (30j offerts)</span>
+                  <span>Créer ma Boutique ({essai}j offerts)</span>
                   <ArrowRight size={14} />
                 </Link>
 

@@ -6,12 +6,15 @@ import {
   CreditCard, BarChart2, Laptop, Clock
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Logiciel de Caisse Enregistreuse au Sénégal (2026) | Nopalou POS Dakar',
-  description: 'Le logiciel de caisse enregistreuse tactile au Sénégal pour boutique et magasin. Conçu pour les coupures de réseau, encaisse Wave & OM, dès 5 000 FCFA/mois (30 jours offerts).',
+  description: `Le logiciel de caisse enregistreuse tactile au Sénégal pour boutique et magasin. Conçu pour les coupures de réseau, encaisse Wave & OM, dès 5 000 FCFA/mois (${essai} jours offerts).`,
   keywords: [
     'logiciel de caisse sénégal',
     'caisse enregistreuse dakar',
@@ -29,16 +32,17 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Logiciel de Caisse Enregistreuse au Sénégal | Nopalou POS',
-    description: 'La solution de caisse enregistreuse tactile pour commerces au Sénégal. Fonctionne hors-ligne dès 5 000 FCFA/mois avec 30 jours offerts.',
+    description: `La solution de caisse enregistreuse tactile pour commerces au Sénégal. Fonctionne hors-ligne dès 5 000 FCFA/mois avec ${essai} jours offerts.`,
     url: `${BASE}/logiciel-caisse-senegal`,
     type: 'website',
   },
+  }
 }
 
-const POS_FAQ = [
+const POS_FAQ = (essai: number) => [
   {
     q: "Quel est le prix d'un logiciel de caisse enregistreuse au Sénégal ?",
-    a: "Alors qu'un équipement de caisse tactile traditionnel coûte entre 350 000 et 900 000 FCFA à Dakar, Nopalou POS ne requiert aucun matériel propriétaire coûteux. La formule Boutique Pro avec caisse tactile POS, tickets et scanner débute à 5 000 FCFA/mois (avec 30 jours 100% offerts) et fonctionne directement sur votre smartphone, tablette ou ordinateur."
+    a: `Alors qu'un équipement de caisse tactile traditionnel coûte entre 350 000 et 900 000 FCFA à Dakar, Nopalou POS ne requiert aucun matériel propriétaire coûteux. La formule Boutique Pro avec caisse tactile POS, tickets et scanner débute à 5 000 FCFA/mois (avec ${essai} jours 100% offerts) et fonctionne directement sur votre smartphone, tablette ou ordinateur.`
   },
   {
     q: "La caisse fonctionne-t-elle si la connexion Internet coupe à Dakar ?",
@@ -71,10 +75,10 @@ const JSON_LD_SOFTWARE = {
   // L'ajout de notes fictives est contraire aux directives Google Rich Results.
 }
 
-const JSON_LD_FAQ = {
+const JSON_LD_FAQ = (essai: number) => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: POS_FAQ.map(item => ({
+  mainEntity: POS_FAQ(essai).map(item => ({
     '@type': 'Question',
     name: item.q,
     acceptedAnswer: {
@@ -82,9 +86,10 @@ const JSON_LD_FAQ = {
       text: item.a,
     },
   })),
-}
+})
 
-export default function LogicielCaisseSenegalPage() {
+export default async function LogicielCaisseSenegalPage() {
+  const essai = await getEssaiJours()
   return (
     <>
       <script
@@ -93,7 +98,7 @@ export default function LogicielCaisseSenegalPage() {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ(essai)) }}
       />
 
       <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -157,7 +162,7 @@ export default function LogicielCaisseSenegalPage() {
                   boxShadow: '0 8px 24px rgba(199,91,0,0.4)'
                 }}
               >
-                <span>Tester la caisse (30 jours offerts)</span>
+                <span>Tester la caisse ({essai} jours offerts)</span>
                 <ArrowRight size={18} />
               </Link>
               <Link
@@ -252,7 +257,7 @@ export default function LogicielCaisseSenegalPage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {POS_FAQ.map((item, i) => (
+            {POS_FAQ(essai).map((item, i) => (
               <div key={i} style={{
                 background: '#ffffff',
                 borderRadius: 14,

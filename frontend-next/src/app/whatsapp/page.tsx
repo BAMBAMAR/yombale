@@ -5,10 +5,13 @@ import {
   CheckCircle2, ArrowRight, Sparkles, HelpCircle, PhoneCall,
   Bell, Bot, Send, CheckCheck
 } from 'lucide-react'
+import { getEssaiJours } from '@/lib/essai'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Vendre sur WhatsApp avec Nopalou | Commandes, Dettes & Bilan Automatisés',
-  description: 'Transformez WhatsApp en votre meilleur commercial. Commandes pré-remplies sans ressaisie, relances de dettes 1-clic avec lien Wave, et bilan financier du jour par message. 30 jours offerts.',
+  description: `Transformez WhatsApp en votre meilleur commercial. Commandes pré-remplies sans ressaisie, relances de dettes 1-clic avec lien Wave, et bilan financier du jour par message. ${essai} jours offerts.`,
   keywords: [
     'vendre sur whatsapp sénégal', 'commandes whatsapp dakar', 'bot whatsapp e-commerce dakar',
     'relance dette whatsapp dakar', 'assistant whatsapp commerçant sénégal', 'nopalou whatsapp'
@@ -19,6 +22,7 @@ export const metadata: Metadata = {
     url: 'https://nopalou.com/whatsapp',
     type: 'website',
   },
+  }
 }
 
 const WA_FAQ = [
@@ -40,7 +44,8 @@ const WA_FAQ = [
   }
 ]
 
-export default function WhatsappLandingPage() {
+export default async function WhatsappLandingPage() {
+  const essai = await getEssaiJours()
   return (
     <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -100,7 +105,7 @@ export default function WhatsappLandingPage() {
               boxShadow: '0 10px 30px rgba(37,211,102,0.35)',
               display: 'inline-flex', alignItems: 'center', gap: 10
             }}>
-              <span>Activer mon commerce WhatsApp (1 mois offert)</span>
+              <span>Activer mon commerce WhatsApp ({essai} jours offerts)</span>
               <ArrowRight size={18} />
             </Link>
 
@@ -329,7 +334,7 @@ export default function WhatsappLandingPage() {
             Prêt à vendre sur WhatsApp comme un Pro ?
           </h2>
           <p style={{ fontSize: 16, color: '#a7f3d0', maxWidth: 600, margin: '0 auto 32px', lineHeight: 1.6 }}>
-            Créez votre boutique en 30 secondes et connectez-la à votre WhatsApp. 30 jours 100% offerts.
+            Créez votre boutique en 30 secondes et connectez-la à votre WhatsApp. {essai} jours 100% offerts.
           </p>
           <Link href="/creer-boutique" style={{
             background: '#ffffff',
@@ -339,7 +344,7 @@ export default function WhatsappLandingPage() {
             boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
             display: 'inline-flex', alignItems: 'center', gap: 8
           }}>
-            <span>Lancer ma boutique WhatsApp (30j offerts)</span>
+            <span>Lancer ma boutique WhatsApp ({essai}j offerts)</span>
             <ArrowRight size={18} />
           </Link>
         </div>

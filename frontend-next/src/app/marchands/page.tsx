@@ -6,10 +6,13 @@ import {
   Award, Clock, Lock, Sparkles, HelpCircle, ChevronRight, FileText,
   BadgePercent, Layers, Receipt, ShoppingCart, DollarSign
 } from 'lucide-react'
+import { getEssaiJours } from '@/lib/essai'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Nopalou Marchands | La Plateforme E-Commerce & Caisse POS au Sénégal',
-  description: 'Tout votre commerce dans votre poche : Boutique en ligne, Caisse POS conçue pour les coupures de réseau, Commandes WhatsApp et paiements Wave & Orange Money sans commission. 30 jours offerts sans carte bancaire.',
+  description: `Tout votre commerce dans votre poche : Boutique en ligne, Caisse POS conçue pour les coupures de réseau, Commandes WhatsApp et paiements Wave & Orange Money sans commission. ${essai} jours offerts sans carte bancaire.`,
   keywords: [
     'boutique en ligne sénégal', 'caisse enregistreuse dakar', 'caisse pos sénégal',
     'vendre sur whatsapp dakar', 'alternative shopify sénégal', 'logiciel commerce dakar',
@@ -24,12 +27,13 @@ export const metadata: Metadata = {
     url: 'https://nopalou.com/marchands',
     type: 'website',
   },
+  }
 }
 
-const FAQ_ITEMS = [
+const FAQ_ITEMS = (essai: number) => [
   {
     q: "Ai-je besoin d'une carte bancaire pour commencer ?",
-    a: "Non, absolument aucune carte bancaire n'est nécessaire. Vous commencez immédiatement avec 30 jours 100% gratuits. À la fin de votre essai, vous réglez votre abonnement (dès 2 500 FCFA/mois) directement avec votre compte Wave ou Orange Money habituel."
+    a: `Non, absolument aucune carte bancaire n'est nécessaire. Vous commencez immédiatement avec ${essai} jours 100% gratuits. À la fin de votre essai, vous réglez votre abonnement (dès 2 500 FCFA/mois) directement avec votre compte Wave ou Orange Money habituel.`
   },
   {
     q: "Est-ce que la caisse enregistreuse fonctionne si Internet coupe ?",
@@ -53,7 +57,8 @@ const FAQ_ITEMS = [
   }
 ]
 
-export default function MarchandsLandingPage() {
+export default async function MarchandsLandingPage() {
+  const essai = await getEssaiJours()
   return (
     <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -118,7 +123,7 @@ export default function MarchandsLandingPage() {
               display: 'inline-flex', alignItems: 'center', gap: 10,
               transition: 'transform 0.15s ease'
             }}>
-              <span>Créer ma boutique (1 mois offert)</span>
+              <span>Créer ma boutique ({essai} jours offerts)</span>
               <ArrowRight size={18} />
             </Link>
 
@@ -143,7 +148,7 @@ export default function MarchandsLandingPage() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckCircle2 size={16} style={{ color: '#10b981' }} />
-              <span>0 FCFA d'avance (30 jours offerts)</span>
+              <span>0 FCFA d'avance ({essai} jours offerts)</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckCircle2 size={16} style={{ color: '#10b981' }} />
@@ -479,7 +484,7 @@ export default function MarchandsLandingPage() {
           Questions Fréquentes des Commerçants
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {FAQ_ITEMS.map((item, idx) => (
+          {FAQ_ITEMS(essai).map((item, idx) => (
             <details
               key={idx}
               style={{
@@ -528,7 +533,7 @@ export default function MarchandsLandingPage() {
           </h2>
 
           <p style={{ fontSize: 16, color: '#94a3b8', maxWidth: 620, margin: '0 auto 32px', lineHeight: 1.6 }}>
-            Testez toutes les fonctionnalités pendant 30 jours sans engagement. Notre équipe vous accompagne personnellement pour vos premiers pas.
+            Testez toutes les fonctionnalités pendant {essai} jours sans engagement. Notre équipe vous accompagne personnellement pour vos premiers pas.
           </p>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>

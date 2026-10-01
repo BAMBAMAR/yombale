@@ -1,11 +1,12 @@
 'use client'
 
 import React from 'react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
-export const POS_FAQ = [
+export const POS_FAQ = (essai: number) => [
   {
     q: "Quel est le prix d'une caisse enregistreuse au Sénégal ?",
-    a: "Alors qu'une caisse tactile traditionnelle coûte entre 300 000 et 800 000 FCFA à Dakar, Nopalou POS ne nécessite aucun matériel dédié et est incluse dans la formule Boutique Pro (dès 3 750 FCFA/mois en formule annuelle, ou 5 000 FCFA/mois avec 30 jours 100% offerts). Elle fonctionne sur votre smartphone, tablette ou ordinateur."
+    a: `Alors qu'une caisse tactile traditionnelle coûte entre 300 000 et 800 000 FCFA à Dakar, Nopalou POS ne nécessite aucun matériel dédié et est incluse dans la formule Boutique Pro (dès 3 750 FCFA/mois en formule annuelle, ou 5 000 FCFA/mois avec ${essai} jours 100% offerts). Elle fonctionne sur votre smartphone, tablette ou ordinateur.`
   },
   {
     q: "Pourquoi Nopalou est la meilleure caisse enregistreuse pour petit commerce ?",
@@ -30,13 +31,14 @@ export const POS_FAQ = [
 ]
 
 export function PosFaqSection() {
+  const essai = useEssaiJours()
   return (
     <section style={{ maxWidth: 900, margin: '0 auto 100px', padding: '0 20px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <h2 style={{ fontSize: 28, fontWeight: 900, textAlign: 'center', color: '#1C2B4A', marginBottom: 36 }}>
         Questions Fréquentes sur la Caisse Enregistreuse Nopalou
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {POS_FAQ.map((item, idx) => (
+        {POS_FAQ(essai).map((item, idx) => (
           <details
             key={idx}
             style={{

@@ -5,10 +5,13 @@ import {
   ArrowRight, Sparkles, HelpCircle, RefreshCw, Smartphone, Clock,
   FileCheck, Database, Zap
 } from 'lucide-react'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Migration Shopify & Excel vers Nopalou en 1 Clic | Zéro Perte de Données',
   description: 'Quittez Shopify et ses frais en dollars. Transférez tout votre catalogue (titres, photos, prix FCFA, stocks, clients) sur Nopalou en moins de 3 minutes. Service d\'accompagnement gratuit.',
   keywords: [
@@ -29,7 +32,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Passez à Nopalou sans recommencer votre boutique.',
-    description: 'Transférez vos produits, photos et stocks depuis Shopify, WooCommerce ou Excel en 1 clic. 1 mois offert.',
+    description: `Transférez vos produits, photos et stocks depuis Shopify, WooCommerce ou Excel en 1 clic. ${essai} jours offerts.`,
     url: `${BASE}/migration`,
     type: 'website',
   },
@@ -38,6 +41,7 @@ export const metadata: Metadata = {
     title: 'Passez à Nopalou sans recommencer votre boutique.',
     description: 'Transférez vos produits, photos et stocks depuis Shopify, WooCommerce ou Excel en 1 clic.',
   },
+  }
 }
 
 const MIGRATION_FAQ = [
@@ -63,7 +67,8 @@ const MIGRATION_FAQ = [
   }
 ]
 
-export default function MigrationLandingPage() {
+export default async function MigrationLandingPage() {
+  const essai = await getEssaiJours()
   return (
     <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -332,7 +337,7 @@ export default function MigrationLandingPage() {
             Faites des économies dès ce mois-ci.
           </h2>
           <p style={{ fontSize: 16, color: '#94a3b8', maxWidth: 600, margin: '0 auto 32px', lineHeight: 1.6 }}>
-            Importez votre boutique en 3 minutes et commencez avec 30 jours 100% offerts sans carte bancaire.
+            Importez votre boutique en 3 minutes et commencez avec {essai} jours 100% offerts sans carte bancaire.
           </p>
           <Link href="/creer-boutique" style={{
             background: 'linear-gradient(135deg, #FF6600 0%, #C75B00 100%)',

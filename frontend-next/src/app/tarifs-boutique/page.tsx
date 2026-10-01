@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import TarifsBoutiqueClient from './TarifsBoutiqueClient'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -19,21 +20,21 @@ export const metadata: Metadata = {
   },
 }
 
-const FAQ_STRUCTURED_DATA = [
-  { q: 'Combien coûte la création d’une boutique en ligne sur Nopalou ?', a: 'La création de boutique démarre dès 2.500 FCFA par mois avec la formule Boutique Taf Taf, avec 30 jours 100% offerts sans engagement.' },
+const FAQ_STRUCTURED_DATA = (essai: number) => [
+  { q: 'Combien coûte la création d’une boutique en ligne sur Nopalou ?', a: `La création de boutique démarre dès 2.500 FCFA par mois avec la formule Boutique Taf Taf, avec ${essai} jours 100% offerts sans engagement.` },
   { q: 'Combien coûte Nopalou pour une agence immobilière ou un gestionnaire locatif ?', a: 'Le plan Agence Essentiel est 100% gratuit sans limitation de durée et inclut jusqu\'à 5 négociateurs, la gestion des mandats et la génération de baux conformes OHADA.' },
   { q: 'Comment mes clients ou locataires paient-ils ?', a: 'Vos clients ou locataires règlent directement par Wave ou Orange Money depuis leur smartphone sans frais cachés ni déplacement.' },
 ]
 
-const JSON_LD_FAQ = {
+const JSON_LD_FAQ = (essai: number) => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: FAQ_STRUCTURED_DATA.map((item) => ({
+  mainEntity: FAQ_STRUCTURED_DATA(essai).map((item) => ({
     '@type': 'Question',
     name: item.q,
     acceptedAnswer: { '@type': 'Answer', text: item.a },
   })),
-}
+})
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 
@@ -42,6 +43,7 @@ export default async function TarifsBoutiquePage({
 }: {
   searchParams?: { secteur?: string }
 }) {
+  const essai = await getEssaiJours()
   const initialSecteur = searchParams?.secteur === 'immo' ? 'immo' : 'commerce'
   let initialPlans = []
 
@@ -57,7 +59,7 @@ export default async function TarifsBoutiquePage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ(essai)) }} />
 
       <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', paddingBottom: 80, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         

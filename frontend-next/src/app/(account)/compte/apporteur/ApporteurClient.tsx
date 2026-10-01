@@ -11,11 +11,13 @@ import {
   Copy, Check, Phone, Download, ExternalLink, Calculator, DollarSign,
   TrendingUp, ShieldCheck, Zap
 } from 'lucide-react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 type CategorieCommerce = 'mode' | 'tech' | 'superette' | 'quincaillerie' | 'cosmetique' | 'resto' | 'grossiste'
 type StatutEquipement = 'sans_app' | 'avec_app'
 
 export default function ApporteurClient({ statsInitiales }: { statsInitiales?: StatsApporteur | null }) {
+  const essai = useEssaiJours()
   const { scrollRef: appTabRef, scrollToCenter: scrollAppToCenter } = useScrollNudge()
   const [stats, setStats] = useState(statsInitiales || null)
   const [loading, setLoading] = useState(statsInitiales === undefined)
@@ -62,7 +64,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
   ]
 
   const MESSAGE_PARTAGE = (lien: string) =>
-    `Salut ! Je te recommande Nopalou, la solution de boutique en ligne et caisse POS au Sénégal. Tu peux créer ta boutique en 30s sur WhatsApp, importer tes produits en 1 clic et recevoir tes commandes par Wave. 30 jours offerts : ${lien}`
+    `Salut ! Je te recommande Nopalou, la solution de boutique en ligne et caisse POS au Sénégal. Tu peux créer ta boutique en 30s sur WhatsApp, importer tes produits en 1 clic et recevoir tes commandes par Wave. ${essai} jours offerts : ${lien}`
 
   useEffect(() => {
     if (statsInitiales !== undefined) return
@@ -160,21 +162,21 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
       label: 'Mode & Prêt-à-Porter',
       emoji: '👗',
       sans_app: {
-        pitch: `« Bonjour ! Fini d'envoyer vos photos et tailles une par une sur WhatsApp. Avec Nopalou, vous avez votre vitrine en ligne et vos clientes commandent directement sur votre WhatsApp. 1er mois 100% offert : ${lien} »`,
+        pitch: `« Bonjour ! Fini d'envoyer vos photos et tailles une par une sur WhatsApp. Avec Nopalou, vous avez votre vitrine en ligne et vos clientes commandent directement sur votre WhatsApp. ${essai} jours 100% offerts : ${lien} »`,
         demo: 'Créer un article avec 3 tailles (S, M, L) en 20s et générer la Story HD marque blanche.',
         objection: 'Générez des stories automatiques sans logo Nopalou pour vos statuts WhatsApp.',
       },
       avec_app: {
         pitch: `« Bonjour ! Nopalou synchronise votre caisse physique avec votre vitrine WhatsApp à 0% de commission. Vos clientes voient votre stock en temps réel : ${lien} »`,
         demo: 'Import immédiat de fichier Excel + suivi à distance sur smartphone.',
-        objection: 'Testez en parallèle pendant 30 jours gratuits sans rien modifier à votre caisse.',
+        objection: `Testez en parallèle pendant ${essai} jours gratuits sans rien modifier à votre caisse.`,
       },
     },
     tech: {
       label: 'Téléphonie & High-Tech',
       emoji: '',
       sans_app: {
-        pitch: `« Bonjour chef ! Soyez visible sur le comparateur de prix Nopalou, scannez les codes-barres par caméra et gérez vos garanties sans carnet papier. 1er mois offert : ${lien} »`,
+        pitch: `« Bonjour chef ! Soyez visible sur le comparateur de prix Nopalou, scannez les codes-barres par caméra et gérez vos garanties sans carnet papier. ${essai} jours offerts : ${lien} »`,
         demo: 'Scanner un code-barres par caméra en 0.5s pour afficher le prix.',
         objection: 'Sécurise vos ventes et stocks même quand vous n\'êtes pas au magasin.',
       },

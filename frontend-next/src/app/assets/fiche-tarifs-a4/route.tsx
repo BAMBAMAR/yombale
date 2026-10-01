@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import QRCode from 'qrcode-svg'
+import { getEssaiJours } from '@/lib/essai'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,7 @@ function qrDataUri(text: string) {
 
 // Fiche Tarifaire A4 Haute Définition (1240 × 1754 px) — Grille Officielle Nopalou
 export async function GET(request: Request) {
+  const essai = await getEssaiJours()
   const { searchParams } = new URL(request.url)
   const codeAgent = searchParams.get('code') || 'DIRECT'
   const agentPhone = searchParams.get('phone') || '+221 70 871 79 42'
@@ -66,7 +68,7 @@ export async function GET(request: Request) {
               display: 'flex', alignItems: 'center', gap: 10,
             }}>
               <span style={{ fontSize: 18, fontWeight: 900, color: '#15803D' }}>
-                1er Mois 100% Offert sur Tous les Plans
+                {essai} Jours 100% Offerts sur Tous les Plans
               </span>
             </div>
           </div>
@@ -97,7 +99,7 @@ export async function GET(request: Request) {
                 <span style={{ fontSize: 16, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
               </div>
               <span style={{ fontSize: 13.5, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
-                1er mois offert
+                {essai} jours offerts
               </span>
               <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '16px 0' }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155', fontWeight: 600 }}>
@@ -127,7 +129,7 @@ export async function GET(request: Request) {
                 <span style={{ fontSize: 16, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
               </div>
               <span style={{ fontSize: 13.5, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
-                1er mois offert · Rentabilisé dès la 1ère vente
+                {essai} jours offerts · Rentabilisé dès la 1ère vente
               </span>
               <hr style={{ border: 'none', borderTop: '1px solid #FED7AA', margin: '16px 0' }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#1C2B4A', fontWeight: 700 }}>
@@ -153,7 +155,7 @@ export async function GET(request: Request) {
                 <span style={{ fontSize: 16, fontWeight: 700, color: '#64748B' }}>F CFA / mois</span>
               </div>
               <span style={{ fontSize: 13.5, color: '#16A34A', fontWeight: 800, marginTop: 4 }}>
-                1er mois offert
+                {essai} jours offerts
               </span>
               <hr style={{ border: 'none', borderTop: '1px solid #CBD5E1', margin: '16px 0' }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15, color: '#334155', fontWeight: 600 }}>

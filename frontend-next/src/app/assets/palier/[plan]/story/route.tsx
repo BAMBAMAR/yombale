@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { notFound } from 'next/navigation'
 import { PALIERS_BOUTIQUE } from '@/lib/fonctionnalites-data'
+import { ESSAI_DEFAUT, essaiJoursValide } from '@/lib/essai-format'
 
 export const runtime = 'edge'
 
@@ -8,7 +9,13 @@ export async function GET(
   request: Request,
   { params }: { params: { plan: string } }
 ) {
-  const palier = PALIERS_BOUTIQUE.find(p => p.id === params.plan)
+  // Durée d'essai : réglage admin (route edge : lecture directe des réglages publics)
+  let essai = ESSAI_DEFAUT
+  try {
+    const rEssai = await fetch(`${process.env.BACKEND_URL || 'http://localhost:3000'}/api/settings/public`, { cache: 'no-store' })
+    if (rEssai.ok) essai = essaiJoursValide((await rEssai.json()).abonnement_essai_jours)
+  } catch { /* repli sur la valeur par défaut */ }
+  const palier = PALIERS_BOUTIQUE(essai).find(p => p.id === params.plan)
   if (!palier) notFound()
 
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'

@@ -9,6 +9,7 @@ import { PALIERS_BOUTIQUE, FONCTIONNALITES_PLATEFORME } from '@/lib/fonctionnali
 import { Sparkles, Check, Zap, Gift, ShieldCheck, Star, Crown, ArrowRight, Store, ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { fcfa } from '@/lib/format'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface Props {
   planActif: { plan: string; fin: string } | null
@@ -32,6 +33,7 @@ const DUREES: DureeOption[] = [
 ]
 
 export default function AbonnementClient({ planActif, userId, settings }: Props) {
+  const essai = useEssaiJours()
   const { t } = useTranslation()
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -247,7 +249,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
         {/* ── Grille des Forfaits Boutiques ── */}
         <section>
           <div className="pricing-grid">
-            {PALIERS_BOUTIQUE.map(palier => {
+            {PALIERS_BOUTIQUE(essai).map(palier => {
               const estActuel = palierActuelId === palier.id || (palierActuelId === 'taf_taf' && palier.id === 'decouverte')
               const prixBase = PRIX_BASE_PAR_PALIER[palier.id]
               const enCours = isPending && loadingPlan === palier.id
@@ -321,7 +323,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                       </p>
                       {prixBase !== null && (
                         <div style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(90deg, #F0FDF4, #DCFCE7)', color: '#15803D', padding: '4px 12px', borderRadius: 10, fontSize: 12, fontWeight: 800 }}>
-                          <Gift size={14} /> 1er mois 100% OFFERT
+                          <Gift size={14} /> {essai} jours 100% OFFERTS
                         </div>
                       )}
                     </div>

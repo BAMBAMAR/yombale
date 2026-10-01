@@ -18,6 +18,7 @@ import {
   Zap,
   BookOpen
 } from 'lucide-react';
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 export default function ShowcaseTabs({ 
   prixTafTaf = 2500, 
@@ -28,6 +29,7 @@ export default function ShowcaseTabs({
   prixPro?: number; 
   prixBusiness?: number;
 }) {
+  const essai = useEssaiJours()
   const [duree, setDuree] = useState<1 | 3 | 6 | 12>(12);
 
   const remise = duree === 12 ? 0.25 : duree === 6 ? 0.15 : duree === 3 ? 0.10 : 0;
@@ -61,7 +63,7 @@ export default function ShowcaseTabs({
           </h2>
 
           <p style={{ fontSize: 15, color: 'var(--text2, #5A4E42)', margin: 0, lineHeight: 1.6 }}>
-            Caisse tactile même sans Internet, scan caméra, relance impayés WhatsApp et zéro commission. <strong>1er mois 100% OFFERT sur tous nos forfaits</strong>.
+            Caisse tactile même sans Internet, scan caméra, relance impayés WhatsApp et zéro commission. <strong>{essai} jours 100% OFFERTS sur tous nos forfaits</strong>.
           </p>
 
           {/* Selector Durée (1, 3, 6, 12 Mois) */}
@@ -72,7 +74,7 @@ export default function ShowcaseTabs({
             boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
           }}>
             {[
-              { m: 1, label: '1 mois (30j offerts)', badge: null },
+              { m: 1, label: `1 mois (${essai}j offerts)`, badge: null },
               { m: 3, label: '3 mois', badge: '-10%' },
               { m: 6, label: '6 mois', badge: '-15%' },
               { m: 12, label: '12 mois', badge: '-25% (3m offerts)' },
@@ -186,7 +188,7 @@ export default function ShowcaseTabs({
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
-                1er mois 100% GRATUIT
+                {essai} jours 100% GRATUITS
               </p>
               {duree > 1 && (
                 <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
@@ -230,7 +232,7 @@ export default function ShowcaseTabs({
                 boxShadow: '0 2px 4px rgba(0,0,0,0.03)', transition: 'all 0.15s'
               }}
             >
-              Lancer en 30s (1 mois offert) →
+              Lancer en 30s ({essai} jours offerts) →
             </Link>
           </div>
 
@@ -264,7 +266,7 @@ export default function ShowcaseTabs({
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
-                1er mois 100% GRATUIT
+                {essai} jours 100% GRATUITS
               </p>
               {duree > 1 && (
                 <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
@@ -316,7 +318,7 @@ export default function ShowcaseTabs({
                 boxShadow: '0 4px 14px rgba(199,91,0,0.3)', transition: 'all 0.15s'
               }}
             >
-              Essayer Vendeur Pro (1 mois offert) →
+              Essayer Vendeur Pro ({essai} jours offerts) →
             </Link>
           </div>
 
@@ -342,7 +344,7 @@ export default function ShowcaseTabs({
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
-                1er mois 100% GRATUIT
+                {essai} jours 100% GRATUITS
               </p>
               {duree > 1 && (
                 <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
@@ -394,7 +396,7 @@ export default function ShowcaseTabs({
                 boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.15s'
               }}
             >
-              Choisir Business VIP (1 mois offert) →
+              Choisir Business VIP ({essai} jours offerts) →
             </Link>
           </div>
 

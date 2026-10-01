@@ -1,12 +1,16 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getEssaiJours } from '@/lib/essai'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Offre Spéciale Vendeurs & Boutiques au Sénégal | Nopalou',
-  description: 'Lancez votre boutique en ligne et votre caisse tactile au Sénégal. 30 jours offerts, 0% de commission, paiements Wave et Orange Money.',
+  description: `Lancez votre boutique en ligne et votre caisse tactile au Sénégal. ${essai} jours offerts, 0% de commission, paiements Wave et Orange Money.`,
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/promo`,
   },
+  }
 }
 
 export default async function PromoPage() {

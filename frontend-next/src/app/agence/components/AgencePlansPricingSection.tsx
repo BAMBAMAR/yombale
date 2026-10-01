@@ -16,11 +16,13 @@ import {
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import { PLANS_AGENCES_CONFIG, DUREES_INITIALES, DureeOption, PlanConfig } from '@/app/tarifs-boutique/tarifsData'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 export function AgencePlansPricingSection() {
+  const essai = useEssaiJours()
   const [duree, setDuree] = useState<number>(12) // 12 mois (1 an) par défaut pour la meilleure remise
   const [dureesOptions, setDureesOptions] = useState<DureeOption[]>(DUREES_INITIALES)
-  const [plans, setPlans] = useState<PlanConfig[]>(PLANS_AGENCES_CONFIG)
+  const [plans, setPlans] = useState<PlanConfig[]>(PLANS_AGENCES_CONFIG(essai))
   const [sponsoring, setSponsoring] = useState<any>(null)
 
   // Synchronisation 100% dynamique depuis la base de données (API publique administrable)

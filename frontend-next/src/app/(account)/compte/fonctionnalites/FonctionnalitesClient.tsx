@@ -6,6 +6,7 @@ import { FONCTIONNALITES_PLATEFORME, PALIERS_BOUTIQUE, PalierBoutique } from '@/
 import { useTranslation } from '@/i18n/context'
 import { fcfa } from '@/lib/format'
 import { Sparkles, Check, Gift, ShieldCheck, Zap, ArrowRight, Store, Star, Crown } from 'lucide-react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface DureeOption {
   mois: number
@@ -23,6 +24,7 @@ const DUREES: DureeOption[] = [
 ]
 
 export default function FonctionnalitesClient() {
+  const essai = useEssaiJours()
   const [planActif, setPlanActif] = useState<{ plan: string; fin: string } | null>(null)
   const [settings, setSettings] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
@@ -158,7 +160,7 @@ export default function FonctionnalitesClient() {
       {/* ── Grille des 4 Forfaits Boutiques ── */}
       <section style={{ marginBottom: 54 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
-          {PALIERS_BOUTIQUE.map(palier => {
+          {PALIERS_BOUTIQUE(essai).map(palier => {
             const estActuel = palierActuelId === palier.id || (palierActuelId === 'taf_taf' && palier.id === 'decouverte')
             const prixBase = PRIX_BASE_PAR_PALIER[palier.id]
             
@@ -275,7 +277,7 @@ export default function FonctionnalitesClient() {
                     </p>
                     {prixBase !== null && (
                       <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 4, background: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0', padding: '3px 8px', borderRadius: 8, fontSize: 11, fontWeight: 800 }}>
-                        <Gift size={12} /> 1er mois 100% OFFERT
+                        <Gift size={12} /> {essai} jours 100% OFFERTS
                       </div>
                     )}
                   </div>

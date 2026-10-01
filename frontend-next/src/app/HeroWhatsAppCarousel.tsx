@@ -1,5 +1,6 @@
 'use client'
 
+import { useEssaiJours } from '@/components/EssaiProvider'
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -21,7 +22,7 @@ interface Slide {
   ctaExternal?: boolean
 }
 
-const SLIDES: Slide[] = [
+const SLIDES = (essai: number) => [
   {
     id: 'whatsapp-order',
     badgeText: 'WHATSAPP DIRECT',
@@ -88,7 +89,7 @@ const SLIDES: Slide[] = [
     title: 'Caisse POS & Vente Web',
     desc: 'Gérez votre caisse, stock, dettes et factures.',
     features: [
-      '30 jours 100% offerts',
+      `${essai} jours 100% offerts`,
       '0% de commission sur vos ventes',
     ],
     ctaText: 'Créer ma boutique →',
@@ -98,17 +99,18 @@ const SLIDES: Slide[] = [
 ]
 
 export default function HeroWhatsAppCarousel({ isMobile = false }: { isMobile?: boolean }) {
+  const essai = useEssaiJours()
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const slide = SLIDES[current]
+  const slide = SLIDES(essai)[current]
 
   // Défilement automatique doux (7 secondes)
   useEffect(() => {
     if (isPaused) return
     timerRef.current = setInterval(() => {
-      setCurrent(prev => (prev + 1) % SLIDES.length)
+      setCurrent(prev => (prev + 1) % SLIDES(essai).length)
     }, 7000)
 
     return () => {
@@ -117,11 +119,11 @@ export default function HeroWhatsAppCarousel({ isMobile = false }: { isMobile?: 
   }, [isPaused])
 
   function prevSlide() {
-    setCurrent(prev => (prev === 0 ? SLIDES.length - 1 : prev - 1))
+    setCurrent(prev => (prev === 0 ? SLIDES(essai).length - 1 : prev - 1))
   }
 
   function nextSlide() {
-    setCurrent(prev => (prev + 1) % SLIDES.length)
+    setCurrent(prev => (prev + 1) % SLIDES(essai).length)
   }
 
   return (
@@ -278,7 +280,7 @@ export default function HeroWhatsAppCarousel({ isMobile = false }: { isMobile?: 
 
         {/* Indicateurs de pagination avec animations GPU compositées & cibles tactiles */}
         <div style={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}>
-          {SLIDES.map((s, idx) => (
+          {SLIDES(essai).map((s, idx) => (
             <button
               key={s.id}
               type="button"

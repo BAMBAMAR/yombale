@@ -1,5 +1,6 @@
 'use client'
 
+import { useEssaiJours } from '@/components/EssaiProvider'
 import React, { useEffect, useState } from 'react'
 import { trackFunnel } from '@/lib/analytics'
 import TarifsPublicsSelector, { DynamicPlan } from './TarifsPublicsSelector'
@@ -13,10 +14,10 @@ interface TarifsBoutiqueClientProps {
   initialPlans?: DynamicPlan[]
 }
 
-const FAQ_COMMERCE_ITEMS = [
+const FAQ_COMMERCE_ITEMS = (essai: number) => [
   {
     q: 'Combien coûte la création d’une boutique en ligne sur Nopalou ?',
-    a: 'La création de boutique démarre dès 2.500 FCFA par mois avec la formule Boutique Taf Taf, avec 30 jours 100% offerts sans engagement. Vous profitez de 0% de commission sur vos ventes et des encaissements directs par Wave ou Orange Money.'
+    a: `La création de boutique démarre dès 2.500 FCFA par mois avec la formule Boutique Taf Taf, avec ${essai} jours 100% offerts sans engagement. Vous profitez de 0% de commission sur vos ventes et des encaissements directs par Wave ou Orange Money.`
   },
   {
     q: 'Pourquoi Nopalou est la meilleure alternative à Shopify au Sénégal ?',
@@ -40,10 +41,10 @@ const FAQ_COMMERCE_ITEMS = [
   },
 ]
 
-const FAQ_IMMO_ITEMS = [
+const FAQ_IMMO_ITEMS = (essai: number) => [
   {
     q: 'Combien coûte Nopalou pour une agence immobilière ou un gestionnaire locatif ?',
-    a: 'Le plan Agence Essentiel est 100% gratuit sans limitation de durée et inclut jusqu\'à 5 négociateurs, la gestion des mandats et la génération de baux conformes OHADA. Pour automatiser les encaissements de loyers par Wave et les relances WhatsApp, le plan Agence Pro est à 10.000 FCFA/mois avec 30 jours offerts.'
+    a: `Le plan Agence Essentiel est 100% gratuit sans limitation de durée et inclut jusqu'à 5 négociateurs, la gestion des mandats et la génération de baux conformes OHADA. Pour automatiser les encaissements de loyers par Wave et les relances WhatsApp, le plan Agence Pro est à 10.000 FCFA/mois avec ${essai} jours offerts.`
   },
   {
     q: 'Les baux et quittances de loyer sont-ils conformes au droit sénégalais (OHADA) ?',
@@ -71,6 +72,7 @@ export default function TarifsBoutiqueClient({
   initialSecteur = 'commerce',
   initialPlans = [],
 }: TarifsBoutiqueClientProps) {
+  const essai = useEssaiJours()
   const [secteur, setSecteur] = useState<'commerce' | 'immo'>(initialSecteur)
 
   useEffect(() => { trackFunnel('tarifs_vue') }, [])
@@ -88,7 +90,7 @@ export default function TarifsBoutiqueClient({
     }
   }
 
-  const currentFaq = secteur === 'commerce' ? FAQ_COMMERCE_ITEMS : FAQ_IMMO_ITEMS
+  const currentFaq = secteur === 'commerce' ? FAQ_COMMERCE_ITEMS(essai) : FAQ_IMMO_ITEMS(essai)
 
   return (
     <>

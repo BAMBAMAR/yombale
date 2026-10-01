@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
 import { ReactNode } from 'react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Créer une Boutique en Ligne au Sénégal | Tarifs & Forfaits Vendeurs | Nopalou',
   description:
     'Lancez votre boutique en ligne et votre commerce sur WhatsApp au Sénégal en 2 minutes. Découvrez nos forfaits (Taf Taf dès 2.500 FCFA/mois, Vendeur Pro, Business VIP). Alternative à Shopify, adaptée à Wave et Orange Money.',
@@ -26,7 +29,7 @@ export const metadata: Metadata = {
     canonical: `${BASE}/creer-boutique`,
   },
   openGraph: {
-    title: 'Créer une Boutique en Ligne au Sénégal | 1 Mois Offert | Nopalou',
+    title: `Créer une Boutique en Ligne au Sénégal | ${essai} Jours Offerts | Nopalou`,
     description:
       'Créez votre commerce en ligne et vendez sur WhatsApp sans carte bancaire avec paiement Wave & Orange Money. Découvrez nos formules d’abonnement dès 2.500 FCFA/mois.',
     url: `${BASE}/creer-boutique`,
@@ -40,10 +43,11 @@ export const metadata: Metadata = {
     description:
       'Lancez votre business e-commerce au Sénégal en 2 minutes avec Nopalou. 0% de commission, paiement Wave & Orange Money.',
   },
+  }
 }
 
 // Données structurées Schema.org pour Google
-const JSON_LD_SERVICE = {
+const JSON_LD_SERVICE = (essai: number) => ({
   '@context': 'https://schema.org',
   '@type': 'Service',
   name: 'Création de Boutique en Ligne Nopalou',
@@ -67,7 +71,7 @@ const JSON_LD_SERVICE = {
         itemOffered: {
           '@type': 'Service',
           name: 'Formule Boutique Taf Taf',
-          description: 'Catalogue produits illimité, commandes WhatsApp directes, 1 mois offert.',
+          description: `Catalogue produits illimité, commandes WhatsApp directes, ${essai} jours offerts.`,
         },
         price: '2500',
         priceCurrency: 'XOF',
@@ -112,7 +116,7 @@ const JSON_LD_SERVICE = {
       },
     ],
   },
-}
+})
 
 const JSON_LD_BREADCRUMB = {
   '@context': 'https://schema.org',
@@ -139,12 +143,13 @@ const JSON_LD_BREADCRUMB = {
   ],
 }
 
-export default function CreerBoutiqueLayout({ children }: { children: ReactNode }) {
+export default async function CreerBoutiqueLayout({ children }: { children: ReactNode }) {
+  const essai = await getEssaiJours()
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_SERVICE) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_SERVICE(essai)) }}
       />
       <script
         type="application/ld+json"

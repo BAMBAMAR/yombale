@@ -1,8 +1,10 @@
 'use client'
 
+import { useEssaiJours } from '@/components/EssaiProvider'
 import React from 'react'
 import { Check, Palette, Sparkles } from 'lucide-react'
 import CategorieSelector from './CategorieSelector'
+import { ESSAI_DEFAUT } from '@/lib/essai-format'
 
 export interface PlanConfigItem {
   name: string
@@ -24,9 +26,9 @@ export interface PlansConfig {
 export const DEFAULT_PLANS: PlansConfig = {
   decouverte: {
     name: 'Boutique Taf Taf',
-    badge: '1 MOIS OFFERT',
+    badge: `${ESSAI_DEFAUT} JOURS OFFERTS`,
     priceMain: '0 FCFA',
-    priceSub: 'pendant 30j puis 2.500 FCFA/mois',
+    priceSub: `pendant ${ESSAI_DEFAUT}j puis 2.500 FCFA/mois`,
     desc: 'Idéal pour débuter et vendre directement sur WhatsApp.',
     features: ['Catalogue illimité', 'Ventes WhatsApp 1-clic', 'Paiement Wave & OM'],
     color: '#10b981',
@@ -36,7 +38,7 @@ export const DEFAULT_PLANS: PlansConfig = {
     name: 'Vendeur Pro',
     badge: 'POPULAIRE',
     priceMain: '0 FCFA',
-    priceSub: 'pendant 30j puis 5.000 FCFA/mois',
+    priceSub: `pendant ${ESSAI_DEFAUT}j puis 5.000 FCFA/mois`,
     desc: 'Pour les commerces voulant être en tête des recherches.',
     features: ['Badge Pro Certifié', 'Référencement prioritaire', 'Caisse POS & Reçus PDF'],
     color: '#C75B00',
@@ -46,7 +48,7 @@ export const DEFAULT_PLANS: PlansConfig = {
     name: 'Business VIP',
     badge: 'MULTI-SITES & API',
     priceMain: '0 FCFA',
-    priceSub: 'pendant 30j puis 10.000 FCFA/mois',
+    priceSub: `pendant ${ESSAI_DEFAUT}j puis 10.000 FCFA/mois`,
     desc: 'Solution complète pour chaînes, grossistes & marques.',
     features: ['Multi-Caissiers & Magasins', 'Clés API & Webhooks', 'Relances WhatsApp Auto'],
     color: '#1e3a5f',
@@ -90,6 +92,7 @@ export default function WizardStepPlanStyle({
   setAccepteContrat,
   onOpenContratModal,
 }: WizardStepPlanStyleProps) {
+  const essai = useEssaiJours()
   return (
     <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
@@ -110,7 +113,7 @@ export default function WizardStepPlanStyle({
           }}
         >
           <Sparkles size={13} />
-          1er mois 100% offert sur tous nos forfaits
+          {essai} jours 100% offerts sur tous nos forfaits
         </span>
         <h1
           style={{
@@ -124,7 +127,7 @@ export default function WizardStepPlanStyle({
           Choisissez votre formule &amp; style
         </h1>
         <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>
-          Testez gratuitement pendant 30 jours sans aucun engagement bancaire.
+          Testez gratuitement pendant {essai} jours sans aucun engagement bancaire.
         </p>
       </div>
 

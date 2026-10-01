@@ -1,5 +1,6 @@
 'use client'
 
+import { useEssaiJours } from '@/components/EssaiProvider'
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Store, Building2, Check, Sparkles, Crown, ArrowRight } from 'lucide-react'
@@ -28,7 +29,7 @@ interface TarifsPublicsSelectorProps {
   initialPlans?: DynamicPlan[]
 }
 
-const FALLBACK_PLANS: DynamicPlan[] = [
+const FALLBACK_PLANS = (essai: number) => [
   {
     id: 'decouverte',
     slug: 'decouverte',
@@ -36,7 +37,7 @@ const FALLBACK_PLANS: DynamicPlan[] = [
     prix_mensuel: 2500,
     badge: 'Populaire',
     couleur: '#10b981',
-    avantages: ['Carnet de dettes client & relances WhatsApp', 'Catalogue connecté avec commandes WhatsApp', 'Encaissement direct Wave & Orange Money', 'Import IA magique de produits', '0% de commission', '1er mois 100% OFFERT'],
+    avantages: ['Carnet de dettes client & relances WhatsApp', 'Catalogue connecté avec commandes WhatsApp', 'Encaissement direct Wave & Orange Money', 'Import IA magique de produits', '0% de commission', `${essai} jours 100% OFFERTS`],
     limites: { max_produits: 50, max_caissiers: 1 },
     ordre: 1,
     actif: true,
@@ -50,7 +51,7 @@ const FALLBACK_PLANS: DynamicPlan[] = [
     prix_mensuel: 5000,
     badge: 'Recommandé',
     couleur: '#f59e0b',
-    avantages: ['Tout le contenu Taf Taf', 'Caisse POS tactile magasin & tickets', 'Saisie express & scanner code-barres', 'Référencement prioritaire & Badge Certifié', '5 annonces classées incluses / mois', 'Analytics avancés', '1er mois 100% OFFERT'],
+    avantages: ['Tout le contenu Taf Taf', 'Caisse POS tactile magasin & tickets', 'Saisie express & scanner code-barres', 'Référencement prioritaire & Badge Certifié', '5 annonces classées incluses / mois', 'Analytics avancés', `${essai} jours 100% OFFERTS`],
     limites: { max_produits: 300, max_caissiers: 3 },
     ordre: 2,
     actif: true,
@@ -64,7 +65,7 @@ const FALLBACK_PLANS: DynamicPlan[] = [
     prix_mensuel: 10000,
     badge: 'VIP',
     couleur: '#6366f1',
-    avantages: ['Tout le contenu Pro', 'Relances automatiques WhatsApp des dettes & paniers', 'Multi-caissiers avec codes PIN & clôtures Z', 'Multi-magasins & transferts de stock', 'Portail Développeur API & Webhooks', 'Comptabilité fournisseurs & Bons de commande', '1er mois 100% OFFERT'],
+    avantages: ['Tout le contenu Pro', 'Relances automatiques WhatsApp des dettes & paniers', 'Multi-caissiers avec codes PIN & clôtures Z', 'Multi-magasins & transferts de stock', 'Portail Développeur API & Webhooks', 'Comptabilité fournisseurs & Bons de commande', `${essai} jours 100% OFFERTS`],
     limites: { max_produits: 2000, max_caissiers: 10 },
     ordre: 3,
     actif: true,
@@ -92,7 +93,7 @@ const FALLBACK_PLANS: DynamicPlan[] = [
     prix_mensuel: 10000,
     badge: 'Recommandé Pro',
     couleur: '#1C2B4A',
-    avantages: ['Tout le forfait Essentiel', 'Jusqu\'à 20 agents négociateurs & gestionnaires', 'Collecte des loyers 1-clic par Wave & Orange Money (/payer-loyer)', 'Relances automatiques WhatsApp des impayés de loyer', 'Reddition des comptes bailleurs & exports comptables', 'CRM Matching WhatsApp', '1er mois 100% OFFERT'],
+    avantages: ['Tout le forfait Essentiel', 'Jusqu\'à 20 agents négociateurs & gestionnaires', 'Collecte des loyers 1-clic par Wave & Orange Money (/payer-loyer)', 'Relances automatiques WhatsApp des impayés de loyer', 'Reddition des comptes bailleurs & exports comptables', 'CRM Matching WhatsApp', `${essai} jours 100% OFFERTS`],
     limites: { max_biens: -1, max_agents: 20 },
     ordre: 11,
     actif: true,
@@ -106,7 +107,7 @@ const FALLBACK_PLANS: DynamicPlan[] = [
     prix_mensuel: 15000,
     badge: 'Multi-Succursales',
     couleur: '#7C3AED',
-    avantages: ['Tout le forfait Agence Pro', 'Agents négociateurs illimités', 'Gestion multi-succursales, filiales et agences secondaires', 'Tableaux de bord consolidés groupe & suivi des royalties', 'Déploiement multi-villes (Dakar, Saly, Thiès...)', 'Account Manager VIP dédié 7j/7', '1er mois 100% OFFERT'],
+    avantages: ['Tout le forfait Agence Pro', 'Agents négociateurs illimités', 'Gestion multi-succursales, filiales et agences secondaires', 'Tableaux de bord consolidés groupe & suivi des royalties', 'Déploiement multi-villes (Dakar, Saly, Thiès...)', 'Account Manager VIP dédié 7j/7', `${essai} jours 100% OFFERTS`],
     limites: { max_biens: -1, max_agents: -1 },
     ordre: 12,
     actif: true,
@@ -135,6 +136,7 @@ export default function TarifsPublicsSelector({
   onSecteurChange,
   initialPlans,
 }: TarifsPublicsSelectorProps = {}) {
+  const essai = useEssaiJours()
   const [internalSecteur, setInternalSecteur] = useState<'commerce' | 'immo'>(initialSecteur)
   const secteur = controlledSecteur ?? internalSecteur
 
@@ -144,7 +146,7 @@ export default function TarifsPublicsSelector({
   }
 
   const [duree, setDuree] = useState<number>(12) // 12 mois par défaut
-  const [allPlans, setAllPlans] = useState<DynamicPlan[]>(initialPlans || FALLBACK_PLANS)
+  const [allPlans, setAllPlans] = useState<DynamicPlan[]>(initialPlans || FALLBACK_PLANS(essai))
   const [dureesOptions, setDureesOptions] = useState<DureeOption[]>(DUREES_INITIALES)
 
   // Chargement 100% dynamique depuis la base de données (API publique administrable)
@@ -362,7 +364,7 @@ export default function TarifsPublicsSelector({
 
           const ctaText = prixBase === 0
             ? (secteur === 'immo' ? 'Créer mon agence gratuite' : 'Créer ma boutique gratuite')
-            : 'Choisir cette formule (1 mois offert)'
+            : `Choisir cette formule (${essai} jours offerts)`
 
           return (
             <div

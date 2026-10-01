@@ -5,12 +5,15 @@ import {
   Store, Smartphone, CreditCard, Receipt, TrendingUp, ShieldCheck,
   Zap, Award, Users, Scale, Monitor
 } from 'lucide-react'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Pourquoi Choisir Nopalou ? | Comparatif Complet & Honnête pour Commerçants',
-  description: 'Découvrez pourquoi Nopalou est la meilleure solution de commerce au Sénégal face à Shopify, WhatsApp seul, aux carnets papier et aux caisses traditionnelles. 30 jours offerts.',
+  description: `Découvrez pourquoi Nopalou est la meilleure solution de commerce au Sénégal face à Shopify, WhatsApp seul, aux carnets papier et aux caisses traditionnelles. ${essai} jours offerts.`,
   keywords: [
     'pourquoi nopalou', 'nopalou vs shopify sénégal', 'nopalou vs whatsapp business',
     'comparatif logiciel caisse dakar', 'alternative carnet de dette sénégal', 'avis nopalou commerçant'
@@ -29,6 +32,7 @@ export const metadata: Metadata = {
     title: 'Pourquoi choisir Nopalou ? Le comparatif complet.',
     description: 'Comparez Nopalou aux solutions existantes (Shopify, WhatsApp seul, carnet papier, caisse classique).',
   },
+  }
 }
 
 const COMPARATIFS = [
@@ -114,7 +118,8 @@ const COMPARATIFS = [
   }
 ]
 
-export default function PourquoiNopalouPage() {
+export default async function PourquoiNopalouPage() {
+  const essai = await getEssaiJours()
   return (
     <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -172,7 +177,7 @@ export default function PourquoiNopalouPage() {
               boxShadow: '0 10px 30px rgba(199,91,0,0.4)',
               display: 'inline-flex', alignItems: 'center', gap: 8
             }}>
-              <span>Créer ma boutique (1 mois offert)</span>
+              <span>Créer ma boutique ({essai} jours offerts)</span>
               <ArrowRight size={18} />
             </Link>
             <Link href="/tarifs-boutique" style={{
@@ -266,7 +271,7 @@ export default function PourquoiNopalouPage() {
             Rejoignez les commerçants qui ont modernisé leur activité.
           </h2>
           <p style={{ fontSize: 16, color: '#94a3b8', maxWidth: 600, margin: '0 auto 32px', lineHeight: 1.6 }}>
-            Faites l'expérience par vous-même pendant 30 jours sans entrer de carte bancaire.
+            Faites l'expérience par vous-même pendant {essai} jours sans entrer de carte bancaire.
           </p>
           <Link href="/creer-boutique" style={{
             background: 'linear-gradient(135deg, #FF6600 0%, #C75B00 100%)',

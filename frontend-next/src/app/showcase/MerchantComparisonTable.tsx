@@ -1,5 +1,6 @@
 'use client'
 
+import { useEssaiJours } from '@/components/EssaiProvider'
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Check, X, SlidersHorizontal, Table2 } from 'lucide-react'
@@ -15,7 +16,7 @@ interface CriterionData {
   shopify: { val: string; positive: boolean }
 }
 
-const CRITERIA: CriterionData[] = [
+const CRITERIA = (essai: number) => [
   {
     id: 'commission',
     label: 'Commission sur vos ventes',
@@ -51,7 +52,7 @@ const CRITERIA: CriterionData[] = [
   {
     id: 'prix',
     label: "Prix d'accès",
-    nopalou: { val: 'Dès 2 500 F/mois (30j offerts)', positive: true },
+    nopalou: { val: `Dès 2 500 F/mois (${essai}j offerts)`, positive: true },
     whatsapp: { val: 'Gratuit (3h perdues/j)', positive: false },
     cahier: { val: 'Cahier (~1 000 F)', positive: true },
     shopify: { val: '29 $ (~18 000 F) + Visa', positive: false },
@@ -66,6 +67,7 @@ const COMPETITORS: { key: CompetitorKey; label: string; shortLabel: string }[] =
 ]
 
 export default function MerchantComparisonTable() {
+  const essai = useEssaiJours()
   const [activeCompetitor, setActiveCompetitor] = useState<CompetitorKey>('whatsapp')
 
   return (
@@ -163,7 +165,7 @@ export default function MerchantComparisonTable() {
         {/* ── AFFICHAGE MOBILE DÉDIÉ : CARTE PAR CARTE SANS DÉBORDEMENT (< 768px) ── */}
         {activeCompetitor !== 'table' && (
           <div className="comparison-mobile-cards" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {CRITERIA.map(c => {
+            {CRITERIA(essai).map(c => {
               const compData = c[activeCompetitor as 'whatsapp' | 'cahier' | 'shopify']
               const compLabel = COMPETITORS.find(comp => comp.key === activeCompetitor)?.shortLabel || 'Alternative'
 
@@ -286,8 +288,8 @@ export default function MerchantComparisonTable() {
               </tr>
             </thead>
             <tbody>
-              {CRITERIA.map((c, idx) => (
-                <tr key={c.id} style={{ borderBottom: idx === CRITERIA.length - 1 ? 'none' : '1px solid #F1F5F9' }}>
+              {CRITERIA(essai).map((c, idx) => (
+                <tr key={c.id} style={{ borderBottom: idx === CRITERIA(essai).length - 1 ? 'none' : '1px solid #F1F5F9' }}>
                   <td
                     style={{
                       padding: '12px 16px',

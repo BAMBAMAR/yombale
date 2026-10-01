@@ -28,7 +28,7 @@ export interface PlanConfig {
   ctaHref: string
 }
 
-export const PLANS_BOUTIQUES_CONFIG: PlanConfig[] = [
+export const PLANS_BOUTIQUES_CONFIG = (essai: number) => [
   {
     id: 'taf_taf',
     nom: 'Boutique Taf Taf',
@@ -44,9 +44,9 @@ export const PLANS_BOUTIQUES_CONFIG: PlanConfig[] = [
       'Assistant Marchand WhatsApp & Alertes de stock',
       'Lien court dédié & QR Code boutique pour flyers et réseaux',
       'Encaissement direct Wave & Orange Money (0% commission)',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
-    ctaText: 'Choisir cette formule (1 mois offert)',
+    ctaText: `Choisir cette formule (${essai} jours offerts)`,
     ctaHref: '/creer-boutique?plan=decouverte',
   },
   {
@@ -66,9 +66,9 @@ export const PLANS_BOUTIQUES_CONFIG: PlanConfig[] = [
       'Import par lot du carnet clients & dettes (CSV / Excel)',
       'Référencement prioritaire comparateur & Badge Vendeur Pro vérifié',
       'Export intégral de votre boutique en 1 clic (.JSON / .CSV)',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
-    ctaText: 'Devenir Vendeur Pro (1 mois offert)',
+    ctaText: `Devenir Vendeur Pro (${essai} jours offerts)`,
     ctaHref: '/creer-boutique?plan=pro',
   },
   {
@@ -87,14 +87,14 @@ export const PLANS_BOUTIQUES_CONFIG: PlanConfig[] = [
       'Portail Développeur Clés API REST & Webhooks temps réel',
       'Bannière publicitaire sponsorisée prioritaire en tête de catégorie',
       'Account Manager VIP dédié 7j/7 avec support prioritaire',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
-    ctaText: 'Rejoindre le Business VIP (1 mois offert)',
+    ctaText: `Rejoindre le Business VIP (${essai} jours offerts)`,
     ctaHref: '/creer-boutique?plan=business',
   },
 ]
 
-export const PLANS_AGENCES_CONFIG: PlanConfig[] = [
+export const PLANS_AGENCES_CONFIG = (essai: number) => [
   {
     id: 'immo_essentiel',
     nom: 'Plan Agence Essentiel',
@@ -129,9 +129,9 @@ export const PLANS_AGENCES_CONFIG: PlanConfig[] = [
       'Reddition des comptes bailleurs & exports comptables',
       'CRM Prospects avec Matching automatique WhatsApp',
       'Espace Locataire dédié dans Mon Compte',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
-    ctaText: 'Activer le Plan Pro (1 mois offert)',
+    ctaText: `Activer le Plan Pro (${essai} jours offerts)`,
     ctaHref: '/inscription?role=agence&plan=immo_pro&redirect=/agence',
   },
   {
@@ -148,9 +148,9 @@ export const PLANS_AGENCES_CONFIG: PlanConfig[] = [
       'Déploiement multi-villes (Dakar, Saly, Thiès, Saint-Louis)',
       'Accompagnement juridique baux et conformité légale',
       'Account Manager VIP dédié 7j/7',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
-    ctaText: 'Déployer mon Réseau (1 mois offert)',
+    ctaText: `Déployer mon Réseau (${essai} jours offerts)`,
     ctaHref: '/inscription?role=agence&plan=immo_multi_agence&redirect=/agence',
   },
 ]

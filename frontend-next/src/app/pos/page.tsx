@@ -7,11 +7,14 @@ import {
 } from 'lucide-react'
 import { PosDouchetteBanner } from './components/PosDouchetteBanner'
 import { PosFaqSection } from './components/PosFaqSection'
+import { getEssaiJours } from '@/lib/essai'
 
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Caisse Enregistreuse Dakar & Prix Sénégal | Nopalou POS pour Petit Commerce',
-  description: 'La caisse enregistreuse tactile à Dakar pour petit commerce, boutique et magasin. Conçue pour les coupures de réseau, avec la formule Boutique Pro. 30 jours offerts.',
+  description: `La caisse enregistreuse tactile à Dakar pour petit commerce, boutique et magasin. Conçue pour les coupures de réseau, avec la formule Boutique Pro. ${essai} jours offerts.`,
   keywords: [
     'caisse enregistreuse dakar',
     'caisse enregistreuse prix sénégal',
@@ -26,14 +29,16 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Caisse Enregistreuse Dakar & Sénégal — Nopalou POS',
-    description: 'La solution de caisse enregistreuse tactile pour commerce au Sénégal avec la formule Pro. 30 jours offerts.',
+    description: `La solution de caisse enregistreuse tactile pour commerce au Sénégal avec la formule Pro. ${essai} jours offerts.`,
     url: 'https://nopalou.com/pos',
     type: 'website',
   },
+  }
 }
 
 
-export default function PosLandingPage() {
+export default async function PosLandingPage() {
+  const essai = await getEssaiJours()
   return (
     <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
@@ -93,7 +98,7 @@ export default function PosLandingPage() {
               boxShadow: '0 10px 30px rgba(199,91,0,0.4)',
               display: 'inline-flex', alignItems: 'center', gap: 10
             }}>
-              <span>Essayer Nopalou POS (1 mois offert)</span>
+              <span>Essayer Nopalou POS ({essai} jours offerts)</span>
               <ArrowRight size={18} />
             </Link>
 
@@ -372,7 +377,7 @@ export default function PosLandingPage() {
             Digitalisez la caisse de votre magasin dès aujourd'hui.
           </h2>
           <p style={{ fontSize: 16, color: '#94a3b8', maxWidth: 600, margin: '0 auto 32px', lineHeight: 1.6 }}>
-            Activez la caisse enregistreuse Nopalou POS en moins de 2 minutes. 30 jours offerts sans aucun engagement.
+            Activez la caisse enregistreuse Nopalou POS en moins de 2 minutes. {essai} jours offerts sans aucun engagement.
           </p>
           <Link href="/creer-boutique?plan=pro" style={{
             background: 'linear-gradient(135deg, #FF6600 0%, #C75B00 100%)',
@@ -382,7 +387,7 @@ export default function PosLandingPage() {
             boxShadow: '0 10px 25px rgba(199,91,0,0.4)',
             display: 'inline-flex', alignItems: 'center', gap: 8
           }}>
-            <span>Démarrer avec la Caisse POS (30j offerts)</span>
+            <span>Démarrer avec la Caisse POS ({essai}j offerts)</span>
             <ArrowRight size={18} />
           </Link>
         </div>

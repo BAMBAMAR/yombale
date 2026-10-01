@@ -35,6 +35,7 @@ import './globals.css';
 
 import { getOptionalSession } from '@/lib/dal';
 import I18nClientProvider from '@/components/I18nClientProvider';
+import { EssaiProvider } from '@/components/EssaiProvider';
 import { ToastProvider } from '@/context/ToastContext';
 import { getValidLocale, isRTL, isI18nScopedRoute } from '@/i18n/config';
 
@@ -79,6 +80,7 @@ import { CartProvider } from '@/context/CartContext';
 import { Suspense } from 'react';
 import { MessageCircle, Heart, Store, User, Zap, Package, Trash2, ShieldCheck, CheckCircle2, MapPin } from 'lucide-react';
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -264,6 +266,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getOptionalSession();
+  const essaiJours = await getEssaiJours();
   const headerList = await headers();
   const nonce = headerList.get('x-nonce') ?? undefined;
   const pathname = headerList.get('x-pathname') || headerList.get('next-url') || '';
@@ -299,6 +302,7 @@ export default async function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <I18nClientProvider initialLocale={locale}>
+<EssaiProvider jours={essaiJours}>
         <CartProvider>
         <ToastProvider>
         {/* Lien d'évitement pour la navigation au clavier (WCAG 2.4.1) */}
@@ -562,7 +566,8 @@ export default async function RootLayout({
         </footer>
         </ToastProvider>
         </CartProvider>
-        </I18nClientProvider>
+        </EssaiProvider>
+</I18nClientProvider>
       </body>
     </html>
   );

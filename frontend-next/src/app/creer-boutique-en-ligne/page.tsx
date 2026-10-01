@@ -6,12 +6,15 @@ import {
   Clock, Award, ShoppingBag, Globe, RefreshCw
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const essai = await getEssaiJours()
+  return {
   title: 'Créer une Boutique en Ligne au Sénégal (2026) | Vendre sur Internet Facilement',
-  description: 'Lancez votre site e-commerce et votre boutique en ligne au Sénégal en moins de 30 secondes. Paiement Wave & Orange Money sans commission, commandes WhatsApp et 30 jours offerts.',
+  description: `Lancez votre site e-commerce et votre boutique en ligne au Sénégal en moins de 30 secondes. Paiement Wave & Orange Money sans commission, commandes WhatsApp et ${essai} jours offerts.`,
   keywords: [
     'créer boutique en ligne sénégal',
     'créer site e-commerce dakar',
@@ -33,16 +36,17 @@ export const metadata: Metadata = {
     url: `${BASE}/creer-boutique-en-ligne`,
     type: 'website',
   },
+  }
 }
 
-const FAQ_ITEMS = [
+const FAQ_ITEMS = (essai: number) => [
   {
     q: "Combien de temps faut-il pour créer sa boutique en ligne sur Nopalou ?",
     a: "Moins de 30 secondes ! Vous choisissez le nom de votre boutique, votre ville (Dakar, Thiès, Touba...) et votre numéro de téléphone. Votre vitrine web personnalisée est immédiatement active et partageable sur vos statuts WhatsApp, Instagram et TikTok."
   },
   {
     q: "Ai-je besoin d'une carte bancaire internationale pour commencer ?",
-    a: "Non, aucune carte bancaire n'est exigée. Vous profitez d'une période d'essai de 30 jours 100% offerte. Ensuite, votre abonnement est réglé en toute simplicité en Francs CFA par Wave ou Orange Money (dès 2 500 FCFA/mois)."
+    a: `Non, aucune carte bancaire n'est exigée. Vous profitez d'une période d'essai de ${essai} jours 100% offerte. Ensuite, votre abonnement est réglé en toute simplicité en Francs CFA par Wave ou Orange Money (dès 2 500 FCFA/mois).`
   },
   {
     q: "Comment mes clients paient-ils leurs commandes ?",
@@ -58,7 +62,7 @@ const FAQ_ITEMS = [
   }
 ]
 
-const JSON_LD_SOFTWARE = {
+const JSON_LD_SOFTWARE = (essai: number) => ({
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: 'Nopalou Création de Boutique en Ligne',
@@ -69,14 +73,14 @@ const JSON_LD_SOFTWARE = {
     price: '2500',
     priceCurrency: 'XOF',
     priceValidUntil: '2027-12-31',
-    description: 'Abonnement mensuel commerçant au Sénégal avec 30 jours offerts et 0% de commission.',
+    description: `Abonnement mensuel commerçant au Sénégal avec ${essai} jours offerts et 0% de commission.`,
   },
-}
+})
 
-const JSON_LD_FAQ = {
+const JSON_LD_FAQ = (essai: number) => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: FAQ_ITEMS.map(item => ({
+  mainEntity: FAQ_ITEMS(essai).map(item => ({
     '@type': 'Question',
     name: item.q,
     acceptedAnswer: {
@@ -84,18 +88,19 @@ const JSON_LD_FAQ = {
       text: item.a,
     },
   })),
-}
+})
 
-export default function CreerBoutiquePage() {
+export default async function CreerBoutiquePage() {
+  const essai = await getEssaiJours()
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_SOFTWARE) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_SOFTWARE(essai)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ(essai)) }}
       />
 
       <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -189,7 +194,7 @@ export default function CreerBoutiquePage() {
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap', fontSize: 13, color: '#cbd5e1' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <CheckCircle2 size={16} color="#10b981" /> 30 jours d'essai offerts
+                <CheckCircle2 size={16} color="#10b981" /> {essai} jours d'essai offerts
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <CheckCircle2 size={16} color="#10b981" /> 0% de commission sur vos ventes
@@ -309,7 +314,7 @@ export default function CreerBoutiquePage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {FAQ_ITEMS.map((item, i) => (
+            {FAQ_ITEMS(essai).map((item, i) => (
               <div key={i} style={{
                 background: '#ffffff',
                 borderRadius: 14,

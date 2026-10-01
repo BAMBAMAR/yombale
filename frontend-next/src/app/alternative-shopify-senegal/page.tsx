@@ -6,6 +6,7 @@ import {
   Layers, RefreshCw, AlertCircle
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -67,7 +68,8 @@ const JSON_LD_FAQ = {
   })),
 }
 
-export default function AlternativeShopifyPage() {
+export default async function AlternativeShopifyPage() {
+  const essai = await getEssaiJours()
   return (
     <>
       <script
@@ -156,7 +158,7 @@ export default function AlternativeShopifyPage() {
                   border: '1px solid rgba(255,255,255,0.2)'
                 }}
               >
-                <span>Tester Nopalou 30 jours offerts</span>
+                <span>Tester Nopalou {essai} jours offerts</span>
               </Link>
             </div>
           </div>

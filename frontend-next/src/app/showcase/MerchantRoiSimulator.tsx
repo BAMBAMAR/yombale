@@ -3,12 +3,14 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { Calculator, BadgePercent } from 'lucide-react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface Props {
   prixTafTaf?: number
 }
 
 export default function MerchantRoiSimulator({ prixTafTaf = 2500 }: Props) {
+  const essai = useEssaiJours()
   const [caMensuel, setCaMensuel] = useState<number>(1200000)
   const commissionClassique = Math.round(caMensuel * 0.12) // 12% moyenne plateformes
   const coutNopalou = prixTafTaf
@@ -33,7 +35,7 @@ export default function MerchantRoiSimulator({ prixTafTaf = 2500 }: Props) {
           }}
         >
           <BadgePercent size={13} />
-          <span>0% DE COMMISSION • 30 JOURS 100% OFFERTS SANS ENGAGEMENT</span>
+          <span>0% DE COMMISSION • {essai} JOURS 100% OFFERTS SANS ENGAGEMENT</span>
         </div>
 
         <h2

@@ -5,6 +5,7 @@ import {
   Sparkles, HelpCircle, Users, Bell, DollarSign, Clock, ShieldCheck
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -66,7 +67,8 @@ const JSON_LD_FAQ = {
   })),
 }
 
-export default function GestionStockCarnetDettesPage() {
+export default async function GestionStockCarnetDettesPage() {
+  const essai = await getEssaiJours()
   return (
     <>
       <script
@@ -134,7 +136,7 @@ export default function GestionStockCarnetDettesPage() {
                   boxShadow: '0 8px 24px rgba(199,91,0,0.4)'
                 }}
               >
-                <span>Tester le carnet de dettes (30 jours offerts)</span>
+                <span>Tester le carnet de dettes ({essai} jours offerts)</span>
                 <ArrowRight size={18} />
               </Link>
               <Link

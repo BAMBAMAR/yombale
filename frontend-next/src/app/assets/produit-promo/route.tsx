@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { getEssaiJours } from '@/lib/essai'
 
 export const runtime = 'edge'
 
@@ -27,6 +28,7 @@ function NopalouLogoMark({ size = 60 }: { size?: number }) {
 }
 
 export async function GET(request: Request) {
+  const essai = await getEssaiJours()
   const { searchParams } = new URL(request.url)
 
   const type = searchParams.get('type') || 'forfait_pro'
@@ -358,7 +360,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>1er Mois 100% Offert sans carte</span>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>{essai} Jours 100% Offerts sans carte</span>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#FED7AA', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
         </div>
@@ -401,7 +403,7 @@ export async function GET(request: Request) {
             </h1>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 6 }}>
               <span style={{ fontSize: 54, fontWeight: 900, color: C.vert, letterSpacing: -1, display: 'flex' }}>{prix || '2 500 FCFA'}</span>
-              <span style={{ fontSize: 22, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · 1er mois 100% offert</span>
+              <span style={{ fontSize: 22, color: C.gris, fontWeight: 700, display: 'flex' }}>/ mois · {essai} jours 100% offerts</span>
             </div>
           </div>
 
@@ -533,7 +535,7 @@ export async function GET(request: Request) {
                 <span>✓ Carnet de dettes client</span>
                 <span>✓ Import AliExpress / 1688</span>
                 <span>✓ 0% de commission</span>
-                <span style={{ color: '#16a34a', fontWeight: 800 }}>1er mois OFFERT</span>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>{essai} jours OFFERTS</span>
               </div>
             </div>
 
@@ -550,7 +552,7 @@ export async function GET(request: Request) {
                 <span>✓ Factures &amp; Devis OHADA PDF</span>
                 <span>✓ Relance Dettes WhatsApp</span>
                 <span>✓ Impression Stickers EAN-13</span>
-                <span style={{ color: '#C75B00', fontWeight: 900 }}>1er mois OFFERT</span>
+                <span style={{ color: '#C75B00', fontWeight: 900 }}>{essai} jours OFFERTS</span>
               </div>
             </div>
 
@@ -566,7 +568,7 @@ export async function GET(request: Request) {
                 <span>✓ Fournisseurs &amp; Scan OCR</span>
                 <span>✓ Import par lot Excel / CSV</span>
                 <span>✓ API REST &amp; Webhooks</span>
-                <span style={{ color: '#7E22CE', fontWeight: 800 }}>1er mois OFFERT</span>
+                <span style={{ color: '#7E22CE', fontWeight: 800 }}>{essai} jours OFFERTS</span>
               </div>
             </div>
 
@@ -582,7 +584,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ background: C.marine, borderRadius: 14, padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-            <span style={{ fontSize: 16, fontWeight: 900, color: '#fff', display: 'flex' }}>Testez 1 Mois Gratuitement</span>
+            <span style={{ fontSize: 16, fontWeight: 900, color: '#fff', display: 'flex' }}>Testez {essai} Jours Gratuitement</span>
             <span style={{ fontSize: 17, fontWeight: 900, color: '#FED7AA', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
         </div>

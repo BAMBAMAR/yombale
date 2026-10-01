@@ -6,6 +6,7 @@ import {
   TrendingUp, Award, Layers, Globe, FileText
 } from 'lucide-react'
 import { safeJsonLd } from '@/lib/jsonld'
+import { getEssaiJours } from '@/lib/essai'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -99,7 +100,8 @@ const JSON_LD_FAQ = {
   }))
 }
 
-export default function GuideSourcingReventePage() {
+export default async function GuideSourcingReventePage() {
+  const essai = await getEssaiJours()
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_ARTICLE) }} />
@@ -211,7 +213,7 @@ export default function GuideSourcingReventePage() {
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: 14, fontWeight: 700 }}>Abonnement mensuel</td>
-                    <td style={{ padding: 14, fontWeight: 900, color: '#16a34a', background: '#fff7ed' }}>Dès 2 500 F (1 mois offert)</td>
+                    <td style={{ padding: 14, fontWeight: 900, color: '#16a34a', background: '#fff7ed' }}>Dès 2 500 F ({essai} jours offerts)</td>
                     <td style={{ padding: 14, color: '#dc2626' }}>29$ / mois (~18 000 FCFA)</td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -291,7 +293,7 @@ export default function GuideSourcingReventePage() {
               Prêt à lancer votre boutique de revente à Dakar ?
             </h3>
             <p style={{ fontSize: 15, color: '#94a3b8', margin: '0 0 24px', maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
-              Bénéficiez de 30 jours offerts, 0% de commission sur vos ventes et encaissement direct Wave &amp; Orange Money.
+              Bénéficiez de {essai} jours offerts, 0% de commission sur vos ventes et encaissement direct Wave &amp; Orange Money.
             </p>
             <Link
               href="/creer-boutique"
@@ -302,7 +304,7 @@ export default function GuideSourcingReventePage() {
                 display: 'inline-flex', alignItems: 'center', gap: 8
               }}
             >
-              <span>Créer ma boutique gratuitement (30j offerts)</span>
+              <span>Créer ma boutique gratuitement ({essai}j offerts)</span>
               <ArrowRight size={18} />
             </Link>
           </div>

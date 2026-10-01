@@ -1,8 +1,10 @@
 import React from 'react'
 import Link from 'next/link'
 import { ArrowRight, Zap } from 'lucide-react'
+import { getEssaiJours } from '@/lib/essai'
 
-export default function MerchantCtaBanner() {
+export default async function MerchantCtaBanner() {
+  const essai = await getEssaiJours()
   return (
     <div
       style={{
@@ -20,7 +22,7 @@ export default function MerchantCtaBanner() {
         Prêt à moderniser votre boutique dès aujourd&apos;hui ?
       </h3>
       <p style={{ fontSize: 13.5, margin: '0 auto 22px', maxWidth: 520, lineHeight: 1.5, color: '#CBD5E1' }}>
-        Testez la Caisse POS gratuitement ou lancez votre boutique en ligne avec 30 jours offerts. Sans carte bancaire ni engagement.
+        Testez la Caisse POS gratuitement ou lancez votre boutique en ligne avec {essai} jours offerts. Sans carte bancaire ni engagement.
       </p>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
         <Link
@@ -39,7 +41,7 @@ export default function MerchantCtaBanner() {
             gap: 6
           }}
         >
-          <span>Créer ma Boutique (30j offerts)</span>
+          <span>Créer ma Boutique ({essai}j offerts)</span>
           <ArrowRight size={15} />
         </Link>
 

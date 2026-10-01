@@ -1,9 +1,11 @@
 import { ImageResponse } from 'next/og'
+import { getEssaiJours } from '@/lib/essai'
 
 export const runtime = 'edge'
 
 // Visuel Dédié Pilier 2 — Marchand & Caisse POS Magasin (Nopalou Identity, Maximum Sharpness)
 export async function GET() {
+  const essai = await getEssaiJours()
   return new ImageResponse(
     (
       <div style={{
@@ -139,7 +141,7 @@ export async function GET() {
         }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: 26, fontWeight: 900, color: '#FFFFFF' }}>Testez la Démo Commerciale POS</span>
-            <span style={{ fontSize: 17, color: '#CBD5E1', fontWeight: 700, marginTop: 4 }}>30 Jours d&apos;essai Pro offerts · Zéro installation</span>
+            <span style={{ fontSize: 17, color: '#CBD5E1', fontWeight: 700, marginTop: 4 }}>{essai} Jours d&apos;essai Pro offerts · Zéro installation</span>
           </div>
           <div style={{
             background: '#16a34a', color: '#FFFFFF', padding: '16px 36px', borderRadius: 16,

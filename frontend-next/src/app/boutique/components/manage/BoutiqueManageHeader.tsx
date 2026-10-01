@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Sparkles, X, Menu, LucideIcon } from 'lucide-react'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface BoutiqueManageHeaderProps {
   toast: string | null
@@ -26,6 +27,7 @@ export default function BoutiqueManageHeader({
   joursRestantsEssai,
   currentTabInfo,
 }: BoutiqueManageHeaderProps) {
+  const essai = useEssaiJours()
   const TabHeaderIcon = currentTabInfo.icon
 
   return (
@@ -156,7 +158,7 @@ export default function BoutiqueManageHeader({
                   flexWrap: 'wrap',
                 }}
               >
-                <span>1er Mois 100% Offert — Accès Total VIP Actif</span>
+                <span>{essai} Jours 100% Offerts — Accès Total VIP Actif</span>
                 <span
                   style={{
                     background: '#22c55e',

@@ -75,7 +75,7 @@ export const FONCTIONNALITES_PLATEFORME: FonctionnalitePlateforme[] = [
   },
 ]
 
-export const PALIERS_BOUTIQUE: PalierBoutique[] = [
+export const PALIERS_BOUTIQUE = (essai: number) => [
   {
     id: 'gratuit',
     label: 'Boutique Gratuite',
@@ -98,7 +98,7 @@ export const PALIERS_BOUTIQUE: PalierBoutique[] = [
       'QR code boutique à imprimer ou partager',
       'Assistant WhatsApp commercial (+221 70 871 79 42)',
       '0% de commission sur vos ventes',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
   },
   {
@@ -113,7 +113,7 @@ export const PALIERS_BOUTIQUE: PalierBoutique[] = [
       'Facturation & devis PDF aux normes OHADA',
       'Dispatch et suivi livreur Tiak-Tiak avec lien GPS',
       'Badge Vendeur Pro Certifié & visibilité prioritaire',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
   },
   {
@@ -129,7 +129,7 @@ export const PALIERS_BOUTIQUE: PalierBoutique[] = [
       'Comptabilité fournisseurs & calcul des marges nettes',
       'Bannière publicitaire sponsorisée en tête de catégorie',
       'Account Manager VIP dédié 7j/7',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
   },
 ]

@@ -1,3 +1,4 @@
+import { getEssaiJours } from '@/lib/essai'
 const COULEURS = {
   marine: '#1C2B4A',
   orange: '#C75B00',
@@ -60,7 +61,7 @@ const ETAPES_BOUTIQUE = [
   { titre: 'Activer la Caisse POS & Tester la Démo (nopalou.com/demo)', detail: 'Accès instantané à la caisse tactile, aux 3 scanners (Caméra, Cloud, USB) et au carnet de dettes.' },
 ]
 
-const PALIERS = [
+const PALIERS = (essai: number) => [
   {
     nom: 'Gratuit / Taf Taf',
     prixLabel: '2 500 FCFA',
@@ -70,7 +71,7 @@ const PALIERS = [
       'Coordonnées et commandes WhatsApp directes',
       'Carnet de dettes client & historique',
       'Import produits AliExpress & 1688 en 1-clic',
-      '1er mois 100% OFFERT',
+      `${essai} jours 100% OFFERTS`,
     ],
   },
   {
@@ -85,7 +86,7 @@ const PALIERS = [
       'Carnet Dettes Client & Relance WhatsApp 1-Clic',
       'Impression Stickers Codes-Barres EAN-13 GS1',
       '0% de commission sur vos ventes',
-      '1er mois 100% OFFERT & -25% sur l\'année',
+      `${essai} jours 100% OFFERTS & -25% sur l'année`,
     ],
   },
   {
@@ -100,7 +101,7 @@ const PALIERS = [
       'Import par lot Excel / CSV de catalogue',
       'Portail Développeur API REST & Webhooks',
       'Support prioritaire dédié 24/7',
-      '1er mois 100% OFFERT & -25% sur l\'année',
+      `${essai} jours 100% OFFERTS & -25% sur l'année`,
     ],
   },
 ]
@@ -179,14 +180,16 @@ function ListeEtapesNumerotees(etapes: { titre: string; detail: string }[], comp
 }
 
 export async function GET() {
+  const essai = await getEssaiJours()
+  const paliers = PALIERS(essai)
   const { prixPro, prixBusiness, commissionBusiness, tauxApporteur } = await getSettings()
 
   const commissionPro = Math.round(prixPro * tauxApporteur / 100)
   const commissionBiz = Math.round(prixBusiness * tauxApporteur / 100)
 
-  PALIERS[1].prixLabel = `${fcfa(prixPro)}/mois`
-  PALIERS[2].prixLabel = `${fcfa(prixBusiness)}/mois`
-  PALIERS[2].items = [
+  paliers[1].prixLabel = `${fcfa(prixPro)}/mois`
+  paliers[2].prixLabel = `${fcfa(prixBusiness)}/mois`
+  paliers[2].items = [
     'Tout ce qui est inclus dans Pro',
     `Seulement ${commissionBusiness}% de commission sur les ventes`,
     'URL dédiée nopalou.com/boutiques/votre-nom',
@@ -304,7 +307,7 @@ export async function GET() {
 <div class="page" style="background:#fff; padding:48px 44px;">
   ${Titre('Fonctionnalités boutique', 'Trois paliers, du gratuit au Business')}
   <div style="display:flex; flex-direction:column; gap:14px;">
-    ${PALIERS.map(p => `
+    ${paliers.map(p => `
     <div style="border:1.5px solid ${p.couleur}; border-radius:10px; overflow:hidden;">
       <div style="background:${p.couleur}; padding:10px 18px; display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:14px; font-weight:800; color:#fff;">Boutique ${p.nom}</span>

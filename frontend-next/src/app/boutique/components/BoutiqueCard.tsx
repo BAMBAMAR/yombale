@@ -8,6 +8,7 @@ import { Store, Monitor, Edit, Eye, Trash2, Tag, MapPin, Phone, ArrowRight } fro
 import { useTranslation } from '@/i18n/context'
 import { showToast } from '@/context/ToastContext'
 import type { Boutique } from '../types'
+import { useEssaiJours } from '@/components/EssaiProvider'
 
 interface BoutiqueCardProps {
   boutique: Boutique
@@ -24,6 +25,7 @@ export default function BoutiqueCard({
   onDelete,
   onManage,
 }: BoutiqueCardProps) {
+  const essai = useEssaiJours()
   const { t } = useTranslation()
   const router = useRouter()
   const [togglingStatut, setTogglingStatut] = useState(false)
@@ -93,7 +95,7 @@ export default function BoutiqueCard({
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {boutique.is_trial ? (
                   <span className="badge-premium" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff', fontSize: 10, padding: '2px 8px', border: 'none' }}>
-                    1er mois Offert (VIP)
+                    {essai} jours offerts (VIP)
                   </span>
                 ) : (
                   <>

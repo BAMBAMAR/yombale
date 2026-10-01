@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import QRCode from 'qrcode-svg'
+import { getEssaiJours } from '@/lib/essai'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,7 @@ function qrDataUri(text: string) {
 
 // Flyer A5 Haute Définition (1240 × 1748 px) — Démarchage Commercial Terrain
 export async function GET(request: Request) {
+  const essai = await getEssaiJours()
   const { searchParams } = new URL(request.url)
   const codeAgent = searchParams.get('code') || 'DIRECT'
   const agentPhone = searchParams.get('phone') || '+221 70 871 79 42'
@@ -79,7 +81,7 @@ export async function GET(request: Request) {
               }} />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: 18, fontWeight: 900, color: '#92400E', letterSpacing: 0.2 }}>
-                  1er MOIS 100% OFFERT
+                  {essai} JOURS 100% OFFERTS
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#B45309' }}>
                   Sans engagement · 0 carte bancaire
