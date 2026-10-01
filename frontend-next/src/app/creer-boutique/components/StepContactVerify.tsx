@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Phone, KeyRound } from 'lucide-react'
 
 interface StepContactVerifyProps {
@@ -10,6 +10,7 @@ interface StepContactVerifyProps {
   code: string
   setCode: (val: string) => void
   fontStyle?: React.CSSProperties
+  onRenvoyer?: () => Promise<void>
 }
 
 export default function StepContactVerify({
@@ -19,7 +20,27 @@ export default function StepContactVerify({
   code,
   setCode,
   fontStyle,
+  onRenvoyer,
 }: StepContactVerifyProps) {
+  const [attente, setAttente] = useState(30)
+  const [renvoi, setRenvoi] = useState(false)
+
+  useEffect(() => {
+    if (step !== 3 || attente <= 0) return
+    const t = setTimeout(() => setAttente((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [step, attente])
+
+  const demanderNouveauCode = async () => {
+    if (!onRenvoyer || attente > 0 || renvoi) return
+    setRenvoi(true)
+    try {
+      await onRenvoyer()
+      setAttente(30)
+    } finally {
+      setRenvoi(false)
+    }
+  }
   if (step === 2) {
     return (
       <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
@@ -133,7 +154,9 @@ export default function StepContactVerify({
       <input
         type="text"
         value={code}
-        onChange={(e) => setCode(e.target.value)}
+        onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+        inputMode="numeric"
+        autoComplete="one-time-code"
         placeholder="123456"
         autoFocus
         maxLength={6}
@@ -152,6 +175,17 @@ export default function StepContactVerify({
           ...fontStyle,
         }}
       />
+      <div style={{ marginTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, fontSize: 14 }}>
+        <span style={{ color: '#64748b' }}>Mauvais numéro ? Utilisez « Retour ».</span>
+        <button
+          type="button"
+          onClick={demanderNouveauCode}
+          disabled={attente > 0 || renvoi}
+          style={{ background: 'none', border: 'none', padding: 0, fontWeight: 800, cursor: attente > 0 || renvoi ? 'default' : 'pointer', color: attente > 0 || renvoi ? '#94a3b8' : 'var(--accent, #C75B00)', whiteSpace: 'nowrap', ...fontStyle }}
+        >
+          {attente > 0 ? `Nouveau code dans ${attente} s` : renvoi ? 'Envoi...' : 'Renvoyer le code'}
+        </button>
+      </div>
     </div>
   )
 }

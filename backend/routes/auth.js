@@ -19,6 +19,7 @@ const { genererCodeUnique } = require('../lib/codeApporteur');
 const { validerForceMotDePasse } = require('../lib/passwordValidator');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const { resolverComptesParTelephone, telephoneEstLibrePourCompte } = require('../lib/telephoneIntegrity');
+const { creerPreuveTelephone } = require('../lib/phoneProof');
 
 // AUD-055 : espace de noms réservé à l'auto-provisionnement WhatsApp — un compte e-mail ordinaire
 // ne doit jamais pouvoir revendiquer <numero>@whatsapp.nopalou.com avant (ou à la place) du vrai
@@ -751,9 +752,14 @@ router.post('/whatsapp-otp-verify', limiterAuth, async (req, res) => {
     let { telephone, code } = req.body;
     telephone = normalisePhone(telephone);
     
-    const verif = await verifierOtpPhone(telephone, null, code);
+    const verif = await verifierOtpPhone(telephone, req.body.type === 'boutique' ? 'boutique' : null, code);
     if (!verif.valide) {
       return res.status(verif.tropDeTentatives ? 429 : 400).json({ error: verif.error });
+    }
+    // AUD-108 : le wizard de création de boutique (type 'boutique') reçoit une preuve de possession
+    // du numéro, exigée ensuite par POST /api/boutiques/taf-taf.
+    if (req.body.type === 'boutique') {
+      return res.json({ success: true, preuve_telephone: creerPreuveTelephone(telephone) });
     }
     res.json({ success: true });
   } catch (err) {

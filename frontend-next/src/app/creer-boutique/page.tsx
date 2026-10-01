@@ -24,6 +24,7 @@ export default function CreerBoutiqueWizard() {
   const [nom, setNom] = useState(initialNom)
   const [telephone, setTelephone] = useState('')
   const [code, setCode] = useState('')
+  const [preuveTelephone, setPreuveTelephone] = useState('')
   const [plan, setPlan] = useState<'decouverte' | 'pro' | 'business'>(initialPlan)
   const [categorie, setCategorie] = useState(CATEGORIES[0]?.value || 'mixte')
   const [couleur, setCouleur] = useState('#C75B00')
@@ -118,7 +119,7 @@ export default function CreerBoutiqueWizard() {
         const res = await fetch(`${BACKEND}/api/auth/whatsapp-otp-send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telephone }),
+          body: JSON.stringify({ telephone, type: 'boutique' }),
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'envoi du code')
@@ -132,7 +133,7 @@ export default function CreerBoutiqueWizard() {
     }
 
     if (step === 3) {
-      if (code.length < 4) {
+      if (code.length !== 6) {
         setError('Veuillez saisir le code à 6 chiffres.')
         return
       }
@@ -141,10 +142,11 @@ export default function CreerBoutiqueWizard() {
         const res = await fetch(`${BACKEND}/api/auth/whatsapp-otp-verify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telephone, code }),
+          body: JSON.stringify({ telephone, code, type: 'boutique' }),
         })
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Code de vérification incorrect.')
+        if (!res.ok) throw new Error(data.error || 'Ce code ne correspond pas. Vérifiez le message WhatsApp reçu, ou demandez un nouveau code.')
+        setPreuveTelephone(data.preuve_telephone || '')
         setStep(4)
       } catch (err: any) {
         setError(err.message)
@@ -155,6 +157,23 @@ export default function CreerBoutiqueWizard() {
     }
 
     setStep(step + 1)
+  }
+
+  const renvoyerCode = async () => {
+    setError('')
+    const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+    try {
+      const res = await fetch(`${BACKEND}/api/auth/whatsapp-otp-send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone, type: 'boutique' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Impossible d\'envoyer le code. Réessayez dans un instant.')
+      setCode('')
+    } catch (err: any) {
+      setError(err.message)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,7 +193,7 @@ export default function CreerBoutiqueWizard() {
       const res = await fetch(`${BACKEND}/api/boutiques/taf-taf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, telephone, couleur, plan, categorie, code_apporteur }),
+        body: JSON.stringify({ nom, telephone, couleur, plan, categorie, code_apporteur, preuve_telephone: preuveTelephone }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur lors de la création de la boutique.')
@@ -294,6 +313,7 @@ export default function CreerBoutiqueWizard() {
               setTelephone={setTelephone}
               code={code}
               setCode={setCode}
+              onRenvoyer={renvoyerCode}
             />
           )}
 

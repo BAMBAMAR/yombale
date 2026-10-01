@@ -1,0 +1,99 @@
+// tests/unit/croissance-audit.test.js — AUD-108, AUD-109, AUD-112 (audit croissance du 2026-10-01)
+process.env.JWT_SECRET = 'npl_master_jwt_secret_test_2026';
+
+const jwt = require('jsonwebtoken');
+const { creerPreuveTelephone, verifierPreuveTelephone } = require('../../backend/lib/phoneProof');
+const { demarrerEssaiSiPremiereFois } = require('../../backend/lib/essaiGratuit');
+const { marquerLeadConverti } = require('../../backend/lib/crmConversion');
+
+describe('AUD-108 : preuve de possession du numéro', () => {
+  test('une preuve valide est acceptée pour le même numéro, quel que soit le format', () => {
+    const preuve = creerPreuveTelephone('221770009911');
+    expect(verifierPreuveTelephone(preuve, '+221770009911')).toBe(true);
+    expect(verifierPreuveTelephone(preuve, '770009911')).toBe(true);
+  });
+
+  test('une preuve émise pour un numéro est refusée pour un autre numéro', () => {
+    const preuve = creerPreuveTelephone('221770009911');
+    expect(verifierPreuveTelephone(preuve, '+221780000000')).toBe(false);
+  });
+
+  test('absence, jeton falsifié ou expiré : refus', () => {
+    expect(verifierPreuveTelephone(undefined, '+221770009911')).toBe(false);
+    expect(verifierPreuveTelephone('abc.def.ghi', '+221770009911')).toBe(false);
+    const expiree = jwt.sign({ tel9: '770009911', objet: 'boutique_creation' }, `${process.env.JWT_SECRET}:phone-proof`, { expiresIn: -10 });
+    expect(verifierPreuveTelephone(expiree, '+221770009911')).toBe(false);
+  });
+
+  test('un jeton de session ne vaut pas preuve de téléphone, et inversement', () => {
+    const session = jwt.sign({ userId: 'u1', tel9: '770009911', objet: 'boutique_creation' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    expect(verifierPreuveTelephone(session, '+221770009911')).toBe(false);
+    const preuve = creerPreuveTelephone('770009911');
+    expect(() => jwt.verify(preuve, process.env.JWT_SECRET)).toThrow('invalid signature');
+  });
+});
+
+describe('AUD-109 : un seul essai par utilisateur', () => {
+  const poolAvec = (flags) => {
+    const calls = [];
+    return {
+      calls,
+      query: jest.fn(async (sql, params) => {
+        calls.push({ sql, params });
+        if (/SELECT\s+EXISTS/i.test(sql)) return { rows: [flags] };
+        return { rows: [] };
+      }),
+    };
+  };
+
+  test('premier essai : inséré, sans aucune annulation', async () => {
+    const pool = poolAvec({ a_deja_eu_essai: false, a_abonnement_actif: false });
+    const r = await demarrerEssaiSiPremiereFois(pool, { userId: 'u1', plan: 'decouverte', prix: 2500, jours: 30 });
+    expect(r.cree).toBe(true);
+    expect(pool.calls.some(c => /INSERT INTO abonnements/i.test(c.sql))).toBe(true);
+    expect(pool.calls.some(c => /UPDATE abonnements/i.test(c.sql))).toBe(false);
+    expect(pool.calls.find(c => /INSERT INTO abonnements/i.test(c.sql)).params).toEqual(['u1', 'decouverte', 2500, 30]);
+  });
+
+  test('essai déjà utilisé : aucune insertion', async () => {
+    const pool = poolAvec({ a_deja_eu_essai: true, a_abonnement_actif: false });
+    const r = await demarrerEssaiSiPremiereFois(pool, { userId: 'u1', plan: 'pro', prix: 5000, jours: 30 });
+    expect(r).toEqual({ cree: false, raison: 'essai_deja_utilise' });
+    expect(pool.calls.some(c => /INSERT INTO abonnements/i.test(c.sql))).toBe(false);
+  });
+
+  test('abonnement payant actif : jamais écrasé par un essai', async () => {
+    const pool = poolAvec({ a_deja_eu_essai: false, a_abonnement_actif: true });
+    const r = await demarrerEssaiSiPremiereFois(pool, { userId: 'u1', plan: 'decouverte', prix: 2500, jours: 30 });
+    expect(r).toEqual({ cree: false, raison: 'abonnement_actif' });
+    expect(pool.calls.some(c => /INSERT|UPDATE/i.test(c.sql))).toBe(false);
+  });
+});
+
+describe('AUD-112 : conversion CRM seulement après un contact réel', () => {
+  test('la requête exige un message réel et ne repasse pas un lead déjà converti', async () => {
+    const pool = { query: jest.fn(async () => ({ rows: [] })) };
+    await marquerLeadConverti(pool, '+221 77 000 99 11');
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toMatch(/prospection_messages_log/);
+    expect(sql).toMatch(/'envoye', 'livre', 'lu'/);
+    expect(sql).toMatch(/statut <> 'converti'/);
+    expect(params).toEqual(['770009911']);
+  });
+
+  test('un événement boutique_creee est tracé pour chaque lead converti', async () => {
+    const pool = {
+      query: jest.fn(async (sql) => (/UPDATE prospection_leads/.test(sql) ? { rows: [{ id: 'l1' }, { id: 'l2' }] } : { rows: [] })),
+    };
+    const n = await marquerLeadConverti(pool, '770009911');
+    expect(n).toBe(2);
+    const events = pool.query.mock.calls.filter(([sql]) => /INSERT INTO prospection_lead_events/.test(sql));
+    expect(events).toHaveLength(2);
+  });
+
+  test('numéro trop court : aucune requête', async () => {
+    const pool = { query: jest.fn() };
+    expect(await marquerLeadConverti(pool, '1234')).toBe(0);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+});

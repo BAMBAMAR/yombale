@@ -1,6 +1,12 @@
-// backend/routes/boutiques-modules/boutiques-crud.js
+﻿// backend/routes/boutiques-modules/boutiques-crud.js
 const router = require('express').Router();
+const jwt = require('jsonwebtoken');
 const { body, param, query, validationResult } = require('express-validator');
+const { normalisePhone } = require('../../services/whatsapp');
+const { resolverComptesParTelephone } = require('../../lib/telephoneIntegrity');
+const { verifierPreuveTelephone } = require('../../lib/phoneProof');
+const { demarrerEssaiSiPremiereFois } = require('../../lib/essaiGratuit');
+const { marquerLeadConverti } = require('../../lib/crmConversion');
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../../middlewares/auth');
 const { checkAbonnement, requireAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
@@ -100,22 +106,46 @@ router.get('/modeles-couvertures', (req, res) => {
 // ── GET /api/boutiques/admin/toutes — toutes les boutiques (admin)
 router.post('/taf-taf', async (req, res) => {
   try {
-    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme, categorie, code_apporteur } = req.body;
+    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme, categorie, code_apporteur, preuve_telephone } = req.body;
     if (!nom || !telephone) return res.status(400).json({ error: 'Nom et téléphone requis' });
-    
+
     // Normaliser téléphone
     telephone = telephone.replace(/[^0-9+]/g, '');
     if (!telephone.startsWith('+221') && telephone.length === 9) {
       telephone = '+221' + telephone;
     }
-    
-    // 1. Gérer l'utilisateur
-    let { rows } = await pool.query('SELECT id, nom, email, code_apporteur FROM utilisateurs WHERE telephone=$1 OR email=$2', [telephone, email || '']);
+
+    // AUD-108 : sans preuve de possession du numéro (OTP WhatsApp validé), cette route publique
+    // ne doit ni créer de compte ni émettre de jeton de session.
+    if (!verifierPreuveTelephone(preuve_telephone, telephone)) {
+      return res.status(401).json({
+        error: 'Vérifiez votre numéro WhatsApp avec le code reçu pour continuer.',
+        code: 'PREUVE_TELEPHONE_REQUISE',
+      });
+    }
+
+    // 1. Gérer l'utilisateur — résolution par téléphone uniquement (jamais par e-mail fourni : un
+    // e-mail connu ne prouve rien et permettrait de récupérer le compte d'un tiers).
+    const cleanPhone = normalisePhone(telephone);
+    const { rows, ambigu } = await resolverComptesParTelephone(
+      pool, cleanPhone, 'id, nom, email, code_apporteur, suspendu, supprime_le, anonymise_le, COALESCE(jwt_version, 1) AS jwt_version'
+    );
+    if (ambigu) {
+      return res.status(409).json({ error: 'Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.' });
+    }
     let user;
     if (rows.length) {
       user = rows[0];
+      if (user.suspendu) return res.status(403).json({ error: 'Ce compte est suspendu.' });
+      if (user.anonymise_le) return res.status(403).json({ error: 'Ce compte a été définitivement supprimé.' });
     } else {
-      const userEmail = email || `${telephone}@whatsapp.nopalou.com`;
+      // Un e-mail déjà rattaché à un autre compte n'est jamais réutilisé (ni pour s'y connecter, ni
+      // pour créer un doublon) : on retombe sur l'adresse synthétique du numéro.
+      let userEmail = `${telephone}@whatsapp.nopalou.com`;
+      if (email) {
+        const emailPris = await pool.query('SELECT 1 FROM utilisateurs WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]);
+        if (!emailPris.rows.length) userEmail = email;
+      }
       const plainPassword = mot_de_passe || require('crypto').randomBytes(16).toString('hex');
       const bcrypt = require('bcryptjs');
       const hash = await bcrypt.hash(plainPassword, 12);
@@ -127,6 +157,19 @@ router.post('/taf-taf', async (req, res) => {
         [nom, userEmail, hash, telephone, codeApp]
       );
       user = insertRes.rows[0];
+    }
+
+    // AUD-109 : rejeu du wizard (double clic, retour arrière) → on renvoie la boutique déjà créée au
+    // lieu d'en fabriquer une deuxième et de relancer un essai.
+    const dejaCreee = await pool.query(
+      `SELECT id, slug, caisse_token FROM boutiques
+       WHERE utilisateur_id = $1 AND LOWER(TRIM(nom)) = LOWER(TRIM($2)) ORDER BY created_at LIMIT 1`,
+      [user.id, nom]
+    );
+    if (dejaCreee.rows[0]) {
+      const b = dejaCreee.rows[0];
+      const tokenExistant = jwt.sign({ userId: user.id, jwtVersion: user.jwt_version || 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ success: true, deja_existante: true, boutiqueId: b.id, slug: b.slug, boutique: { id: b.id, caisse_token: b.caisse_token }, caisse_token: b.caisse_token, token: tokenExistant });
     }
 
     // 1.5 Vérification stricte des quotas Admin
@@ -157,16 +200,7 @@ router.post('/taf-taf', async (req, res) => {
     const boutiqueId = insertBoutique.rows[0].id;
 
     // Hook automatique de conversion CRM prospection
-    if (telephone) {
-      const normTel = String(telephone).replace(/\D/g, '').slice(-9);
-      if (normTel.length === 9) {
-        pool.query(
-          `UPDATE prospection_leads SET statut = 'converti', derniere_action_at = NOW(), updated_at = NOW()
-           WHERE telephone LIKE '%' || $1`,
-          [normTel]
-        ).catch(e => console.warn('[CRM CONVERSION HOOK ERR]:', e.message));
-      }
-    }
+    if (telephone) marquerLeadConverti(pool, telephone).catch(e => console.warn('[CRM CONVERSION HOOK ERR]:', e.message));
 
     try {
       const slugBase = slugify(nom);
@@ -182,18 +216,10 @@ router.post('/taf-taf', async (req, res) => {
     const prix = planChoisi === 'business' ? prixBusiness : planChoisi === 'pro' ? prixPro : prixDecouverte;
 
     // 3. Activer le plan choisi (Taf Taf Découverte 1 mois offert par défaut)
-    const essaiJours = await cfg.getNum('abonnement_essai_jours') || 14;
-    
-    await pool.query(
-      `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
-      [user.id]
-    );
-
-    await pool.query(
-      `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, is_trial)
-       VALUES ($1, $2, 'actif', $3, NOW() + INTERVAL '1 day' * $4, TRUE)`,
-      [user.id, planChoisi, prix, essaiJours]
-    );
+    // Durée pilotée par le réglage admin `abonnement_essai_jours` (AUD-111).
+    // AUD-109 : un seul essai par utilisateur, jamais d'annulation d'un abonnement existant.
+    const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
+    await demarrerEssaiSiPremiereFois(pool, { userId: user.id, plan: planChoisi, prix, jours: essaiJours });
 
     // 3.5 Initialiser 2 articles modèles pour que la caisse POS et la vitrine soient immédiatement opérationnelles
     // Initialiser le pack d'articles de démarrage par catégorie (Anti-Boutique-Vide)
@@ -205,8 +231,7 @@ router.post('/taf-taf', async (req, res) => {
     }
 
     // 4. Générer le token de session
-    const jwt = require('jsonwebtoken');
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user.id, jwtVersion: user.jwt_version || 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     res.json({ success: true, boutiqueId, boutique: { id: boutiqueId, caisse_token: caisseToken }, caisse_token: caisseToken, token });
   } catch (err) {
@@ -955,16 +980,7 @@ router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo
     const newId = r.rows[0].id;
 
     // Hook automatique de conversion CRM prospection
-    if (inputTelRaw) {
-      const normTel = String(inputTelRaw).replace(/\D/g, '').slice(-9);
-      if (normTel.length === 9) {
-        pool.query(
-          `UPDATE prospection_leads SET statut = 'converti', derniere_action_at = NOW(), updated_at = NOW()
-           WHERE telephone LIKE '%' || $1`,
-          [normTel]
-        ).catch(e => console.warn('[CRM CONVERSION HOOK ERR]:', e.message));
-      }
-    }
+    if (inputTelRaw) marquerLeadConverti(pool, inputTelRaw).catch(e => console.warn('[CRM CONVERSION HOOK ERR]:', e.message));
 
     // UPDATE des colonnes avancées (ajoutées par migration — best-effort)
     try {
@@ -979,12 +995,11 @@ router.post('/', limiterPublication, verifierToken, upload.fields([{ name: 'logo
 
     // Activer le plan découverte (1 mois gratuit avec accès total VIP) par défaut
     try {
-      const essaiJours = await cfg.getNum('abonnement_essai_jours') || 14;
-      await pool.query(
-        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, is_trial)
-         VALUES ($1, 'decouverte', 'actif', 2500, NOW() + INTERVAL '1 day' * $2, TRUE)`,
-        [userId, essaiJours]
-      );
+      // Durée pilotée par le réglage admin (AUD-111) ; un seul essai par utilisateur (AUD-109).
+      const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
+      await demarrerEssaiSiPremiereFois(pool, {
+        userId, plan: 'decouverte', prix: await cfg.getNum('plan_decouverte_prix') || 2500, jours: essaiJours,
+      });
     } catch (errAbo) {
       console.error('[BOUTIQUES POST] Erreur création abonnement:', errAbo.message);
     }
