@@ -81,3 +81,29 @@ describe('AUD-122 / AUD-124 : relances de fin d\'essai', () => {
     expect(src).not.toMatch(/\}, 24 \* 60 \* 60 \* 1000\)/);
   });
 });
+
+describe('AUD-120 : relance du paiement non finalisé', () => {
+  beforeEach(() => { jest.useFakeTimers(); jest.setSystemTime(new Date('2026-10-01T10:00:00Z')); });
+  afterEach(() => jest.useRealTimers());
+
+  test('un paiement initié il y a plus de 30 min est relancé une fois et marqué', async () => {
+    const { traiterRelancesMarchands, envois, requetes } = charger({
+      reglages: { alertes_abonnement_whatsapp: 'true' },
+      lignes: { 'FROM paiements_inities pi': [{ id: 'p1', plan: 'pro', nom: 'Boutique Test', telephone: '221770009911' }] },
+    });
+    await traiterRelancesMarchands();
+    const msg = envois.map(e => e.textMessage).join('\n');
+    expect(msg).toMatch(/le paiement n'a pas abouti/);
+    expect(msg).toMatch(/\/boutique\/abonnement/);
+    expect(requetes.some(s => /UPDATE paiements_inities SET relance_envoyee_at = NOW\(\)/.test(s))).toBe(true);
+  });
+
+  test('désactivée avec l\'interrupteur admin des alertes d\'abonnement', async () => {
+    const { traiterRelancesMarchands, envois } = charger({
+      reglages: { alertes_abonnement_whatsapp: 'false' },
+      lignes: { 'FROM paiements_inities pi': [{ id: 'p1', plan: 'pro', nom: 'B', telephone: '221770009911' }] },
+    });
+    await traiterRelancesMarchands();
+    expect(envois).toHaveLength(0);
+  });
+});

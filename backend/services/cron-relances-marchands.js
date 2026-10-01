@@ -346,6 +346,68 @@ async function traiterRelancesMarchands() {
       }
     }
 
+    // ── 6. Paiement d'abonnement commencé mais non finalisé (AUD-120) ─────────
+    // Relance unique, 30 min à 24 h après l'initiation, si aucun abonnement payant n'est actif.
+    const resInities = alertesAbo
+      ? await pool.query(`
+          SELECT pi.id, pi.plan, COALESCE(b.nom, u.nom, 'marchand') AS nom,
+                 COALESCE(b.whatsapp, b.telephone, u.telephone) AS telephone
+          FROM paiements_inities pi
+          JOIN utilisateurs u ON u.id = pi.utilisateur_id
+          LEFT JOIN LATERAL (
+            SELECT nom, whatsapp, telephone FROM boutiques WHERE utilisateur_id = u.id ORDER BY created_at LIMIT 1
+          ) b ON true
+          WHERE pi.statut = 'initie' AND pi.type = 'abonnement' AND pi.relance_envoyee_at IS NULL
+            AND pi.created_at < NOW() - INTERVAL '30 minutes'
+            AND pi.created_at > NOW() - INTERVAL '24 hours'
+            AND NOT EXISTS (
+              SELECT 1 FROM abonnements a
+              WHERE a.utilisateur_id = u.id AND a.statut = 'actif' AND a.fin > NOW() AND a.is_trial = FALSE
+            )
+          ORDER BY pi.created_at
+          LIMIT 50`)
+      : { rows: [] };
+
+    for (const p of resInities.rows) {
+      if (!p.telephone) continue;
+      if (estDesinscrit && (await estDesinscrit(p.telephone))) continue;
+
+      const msg =
+        `Salam ${p.nom} ! 👋\n\n` +
+        `Vous avez commencé à régler votre abonnement Nopalou, mais le paiement n'a pas abouti. Vos données sont intactes.\n\n` +
+        `👉 Reprenez en 1 minute : ${SITE}/boutique/abonnement\n\n` +
+        `Un souci avec Wave ? Répondez à ce message, on vous aide.\n\n` +
+        `_Pour ne plus recevoir de rappel, répondez STOP._`;
+
+      if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
+        try {
+          const res = await sendWhatsAppNotification(p.telephone, {
+            textMessage: msg,
+            title: `Paiement non finalisé — ${p.nom}`.slice(0, 60),
+            montant: 'Abonnement',
+            detail: `Votre paiement n'a pas abouti. Reprenez-le : ${SITE}/boutique/abonnement`,
+            url: `${SITE}/boutique/abonnement`,
+            buttonParam: 'boutique/abonnement',
+            type: 'service',
+          });
+          const isSent = !!(res && res.messages?.[0]?.id);
+          if (isSent) {
+            await pool.query('UPDATE paiements_inities SET relance_envoyee_at = NOW() WHERE id = $1', [p.id]);
+          }
+          stats.paiementNonFinalise = (stats.paiementNonFinalise || 0) + 1;
+          stats.total++;
+          await pool.query(
+            `INSERT INTO prospection_messages_log (canal, destinataire, message_envoye, statut)
+             VALUES ('whatsapp', $1, $2, $3)`,
+            [p.telephone, msg, isSent ? 'envoye' : 'echec']
+          );
+        } catch (e) {
+          stats.erreurs.push({ bq: p.nom, type: 'paiement_non_finalise', err: e.message });
+        }
+      }
+    }
+    await pool.query(`UPDATE paiements_inities SET statut = 'expire' WHERE statut = 'initie' AND created_at < NOW() - INTERVAL '48 hours'`).catch(() => {});
+
     console.log(`[CRON RELANCES MARCHANDS] ✅ Traité : ${stats.total} envois (J+1: ${stats.j1}, J+7: ${stats.j7}, J-3: ${stats.jMoins3 || 0}, J-1: ${stats.jMoins1 || 0}, J+1_exp: ${stats.jPlus1 || 0})`);
     return { succes: true, stats };
     } catch (err) {

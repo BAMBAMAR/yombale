@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { PAYANT, ATTRIBUE_ADMIN } = require('../lib/abonnementsSql');
+const { enregistrerInitiation } = require('../lib/paiementsInities');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
@@ -91,6 +92,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
       error_url:        `${process.env.FRONTEND_URL}/paiement/erreur?ref=${clientRef}&type=abonnement`,
       client_reference: clientRef,
     });
+    await enregistrerInitiation(pool, { reference: clientRef, utilisateurId: userId, type: 'abonnement', plan, montant: prixTotal, methode: 'wave' });
     res.json({ wave_url: session.wave_url, session_id: session.session_id, plan, label, prix: prixTotal, duree });
   } catch (err) {
     const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Erreur Wave';
@@ -98,6 +100,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
     const userId = req.user?.userId;
     const { plan = 'pro', duree_mois = 1 } = req.body || {};
     const ref = `abmt_${userId}_${plan}_${duree_mois}`;
+    await enregistrerInitiation(pool, { reference: ref, utilisateurId: userId, type: 'abonnement', plan, methode: 'wave', statut: 'echec_wave' });
     res.json({ fallback_manuel: true, error: msg, numero_depot: '777202086', reference: ref, plan, duree: duree_mois });
   }
 });

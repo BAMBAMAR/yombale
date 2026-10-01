@@ -2,6 +2,7 @@ const router = require('express').Router();
 const axios  = require('axios');
 const crypto = require('crypto');
 const { pool } = require('../models/db');
+const { marquerPaye } = require('../lib/paiementsInities');
 const notifs   = require('../services/notifications');
 const { limiterEcriture, limiterAuth, limiterGeneral } = require('../middlewares/rateLimit');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
@@ -115,6 +116,7 @@ async function montantAttendu(reference, montantDeclare) {
 // Appelée par les webhooks Wave/Orange ET par la validation admin d'un paiement manuel.
 async function appliquerPaiementReussi(reference, montant, methode) {
   const montantReel = await montantAttendu(reference, montant);
+  await marquerPaye(pool, reference); // AUD-120 : l'initiation passe à « payé »
   await pool.query(
     "INSERT INTO commandes (reference,montant,statut,methode_paiement) VALUES ($1,$2,'payee',$3) ON CONFLICT (reference) DO NOTHING",
     [reference, montantReel, methode]

@@ -2890,6 +2890,29 @@ module.exports = async function migrateInline(customConnStr = null) {
     catch (e) { console.warn('[MIGRATE] schéma production non décrit:', e.message, '::', sql.slice(0, 90)); }
   }
 
+  // AUD-120 : traçabilité des paiements initiés (abandon au paiement mesurable, relance 30 min après)
+  const schemaCroissance = [
+    `CREATE TABLE IF NOT EXISTS paiements_inities (
+       id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+       reference        VARCHAR(200) NOT NULL,
+       utilisateur_id   UUID,
+       type             VARCHAR(30) NOT NULL DEFAULT 'abonnement',
+       plan             VARCHAR(40),
+       montant          NUMERIC(12,2),
+       methode          VARCHAR(30) DEFAULT 'wave',
+       statut           VARCHAR(20) NOT NULL DEFAULT 'initie',
+       relance_envoyee_at TIMESTAMPTZ,
+       paye_le          TIMESTAMPTZ,
+       created_at       TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_paiements_inities_ref ON paiements_inities(reference)`,
+    `CREATE INDEX IF NOT EXISTS idx_paiements_inities_statut ON paiements_inities(statut, created_at)`,
+  ];
+  for (const sql of schemaCroissance) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] schéma croissance:', e.message, '::', sql.slice(0, 90)); }
+  }
+
   // AUD-001 : rejeu des instructions différées jusqu'à stabilité (les tables visées existent désormais)
   const nbDifferees = differees.length;
   let restantes = differees.splice(0);

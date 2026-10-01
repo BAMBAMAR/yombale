@@ -165,3 +165,36 @@ describe('AUD-110 / AUD-117 : indicateurs fiables', () => {
     expect(src).toMatch(/FILTER \(WHERE type='commande_web'\)\s+AS commandes_web_total/);
   });
 });
+
+describe('AUD-120 : paiements initiés tracés et relancés', () => {
+  const { enregistrerInitiation, marquerPaye } = require('../../backend/lib/paiementsInities');
+
+  test('enregistrerInitiation écrit une ligne idempotente (ON CONFLICT DO NOTHING)', async () => {
+    const pool = { query: jest.fn(async () => ({ rows: [] })) };
+    await enregistrerInitiation(pool, { reference: 'abmt_u1_pro_1_123', utilisateurId: 'u1', plan: 'pro', montant: 5000 });
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toMatch(/INSERT INTO paiements_inities/);
+    expect(sql).toMatch(/ON CONFLICT \(reference\) DO NOTHING/);
+    expect(params).toEqual(['abmt_u1_pro_1_123', 'u1', 'abonnement', 'pro', 5000, 'wave', 'initie']);
+  });
+
+  test('un échec de traçage ne lève jamais d\'exception (un paiement ne doit pas être bloqué)', async () => {
+    const pool = { query: jest.fn(async () => { throw new Error('db down'); }) };
+    await expect(enregistrerInitiation(pool, { reference: 'r' })).resolves.toBeUndefined();
+    await expect(marquerPaye(pool, 'r')).resolves.toBeUndefined();
+  });
+
+  test('marquerPaye passe l\'initiation à payé', async () => {
+    const pool = { query: jest.fn(async () => ({ rows: [] })) };
+    await marquerPaye(pool, 'abmt_u1_pro_1_123');
+    expect(pool.query.mock.calls[0][0]).toMatch(/SET statut = 'paye'/);
+    expect(pool.query.mock.calls[0][1]).toEqual(['abmt_u1_pro_1_123']);
+  });
+
+  test('les routes d\'initiation et de validation sont câblées', () => {
+    const fs = require('fs'), path = require('path');
+    const lire = (p) => fs.readFileSync(path.join(__dirname, '../..', p), 'utf8');
+    expect(lire('backend/routes/abonnements.js')).toMatch(/enregistrerInitiation\(pool, \{ reference: clientRef/);
+    expect(lire('backend/routes/paiement.js')).toMatch(/await marquerPaye\(pool, reference\)/);
+  });
+});
