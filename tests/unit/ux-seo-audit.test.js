@@ -124,6 +124,10 @@ describe('AUD-153 : une fiche inconnue répond 404 dès generateMetadata (sinon 
     expect(src).not.toMatch(/title: 'Vitrine Boutique'/);
   });
 
+  test('la fiche boutique inconnue ne redirige plus vers l\'annuaire', () => {
+    expect(lire('app/boutiques/[id]/page.tsx')).not.toMatch(/redirect\('\/boutiques'\)\s*\n\s*\}\s*\n\s*\n\s*const b = boutique/);
+  });
+
   test('la catégorie inconnue appelle notFound() dès les métadonnées', () => {
     const src = lire('app/categorie/[slug]/page.tsx');
     expect(src).not.toMatch(/title: 'Catégorie introuvable'/);

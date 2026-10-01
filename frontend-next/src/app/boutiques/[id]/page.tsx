@@ -138,7 +138,8 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
       if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
     }
 
-    redirect('/boutiques')
+    // AUD-153 : boutique inconnue = 404 (et non un renvoi vers l'annuaire, qui masquait l'erreur)
+    notFound()
   }
 
   const b = boutique!
