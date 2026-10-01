@@ -1,0 +1,10 @@
+﻿import { launch, BASE } from './lib.mjs';
+const { browser, page, logs } = await launch();
+const failed = []; page.on('requestfailed', r => failed.push(r.url().replace(BASE, '').slice(0, 90) + ' ' + (r.failure() && r.failure().errorText)));
+page.on('response', r => { if (r.status() >= 400) failed.push(r.status() + ' ' + r.url().replace(BASE, '').slice(0, 90)); });
+await page.goto(BASE + '/connexion', { waitUntil: 'load' }); await page.waitForTimeout(5000);
+console.log('secure context:', await page.evaluate(() => window.isSecureContext), '| SW:', await page.evaluate(() => 'serviceWorker' in navigator));
+console.log('boutons:', JSON.stringify(await page.$$eval('button', bs => bs.map(b => b.textContent.trim().replace(/\s+/g, ' ')).filter(Boolean).slice(0, 8))));
+console.log('erreurs console:', JSON.stringify(logs.slice(0, 6)));
+console.log('requêtes en échec:', JSON.stringify(failed.slice(0, 8)));
+await browser.close();
