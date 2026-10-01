@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { secondesDeVerrou, enregistrerEchec, effacerEchecs } = require('../lib/verrouConnexion'); // AUD-148
 const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const bcrypt = require('bcryptjs');
 const jwt    = require('jsonwebtoken');
@@ -149,12 +150,19 @@ router.post(['/connexion', '/login'],
     try {
       const email = req.body.email;
       const mot_de_passe = req.body.mot_de_passe || req.body.password;
+      // AUD-148 : verrou par compte après 5 échecs en 15 minutes
+      const attente = secondesDeVerrou(email);
+      if (attente > 0) {
+        res.set('Retry-After', String(attente));
+        return res.status(429).json({ error: 'Trop de tentatives sur ce compte. Réessayez plus tard ou réinitialisez votre mot de passe.' });
+      }
       const { rows } = await pool.query(
         'SELECT id,nom,email,telephone,mot_de_passe_hash,email_verifie,suspendu,supprime_le,anonymise_le,COALESCE(jwt_version, 1) AS jwt_version,a2f_actif,a2f_telephone FROM utilisateurs WHERE email=$1', [email]
       );
-      if (!rows.length) return res.status(401).json({ error: 'Identifiants incorrects' });
+      if (!rows.length) { enregistrerEchec(email); return res.status(401).json({ error: 'Identifiants incorrects' }); }
       const ok = await bcrypt.compare(mot_de_passe, rows[0].mot_de_passe_hash);
-      if (!ok) return res.status(401).json({ error: 'Identifiants incorrects' });
+      if (!ok) { enregistrerEchec(email); return res.status(401).json({ error: 'Identifiants incorrects' }); }
+      effacerEchecs(email);
       if (rows[0].suspendu) return res.status(403).json({ error: 'Compte suspendu. Contactez le support.' });
       if (rows[0].anonymise_le) return res.status(403).json({ error: 'Ce compte a été définitivement supprimé.' });
 

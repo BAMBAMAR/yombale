@@ -632,4 +632,26 @@ describeIntegration('Protection des données', () => {
       expect(spy.mock.calls[0].join(' ')).toMatch(/r1.*GET \/api\/x\/y.*relation "secret"/);
       spy.mockRestore();
     });
+  });
+  describe('AUD-148 — limite des échecs de connexion par compte', () => {
+    test('5 échecs depuis des IP différentes verrouillent le compte (429) ; une réussite avant le seuil remet à zéro', async () => {
+      const email = `verrou.${Date.now()}@integration.test`;
+      await post('/api/auth/inscription', { nom: 'Verrou', email, mot_de_passe: PW });
+      const tente = (mdp, ip) => request(app).post('/api/auth/connexion').set('X-Forwarded-For', `198.51.100.${ip}`).send({ email, mot_de_passe: mdp });
+      for (let i = 1; i <= 3; i++) expect((await tente('faux' + i, i)).status).toBe(401);
+      expect((await tente(PW, 10)).status).toBe(200);                 // réussite : compteur remis à zéro
+      for (let i = 1; i <= 5; i++) expect((await tente('faux' + i, 20 + i)).status).toBe(401);
+      const verrou = await tente('faux6', 40);
+      expect(verrou.status).toBe(429);
+      expect(Number(verrou.headers['retry-after'])).toBeGreaterThan(0);
+      expect((await tente(PW, 41)).status).toBe(429);                 // même le bon mot de passe : le verrou protège contre le devinage
+      await pool.query('DELETE FROM utilisateurs WHERE email = $1', [email]);
+    }, 60000);
+    test('un compte inconnu est compté pareil (aucune différence observable) et un autre compte n\'est pas affecté', async () => {
+      const inconnu = `inconnu.${Date.now()}@integration.test`;
+      const t = (ip) => request(app).post('/api/auth/connexion').set('X-Forwarded-For', `198.51.100.${ip}`).send({ email: inconnu, mot_de_passe: 'x' });
+      for (let i = 0; i < 5; i++) expect((await t(60 + i)).status).toBe(401);
+      expect((await t(70)).status).toBe(429);
+      expect((await request(app).post('/api/auth/connexion').set('X-Forwarded-For', '198.51.100.80').send({ email: 'autre.compte@integration.test', mot_de_passe: 'x' })).status).toBe(401);
+    });
   });});
