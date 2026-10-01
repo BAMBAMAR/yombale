@@ -5,7 +5,7 @@ const fs = require('fs');
 const b64 = (s) => Buffer.from(typeof s === 'string' ? s : JSON.stringify(s)).toString('base64url');
 const h = b64({ alg: 'HS256', typ: 'JWT' });
 const now = Math.floor(Date.now() / 1000);
-const p = b64({ userId: '198c9309-86c2-4129-926c-371d0ceec4a2', nom: 'AMAR', email: 'skyteltelecomssenegal@gmail.com', iat: now, exp: now + 7 * 86400 });
+const p = b64({ userId: '00000000-0000-4000-8000-000000000042', nom: 'AMAR', email: 'agence.test@example.com', iat: now, exp: now + 7 * 86400 });
 const sig = crypto.createHmac('sha256', '6WW9lNRRSvAtYuwQvx5HzSSQsOy6Syv10jpVHrrsk8g').update(h + '.' + p).digest('base64url');
 const token = h + '.' + p + '.' + sig;
 
