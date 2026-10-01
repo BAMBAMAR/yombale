@@ -362,6 +362,7 @@ app.use('/api/comptabilite',    require('./routes/comptabilite'));
 app.use('/api/kalpe',           require('./routes/kalpe'));
 app.use('/api/admin/kalpe',     require('./routes/admin-kalpe'));
 app.use('/api/search',          require('./routes/search'));
+app.use('/api/sitemap',         require('./routes/sitemap')); // AUD-139 : identifiants pour le sitemap (rendu serveur uniquement)
 app.use('/api/v1',              require('./routes/api-partenaire'));
 app.use('/api/settings',        require('./routes/settings'));
 app.use('/api/apporteurs',      require('./routes/apporteurs'));

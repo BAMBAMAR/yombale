@@ -508,4 +508,45 @@ describeIntegration('Protection des données', () => {
         expect([ua, r.status]).toEqual([ua, 401]);
       }
     });
+  });
+  describe('AUD-139 — sitemap complet via un endpoint réservé au rendu serveur', () => {
+    const ssr = { 'X-SSR-Token': 'integration-ssr-secret' };
+    const compteSql = {
+      annonce: 'SELECT count(*)::int AS n FROM annonces_classifiees WHERE actif = true AND supprimee = false',
+      boutique: 'SELECT count(*)::int AS n FROM boutiques WHERE actif = true',
+      immo: 'SELECT count(*)::int AS n FROM annonces_immo WHERE actif = true AND (supprimee IS NULL OR supprimee = false) AND (rejete IS NULL OR rejete = false) AND prix IS NOT NULL AND prix >= 10000',
+    };
+
+    test('refusé sans jeton SSR, type invalide refusé', async () => {
+      expect((await request(app).get('/api/sitemap/ids?type=annonce')).status).toBe(403);
+      expect((await request(app).get('/api/sitemap/ids?type=annonce').set('X-SSR-Token', 'faux')).status).toBe(403);
+      expect((await request(app).get('/api/sitemap/ids?type=utilisateur').set(ssr)).status).toBe(400);
+    });
+
+    test('avec le jeton : le total égale le comptage SQL, aucune donnée personnelle, aucun plafond de 50', async () => {
+      for (const type of ['annonce', 'boutique', 'immo']) {
+        const r = await request(app).get(`/api/sitemap/ids?type=${type}`).set(ssr);
+        expect(r.status).toBe(200);
+        const attendu = (await pool.query(compteSql[type])).rows[0].n;
+        expect([type, r.body.total]).toEqual([type, attendu]);
+        expect(r.body.items).toHaveLength(Math.min(attendu, 5000));
+        for (const it of r.body.items) expect(Object.keys(it).every((k) => ['id', 'slug', 'updated_at', 'boutique_id', 'boutique_slug'].includes(k))).toBe(true); // identifiants seulement
+      }
+      for (const type of ['produit', 'produit_boutique', 'agence']) {
+        expect([type, (await request(app).get(`/api/sitemap/ids?type=${type}`).set(ssr)).status]).toEqual([type, 200]);
+      }
+    });
+
+    test('plus de 50 annonces sont listées (le plafond des listes publiques ne s\'applique pas)', async () => {
+      await pool.query(`INSERT INTO annonces_immo (titre, type_bien, transaction, prix, ville, source, actif, supprimee, rejete)
+        SELECT 'Annonce sitemap ' || g, 'studio', 'location', 80000 + g, 'Dakar', 'test-sitemap', true, false, false FROM generate_series(1, 120) g`);
+      try {
+        const r = await request(app).get('/api/sitemap/ids?type=immo').set(ssr);
+        expect(r.body.items.length).toBeGreaterThanOrEqual(120);
+        const publique = await request(app).get('/api/immo/?limit=1000').set({ 'X-Forwarded-For': '203.0.113.90', 'User-Agent': 'Mozilla/5.0 Chrome/122.0' });
+        expect(publique.body.annonces.length).toBeLessThanOrEqual(50);
+      } finally {
+        await pool.query(`DELETE FROM annonces_immo WHERE source = 'test-sitemap'`);
+      }
+    });
   });});

@@ -89,123 +89,87 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/mentions-legales`,     changeFrequency: 'yearly',  priority: 0.3 },
 ]
 
-interface Produit {
+interface SitemapItem {
   id: string
-  updated_at?: string
+  slug?: string | null
+  updated_at?: string | null
   boutique_id?: string | null
   boutique_slug?: string | null
 }
-interface Annonce { id: string; updated_at?: string }
-interface AnnonceClassifiee { id: string; updated_at?: string }
-interface Boutique { id: string; slug: string | null; updated_at?: string }
-interface AgenceItem { id: string; slug: string; updated_at?: string }
-interface BoutiqueProductItem { id: string; updated_at?: string }
+
+type TypeSitemap = 'produit' | 'produit_boutique' | 'boutique' | 'annonce' | 'immo' | 'agence'
+
+// AUD-139 : identifiants complets via l'endpoint réservé au rendu serveur (jeton SSR), page par page.
+// Les listes publiques sont plafonnées et budgétées : elles tronquaient le sitemap (50 annonces sur 4 633).
+async function recupererIds(backend: string, type: TypeSitemap): Promise<SitemapItem[]> {
+  const items: SitemapItem[] = []
+  for (let page = 1; page <= 20; page++) {
+    try {
+      const res = await fetch(`${backend}/api/sitemap/ids?type=${type}&page=${page}`, {
+        headers: SSR_HEADERS,
+        next: { revalidate: 3600 },
+      })
+      if (!res.ok) break
+      const data = await res.json()
+      items.push(...(data.items ?? []))
+      if (page >= (data.pages ?? 1)) break
+    } catch {
+      break
+    }
+  }
+  return items
+}
+
+const date = (d?: string | null) => (d ? new Date(d) : undefined)
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 
-  let produitEntries: MetadataRoute.Sitemap         = []
-  let immoEntries: MetadataRoute.Sitemap            = []
-  let annonceEntries: MetadataRoute.Sitemap         = []
-  let boutiqueEntries: MetadataRoute.Sitemap        = []
-  let agenceEntries: MetadataRoute.Sitemap          = []
-  let boutiqueProduitEntries: MetadataRoute.Sitemap = []
+  const [produits, produitsBoutique, boutiques, annonces, immo, agences] = await Promise.all([
+    recupererIds(BACKEND, 'produit'),
+    recupererIds(BACKEND, 'produit_boutique'),
+    recupererIds(BACKEND, 'boutique'),
+    recupererIds(BACKEND, 'annonce'),
+    recupererIds(BACKEND, 'immo'),
+    recupererIds(BACKEND, 'agence'),
+  ])
 
-  try {
-    const [prodRes, immoRes, annonceRes, boutiqueRes, agenceRes] = await Promise.allSettled([
-      fetch(`${BACKEND}/api/produits?limit=3000&page=1`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/immo?limit=500&page=1`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/annonces?limit=1000&page=1`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/boutiques?limit=500&page=1`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/agences/public?limit=500`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
-    ])
-
-    if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
-      const data = await prodRes.value.json()
-      const items: Produit[] = data.produits ?? data.data ?? []
-      produitEntries = items.map(p => ({
-        url: p.boutique_id
-          ? `${BASE}/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}`
-          : `${BASE}/produit/${p.id}`,
-        lastModified: p.updated_at ? new Date(p.updated_at) : undefined,
-        changeFrequency: 'daily' as const,
-        priority: 0.7,
-      }))
-    }
-
-    if (immoRes.status === 'fulfilled' && immoRes.value.ok) {
-      const data = await immoRes.value.json()
-      const items: Annonce[] = data.annonces ?? []
-      immoEntries = items.map(a => ({
-        url: `${BASE}/immo/${a.id}`,
-        lastModified: a.updated_at ? new Date(a.updated_at) : undefined,
-        changeFrequency: 'weekly' as const,
-        priority: 0.75,
-      }))
-    }
-
-    if (annonceRes.status === 'fulfilled' && annonceRes.value.ok) {
-      const data = await annonceRes.value.json()
-      const items: AnnonceClassifiee[] = data.annonces ?? []
-      annonceEntries = items.map(a => ({
-        url: `${BASE}/annonces/${a.id}`,
-        lastModified: a.updated_at ? new Date(a.updated_at) : undefined,
-        changeFrequency: 'weekly' as const,
-        priority: 0.65,
-      }))
-    }
-
-    if (boutiqueRes.status === 'fulfilled' && boutiqueRes.value.ok) {
-      const data = await boutiqueRes.value.json()
-      const items: Boutique[] = data.boutiques ?? []
-      boutiqueEntries = items.map(b => ({
-        url: `${BASE}/boutiques/${b.slug || b.id}`,
-        lastModified: b.updated_at ? new Date(b.updated_at) : undefined,
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      }))
-
-      // Indexation des fiches produits des boutiques partenaires actives
-      try {
-        const topBoutiques = items.slice(0, 15)
-        const prodsResponses = await Promise.allSettled(
-          topBoutiques.map(b =>
-            fetch(`${BACKEND}/api/boutiques/${b.id}/produits`, { headers: SSR_HEADERS, next: { revalidate: 3600 } })
-              .then(r => r.ok ? r.json() : null)
-          )
-        )
-        prodsResponses.forEach((res, idx) => {
-          if (res.status === 'fulfilled' && res.value?.produits) {
-            const b = topBoutiques[idx]
-            const bProds: BoutiqueProductItem[] = res.value.produits
-            bProds.forEach(bp => {
-              boutiqueProduitEntries.push({
-                url: `${BASE}/boutiques/${b.slug || b.id}/produits/${bp.id}`,
-                lastModified: bp.updated_at ? new Date(bp.updated_at) : undefined,
-                changeFrequency: 'daily' as const,
-                priority: 0.75,
-              })
-            })
-          }
-        })
-      } catch {
-        // Fallback silencieux si sous-requête boutique échoue
-      }
-    }
-
-    if (agenceRes.status === 'fulfilled' && agenceRes.value.ok) {
-      const data = await agenceRes.value.json()
-      const items: AgenceItem[] = data.agences ?? []
-      agenceEntries = items.map(ag => ({
-        url: `${BASE}/agences/${ag.slug || ag.id}`,
-        lastModified: ag.updated_at ? new Date(ag.updated_at) : undefined,
-        changeFrequency: 'daily' as const,
-        priority: 0.85,
-      }))
-    }
-  } catch {
-    // sitemap dégradé si backend indisponible
-  }
+  const produitEntries: MetadataRoute.Sitemap = produits.map(p => ({
+    url: `${BASE}/produit/${p.id}`,
+    lastModified: date(p.updated_at),
+    changeFrequency: 'daily' as const,
+    priority: 0.7,
+  }))
+  const boutiqueProduitEntries: MetadataRoute.Sitemap = produitsBoutique.map(p => ({
+    url: `${BASE}/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}`,
+    lastModified: date(p.updated_at),
+    changeFrequency: 'daily' as const,
+    priority: 0.75,
+  }))
+  const boutiqueEntries: MetadataRoute.Sitemap = boutiques.map(b => ({
+    url: `${BASE}/boutiques/${b.slug || b.id}`,
+    lastModified: date(b.updated_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
+  const immoEntries: MetadataRoute.Sitemap = immo.map(a => ({
+    url: `${BASE}/immo/${a.id}`,
+    lastModified: date(a.updated_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.75,
+  }))
+  const annonceEntries: MetadataRoute.Sitemap = annonces.map(a => ({
+    url: `${BASE}/annonces/${a.id}`,
+    lastModified: date(a.updated_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.65,
+  }))
+  const agenceEntries: MetadataRoute.Sitemap = agences.map(ag => ({
+    url: `${BASE}/agences/${ag.slug || ag.id}`,
+    lastModified: date(ag.updated_at),
+    changeFrequency: 'daily' as const,
+    priority: 0.85,
+  }))
 
   // Déduplication par URL
   const seenUrls = new Set<string>()
@@ -216,7 +180,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...boutiqueProduitEntries,
     ...immoEntries,
     ...agenceEntries,
-    ...annonceEntries
+    ...annonceEntries,
   ]
 
   return allEntries.filter(entry => {
