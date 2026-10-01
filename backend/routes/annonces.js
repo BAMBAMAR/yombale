@@ -6,7 +6,8 @@ const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = require('../middlewares/auth');
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
-const { limiterPublication, limiterEcriture, limiterBulk, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
+const { limiterPublication, limiterEcriture, limiterBulk, limiterBudget, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
+const { clampPagination } = require('../lib/pagination');
 const { uploadBuffer } = require('../services/cloudinary');
 const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/whatsapp');
 const cfg = require('../lib/settingsCache');
@@ -185,11 +186,11 @@ router.get('/categories-actives', async (req, res) => {
 });
 
 // ── GET /api/annonces — liste publique paginée
-router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
+router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async (req, res) => {
   try {
-    const { categorie, ville, q, utilisateur_id, tri, prixMin, prixMax, source, limit = 20, page = 1 } = req.query;
-    const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
-    const lim    = Math.min(50, parseInt(limit));
+    const { categorie, ville, q, utilisateur_id, tri, prixMin, prixMax, source } = req.query;
+    // AUD-135 : pagination bornée, valeurs invalides ramenées au défaut (plus de 500 sur limit=abc)
+    const { limit: lim, page, offset } = clampPagination(req, { def: 20, max: 50, maxSsr: 1000 });
     const conds  = ['actif=true', 'supprimee=false'];
     const vals   = [];
 

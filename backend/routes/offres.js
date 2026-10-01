@@ -1,25 +1,43 @@
 // backend/routes/offres.js
 const router   = require('express').Router();
 const { pool } = require('../models/db');
-const { adminSecretOnly } = require('../middlewares/auth');
+const { adminSecretOnly, tokenOptional } = require('../middlewares/auth');
+const { limiterBudget } = require('../middlewares/rateLimit');
+const { clampPagination } = require('../lib/pagination');
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const { corrigerPrixParPlancher } = require('../services/scraper');
 
 const { adminAccess } = require('../middlewares/admin-rbac');
 // GET /api/offres
-router.get('/', async (req, res) => {
+// AUD-135 : plus d'export complet anonyme (12 348 offres en une requête). Un filtre produit ou marchand est
+// obligatoire, la page est bornée à 200 lignes et seules les colonnes utiles à l'affichage sont renvoyées.
+router.get('/', tokenOptional, limiterBudget, async (req, res) => {
   try {
     const { produit_id, marchand_id, stock } = req.query;
+    if (!produit_id && !marchand_id) {
+      return res.status(400).json({ error: 'Précisez produit_id ou marchand_id.' });
+    }
+    if ((produit_id && !UUID_RE.test(produit_id)) || (marchand_id && !UUID_RE.test(marchand_id))) {
+      return res.status(400).json({ error: 'Identifiant invalide.' });
+    }
+    const { limit, offset } = clampPagination(req, { def: 50, max: 200 });
     const { rows } = await pool.query(`
-      SELECT o.*, m.nom AS marchand, m.site_url
+      SELECT o.id, o.produit_id, o.marchand_id, o.prix, o.devise, o.stock, o.url_achat, o.titre_marchand,
+             o.scraped_at, o.specs, m.nom AS marchand, m.site_url
       FROM offres o JOIN marchands m ON m.id = o.marchand_id
       WHERE ($1::uuid IS NULL OR o.produit_id  = $1::uuid)
         AND ($2::uuid IS NULL OR o.marchand_id = $2::uuid)
         AND ($3::boolean IS NULL OR o.stock     = $3)
-      ORDER BY o.prix ASC`,
-      [produit_id || null, marchand_id || null, stock === 'true' ? true : null]
+        AND COALESCE(o.quarantinee, false) = false
+      ORDER BY o.prix ASC
+      LIMIT $4 OFFSET $5`,
+      [produit_id || null, marchand_id || null, stock === 'true' ? true : null, limit, offset]
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error('[GET /api/offres]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // POST /api/offres/sync — réception données d'un scraper externe (admin seulement)

@@ -4,6 +4,9 @@ import { IMMO_LANDINGS } from './immo/landing-data'
 import { TELECOM_LANDINGS } from './telecom/landing-data'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+// AUD-135/139 : les appels serveur portent le jeton SSR (listes protégées par le filtre anti-bots et les budgets)
+const SSR_SECRET = process.env.SSR_SECRET || ''
+const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
 
 // beaute exclue : 0 produit en base — page vide contre-productive pour Google
 const CATEGORY_SLUGS = [
@@ -110,11 +113,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const [prodRes, immoRes, annonceRes, boutiqueRes, agenceRes] = await Promise.allSettled([
-      fetch(`${BACKEND}/api/produits?limit=3000&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/immo?limit=500&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/annonces?limit=1000&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/boutiques?limit=500&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/agences/public?limit=500`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/produits?limit=3000&page=1`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/immo?limit=500&page=1`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/annonces?limit=1000&page=1`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/boutiques?limit=500&page=1`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/agences/public?limit=500`, { headers: SSR_HEADERS, next: { revalidate: 3600 } }),
     ])
 
     if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
@@ -167,7 +170,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const topBoutiques = items.slice(0, 15)
         const prodsResponses = await Promise.allSettled(
           topBoutiques.map(b =>
-            fetch(`${BACKEND}/api/boutiques/${b.id}/produits`, { next: { revalidate: 3600 } })
+            fetch(`${BACKEND}/api/boutiques/${b.id}/produits`, { headers: SSR_HEADERS, next: { revalidate: 3600 } })
               .then(r => r.ok ? r.json() : null)
           )
         )

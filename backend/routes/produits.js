@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly } = require('../middlewares/auth');
-const { blockScraperUA, limiterRecherche, limiterBulk } = require('../middlewares/rateLimit');
+const { blockScraperUA, limiterRecherche, limiterBulk, limiterBudget } = require('../middlewares/rateLimit');
+const { clampPagination } = require('../lib/pagination');
 const { recordSearch, getTopTendances, FALLBACK_TENDANCES } = require('../lib/searchLogger');
 const { cacheGet, cacheSet, cacheInvalidatePattern } = require('../services/redis-cache');
 
@@ -165,10 +166,11 @@ router.get('/categories-actives', async (req, res) => {
 });
 
 // GET /api/produits
-router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
+router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async (req, res) => {
   try {
     const { q, categorie, sousType, page = 1, tri, prixMax, prixMin, etat } = req.query;
-    const safeLimit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 5000);
+    // AUD-135 : 100 lignes pour un client anonyme (5 000 réservés au rendu serveur du site)
+    const safeLimit = clampPagination(req, { def: 20, max: 100, maxSsr: 5000 }).limit;
     const safePage = Math.max(parseInt(page) || 1, 1);
     if (q && String(q).trim().length >= 2) {
       recordSearch(String(q).trim());

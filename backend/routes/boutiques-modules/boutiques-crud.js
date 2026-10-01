@@ -10,7 +10,8 @@ const { marquerLeadConverti } = require('../../lib/crmConversion');
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../../middlewares/auth');
 const { checkAbonnement, requireAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
-const { limiterPublication, limiterImport } = require('../../middlewares/rateLimit');
+const { limiterPublication, limiterImport, limiterBudget } = require('../../middlewares/rateLimit');
+const { clampPagination } = require('../../lib/pagination');
 const { uploadBuffer } = require('../../services/cloudinary');
 const { scrapeProductFromUrl } = require('../../services/magic-import');
 const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog');
@@ -299,12 +300,12 @@ router.get('/top-produits', async (req, res) => {
 });
 
 // GET /api/boutiques - Liste publique (recherche, tri, filtres)
-router.get('/', async (req, res) => {
+router.get('/', tokenOptional, limiterBudget, async (req, res) => {
   try {
-    const { ville, q, cat, categorie, tri, limit = 20, page = 1, avec_prods, vedette, budget, promo, note_min, prix_min, prix_max, whatsapp, certifie } = req.query;
+    const { ville, q, cat, categorie, tri, avec_prods, vedette, budget, promo, note_min, prix_min, prix_max, whatsapp, certifie } = req.query;
     const catQuery = (categorie || cat || '').trim().toLowerCase();
-    const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit));
-    const lim = Math.min(50, parseInt(limit));
+    // AUD-135 : pagination bornée, valeurs invalides ramenées au défaut
+    const { limit: lim, page, offset } = clampPagination(req, { def: 20, max: 50, maxSsr: 500 });
     const conds = ['b.actif=true'];
     const vals = [];
 

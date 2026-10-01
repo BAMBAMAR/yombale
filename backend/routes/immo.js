@@ -6,7 +6,8 @@ const multer  = require('multer');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = require('../middlewares/auth');
-const { limiterPublication, limiterImmo, limiterBulk, blockScraperUA } = require('../middlewares/rateLimit');
+const { limiterPublication, limiterImmo, limiterBulk, limiterBudget, blockScraperUA } = require('../middlewares/rateLimit');
+const { clampPagination } = require('../lib/pagination');
 const { notifierModerationImmo } = require('../services/notifications');
 const { uploadBuffer } = require('../services/cloudinary');
 
@@ -41,15 +42,16 @@ const ORDER_MAP = {
 };
 
 // GET /api/immo — liste / filtre paginé
-router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
+router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async (req, res) => {
   try {
     const {
       ville, quartier, type_bien, transaction,
       prixMin, prixMax, surfaceMin, nbPieces, nbChambres, meuble, source, commodite,
-      tri = 'recent', limit = 24, page = 1,
+      tri = 'recent',
     } = req.query;
 
-    const offset  = (page - 1) * limit;
+    // AUD-135 : pagination bornée (plus de limit=100000)
+    const { limit, page, offset } = clampPagination(req, { def: 24, max: 50, maxSsr: 1000 });
     const orderBy = ORDER_MAP[tri] || ORDER_MAP.recent;
 
     const txParam = (!transaction || transaction === 'tous' || transaction === 'all')

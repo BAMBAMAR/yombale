@@ -7,6 +7,7 @@ process.env.NODE_ENV = 'test';
 process.env.FORCE_RATE_LIMITS = '1'; // les limiteurs OTP du portail locataire restent actifs en test
 if (HAS_DB_TEST) process.env.DATABASE_URL = process.env.DATABASE_URL_TEST;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'integration-jwt-secret';
+process.env.SSR_SECRET = 'integration-ssr-secret';
 
 jest.mock('../../backend/services/whatsapp', () => new Proxy({ estDesinscrit: async () => false, normalisePhone: (t) => `221${String(t).replace(/\D/g, '').slice(-9)}` }, {
   get: (t, p) => (p in t ? t[p] : async () => ({ ok: true })),
@@ -184,5 +185,74 @@ describeIntegration('Protection des données', () => {
       expect(r.status).toBe(200);
       expect(Array.isArray(r.body.annonces)).toBe(true);
       expect((await request(app).get('/api/boutiques/inexistant-protection/annonces')).body.annonces).toEqual([]);
+    });
+  });
+  describe('AUD-135 — plus d\'extraction en masse en quelques requêtes', () => {
+    const PUBLIC = (n) => ({ 'X-Forwarded-For': `203.0.113.${n}` }); // IP publique simulée (trust proxy)
+    const get = (url, headers = {}) => request(app).get(url).set(headers);
+
+    beforeAll(async () => {
+      await pool.query(`
+        INSERT INTO annonces_immo (titre, type_bien, transaction, prix, ville, source, actif, supprimee, rejete)
+        SELECT 'Annonce test protection ' || g, 'appartement', 'location', 150000 + g, 'Dakar', 'test-protection', true, false, false
+        FROM generate_series(1, 130) g`);
+    });
+    afterAll(async () => {
+      await pool.query(`DELETE FROM annonces_immo WHERE source = 'test-protection'`).catch(() => {});
+    });
+
+    test('immo : limit=100000 est ramené à 50 lignes ; une valeur invalide donne le défaut (plus de 500)', async () => {
+      const grand = await get('/api/immo/?limit=100000&source=test-protection', PUBLIC(11));
+      expect(grand.status).toBe(200);
+      expect(grand.body.annonces).toHaveLength(50);
+      expect(grand.body.total).toBe(130);
+      const invalide = await get('/api/immo/?limit=abc&page=x&source=test-protection', PUBLIC(11));
+      expect(invalide.status).toBe(200);
+      expect(invalide.body.annonces).toHaveLength(24);
+    });
+
+    test('le rendu serveur du site (jeton SSR) garde un plafond élevé pour le sitemap', async () => {
+      const r = await get('/api/immo/?limit=500&source=test-protection', { 'X-SSR-Token': 'integration-ssr-secret', ...PUBLIC(12) });
+      expect(r.body.annonces).toHaveLength(130);
+    });
+
+    test('budget de lignes : un anonyme est arrêté (429) après ~600 lignes, un compte a un budget plus large, le SSR est exempté', async () => {
+      process.env.SCRAPE_BUDGET_ANON = '100';
+      process.env.SCRAPE_BUDGET_USER = '300';
+      try {
+        const url = '/api/immo/?limit=50&source=test-protection';
+        const anonyme = [];
+        for (let i = 0; i < 4; i++) anonyme.push((await get(url, PUBLIC(21))).status);
+        expect(anonyme).toEqual([200, 200, 429, 429]);
+        const bloque = await get(url, PUBLIC(21));
+        expect(bloque.headers['retry-after']).toBeDefined();
+        // un autre visiteur n'est pas affecté
+        expect((await get(url, PUBLIC(22))).status).toBe(200);
+        // un compte connecté : budget propre (300 lignes), non partagé avec l'IP bloquée
+        const compte = [];
+        for (let i = 0; i < 7; i++) compte.push((await get(url, { Authorization: `Bearer ${marchand.token}`, ...PUBLIC(21) })).status);
+        expect(compte.slice(0, 6)).toEqual([200, 200, 200, 200, 200, 200]);
+        expect(compte[6]).toBe(429);
+        // le rendu serveur n'est jamais compté
+        for (let i = 0; i < 5; i++) expect((await get(url, { 'X-SSR-Token': 'integration-ssr-secret', ...PUBLIC(21) })).status).toBe(200);
+      } finally {
+        delete process.env.SCRAPE_BUDGET_ANON;
+        delete process.env.SCRAPE_BUDGET_USER;
+      }
+    });
+
+    test('offres : plus d\'export complet, filtre obligatoire, identifiants validés', async () => {
+      expect((await get('/api/offres/', PUBLIC(31))).status).toBe(400);
+      expect((await get('/api/offres/?produit_id=zzz', PUBLIC(31))).status).toBe(400);
+      const ok = await get('/api/offres/?produit_id=00000000-0000-4000-8000-000000000001', PUBLIC(31));
+      expect(ok.status).toBe(200);
+      expect(Array.isArray(ok.body)).toBe(true);
+    });
+
+    test('listes télécom, annonces et boutiques : valeurs invalides sans 500', async () => {
+      for (const u of ['/api/telecom/?limit=abc', '/api/annonces/?page=abc&limit=zz', '/api/boutiques/?page=abc&limit=zz', '/api/produits/?limit=abc']) {
+        const r = await get(u, PUBLIC(41));
+        expect([u, r.status]).toEqual([u, 200]);
+      }
     });
   });});

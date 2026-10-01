@@ -169,4 +169,53 @@ const limiterBulk = rateLimit({
   },
 });
 
-module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };
+// AUD-135 : budget de LIGNES servies (et non de requêtes). Un moissonneur qui demande des pages de 50 lignes ou
+// des listes entières consomme le même budget : 600 lignes / 15 min pour un anonyme, 3 000 pour un compte.
+// Un visiteur humain (quelques dizaines de fiches) n'approche jamais ces seuils. Exemptés : rendu serveur du site
+// (X-SSR-Token) et réseau interne. Compteur en mémoire du processus (un seul processus web sur Render).
+const FENETRE_BUDGET_MS = 15 * 60 * 1000;
+const budgets = new Map();
+setInterval(() => {
+  const limite = Date.now() - FENETRE_BUDGET_MS;
+  for (const [cle, b] of budgets) if (b.debut < limite) budgets.delete(cle);
+}, 5 * 60 * 1000).unref();
+
+const CLES_LISTES = ['annonces', 'produits', 'boutiques', 'forfaits', 'agences', 'offres', 'biens'];
+function compterLignes(corps) {
+  if (Array.isArray(corps)) return corps.length;
+  if (!corps || typeof corps !== 'object') return 0;
+  return CLES_LISTES.reduce((n, k) => n + (Array.isArray(corps[k]) ? corps[k].length : 0), 0);
+}
+
+function limiterBudget(req, res, next) {
+  if (process.env.NODE_ENV !== 'production' && !process.env.FORCE_RATE_LIMITS) return next();
+  if (isSsrRequest(req)) return next();
+  const ip = realIp(req);
+  if (INTERNAL_IPS.has(ip) || isPrivateIp(ip)) return next();
+
+  const max = req.user
+    ? parseInt(process.env.SCRAPE_BUDGET_USER, 10) || 3000
+    : parseInt(process.env.SCRAPE_BUDGET_ANON, 10) || 600;
+  const cle = req.user ? `u:${req.user.userId || req.user.id}` : `ip:${ip}`;
+  const now = Date.now();
+  let b = budgets.get(cle);
+  if (!b || now - b.debut > FENETRE_BUDGET_MS) {
+    b = { debut: now, lignes: 0 };
+    budgets.set(cle, b);
+  }
+  if (b.lignes >= max) {
+    if (!b.signale) { b.signale = true; console.warn('[BUDGET] ' + cle + ' a atteint ' + max + ' lignes en 15 min (' + req.method + ' ' + req.baseUrl + ')'); }
+    // SCRAPE_BUDGET_ENFORCE=false : journalise sans refuser (utile pour valider l'IP vue par le backend avant d'appliquer)
+    if (process.env.SCRAPE_BUDGET_ENFORCE === 'false') return next();
+    res.set('Retry-After', String(Math.ceil((b.debut + FENETRE_BUDGET_MS - now) / 1000)));
+    return res.status(429).json({ error: 'Volume de données demandé trop élevé — réessayez dans quelques minutes.' });
+  }
+  const envoyer = res.json.bind(res);
+  res.json = (corps) => {
+    b.lignes += compterLignes(corps);
+    return envoyer(corps);
+  };
+  next();
+}
+
+module.exports = { isSsrRequest, limiterBudget, limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };

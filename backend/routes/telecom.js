@@ -4,14 +4,17 @@
 // avec plusieurs dimensions (data, appels, SMS, validité) plutôt qu'un simple prix.
 const router = require('express').Router();
 const { pool } = require('../models/db');
-const { adminSecretOnly } = require('../middlewares/auth');
+const { adminSecretOnly, tokenOptional } = require('../middlewares/auth');
+const { limiterBudget } = require('../middlewares/rateLimit');
+const { clampPagination } = require('../lib/pagination');
 
 const { adminAccess } = require('../middlewares/admin-rbac');
 // GET /api/telecom — liste / filtre
-router.get('/', async (req, res) => {
+router.get('/', tokenOptional, limiterBudget, async (req, res) => {
   try {
-    const { operateur, type, prixMax, prixMin, dataMin, tri, limit = 20, page = 1 } = req.query;
-    const offset = (page - 1) * limit;
+    const { operateur, type, prixMax, prixMin, dataMin, tri } = req.query;
+    // AUD-135 : pagination bornée (le catalogue télécom reste lisible en entier : 200 lignes)
+    const { limit, page, offset } = clampPagination(req, { def: 20, max: 200 });
 
     const orderBy = tri === 'prix_asc'  ? 'prix ASC'
                   : tri === 'prix_desc' ? 'prix DESC'
