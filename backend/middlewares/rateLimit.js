@@ -42,19 +42,23 @@ const limiterGeneral = rateLimit({
 
 // Bloque les user-agents de scripts nus connus (bots, scrapers)
 // Laisse passer les requêtes SSR Next.js identifiées par X-SSR-Token
-function blockScraperUA(req, res, next) {
-  if (process.env.NODE_ENV !== 'production') return next()
-  if (isSsrRequest(req)) return next()
-  const ip = realIp(req)
-  if (INTERNAL_IPS.has(ip) || isPrivateIp(ip)) return next()
-  const ua = (req.headers['user-agent'] || '').toLowerCase().trim()
-  const blocked = ['python-requests', 'python-httpx', 'go-http-client', 'java/', 'okhttp']
-  const isNodeBot = !ua || ua === 'node' || /^node\/\d/.test(ua)
-  if (isNodeBot || blocked.some(b => ua === b || ua.startsWith(b))) {
-    return res.status(429).json({ error: 'Accès automatisé non autorisé' })
+// AUD-138 : l'User-Agent est un SIGNAL, plus un refus. Un scraper change d'User-Agent en une ligne (et un client
+// d'API partenaire légitime en Python ou en curl ne doit pas être bloqué). Un client « nu » (script, sans navigateur)
+// reçoit simplement un budget de lignes réduit ; l'accès reste possible. BOT_UA_BLOCK=true rétablit l'ancien refus (429).
+const UA_AUTOMATE = /^(python-requests|python-httpx|python-urllib|go-http-client|java\/|okhttp|curl\/|wget\/|scrapy|aiohttp|httpx|libwww-perl|httrack|node(\/\d.*)?$)/i;
+function signalerAutomate(req, res, next) {
+  req.botSignal = false;
+  if (isSsrRequest(req)) return next();
+  const ip = realIp(req);
+  if (INTERNAL_IPS.has(ip) || isPrivateIp(ip)) return next();
+  const ua = String(req.headers['user-agent'] || '').trim();
+  req.botSignal = !ua || UA_AUTOMATE.test(ua);
+  if (req.botSignal && process.env.BOT_UA_BLOCK === 'true' && process.env.NODE_ENV === 'production') {
+    return res.status(429).json({ error: 'Accès automatisé non autorisé' });
   }
-  next()
+  next();
 }
+const blockScraperUA = signalerAutomate; // nom conservé : les routes l'utilisent déjà dans leur chaîne
 
 const skipInDevOrSsr = (req) => process.env.NODE_ENV !== 'production' || isSsrRequest(req);
 
@@ -193,9 +197,11 @@ function limiterBudget(req, res, next) {
   const ip = realIp(req);
   if (INTERNAL_IPS.has(ip) || isPrivateIp(ip)) return next();
 
-  const max = req.user
+  const base = req.user
     ? parseInt(process.env.SCRAPE_BUDGET_USER, 10) || 3000
     : parseInt(process.env.SCRAPE_BUDGET_ANON, 10) || 600;
+  // un client automate sans compte a un budget divisé par 4 (AUD-138)
+  const max = req.botSignal && !req.user ? Math.max(1, Math.floor(base / 4)) : base;
   const cle = req.user ? `u:${req.user.userId || req.user.id}` : `ip:${ip}`;
   const now = Date.now();
   let b = budgets.get(cle);
@@ -236,4 +242,4 @@ const limiterRevelationCompte = rateLimit({
 });
 const limiterRevelation = [limiterRevelationIp, limiterRevelationCompte];
 
-module.exports = { limiterRevelation, isSsrRequest, limiterBudget, limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };
+module.exports = { signalerAutomate, limiterRevelation, isSsrRequest, limiterBudget, limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, limiterWhatsappSend, limiterCommandeExpress, blockScraperUA, limiterOtpLocataireIp, limiterOtpLocataireNumero, limiterVerifOtpLocataire };

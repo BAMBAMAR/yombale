@@ -140,24 +140,10 @@ app.use(cors({
 app.use(compression());
 
 // ── Protection Anti-Scraping & Filtrage des User-Agents de Bots ─
-const BAD_USER_AGENTS = /scrapy|python-requests|go-http-client|java\/|libwww-perl|wget\/|httrack|aiohttp|httpx|curl\//i;
-
-const botBlockerMiddleware = (req, res, next) => {
-  // Exempter les environnements de test / dev locaux
-  if (process.env.NODE_ENV !== 'production') return next();
-  // Exempter les webhooks et les sondes de santé
-  if (req.path.includes('/webhook') || req.path.includes('/health')) return next();
-  // Exempter les requêtes authentifiées ou internes SSR
-  if (req.headers['authorization'] || (process.env.SSR_SECRET && req.headers['x-ssr-token'] === process.env.SSR_SECRET)) return next();
-
-  const ua = req.headers['user-agent'] || '';
-  if (BAD_USER_AGENTS.test(ua)) {
-    return res.status(403).json({ error: 'Accès refusé : requête automatisée détectée (Anti-Scraping Nopalou)' });
-  }
-  next();
-};
-
-app.use('/api/', botBlockerMiddleware);
+// AUD-138 : l'ancien filtre d'User-Agent refusait (403) curl, Python, Java, Go… y compris les clients de l'API partenaire
+// /api/v1 et toute requête portant un en-tête Authorization quelconque, mais ne gênait pas un scraper qui copie un
+// User-Agent de navigateur. L'User-Agent n'est plus qu'un signal (budget réduit, voir middlewares/rateLimit.js).
+app.use('/api/', require('./middlewares/rateLimit').signalerAutomate);
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

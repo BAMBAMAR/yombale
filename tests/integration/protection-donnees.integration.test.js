@@ -189,7 +189,7 @@ describeIntegration('Protection des données', () => {
     });
   });
   describe('AUD-135 — plus d\'extraction en masse en quelques requêtes', () => {
-    const PUBLIC = (n) => ({ 'X-Forwarded-For': `203.0.113.${n}` }); // IP publique simulée (trust proxy)
+    const PUBLIC = (n) => ({ 'X-Forwarded-For': `203.0.113.${n}`, 'User-Agent': 'Mozilla/5.0 Chrome/122.0' }); // IP publique simulée (trust proxy) + navigateur (supertest envoie "node", signalé comme automate)
     const get = (url, headers = {}) => request(app).get(url).set(headers);
 
     beforeAll(async () => {
@@ -474,5 +474,38 @@ describeIntegration('Protection des données', () => {
       await expect(uploadBuffer(html, 'test')).rejects.toMatchObject({ status: 400 });
       await expect(uploadDocumentBuffer(html, 'test', 'a.pdf')).rejects.toMatchObject({ status: 400 });
       await expect(uploadVideoBuffer(Buffer.from('%PDF-1.7'), 'test')).rejects.toMatchObject({ status: 400 });
+    });
+  });
+  describe('AUD-138 — l\'User-Agent est un signal (budget réduit), plus un refus', () => {
+    const get = (url, ua, ip) => request(app).get(url).set({ 'X-Forwarded-For': `203.0.113.${ip}`, 'User-Agent': ua });
+    const NAV = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0 Safari/537.36';
+    beforeAll(async () => {
+      await pool.query(`INSERT INTO annonces_immo (titre, type_bien, transaction, prix, ville, source, actif, supprimee, rejete)
+        SELECT 'Annonce UA ' || g, 'appartement', 'location', 150000 + g, 'Dakar', 'test-protection-ua', true, false, false FROM generate_series(1, 130) g`);
+    });
+    afterAll(async () => { await pool.query(`DELETE FROM annonces_immo WHERE source = 'test-protection-ua'`).catch(() => {}); });
+
+    test('un client automate reçoit un budget divisé par 4 mais n\'est jamais refusé d\'emblée ; un navigateur garde le budget normal', async () => {
+      process.env.SCRAPE_BUDGET_ANON = '200';
+      try {
+        const url = '/api/immo/?limit=50&source=test-protection-ua';
+        const auto = [];
+        for (let i = 0; i < 3; i++) auto.push((await get(url, 'python-requests/2.31', 71)).status);
+        expect(auto).toEqual([200, 429, 429]);   // 200/4 = 50 lignes : une seule page
+        const nav = [];
+        for (let i = 0; i < 5; i++) nav.push((await get(url, NAV, 72)).status);
+        expect(nav).toEqual([200, 200, 200, 200, 429]); // 200 lignes : 4 pages
+        const vide = await get(url, '', 73);
+        expect(vide.status).toBe(200);           // UA vide : accepté (budget réduit), pas refusé
+      } finally {
+        delete process.env.SCRAPE_BUDGET_ANON;
+      }
+    });
+
+    test('un client d\'API partenaire en Python ou curl atteint la vérification de clé (401), il n\'est pas refusé en 403', async () => {
+      for (const ua of ['python-requests/2.31', 'curl/8.4.0', 'Java/17.0.2', 'Go-http-client/1.1']) {
+        const r = await request(app).get('/api/v1/prix').set({ 'User-Agent': ua, 'X-Api-Key': 'nopalou_sk_live_fausse' });
+        expect([ua, r.status]).toEqual([ua, 401]);
+      }
     });
   });});
