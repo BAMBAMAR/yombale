@@ -64,7 +64,7 @@ export default async function PromoPage() {
         </h1>
       </header>
 
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
         
         {/* HERO SECTION */}
         <div className="animate-fade-up">
@@ -151,7 +151,7 @@ export default async function PromoPage() {
           </Link>
         </div>
 
-      </main>
+      </div>
     </div>
   )
 }

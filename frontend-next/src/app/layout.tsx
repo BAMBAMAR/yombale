@@ -151,14 +151,6 @@ const ORG_JSON_LD = {
   logo: 'https://nopalou.com/icons/icon-512.svg',
   description: 'Plateforme de commerce digital, comparateur de prix et solutions marchandes au Sénégal (boutiques en ligne, caisse tactile POS, commandes WhatsApp).',
   inLanguage: 'fr',
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: {
-      '@type': 'EntryPoint',
-      urlTemplate: 'https://nopalou.com/recherche?q={search_term_string}',
-    },
-    'query-input': 'required name=search_term_string',
-  },
 }
 
 // Schema.org Organization (entité juridique Nopalou/Skyroad-SARL)
@@ -203,63 +195,6 @@ const ORG_ENTITY_JSON_LD = {
   ],
 }
 
-const SITE_NAV_JSON_LD = {
-  '@context': 'https://schema.org',
-  '@type': 'ItemList',
-  name: 'Navigation Principale Nopalou',
-  itemListElement: [
-    {
-      '@type': 'SiteNavigationElement',
-      position: 1,
-      name: 'Téléphones & Smartphones',
-      description: 'Comparez les prix des téléphones Samsung, iPhone, Xiaomi à Dakar',
-      url: 'https://nopalou.com/categorie/smartphones',
-    },
-    {
-      '@type': 'SiteNavigationElement',
-      position: 2,
-      name: 'Informatique & Laptops',
-      description: 'Ordinateurs portables, MacBooks et imprimantes au meilleur prix au Sénégal',
-      url: 'https://nopalou.com/categorie/informatique',
-    },
-    {
-      '@type': 'SiteNavigationElement',
-      position: 3,
-      name: 'TV & Électroménager',
-      description: 'Téléviseurs Smart TV, climatiseurs, réfrigérateurs et machines à laver à Dakar',
-      url: 'https://nopalou.com/categorie/tv-electro',
-    },
-    {
-      '@type': 'SiteNavigationElement',
-      position: 4,
-      name: 'Immobilier Sénégal',
-      description: 'Locations d\'appartements, chambres et terrains à vendre à Dakar',
-      url: 'https://nopalou.com/immo',
-    },
-    {
-      '@type': 'SiteNavigationElement',
-      position: 5,
-      name: 'Forfaits Télécom',
-      description: 'Comparateur de forfaits internet et pass Orange, Free, Expresso',
-      url: 'https://nopalou.com/telecom',
-    },
-    {
-      '@type': 'SiteNavigationElement',
-      position: 6,
-      name: 'Annonces Classifiées',
-      description: 'Petites annonces d\'achats et ventes de particuliers et professionnels',
-      url: 'https://nopalou.com/annonces',
-    },
-    {
-      '@type': 'SiteNavigationElement',
-      position: 7,
-      name: 'Boutiques & Marchands',
-      description: 'Découvrez les boutiques partenaires et vendeurs pro au Sénégal',
-      url: 'https://nopalou.com/boutiques',
-    },
-  ],
-};
-
 export default async function RootLayout({
   children,
 }: {
@@ -294,10 +229,6 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: safeJsonLd(ORG_ENTITY_JSON_LD) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: safeJsonLd(SITE_NAV_JSON_LD) }}
         />
       </head>
       <body suppressHydrationWarning>

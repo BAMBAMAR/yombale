@@ -48,7 +48,7 @@ const WA_FAQ = [
 export default async function WhatsappLandingPage() {
   const essai = await getEssaiJours()
   return (
-    <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* ── 1. HERO WHATSAPP COMMERCE ── */}
       <section style={{
@@ -351,6 +351,6 @@ export default async function WhatsappLandingPage() {
         </div>
       </section>
 
-    </main>
+    </div>
   )
 }

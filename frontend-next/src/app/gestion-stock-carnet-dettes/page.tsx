@@ -77,7 +77,7 @@ export default async function GestionStockCarnetDettesPage() {
         dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
       />
 
-      <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         
         {/* ── HERO GESTION & BOR ── */}
         <section style={{
@@ -274,7 +274,7 @@ export default async function GestionStockCarnetDettesPage() {
           </div>
         </section>
 
-      </main>
+      </div>
     </>
   )
 }

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function PayerLoyerHubPage() {
   return (
-    <main
+    <div
       style={{
         minHeight: '85vh',
         background: 'var(--bg, #F8F5F0)',
@@ -240,6 +240,6 @@ export default function PayerLoyerHubPage() {
         </div>
 
       </div>
-    </main>
+    </div>
   )
 }

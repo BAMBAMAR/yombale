@@ -206,7 +206,7 @@ Vous en avez assez de payer trop cher ? Nopalou compare les prix de milliers de 
 
 Téléphones, Informatique, 📺 TV & Électro, 👗 Mode, Immobilier
 
-3 000+ produits indexés avec mises à jour toutes les 6 heures
+Des milliers de produits indexés, mis à jour régulièrement
 Caisse POS Enregistreuse Tactile pour Marchands (3 Scanners & Dettes Client)
 Assistant Chatbot WhatsApp Meta 24h/24 (+221 70 871 79 42)
 100% gratuit pour les acheteurs

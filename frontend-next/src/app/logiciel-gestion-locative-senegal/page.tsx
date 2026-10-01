@@ -104,7 +104,7 @@ export default function LogicielGestionLocativePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
       />
-      <main
+      <div
         style={{
         background: '#f8fafc',
         color: '#0f172a',
@@ -362,7 +362,7 @@ export default function LogicielGestionLocativePage() {
         </div>
       </section>
 
-    </main>
+    </div>
     </>
   )
 }

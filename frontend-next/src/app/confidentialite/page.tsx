@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/confidentialite' },
   title: 'Politique de confidentialité',
   description: 'Politique de confidentialité et protection des données personnelles de Nopalou.',
 }

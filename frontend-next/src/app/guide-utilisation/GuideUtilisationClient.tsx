@@ -169,7 +169,7 @@ export default function GuideUtilisationClient() {
         </div>
 
         {/* Panneau Principal de Contenu */}
-        <main className="guide-content-panel">
+        <div className="guide-content-panel">
 
           {/* 1. DÉMARRAGE & INSCRIPTION */}
           {(activeTab === 'intro' || searchQuery) && (
@@ -528,7 +528,7 @@ export default function GuideUtilisationClient() {
               </div>
             </div>
           )}
-        </main>
+        </div>
       </div>
     </div>
   )

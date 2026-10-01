@@ -108,7 +108,7 @@ export default async function GuideSourcingReventePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_ARTICLE) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }} />
 
-      <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', padding: '40px 20px 80px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', padding: '40px 20px 80px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         <article style={{ maxWidth: 900, margin: '0 auto', background: '#ffffff', padding: '44px 36px', borderRadius: 24, border: '1px solid #cbd5e1', boxShadow: '0 10px 35px rgba(0,0,0,0.03)' }}>
           
           {/* HEADER */}
@@ -311,7 +311,7 @@ export default async function GuideSourcingReventePage() {
           </div>
 
         </article>
-      </main>
+      </div>
     </>
   )
 }

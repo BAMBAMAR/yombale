@@ -78,7 +78,7 @@ export default function PaiementEnLigneSenegalPage() {
         dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
       />
 
-      <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         
         {/* ── HERO PAIEMENT MOBILE ── */}
         <section style={{
@@ -276,7 +276,7 @@ export default function PaiementEnLigneSenegalPage() {
           </div>
         </section>
 
-      </main>
+      </div>
     </>
   )
 }

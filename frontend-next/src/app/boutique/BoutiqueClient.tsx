@@ -257,7 +257,7 @@ export default function BoutiqueClient({
 
   // Vue liste des boutiques
   return (
-    <main className="bq-list-outer-wrap" style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px 80px', overflowX: 'hidden' }}>
+    <div className="bq-list-outer-wrap" style={{ maxWidth: 1200, margin: '32px auto', padding: '0 20px 80px', overflowX: 'hidden' }}>
       <BoutiqueListHeader
         boutiquesCount={boutiques.length}
         canCreate={canCreate}
@@ -353,6 +353,6 @@ export default function BoutiqueClient({
           }
         }}
       />
-    </main>
+    </div>
   )
 }

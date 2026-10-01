@@ -47,7 +47,7 @@ export default async function PartenairesLandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_PARTENAIRES) }}
       />
-      <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: 80 }}>
+      <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: 80 }}>
         
         {/* ── HERO SECTION B2B PARTENAIRES ── */}
         <section style={{
@@ -181,7 +181,7 @@ export default async function PartenairesLandingPage() {
           </div>
         </section>
 
-      </main>
+      </div>
     </>
   )
 }

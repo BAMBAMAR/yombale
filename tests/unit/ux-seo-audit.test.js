@@ -44,6 +44,10 @@ describe('AUD-160 : la durée d\'essai et les allégations ne sont jamais écrit
     expect(trouve(/Impartial/)).toEqual([]);
   });
 
+  test('plus de promesse « toutes les 6 heures » sur la fraîcheur des prix (cadence non prouvée)', () => {
+    expect(trouve(/toutes les 6 ?(?:h|heures)/i)).toEqual([]);
+  });
+
   test('plus de « 100% hors-ligne », « le plus consulté/visité », « Plateforme Officielle »', () => {
     expect(trouve(/100 ?% hors[- ]ligne/i)).toEqual([]);
     expect(trouve(/le plus (?:consulté|visité)/i)).toEqual([]);
@@ -105,6 +109,86 @@ describe('AUD-154 : un titre de page ne porte pas déjà la marque ajoutée par 
     expect(lire('app/produit/[id]/page.tsx')).not.toMatch(/const titre = `[^`]*\| Nopalou`/);
     expect(lire('app/immo/[id]/page.tsx')).not.toMatch(/const titre = `[^`]*\| Nopalou Immo`/);
     expect(lire('app/boutiques/[id]/page.tsx')).not.toMatch(/const titre = `[^`]*\| Nopalou`/);
+  });
+});
+
+describe('AUD-157 : structure HTML (un seul <main>, pas de H1 vide, un H1 par vue)', () => {
+  test('hors layout racine et espaces admin, aucun <main> imbriqué dans le <main id="app-main">', () => {
+    const fautifs = sources(RACINE)
+      .filter((p) => !/[\\/]admin[\\/]/.test(p) && !p.endsWith(path.join('app', 'layout.tsx')))
+      .filter((p) => /<main\b/.test(fs.readFileSync(p, 'utf8')))
+      .map((p) => path.relative(RACINE, p).replace(/\\/g, '/'));
+    expect(fautifs).toEqual([]);
+  });
+
+  test('PageHeader ne rend pas de <h1> quand le titre est vide', () => {
+    expect(lire('components/PageHeader.tsx')).toMatch(/\{titre \? \(\s*<h1/);
+  });
+
+  test('les vues marchand et agence de l\'accueil ont un <h1>, et la page guide-emploi aussi', () => {
+    expect(lire('app/hero/HeroMarchandView.tsx')).toMatch(/<h1\b/);
+    expect(lire('app/hero/HeroAgenceHeaderView.tsx')).toMatch(/<h1\b/);
+    expect(lire('app/guide-emploi/page.tsx')).toMatch(/<h1\b/);
+  });
+});
+
+describe('AUD-164 : données structurées', () => {
+  test('l\'accueil n\'ajoute pas un second Organization / WebSite (le layout les fournit)', () => {
+    const src = lire('app/page.tsx');
+    expect(src).not.toMatch(/organizationSchema\(\)/);
+    expect(src).not.toMatch(/websiteSchema\(\)/);
+  });
+
+  test('plus de liste de navigation sur chaque page ni de SearchAction vers une URL interdite', () => {
+    const src = lire('app/layout.tsx');
+    expect(src).not.toMatch(/SITE_NAV_JSON_LD/);
+    expect(src).not.toMatch(/potentialAction/);
+  });
+
+  test('les fiches produit ont un fil d\'Ariane structuré', () => {
+    expect(lire('app/produit/[id]/page.tsx')).toMatch(/breadcrumbSchema\(/);
+  });
+});
+
+describe('AUD-165 : canonical et métadonnées des pages sans titre propre', () => {
+  test.each([
+    ['app/connexion/page.tsx', '/connexion'],
+    ['app/inscription/page.tsx', '/inscription'],
+    ['app/aide/page.tsx', '/aide'],
+    ['app/cgu/page.tsx', '/cgu'],
+    ['app/confidentialite/page.tsx', '/confidentialite'],
+    ['app/mentions-legales/page.tsx', '/mentions-legales'],
+    ['app/demo/page.tsx', '/demo'],
+  ])('%s déclare son canonical', (rel, chemin) => {
+    expect(lire(rel)).toContain(`canonical: '${chemin}'`);
+  });
+
+  test.each(['app/suivi-commande/layout.tsx', 'app/checkout-express/layout.tsx', 'app/agence/layout.tsx'])('%s fournit un titre propre', (rel) => {
+    expect(lire(rel)).toMatch(/title:/);
+  });
+});
+
+describe('AUD-170 : plus d\'emoji dans les titres et pastilles de catégories', () => {
+  test('PageHeader ne rend plus d\'emoji', () => {
+    expect(lire('components/PageHeader.tsx')).not.toMatch(/\{emoji \?/);
+  });
+
+  test('les pages de catégorie ne rendent plus l\'emoji dans le H1, les pastilles ni le décor', () => {
+    const a = lire('app/categorie/[slug]/page.tsx');
+    const b = lire('app/categorie/[slug]/[sousCategorie]/page.tsx');
+    expect(a).not.toMatch(/emoji=\{cat\.emoji\}/);
+    expect(a).not.toMatch(/\{cat\.emoji\}/);
+    expect(a).not.toMatch(/emoji: '🗂'/);
+    expect(b).not.toMatch(/\{emoji\} \{h1\}/);
+    expect(b).not.toMatch(/\{emoji\}<\/span>/);
+  });
+});
+
+describe('AUD-167 : cibles tactiles sur mobile', () => {
+  test('les onglets du hero et les liens du pied de page ont une hauteur minimale', () => {
+    const css = fs.readFileSync(path.join(RACINE, 'styles', 'mobile-utils.css'), 'utf8');
+    expect(css).toMatch(/\.hero-mode-tab-btn[^}]*min-height:\s*40px/);
+    expect(css).toMatch(/\.footer-col a[^}]*min-height:\s*32px/);
   });
 });
 

@@ -45,4 +45,9 @@ html, body {
   box-sizing: border-box;
   overflow-x: hidden;
 }
-
+
+/* AUD-167 : cibles tactiles d'au moins 32 à 40 px sur mobile (mesure initiale : onglets du hero 26 à 29 px, liens du pied de page 20 px) */
+@media (max-width: 768px) {
+  .hero-mode-tab-btn { min-height: 40px; }
+  .footer-col a { display: inline-block; min-height: 32px; padding-top: 6px; padding-bottom: 6px; }
+}

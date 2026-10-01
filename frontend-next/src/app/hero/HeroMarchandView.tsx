@@ -101,7 +101,7 @@ export default function HeroMarchandView({
           <span>Pour les commerçants du Sénégal</span>
         </div>
 
-        <h2
+        <h1
           style={{
             fontSize: 'clamp(22px, 3.2vw, 32px)',
             fontWeight: 900,
@@ -113,7 +113,7 @@ export default function HeroMarchandView({
         >
           Gérez votre magasin physique, vendez en ligne et encaissez sur{' '}
           <span style={{ color: 'var(--accent, #C75B00)' }}>Wave &amp; WhatsApp</span>
-        </h2>
+        </h1>
 
         <p
           style={{

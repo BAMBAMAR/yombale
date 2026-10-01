@@ -108,7 +108,7 @@ function HomeDualTrackContainerContent({
       {/* ══════════════════════════════════════════
           ZONE RÉSULTATS : Catégories + Recherche + Filtres + Produits
       ══════════════════════════════════════════ */}
-      <main id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '0.75rem', paddingBottom: '0.5rem' }}>
+      <section id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '0.75rem', paddingBottom: '0.5rem' }}>
         {activeTab === 'acheteur' ? (
           /* VUE 1 : CATALOGUE ACHETEUR, COMPARATEUR DE PRIX & FILTRES */
           <div>
@@ -145,7 +145,7 @@ function HomeDualTrackContainerContent({
             <AgenceLandingPublicView hideHero={true} />
           </div>
         )}
-      </main>
+      </section>
     </>
   )
 }
@@ -170,7 +170,7 @@ export default function HomeDualTrackContainer(props: Props) {
             />
           </div>
         </section>
-        <main id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '0.75rem', paddingBottom: '0.5rem' }}>
+        <section id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '0.75rem', paddingBottom: '0.5rem' }}>
           <div>
             <div style={{
               display: 'flex',
@@ -189,7 +189,7 @@ export default function HomeDualTrackContainer(props: Props) {
             </div>
             {props.buyerContentSlot}
           </div>
-        </main>
+        </section>
       </>
     }>
       <HomeDualTrackContainerContent {...props} />

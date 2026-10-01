@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api';import { OG_IMAGES } from '@/lib/social'
 
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/demo' },
   title: 'Démo Commerciale Interactive | Nopalou — Le Super-Écosystème E-commerce au Sénégal',
   description: 'Découvrez la démo interactive de Nopalou : Comparateur de prix, Caisse POS marchand avec carnet de crédit/dette, Bot WhatsApp commercial et programme Apporteur d\'affaires 20% récurrent à vie.',
   keywords: [
@@ -68,12 +69,12 @@ export default async function DemoPage({ searchParams }: DemoPageProps) {
   }
 
   return (
-    <main style={{ background: 'var(--bg, #F8F5F0)', minHeight: '100vh', paddingBottom: '40px' }}>
+    <div style={{ background: 'var(--bg, #F8F5F0)', minHeight: '100vh', paddingBottom: '40px' }}>
       <DemoClient
         initialRef={initialRef}
         initialRole={initialRole}
         initialSettings={initialSettings}
       />
-    </main>
+    </div>
   );
 }

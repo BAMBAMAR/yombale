@@ -311,7 +311,7 @@ export default function AgenceWorkspaceLayout({
       </aside>
 
         {/* ── Main Content Area (Directement sous l'entête unique sans barre redondante) ── */}
-        <main className="workspace-content">{children}</main>
+        <div className="workspace-content">{children}</div>
       </div>
 
       {/* ── Navigation Basse Persistante Mobile (< 768px) ── */}

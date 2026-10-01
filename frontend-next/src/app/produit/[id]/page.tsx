@@ -7,6 +7,8 @@ import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import { getOptionalSession } from '@/lib/dal'
 import { introuvableOuRedirection } from '@/lib/introuvable'
+import { breadcrumbSchema } from '@/lib/schema-org'
+import { safeJsonLd } from '@/lib/jsonld'
 import { descriptionMetaProduit, descriptionProduitUtile } from '@/lib/produit-texte'
 import TrackRecent from './TrackRecent'
 
@@ -212,6 +214,19 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
     <>
       <TrackRecent id={produit.id} nom={produit.nom} prix_min={prixMin} image_url={produit.image_url} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: buildJsonLd(produit, valides) }} />
+      {/* AUD-164 : fil d'Ariane structuré (déjà présent sur les catégories et les fiches boutique) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: safeJsonLd(breadcrumbSchema([
+            { name: 'Accueil', url: '/' },
+            ...((produit.categorie_nom ?? produit.categorie) && CAT_SLUGS[(produit.categorie_nom ?? produit.categorie) as string]
+              ? [{ name: (produit.categorie_nom ?? produit.categorie) as string, url: `/categorie/${CAT_SLUGS[(produit.categorie_nom ?? produit.categorie) as string]}` }]
+              : []),
+            { name: produit.nom, url: `/produit/${produit.id}` },
+          ])),
+        }}
+      />
 
       <div className="fiche">
         {/* Fil d'Ariane */}

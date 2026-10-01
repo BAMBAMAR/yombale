@@ -213,9 +213,8 @@ export default async function CategoriePage({
 
         <PageHeader
           breadcrumb={[{ label: 'Accueil', href: '/' }, { label: cat.label }]}
-          emoji={cat.emoji}
           titre={cat.h1}
-          compteur={total > 0 ? `${total.toLocaleString('fr-FR')} produit${total > 1 ? 's' : ''} comparés au Sénégal · Prix mis à jour toutes les 6h` : undefined}
+          compteur={total > 0 ? `${total.toLocaleString('fr-FR')} produit${total > 1 ? 's' : ''} comparés au Sénégal · Prix mis à jour régulièrement` : undefined}
         />
 
         {/* Recherche texte */}
@@ -258,7 +257,6 @@ export default async function CategoriePage({
         <CompareFilterBanner />
         {produits.length === 0 ? (
           <div className="empty-state">
-            <span style={{ fontSize: 48 }}>{cat.emoji}</span>
             <p>Aucun produit disponible dans cette catégorie pour l&apos;instant.</p>
             <Link href="/" className="budget-pill active" style={{ marginTop: 12 }}>
               Voir tous les produits
@@ -280,7 +278,7 @@ export default async function CategoriePage({
                   }}
                 >
                   <div className="card-img">
-                    <ExternalImg src={p.image_url} alt={p.nom} fallback={cat.emoji} fallbackClassName="card-img-placeholder" />
+                    <ExternalImg src={p.image_url} alt={p.nom} fallback="" fallbackClassName="card-img-placeholder" />
                     {/* AUD-160 : un placement payant est toujours signalé (les produits de boutique ne sont pas des placements payants) */}
                     <BadgeSponsorise actif={!p.boutique_id && sponsoringActif(p.sponsorise, p.sponsor_jusqu_au)} />
                   </div>
@@ -327,7 +325,7 @@ export default async function CategoriePage({
                   <p>
                     Nopalou est le premier comparateur de prix dédié au marché sénégalais.
                     Nous indexons les prix de {cat.exemples} chez tous les grands marchands en ligne du Sénégal — Jumia, Expat-Dakar, CoinAfrique et bien d&apos;autres.
-                    Les prix sont mis à jour automatiquement toutes les 6 heures.
+                    Les prix sont mis à jour régulièrement.
                   </p>
                   <p>
                     {cat.intro}
@@ -353,7 +351,7 @@ export default async function CategoriePage({
               chips: [
                 ...Object.entries(SOUS_CATEGORIES)
                   .filter(([, sc]) => sc.categorie === slug)
-                  .map(([key, sc]) => ({ href: `/categorie/${key}`, emoji: sc.emoji, label: sc.label })),
+                  .map(([key, sc]) => ({ href: `/categorie/${key}`, emoji: '', label: sc.label })),
                 { href: `/categorie/${slug}/moins-de-50000`, emoji: '', label: 'Moins de 50 000 FCFA' },
                 { href: `/categorie/${slug}/moins-de-100000`, emoji: '', label: 'Moins de 100 000 FCFA' },
               ],
@@ -361,15 +359,15 @@ export default async function CategoriePage({
             {
               label: 'Autres catégories',
               chips: [
-                { href: '/', emoji: '🗂', label: 'Tous les produits', small: true },
+                { href: '/', emoji: '', label: 'Tous les produits', small: true },
                 ...Object.entries(CATEGORIES)
                   .filter(([s]) => s !== slug)
                   .slice(0, 4)
-                  .map(([s, c]) => ({ href: `/categorie/${s}`, emoji: c.emoji, label: c.label, small: true })),
+                  .map(([s, c]) => ({ href: `/categorie/${s}`, emoji: '', label: c.label, small: true })),
               ],
             },
           ]}
-          foot="Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais"
+          foot="Prix relevés régulièrement auprès de marchands sénégalais"
         />
       </div>
     </>

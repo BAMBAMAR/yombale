@@ -102,7 +102,7 @@ export default async function LogicielCaisseSenegalPage() {
         dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ(essai)) }}
       />
 
-      <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         
         {/* ── HERO CAISSE POS ── */}
         <section style={{
@@ -300,7 +300,7 @@ export default async function LogicielCaisseSenegalPage() {
           </div>
         </section>
 
-      </main>
+      </div>
     </>
   )
 }

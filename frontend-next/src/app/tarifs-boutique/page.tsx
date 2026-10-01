@@ -62,7 +62,7 @@ export default async function TarifsBoutiquePage({
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ(essai)) }} />
 
-      <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', paddingBottom: 80, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', paddingBottom: 80, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         
         {/* ── HERO HEADER SAAS PREMIUM ── */}
         <section style={{
@@ -97,7 +97,7 @@ export default async function TarifsBoutiquePage({
         {/* ── CLIENT CONTAINER DYNAMIQUE (FORFAITS, MATRICE, COMPARATIF & FAQ) ── */}
         <TarifsBoutiqueClient initialSecteur={initialSecteur} initialPlans={initialPlans} />
 
-      </main>
+      </div>
     </>
   )
 }

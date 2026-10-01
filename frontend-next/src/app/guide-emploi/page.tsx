@@ -113,10 +113,10 @@ export default async function GuideEmploiPage() {
           ← Accueil
         </Link>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: '#1C2B4A', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#1C2B4A', display: 'flex', alignItems: 'center', gap: 8 }}>
             <BookOpen size={22} color="var(--accent, #C75B00)" />
             <span>Comment fonctionne Nopalou</span>
-          </div>
+          </h1>
           <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Guides pratiques et parcours détaillés de la plateforme.</div>
         </div>
       </div>

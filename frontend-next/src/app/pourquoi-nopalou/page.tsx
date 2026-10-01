@@ -122,7 +122,7 @@ const COMPARATIFS = [
 export default async function PourquoiNopalouPage() {
   const essai = await getEssaiJours()
   return (
-    <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* ── 1. HERO COMPARATIF ── */}
       <section style={{
@@ -288,6 +288,6 @@ export default async function PourquoiNopalouPage() {
         </div>
       </section>
 
-    </main>
+    </div>
   )
 }

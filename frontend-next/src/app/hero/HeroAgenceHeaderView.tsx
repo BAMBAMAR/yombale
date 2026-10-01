@@ -29,7 +29,7 @@ export default function HeroAgenceHeaderView() {
         <span>Espace Agences Immobilières, Administrateurs de Biens &amp; Bailleurs</span>
       </div>
 
-      <h2
+      <h1
         style={{
           fontSize: 'clamp(20px, 3.2vw, 32px)',
           fontWeight: 900,
@@ -41,7 +41,7 @@ export default function HeroAgenceHeaderView() {
       >
         L&apos;ERP Immobilier du Sénégal : Baux, Quittances, Bailleurs &amp; Loyers sur{' '}
         <span style={{ color: '#10b981' }}>Wave &amp; WhatsApp</span>
-      </h2>
+      </h1>
 
       <p
         style={{

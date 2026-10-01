@@ -100,7 +100,7 @@ export default function GuideCreerBoutiquePage() {
         dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_BREADCRUMB) }}
       />
 
-      <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', padding: '40px 20px 80px' }}>
+      <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', padding: '40px 20px 80px' }}>
         <article style={{ maxWidth: 880, margin: '0 auto', background: '#ffffff', padding: '40px 32px', borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
           
           {/* HEADER ARTICLE */}
@@ -250,7 +250,7 @@ export default function GuideCreerBoutiquePage() {
           </div>
 
         </article>
-      </main>
+      </div>
     </>
   )
 }

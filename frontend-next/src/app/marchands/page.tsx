@@ -61,7 +61,7 @@ const FAQ_ITEMS = (essai: number) => [
 export default async function MarchandsLandingPage() {
   const essai = await getEssaiJours()
   return (
-    <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* ── 1. HERO SECTION PREMIUM B2B SAAS ── */}
       <section style={{
@@ -562,6 +562,6 @@ export default async function MarchandsLandingPage() {
         </div>
       </section>
 
-    </main>
+    </div>
   )
 }

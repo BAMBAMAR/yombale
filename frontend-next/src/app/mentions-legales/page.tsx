@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/mentions-legales' },
   title: 'Mentions légales',
   description: 'Mentions légales de la plateforme de commerce digital Nopalou au Sénégal.',
 }

@@ -29,7 +29,7 @@ export default async function VerifierVendeurPage({ params }: { params: { slug: 
   const verifie = v?.statut === 'verifie' || v?.statut === 'certifie'
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: '32px 16px', width: '100%', boxSizing: 'border-box' }}>
+    <div style={{ maxWidth: 640, margin: '0 auto', padding: '32px 16px', width: '100%', boxSizing: 'border-box' }}>
       <h1 style={{ fontSize: 22, color: 'var(--navy, #1C2B4A)', margin: '0 0 16px' }}>Vérifier un vendeur</h1>
 
       {!v ? (
@@ -75,6 +75,6 @@ export default async function VerifierVendeurPage({ params }: { params: { slug: 
           <Link href="/aide" style={{ color: 'var(--accent, #C75B00)', fontWeight: 700, fontSize: 13 }}>Signaler un vendeur</Link>
         </p>
       </section>
-    </main>
+    </div>
   )
 }

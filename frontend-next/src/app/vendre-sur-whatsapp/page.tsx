@@ -80,7 +80,7 @@ export default async function VendreSurWhatsappPage() {
         dangerouslySetInnerHTML={{ __html: safeJsonLd(JSON_LD_FAQ) }}
       />
 
-      <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         
         {/* ── HERO WHATSAPP COMMERCE ── */}
         <section style={{
@@ -278,7 +278,7 @@ export default async function VendreSurWhatsappPage() {
           </div>
         </section>
 
-      </main>
+      </div>
     </>
   )
 }

@@ -128,7 +128,7 @@ export default function BoutiqueManage({
         />
 
         {/* Contenu principal */}
-        <main className={`bq-main${!nav.isSidebarOpen ? ' bq-main--expanded' : ''}`}>
+        <div className={`bq-main${!nav.isSidebarOpen ? ' bq-main--expanded' : ''}`}>
           <BoutiqueManageHeader
             toast={nav.toast}
             onToastClick={() => {
@@ -164,7 +164,7 @@ export default function BoutiqueManage({
               nbEnAttente={nav.nbEnAttente}
             />
           )}
-        </main>
+        </div>
       </div>
 
       {/* ── Pied Mobile (Barre basse fixe 5 boutons avec FAB central) ── */}

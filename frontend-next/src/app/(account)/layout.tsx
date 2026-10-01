@@ -40,9 +40,9 @@ export default async function CompteLayout({ children }: { children: React.React
           email={session.email ?? null}
           initiale={initiale}
         />
-        <main className="account-main">
+        <div className="account-main">
           {children}
-        </main>
+        </div>
       </div>
     </AccountWorkspaceWrapper>
   )

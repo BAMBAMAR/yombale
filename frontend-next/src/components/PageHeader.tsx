@@ -89,10 +89,12 @@ export default function PageHeader({ breadcrumb, emoji, titre, compteur, cta, ce
       </nav>
 
       <div style={{ display: 'flex', alignItems: alignFlex, justifyContent: justifyFlex, gap: 16, flexWrap: 'wrap', flexDirection: centered ? 'column' : 'row' }}>
-        <h1 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--navy, #1C2B4A)', lineHeight: 1.25, margin: 0, textAlign }}>
-          {emoji ? <span style={{ marginRight: 8, opacity: 0.9 }}>{emoji}</span> : null}
-          {titre}
-        </h1>
+        {/* AUD-157 : pas de <h1> vide quand la page porte son propre titre ; AUD-170 : pas d'emoji dans le titre */}
+        {titre ? (
+          <h1 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--navy, #1C2B4A)', lineHeight: 1.25, margin: 0, textAlign }}>
+            {titre}
+          </h1>
+        ) : null}
         {cta && (
           cta.href ? (
             <Link href={cta.href} className="btn-npl btn-npl-md btn-npl-primary">{cta.label}</Link>

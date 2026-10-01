@@ -99,7 +99,7 @@ export default async function SamaXaalisLandingPage() {
   const { essaiJours, prixMensuel } = await getKalpeReglages()
   const FAQ_ITEMS = faqItems(essaiJours, prixMensuel)
   return (
-    <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLdSoftware(prixMensuel)) }}
@@ -291,6 +291,6 @@ export default async function SamaXaalisLandingPage() {
           </Link>
         </div>
       </section>
-    </main>
+    </div>
   )
 }

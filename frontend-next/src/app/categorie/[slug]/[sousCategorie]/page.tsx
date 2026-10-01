@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   if (r.kind === 'budget') {
     return {
       title: `${r.cat.label} à moins de ${fcfa(r.budget)} au Sénégal`,
-      description: `Découvrez les ${r.cat.label.toLowerCase()} à moins de ${fcfa(r.budget)} au Sénégal. Comparez les meilleurs prix à Dakar, mis à jour toutes les 6h.`,
+      description: `Découvrez les ${r.cat.label.toLowerCase()} à moins de ${fcfa(r.budget)} au Sénégal. Comparez les meilleurs prix à Dakar, mis à jour régulièrement.`,
       alternates: { canonical },
       openGraph: { images: OG_IMAGES, title: `${r.cat.label} à moins de ${fcfa(r.budget)} — Nopalou`, type: 'website', url: canonical },
     }
@@ -104,9 +104,8 @@ export default async function SousCategoriePage({
   const currentPage = Number(page)
   const h1 = r.kind === 'budget' ? `${r.cat.label} à moins de ${fcfa(r.budget)}` : r.sousCat.h1
   const intro = r.kind === 'budget'
-    ? `Tous les ${r.cat.label.toLowerCase()} à moins de ${fcfa(r.budget)} disponibles au Sénégal, comparés chez tous les marchands en ligne. Prix mis à jour toutes les 6 heures.`
+    ? `Tous les ${r.cat.label.toLowerCase()} à moins de ${fcfa(r.budget)} disponibles au Sénégal, comparés chez tous les marchands en ligne. Prix mis à jour régulièrement.`
     : r.sousCat.intro
-  const emoji = r.kind === 'budget' ? r.cat.emoji : r.sousCat.emoji
   const crumbLabel = r.kind === 'budget' ? `Moins de ${fcfa(r.budget)}` : r.sousCat.label
   const self = `/categorie/${params.slug}/${params.sousCategorie}`
 
@@ -152,20 +151,19 @@ export default async function SousCategoriePage({
 
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, color: 'var(--navy)', lineHeight: 1.2, marginBottom: 10 }}>
-            {emoji} {h1}
+            {h1}
           </h1>
           <p style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.6, maxWidth: 720 }}>{intro}</p>
           {total > 0 && (
             <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8 }}>
-              <strong style={{ color: 'var(--accent)' }}>{total.toLocaleString('fr-FR')} produit{total > 1 ? 's' : ''}</strong> comparés au Sénégal · Prix mis à jour toutes les 6h
+              <strong style={{ color: 'var(--accent)' }}>{total.toLocaleString('fr-FR')} produit{total > 1 ? 's' : ''}</strong> comparés au Sénégal · Prix mis à jour régulièrement
             </p>
           )}
         </div>
 
         {produits.length === 0 ? (
           <div className="empty-state">
-            <span style={{ fontSize: 48 }}>{emoji}</span>
-            <p>Aucun produit disponible pour l&apos;instant.</p>
+                        <p>Aucun produit disponible pour l&apos;instant.</p>
             <Link href={`/categorie/${params.slug}`} className="budget-pill active" style={{ marginTop: 12 }}>
               Voir toute la catégorie {r.cat.label}
             </Link>
@@ -186,7 +184,7 @@ export default async function SousCategoriePage({
                   }}
                 >
                   <div className="card-img">
-                    <ExternalImg src={p.image_url} alt={p.nom} fallback={emoji} fallbackClassName="card-img-placeholder" />
+                    <ExternalImg src={p.image_url} alt={p.nom} fallback="" fallbackClassName="card-img-placeholder" />
                     {/* AUD-160 : un placement payant est toujours signalé (les produits de boutique ne sont pas des placements payants) */}
                     <BadgeSponsorise actif={!p.boutique_id && sponsoringActif(p.sponsorise, p.sponsor_jusqu_au)} />
                   </div>

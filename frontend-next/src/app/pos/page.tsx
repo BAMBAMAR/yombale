@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PosLandingPage() {
   const essai = await getEssaiJours()
   return (
-    <main style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ background: '#f8fafc', color: '#0f172a', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* ── 1. HERO POS PREMIUM ── */}
       <section style={{
@@ -394,6 +394,6 @@ export default async function PosLandingPage() {
         </div>
       </section>
 
-    </main>
+    </div>
   )
 }
