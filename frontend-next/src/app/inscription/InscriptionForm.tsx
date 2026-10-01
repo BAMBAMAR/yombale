@@ -6,6 +6,7 @@ import { signup, type AuthState, setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
+import { trackFunnel } from '@/lib/analytics'
 import { User, Mail, Lock, Phone, KeyRound, AlertCircle, Eye, EyeOff, MessageCircle } from 'lucide-react'
 
 function SubmitButton() {
@@ -36,6 +37,7 @@ function getPasswordStrength(pwd: string): { score: number; label: string; color
 }
 
 export default function InscriptionForm() {
+  useEffect(() => { trackFunnel('inscription_vue') }, [])
   const [state, action] = useFormState<AuthState, FormData>(signup, {})
   const [showPwd, setShowPwd]         = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)

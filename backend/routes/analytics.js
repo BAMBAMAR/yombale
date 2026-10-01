@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { limiterGeneral } = require('../middlewares/rateLimit');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 
 // POST /api/analytics/event — enregistrer un événement (vue, clic tel)
 router.post('/event', limiterGeneral, async (req, res) => {
@@ -33,6 +34,49 @@ router.post('/event', limiterGeneral, async (req, res) => {
     );
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
+// AUD-116 : événements de funnel d'acquisition, sans boutique ni donnée personnelle.
+const TYPES_FUNNEL = [
+  'tarifs_vue', 'inscription_vue', 'wizard_etape', 'wizard_cree',
+  'abonnement_vue', 'abonnement_paiement_clique',
+];
+const nettoyer = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null);
+
+// POST /api/analytics/funnel
+router.post('/funnel', limiterGeneral, async (req, res) => {
+  const { type, session_id, etape, plan, utm_source, utm_medium, utm_campaign, ref } = req.body || {};
+  if (!TYPES_FUNNEL.includes(type)) return res.status(400).json({ error: 'Type invalide' });
+  const session = nettoyer(session_id, 64);
+  if (!session || !/^[A-Za-z0-9_-]{8,64}$/.test(session)) return res.status(400).json({ error: 'session_id invalide' });
+  const etapeNum = Number.isInteger(etape) && etape >= 1 && etape <= 20 ? etape : null;
+  try {
+    await pool.query(
+      `INSERT INTO funnel_events (session_id, type, etape, plan, utm_source, utm_medium, utm_campaign, ref)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [session, type, etapeNum, nettoyer(plan, 20), nettoyer(utm_source, 80), nettoyer(utm_medium, 80), nettoyer(utm_campaign, 120), nettoyer(ref, 60)]
+    );
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// GET /api/analytics/funnel/resume — synthèse admin : sessions distinctes par étape, taux de passage, par source
+router.get('/funnel/resume', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
+  const jours = [7, 30, 90].includes(parseInt(req.query.jours, 10)) ? parseInt(req.query.jours, 10) : 30;
+  try {
+    const { rows: etapes } = await pool.query(
+      `SELECT type, COALESCE(etape, 0) AS etape, COUNT(DISTINCT session_id)::int AS sessions
+         FROM funnel_events WHERE created_at >= NOW() - ($1 || ' days')::interval
+         GROUP BY 1, 2 ORDER BY 1, 2`, [String(jours)]);
+    const { rows: sources } = await pool.query(
+      `SELECT COALESCE(utm_source, 'direct') AS source,
+              COUNT(DISTINCT session_id)::int AS sessions,
+              COUNT(DISTINCT session_id) FILTER (WHERE type = 'wizard_cree')::int AS boutiques_creees
+         FROM funnel_events WHERE created_at >= NOW() - ($1 || ' days')::interval
+         GROUP BY 1 ORDER BY 2 DESC LIMIT 20`, [String(jours)]);
+    res.json({ jours, etapes, sources });
+  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
 // GET /api/analytics/boutique/:id — stats d'une boutique (propriétaire uniquement)

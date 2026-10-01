@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { trackFunnel } from '@/lib/analytics'
 import TarifsPublicsSelector, { DynamicPlan } from './TarifsPublicsSelector'
 import TarifsMatriceDetaillee from './TarifsMatriceDetaillee'
 import TarifsMatriceDetailleeImmo from './components/TarifsMatriceDetailleeImmo'
@@ -71,6 +72,8 @@ export default function TarifsBoutiqueClient({
   initialPlans = [],
 }: TarifsBoutiqueClientProps) {
   const [secteur, setSecteur] = useState<'commerce' | 'immo'>(initialSecteur)
+
+  useEffect(() => { trackFunnel('tarifs_vue') }, [])
 
   const handleSecteurChange = (newSecteur: 'commerce' | 'immo') => {
     setSecteur(newSecteur)

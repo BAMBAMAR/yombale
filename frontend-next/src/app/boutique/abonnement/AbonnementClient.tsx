@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useEffect, useState, useTransition } from 'react'
+import { trackFunnel } from '@/lib/analytics'
 import Link from 'next/link'
 import { initierWaveAbonnement } from '@/app/actions/paiement'
 import ModalPaiementManuel from '@/components/ModalPaiementManuel'
@@ -38,6 +39,8 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
   const [planManuel, setPlanManuel] = useState<'decouverte' | 'pro' | 'business' | null>(null)
   const [duree, setDuree] = useState<number>(12) // 12 mois sélectionné par défaut
 
+  useEffect(() => { trackFunnel('abonnement_vue') }, [])
+
   const prixDecouverteBase = Number(settings.plan_decouverte_prix) || 2500
   const prixProBase = Number(settings.plan_pro_prix) || 5000
   const prixBusinessBase = Number(settings.plan_business_prix) || 10000
@@ -55,6 +58,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
   const RANG_PALIER: Record<string, number> = { gratuit: 0, decouverte: 1, taf_taf: 1, pro: 2, business: 3 }
 
   const handleSouscrireWave = (planId: 'decouverte' | 'pro' | 'business') => {
+    trackFunnel('abonnement_paiement_clique', { plan: planId })
     setError(null)
     setLoadingPlan(planId)
     startTransition(async () => {

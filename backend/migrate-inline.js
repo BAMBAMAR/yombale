@@ -2907,6 +2907,21 @@ module.exports = async function migrateInline(customConnStr = null) {
      )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_paiements_inities_ref ON paiements_inities(reference)`,
     `CREATE INDEX IF NOT EXISTS idx_paiements_inities_statut ON paiements_inities(statut, created_at)`,
+    // AUD-116 : événements de funnel sans boutique ni donnée personnelle (identifiant de session aléatoire seulement)
+    `CREATE TABLE IF NOT EXISTS funnel_events (
+       id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+       session_id    VARCHAR(64) NOT NULL,
+       type          VARCHAR(40) NOT NULL,
+       etape         SMALLINT,
+       plan          VARCHAR(20),
+       utm_source    VARCHAR(80),
+       utm_medium    VARCHAR(80),
+       utm_campaign  VARCHAR(120),
+       ref           VARCHAR(60),
+       created_at    TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_funnel_events_type_date ON funnel_events(type, created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_funnel_events_session ON funnel_events(session_id)`,
   ];
   for (const sql of schemaCroissance) {
     try { await pool.query(sql); }

@@ -170,3 +170,56 @@ export function trackAnalyticsEvent(
     /* ignoré */
   }
 }
+
+
+// AUD-116 : funnel d'acquisition (sans boutique, sans donnée personnelle : identifiant de session aléatoire).
+export type FunnelEventType =
+  | 'tarifs_vue'
+  | 'inscription_vue'
+  | 'wizard_etape'
+  | 'wizard_cree'
+  | 'abonnement_vue'
+  | 'abonnement_paiement_clique'
+
+const FUNNEL_SESSION_KEY = 'nopalou_funnel_sid'
+
+function getFunnelSessionId(): string {
+  try {
+    let sid = sessionStorage.getItem(FUNNEL_SESSION_KEY)
+    if (!sid) {
+      sid = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9_-]/g, '')
+      sessionStorage.setItem(FUNNEL_SESSION_KEY, sid)
+    }
+    return sid
+  } catch {
+    return 'sans-stockage'.padEnd(8, '0')
+  }
+}
+
+export function trackFunnel(
+  type: FunnelEventType,
+  extra?: { etape?: number; plan?: string; ref?: string }
+): void {
+  if (typeof window === 'undefined') return
+  // Respect de « Ne pas me suivre »
+  if (typeof navigator !== 'undefined' && (navigator as any).doNotTrack === '1') return
+  const utm = getSavedUtm()
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+  fetch(`${backendUrl}/api/analytics/funnel`, {
+    method: 'POST',
+    keepalive: true,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type,
+      session_id: getFunnelSessionId(),
+      etape: extra?.etape,
+      plan: extra?.plan,
+      ref: extra?.ref,
+      utm_source: utm.utm_source,
+      utm_medium: utm.utm_medium,
+      utm_campaign: utm.utm_campaign,
+    }),
+  }).catch(() => {
+    /* mesure silencieuse : ne jamais perturber le parcours */
+  })
+}

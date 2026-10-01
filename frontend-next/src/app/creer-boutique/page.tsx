@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { setAuthCookieAction } from '@/app/actions/auth'
+import { trackFunnel } from '@/lib/analytics'
 import { CATEGORIES } from '@/lib/categories'
 import ModalBoutiqueCreeeSucces from './components/ModalBoutiqueCreeeSucces'
 import ModalContratVendeur from './components/ModalContratVendeur'
@@ -42,6 +43,12 @@ export default function CreerBoutiqueWizard() {
   } | null>(null)
 
   const [plansConfig, setPlansConfig] = useState<PlansConfig>(DEFAULT_PLANS)
+
+  // AUD-116 : une étape vue = un événement (le départ se lit comme l'écart entre deux étapes)
+  useEffect(() => {
+    trackFunnel('wizard_etape', { etape: step, plan, ref: searchParams?.get('apporteur') || searchParams?.get('ref') || undefined })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
 
   useEffect(() => {
     const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
@@ -202,6 +209,7 @@ export default function CreerBoutiqueWizard() {
         await setAuthCookieAction(data.token)
       }
 
+      trackFunnel('wizard_cree', { plan })
       setBoutiqueCreee({
         id: String(data.boutiqueId),
         nom: nom.trim(),
