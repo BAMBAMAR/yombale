@@ -686,9 +686,12 @@ async function upsertAnnonceClassifiee(a) {
 
     return { doublon: false };
   } catch (err) {
-    if (err.code === 'ECONNRESET' || (err.message && (err.message.includes('ECONNRESET') || err.message.includes('timeout')))) {
-      const backendUrl = process.env.BACKEND_URL || 'https://yombale.onrender.com';
-      const secret = process.env.ADMIN_SECRET || 'NDIEME@131215';
+    // AUD-171 : le repli HTTP exige un BACKEND_URL et un ADMIN_SECRET explicites. Plus de secret en dur, plus de repli
+    // silencieux vers l'URL de production : sans eux, l'erreur d'origine est relancée.
+    const repliHttpAutorise = Boolean(process.env.BACKEND_URL && process.env.ADMIN_SECRET);
+    if (repliHttpAutorise && (err.code === 'ECONNRESET' || (err.message && (err.message.includes('ECONNRESET') || err.message.includes('timeout'))))) {
+      const backendUrl = process.env.BACKEND_URL;
+      const secret = process.env.ADMIN_SECRET;
       const axios = require('axios');
       try {
         const resSync = await axios.post(`${backendUrl}/api/scraper/sync-annonces`, {

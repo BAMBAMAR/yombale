@@ -5,7 +5,12 @@
 
 const crypto = require('crypto');
 
-const SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'nopalou_secure_magic_token_secret_key_2026';
+// AUD-171 : aucun secret par défaut. Sans JWT_SECRET ni SESSION_SECRET, aucun jeton n'est signé ni accepté.
+function getSecret() {
+  const s = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+  if (!s) throw new Error('JWT_SECRET ou SESSION_SECRET requis (aucun secret par défaut)');
+  return s;
+}
 
 /**
  * Génère un jeton Magic Link signé HMAC
@@ -22,7 +27,7 @@ function genererMagicToken({ userId, boutiqueId = '', telephone = '', expiresInH
   }
   const exp = Date.now() + expiresInHours * 3600 * 1000;
   const data = `${userId}:${boutiqueId || ''}:${telephone || ''}:${exp}`;
-  const sig = crypto.createHmac('sha256', SECRET).update(data).digest('hex');
+  const sig = crypto.createHmac('sha256', getSecret()).update(data).digest('hex');
 
   const payload = {
     u: userId,
@@ -41,6 +46,8 @@ function genererMagicToken({ userId, boutiqueId = '', telephone = '', expiresInH
  * @returns {{ valide: boolean, userId?: string, boutiqueId?: string, telephone?: string, erreur?: string }}
  */
 function validerMagicToken(token) {
+  let secret;
+  try { secret = getSecret(); } catch (e) { return { valide: false, erreur: 'secret_absent' }; }
   try {
     if (!token || typeof token !== 'string') {
       return { valide: false, erreur: 'token_manquant' };
@@ -58,7 +65,7 @@ function validerMagicToken(token) {
     }
 
     const data = `${userId}:${boutiqueId || ''}:${telephone || ''}:${exp}`;
-    const attendu = crypto.createHmac('sha256', SECRET).update(data).digest('hex');
+    const attendu = crypto.createHmac('sha256', secret).update(data).digest('hex');
 
     const bufSig = Buffer.from(sig);
     const bufAttendu = Buffer.from(attendu);

@@ -765,9 +765,12 @@ module.exports = async function migrateInline(customConnStr = null) {
 
     // Bootstrap du compte Super Admin initial si la table est vide
     const { rows: countAdmins } = await pool.query('SELECT COUNT(*)::int AS count FROM admin_utilisateurs');
-    if (countAdmins[0]?.count === 0) {
+    if (countAdmins[0]?.count === 0 && !process.env.ADMIN_SECRET) {
+      // AUD-171 : aucun mot de passe par défaut connu. Sans ADMIN_SECRET, le compte initial n'est pas créé.
+      console.warn('[MIGRATE] ⚠️ Aucun Super Admin et ADMIN_SECRET absent : compte initial non créé (définir ADMIN_SECRET puis redémarrer)');
+    } else if (countAdmins[0]?.count === 0) {
       const defaultEmail = process.env.ADMIN_EMAIL || 'contact@nopalou.com';
-      const initialPassword = process.env.ADMIN_SECRET || 'NopalouAdmin2026!';
+      const initialPassword = process.env.ADMIN_SECRET;
       const hash = await bcrypt.hash(initialPassword, 10);
       await pool.query(
         `INSERT INTO admin_utilisateurs (nom, email, mot_de_passe_hash, role, actif, permissions)
@@ -2940,6 +2943,58 @@ module.exports = async function migrateInline(customConnStr = null) {
   for (const sql of schemaCroissance) {
     try { await pool.query(sql); }
     catch (e) { console.warn('[MIGRATE] schéma croissance:', e.message, '::', sql.slice(0, 90)); }
+  }
+
+  // AUD-172 / AUD-176 : socle de la collecte de données. `scraping_runs` était écrite par trois scrapers sans jamais
+  // avoir été créée ; `f_unaccent` était utilisée par matching.js et scraper.js sans qu'aucune migration ne la crée
+  // (ingestion de nouveaux produits impossible sur une base reconstruite). La fonction n'est créée QUE si elle est
+  // absente : sur la production elle existe peut-être déjà, et un index peut en dépendre.
+  const schemaCollecte = [
+    `CREATE EXTENSION IF NOT EXISTS unaccent`,
+    `DO $$ BEGIN
+       IF to_regprocedure('public.f_unaccent(text)') IS NULL THEN
+         CREATE FUNCTION public.f_unaccent(text) RETURNS text
+           AS 'SELECT public.unaccent(''public.unaccent'', $1)' LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+       END IF;
+     END $$`,
+    `CREATE INDEX IF NOT EXISTS idx_produits_nom_unaccent ON produits USING gin (public.f_unaccent(lower(nom)) gin_trgm_ops)`,
+    `CREATE TABLE IF NOT EXISTS scraping_runs (
+       id              BIGSERIAL PRIMARY KEY,
+       source          TEXT NOT NULL,
+       systeme         TEXT NOT NULL,
+       started_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       ended_at        TIMESTAMPTZ,
+       pages_cibles    INT,
+       pages_ok        INT DEFAULT 0,
+       pages_erreur    INT DEFAULT 0,
+       http_codes      JSONB DEFAULT '{}'::jsonb,
+       items_extraits  INT DEFAULT 0,
+       items_inseres   INT DEFAULT 0,
+       items_maj       INT DEFAULT 0,
+       items_filtres   INT DEFAULT 0,
+       items_doublons  INT DEFAULT 0,
+       items_rejetes   JSONB DEFAULT '{}'::jsonb,
+       couverture      NUMERIC(5,2),
+       duree_ms        INT,
+       statut          TEXT NOT NULL DEFAULT 'en_cours',
+       erreur_msg      TEXT
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_scraping_runs_source ON scraping_runs(source, started_at DESC)`,
+    `CREATE TABLE IF NOT EXISTS scraping_run_pages (
+       id          BIGSERIAL PRIMARY KEY,
+       run_id      BIGINT REFERENCES scraping_runs(id) ON DELETE CASCADE,
+       categorie   TEXT,
+       page        INT,
+       http_status TEXT,
+       nb_items    INT,
+       ms          INT,
+       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_scraping_run_pages_run ON scraping_run_pages(run_id)`,
+  ];
+  for (const sql of schemaCollecte) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[MIGRATE] schéma collecte:', e.message, '::', sql.replace(/\s+/g, ' ').slice(0, 90)); }
   }
 
   // AUD-001 : rejeu des instructions différées jusqu'à stabilité (les tables visées existent désormais)

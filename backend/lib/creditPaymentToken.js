@@ -1,7 +1,10 @@
 const crypto = require('crypto');
 
+// AUD-171 : aucun secret par défaut. Sans JWT_SECRET ni SESSION_SECRET, aucun jeton n'est signé ni accepté.
 function getSecret() {
-  return process.env.JWT_SECRET || process.env.SESSION_SECRET || 'nopalou_credit_secret_key_2026';
+  const s = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+  if (!s) throw new Error('JWT_SECRET ou SESSION_SECRET requis (aucun secret par défaut)');
+  return s;
 }
 
 /**
@@ -33,6 +36,9 @@ function validerCreditToken(token) {
     return { valide: false, error: 'Token manquant' };
   }
 
+  let secret;
+  try { secret = getSecret(); } catch (e) { return { valide: false, error: 'Configuration serveur incomplète' }; }
+
   try {
     const raw = Buffer.from(token, 'base64url').toString('utf-8');
     const parts = raw.split(':');
@@ -48,7 +54,7 @@ function validerCreditToken(token) {
     }
 
     const expectedPayload = `${clientId}:${boutiqueId}:${expStr}`;
-    const expectedSig = crypto.createHmac('sha256', getSecret()).update(expectedPayload).digest('hex');
+    const expectedSig = crypto.createHmac('sha256', secret).update(expectedPayload).digest('hex');
 
     // Timing-safe compare
     const sigBuf = Buffer.from(signature, 'hex');
