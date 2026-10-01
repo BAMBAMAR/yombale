@@ -151,7 +151,8 @@ describe('Module de Relance & Onboarding Catalogue Marchands', () => {
       const list = await recupererBoutiquesEligiblesRelance();
       expect(list.length).toBe(2);
       expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('AND (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) <= $3'),
+        // AUD-118 : les articles d'exemple du pack de démarrage ne comptent pas comme produits
+        expect.stringContaining("AND (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id AND COALESCE(statut_moderation, 'actif') <> 'exemple') <= $3"),
         [24, 7, 1]
       );
     });
