@@ -1,10 +1,18 @@
 // backend/services/prospection.js — Moteur d'automatisation et de collecte de leads (Nopalou)
 const { pool } = require('../models/db');
+const cfg = require('../lib/settingsCache');
 const { sendWhatsAppText, sendWhatsAppNotification, sendWhatsAppProspectionDirecte, normalisePhone, estDesinscrit } = require('./whatsapp');
 
 // ── Normalisation des numéros de téléphone pour le Sénégal ───────────────────
 const { normaliserTelephoneSenegal } = require('../lib/phoneNormalizer');
 
+
+// AUD-111 : la durée d'essai annoncée vient du réglage admin `abonnement_essai_jours`, jamais d'un texte en dur.
+function remplacerEssaiJours(texte) {
+  if (typeof texte !== 'string' || !texte.includes('{essai_jours}')) return texte;
+  const jours = Math.round(Number(cfg.getSync('abonnement_essai_jours'))) || 30;
+  return texte.replace(/\{essai_jours\}/g, String(jours));
+}
 
 const FOOTER_OPTOUT = '\n\n_STOP pour vous désinscrire._';
 
@@ -12,14 +20,14 @@ const FOOTER_OPTOUT = '\n\n_STOP pour vous désinscrire._';
 const TEMPLATES_PAR_DEFAUT = [
   {
     id: 'gestion_caisse_smartphone_nopalou',
-    titre: '📱 Vente & Caisse Smartphone — 0% Commission & 30j offerts (Recommandé)',
+    titre: '📱 Vente & Caisse Smartphone — 0% Commission & {essai_jours}j offerts (Recommandé)',
     canal: 'whatsapp',
     categorie: 'general',
     texte: `Salam alaykoum ! 👋
 
 📱 Vendez & encaissez par Wave / OM sans commission sur mobile.
 
-🎁 30 jours offerts & factures (tapez Nopalou sur Google 🇸🇳)
+🎁 {essai_jours} jours offerts & factures (tapez Nopalou sur Google 🇸🇳)
 
 Répondez OUI pour ouvrir votre boutique en 30 secondes !` + FOOTER_OPTOUT
   },
@@ -37,7 +45,7 @@ Avec Nopalou (https://nopalou.com) :
 📸 Vous ajoutez vos articles en envoyant une simple photo et le prix (ex: « Robe Soie 15000 »)
 🌊 Vos clients commandent en 1 clic et paient par Wave & Orange Money (0% de commission)
 📊 Vous demandez votre bilan du jour par message : tapez « Bilan » et recevez vos ventes en direct !
-🎁 1er mois 100% OFFERT sans engagement !
+🎁 {essai_jours} jours 100% OFFERTS sans engagement !
 
 Répondez simplement « OUI » pour ouvrir votre boutique tout de suite !` + FOOTER_OPTOUT
   },
@@ -55,7 +63,7 @@ Migrez sur Nopalou en 1 seul clic sans perdre vos données :
 ✅ Vos titres, prix, stocks et photos sont reconnus automatiquement
 ✅ Import de votre carnet de clients & dettes existantes
 ✅ Paiement direct Wave & Orange Money en FCFA à 0% de commission
-🎁 30 jours 100% gratuits pour tester la puissance de la plateforme !
+🎁 {essai_jours} jours 100% gratuits pour tester la puissance de la plateforme !
 
 Testez l'import gratuit ici : https://nopalou.com/tarifs-boutique
 
@@ -75,7 +83,7 @@ Avec Nopalou (https://nopalou.com), vous avez votre boutique prête en 30 second
 ✅ Paiement direct Wave & Orange Money sur votre compte (0% de commission)
 ✅ Caisse enregistreuse POS & Carnet de dettes inclus
 ✅ Suivez votre CA du jour en tapant simplement « Bilan » sur WhatsApp
-🎁 Le 1er mois est 100% OFFERT sans engagement !
+🎁 Les {essai_jours} premiers jours sont 100% OFFERTS sans engagement !
 
 Découvrez une boutique exemple ici : https://nopalou.com/guide-creer-boutique
 
@@ -95,7 +103,7 @@ Avec Nopalou, votre boutique est référencée sur le comparateur N°1 au Séné
 ✅ Caisse tactile avec scanner de codes-barres par caméra
 ✅ Importez tout votre catalogue existant (Excel / Shopify) en 1 seconde
 ✅ Devis & Factures OHADA proformas en PDF en 10 secondes
-🎁 30 jours 100% gratuits pour booster vos ventes !
+🎁 {essai_jours} jours 100% gratuits pour booster vos ventes !
 
 Lien d'inscription gratuite : https://nopalou.com/creer-boutique?plan=pro
 
@@ -114,7 +122,7 @@ Avec Nopalou (https://nopalou.com), partagez votre parc auto en 1 seul lien pro 
 ✅ Fiches véhicules complètes (photos HD, transmission, carburant, prix)
 ✅ Prise de rendez-vous et contact direct sur votre WhatsApp
 ✅ Référencement sur le portail auto n°1 au Sénégal
-🎁 1er mois 100% OFFERT sans aucun engagement !
+🎁 {essai_jours} jours 100% OFFERTS sans aucun engagement !
 
 Découvrez un exemple de vitrine : https://nopalou.com/annonces
 
@@ -134,7 +142,7 @@ Avec Nopalou Immo (https://nopalou.com/immo) :
 ✅ Vos fiches appartements, villas et terrains propres et sans filigrane parasite
 ✅ Vos demandes de visites qualifiées arrivent directement sur votre WhatsApp
 ✅ 0% de commission sur vos transactions et mandats
-🎁 30 jours 100% offerts pour équiper votre agence !
+🎁 {essai_jours} jours 100% offerts pour équiper votre agence !
 
 Découvrez l'espace agence : https://nopalou.com/agence
 
@@ -154,7 +162,7 @@ Nopalou Immo automatise votre gestion locative au Sénégal :
 ✅ Quittances de loyer numériques certifiées envoyées automatiquement par WhatsApp
 ✅ Encaissement direct des loyers par Wave et Orange Money sans retard
 ✅ Suivi en direct des états des lieux et historiques locataires
-🎁 1er mois d'essai offert pour tester sur vos premiers lots !
+🎁 {essai_jours} jours d'essai offerts pour tester sur vos premiers lots !
 
 Activez votre gestion locative : https://nopalou.com/immo
 
@@ -173,7 +181,7 @@ Nopalou Immo vous donne une vitrine professionnelle clé en main :
 ✅ Votre mini-site d'agent immobilier avec votre nom, contact WhatsApp et catalogue
 ✅ Partagez vos biens en 1 seul lien propre au lieu de saturer la mémoire WhatsApp de vos clients
 ✅ Bons de visite numériques et suivi de vos commissions
-🎁 30 jours 100% gratuits sans aucun engagement !
+🎁 {essai_jours} jours 100% gratuits sans aucun engagement !
 
 Créez votre profil en 1 minute : https://nopalou.com/agence
 
@@ -216,7 +224,7 @@ Aujourd'hui au Sénégal, les acquéreurs et locataires privilégient l'accès d
 • Bons de visite numériques et suivi des mandats de vos négociateurs
 • Espace client sécurisé pour vos propriétaires bailleurs
 
-Nous offrons 30 jours d'essai complet sans engagement pour digitaliser le catalogue de {nom_boutique} :
+Nous offrons {essai_jours} jours d'essai complet sans engagement pour digitaliser le catalogue de {nom_boutique} :
 👉 https://nopalou.com/agence
 
 Seriez-vous ouvert à une présentation rapide de 10 minutes cette semaine ?
@@ -240,7 +248,7 @@ Nopalou équipe votre commerce d'une solution tout-en-un simple et rapide :
 ✅ Carnet de dettes client avec rappels WhatsApp en 1 clic
 ✅ Bilan du jour et alertes de rupture de stock envoyés par WhatsApp
 ✅ Paiements Wave & Orange Money directs sans intermédiaire
-🎁 1 mois d'essai offert pour équiper votre magasin !
+🎁 {essai_jours} jours d'essai offerts pour équiper votre magasin !
 
 Testez sans engagement : https://nopalou.com/tarifs-boutique
 
@@ -260,7 +268,7 @@ Nopalou intègre le Carnet de Dettes intelligent pour commerçants :
 📥 Importez vos clients et soldes existants d'un coup depuis un fichier Excel
 🔔 Vous envoyez des rappels polis sur WhatsApp en 1 seul clic avec lien Wave
 📊 Vous suivez vos encaissements Wave et vos marges nettes
-🎁 1er mois 100% offert sans carte bancaire !
+🎁 {essai_jours} jours 100% offerts sans carte bancaire !
 
 Testez gratuitement dès maintenant : https://nopalou.com/tarifs-boutique` + FOOTER_OPTOUT
   },
@@ -277,7 +285,7 @@ Fini le désordre des photos perdues dans vos statuts :
 ✨ Publiez votre arrivage en 2 minutes ou envoyez directement les photos au bot WhatsApp
 🌊 Recevez l'argent par Wave dès la réservation
 ⚡ Vos clients commandent directement sur votre WhatsApp
-🎁 30 jours offerts pour écouler votre prochain arrivage !
+🎁 {essai_jours} jours offerts pour écouler votre prochain arrivage !
 
 Lien direct : https://nopalou.com/creer-boutique` + FOOTER_OPTOUT
   },
@@ -301,7 +309,7 @@ Contrairement aux plateformes étrangères comme Shopify qui exigent une carte b
 • Facturation normalisée OHADA avec NINEA et RCCM
 • Suivi des stocks et clôtures de caisse (Rapports Z & Bilan WhatsApp)
 
-Nous vous offrons 30 jours d'essai gratuit pour équiper vos magasins :
+Nous vous offrons {essai_jours} jours d'essai gratuit pour équiper vos magasins :
 👉 https://nopalou.com/tarifs-boutique
 
 Seriez-vous disponible pour un échange rapide de 5 minutes cette semaine ?
@@ -1847,7 +1855,7 @@ function interpolerMessage(template, lead) {
   if (!template) return '';
 
   // 1. Résolution préalable du Spintax ({Salam|Bonjour|Hello})
-  let message = traiterSpintax(template);
+  let message = traiterSpintax(remplacerEssaiJours(template));
 
   const rawNom = (lead.nom_boutique || '').trim();
   const rawPrenom = (lead.contact_nom || '').trim();
@@ -2397,6 +2405,12 @@ async function ensureProspectionTables() {
 
 // ── Résolution des Paramètres Meta Template par Persona/Catégorie ───────────
 function resoudreParametresMetaTemplate(lead) {
+  const p = resoudreParametresMetaTemplateBrut(lead);
+  for (const k of Object.keys(p)) p[k] = remplacerEssaiJours(p[k]);
+  return p;
+}
+
+function resoudreParametresMetaTemplateBrut(lead) {
   const cat = String(lead?.categorie || '').toLowerCase();
   const sousProfil = String(lead?.sous_profil || '').toLowerCase();
   const enseigneAuth = estNomPropreAuthentique(lead?.nom_boutique) ? lead.nom_boutique.trim() : null;
@@ -2411,11 +2425,11 @@ function resoudreParametresMetaTemplate(lead) {
       features: isGestionnaire
         ? '🏢 Quittances automatiques, loyers Wave/OM & baux sur mobile.'
         : '🏢 Mandats, visites WhatsApp & vitrine immobilière mobile.',
-      googleProof: '🎁 30j offerts & baux (tapez Nopalou Immo sur Google 🇸🇳)',
+      googleProof: '🎁 {essai_jours}j offerts & baux (tapez Nopalou Immo sur Google 🇸🇳)',
       title: titre,
       detail: isGestionnaire
-        ? '🏢 Gérez vos biens, quittances automatiques et loyers Wave/OM sans commission. 30 jours offerts. Tapez Nopalou Immo sur Google 🇸🇳. Répondez OUI pour activer votre espace.'
-        : '🏢 Gérez vos mandats, visites WhatsApp et vitrine agence sans commission. 30 jours offerts. Tapez Nopalou Immo sur Google 🇸🇳. Répondez OUI pour activer votre agence en 30s.',
+        ? '🏢 Gérez vos biens, quittances automatiques et loyers Wave/OM sans commission. {essai_jours} jours offerts. Tapez Nopalou Immo sur Google 🇸🇳. Répondez OUI pour activer votre espace.'
+        : '🏢 Gérez vos mandats, visites WhatsApp et vitrine agence sans commission. {essai_jours} jours offerts. Tapez Nopalou Immo sur Google 🇸🇳. Répondez OUI pour activer votre agence en 30s.',
       url: 'https://nopalou.com/agence',
       buttonParam: 'agence',
     };
@@ -2424,9 +2438,9 @@ function resoudreParametresMetaTemplate(lead) {
   if (cat === 'auto-moto') {
     return {
       features: '🚗 Vitrine véhicules, fiches techniques & contacts WhatsApp.',
-      googleProof: '🎁 30 jours offerts (tapez Nopalou sur Google 🇸🇳)',
+      googleProof: '🎁 {essai_jours} jours offerts (tapez Nopalou sur Google 🇸🇳)',
       title: enseigneAuth ? `🚗 Nopalou Auto — ${enseigneAuth}`.slice(0, 50) : '🚗 Nopalou Auto — Showroom & Vente',
-      detail: '🚗 Présentez votre parc auto, fiches techniques et recevez vos acheteurs directement sur WhatsApp. 30 jours offerts. Répondez OUI pour activer votre showroom.',
+      detail: '🚗 Présentez votre parc auto, fiches techniques et recevez vos acheteurs directement sur WhatsApp. {essai_jours} jours offerts. Répondez OUI pour activer votre showroom.',
       url: 'https://nopalou.com/annonces',
       buttonParam: 'annonces',
     };
@@ -2435,9 +2449,9 @@ function resoudreParametresMetaTemplate(lead) {
   if (cat === 'grossiste') {
     return {
       features: '📦 Catalogue de gros, tarifs dégressifs & encaissement mobile.',
-      googleProof: '🎁 30 jours offerts (tapez Nopalou sur Google 🇸🇳)',
+      googleProof: '🎁 {essai_jours} jours offerts (tapez Nopalou sur Google 🇸🇳)',
       title: enseigneAuth ? `📦 Nopalou B2B — ${enseigneAuth}`.slice(0, 50) : '📦 Nopalou Gros & Demi-gros',
-      detail: '📦 Partagez votre catalogue de gros avec tarifs dégressifs et encaissez par Wave/OM sans commission. 30 jours offerts. Répondez OUI pour configurer votre catalogue.',
+      detail: '📦 Partagez votre catalogue de gros avec tarifs dégressifs et encaissez par Wave/OM sans commission. {essai_jours} jours offerts. Répondez OUI pour configurer votre catalogue.',
       url: 'https://nopalou.com/tarifs-boutique',
       buttonParam: 'tarifs-boutique',
     };
@@ -2446,9 +2460,9 @@ function resoudreParametresMetaTemplate(lead) {
   if (cat === 'restaurant') {
     return {
       features: '🍽️ Menu digital interactif, commandes WhatsApp & livraison.',
-      googleProof: '🎁 30 jours offerts (tapez Nopalou sur Google 🇸🇳)',
+      googleProof: '🎁 {essai_jours} jours offerts (tapez Nopalou sur Google 🇸🇳)',
       title: enseigneAuth ? `🍽️ Nopalou Resto — ${enseigneAuth}`.slice(0, 50) : '🍽️ Nopalou — Menu & Commandes',
-      detail: '🍽️ Partagez votre carte sur WhatsApp, recevez les commandes et encaissez par Wave/OM sans commission. 30 jours offerts. Répondez OUI pour créer votre menu.',
+      detail: '🍽️ Partagez votre carte sur WhatsApp, recevez les commandes et encaissez par Wave/OM sans commission. {essai_jours} jours offerts. Répondez OUI pour créer votre menu.',
       url: 'https://nopalou.com/tarifs-boutique',
       buttonParam: 'tarifs-boutique',
     };
@@ -2457,9 +2471,9 @@ function resoudreParametresMetaTemplate(lead) {
   // Par défaut (mode, tech, divers, superette, etc.)
   return {
     features: '📱 Vendez & encaissez par Wave / OM sans commission sur mobile.',
-    googleProof: '🎁 30 jours offerts & factures (tapez Nopalou sur Google 🇸🇳)',
+    googleProof: '🎁 {essai_jours} jours offerts & factures (tapez Nopalou sur Google 🇸🇳)',
     title: enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse & Gestion',
-    detail: '📱 Vendez & encaissez par Wave / OM sans commission. 30 jours offerts. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour ouvrir votre boutique en 30s.',
+    detail: '📱 Vendez & encaissez par Wave / OM sans commission. {essai_jours} jours offerts. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour ouvrir votre boutique en 30s.',
     url: 'https://nopalou.com/tarifs-boutique',
     buttonParam: 'tarifs-boutique',
   };
@@ -3193,7 +3207,7 @@ async function traiterRelancesProspectsAutomatiques({ limite = 30, simulation = 
           const resp = await sendWhatsAppProspectionDirecte(lead.telephone, {
             features: lead.categorie === 'immo'
               ? '🏢 Référencez vos biens gratuitement sur Nopalou Immo.'
-              : '📱 Activez vos 30 jours offerts sans commission sur Nopalou.',
+              : '📱 Activez vos {essai_jours} jours offerts sans commission sur Nopalou.',
             googleProof: '🎁 Répondez OUI pour démarrer, ou STOP pour vous désinscrire.',
           });
           if (resp && resp.success !== false) {
@@ -3256,7 +3270,7 @@ async function traiterRelancesProspectsAutomatiques({ limite = 30, simulation = 
         try {
           const resp = await sendWhatsAppProspectionDirecte(lead.telephone, {
             features: metaParams.features,
-            googleProof: '🎁 Avez-vous pu tester ? Répondez OUI pour 30 jours offerts.',
+            googleProof: '🎁 Avez-vous pu tester ? Répondez OUI pour {essai_jours} jours offerts.',
           });
           if (resp && resp.success !== false) {
             stats.relancesJ3++;

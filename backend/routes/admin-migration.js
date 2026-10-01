@@ -456,7 +456,7 @@ router.post('/welcome-kit', requireAdminAuth, requireAdminRole('super_admin'), a
 ✨ *Ce qui est configuré pour vous :*
 ✅ Vos produits et photos sont déjà en ligne
 ✅ Encaissements Wave & Orange Money prêts
-✅ 30 Jours d'Essai 100% OFFERTS sur le forfait ${b.plan || 'Pro'}
+✅ ${Math.round(Number(require('../lib/settingsCache').getSync('abonnement_essai_jours'))) || 30} Jours d'Essai 100% OFFERTS sur le forfait ${b.plan || 'Pro'}
 
 📲 Partagez votre lien de boutique à tous vos clients sur WhatsApp pour commencer à recevoir des commandes !
 Une question ? Notre équipe support reste à votre entière disposition. 🤝`;

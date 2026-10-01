@@ -97,3 +97,44 @@ describe('AUD-112 : conversion CRM seulement après un contact réel', () => {
     expect(pool.query).not.toHaveBeenCalled();
   });
 });
+
+describe('AUD-111 : la durée d\'essai annoncée vient du réglage admin', () => {
+  beforeEach(() => jest.resetModules());
+
+  const chargerAvecReglage = async (valeur) => {
+    jest.doMock('../../backend/models/db', () => ({
+      pool: { query: jest.fn(async () => ({ rows: valeur === null ? [] : [{ key: 'abonnement_essai_jours', value: valeur }] })) },
+    }));
+    jest.doMock('../../backend/services/whatsapp', () => ({
+      sendWhatsAppText: jest.fn(), sendWhatsAppNotification: jest.fn(), sendWhatsAppProspectionDirecte: jest.fn(),
+      normalisePhone: (t) => String(t || '').replace(/\D/g, ''), estDesinscrit: jest.fn(),
+    }));
+    const cfg = require('../../backend/lib/settingsCache');
+    await cfg.get('abonnement_essai_jours'); // charge le cache depuis le (faux) pool
+    return cfg;
+  };
+
+  test('le défaut du code est 30 jours (plus 14)', () => {
+    const cfg = require('../../backend/lib/settingsCache');
+    expect(cfg.DEFAULTS.abonnement_essai_jours).toBe('30');
+  });
+
+  test('gabarits de prospection : aucun « 30 jours » écrit en dur, valeur du réglage appliquée', async () => {
+    await chargerAvecReglage('45');
+    const { TEMPLATES_PAR_DEFAUT, interpolerMessage } = require('../../backend/services/prospection');
+    const brut = TEMPLATES_PAR_DEFAUT.map(t => t.texte).join('\n');
+    expect(brut).not.toMatch(/30 jours|30j |1er mois/i);
+    expect(brut).toMatch(/\{essai_jours\}/);
+    const message = interpolerMessage(TEMPLATES_PAR_DEFAUT[0].texte, { nom_boutique: 'Test', contact_nom: '' });
+    expect(message).toMatch(/45 jours/);
+    expect(message).not.toMatch(/\{essai_jours\}/);
+  });
+
+  test('FAQ WhatsApp : durée issue du réglage', async () => {
+    await chargerAvecReglage('21');
+    const { getFAQWhatsApp } = require('../../backend/lib/faq');
+    const textes = getFAQWhatsApp('https://nopalou.com').map(e => e.reponse).join('\n');
+    expect(textes).toMatch(/21 jours/);
+    expect(textes).not.toMatch(/1er mois/);
+  });
+});

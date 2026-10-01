@@ -1,4 +1,7 @@
 // backend/lib/faq.js — Base de connaissances FAQ unifiée (WhatsApp & Web)
+const cfg = require('./settingsCache');
+// AUD-111 : durée d'essai lue dans le réglage admin, jamais écrite en dur.
+const essaiJours = () => Math.round(Number(cfg.getSync('abonnement_essai_jours'))) || 30;
 const SITE_DEFAULT = process.env.FRONTEND_URL || 'https://nopalou.com';
 
 function normaliserTexte(s) {
@@ -26,7 +29,7 @@ function getFAQWhatsApp(site = SITE_DEFAULT) {
     },
     {
       motsCles: ['boutique', 'vendre en ligne', 'creer shop', 'ouvrir shop'],
-      reponse: `🛍️ *Créer votre boutique*\n\nVendez directement sur Nopalou : catalogue produits, statistiques, encaissements Wave & Orange Money 1-Clic. 1er mois 100% OFFERT sur tous nos forfaits !\n👉 ${site}/creer-boutique`,
+      reponse: `🛍️ *Créer votre boutique*\n\nVendez directement sur Nopalou : catalogue produits, statistiques, encaissements Wave & Orange Money 1-Clic. ${essaiJours()} jours 100% OFFERTS sur tous nos forfaits !\n👉 ${site}/creer-boutique`,
     },
     {
       motsCles: ['comparer', 'meilleur prix', 'moins cher'],
@@ -93,7 +96,7 @@ const FAQ_WEB = [
   {
     motsCles: ['vendre', 'creer boutique', 'devenir vendeur', 'marchand', 'ouvrir magasin'],
     titre: 'Ouvrir votre Boutique Nopalou',
-    reponse: 'Créer votre boutique sur Nopalou est rapide et gratuit le 1er mois : catalogue en ligne, caisse tactile et synchronisation WhatsApp automatique.',
+    reponse: `Créer votre boutique sur Nopalou est rapide et gratuit pendant ${essaiJours()} jours : catalogue en ligne, caisse tactile et synchronisation WhatsApp automatique.`,
     actionLabel: 'Créer ma boutique',
     actionUrl: '/creer-boutique',
   },

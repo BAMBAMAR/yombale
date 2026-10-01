@@ -16,7 +16,7 @@ const DEFAULTS = {
   plan_pro_prix:       '5000',
   plan_business_prix:  '10000',
   plan_decouverte_label: 'Boutique Taf Taf',
-  abonnement_essai_jours: '14',
+  abonnement_essai_jours: '30',
   plan_pro_label:      'Boutique Pro',
   plan_business_label: 'Boutique Business',
   kalpe_prix_mensuel:   '1000',
@@ -99,6 +99,13 @@ async function get(key) {
   return cache[key] ?? DEFAULTS[key] ?? null;
 }
 
+// Lecture synchrone (valeur en cache ou défaut) pour les textes composés hors contexte async ;
+// rafraîchit le cache en arrière-plan s'il est périmé.
+function getSync(key) {
+  if (Date.now() - lastLoaded > CACHE_TTL) loadSettings().catch(() => {});
+  return cache[key] ?? DEFAULTS[key] ?? null;
+}
+
 async function getAll() {
   if (Date.now() - lastLoaded > CACHE_TTL) await loadSettings();
   return { ...cache };
@@ -126,4 +133,4 @@ function invalidate() { lastLoaded = 0; }
 async function getNum(key) { return parseFloat(await get(key)) || 0; }
 async function getBool(key) { return (await get(key)) === 'true'; }
 
-module.exports = { get, getAll, set, setMany, getNum, getBool, invalidate, DEFAULTS };
+module.exports = { get, getSync, getAll, set, setMany, getNum, getBool, invalidate, DEFAULTS };
