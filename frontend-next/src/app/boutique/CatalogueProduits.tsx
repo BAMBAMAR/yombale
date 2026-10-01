@@ -312,7 +312,7 @@ function CatalogueProduits({
           }}
         >
           <p style={{ color: '#6b7280', margin: '0 0 16px', fontSize: 14 }}>
-            Votre catalogue est actuellement vide. Vous pouvez ajouter un premier produit ou pré-charger un pack de démarrage type.
+            Votre catalogue est actuellement vide. Ajoutez votre premier produit, ou chargez des articles d'exemple à adapter : vos clients ne les voient qu'après votre modification.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
@@ -330,7 +330,7 @@ function CatalogueProduits({
                 opacity: packLoading ? 0.7 : 1,
               }}
             >
-              {packLoading ? 'Chargement du pack…' : 'Activer le pack de démarrage (Articles types)'}
+              {packLoading ? 'Chargement des exemples…' : 'Charger des articles d\'exemple'}
             </button>
             <button
               onClick={() => setMode({ creating: 'rapide' })}

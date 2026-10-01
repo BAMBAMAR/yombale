@@ -337,6 +337,33 @@ export default function CatalogueProductCard({
                 </span>
               </span>
             )}
+
+            {/* AUD-118 : article d'exemple du pack de démarrage, invisible des clients tant qu'il n'est pas modifié */}
+            {(p as any).statut_moderation === 'exemple' && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(p)
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  background: '#FFF3E8',
+                  color: 'var(--accent, #C75B00)',
+                  border: '1px solid var(--border, #E8DDD2)',
+                  borderRadius: 20,
+                  padding: '2px 8px',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Article d'exemple : vos clients ne le voient pas. Modifiez-le (prix, photo) pour le publier."
+              >
+                <AlertCircle size={11} />
+                <span>Exemple, à modifier pour publier</span>
+              </span>
+            )}
           </div>
         </div>
       </div>

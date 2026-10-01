@@ -328,7 +328,8 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4, prix_achat=$5,
        images=$6, en_stock=$7, stock_quantite=$8, categorie=$9, caracteristiques=$10, variantes=$11, code_barre=$12,
-       unite_vente=$13, has_variants=$14, date_expiration=$15, updated_at=NOW()
+       unite_vente=$13, has_variants=$14, date_expiration=$15, updated_at=NOW(),
+       statut_moderation = CASE WHEN statut_moderation = 'exemple' THEN 'actif' ELSE statut_moderation END
        WHERE id=$16 AND boutique_id=$17 RETURNING *`,
       [nom||existing.rows[0].nom, description !== undefined ? (description || null) : existing.rows[0].description, safePrix, safePrixBarre, safePrixAchat,
        images, finalEnStock, safeStock, categorie||existing.rows[0].categorie||null,

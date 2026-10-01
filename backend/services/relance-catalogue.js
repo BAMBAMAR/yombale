@@ -64,7 +64,7 @@ async function envoyerRelanceCatalogueBoutique(boutiqueId, { messageCustom, titr
     `SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.actif, b.utilisateur_id,
             b.derniere_relance_catalogue_at, b.nb_relances_catalogue, b.relances_suspendues, b.nb_relances_sans_reponse,
             u.nom AS proprietaire_nom, split_part(u.nom, ' ', 1) AS proprietaire_prenom, u.telephone AS proprietaire_telephone,
-            (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits
+            (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id AND COALESCE(statut_moderation, 'actif') <> 'exemple') AS nb_produits
      FROM boutiques b
      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
      WHERE b.id = $1`,
@@ -168,7 +168,7 @@ async function recupererBoutiquesEligiblesRelance() {
     SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.created_at, b.utilisateur_id,
            b.derniere_relance_catalogue_at, b.nb_relances_catalogue,
            u.nom AS proprietaire_nom, split_part(u.nom, ' ', 1) AS proprietaire_prenom, u.telephone AS proprietaire_telephone,
-           (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits
+           (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id AND COALESCE(statut_moderation, 'actif') <> 'exemple') AS nb_produits
     FROM boutiques b
     LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
     WHERE b.actif = true
@@ -179,7 +179,7 @@ async function recupererBoutiquesEligiblesRelance() {
         b.derniere_relance_catalogue_at IS NULL 
         OR b.derniere_relance_catalogue_at <= NOW() - ($2 * INTERVAL '1 day')
       )
-      AND (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) <= $3
+      AND (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id AND COALESCE(statut_moderation, 'actif') <> 'exemple') <= $3
       AND (b.whatsapp IS NOT NULL OR b.telephone IS NOT NULL OR u.telephone IS NOT NULL)
     ORDER BY b.created_at DESC
     LIMIT 200

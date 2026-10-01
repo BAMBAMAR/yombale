@@ -51,6 +51,8 @@ function normaliserCleCategorie(cat) {
  * @param {boolean} forcer - Si true, injecte même s'il y a déjà des articles
  * @returns {Promise<{ succes: boolean, nbAjoutes: number, message: string }>}
  */
+// AUD-118 : les articles de démarrage sont des EXEMPLES (statut_moderation = 'exemple') : invisibles du public,
+// non commandables, exclus des indicateurs d'activation. Le marchand les publie en les modifiant.
 async function injecterStarterPack(boutiqueId, categorie, forcer = false) {
   if (!boutiqueId) {
     return { succes: false, nbAjoutes: 0, message: 'Boutique ID requis' };
@@ -81,8 +83,8 @@ async function injecterStarterPack(boutiqueId, categorie, forcer = false) {
 
       await pool.query(
         `INSERT INTO boutique_produits (
-          boutique_id, nom, description, prix, en_stock, stock_quantite, unite_vente, categorie, slug, ordre
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          boutique_id, nom, description, prix, en_stock, stock_quantite, unite_vente, categorie, slug, ordre, statut_moderation
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'exemple')`,
         [
           boutiqueId,
           it.nom,
