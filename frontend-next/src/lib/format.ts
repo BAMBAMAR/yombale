@@ -68,7 +68,7 @@ export function fcfa(prix: number | string | null | undefined, locale?: string):
   if (isNaN(num)) return '—';
   const activeLoc = detectActiveLocale(locale);
   const loc = activeLoc === 'ar' ? 'ar-EG-u-nu-arab' : activeLoc === 'en' ? 'en-US' : 'fr-FR';
-  return new Intl.NumberFormat(loc).format(Math.round(num)) + ' FCFA';
+  return (new Intl.NumberFormat(loc).format(Math.round(num)) + ' FCFA').replace(/[\u202F\u00A0]/g, ' ');
 }
 
 /** AUD-232 : accord en nombre à la française (0 et 1 au singulier) — « 1 agence », « 2 agences ». */
@@ -82,7 +82,7 @@ export function formatNombre(val: number | string | null | undefined, locale?: s
   if (isNaN(num)) return '0';
   const activeLoc = detectActiveLocale(locale);
   const loc = activeLoc === 'ar' ? 'ar-EG-u-nu-arab' : activeLoc === 'en' ? 'en-US' : 'fr-FR';
-  return new Intl.NumberFormat(loc).format(num);
+  return new Intl.NumberFormat(loc).format(num).replace(/[\u202F\u00A0]/g, ' ');
 }
 
 export function escapeHtml(s: string | null | undefined): string {
