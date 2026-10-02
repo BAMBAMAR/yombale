@@ -1,4 +1,4 @@
-﻿// Sonde AUDIT VOIX n°5 : Carnet de dettes boutique (useCarnetVoice -> CarnetVoiceActionPrompt -> POST transaction -> PostgreSQL).
+// Sonde AUDIT VOIX n°5 : Carnet de dettes boutique (useCarnetVoice -> CarnetVoiceActionPrompt -> POST transaction -> PostgreSQL).
 // Usage : . scripts\audit\audit-env.ps1 ; node scripts/audit/voice/05-e2e-carnet.mjs   (amorcer avec 03-seed-boutique.mjs)
 import { garde, ouvrirNavigateur, connexionUI, pool, FRONT } from './lib.mjs'
 garde()
@@ -38,6 +38,7 @@ const S = [
   ['C12', 'Moussa 5000', false],
 ]
 for (const [id, phrase, valider] of S) {
+  if (process.env.VOICE_FILTRE && !process.env.VOICE_FILTRE.split(',').includes(id)) continue
   await page.goto(FRONT + '/boutique?manage=' + bq.id + '&tab=carnet', { waitUntil: 'commit' })
   await page.waitForFunction(() => /Moussa Diop/.test(document.body.innerText), null, { timeout: 150000 }).catch(() => {})
   await page.waitForTimeout(1200)
