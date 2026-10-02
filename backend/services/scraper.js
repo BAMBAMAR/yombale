@@ -7,6 +7,7 @@ const scrapingLock = require('../lib/scrapingLock');
 const { RunCollecte, noterRequeteCourante, strict: statutsStricts } = require('../lib/scrapingRun');
 const { plafondPages } = require('../lib/scrapePagination');
 const { ordreParAnciennete } = require('../lib/ordreCollecte');
+const { normaliserUrlAchat } = require('../lib/urlAchat');
 const { parsePrix } = require('../lib/prix');
 const matching = require('./matching');
 
@@ -920,7 +921,7 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         continue;
       }
       item.prix = corrigerPrixParPlancher(prixVerifie, item.titre);
-      const cleanUrl = item.url && item.url.trim() ? item.url.trim() : null;
+      const cleanUrl = normaliserUrlAchat(item.url); // AUD-193 : paramètres de suivi et fragment retirés
       // Rejeter strictement les offres sans URL valide (évite les offres fantômes non-actionnables)
       if (!cleanUrl || !cleanUrl.startsWith('http')) {
         stats.filtres++;
@@ -1336,15 +1337,22 @@ async function offreEstMorte(url) {
 
     // 3. Détection dans le contenu HTML des messages explicites d'expiration/suppression/rupture
     if (typeof res.data === 'string') {
-      const lower = res.data.toLowerCase();
+      // AUD-191 : le texte d'indisponibilité n'est cherché que dans la zone principale de la page (titre, titres h1/h2 et début du
+      // contenu), après retrait des scripts, styles, menus, en-têtes et pieds de page. Avant, une page vivante qui contenait
+      // « page introuvable » n'importe où (gabarit, menu, script) était jugée morte et sa fiche retirée du stock.
+      const $ = cheerio.load(res.data);
+      $('script, style, noscript, template, nav, header, footer').remove();
+      const titres = `${$('title').text()} ${$('h1, h2').text()}`.toLowerCase();
+      const debutContenu = (($('main').text() || $('body').text()) || '').replace(/\s+/g, ' ').slice(0, 2500).toLowerCase();
+      const zone = `${titres} ${debutContenu}`;
       if (
-        lower.includes("ce produit n'est plus disponible") ||
-        lower.includes("cette annonce n'est plus disponible") ||
-        lower.includes("cette annonce a été désactivée") ||
-        lower.includes("annonce introuvable") ||
-        lower.includes("cette annonce n'existe plus") ||
-        lower.includes("cette annonce est expirée") ||
-        lower.includes("page introuvable")
+        zone.includes("ce produit n'est plus disponible") ||
+        zone.includes("cette annonce n'est plus disponible") ||
+        zone.includes("cette annonce a été désactivée") ||
+        zone.includes("annonce introuvable") ||
+        zone.includes("cette annonce n'existe plus") ||
+        zone.includes("cette annonce est expirée") ||
+        titres.includes("page introuvable") // « page introuvable » : seulement dans le titre ou un titre h1/h2 (page d'erreur)
       ) {
         return true;
       }
@@ -1360,7 +1368,9 @@ async function offreEstMorte(url) {
   }
 }
 
-async function nettoyerOffresExpirees(limite = 200) {
+// AUD-191 : 200 offres par nuit pour 12 348 offres = 62 jours pour un tour complet, plus que la péremption de 45 jours ;
+// 600 par passage (VERIF_OFFRES_PAR_PASSAGE) ramène le tour à 21 jours.
+async function nettoyerOffresExpirees(limite = parseInt(process.env.VERIF_OFFRES_PAR_PASSAGE, 10) || 600) {
   const { rows: offres } = await pool.query(
     `SELECT id, url_achat, produit_id FROM offres
      WHERE stock = true AND scraped_at < NOW() - INTERVAL '20 hours'
@@ -1567,6 +1577,11 @@ function demarrerCronsMetier() {
   // Alertes de baisse de prix : vérification quotidienne à 08h00 au lieu de toutes les 15 min
   cron.schedule('0 8 * * *', () => {
     executerTacheCron('verifier_alertes_prix', () => verifierAlertsPrix()).catch(err => console.error('[ALERTES]', err.message));
+  });
+
+  // AUD-192 : synchronisation hebdomadaire du catalogue télécom ARTP (jusqu'ici manuelle : 144 forfaits figés depuis le 09/06)
+  cron.schedule('0 5 * * 1', () => {
+    executerTacheCron('sync_artp_telecom', () => require('./scraper-artp').scraperARTP({ dryRun: false })).catch(err => console.error('[ARTP CRON]', err.message));
   });
 
   const { detecterAnomalies } = require('./anomaly-detector');

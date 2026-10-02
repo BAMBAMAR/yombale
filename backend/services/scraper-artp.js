@@ -4,7 +4,11 @@
 // Déclenchement : POST /api/telecom/sync-artp (protégé adminSecretOnly, arrière-plan)
 
 const https  = require('https');
+const tls    = require('tls');
+const fs     = require('fs');
+const path   = require('path');
 const { pool } = require('../models/db');
+const { RunCollecte, noterRequeteCourante } = require('../lib/scrapingRun');
 
 const BASE_URL = 'https://e-services.artp.sn/catalogue-api';
 
@@ -16,19 +20,31 @@ const TYPE_MAP = {
   'Voix-Sms':        'combo',
 };
 
-// ─── Requête HTTPS (SSL non-vérifié — cert ARTP auto-signé) ──────────────
+// ─── Requête HTTPS (certificat vérifié : AUD-192) ─────────────────────────
+// Le certificat de e-services.artp.sn n'est PAS auto-signé (le commentaire d'origine était faux) : c'est un certificat Sectigo
+// valide dont le serveur n'envoie pas l'intermédiaire. Cet intermédiaire public est fourni dans backend/certs. Retour arrière
+// explicite et journalisé : ARTP_TLS_INSECURE=true.
+function optionsTls() {
+  if (process.env.ARTP_TLS_INSECURE === 'true') {
+    console.warn('[ARTP] ARTP_TLS_INSECURE=true : certificat NON vérifié (retour arrière explicite)');
+    return { rejectUnauthorized: false };
+  }
+  const intermediaire = fs.readFileSync(path.join(__dirname, '..', 'certs', 'sectigo-public-server-ca-dv-r36.pem'), 'utf8');
+  return { ca: [...tls.rootCertificates, intermediaire] };
+}
 
-function apiFetch(path) {
+function apiFetch(chemin) {
   return new Promise((resolve, reject) => {
-    const url = BASE_URL + path;
+    const url = BASE_URL + chemin;
     const req = https.get(url, {
-      rejectUnauthorized: false,
+      ...optionsTls(),
       headers: {
         'Accept':  'application/json',
         'Referer': 'https://e-services.artp.sn/catalogues',
         'User-Agent': 'Mozilla/5.0 (compatible; Nopalou-Scraper/1.0)',
       },
     }, (res) => {
+      noterRequeteCourante(res.statusCode);
       let body = '';
       res.on('data', d => body += d);
       res.on('end', () => {
@@ -39,7 +55,7 @@ function apiFetch(path) {
         catch (e) { reject(new Error(`JSON invalide: ${e.message}`)); }
       });
     });
-    req.on('error', reject);
+    req.on('error', (e) => { noterRequeteCourante(e.code || 'none'); reject(e); });
     req.setTimeout(15000, () => { req.destroy(); reject(new Error(`Timeout ${url}`)); });
   });
 }
@@ -75,7 +91,20 @@ async function upsertForfait(f) {
 
 // ─── Point d'entrée principal ─────────────────────────────────────────────
 
-async function scraperARTP({ dryRun = false } = {}) {
+// AUD-192 / AUD-173 : le passage est mesuré et évalué comme les autres sources (0 forfait lu = échec, alerte si répété)
+async function scraperARTP(options = {}) {
+  const run = new RunCollecte({ source: 'ARTP', systeme: 'telecom', categoriesCibles: 1 });
+  const resultats = await run.executer(() => scraperARTPMesure(options));
+  run.noterCategorie('catalogue', resultats.inseres);
+  if (!options.dryRun) {
+    const verdict = await run.cloturer(pool, { itemsExtraits: resultats.scrapes, itemsInseres: resultats.inseres, itemsFiltres: resultats.ignores });
+    resultats.statut = verdict.statut;
+    resultats.motifs = verdict.motifs;
+  }
+  return resultats;
+}
+
+async function scraperARTPMesure({ dryRun = false } = {}) {
   const resultats = { scrapes: 0, inseres: 0, ignores: 0, erreurs: [], dryRun };
 
   try {
