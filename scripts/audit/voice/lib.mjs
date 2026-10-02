@@ -75,6 +75,9 @@ export async function ouvrirNavigateur({ headless = true, viewport = { width: 41
   const browser = await chromium.launch({ headless, args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] })
   const storageState = email && fs.existsSync(etatSession(email)) ? etatSession(email) : undefined // la limite de connexions (15 min) interdit de se reconnecter a chaque sonde
   const context = await browser.newContext({ viewport, permissions: ['microphone'], locale: 'fr-FR', isMobile: true, hasTouch: true, storageState })
+  // f8649ede : écran d'information unique avant la première demande du micro ; les sondes le considèrent déjà accepté
+  // (VOICE_SANS_CONSENTEMENT=1 pour tester l'écran lui-même)
+  if (!process.env.VOICE_SANS_CONSENTEMENT) await context.addInitScript(() => { try { localStorage.setItem('nopalou_voice_consent_v1', '1') } catch {} })
   await context.route('**/*', route => {
     const h = new URL(route.request().url()).hostname
     if (h === 'localhost' || h === '127.0.0.1') return route.continue()

@@ -1,0 +1,40 @@
+// Parcours immobilier (mobile) : /immo -> quartier "Almadies" + location -> résultats -> fiche -> contact.
+// Usage : node scripts/audit/ux-parcours/11-immo.js <sortieDir>
+const { chromium } = require('playwright');
+const path = require('path');
+const [, , out] = process.argv;
+(async () => {
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, locale: 'fr-FR' });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => { window.__opened = []; window.open = (u) => { window.__opened.push(String(u)); return null; }; });
+  page.on('pageerror', e => console.log('PAGEERROR', e.message.slice(0, 150)));
+  page.on('request', r => { if (/\/api\/immo(\?|$)/.test(r.url())) console.log('API', r.url().replace(/^https?:\/\/[^/]+/, '')); });
+  const shot = n => page.screenshot({ path: path.join(out, `i-${n}.png`) });
+  await page.goto('http://localhost:3001/immo', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2500);
+  const compte = async () => (await page.locator('main').innerText()).match(/\d[\d\s ]*\s*(annonces?|biens?|résultats?)/gi)?.slice(0, 3);
+  console.log('compteurs initiaux :', await compte());
+  const q = page.locator('input[placeholder*="Almadies"]').first();
+  await q.fill('Almadies');
+  const sel = await page.locator('main select:visible').evaluateAll(es => es.map(s => [...s.options].map(o => o.text).join('/')));
+  console.log('listes :', sel);
+  const transaction = page.locator('main select:visible').filter({ hasText: /Location|Louer/ }).first();
+  if (await transaction.count()) await transaction.selectOption({ label: (await transaction.locator('option').allInnerTexts()).find(t => /Location|Louer/.test(t)) });
+  await q.press('Enter');
+  await page.waitForTimeout(3500);
+  console.log('URL :', page.url().replace('http://localhost:3001', ''), '; compteurs :', await compte());
+  await shot('1-resultats');
+  const cartes = await page.evaluate(() => [...document.querySelectorAll('main a[href^="/immo/"]')].filter(a => a.getBoundingClientRect().height > 60).slice(0, 8).map(a => a.innerText.replace(/\s+/g, ' ').slice(0, 110) + ' => ' + a.getAttribute('href')));
+  console.log('premières cartes :\n  ' + cartes.join('\n  '));
+  const premiere = page.locator('main a[href^="/immo/"]').filter({ hasText: /FCFA|F CFA|CFA/ }).first();
+  const href = await premiere.getAttribute('href');
+  await page.goto('http://localhost:3001' + href, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(3000);
+  await shot('2-fiche');
+  console.log('fiche', href, ':', (await page.locator('main').innerText()).replace(/\n+/g, ' | ').slice(0, 900));
+  const ctas = await page.evaluate(() => [...document.querySelectorAll('main a, main button')].filter(e => /appeler|whatsapp|contacter|visite|afficher|numéro/i.test(e.innerText)).map(e => `${e.innerText.trim().replace(/\s+/g, ' ').slice(0, 50)} -> ${e.getAttribute('href') || 'bouton'}`).slice(0, 8));
+  console.log('CTA contact :', ctas);
+  await page.goto('http://localhost:3001/immo?retour=1', { waitUntil: 'domcontentloaded' });
+  await browser.close();
+})();
