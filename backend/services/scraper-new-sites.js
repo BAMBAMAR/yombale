@@ -17,6 +17,7 @@
 const axios   = require('axios');
 const { noterRequeteCourante } = require('../lib/scrapingRun');
 const { plafondPages, plafondPagesWoo } = require('../lib/scrapePagination');
+const { parsePrix } = require('../lib/prix');
 const cheerio = require('cheerio');
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -29,17 +30,9 @@ const UA_POOL = [
 const randUA = () => UA_POOL[Math.floor(Math.random() * UA_POOL.length)];
 const sleep  = ms => new Promise(r => setTimeout(r, ms));
 
-function nettoyerPrix(t) {
-  if (!t) return 0;
-  let str = (t + '').trim();
-  const lignes = str.split(/\n|\r|\t|\s{2,}|[-–—/]/).map(s => s.trim()).filter(Boolean);
-  const cible = lignes.length > 0 ? lignes[0] : str;
-  const m = cible.match(/(\d{1,3}(?:[\s.\u00a0]\d{3})+|\d+)(?:[.,](\d{1,2}))?/);
-  if (!m) return 0;
-  const entier = m[1].replace(/[\s.\u00a0]/g, '');
-  const n = parseInt(entier, 10);
-  return isNaN(n) || n < 500 ? 0 : n;
-}
+// AUD-187 : parseur de prix commun (lib/prix.js) ; 0 = prix illisible ou < 500
+function nettoyerPrix(t) { return parsePrix(t, { min: 500 }) || 0; }
+
 function nettoyerTitre(t) {
   return (t || '').trim().replace(/\s+/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '').slice(0, 255);
 }
@@ -156,7 +149,7 @@ async function scraperWooStoreAPI(baseUrl, nom, maxPages = 8) {
         const prix     = rawUnit > 0 ? Math.round(prixRaw / Math.pow(10, rawUnit)) : prixRaw;
         const img  = p.images?.[0]?.src || null;
         const url  = p.permalink || `${baseUrl}/?p=${p.id}`;
-        if (titre.length > 3 && prix > 500) resultats.push({ titre, prix, url, image_url: img });
+        if (titre.length > 3 && prix > 500) resultats.push({ titre, prix, url, image_url: img, prix_brut: `${p.prices?.price ?? ''} ${currCode || 'XOF'}`.trim() }); // AUD-187
       }
       console.log(`[WC-STORE] ${nom} p${page}: ${data.length} (total: ${resultats.length})`);
       await sleep(1000 + Math.random() * 500);
@@ -257,7 +250,7 @@ async function scraperHTML(baseUrl, nom, shopUrls, maxPages = 3) {
 
             if (titre.length > 3 && prix > 500 && !vus.has(titre)) {
               vus.add(titre);
-              resultats.push({ titre, prix, url: href, image_url: imgFull });
+              resultats.push({ titre, prix, url: href, image_url: imgFull, prix_brut: String(prixTxt).trim().slice(0, 60) }); // AUD-187
               found++;
             }
           });

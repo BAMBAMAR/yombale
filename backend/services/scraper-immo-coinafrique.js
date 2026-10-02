@@ -6,6 +6,7 @@ const cheerio = require('cheerio');
 const { pool } = require('../models/db');
 const { RunCollecte, noterRequeteCourante } = require('../lib/scrapingRun');
 const { plafondPagesImmo } = require('../lib/scrapePagination');
+const { parsePrix: lirePrix } = require('../lib/prix');
 
 const BASE  = 'https://sn.coinafrique.com';
 const DELAY = 3000; // CoinAfrique est lent — respecter un délai plus long
@@ -172,8 +173,7 @@ async function scraperPage(url, type_bien_defaut) {
       // Prix : data-ad-price sur .card-fav ou .ad__card-price
       const prixRaw = $el.find('[data-ad-price]').attr('data-ad-price')
                    || $el.find('[class*="price"]').first().text();
-      const prixV = prixRaw ? parseInt(String(prixRaw).replace(/[^0-9]/g,''), 10) : 0;
-      const prix = (prixV >= 10_000 && prixV < 999_000_000) ? prixV : null;
+      const prix = lirePrix(prixRaw, { min: 10_000, max: 998_999_999 }); // AUD-187 : parseur commun (un data-ad-price "150000.0" n'est plus lu 1 500 000)
 
       // Image : img.ad__card-img avec src direct
       const img = $el.find('img.ad__card-img, img').first();

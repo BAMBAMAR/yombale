@@ -6,6 +6,7 @@ const cheerio = require('cheerio');
 const { pool } = require('../models/db');
 const { RunCollecte, noterRequeteCourante } = require('../lib/scrapingRun');
 const { plafondPagesImmo } = require('../lib/scrapePagination');
+const { parsePrix: lirePrix } = require('../lib/prix');
 
 const BASE  = 'https://www.expat-dakar.com';
 const DELAY = 1500;
@@ -56,13 +57,8 @@ async function fetchPage(url, retries = 2) {
     }
   }
 }
-function parsePrix(txt) {
-  if (!txt) return null;
-  const clean = txt.replace(/[^0-9]/g, '');
-  const v = parseInt(clean, 10);
-  // Minimum 10 000 FCFA — rejette les valeurs parasites (numéros de pièces, étages, etc.)
-  return (v >= 10_000 && v < 999_000_000) ? v : null;
-}
+// AUD-187 : parseur commun ; minimum 10 000 FCFA (rejette numéros de pièces, étages...), maximum exclu 999 000 000
+function parsePrix(txt) { return lirePrix(txt, { min: 10_000, max: 998_999_999 }); }
 
 function parseNbChambres(txt) {
   if (!txt) return null;

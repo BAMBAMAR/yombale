@@ -25,6 +25,7 @@ const path = require('path');
 const { pool } = require('../models/db');
 const scrapingLock = require('../lib/scrapingLock');
 const { RunCollecte } = require('../lib/scrapingRun');
+const { extrairePrixTexte } = require('../lib/prix');
 
 // Session sauvegardée via `node scripts/fb-login-setup.js` (gère le 2FA manuellement une fois)
 const SESSION_FILE = path.join(__dirname, '../.fb-session.json');
@@ -358,28 +359,10 @@ function extraireTitreIntelligentFB(texte) {
   return (fallback.length >= 4 ? fallback : null) || 'Annonce';
 }
 
+// AUD-187 : extraction commune (lib/prix.js) : montant + devise, "1,5M", "35k", "prix : 25000" ; jamais un numéro de téléphone
 function parsePrixFB(texte) {
   if (!texte) return null;
-  const t = purgerUnicodeStealthFB(texte);
-  // Format classique : "150 000 FCFA"
-  let m = t.match(/(?:prix\s*[:=-]?\s*)?(\d[\d\s.]{3,12})\s*(?:fcfa|xof|f\b|fr\b)/i);
-  if (m) {
-    const v = parseInt(m[1].replace(/[\s.]/g, ''), 10);
-    if (v >= 500 && v < 500_000_000) return v;
-  }
-  // Format raccourci : "35k", "35 k", "35.000k" → 35 000
-  m = t.match(/(\d+(?:[.,]\d+)?)\s*k\b/i);
-  if (m) {
-    const v = Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
-    if (v >= 500 && v < 500_000_000) return v;
-  }
-  // Format "Prix 25.000", "Prix: 25000", "A 15000"
-  m = t.match(/(?:prix|à|a)\s*[:=-]?\s*(\d{4,9})\b/i);
-  if (m) {
-    const v = parseInt(m[1], 10);
-    if (v >= 1000 && v < 500_000_000) return v;
-  }
-  return null;
+  return extrairePrixTexte(purgerUnicodeStealthFB(texte), { min: 500, max: 499_999_999 });
 }
 
 function parseVilleFB(texte, villeDefaut) {

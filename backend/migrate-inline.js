@@ -2980,6 +2980,8 @@ module.exports = async function migrateInline(customConnStr = null) {
        erreur_msg      TEXT
      )`,
     `CREATE INDEX IF NOT EXISTS idx_scraping_runs_source ON scraping_runs(source, started_at DESC)`,
+    // AUD-187 : prix tel que publié par la source (provenance), à côté du prix normalisé
+    `ALTER TABLE offres ADD COLUMN IF NOT EXISTS prix_brut TEXT`,
     `CREATE TABLE IF NOT EXISTS scraping_run_pages (
        id          BIGSERIAL PRIMARY KEY,
        run_id      BIGINT REFERENCES scraping_runs(id) ON DELETE CASCADE,

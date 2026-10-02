@@ -6,6 +6,7 @@ const { pool } = require('../models/db');
 const scrapingLock = require('../lib/scrapingLock');
 const { RunCollecte, noterRequeteCourante, strict: statutsStricts } = require('../lib/scrapingRun');
 const { plafondPages } = require('../lib/scrapePagination');
+const { parsePrix } = require('../lib/prix');
 const matching = require('./matching');
 
 const UA = [
@@ -136,19 +137,8 @@ const CAT_MOTS = [
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-function nettoyerPrix(t) {
-  if (!t) return 0;
-  let str = (t + '').trim();
-  str = str.replace(/^(?:CFA|FCFA|XOF|F)\s*/i, '').trim();
-  const lignes = str.split(/\n|\r|\t|\s{2,}|[-–—/]/).map(s => s.trim()).filter(Boolean);
-  const cible = lignes.length > 0 ? lignes[0] : str;
-  let normalise = cible.replace(/,(\d{3})(?!\d)/g, '$1').replace(/\.(\d{3})(?!\d)/g, '$1');
-  const m = normalise.match(/(\d{1,3}(?:[\s\u00a0]\d{3})+|\d+)(?:[.,](\d{1,2}))?/);
-  if (!m) return 0;
-  const entier = m[1].replace(/[\s\u00a0]/g, '');
-  const n = parseInt(entier, 10);
-  return isNaN(n) || n < 100 ? 0 : n;
-}
+// AUD-187 : parseur de prix commun (lib/prix.js) ; 0 = prix illisible ou < 100
+function nettoyerPrix(t) { return parsePrix(t, { min: 100 }) || 0; }
 
 function nettoyerTitre(t) { return (t||'').trim().replace(/\s+/g,' ').slice(0,255); }
 function extraireMarque(titre) { const t=titre.toLowerCase(); return MARQUES.find(m=>t.includes(m.toLowerCase()))||null; }
@@ -477,7 +467,7 @@ async function scraperKaynoo(categorie='produits-hightech', maxPages=3) {
         const imgEl = $(el).find('.product-image-photo, .product-item-photo img, img').first();
         const img = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy-src') || imgEl.attr('data-original') || null;
         if (titre.length > 3 && prix > 500 && href) {
-          resultats.push({ titre, prix, url: href, image_url: img });
+          resultats.push({ titre, prix, url: href, image_url: img, prix_brut: String(prixStr).trim().slice(0, 60) }); // AUD-187 : prix tel que publié
           found++;
         }
       });
@@ -519,7 +509,7 @@ async function scraperAuchan(categorie='137-boissons', maxPages=3) {
         const ean = eanMatch ? eanMatch[1] : null;
 
         if (titre.length > 3 && prix > 500 && href) {
-          resultats.push({ titre, prix, url: href, image_url: img, ean });
+          resultats.push({ titre, prix, url: href, image_url: img, ean, prix_brut: String(prixStr).trim().slice(0, 60) }); // AUD-187 : prix tel que publié
           found++;
         }
       });
@@ -700,7 +690,7 @@ async function scraperJiji(categorie = 'mobile-phones', maxPages = 4) {
         const img = $(el).find('img').first().attr('src') || $(el).find('img').first().attr('data-src') || null;
 
         if (titre.length > 3 && prix > 500) {
-          resultats.push({ titre, prix, url: href, image_url: img });
+          resultats.push({ titre, prix, url: href, image_url: img, prix_brut: String(prixTxt).trim().slice(0, 60) }); // AUD-187 : prix tel que publié
           found++;
         }
       });
@@ -1027,9 +1017,10 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
                titre_marchand = $2,
                specs = $3,
                scraped_at = NOW(),
-               stock = true
+               stock = true,
+               prix_brut = COALESCE($5, prix_brut)
              WHERE id = $4`,
-            [item.prix, item.titre, JSON.stringify(specs), existingOffre.id]
+            [item.prix, item.titre, JSON.stringify(specs), existingOffre.id, item.prix_brut || null]
           );
 
           if (prixChange) {
@@ -1082,17 +1073,18 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
 
       // 2. Insertion de l'offre avec protection contre les doublons (produit_id, marchand_id)
       const { rows: resOffre } = await pool.query(
-        `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock)
-         VALUES($1, $2, $3, $4, $5, $6, NOW(), true)
+        `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock, prix_brut)
+         VALUES($1, $2, $3, $4, $5, $6, NOW(), true, $7)
          ON CONFLICT (produit_id, marchand_id)
          DO UPDATE SET url_achat = COALESCE(EXCLUDED.url_achat, offres.url_achat),
                        prix = EXCLUDED.prix,
                        titre_marchand = EXCLUDED.titre_marchand,
                        specs = EXCLUDED.specs,
                        scraped_at = NOW(),
-                       stock = true
+                       stock = true,
+                       prix_brut = COALESCE(EXCLUDED.prix_brut, offres.prix_brut)
          RETURNING id`,
-        [produitId, marchandId, item.prix, cleanUrl, item.titre, JSON.stringify(specs)]
+        [produitId, marchandId, item.prix, cleanUrl, item.titre, JSON.stringify(specs), item.prix_brut || null]
       );
       offreRows = resOffre;
 

@@ -4,6 +4,7 @@
 
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { extrairePrixTexte: lireDansTexte } = require('../lib/prix');
 const { pool } = require('../models/db');
 const {
   normaliserTelephoneSenegal,
@@ -18,32 +19,9 @@ const {
 const REGEX_TEL_SN = /(?:(?:\+|00)?221)?[\s.-]?(7[05678][\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}|7[05678]\d{7})/g;
 
 // Regex pour extraire un prix en FCFA / XOF / F
+// AUD-187 : extraction commune (lib/prix.js), validée par la cohérence de la catégorie (loyer, véhicule, commerce)
 function extrairePrixTexte(texte, categorie) {
-  if (!texte) return null;
-  const t = texte.replace(/\s+/g, ' ');
-
-  // Format explicite : "150 000 FCFA", "150000 F", "25.000 CFA", "350000/mois"
-  let m = t.match(/(?:prix\s*[:=-]?\s*)?(\d[\d\s.]{3,12})\s*(?:fcfa|xof|f\b|fr\b|cfa\b|\/(?:mois|jour))/i);
-  if (m) {
-    const v = parseInt(m[1].replace(/[\s.]/g, ''), 10);
-    if (estPrixCoherent(v, categorie)) return v;
-  }
-
-  // Format abrégé : "35k", "40 k" -> 35000, 40000
-  m = t.match(/(\d+(?:[.,]\d+)?)\s*k\b/i);
-  if (m) {
-    const v = Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
-    if (estPrixCoherent(v, categorie)) return v;
-  }
-
-  // Format "Prix: 25000"
-  m = t.match(/(?:prix|à|a)\s*[:=-]?\s*(\d{4,9})\b/i);
-  if (m) {
-    const v = parseInt(m[1], 10);
-    if (estPrixCoherent(v, categorie)) return v;
-  }
-
-  return null;
+  return lireDansTexte(texte, { valider: (v) => estPrixCoherent(v, categorie) });
 }
 
 function estPrixCoherent(prix, categorie) {
