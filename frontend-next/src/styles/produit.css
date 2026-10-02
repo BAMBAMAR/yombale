@@ -678,10 +678,25 @@
   .fiche-grid { grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; }
 }
 
+/* AUD-228 : barre de contact fixe de la fiche immo (mobile uniquement), posée au-dessus de la navigation basse (56 px) */
+.fiche-barre-contact { display: none; }
+
 /* Audit mobile : hero grid passe en 1 colonne plus tôt (640px au lieu de 768px) */
 @media (max-width: 768px) {
   .fiche-grid { grid-template-columns: minmax(0, 1fr); }
-  .fiche-sidebar { position: static; order: 2; margin-top: 16px; }
+  .fiche-sidebar { position: static; order: 2; margin-top: 16px; margin-bottom: 64px; }
+  .fiche-barre-contact {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    position: fixed; left: 0; right: 0; z-index: 900;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 16px; background: var(--card, #fff); border-top: 1px solid var(--border, #E8DDD2);
+    box-shadow: 0 -4px 14px rgba(26, 22, 18, .08);
+  }
+  .fiche-barre-contact__prix { color: var(--navy, #1C2B4A); font-size: 16px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fiche-barre-contact__btn {
+    flex-shrink: 0; min-height: 44px; display: inline-flex; align-items: center; padding: 0 22px; border-radius: 12px;
+    background: var(--accent-text, #A64800); color: #fff; font-weight: 800; font-size: 15px; text-decoration: none;
+  }
   /* Offres : wrap sur tous les mobiles */
   .offre-row-fiche { padding: 12px 14px; gap: 8px; flex-wrap: wrap; }
   .offre-prix-col { width: 100%; display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; }

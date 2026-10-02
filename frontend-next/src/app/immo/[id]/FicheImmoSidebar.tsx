@@ -54,6 +54,13 @@ export default function FicheImmoSidebar({
 }: FicheImmoSidebarProps) {
   return (
     <aside className="fiche-sidebar">
+      {/* AUD-228 : sur mobile le contact tombait à ~2 écrans du haut de la fiche. Barre fixe : prix + accès direct au contact. */}
+      <div className="fiche-barre-contact" role="region" aria-label="Contact rapide">
+        <strong className="fiche-barre-contact__prix">
+          {fcfa(annonce.prix)}{annonce.transaction?.toLowerCase().includes('locat') ? ' /mois' : ''}
+        </strong>
+        <a href="#contact-annonce" className="fiche-barre-contact__btn">Contacter</a>
+      </div>
       <div className="sidebar-card" style={{ background: 'var(--card)', color: 'var(--text1)', border: '1px solid var(--border)' }}>
         <p className="sidebar-titre" style={{ color: 'var(--text3)' }}>RÉSUMÉ</p>
         <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text1)', lineHeight: 1.4, marginBottom: 16 }}>
@@ -134,6 +141,7 @@ export default function FicheImmoSidebar({
         )}
 
         {/* Carte Agence Certifiée ou Vendeur Particulier */}
+        <span id="contact-annonce" style={{ display: 'block', scrollMarginTop: 72 }} />
         <BlocAgenceAnnonce
           annonceId={annonce.id}
           titre={annonce.titre}

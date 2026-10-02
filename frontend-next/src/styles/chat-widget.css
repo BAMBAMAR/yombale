@@ -602,6 +602,13 @@
     right: 16px;
   }
 
+  /* AUD-228/231 : quand une barre d'action fixe est affichée (fiche immo : 65 px au-dessus de la navigation basse), la bulle
+     passe au-dessus d'elle au lieu de recouvrir son bouton « Contacter ». */
+  body:has(.fiche-barre-contact) .npl-chat-floating-wrapper,
+  body:has(.fiche-barre-contact) .npl-chat-restore-btn {
+    bottom: calc(68px + 72px + env(safe-area-inset-bottom, 0px));
+  }
+
   .npl-chat-floating-btn {
     padding: 10px 14px;
     font-size: 13px;

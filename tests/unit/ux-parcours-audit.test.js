@@ -128,6 +128,20 @@ describe('AUD-230 — couleurs lisibles (WCAG AA) sans toucher à la couleur de 
   });
 });
 
+describe('AUD-228 — fiche immobilière : contact accessible dès le premier écran sur mobile', () => {
+  test('barre fixe prix + « Contacter » reliée à l\'ancre du bloc contact, visible seulement sur mobile', () => {
+    const s = lire('app/immo/[id]/FicheImmoSidebar.tsx');
+    expect(s).toMatch(/className="fiche-barre-contact"/);
+    expect(s).toMatch(/href="#contact-annonce"/);
+    expect(s).toMatch(/id="contact-annonce"/);
+    const c = fs.readFileSync(path.join(FRONT, 'styles/produit.css'), 'utf8');
+    expect(c).toMatch(/\.fiche-barre-contact \{ display: none; \}/);
+    expect(c).toMatch(/@media \(max-width: 768px\) \{[\s\S]*?\.fiche-barre-contact \{\s*display: flex/);
+    // constaté en navigateur : sans cette règle la bulle d'assistant recouvre le bouton « Contacter »
+    expect(fs.readFileSync(path.join(FRONT, 'styles/chat-widget.css'), 'utf8')).toMatch(/body:has\(\.fiche-barre-contact\) \.npl-chat-floating-wrapper/);
+  });
+});
+
 describe('AUD-229 — aucun <style>{texte}</style> contenant « > » (erreur d\'hydratation #425)', () => {
   // React échappe « > » en « &gt; » dans un enfant texte rendu côté serveur, pas côté client : les deux textes diffèrent
   function fichiersTsx(dir) {
