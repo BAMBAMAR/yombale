@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Info, Search, PackageOpen } from 'lucide-react'
 import CommanderModal from './CommanderModal'
+import { lienWhatsapp } from '@/lib/format'
 import SocialShopFeed, { type SocialPost, type SocialAccount } from './SocialShopFeed'
 import { useCart } from '@/context/CartContext'
 import { matcherProduitRecherche, scorePertinenceProduit } from '@/lib/recherche-senegal'
@@ -165,7 +166,7 @@ export default function BoutiqueDetailClient({
   }, [produits, searchQuery, catFilter, stockOnly, priceFilter, sortOption])
 
   const contactNumber = boutique.whatsapp || boutique.telephone
-  const whatsappUrl = contactNumber ? `https://wa.me/${contactNumber.replace(/\D/g, '')}` : null
+  const whatsappUrl = lienWhatsapp(contactNumber)
 
   return (
     <div

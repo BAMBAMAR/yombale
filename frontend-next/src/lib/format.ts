@@ -88,6 +88,24 @@ export function escapeHtml(s: string | null | undefined): string {
     .replace(/"/g, '&quot;');
 }
 
+/**
+ * AUD-220 : numéro au format international sans « + » exigé par wa.me. Un numéro sénégalais à 9 chiffres reçoit
+ * l'indicatif 221 ; « 00221… » et « +221… » sont ramenés à « 221… ». Renvoie null si le numéro est inutilisable.
+ */
+export function numeroWhatsapp(tel: string | null | undefined): string | null {
+  let chiffres = String(tel ?? '').replace(/\D/g, '')
+  if (chiffres.startsWith('00')) chiffres = chiffres.slice(2)
+  if (chiffres.length === 9) return `221${chiffres}`
+  return chiffres.length >= 11 && chiffres.length <= 15 ? chiffres : null
+}
+
+/** Lien wa.me avec message facultatif ; null quand aucun numéro valide (le bouton doit alors être masqué). */
+export function lienWhatsapp(tel: string | null | undefined, texte?: string): string | null {
+  const numero = numeroWhatsapp(tel)
+  if (!numero) return null
+  return `https://wa.me/${numero}${texte ? `?text=${encodeURIComponent(texte)}` : ''}`
+}
+
 export function lienBoutiqueWhatsapp(slug: string): string {
   const numero = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || ''
   const texte = encodeURIComponent(`boutique_${slug}`)

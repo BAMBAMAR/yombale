@@ -4,6 +4,7 @@ export const errors: LocaleTranslations['errors'] = {
   genericError: 'حدث خطأ غير متوقع.',
   networkError: 'خطأ في الاتصال. يرجى التحقق من الشبكة.',
   unauthorized: 'وصول غير مصرح به. يرجى تسجيل الدخول.',
+  invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة. تحقق من البيانات أو استخدم "نسيت كلمة المرور".',
   sessionExpired: 'انتهت جلستك.',
   fieldRequired: 'هذا الحقل مطلوب.',
   invalidEmail: 'عنوان البريد الإلكتروني غير صالح.',

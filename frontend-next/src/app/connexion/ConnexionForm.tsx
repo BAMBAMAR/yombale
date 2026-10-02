@@ -144,7 +144,7 @@ export default function ConnexionForm() {
 
   const getLocalizedError = (err?: string) => {
     if (!err) return null
-    if (err === 'Identifiants incorrects' || err === 'Identifiants invalides') return t('errors.unauthorized')
+    if (err === 'Identifiants incorrects' || err === 'Identifiants invalides') return t('errors.invalidCredentials')
     if (err.includes('ECONNRESET') || err.includes('Erreur de connexion') || err.includes('Erreur serveur') || err.includes('timeout')) {
       return t('errors.serverError')
     }

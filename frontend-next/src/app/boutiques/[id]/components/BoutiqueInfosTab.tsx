@@ -3,6 +3,7 @@
 import React from 'react'
 import { Info, Globe, Phone, MessageCircle, MapPin, Clock } from 'lucide-react'
 import BadgeVerification from '@/components/BadgeVerification'
+import { lienWhatsapp } from '@/lib/format'
 import AvisClients from '@/components/AvisClients'
 import { BoutiqueData } from './types'
 
@@ -256,8 +257,8 @@ export default function BoutiqueInfosTab({ boutique }: BoutiqueInfosTabProps) {
             </a>
           )}
 
-          {boutique.whatsapp && (
-            <a href={`https://wa.me/${boutique.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+          {lienWhatsapp(boutique.whatsapp) && (
+            <a href={lienWhatsapp(boutique.whatsapp) as string} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
               <div
                 style={{
                   display: 'flex',

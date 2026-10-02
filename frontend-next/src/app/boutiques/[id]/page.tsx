@@ -5,6 +5,7 @@ import '@/styles/vitrine-publique.css'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
+import { lienWhatsapp } from '@/lib/format'
 import { notFound, redirect } from 'next/navigation'
 import { introuvableOuRedirection } from '@/lib/introuvable'
 import { cloudinaryHQ } from '@/lib/cloudinary'
@@ -166,9 +167,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
   ])
 
   const contactNumber = b.whatsapp || b.telephone
-  const whatsappUrl = contactNumber
-    ? `https://wa.me/${contactNumber.replace(/\D/g, '')}`
-    : null
+  const whatsappUrl = lienWhatsapp(contactNumber)
 
   // Convertit les horaires { lundi: '08h00 - 20h00', ... } en OpeningHoursSpecification Schema.org
   function buildOpeningHoursSpec(horaires: Record<string, string> | null) {

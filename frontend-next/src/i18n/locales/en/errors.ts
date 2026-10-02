@@ -4,6 +4,7 @@ export const errors: LocaleTranslations['errors'] = {
   genericError: 'An unexpected error occurred.',
   networkError: 'Connection error. Please check your network.',
   unauthorized: 'Unauthorized access. Please log in.',
+  invalidCredentials: 'Incorrect email or password. Check what you typed or use "Forgot password".',
   sessionExpired: 'Your session has expired.',
   fieldRequired: 'This field is required.',
   invalidEmail: 'Invalid email address.',

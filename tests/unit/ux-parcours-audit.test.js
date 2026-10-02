@@ -27,6 +27,34 @@ describe('AUD-218 — un SMS simulé n\'est jamais un envoi réussi en productio
   });
 });
 
+const fs = require('fs');
+const path = require('path');
+const FRONT = process.env.UXP_FRONT_ROOT || path.join(__dirname, '../../frontend-next/src');
+const lire = (rel) => fs.readFileSync(path.join(FRONT, rel), 'utf8');
+
+describe('AUD-220 — jamais de lien wa.me construit à la main dans la vitrine boutique', () => {
+  test.each([
+    'app/boutiques/[id]/page.tsx',
+    'app/boutiques/[id]/BoutiqueDetailClient.tsx',
+    'app/boutiques/[id]/produits/[produitId]/page.tsx',
+    'app/boutiques/[id]/components/BoutiqueInfosTab.tsx',
+    'app/boutiques/[id]/SocialShopFeed.tsx',
+  ])('%s passe par lienWhatsapp()', (rel) => {
+    const src = lire(rel);
+    expect(src).not.toMatch(/wa\.me\/\$\{/);
+    expect(src).toMatch(/lienWhatsapp\(/);
+  });
+});
+
+describe('AUD-224 — message de connexion explicite', () => {
+  test('un mauvais mot de passe ne répond plus « Accès non autorisé »', () => {
+    const src = lire('app/connexion/ConnexionForm.tsx');
+    expect(src).toMatch(/errors\.invalidCredentials/);
+    expect(src).not.toMatch(/Identifiants invalides'\) return t\('errors\.unauthorized'\)/);
+    for (const l of ['fr', 'en', 'ar']) expect(lire(`i18n/locales/${l}/errors.ts`)).toMatch(/invalidCredentials:/);
+  });
+});
+
 describe('AUD-215 — suivi public : jamais de joker', () => {
   beforeEach(() => { jest.clearAllMocks(); pool.query.mockResolvedValue({ rows: [{ id: 'x', reference: 'C-1', client_nom: 'A B', client_telephone: '770000001', statut: 'en_attente', montant_total: 1 }] }); });
 

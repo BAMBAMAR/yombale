@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Video } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
-import { fcfa } from '@/lib/format'
+import { fcfa, lienWhatsapp } from '@/lib/format'
 import {
   SocialPost,
   SocialAccount,
@@ -109,7 +109,6 @@ export default function SocialShopFeed({
   // Génération du message WhatsApp contextuel pour une publication
   function getWhatsAppUrlForPost(post: SocialPost, produit?: SocialProduct) {
     if (!whatsappNumber) return null
-    const cleanTel = whatsappNumber.replace(/\D/g, '')
     const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
     const postLink = `${siteUrl}/boutiques/${boutiqueKey}?post=${post.id}`
 
@@ -130,7 +129,7 @@ export default function SocialShopFeed({
     msg += `🔗 Lien de la publication : ${postLink}\n`
     msg += `Est-ce toujours disponible et quel est son prix avec livraison ? Merci !`
 
-    return `https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`
+    return lienWhatsapp(whatsappNumber, msg) ?? '#'
   }
 
   return (
