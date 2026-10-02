@@ -307,10 +307,11 @@ export function useDrawerCartCheckout() {
         return
       }
 
-      if (data.wave_url) {
+      const redirectUrl = data.wave_url || data.om_url || data.payment_url
+      if (redirectUrl) {
         trackAnalyticsEvent('commande_confirmee', currentBoutiqueId, { valeur: currentTotal })
         clearCart(currentBoutiqueId)
-        window.location.href = data.wave_url
+        window.location.href = redirectUrl
         return
       }
 

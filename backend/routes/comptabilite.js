@@ -910,21 +910,56 @@ router.post(
         } catch (eCl) {}
       }
 
+      const cfg = require('../lib/settingsCache');
+      const waveApiKey = (process.env.WAVE_API_KEY || (await cfg.get('wave_api_key')) || '').trim();
+      const hasWaveKey = Boolean(waveApiKey && !waveApiKey.includes('xxxxxxxx'));
+      const isWavePayment = (methode_paiement === 'wave' || methode_paiement === 'pay_wave');
+      const isOmPayment = (methode_paiement === 'orange_money' || methode_paiement === 'pay_om');
+
       // Si le paiement Wave est sélectionné et l'API Wave est disponible, initialiser le checkout Wave
-      if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+      if (isWavePayment) {
+        if (!hasWaveKey) {
+          console.warn('[COMMANDE WAVE] ⚠️ Clé Wave non configurée sur le serveur. Commande enregistrée en attente.');
+        } else {
+          try {
+            const wave = require('../services/wave');
+            const waveSession = await wave.createCheckoutSession({
+              amount: Number(commande.montant_total),
+              currency: 'XOF',
+              success_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
+              error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur?ref=${commande.reference}&type=commande-boutique`,
+              client_reference: commande.reference,
+            });
+            return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
+          } catch (waveErr) {
+            const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
+            console.error('[COMMANDE WAVE INIT ERR]:', waveMsg);
+            return res.status(201).json({
+              commande,
+              fallback_manuel: true,
+              numero_depot: '777202086',
+              message: 'Commande enregistrée. Redirection vers le paiement manuel…'
+            });
+          }
+        }
+      }
+
+      // Si le paiement Orange Money est sélectionné
+      if (isOmPayment) {
         try {
-          const wave = require('../services/wave');
-          const waveSession = await wave.createCheckoutSession({
+          const om = require('../services/orange-money');
+          const omSession = await om.createWebPayment({
             amount: Number(commande.montant_total),
             currency: 'XOF',
-            success_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
-            error_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur?ref=${commande.reference}&type=commande-boutique`,
-            client_reference: commande.reference,
+            order_id: commande.reference,
+            return_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/succes?ref=${commande.reference}&type=commande-boutique`,
+            cancel_url: `${process.env.FRONTEND_URL || 'https://nopalou.com'}/paiement/erreur?ref=${commande.reference}&type=commande-boutique`,
+            notif_url: `${process.env.BACKEND_URL || 'https://nopalou.onrender.com'}/api/paiement/orange/webhook`,
           });
-          return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
-        } catch (waveErr) {
-          const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
-          console.error('[COMMANDE WAVE INIT ERR]:', waveMsg);
+          return res.status(201).json({ commande, om_url: omSession.om_url || omSession.payment_url, message: 'Commande créée. Redirection vers Orange Money…' });
+        } catch (omErr) {
+          const omMsg = omErr.response?.data?.message || omErr.message;
+          console.error('[COMMANDE OM INIT ERR]:', omMsg);
           return res.status(201).json({
             commande,
             fallback_manuel: true,
@@ -1214,7 +1249,23 @@ router.patch(
         }
 
         // Reversement 100% Automatique Wave Payout vers le marchand si activé
-        if ((commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') && process.env.REVERSEMENT_AUTOMATIQUE_WAVE !== 'false' && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+        // AUD-072 : virement seulement si le paiement est réellement encaissé, et une seule fois (réservation atomique de payout_ref)
+        let payoutReserve = false;
+        const cfgCompta = require('../lib/settingsCache');
+        const wavePayoutKey = (process.env.WAVE_API_KEY || (await cfgCompta.get('wave_api_key')) || '').trim();
+        const hasWavePayoutKey = Boolean(wavePayoutKey && !wavePayoutKey.includes('xxxxxxxx'));
+
+        if ((commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') && process.env.REVERSEMENT_AUTOMATIQUE_WAVE !== 'false' && hasWavePayoutKey) {
+          if (commande.paiement_recu === true) {
+            const { rowCount } = await pool.query(
+              `UPDATE commandes_boutique SET payout_ref = 'auto_en_cours', payout_date = NOW()
+                WHERE id = $1 AND paiement_recu = true AND payout_ref IS NULL`,
+              [commande.id]
+            );
+            payoutReserve = rowCount === 1;
+          }
+        }
+        if (payoutReserve) {
           try {
             const mobile = boutique.whatsapp || boutique.telephone;
             if (mobile) {

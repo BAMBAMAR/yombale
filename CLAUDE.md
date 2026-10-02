@@ -26,6 +26,12 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Fiabilisation des Paiements en Ligne (Wave & Orange Money) et Reversements Marchands (`comptabilite.js`, `boutiques-commandes.js`, `useDrawerCartCheckout.ts`, `TarifsClient.tsx`)** :
+  - **Résolution Dynamique de la Clé Wave (DB & Env)** : Remplacement de la vérification rigide `process.env.WAVE_API_KEY` par `process.env.WAVE_API_KEY || (await cfg.get('wave_api_key'))` dans la création de commande boutique et le reversement automatique lors de la livraison.
+  - **Intégration d'Orange Money dans le Panier** : Ajout du flux d'initialisation Orange Money (`createWebPayment`) sur la route `POST /api/comptabilite/:id/commandes` et redirection automatique (`om_url` / `payment_url`) dans `useDrawerCartCheckout.ts`.
+  - **Fallback Élégant en Cas d'Erreur API Wave/OM** : Si l'API Wave ou Orange Money rencontre une clé invalide ou révoquée, le système bascule proprement sur le paiement manuel avec numéro de dépôt au lieu d'une création silencieuse sans paiement.
+  - **Gestion de la Clé Wave Directement dans l'Espace Admin** : Ajout des champs sécurisés `wave_api_key` et `wave_signing_secret` dans le tableau de bord Admin (`TarifsClient.tsx`) pour permettre la mise à jour ou le renouvellement de la clé Wave directement depuis l'interface Nopalou sans nécessiter un redéploiement Render.
+
 - **Correction Crash 500 Commandes Boutique & Éradication des Erreurs d'Hydratation React SSR (#418, #423, #425)** :
   - **Correction Base de Données Render** : Ajout de la colonne `idempotency_key` manquante sur `commandes_boutique`, `depenses`, `caisse_clients_credits`, `boutique_pos_sessions`, résolvant l'erreur 500 sur `creerCommandeBoutique`.
   - **Correction SSR Frontend** : Remplacement des lectures synchrones de `localStorage` dans `useState` par des initialisations sécurisées SSR et réconciliation après montage dans `useCommandesData`, `GestionEntrepots`, `SocialShopManager`, `useCatalogueProduitsData` et `CatalogueProduits`.

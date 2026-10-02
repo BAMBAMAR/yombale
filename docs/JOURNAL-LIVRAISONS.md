@@ -1,5 +1,12 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Fiabilisation des Paiements en Ligne (Wave & Orange Money) et Reversements Marchands (02 octobre 2026)** :
+  * **Cause Racine Absence de Paiement / Payout** : Clé API Wave révoquée par Wave (`code: api-key-revoked`) suite à l'émission d'une nouvelle clé sur le portail Wave Business, et absence de lecture dynamique depuis la base de données PostgreSQL dans `comptabilite.js` (qui vérifiait uniquement `process.env.WAVE_API_KEY`).
+  * **Résolution Dynamique Clé Wave (DB & Env)** : `process.env.WAVE_API_KEY || (await cfg.get('wave_api_key'))` appliqué sur l'initialisation du checkout et sur le reversement automatique (`sendPayout`) lors de la livraison (`statut: 'livree'`).
+  * **Intégration Orange Money & Redirection Panier** : Ajout du flux `createWebPayment` Orange Money dans `POST /api/comptabilite/:id/commandes` et redirection automatique (`data.wave_url`, `data.om_url`, `data.payment_url`) dans `useDrawerCartCheckout.ts`.
+  * **Gestion Sécurisée de la Clé Wave dans l'Interface Admin** : Ajout des champs `wave_api_key` et `wave_signing_secret` dans `TarifsClient.tsx` permettant à l'administrateur de mettre à jour ou renouveler ses clés directement sans toucher à la configuration Render.
+  * **Fallback Élégant en Cas d'Erreur API** : Bascule automatique vers le paiement manuel avec numéro de dépôt pour ne pas perdre la vente en cas de panne temporaire du fournisseur tiers.
+
 - **Correction Crash 500 Commandes Boutique & Éradication des Erreurs d'Hydratation React SSR (#418, #423, #425)** :
   * **Cause Racine Crash 500 (`/api/comptabilite/:id/commandes`)** : La colonne `idempotency_key` (PWA offline idempotency) était absente de la table `commandes_boutique` sur la base de données PostgreSQL de production Render (erreur 42703).
   * **Correction Base de Données** : Exécution DDL idempotente appliquant la colonne `idempotency_key VARCHAR(128)` et son index partiel unique sur `commandes_boutique`, `depenses`, `caisse_clients_credits`, `boutique_pos_sessions`, ainsi que la table `stock_ecarts`. Validation directe par exécution transactionnelle avec rollback de `creerCommandeBoutique` (succès 100%).
