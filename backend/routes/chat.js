@@ -16,6 +16,7 @@ const {
 const WA_PHONE = '221708717942';
 const { FAQ_WEB } = require('../lib/faq');
 const { conditionImmoPubliable } = require('../lib/immo-publiable');
+const { normaliser, estSalutation, extraireReferenceCommande, extraireBudget, decoderEntites } = require('../lib/chat-intentions');
 
 // ── Fonctions de recherche spécialisées ───────────────────────────────────────
 
@@ -263,6 +264,23 @@ router.post('/message', limiterRecherche, async (req, res) => {
     });
   }
 
+  // 0.05 Salutation seule : on accueille, on ne cherche pas (« salam » devenait une recherche de « saly »)
+  if (estSalutation(rawText)) {
+    return res.json({
+      success: true,
+      reply: 'Salam ! Je suis l’assistant Nopalou. Dites-moi ce que vous cherchez : un produit, une boutique, un logement, ou posez-moi une question.',
+      correction: null,
+      items: [],
+      chips: [
+        { label: 'Boutiques partenaires', url: '/boutiques' },
+        { label: 'Biens immobiliers', url: '/immo' },
+        { label: 'Suivre ma commande', url: '/suivi-commande' },
+        { label: 'Créer ma boutique', url: '/creer-boutique' },
+      ],
+      whatsappUrl,
+    });
+  }
+
   // 0.1 Détection Comparateur de Prix Multi-Marchands
   if (detecterIntentionComparateur(rawText)) {
     try {
@@ -283,7 +301,7 @@ router.post('/message', limiterRecherche, async (req, res) => {
               : `/produit/${it.id}`;
             return {
               id: it.id,
-              titre: it.nom,
+              titre: decoderEntites(it.nom),
               prix: it.prix,
               photo: Array.isArray(it.photos) ? it.photos[0] : it.photos,
               type: it.source === 'boutique' ? 'produit' : 'marketplace',
@@ -310,14 +328,17 @@ router.post('/message', limiterRecherche, async (req, res) => {
   }
 
   // 1. Détection FAQ Web
+  // AUD-221 : comparaison sans accents (« créer une boutique » ne contenait pas « creer boutique »)
+  const textNorm = normaliser(rawText);
   const faqTrouvee = FAQ_WEB.find((f) =>
     f.motsCles.some((mot) => {
       if (mot === 'om') {
         return /\bom\b/i.test(rawText);
       }
-      return textLower.includes(mot);
+      return textNorm.includes(normaliser(mot));
     })
   );
+  const referenceCommande = extraireReferenceCommande(rawText);
 
   // 2. Détection Intentions Spécifiques
   const hasSpecificProperty = /\b(appartements?|apparts?|villas?|studios?|terrains?|parcelles?|bureaux?|chambres?|immeubles?|louer|location|bail|loyer|a\s+louer|a\s+vendre)\b/i.test(textLower);
@@ -334,7 +355,11 @@ router.post('/message', limiterRecherche, async (req, res) => {
   if (faqTrouvee) {
     reply = faqTrouvee.reponse;
     if (faqTrouvee.actionLabel && faqTrouvee.actionUrl) {
-      chips.push({ label: faqTrouvee.actionLabel, url: faqTrouvee.actionUrl });
+      // Référence donnée dans le message : on mène directement à SON suivi
+      const lienAction = referenceCommande && faqTrouvee.actionUrl === '/suivi-commande'
+        ? `/suivi-commande?ref=${encodeURIComponent(referenceCommande)}`
+        : faqTrouvee.actionUrl;
+      chips.push({ label: referenceCommande && faqTrouvee.actionUrl === '/suivi-commande' ? `Suivre ${referenceCommande}` : faqTrouvee.actionLabel, url: lienAction });
     }
     if (faqTrouvee.actionUrl === '/agences' || isAgenceQuery) {
       items = await searchAgencesIlike(rawText.replace(/\b(agences?|courtiers?|cabinets?\s+immo)\b/gi, '').trim());
@@ -383,14 +408,16 @@ router.post('/message', limiterRecherche, async (req, res) => {
     );
   } else {
     // Recherche générale catalogue (Extraction de mot-clé naturel + Fuzzy + searchContentIlike)
-    const motCle = extraireMotCleRecherche(rawText);
-    suggestionFuzzy = corrigerRequeteFuzzy(motCle || rawText);
-    const requeteRecherche = suggestionFuzzy || motCle || rawText;
+    // AUD-221 : « iphone 13 moins de 200000 » cherche « iphone 13 » avec un plafond de 200 000 F
+    const { texte: texteSansBudget, prixMax } = extraireBudget(rawText);
+    const motCle = extraireMotCleRecherche(texteSansBudget);
+    suggestionFuzzy = corrigerRequeteFuzzy(motCle || texteSansBudget);
+    const requeteRecherche = suggestionFuzzy || motCle || texteSansBudget;
 
     try {
       let rawResults = await searchContentIlike(requeteRecherche);
-      if ((!rawResults || rawResults.length === 0) && requeteRecherche !== rawText) {
-        rawResults = await searchContentIlike(rawText);
+      if ((!rawResults || rawResults.length === 0) && requeteRecherche !== texteSansBudget) {
+        rawResults = await searchContentIlike(texteSansBudget);
       }
       items = (rawResults || []).map((it) => {
         const bRef = it.boutique_slug || it.boutique_id;
@@ -410,7 +437,7 @@ router.post('/message', limiterRecherche, async (req, res) => {
 
         return {
           id: it.id,
-          titre: it.titre,
+          titre: decoderEntites(it.titre),
           prix: it.prix,
           photo: it.photo,
           type: it.type,
@@ -421,18 +448,26 @@ router.post('/message', limiterRecherche, async (req, res) => {
           actions,
         };
       });
+      if (prixMax) items = items.filter((it) => it.prix == null || Number(it.prix) <= prixMax);
     } catch (errSearch) {
       console.warn('[CHAT API SEARCH WARN]:', errSearch.message);
     }
 
-    if (items.length > 0) {
+    if (items.length === 0 && prixMax) {
+      // Budget annoncé mais rien à ce prix dans l'échantillon : réponse précise plutôt qu'une réponse générique
+      reply = `Je n’ai rien trouvé pour « ${texteSansBudget} » à moins de ${prixMax.toLocaleString('fr-FR')} FCFA dans cette sélection. Voyez la recherche complète avec ce budget :`;
+      chips.push(
+        { label: `Voir « ${texteSansBudget} » ≤ ${prixMax.toLocaleString('fr-FR')} FCFA`, url: `/recherche?q=${encodeURIComponent(texteSansBudget)}&prix_max=${prixMax}` },
+        { label: 'Boutiques partenaires', url: '/boutiques' }
+      );
+    } else if (items.length > 0) {
       if (suggestionFuzzy && suggestionFuzzy.toLowerCase() !== rawText.toLowerCase()) {
         reply = `Je n'ai pas trouvé de correspondance exacte pour "${rawText}", mais voici les résultats pour "${suggestionFuzzy}" :`;
       } else {
         reply = `Voici les meilleures offres trouvées pour votre recherche :`;
       }
       chips.push(
-        { label: 'Voir tout le comparateur', url: `/recherche?q=${encodeURIComponent(requeteRecherche)}` },
+        { label: 'Voir tout le comparateur', url: `/recherche?q=${encodeURIComponent(requeteRecherche)}${prixMax ? `&prix_max=${prixMax}` : ''}` },
         { label: 'Boutiques partenaires', url: '/boutiques' }
       );
     } else {

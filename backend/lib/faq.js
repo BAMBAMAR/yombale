@@ -94,7 +94,7 @@ const FAQ_WEB = [
     actionUrl: '/aide',
   },
   {
-    motsCles: ['vendre', 'creer boutique', 'devenir vendeur', 'marchand', 'ouvrir magasin'],
+    motsCles: ['vendre', 'creer boutique', 'creer une boutique', 'creer ma boutique', 'ouvrir une boutique', 'ouvrir ma boutique', 'devenir vendeur', 'marchand', 'ouvrir magasin'],
     titre: 'Ouvrir votre Boutique Nopalou',
     reponse: `Créer votre boutique sur Nopalou est rapide et gratuit pendant ${essaiJours()} jours : catalogue en ligne, caisse tactile et synchronisation WhatsApp automatique.`,
     actionLabel: 'Créer ma boutique',
@@ -120,6 +120,13 @@ const FAQ_WEB = [
     reponse: 'Pour suivre votre commande en direct, munissez-vous de votre référence de commande ou numéro de téléphone sur notre page dédiée au suivi.',
     actionLabel: 'Suivre ma commande',
     actionUrl: '/suivi-commande',
+  },
+  {
+    motsCles: ['sama xaalis', 'xaalis', 'mes depenses', 'suivre mes depenses', 'carnet de dettes', 'gerer mon budget'],
+    titre: 'Sama Xaalis — mon argent',
+    reponse: 'Sama Xaalis est votre carnet d’argent personnel : dépenses, entrées, dettes et épargne, avec saisie à la voix. Il se trouve dans votre compte.',
+    actionLabel: 'Découvrir Sama Xaalis',
+    actionUrl: '/sama-xaalis',
   },
   {
     motsCles: ['annuaire agence', 'agences partenaires', 'trouver une agence', 'liste des agences'],

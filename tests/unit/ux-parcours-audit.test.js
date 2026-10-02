@@ -100,6 +100,74 @@ describe('AUD-222 — une seule règle de publication immobilière pour le site 
   });
 });
 
+describe('AUD-221 — l\'assistant du site comprend les demandes courantes', () => {
+  const { normaliser, estSalutation, extraireReferenceCommande, extraireBudget, decoderEntites } = require('../../backend/lib/chat-intentions');
+  const BACK = process.env.UXP_BACK_ROOT || path.join(__dirname, '../../backend');
+
+  test('accents ignorés', () => expect(normaliser('Je veux CRÉER une boutique')).toBe('je veux creer une boutique'));
+
+  test.each(['salam', 'Salam aleykoum', 'Bonjour !', 'bsr', 'Nanga def'])('« %s » est une salutation', (t) => expect(estSalutation(t)).toBe(true));
+  test.each(['salam je cherche un iphone', 'iphone 13', 'saly villa à vendre', ''])('« %s » n\'est pas une simple salutation', (t) => expect(estSalutation(t)).toBe(false));
+
+  test('référence de commande extraite', () => {
+    expect(extraireReferenceCommande('suivre ma commande c-mur0mzmr70c8 svp')).toBe('C-MUR0MZMR70C8');
+    expect(extraireReferenceCommande('CMD-20260921-164F39')).toBe('CMD-20260921-164F39');
+    expect(extraireReferenceCommande('je veux un iphone')).toBeNull();
+  });
+
+  test.each([
+    ['iphone 13 moins de 200000', 'iphone 13', 200000],
+    ['samsung a15 max 150k', 'samsung a15', 150000],
+    ['frigo budget 200 mille', 'frigo', 200000],
+    ['télévision jusqu\'à 80 000 FCFA', 'télévision', 80000],
+    ['iphone 13', 'iphone 13', null],
+  ])('budget de « %s »', (entree, texte, prix) => {
+    const r = extraireBudget(entree);
+    expect(r.prixMax).toBe(prix);
+    expect(r.texte).toBe(texte);
+  });
+
+  test('entités HTML décodées', () => {
+    expect(decoderEntites('Chargeur USB C &#8211; 35W')).toBe('Chargeur USB C – 35W');
+    expect(decoderEntites('Tongs Personnalis&eacute;es')).toBe('Tongs Personnalisées');
+    expect(decoderEntites('6.1&Prime; &amp; plus')).toBe('6.1″ & plus');
+    expect(decoderEntites('&inconnue; reste')).toBe('&inconnue; reste');
+  });
+
+  describe('route /api/chat/message', () => {
+    beforeEach(() => { jest.clearAllMocks(); pool.query.mockResolvedValue({ rows: [] }); });
+    const dire = (message) => request(app).post('/api/chat/message').send({ message });
+
+    test('« je veux créer une boutique » mène à la création', async () => {
+      const r = await dire('je veux créer une boutique');
+      expect(r.statusCode).toBe(200);
+      expect(JSON.stringify(r.body.chips)).toMatch(/\/creer-boutique/);
+    });
+    test('une référence de commande donne un lien de suivi direct', async () => {
+      const r = await dire('suivre ma commande C-MUR0MZMR70C8');
+      expect(JSON.stringify(r.body.chips)).toMatch(/\/suivi-commande\?ref=C-MUR0MZMR70C8/);
+    });
+    test('« Sama xaalis » est reconnu', async () => {
+      const r = await dire('Sama xaalis');
+      expect(JSON.stringify(r.body.chips)).toMatch(/\/sama-xaalis/);
+    });
+    test('« salam » reçoit un accueil, sans recherche ni correction en ville', async () => {
+      const r = await dire('salam');
+      expect(r.body.items).toEqual([]);
+      expect(r.body.correction).toBeNull();
+      expect(r.body.reply).not.toMatch(/saly/i);
+      expect(pool.query.mock.calls.some(c => /FROM (produits|boutique_produits|annonces)/.test(c[0]))).toBe(false);
+    });
+  });
+
+  test('chat.js applique budget et décodage des entités', () => {
+    const src = fs.readFileSync(path.join(BACK, 'routes/chat.js'), 'utf8');
+    expect(src).toMatch(/extraireBudget\(/);
+    expect(src).toMatch(/decoderEntites\(/);
+    expect(src).toMatch(/estSalutation\(/);
+  });
+});
+
 describe('AUD-223 — l\'erreur du wizard boutique est visible et compréhensible', () => {
   test('erreur annoncée, amenée à l\'écran, messages sans « utilisez la connexion par e-mail » ni « Failed to fetch »', () => {
     const src = lire('app/creer-boutique/page.tsx');
