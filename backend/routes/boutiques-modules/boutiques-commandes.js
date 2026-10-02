@@ -612,8 +612,10 @@ router.get('/commandes/suivi', async (req, res) => {
       return res.status(400).json({ error: 'Référence de commande invalide.' });
     }
 
-    if (!isPhoneSearch && !isReferenceSearch && rawTerm.length < 8) {
-      return res.status(400).json({ error: 'Terme de recherche trop court ou générique. Indiquez votre référence exacte (ex: CMD-2026-1234) ou votre numéro complet.' });
+    // AUD-215 : ni référence bien formée ni téléphone complet = aucune recherche (un terme vide dans la branche
+    // téléphone donnait `LIKE '%'` et renvoyait les dernières commandes de tous les clients).
+    if (!isPhoneSearch && !isReferenceSearch) {
+      return res.status(400).json({ error: 'Référence introuvable. Vérifiez le format (ex. C-ABC123) ou saisissez votre numéro complet (9 chiffres).' });
     }
 
     let query;
