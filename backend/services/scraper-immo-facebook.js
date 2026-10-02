@@ -24,6 +24,7 @@ const fs   = require('fs');
 const path = require('path');
 const { pool } = require('../models/db');
 const scrapingLock = require('../lib/scrapingLock');
+const { RunCollecte } = require('../lib/scrapingRun');
 
 // Session sauvegardée via `node scripts/fb-login-setup.js` (gère le 2FA manuellement une fois)
 const SESSION_FILE = path.join(__dirname, '../.fb-session.json');
@@ -710,208 +711,10 @@ async function upsertAnnonceClassifiee(a) {
   }
 }
 
-// maxGroupes limite le nombre de groupes visités par run (défaut 5) — un navigateur
-// Chromium headless est lourd en RAM, et le plan Render free (512 Mo) a connu un OOM
-// kill en cours d'exécution quand ce scraper tournait longtemps (16 groupes) en même
-// temps que le cron de scraping produits. Relancer le bouton admin plusieurs fois
-// couvre progressivement tous les groupes.
-async function scraperImmo({ dryRun = false, maxGroupes = 15 } = {}) {
-  if (!playwright) {
-    console.error('[FB-SCRAPER] playwright non installé. Lancez : npm install playwright && npx playwright install chromium');
-    return { erreurs: ['playwright non installé'], inseres: 0 };
-  }
-
-  const session  = resoudreSession();
-  const email    = process.env.FB_EMAIL;
-  const password = process.env.FB_PASSWORD;
-  if (!session && (!email || !password)) {
-    console.error('[FB-SCRAPER] Aucune session Facebook (fichier ou FB_SESSION_JSON) ni FB_EMAIL/FB_PASSWORD — lancez : node scripts/fb-login-setup.js');
-    return { erreurs: ['Session Facebook manquante'], inseres: 0 };
-  }
-
-  // Évite un chevauchement avec le scraper produits (axios/cheerio) — les deux en même
-  // temps ont provoqué un crash mémoire constaté en prod sur le plan free.
-  if (!scrapingLock.tenterAcquerir('facebook')) {
-    console.log(`[FB-SCRAPER] Verrou occupé par "${scrapingLock.actif()}", requête ignorée`);
-    return { erreurs: ['Un autre scraping est déjà en cours'], inseres: 0 };
-  }
-
-async function lancerNavigateur(pw) {
-  const optionsBase = {
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-gpu',
-      '--disable-dev-shm-usage',
-      '--no-first-run',
-      '--no-service-autorun',
-    ],
-  };
-
-  try {
-    return await pw.chromium.launch({ ...optionsBase, channel: 'chrome' });
-  } catch (e1) {
-    try {
-      return await pw.chromium.launch({ ...optionsBase, channel: 'msedge' });
-    } catch (e2) {
-      return await pw.chromium.launch(optionsBase);
-    }
-  }
-}
-
-  const stats = { scrapes: 0, inseres: 0, doublons: 0, ignores: 0, erreurs: [], dryRun };
-  let indexCompteur = 0;
-  let groupesDuRun  = [];
-  const browser = await lancerNavigateur(playwright);
-
-  try {
-    const ctx  = await browser.newContext({
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
-      locale: 'fr-FR',
-      ...(session ? { storageState: session } : {}),
-    });
-    const page = await ctx.newPage();
-
-    if (session) {
-      // ── Session déjà connectée (cookies sauvegardés via fb-login-setup.js) ──
-      console.log('[FB-SCRAPER] Session existante — connexion sans formulaire');
-      await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
-    } else {
-      // ── Connexion Facebook par formulaire (échouera si 2FA actif) ──────────
-      console.log('[FB-SCRAPER] Connexion Facebook…');
-      await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
-
-      try {
-        await page.click('[data-testid="cookie-policy-manage-dialog-accept-button"], [aria-label*="cookie"], button:has-text("Autoriser"), button:has-text("Accept")', { timeout: 5000 });
-      } catch {}
-
-      const emailSel = '#email, input[name="email"], input[type="email"], [data-testid="royal_email"], [autocomplete="username"]';
-      const passSel  = '#pass,  input[name="pass"],  input[type="password"], [data-testid="royal_pass"],  [autocomplete="current-password"]';
-      const loginSel = '[name="login"], [data-testid="royal_login_button"], [aria-label="Se connecter"], [aria-label="Log in"], button[type="submit"], input[type="submit"]';
-
-      await page.waitForSelector(emailSel, { timeout: 30000 });
-      await page.fill(emailSel, email);
-      await page.fill(passSel,  password);
-      await page.click(loginSel);
-
-      try {
-        await page.waitForURL(url => !url.includes('/login'), { timeout: 25000 });
-      } catch {}
-
-      if (page.url().includes('/login') || page.url().includes('/checkpoint') || page.url().includes('two_step_verification')) {
-        throw new Error('Connexion Facebook échouée (2FA requis) — lancez : node scripts/fb-login-setup.js');
-      }
-    }
-
-    if (page.url().includes('/login') || page.url().includes('two_step_verification')) {
-      throw new Error('Session Facebook expirée — relancez : node scripts/fb-login-setup.js');
-    }
-    console.log('[FB-SCRAPER] Connecté :', page.url().split('?')[0]);
-
-    // ── Parcours des groupes (fenêtre glissante, cf. maxGroupes ci-dessus) ──────
-    const indexDepart = lireIndexGroupe();
-    groupesDuRun = GROUPES.slice(indexDepart, indexDepart + maxGroupes);
-    const prochainIndex = groupesDuRun.length === 0 ? 0 : (indexDepart + groupesDuRun.length) % GROUPES.length;
-    ecrireIndexGroupe(prochainIndex);
-    console.log(`[FB-SCRAPER] ${groupesDuRun.length} groupe(s) ce run : ${groupesDuRun.map(g => g.label).join(', ')}`);
-
-    sauverProgression({
-      status: 'in_progress',
-      mode: dryRun ? 'dry-run' : 'live',
-      groupeIndex: 0,
-      totalGroupes: groupesDuRun.length,
-      pourcentage: 0,
-      groupeActuel: 'Démarrage...',
-      scrapes: 0,
-      inseres: 0,
-      doublons: 0,
-      ignores: 0,
-      erreurs: [],
-    });
-
-    for (const groupe of groupesDuRun) {
-      indexCompteur++;
-      const pct = Math.round((indexCompteur / groupesDuRun.length) * 100);
-      const url = groupe.type === 'page' ? `https://www.facebook.com/${groupe.id}` : `https://www.facebook.com/groups/${groupe.id}`;
-      console.log(`\n📊 [PROGRES ${indexCompteur}/${groupesDuRun.length} - ${pct}%] ${groupe.type === 'page' ? 'Page' : 'Groupe'} : ${groupe.label} (${url})`);
-
-      sauverProgression({
-        status: 'in_progress',
-        mode: dryRun ? 'dry-run' : 'live',
-        groupeIndex: indexCompteur,
-        totalGroupes: groupesDuRun.length,
-        pourcentage: pct,
-        groupeActuel: groupe.label,
-        groupeUrl: url,
-        scrapes: stats.scrapes,
-        inseres: stats.inseres,
-        doublons: stats.doublons,
-        ignores: stats.ignores,
-        erreurs: stats.erreurs,
-      });
-
-      try {
-        // 'networkidle' n'atteint jamais un état stable sur Facebook (polling/websockets
-        // permanents) — timeout systématique constaté en test réel. 'domcontentloaded' +
-        // attente fixe est le seul mode fiable ici.
-        // Timeout 60s (au lieu de 30s) : sur le plan Render free (CPU/bande passante limités),
-        // le chargement d'une page de groupe Facebook dépasse régulièrement 30s alors qu'il
-        // prend ~17s en local — constaté en observant des timeouts systématiques en prod alors
-        // que la même page charge sans souci en local.
-        try {
-          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
-        } catch (err) {
-          console.warn(`[FB-SCRAPER] page.goto timeout sur ${url}, tentative de continuer si le DOM est partiellement chargé...`);
-        }
-        await page.waitForTimeout(4000);
-
-        // Scroller pour charger plus de posts.
-        // Pages publiques : attente plus longue entre scrolls (React charge différemment des groupes)
-        const scrollPause = groupe.type === 'page' ? 3000 : 2500;
-        for (let i = 0; i < 15; i++) {
-          await page.evaluate(() => window.scrollTo(0, document.body?.scrollHeight || document.documentElement?.scrollHeight || 0));
-          await page.waitForTimeout(scrollPause);
-        }
-
-        // Déplier tous les posts tronqués ("Voir plus") directement en JS in-page
-        await page.evaluate(() => {
-          const btns = Array.from(document.querySelectorAll('div[role="button"], span[role="button"], div[action="go"]'))
-            .filter(el => /(?:voir plus|en voir plus|see more)/i.test(el.innerText || ''));
-          for (const b of btns) {
-            try { b.click(); } catch {}
-          }
-        });
-        await page.waitForTimeout(1000);
-
-        // Détection blocage / session invalide
-        const urlBlocage = page.url().includes('/sorry.php') || page.url().includes('/checkpoint');
-        const { murConnexion, feedAbsent } = await page.evaluate((isPage) => ({
-          murConnexion: !!document.querySelector('input[name="pass"], [data-testid="royal_pass"]'),
-          // Les pages publiques peuvent ne pas avoir [role="feed"] mais afficher les posts
-          // dans un conteneur différent — on ne bloque que si AUCUN contenu article n'est présent.
-          feedAbsent: isPage
-            ? !document.querySelector('[role="feed"], [role="main"] article, [role="main"] [data-pagelet], [data-pagelet*="ProfileTimeline"], [role="main"]')
-            : !document.querySelector('[role="feed"]'),
-        }), groupe.type === 'page');
-        if (urlBlocage || murConnexion) {
-          // Blocage de session confirmé (sorry.php, checkpoint, mur login) :
-          // inutile de continuer, chaque groupe suivant échouerait aussi.
-          const raison = urlBlocage
-            ? `page de blocage Facebook détectée (${page.url().split('?')[0]})`
-            : 'mur de connexion détecté';
-          stats.erreurs.push(`${groupe.label}: Session Facebook invalidée (${raison}) — relancez : node backend/scripts/fb-login-setup.js`);
-          break;
-        }
-        if (feedAbsent) {
-          // Groupe privé, inexistant, ou layout différent — on passe au suivant sans
-          // arrêter le run (ça peut être juste un groupe privé parmi d'autres valides).
-          console.warn(`[FB-SCRAPER] ${groupe.label}: aucun fil détecté, groupe ignoré`);
-          stats.erreurs.push(`${groupe.label}: aucun contenu chargé (groupe privé ou ID invalide)`);
-          continue;
-        }
-
-        const posts = await page.evaluate((isPage) => {
+// AUD-177 : extraction des posts visibles dans le DOM, appelée après chaque série de défilements (le fil Facebook retire
+// du DOM les posts sortis de l'écran : une extraction unique en fin de défilement n'en voyait que quelques-uns, hypothèse
+// à confirmer par le diagnostic `articlesVisibles`). Corps inchangé par rapport à l'ancienne extraction unique.
+function extrairePostsDom(isPage) {
           // Pour les pages publiques, les posts peuvent être dans des articles hors [role="feed"]
           let feedRoot = document.querySelector('[role="feed"]');
           let feedChildren;
@@ -971,11 +774,254 @@ async function lancerNavigateur(pw) {
             vus.add(cle);
             return true;
           });
-        }, groupe.type === 'page');
+}
+
+// Fusionne un lot dans l'accumulateur ; une extraction plus récente remplace la précédente (texte déplié).
+function accumulerPosts(accumules, lot) {
+  for (const p of lot) accumules.set(p.refExterneId || p.href, p);
+  return lot.length;
+}
+// maxGroupes limite le nombre de groupes visités par run (défaut 5) — un navigateur
+// Chromium headless est lourd en RAM, et le plan Render free (512 Mo) a connu un OOM
+// kill en cours d'exécution quand ce scraper tournait longtemps (16 groupes) en même
+// temps que le cron de scraping produits. Relancer le bouton admin plusieurs fois
+// couvre progressivement tous les groupes.
+async function scraperImmo({ dryRun = false, maxGroupes = 15 } = {}) {
+  if (!playwright) {
+    console.error('[FB-SCRAPER] playwright non installé. Lancez : npm install playwright && npx playwright install chromium');
+    return { erreurs: ['playwright non installé'], scrapes: 0, inseres: 0, statut: 'echec', motifs: ['playwright_absent'] };
+  }
+
+  const session  = resoudreSession();
+  const email    = process.env.FB_EMAIL;
+  const password = process.env.FB_PASSWORD;
+  if (!session && (!email || !password)) {
+    console.error('[FB-SCRAPER] Aucune session Facebook (fichier ou FB_SESSION_JSON) ni FB_EMAIL/FB_PASSWORD — lancez : node scripts/fb-login-setup.js');
+    return { erreurs: ['Session Facebook manquante'], scrapes: 0, inseres: 0, statut: 'echec', motifs: ['session_absente'] };
+  }
+
+  // Évite un chevauchement avec le scraper produits (axios/cheerio) — les deux en même
+  // temps ont provoqué un crash mémoire constaté en prod sur le plan free.
+  if (!scrapingLock.tenterAcquerir('facebook')) {
+    console.log(`[FB-SCRAPER] Verrou occupé par "${scrapingLock.actif()}", requête ignorée`);
+    return { erreurs: ['Un autre scraping est déjà en cours'], scrapes: 0, inseres: 0, statut: 'echec', motifs: ['verrou_occupe'] };
+  }
+
+  // AUD-177 : base injoignable = rien n'est lancé (ni navigateur, ni rotation). Avant : 22 à 32 erreurs d'écriture par passage,
+  // 0 annonce retenue et un code de sortie 0.
+  if (!dryRun) {
+    try { await pool.query('SELECT 1'); }
+    catch (e) {
+      scrapingLock.relacher();
+      console.error('[FB-SCRAPER] Base de données injoignable, passage annulé :', e.message);
+      return { erreurs: [`Base de données injoignable : ${e.message}`], scrapes: 0, inseres: 0, statut: 'echec', motifs: ['base_injoignable'] };
+    }
+  }
+
+async function lancerNavigateur(pw) {
+  const optionsBase = {
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--no-first-run',
+      '--no-service-autorun',
+    ],
+  };
+
+  try {
+    return await pw.chromium.launch({ ...optionsBase, channel: 'chrome' });
+  } catch (e1) {
+    try {
+      return await pw.chromium.launch({ ...optionsBase, channel: 'msedge' });
+    } catch (e2) {
+      return await pw.chromium.launch(optionsBase);
+    }
+  }
+}
+
+  const stats = { scrapes: 0, inseres: 0, doublons: 0, ignores: 0, erreurs: [], dryRun };
+  let indexCompteur = 0;
+  let groupesDuRun  = [];
+  let run = null;                 // AUD-177 : passage mesuré (RunCollecte)
+  let sessionInvalide = false;
+  let prochainIndexFinal = 0;
+  let erreursUpsert = 0;
+  const rejets = {};
+  const diagnosticGroupes = [];
+  const browser = await lancerNavigateur(playwright);
+
+  try {
+    const ctx  = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
+      locale: 'fr-FR',
+      ...(session ? { storageState: session } : {}),
+    });
+    const page = await ctx.newPage();
+
+    if (session) {
+      // ── Session déjà connectée (cookies sauvegardés via fb-login-setup.js) ──
+      console.log('[FB-SCRAPER] Session existante — connexion sans formulaire');
+      await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
+    } else {
+      // ── Connexion Facebook par formulaire (échouera si 2FA actif) ──────────
+      console.log('[FB-SCRAPER] Connexion Facebook…');
+      await page.goto('https://www.facebook.com/', { waitUntil: 'domcontentloaded', timeout: 40000 });
+
+      try {
+        await page.click('[data-testid="cookie-policy-manage-dialog-accept-button"], [aria-label*="cookie"], button:has-text("Autoriser"), button:has-text("Accept")', { timeout: 5000 });
+      } catch {}
+
+      const emailSel = '#email, input[name="email"], input[type="email"], [data-testid="royal_email"], [autocomplete="username"]';
+      const passSel  = '#pass,  input[name="pass"],  input[type="password"], [data-testid="royal_pass"],  [autocomplete="current-password"]';
+      const loginSel = '[name="login"], [data-testid="royal_login_button"], [aria-label="Se connecter"], [aria-label="Log in"], button[type="submit"], input[type="submit"]';
+
+      await page.waitForSelector(emailSel, { timeout: 30000 });
+      await page.fill(emailSel, email);
+      await page.fill(passSel,  password);
+      await page.click(loginSel);
+
+      try {
+        await page.waitForURL(url => !url.includes('/login'), { timeout: 25000 });
+      } catch {}
+
+      if (page.url().includes('/login') || page.url().includes('/checkpoint') || page.url().includes('two_step_verification')) {
+        throw new Error('Connexion Facebook échouée (2FA requis) — lancez : node scripts/fb-login-setup.js');
+      }
+    }
+
+    if (page.url().includes('/login') || page.url().includes('two_step_verification')) {
+      throw new Error('Session Facebook expirée — relancez : node scripts/fb-login-setup.js');
+    }
+    console.log('[FB-SCRAPER] Connecté :', page.url().split('?')[0]);
+
+    // ── Parcours des groupes (fenêtre glissante, cf. maxGroupes ci-dessus) ──────
+    const indexDepart = lireIndexGroupe();
+    groupesDuRun = GROUPES.slice(indexDepart, indexDepart + maxGroupes);
+    // AUD-177 : l'index de rotation n'est PLUS écrit avant le passage. Il avance groupe par groupe (voir la boucle) :
+    // un passage interrompu ou une session invalide ne fait plus sauter les groupes non visités.
+    prochainIndexFinal = groupesDuRun.length === 0 ? 0 : (indexDepart + groupesDuRun.length) % GROUPES.length;
+    run = new RunCollecte({ source: 'facebook', systeme: 'facebook', categoriesCibles: groupesDuRun.length });
+    console.log(`[FB-SCRAPER] ${groupesDuRun.length} groupe(s) ce run : ${groupesDuRun.map(g => g.label).join(', ')}`);
+
+    sauverProgression({
+      status: 'in_progress',
+      mode: dryRun ? 'dry-run' : 'live',
+      groupeIndex: 0,
+      totalGroupes: groupesDuRun.length,
+      pourcentage: 0,
+      groupeActuel: 'Démarrage...',
+      scrapes: 0,
+      inseres: 0,
+      doublons: 0,
+      ignores: 0,
+      erreurs: [],
+    });
+
+    for (const groupe of groupesDuRun) {
+      indexCompteur++;
+      ecrireIndexGroupe((indexDepart + indexCompteur - 1) % GROUPES.length); // les groupes précédents sont faits ; celui-ci sera repris s'il échoue
+      const pct = Math.round((indexCompteur / groupesDuRun.length) * 100);
+      const url = groupe.type === 'page' ? `https://www.facebook.com/${groupe.id}` : `https://www.facebook.com/groups/${groupe.id}`;
+      console.log(`\n📊 [PROGRES ${indexCompteur}/${groupesDuRun.length} - ${pct}%] ${groupe.type === 'page' ? 'Page' : 'Groupe'} : ${groupe.label} (${url})`);
+
+      sauverProgression({
+        status: 'in_progress',
+        mode: dryRun ? 'dry-run' : 'live',
+        groupeIndex: indexCompteur,
+        totalGroupes: groupesDuRun.length,
+        pourcentage: pct,
+        groupeActuel: groupe.label,
+        groupeUrl: url,
+        scrapes: stats.scrapes,
+        inseres: stats.inseres,
+        doublons: stats.doublons,
+        ignores: stats.ignores,
+        erreurs: stats.erreurs,
+      });
+
+      let postsGroupe = 0;
+      try {
+        // 'networkidle' n'atteint jamais un état stable sur Facebook (polling/websockets
+        // permanents) — timeout systématique constaté en test réel. 'domcontentloaded' +
+        // attente fixe est le seul mode fiable ici.
+        // Timeout 60s (au lieu de 30s) : sur le plan Render free (CPU/bande passante limités),
+        // le chargement d'une page de groupe Facebook dépasse régulièrement 30s alors qu'il
+        // prend ~17s en local — constaté en observant des timeouts systématiques en prod alors
+        // que la même page charge sans souci en local.
+        try {
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        } catch (err) {
+          console.warn(`[FB-SCRAPER] page.goto timeout sur ${url}, tentative de continuer si le DOM est partiellement chargé...`);
+        }
+        await page.waitForTimeout(4000);
+
+        // Scroller pour charger plus de posts.
+        // Pages publiques : attente plus longue entre scrolls (React charge différemment des groupes)
+        const scrollPause = groupe.type === 'page' ? 3000 : 2500;
+        const accumules = new Map();
+        const articlesVisibles = [];
+        const accumuler = async () => {
+          try { articlesVisibles.push(accumulerPosts(accumules, await page.evaluate(extrairePostsDom, groupe.type === 'page'))); }
+          catch (_) { articlesVisibles.push(0); }
+        };
+        for (let i = 0; i < 15; i++) {
+          await page.evaluate(() => window.scrollTo(0, document.body?.scrollHeight || document.documentElement?.scrollHeight || 0));
+          await page.waitForTimeout(scrollPause);
+          if ((i + 1) % 5 === 0) await accumuler();
+        }
+
+        // Déplier tous les posts tronqués ("Voir plus") directement en JS in-page
+        await page.evaluate(() => {
+          const btns = Array.from(document.querySelectorAll('div[role="button"], span[role="button"], div[action="go"]'))
+            .filter(el => /(?:voir plus|en voir plus|see more)/i.test(el.innerText || ''));
+          for (const b of btns) {
+            try { b.click(); } catch {}
+          }
+        });
+        await page.waitForTimeout(1000);
+
+        // Détection blocage / session invalide
+        const urlBlocage = page.url().includes('/sorry.php') || page.url().includes('/checkpoint');
+        const { murConnexion, feedAbsent } = await page.evaluate((isPage) => ({
+          murConnexion: !!document.querySelector('input[name="pass"], [data-testid="royal_pass"]'),
+          // Les pages publiques peuvent ne pas avoir [role="feed"] mais afficher les posts
+          // dans un conteneur différent — on ne bloque que si AUCUN contenu article n'est présent.
+          feedAbsent: isPage
+            ? !document.querySelector('[role="feed"], [role="main"] article, [role="main"] [data-pagelet], [data-pagelet*="ProfileTimeline"], [role="main"]')
+            : !document.querySelector('[role="feed"]'),
+        }), groupe.type === 'page');
+        if (urlBlocage || murConnexion) {
+          // Blocage de session confirmé (sorry.php, checkpoint, mur login) :
+          // inutile de continuer, chaque groupe suivant échouerait aussi.
+          const raison = urlBlocage
+            ? `page de blocage Facebook détectée (${page.url().split('?')[0]})`
+            : 'mur de connexion détecté';
+          stats.erreurs.push(`${groupe.label}: Session Facebook invalidée (${raison}) — relancez : node backend/scripts/fb-login-setup.js`);
+          sessionInvalide = true;
+          run.noterCategorie(groupe.label, 0);
+          break;
+        }
+        if (feedAbsent) {
+          // Groupe privé, inexistant, ou layout différent — on passe au suivant sans
+          // arrêter le run (ça peut être juste un groupe privé parmi d'autres valides).
+          console.warn(`[FB-SCRAPER] ${groupe.label}: aucun fil détecté, groupe ignoré`);
+          stats.erreurs.push(`${groupe.label}: aucun contenu chargé (groupe privé ou ID invalide)`);
+          run.noterCategorie(groupe.label, 0);
+          continue;
+        }
+
+        await accumuler(); // dernière extraction, après le dépliage des « Voir plus »
+        const posts = [...accumules.values()];
+        console.log(`[FB-SCRAPER] ${groupe.label}: articles lus après les défilements [${articlesVisibles.join(', ')}] → ${posts.length} post(s) distinct(s)`);
+        diagnosticGroupes.push({ groupe: groupe.label, articlesVisibles, postsDistincts: posts.length });
+        postsGroupe = posts.length;
 
         for (const post of posts) {
           stats.scrapes++;
-          if (estFilDeCommentaires(post.texte)) { stats.ignores++; continue; }
+          if (estFilDeCommentaires(post.texte)) { stats.ignores++; rejets.fil_commentaires = (rejets.fil_commentaires || 0) + 1; continue; }
 
           // Bannière colorée : titre/prix/tel incrustés dans l'image, texte DOM quasi vide
           // (juste le bruit "Facebook" répété résiduel) — sans l'OCR ici, ces posts échoueraient
@@ -1004,8 +1050,8 @@ async function lancerNavigateur(pw) {
           // Un numéro de téléphone réel OU une catégorie forte (emploi) avec signal vente
           // sont nécessaires pour qu'une annonce soit retenue.
           const estEmploi = categorie_slug === 'emploi';
-          if (!telFinal && !estEmploi && !estAnnoncePotentielle(texte)) { stats.ignores++; continue; }
-          if (!telFinal && !estEmploi) { stats.ignores++; continue; }
+          if (!telFinal && !estEmploi && !estAnnoncePotentielle(texte)) { stats.ignores++; rejets.pas_une_annonce = (rejets.pas_une_annonce || 0) + 1; continue; }
+          if (!telFinal && !estEmploi) { stats.ignores++; rejets.sans_telephone = (rejets.sans_telephone || 0) + 1; continue; }
 
           const descriptionPropre = purgerUiFacebook(purgerUnicodeStealthFB(texte)).slice(0, 2000);
           const titre  = extraireTitreIntelligentFB(texte);
@@ -1053,13 +1099,14 @@ async function lancerNavigateur(pw) {
             try {
               const { doublon } = await upsertAnnonceClassifiee(annonce);
               if (doublon) { stats.doublons++; } else { stats.inseres++; }
-            } catch (e) { stats.erreurs.push(e.message); }
+            } catch (e) { stats.erreurs.push(e.message); erreursUpsert++; }
           }
         }
       } catch (err) {
         console.warn(`[FB-SCRAPER] Erreur groupe ${groupe.label}: ${err.message}`);
         stats.erreurs.push(`${groupe.label}: ${err.message}`);
       }
+      run.noterCategorie(groupe.label, postsGroupe);
 
       await page.waitForTimeout(3000);
     }
@@ -1068,6 +1115,18 @@ async function lancerNavigateur(pw) {
     if (ocrWorker) { await ocrWorker.terminate(); ocrWorker = null; }
     scrapingLock.relacher();
   }
+
+  // AUD-177 : passage évalué et persisté ; session invalide = échec, quoi qu'il ait été lu avant
+  if (!sessionInvalide) ecrireIndexGroupe(prochainIndexFinal);
+  if (!dryRun && run) {
+    const verdict = await run.cloturer(pool, { itemsExtraits: stats.scrapes, itemsInseres: stats.inseres, itemsDoublons: stats.doublons, itemsFiltres: stats.ignores, rejetes: rejets, erreursSauvegarde: erreursUpsert });
+    stats.statut = sessionInvalide ? 'echec' : verdict.statut;
+    stats.motifs = sessionInvalide ? ['session_invalide', ...verdict.motifs] : verdict.motifs;
+  } else {
+    stats.statut = sessionInvalide ? 'echec' : (stats.scrapes ? 'ok' : 'echec');
+    stats.motifs = sessionInvalide ? ['session_invalide'] : [];
+  }
+  stats.diagnostic = diagnosticGroupes;
 
   sauverProgression({
     status: 'completed',
@@ -1092,5 +1151,6 @@ module.exports = {
   extraireTitreIntelligentFB, 
   parseAuteurFB, 
   REGEX_NON_IMMO,
+  accumulerPosts,
   upsertAnnonceClassifiee
 };

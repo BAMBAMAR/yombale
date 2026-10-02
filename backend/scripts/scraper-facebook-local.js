@@ -42,7 +42,7 @@ const RESUME_FILE = path.join(__dirname, '../.fb-scraper-resume.txt');
     : `${stats.inseres} annonce(s) ajoutee(s), ${stats.doublons} doublon(s), ${stats.ignores} ignoree(s)`;
   try { fs.writeFileSync(RESUME_FILE, resume); } catch {}
 
-  process.exit(stats.erreurs.length > 0 ? 1 : 0);
+  process.exit(stats.erreurs.length > 0 || stats.statut === 'echec' ? 1 : 0); // AUD-177 : un passage en echec n'est jamais un succes
 })().catch(err => {
   try { fs.writeFileSync(RESUME_FILE, `Erreur fatale : ${err.message}`); } catch {}
   console.error('[FATAL]', err);

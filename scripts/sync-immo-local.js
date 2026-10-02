@@ -74,6 +74,7 @@ async function runSource(source) {
 
 async function main() {
   const totaux = { scrapes: 0, inseres: 0, erreurs: 0 };
+  let echecs = 0; // AUD-177 : passages en statut 'echec' (session invalide, base injoignable, aucune donnée)
 
   for (const src of sources) {
     try {
@@ -81,6 +82,7 @@ async function main() {
       totaux.scrapes  += s.scrapes  || 0;
       totaux.inseres  += s.inseres  || 0;
       totaux.erreurs  += s.erreurs?.length || 0;
+      if (s.statut === 'echec') echecs++;
     } catch (err) {
       console.error(`\n❌  ${src} — erreur fatale :`, err.message);
       totaux.erreurs++;
@@ -95,7 +97,7 @@ async function main() {
     console.log(`    Erreurs : ${totaux.erreurs}`);
   }
 
-  process.exit(totaux.erreurs > 0 && totaux.inseres === 0 ? 1 : 0);
+  process.exit((totaux.erreurs > 0 && totaux.inseres === 0) || echecs > 0 ? 1 : 0);
 }
 
 main().catch(err => { console.error(err.message); process.exit(1); });

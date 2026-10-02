@@ -39,6 +39,7 @@ set "NODE_ARGS=%*"
 set "NODE_ARGS=%NODE_ARGS:--scheduled=%"
 set "NODE_ARGS=%NODE_ARGS:  = %"
 
+:: AUD-177 : le code de sortie de Node est propage (sans '; exit $LASTEXITCODE' le pipeline Tee-Object le remplaçait par 0)
 :: Script cible selon les options
 set "TARGET_SCRIPT=scripts\sync-immo-local.js"
 echo %NODE_ARGS% | findstr /i /c:"--omnisource" >nul
@@ -62,7 +63,7 @@ echo   Logs enregistrés dans : logs\scraper-task.log
 echo ========================================================
 echo.
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' %TARGET_SCRIPT% %NODE_ARGS% } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' %TARGET_SCRIPT% %NODE_ARGS% } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append; exit $LASTEXITCODE"
 set "EXIT_CODE=%errorlevel%"
 
 echo [!DATE! !TIME!] Fin de la tâche avec code de sortie: %EXIT_CODE% >> "%LOG_FILE%"

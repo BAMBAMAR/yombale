@@ -71,7 +71,7 @@ class RunCollecte {
   // Exécute `fn` en rattachant à ce passage toutes les requêtes HTTP qu'elle déclenche.
   executer(fn) { return stockage.run(this, fn); }
 
-  async cloturer(pool, { itemsExtraits, itemsInseres = 0, itemsMaj = 0, itemsFiltres = 0, erreursSauvegarde = 0 }) {
+  async cloturer(pool, { itemsExtraits, itemsInseres = 0, itemsMaj = 0, itemsFiltres = 0, itemsDoublons = 0, rejetes = {}, erreursSauvegarde = 0 }) {
     let medianeItems = null;
     try {
       const { rows } = await pool.query(
@@ -90,14 +90,16 @@ class RunCollecte {
     try {
       await pool.query(
         `INSERT INTO scraping_runs (source, systeme, started_at, ended_at, pages_cibles, pages_ok, pages_erreur, http_codes,
-           items_extraits, items_inseres, items_maj, items_filtres, couverture, duree_ms, statut, erreur_msg)
-         VALUES ($1,$2,$3,NOW(),$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15)`,
+           items_extraits, items_inseres, items_maj, items_filtres, couverture, duree_ms, statut, erreur_msg,
+           items_doublons, items_rejetes)
+         VALUES ($1,$2,$3,NOW(),$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb)`,
         [this.source, this.systeme, this.debut, this.categoriesCibles, avecArticles,
           this.categories.length - avecArticles, JSON.stringify(this.codes),
           itemsExtraits, itemsInseres, itemsMaj, itemsFiltres,
           this.categoriesCibles ? Math.round((avecArticles / this.categoriesCibles) * 10000) / 100 : null,
           Date.now() - this.debut.getTime(), statut,
-          [...motifs, erreursSauvegarde ? `erreurs_sauvegarde_${erreursSauvegarde}` : null].filter(Boolean).join(',') || null]);
+          [...motifs, erreursSauvegarde ? `erreurs_sauvegarde_${erreursSauvegarde}` : null].filter(Boolean).join(',') || null,
+          itemsDoublons, JSON.stringify(rejetes)]);
     } catch (e) { console.warn('[SCRAPING_RUN WARN]', e.message); }
 
     if (statut === 'echec') await this._alerterSiRepete(pool);
