@@ -489,7 +489,10 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
     };
 
     // Initialisation session Wave si paiement Wave sélectionné
-    if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
+    const cfgBq = require('../../lib/settingsCache');
+    const waveKeyBq = (process.env.WAVE_API_KEY || (await cfgBq.get('wave_api_key')) || '').trim();
+    const hasWaveKeyBq = Boolean(waveKeyBq && !waveKeyBq.includes('xxxxxxxx'));
+    if ((methode_paiement === 'wave' || methode_paiement === 'pay_wave') && hasWaveKeyBq) {
       try {
         const wave = require('../../services/wave');
         const waveSession = await wave.createCheckoutSession({

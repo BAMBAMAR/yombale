@@ -44,6 +44,8 @@ interface Settings {
   kalpe_gratuit_boutiques?: string
   contrat_vendeur_requis?: string
   contrat_vendeur_texte?: string
+  wave_api_key?: string
+  wave_signing_secret?: string
 }
 
 export default function TarifsClient({ initial, secret }: { initial: Settings; secret: string }) {
@@ -89,6 +91,8 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       kalpe_gratuit_boutiques: 'true',
       contrat_vendeur_requis: 'true',
       contrat_vendeur_texte: '',
+      wave_api_key: '',
+      wave_signing_secret: '',
     }
     return { ...defaults, ...initial }
   })
@@ -196,8 +200,38 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         </div>
       </>)}
 
-      {card('Méthodes de paiement', <>
-        {toggle('paiement_wave', 'Wave Senegal')}
+      {card('Passerelle Wave API (Encaissements & Payouts)', <>
+        {toggle('paiement_wave', 'Wave Sénégal')}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 4, fontSize: 13, color: '#374151' }}>
+            Clé API Wave (Production)
+          </label>
+          <input
+            type="password"
+            value={form.wave_api_key ?? ''}
+            onChange={e => setForm(f => ({ ...f, wave_api_key: e.target.value }))}
+            placeholder="Bearer token wave_sn_prod_..."
+            style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, width: '100%', maxWidth: 420 }}
+          />
+          <div style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>
+            Clé secrète Wave avec droits d&apos;encaissement et de reversement (ex: wave_sn_prod_...).
+          </div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 4, fontSize: 13, color: '#374151' }}>
+            Secret de Signature Webhook (WAVE_SIGNING_SECRET)
+          </label>
+          <input
+            type="password"
+            value={form.wave_signing_secret ?? ''}
+            onChange={e => setForm(f => ({ ...f, wave_signing_secret: e.target.value }))}
+            placeholder="Secret de signature Wave..."
+            style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, width: '100%', maxWidth: 420 }}
+          />
+          <div style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>
+            Clé secrète servant à signer les requêtes de payout et vérifier les webhooks de confirmation.
+          </div>
+        </div>
         {toggle('paiement_orange', 'Orange Money')}
       </>)}
 
