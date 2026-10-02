@@ -1,7 +1,9 @@
 'use client'
-import { useState, useRef, useTransition } from 'react'
+import { useState, useRef, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { creerAnnonce } from '@/app/actions/annonces'
+import { renvoyerEmailVerification } from '@/app/actions/auth'
+import { lireBrouillon, ecrireBrouillon, effacerBrouillon } from '@/lib/brouillon-annonce'
 import { CATEGORIES as LIB_CATEGORIES } from '@/lib/categories'
 import { useTranslation } from '@/i18n/context'
 
@@ -81,10 +83,42 @@ function CaracteristiquesFields({ slug, values, onChange }: CaracteristiquesProp
   return null
 }
 
-export default function FormulaireAnnonce({ email }: { email: string }) {
+/** AUD-219 : prévient avant le premier champ que la publication exige un e-mail vérifié (le refus tombait au dernier clic) */
+function AvisEmailAPublier({ email }: { email: string }) {
+  const [etat, setEtat] = useState<'repos' | 'envoi' | 'envoye'>('repos')
+  const [erreur, setErreur] = useState<string | null>(null)
+  async function renvoyer() {
+    setEtat('envoi')
+    setErreur(null)
+    const res = await renvoyerEmailVerification()
+    if (res.error) {
+      setErreur(res.error)
+      setEtat('repos')
+    } else {
+      setEtat('envoye')
+    }
+  }
+  return (
+    <div role="status" className="annonce-error" style={{ margin: '0 0 16px', textAlign: 'left' }}>
+      <strong>Avant de publier, confirmez votre adresse e-mail.</strong>{' '}
+      {etat === 'envoye'
+        ? `Un lien vient d’être envoyé${email ? ` à ${email}` : ''}. Ouvrez-le, puis revenez ici : ce que vous avez saisi est conservé.`
+        : 'Vous pouvez remplir l’annonce dès maintenant : ce que vous saisissez est conservé sur cet appareil.'}{' '}
+      {etat !== 'envoye' && (
+        <button type="button" onClick={renvoyer} disabled={etat === 'envoi'} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', fontWeight: 800, textDecoration: 'underline', cursor: 'pointer', color: 'inherit' }}>
+          {etat === 'envoi' ? 'Envoi…' : 'Renvoyer le lien de vérification'}
+        </button>
+      )}
+      {erreur && <span> {erreur}</span>}
+    </div>
+  )
+}
+
+export default function FormulaireAnnonce({ email, emailVerifie = true }: { email: string; emailVerifie?: boolean }) {
   const router = useRouter()
   const [step, setStep]   = useState<1 | 2 | 3>(1)
   const [slug, setSlug]   = useState('')
+  const [brouillonRestaure, setBrouillonRestaure] = useState(false)
   const [car, setCar]     = useState<Record<string, string>>({})
   const [photos, setPhotos] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -99,6 +133,24 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
     label: c.label.replace(/^.*? /, ''),
     emoji: c.label.split(' ')[0]
   }))
+
+  // AUD-219 : reprise du brouillon après le montage (jamais pendant le rendu : pas d'écart d'hydratation)
+  useEffect(() => {
+    const b = lireBrouillon(email)
+    if (b && CATEGORIES.some(c => c.slug === b.slug)) {
+      setSlug(b.slug)
+      setCar(b.car)
+      step2Data.current = b.champs
+      setStep(b.step)
+      setBrouillonRestaure(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Sauvegarde à chaque changement de catégorie, de caractéristique ou d'étape (les champs libres sont enregistrés à la saisie)
+  useEffect(() => {
+    if (slug && step !== 1) ecrireBrouillon(email, { slug, car, champs: step2Data.current, step })
+  }, [slug, car, step, email])
 
   function handleCarChange(k: string, v: string) {
     setCar(prev => ({ ...prev, [k]: v }))
@@ -129,6 +181,7 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
     startTransition(async () => {
       const res = await creerAnnonce(fd)
       if (res.ok) {
+        effacerBrouillon(email)
         router.push(res.id ? `/payer-annonce/${res.id}` : '/mes-annonces?created=1')
       } else {
         setError(res.error ?? t('errors.genericError'))
@@ -136,10 +189,22 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
     })
   }
 
+  const avis = (
+    <>
+      {!emailVerifie && <AvisEmailAPublier email={email} />}
+      {brouillonRestaure && (
+        <p role="status" className="form-hint" style={{ margin: '0 0 12px' }}>
+          Votre annonce en cours a été reprise là où vous l’aviez laissée. Les photos sont à ajouter de nouveau.
+        </p>
+      )}
+    </>
+  )
+
   // Step 1 — choix catégorie
   if (step === 1) {
     return (
       <div className="annonce-steps">
+        {avis}
         <div className="annonce-step-header">
           <span className="annonce-step-num">1 / 3</span>
           <h2 className="annonce-step-titre">{t('account.chooseCategory')}</h2>
@@ -164,14 +229,24 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
   // Step 2 — infos + caractéristiques
   if (step === 2) {
     const cat = CATEGORIES.find(c => c.slug === slug)!
+    const d = step2Data.current // valeurs déjà saisies (retour depuis l'étape 3, ou brouillon repris)
     return (
       <div className="annonce-steps">
+        {avis}
         <div className="annonce-step-header">
           <button type="button" onClick={() => setStep(1)} className="annonce-back">{t('account.back')}</button>
           <span className="annonce-step-num">2 / 3</span>
           <h2 className="annonce-step-titre">{cat.emoji} {cat.label} — {t('account.stepDetails')}</h2>
         </div>
-        <form className="annonce-form" onSubmit={e => {
+        <form className="annonce-form"
+          onChange={e => {
+            // enregistrement à la saisie : un rechargement ou un détour par la messagerie ne fait rien perdre
+            const saved: Record<string, string> = {}
+            new FormData(e.currentTarget).forEach((v, k) => { if (typeof v === 'string') saved[k] = v })
+            step2Data.current = saved
+            ecrireBrouillon(email, { slug, car, champs: saved, step: 2 })
+          }}
+          onSubmit={e => {
           e.preventDefault()
           const fd = new FormData(e.currentTarget)
           const saved: Record<string, string> = {}
@@ -182,14 +257,14 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
           {/* Titre */}
           <div className="form-field">
             <label className="form-label">{t('account.adTitle')} <span className="required">*</span></label>
-            <input name="titre" type="text" className="form-input" placeholder={t('account.adTitlePlaceholder')} required minLength={8} maxLength={150} />
+            <input name="titre" type="text" className="form-input" placeholder={t('account.adTitlePlaceholder')} required minLength={8} maxLength={150} defaultValue={d.titre ?? ''} />
             <span className="form-hint">{t('account.adTitleHint')}</span>
           </div>
 
           {/* Prix */}
           <div className="form-field">
             <label className="form-label">{t('account.price')} (FCFA)</label>
-            <input name="prix" type="number" min="100" max="500000000" className="form-input" placeholder={t('account.priceNegotiable')} />
+            <input name="prix" type="number" min="100" max="500000000" className="form-input" placeholder={t('account.priceNegotiable')} defaultValue={d.prix ?? ''} />
           </div>
 
           {/* Caractéristiques catégorie */}
@@ -201,21 +276,21 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
           <div className="form-row">
             <div className="form-field">
               <label className="form-label">{t('account.city')}</label>
-              <select name="ville" className="form-input">
+              <select name="ville" className="form-input" defaultValue={d.ville ?? ''}>
                 <option value="">{t('common.select') || 'Choisir…'}</option>
                 {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
             </div>
             <div className="form-field">
               <label className="form-label">{t('account.neighborhood')}</label>
-              <input name="quartier" type="text" className="form-input" placeholder={t('account.neighborhoodPlaceholder')} />
+              <input name="quartier" type="text" className="form-input" placeholder={t('account.neighborhoodPlaceholder')} defaultValue={d.quartier ?? ''} />
             </div>
           </div>
 
           {/* Description */}
           <div className="form-field">
             <label className="form-label">{t('account.description')}</label>
-            <textarea name="description" className="form-input form-textarea" rows={4} placeholder={t('account.descriptionPlaceholderAd')} maxLength={2000} />
+            <textarea name="description" className="form-input form-textarea" rows={4} placeholder={t('account.descriptionPlaceholderAd')} maxLength={2000} defaultValue={d.description ?? ''} />
           </div>
 
           {/* Contact */}
@@ -223,11 +298,11 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
           <div className="form-row">
             <div className="form-field">
               <label className="form-label">{t('account.yourName')}</label>
-              <input name="contact_nom" type="text" className="form-input" placeholder={t('account.yourNamePlaceholder')} maxLength={80} />
+              <input name="contact_nom" type="text" className="form-input" placeholder={t('account.yourNamePlaceholder')} maxLength={80} defaultValue={d.contact_nom ?? ''} />
             </div>
             <div className="form-field">
               <label className="form-label">{t('account.yourPhone')} <span className="required">*</span></label>
-              <input name="contact_tel" type="tel" className="form-input" placeholder="ex: 77 123 45 67" required />
+              <input name="contact_tel" type="tel" className="form-input" placeholder="ex: 77 123 45 67" required defaultValue={d.contact_tel ?? ''} />
             </div>
           </div>
 
@@ -243,6 +318,7 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
   const cat = CATEGORIES.find(c => c.slug === slug)!
   return (
     <div className="annonce-steps">
+      {avis}
       <div className="annonce-step-header">
         <button type="button" onClick={() => setStep(2)} className="annonce-back">{t('account.back')}</button>
         <span className="annonce-step-num">3 / 3</span>

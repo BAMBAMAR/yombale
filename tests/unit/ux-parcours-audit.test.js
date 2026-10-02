@@ -67,7 +67,20 @@ describe('AUD-217 — la confirmation de commande ne ment pas', () => {
   });
 });
 
-describe('AUD-214 — un utilisateur connecté crée sa boutique sur son propre compte', () => {
+describe('AUD-219 — dépôt d\'annonce : prévenu dès l\'ouverture, saisie conservée', () => {
+  test('le formulaire avertit si l\'e-mail n\'est pas vérifié, reprend et efface le brouillon', () => {
+    const f = lire('app/(account)/deposer-annonce/FormulaireAnnonce.tsx');
+    expect(f).toMatch(/AvisEmailAPublier/);
+    expect(f).toMatch(/lireBrouillon\(email\)/);
+    expect(f).toMatch(/ecrireBrouillon\(email/);
+    expect(f).toMatch(/effacerBrouillon\(email\)/);
+    // le retour depuis l'étape 3 ne vide plus l'étape 2
+    expect(f).toMatch(/defaultValue=\{d\.titre/);
+    expect(lire('app/(account)/deposer-annonce/page.tsx')).toMatch(/email_verifie/);
+  });
+});
+
+describe('AUD-214— un utilisateur connecté crée sa boutique sur son propre compte', () => {
   // Module chargé en isolation : l'application, déjà chargée plus haut, a figé la vraie résolution par téléphone
   const charger = (resultat) => {
     const resolverComptesParTelephone = jest.fn().mockResolvedValue(resultat);
