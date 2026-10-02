@@ -71,17 +71,26 @@ export function useKalpeVoice({
       toast.warning(msg)
       return
     }
+    // AUD-225 : un remboursement REÇU ou FAIT n'est pas une nouvelle dette. Pré-remplir le formulaire de dette conduisait à
+    // « Valider » = dette inversée envers la personne (constaté : « Awa m'a remboursé 5000 » → dette de 5 000 envers Awa).
+    // On ne remplit donc rien et on dit quoi faire.
+    if (parsed.remboursement) {
+      const qui = parsed.nomClient ? ` de ${parsed.nomClient}` : ''
+      const combien = parsed.montant ? ` de ${parsed.montant.toLocaleString('fr-FR')} FCFA` : ''
+      const msg = `Remboursement${combien}${qui} détecté : aucune dette n’a été créée. Ouvrez la dette concernée et touchez « Rembourser » pour l’enregistrer.`
+      setVoiceFeedback(msg)
+      toast.warning(msg)
+      return
+    }
     setVoiceFeedback(`Reconnu : "${transcript}"`)
     if (parsed.montant) setMontant(String(parsed.montant))
     if (parsed.nomClient) setTiersNom(parsed.nomClient)
     if (parsed.telephone) setTiersTel(parsed.telephone)
     if (parsed.dateEcheance) setDateEcheance(parsed.dateEcheance)
     setTiersType(parsed.tiersType)
-    if (parsed.sens && !parsed.remboursement) setDetteSens(parsed.sens)
+    if (parsed.sens) setDetteSens(parsed.sens)
 
-    if (parsed.remboursement) {
-      toast.warning('Remboursement détecté : enregistrez-le avec le bouton « Rembourser » de la dette concernée, pas comme une nouvelle dette.')
-    } else if (!parsed.montant) {
+    if (!parsed.montant) {
       toast.warning('Montant non compris : saisissez-le.')
     } else if (!parsed.sens) {
       toast.info('Précisez le sens : « On me doit » ou « Je dois ».')

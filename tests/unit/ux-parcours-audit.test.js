@@ -128,6 +128,19 @@ describe('AUD-230 — couleurs lisibles (WCAG AA) sans toucher à la couleur de 
   });
 });
 
+describe('AUD-225 — la dictée d\'un remboursement ne pré-remplit pas une dette', () => {
+  test('remboursement détecté : message explicite et retour avant tout setter du formulaire', () => {
+    const s = lire('app/(account)/compte/kalpe/components/useKalpeVoice.ts');
+    const iRemb = s.indexOf('if (parsed.remboursement)');
+    const iMontant = s.indexOf('setMontant(String(parsed.montant))');
+    expect(iRemb).toBeGreaterThan(-1);
+    expect(iRemb).toBeLessThan(iMontant); // le contrôle précède tout remplissage
+    expect(s).toMatch(/aucune dette n’a été créée/);
+    expect(s).toMatch(/touchez « Rembourser »/);
+    expect(s).not.toMatch(/parsed\.sens && !parsed\.remboursement/);
+  });
+});
+
 describe('AUD-228 — fiche immobilière : contact accessible dès le premier écran sur mobile', () => {
   test('barre fixe prix + « Contacter » reliée à l\'ancre du bloc contact, visible seulement sur mobile', () => {
     const s = lire('app/immo/[id]/FicheImmoSidebar.tsx');
