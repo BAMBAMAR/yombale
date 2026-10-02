@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
+import { pluriel } from '@/lib/format'
 import BoutiquesSearch from './BoutiquesSearch'
 import HeroCarousel from './HeroCarousel'
 import BoutiqueCard, { BoutiqueItem } from './components/BoutiqueCard'
@@ -445,7 +446,7 @@ export default async function BoutiquesPage({
                   <CheckCircle2 size={12} style={{ color: '#10b981' }} /> <b>WhatsApp direct</b>
                 </span>
                 <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Store size={12} style={{ color: '#C75B00' }} /> <b>{total > 0 ? total : '70+'} boutiques</b>
+                  <Store size={12} style={{ color: '#C75B00' }} /> <b>{total > 0 ? pluriel(total, 'boutique') : '70+ boutiques'}</b>
                 </span>
                 <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <ShieldCheck size={12} style={{ color: '#16a34a' }} /> <b>Badge sur critères réels</b>

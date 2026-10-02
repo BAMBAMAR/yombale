@@ -172,8 +172,8 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
       if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
     }
 
-    // Redirection de repli sans 404
-    redirect('/annonces')
+    // Redirection de repli sans 404 (AUD-232 : la liste explique pourquoi on y arrive, au lieu d'une redirection muette)
+    redirect('/annonces?introuvable=1')
   }
 
   const { titre, description } = vueTexteAnnonce(annonce)

@@ -3,6 +3,7 @@
 import React, { useRef } from 'react'
 import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
+import { pluriel } from '@/lib/format'
 import {
   Sparkles,
   MessageCircle,
@@ -169,7 +170,7 @@ export default function DiscoverTrendingBiens({
                   whiteSpace: 'nowrap',
                 }}
               >
-                {items.length} biens
+                {pluriel(items.length, 'bien')}
               </span>
             </div>
             <p

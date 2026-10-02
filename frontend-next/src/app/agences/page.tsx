@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
+import { pluriel } from '@/lib/format'
 import AgencesSearch from './components/AgencesSearch'
 import ImmoHeroCarousel from './components/ImmoHeroCarousel'
 import AgenceDirectoryCard, { AgenceItem } from './components/AgenceDirectoryCard'
@@ -382,7 +383,7 @@ export default async function PublicAgencesDirectoryPage({
                   <CheckCircle2 size={12} style={{ color: '#10b981' }} /> <b>Baux & Quittances Wave</b>
                 </span>
                 <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Building2 size={12} style={{ color: 'var(--navy, #1C2B4A)' }} /> <b>{total > 0 ? total : '50+'} agences</b>
+                  <Building2 size={12} style={{ color: 'var(--navy, #1C2B4A)' }} /> <b>{total > 0 ? pluriel(total, 'agence') : '50+ agences'}</b>
                 </span>
                 <span className="hero-values-chip" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <ShieldCheck size={12} style={{ color: '#16a34a' }} /> <b>100% agréées</b>

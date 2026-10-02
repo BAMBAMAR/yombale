@@ -459,6 +459,20 @@ describe('AUD-232 — suivi public : masque de téléphone et nom de boutique ho
   });
 });
 
+describe('AUD-232 (lot 2) — pluriels et annonce introuvable expliquée', () => {
+  test('pluriels français sur les compteurs des annuaires', () => {
+    expect(lire('app/agences/page.tsx')).toMatch(/pluriel\(total, 'agence'\)/);
+    expect(lire('app/boutiques/page.tsx')).toMatch(/pluriel\(total, 'boutique'\)/);
+    expect(lire('app/agences/components/DiscoverTrendingBiens.tsx')).toMatch(/pluriel\(items\.length, 'bien'\)/);
+  });
+  test('une annonce introuvable mène à la liste avec une explication', () => {
+    expect(lire('app/annonces/[id]/page.tsx')).toMatch(/redirect\('\/annonces\?introuvable=1'\)/);
+    const l = lire('app/annonces/page.tsx');
+    expect(l).toMatch(/introuvable === '1'/);
+    expect(l).toMatch(/n’est plus disponible/);
+  });
+});
+
 describe('AUD-215 — suivi public : jamais de joker', () => {
   beforeEach(() => { jest.clearAllMocks(); pool.query.mockResolvedValue({ rows: [{ id: 'x', reference: 'C-1', client_nom: 'A B', client_telephone: '770000001', statut: 'en_attente', montant_total: 1 }] }); });
 

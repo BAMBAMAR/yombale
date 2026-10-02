@@ -142,12 +142,12 @@ export default async function AnnoncesPage({
 }: {
   searchParams: Promise<{
     categorie?: string; page?: string; tri?: string
-    q?: string; prixMax?: string; ville?: string; source?: string
+    q?: string; prixMax?: string; ville?: string; source?: string; introuvable?: string
   }>
 }) {
   const {
     categorie = '', page: pageStr = '1', tri = '',
-    q = '', prixMax = '', ville = '', source = '',
+    q = '', prixMax = '', ville = '', source = '', introuvable = '',
   } = await searchParams
   const page = Math.max(1, parseInt(pageStr))
 
@@ -183,6 +183,12 @@ export default async function AnnoncesPage({
 
   return (
     <div className="annonces-page">
+      {/* AUD-232 : lien d'annonce périmé ou supprimé */}
+      {introuvable === '1' && (
+        <p role="status" style={{ margin: '0 0 16px', padding: '12px 14px', borderRadius: 12, background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)', color: 'var(--navy, #1C2B4A)', fontSize: 14, fontWeight: 600, lineHeight: 1.45 }}>
+          Cette annonce n’est plus disponible : elle a peut-être été vendue ou retirée. Voici les annonces en ligne.
+        </p>
+      )}
       {/* Header */}
       <PageHeader
         breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Annonces' }]}

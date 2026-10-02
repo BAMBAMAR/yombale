@@ -71,6 +71,11 @@ export function fcfa(prix: number | string | null | undefined, locale?: string):
   return new Intl.NumberFormat(loc).format(Math.round(num)) + ' FCFA';
 }
 
+/** AUD-232 : accord en nombre à la française (0 et 1 au singulier) — « 1 agence », « 2 agences ». */
+export function pluriel(n: number, mot: string, motPluriel?: string): string {
+  return `${n} ${n >= 2 ? (motPluriel ?? `${mot}s`) : mot}`
+}
+
 export function formatNombre(val: number | string | null | undefined, locale?: string): string {
   if (val === null || val === undefined || val === '') return '0';
   const num = Number(val);
