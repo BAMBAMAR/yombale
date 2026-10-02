@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { body, param, query, validationResult } = require('express-validator');
 const { normalisePhone } = require('../../services/whatsapp');
 const { resolverComptesParTelephone } = require('../../lib/telephoneIntegrity');
+const { proprietaireDepuisSession } = require('../../lib/proprietaireBoutique');
 const { verifierPreuveTelephone } = require('../../lib/phoneProof');
 const { demarrerEssaiSiPremiereFois } = require('../../lib/essaiGratuit');
 const { marquerLeadConverti } = require('../../lib/crmConversion');
@@ -108,7 +109,13 @@ router.get('/modeles-couvertures', (req, res) => {
 });
 
 // ── GET /api/boutiques/admin/toutes — toutes les boutiques (admin)
-router.post('/taf-taf', async (req, res) => {
+// AUD-214 : si l'appelant est connecté (en-tête Authorization), la session est pleinement vérifiée (suspension, révocation)
+// et la boutique est rattachée à SON compte ; sans en-tête, le parcours visiteur reste inchangé.
+function authSiEnTete(req, res, next) {
+  return req.headers['authorization'] ? verifierToken(req, res, next) : next();
+}
+
+router.post('/taf-taf', authSiEnTete, async (req, res) => {
   try {
     let { nom, email, mot_de_passe, telephone, couleur, couleur_theme, categorie, code_apporteur, preuve_telephone } = req.body;
     if (!nom || !telephone) return res.status(400).json({ error: 'Nom et téléphone requis' });
@@ -131,14 +138,26 @@ router.post('/taf-taf', async (req, res) => {
     // 1. Gérer l'utilisateur — résolution par téléphone uniquement (jamais par e-mail fourni : un
     // e-mail connu ne prouve rien et permettrait de récupérer le compte d'un tiers).
     const cleanPhone = normalisePhone(telephone);
-    const { rows, ambigu } = await resolverComptesParTelephone(
-      pool, cleanPhone, 'id, nom, email, code_apporteur, suspendu, supprime_le, anonymise_le, COALESCE(jwt_version, 1) AS jwt_version'
-    );
+    let user;
+    let compteConnecte = false; // AUD-214 : la boutique va au compte déjà connecté, sa session n'est pas remplacée
+    const sessionUserId = req.user && req.user.userId;
+    if (sessionUserId) {
+      const prop = await proprietaireDepuisSession(pool, sessionUserId, telephone, cleanPhone);
+      if (!prop.user) return res.status(prop.status).json({ error: prop.error, code: prop.code });
+      user = prop.user;
+      compteConnecte = true;
+    }
+    const { rows, ambigu } = sessionUserId
+      ? { rows: [], ambigu: false }
+      : await resolverComptesParTelephone(
+          pool, cleanPhone, 'id, nom, email, code_apporteur, suspendu, supprime_le, anonymise_le, COALESCE(jwt_version, 1) AS jwt_version'
+        );
     if (ambigu) {
       return res.status(409).json({ error: 'Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.' });
     }
-    let user;
-    if (rows.length) {
+    if (compteConnecte) {
+      // propriétaire déjà déterminé ci-dessus
+    } else if (rows.length) {
       user = rows[0];
       if (user.suspendu) return res.status(403).json({ error: 'Ce compte est suspendu.' });
       if (user.anonymise_le) return res.status(403).json({ error: 'Ce compte a été définitivement supprimé.' });
@@ -173,7 +192,7 @@ router.post('/taf-taf', async (req, res) => {
     if (dejaCreee.rows[0]) {
       const b = dejaCreee.rows[0];
       const tokenExistant = jwt.sign({ userId: user.id, jwtVersion: user.jwt_version || 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      return res.json({ success: true, deja_existante: true, boutiqueId: b.id, slug: b.slug, boutique: { id: b.id, caisse_token: b.caisse_token }, caisse_token: b.caisse_token, token: tokenExistant });
+      return res.json({ success: true, deja_existante: true, compte_connecte: compteConnecte, boutiqueId: b.id, slug: b.slug, boutique: { id: b.id, caisse_token: b.caisse_token }, caisse_token: b.caisse_token, ...(compteConnecte ? {} : { token: tokenExistant }) });
     }
 
     // 1.5 Vérification stricte des quotas Admin
@@ -240,7 +259,8 @@ router.post('/taf-taf', async (req, res) => {
     // 4. Générer le token de session
     const token = jwt.sign({ userId: user.id, jwtVersion: user.jwt_version || 1 }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ success: true, boutiqueId, boutique: { id: boutiqueId, caisse_token: caisseToken }, caisse_token: caisseToken, token });
+    // Compte déjà connecté : aucun jeton renvoyé, le front garde la session en cours (AUD-214)
+    res.json({ success: true, compte_connecte: compteConnecte, boutiqueId, boutique: { id: boutiqueId, caisse_token: caisseToken }, caisse_token: caisseToken, ...(compteConnecte ? {} : { token }) });
   } catch (err) {
     console.error('[TAF TAF]', err);
     res.status(500).json({ error: erreurPublique(err, req) });

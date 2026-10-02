@@ -67,7 +67,67 @@ describe('AUD-217 — la confirmation de commande ne ment pas', () => {
   });
 });
 
-describe('AUD-213 — le succès de création de boutique ne dépend plus d\'un état local', () => {
+describe('AUD-214 — un utilisateur connecté crée sa boutique sur son propre compte', () => {
+  // Module chargé en isolation : l'application, déjà chargée plus haut, a figé la vraie résolution par téléphone
+  const charger = (resultat) => {
+    const resolverComptesParTelephone = jest.fn().mockResolvedValue(resultat);
+    let mod;
+    jest.isolateModules(() => {
+      jest.doMock('../../backend/lib/telephoneIntegrity', () => ({ resolverComptesParTelephone }));
+      mod = require('../../backend/lib/proprietaireBoutique');
+    });
+    return mod.proprietaireDepuisSession;
+  };
+  const ligneUser = (extra = {}) => ({ id: 'u-mail', nom: 'Awa', email: 'awa@exemple.sn', telephone: null, suspendu: false, anonymise_le: null, jwt_version: 1, ...extra });
+  const poolFactice = (user) => ({ query: jest.fn(async (sql) => (/FROM utilisateurs WHERE id/.test(sql) ? { rows: user ? [user] : [] } : { rows: [] })) });
+
+  test('numéro libre : la boutique va au compte connecté et le numéro rejoint son profil', async () => {
+    const proprietaireDepuisSession = charger({ rows: [], ambigu: false });
+    const p = poolFactice(ligneUser());
+    const r = await proprietaireDepuisSession(p, 'u-mail', '+221770000003', '770000003');
+    expect(r.user.id).toBe('u-mail');
+    expect(p.query).toHaveBeenCalledWith('UPDATE utilisateurs SET telephone = $1 WHERE id = $2', ['+221770000003', 'u-mail']);
+  });
+
+  test('numéro déjà sur le même compte : accepté, aucune écriture', async () => {
+    const proprietaireDepuisSession = charger({ rows: [{ id: 'u-mail' }], ambigu: false });
+    const p = poolFactice(ligneUser({ telephone: '+221770000003' }));
+    const r = await proprietaireDepuisSession(p, 'u-mail', '+221770000003', '770000003');
+    expect(r.user.id).toBe('u-mail');
+    expect(p.query.mock.calls.some(c => /UPDATE/.test(c[0]))).toBe(false);
+  });
+
+  test('numéro d\'un AUTRE compte : 409 explicite, pas de boutique chez un tiers', async () => {
+    const proprietaireDepuisSession = charger({ rows: [{ id: 'u-autre' }], ambigu: false });
+    const r = await proprietaireDepuisSession(poolFactice(ligneUser()), 'u-mail', '+221770000003', '770000003');
+    expect(r.status).toBe(409);
+    expect(r.code).toBe('TELEPHONE_AUTRE_COMPTE');
+    expect(r.user).toBeUndefined();
+  });
+
+  test('compte suspendu ou introuvable : refusé', async () => {
+    const proprietaireDepuisSession = charger({ rows: [], ambigu: false });
+    expect((await proprietaireDepuisSession(poolFactice(ligneUser({ suspendu: true })), 'u-mail', 't', 'c')).status).toBe(403);
+    expect((await proprietaireDepuisSession(poolFactice(null), 'u-mail', 't', 'c')).status).toBe(401);
+  });
+
+  test('le wizard crée la boutique côté serveur (session jointe) et ne remplace pas la session d\'un compte connecté', () => {
+    const src = lire('app/creer-boutique/page.tsx');
+    expect(src).toMatch(/creerBoutiqueTafTafAction\(/);
+    expect(src).not.toMatch(/\/api\/boutiques\/taf-taf/);
+    expect(src).toMatch(/data\.token && !data\.compte_connecte/);
+    expect(lire('app/actions/boutique-creation.ts')).toMatch(/backendFetch\('\/api\/boutiques\/taf-taf'/);
+  });
+
+  test('la route taf-taf utilise ce propriétaire et ne remplace pas le jeton d\'une session existante', () => {
+    const src = fs.readFileSync(path.join(__dirname, '../../backend/routes/boutiques-modules/boutiques-crud.js'), 'utf8');
+    expect(src).toMatch(/router\.post\('\/taf-taf', authSiEnTete,/);
+    expect(src).toMatch(/proprietaireDepuisSession\(/);
+    expect(src).toMatch(/compte_connecte/);
+  });
+});
+
+describe('AUD-213— le succès de création de boutique ne dépend plus d\'un état local', () => {
   test('le wizard navigue vers /creer-boutique/succes et ne garde plus de boutiqueCreee', () => {
     const src = lire('app/creer-boutique/page.tsx');
     expect(src).toMatch(/router\.replace\(`\/creer-boutique\/succes\?/);

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { setAuthCookieAction } from '@/app/actions/auth'
+import { creerBoutiqueTafTafAction } from '@/app/actions/boutique-creation'
 import { trackFunnel } from '@/lib/analytics'
 import { CATEGORIES } from '@/lib/categories'
 import ModalContratVendeur from './components/ModalContratVendeur'
@@ -189,21 +190,18 @@ export default function CreerBoutiqueWizard() {
         storedApporteur ||
         ''
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
-      const res = await fetch(`${BACKEND}/api/boutiques/taf-taf`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, telephone, couleur, plan, categorie, code_apporteur, preuve_telephone: preuveTelephone }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de la création de la boutique.')
+      // AUD-214 : appel côté serveur pour que la session éventuelle accompagne la requête
+      const resultat = await creerBoutiqueTafTafAction({ nom, telephone, couleur, plan, categorie, code_apporteur, preuve_telephone: preuveTelephone })
+      if (!resultat.ok || !resultat.data) throw new Error(resultat.error || 'Erreur lors de la création de la boutique.')
+      const data = resultat.data
 
       trackFunnel('wizard_cree', { plan })
 
       // AUD-213 : la boutique EST créée à ce stade. L'ouverture de la session (cookie posé par une Server Action)
       // réinitialise la page : on ne garde donc aucun état local, le succès vit dans l'adresse de la page suivante.
+      // AUD-214 : un utilisateur déjà connecté ne reçoit pas de nouveau jeton, sa session reste celle de son compte.
       let sessionOuverte = true
-      if (data.token) {
+      if (data.token && !data.compte_connecte) {
         try {
           await setAuthCookieAction(data.token)
         } catch (cookieErr) {
