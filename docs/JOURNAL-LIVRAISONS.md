@@ -1,5 +1,11 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Crash 500 Commandes Boutique & Éradication des Erreurs d'Hydratation React SSR (#418, #423, #425)** :
+  * **Cause Racine Crash 500 (`/api/comptabilite/:id/commandes`)** : La colonne `idempotency_key` (PWA offline idempotency) était absente de la table `commandes_boutique` sur la base de données PostgreSQL de production Render (erreur 42703).
+  * **Correction Base de Données** : Exécution DDL idempotente appliquant la colonne `idempotency_key VARCHAR(128)` et son index partiel unique sur `commandes_boutique`, `depenses`, `caisse_clients_credits`, `boutique_pos_sessions`, ainsi que la table `stock_ecarts`. Validation directe par exécution transactionnelle avec rollback de `creerCommandeBoutique` (succès 100%).
+  * **Cause Racine Erreurs React Minified (#418, #423, #425)** : Lectures synchrones de `localStorage` lors de l'initialisation de `useState` dans `useCommandesData`, `GestionEntrepots`, `SocialShopManager`, `useCatalogueProduitsData` et `CatalogueProduits` provoquant une divergence entre le rendu HTML côté serveur (SSR vide/squelette) et l'arbre de composants côté client lors de l'hydratation.
+  * **Correction Frontend SSR-Safe** : Initialisation stricte des états à vide côté serveur/hydratation et bascule des lectures `localStorage` dans des hooks `useEffect` ou sous verrouillage `mounted`. Validation complète : `npm run lint:slop` et `npx tsc --noEmit` sans aucune erreur.
+
 - **Lot Voix — corrections de la chaîne vocale AUD-196 à AUD-211 (branche `fix/voix`, commits locaux, non poussée)**
   * **AUD-196/208** : formulaire Sama Xaalis plus vidé après dictée (réinitialisation à l'ouverture seulement, `ToastContext` mémoïsé). Preuve réelle (build de production) : champs conservés 6,5 s, écriture en base en 515 ms (avant : champ vide 30 ms après la dictée).
   * **AUD-199** : analyseur de montants compositionnel (3 500, 150 000, 1 500 000, deux millions, junni ak téemeer = 5 500). **AUD-197/198/202/203/204/205** : sens reçu/payé avant catégorie (salaire reçu = revenu en base), parseur de dettes dédié (sens, nom, téléphone, échéance, entreprise), catégories valides, libellé issu de la parole, retour « non compris », aucune bascule hors dépense/revenu. **AUD-207** : une seule session d'écoute (journal : 1 start au lieu de 2).

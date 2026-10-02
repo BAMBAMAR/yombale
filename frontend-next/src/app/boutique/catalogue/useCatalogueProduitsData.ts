@@ -23,25 +23,8 @@ export function useCatalogueProduitsData({
   filtreInitial?: 'jamais_partage'
 }) {
   const { toast, confirmModal } = useToast()
-  const [produits, setProduits] = useState<Produit[]>(() => {
-    if (typeof window !== 'undefined' && boutique?.id) {
-      try {
-        const cached = localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) || localStorage.getItem(`nopalou_offline_prods_${boutique.id}`)
-        if (cached) {
-          const parsed = JSON.parse(cached)
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed
-        }
-      } catch (_) {}
-    }
-    return []
-  })
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== 'undefined' && boutique?.id) {
-      const cached = localStorage.getItem(`nopalou_pos_produits_${boutique.id}`) || localStorage.getItem(`nopalou_offline_prods_${boutique.id}`)
-      if (cached) return false
-    }
-    return true
-  })
+  const [produits, setProduits] = useState<Produit[]>([])
+  const [loading, setLoading] = useState(true)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [rechercheTexte, setRechercheTexte] = useState('')
