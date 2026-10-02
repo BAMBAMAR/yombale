@@ -128,6 +128,15 @@ describe('AUD-230 — couleurs lisibles (WCAG AA) sans toucher à la couleur de 
   });
 });
 
+describe('AUD-231 — la bulle d\'assistant ne recouvre plus les pages de formulaire', () => {
+  test('le widget consulte la liste de pages sans bulle', () => {
+    const w = lire('components/chat/ChatbotWidget.tsx');
+    expect(w).toMatch(/bulleAssistantMasquee\(pathname\)/);
+    expect(w).toMatch(/usePathname/);
+    expect(lire('lib/chat-routes.ts')).toMatch(/'\/creer-boutique'/);
+  });
+});
+
 describe('AUD-226 — carte « Commencez à vendre » lisible sur mobile', () => {
   test('le bloc de texte garde une base de largeur (il passe à la ligne au lieu d\'être écrasé) et les boutons font 44 px', () => {
     const src = lire('app/(account)/compte/tabs/hub/AccountHubRecentAnnonces.tsx');

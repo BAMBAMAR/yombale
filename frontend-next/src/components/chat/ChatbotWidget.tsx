@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import ChatbotMessageItem, { type ChatMessage } from './ChatbotMessageItem'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
+import { usePathname } from 'next/navigation'
+import { bulleAssistantMasquee } from '@/lib/chat-routes'
 
 const WA_OFFICIAL_URL = 'https://wa.me/221708717942?text=' + encodeURIComponent('Bonjour Nopalou')
 
@@ -37,6 +39,7 @@ const INITIAL_MESSAGE: ChatMessage = {
 }
 
 export default function ChatbotWidget() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE])
@@ -157,6 +160,9 @@ export default function ChatbotWidget() {
       handleSendMessage()
     }
   }
+
+  // AUD-231 : pas de bulle sur les pages de formulaire / espaces de travail (sauf si la conversation est déjà ouverte)
+  if (bulleAssistantMasquee(pathname) && !isOpen) return null
 
   return (
     <>
