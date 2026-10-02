@@ -9,6 +9,7 @@ const { adminSecretOnly } = require('../middlewares/auth');
 const { adminAccess } = require('../middlewares/admin-rbac');
 const router = express.Router();
 const { erreurPublique } = require('../lib/safeError'); // AUD-145
+const { relacherOffres } = require('../lib/quarantaine'); // AUD-180
 
 let quarantinesTableEnsured = false;
 async function ensureQuarantinesTable() {
@@ -38,8 +39,13 @@ async function ensureQuarantinesTable() {
 router.get('/quarantines', ...adminAccess('produits', {'edit':'produits:moderate'}), async (req, res) => {
   try {
     await ensureQuarantinesTable();
+    // AUD-180 : liste blanche + requête paramétrée (le statut était concaténé dans le SQL)
     const status = req.query.status || 'quarantined';
-    const filter = status === 'all' ? '' : `AND status = '${status}'`;
+    if (!['quarantined', 'validated', 'rejected', 'released_auto', 'all'].includes(status)) {
+      return res.status(400).json({ error: 'Statut inconnu' });
+    }
+    const filter = status === 'all' ? '' : 'AND ql.status = $1';
+    const parametres = status === 'all' ? [] : [status];
 
     const result = await pool.query(`
       SELECT
@@ -57,7 +63,7 @@ router.get('/quarantines', ...adminAccess('produits', {'edit':'produits:moderate
       WHERE 1=1 ${filter}
       ORDER BY ql.created_at DESC
       LIMIT 500
-    `);
+    `, parametres);
 
     res.json(result.rows);
   } catch (err) {
@@ -72,19 +78,10 @@ router.post('/quarantines/:offre_id/validate', ...adminAccess('produits', {'edit
     const { offre_id } = req.params;
     const { admin_name } = req.body;
 
-    // Mettre à jour quarantine log
-    await pool.query(`
-      UPDATE quarantines_log
-      SET status = 'validated', validated_by = $1, validated_at = NOW()
-      WHERE offre_id = $2 AND status = 'quarantined'
-      ORDER BY created_at DESC LIMIT 1
-    `, [admin_name || 'admin', offre_id]);
-
-    // Retirer de quarantine l'offre
-    await pool.query(
-      'UPDATE offres SET quarantinee = false WHERE id = $1',
-      [offre_id]
-    );
+    // AUD-180 : l'ancienne requête (UPDATE ... ORDER BY ... LIMIT 1) est une erreur de syntaxe PostgreSQL : la route répondait
+    // toujours 500 et aucune quarantaine n'a jamais pu être validée à la main. Journal, offre et agrégats du produit en un appel.
+    const { relachees } = await relacherOffres(pool, [offre_id], { par: admin_name || 'admin', statut: 'validated' });
+    if (!relachees) return res.status(404).json({ error: 'Offre introuvable' });
 
     res.json({ success: true, message: 'Offre validée et restaurée' });
   } catch (err) {
@@ -99,16 +96,9 @@ router.post('/quarantines/:offre_id/reject', ...adminAccess('produits', {'edit':
     const { offre_id } = req.params;
     const { admin_name } = req.body;
 
-    // Mettre à jour quarantine log
-    await pool.query(`
-      UPDATE quarantines_log
-      SET status = 'rejected', validated_by = $1, validated_at = NOW()
-      WHERE offre_id = $2 AND status = 'quarantined'
-      ORDER BY created_at DESC LIMIT 1
-    `, [admin_name || 'admin', offre_id]);
-
-    // Garder l'offre en quarantine
-    // (pas de UPDATE offres, elle reste quarantinee = true)
+    // AUD-180 : même défaut de syntaxe que la validation (UPDATE ... ORDER BY ... LIMIT 1) ; l'offre reste en quarantaine,
+    // la décision est journalisée
+    await relacherOffres(pool, [offre_id], { par: admin_name || 'admin', statut: 'rejected' });
 
     res.json({ success: true, message: 'Offre rejetée et maintenue en quarantine' });
   } catch (err) {

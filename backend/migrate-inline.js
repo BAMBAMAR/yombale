@@ -2994,6 +2994,10 @@ module.exports = async function migrateInline(customConnStr = null) {
        motif        TEXT NOT NULL DEFAULT 'nom_normalise_identique'
      )`,
     `CREATE INDEX IF NOT EXISTS idx_produits_alias_canonique ON produits_alias(canonique_id)`,
+    // AUD-180 : la contrainte d'origine n'admettait que quarantined / validated / rejected : la réintégration automatique
+    // (released_auto) en est un quatrième état. Remplacement idempotent (suppression puis recréation).
+    `ALTER TABLE quarantines_log DROP CONSTRAINT IF EXISTS quarantines_log_status_check`,
+    `ALTER TABLE quarantines_log ADD CONSTRAINT quarantines_log_status_check CHECK (status IN ('quarantined', 'validated', 'rejected', 'released_auto'))`,
     `CREATE TABLE IF NOT EXISTS scraping_run_pages (
        id          BIGSERIAL PRIMARY KEY,
        run_id      BIGINT REFERENCES scraping_runs(id) ON DELETE CASCADE,

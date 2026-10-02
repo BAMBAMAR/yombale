@@ -4,6 +4,7 @@
 // Logique : si variation > 50% vs prix_moyen_30j OU si prix = 0 OU si prix > seuil max => quarantine
 
 const { pool } = require('../models/db');
+const { raisonVariation, reevaluerQuarantaines } = require('../lib/quarantaine'); // AUD-180
 
 const VARIATION_THRESHOLD = 0.5; // 50%
 const PRICE_MAX_BY_CATEGORY = {
@@ -63,7 +64,12 @@ async function detecterAnomalies() {
         COALESCE(
           (SELECT AVG(prix) FROM historique_prix WHERE offre_id = o.id AND date > NOW() - INTERVAL '30 days'),
           o.prix
-        ) as prix_moyen_30j
+        ) as prix_moyen_30j,
+        (SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY o2.prix) FROM offres o2
+           WHERE o2.produit_id = o.produit_id AND o2.id <> o.id AND o2.stock AND NOT o2.quarantinee) AS mediane_autres,
+        (SELECT COUNT(*) FROM offres o2
+           WHERE o2.produit_id = o.produit_id AND o2.id <> o.id AND o2.stock AND NOT o2.quarantinee)::int AS nb_autres,
+        o.titre_marchand
       FROM offres o
       JOIN produits p ON p.id = o.produit_id
       LEFT JOIN categories c ON c.id = p.categorie_id
@@ -76,7 +82,7 @@ async function detecterAnomalies() {
 
     for (const offre of res.rows) {
       if (dejaQuarantines.has(offre.id)) continue;
-      const {id, produit_id, prix, prod_nom, cat_slug, prix_moyen_30j} = offre;
+      const {id, produit_id, prix, prod_nom, cat_slug, prix_moyen_30j, mediane_autres, nb_autres, titre_marchand} = offre;
 
       let raison = null;
 
@@ -90,10 +96,10 @@ async function detecterAnomalies() {
       }
       // 3. Variation > 50% vs historique 30j
       else if (prix_moyen_30j) {
-        const variation = Math.abs(prix - prix_moyen_30j) / prix_moyen_30j;
-        if (variation > VARIATION_THRESHOLD) {
-          raison = `variation_${Math.round(variation * 100)}pct`;
-        }
+        // AUD-180 : une baisse n'est suspecte que si elle sort de ce qui est crédible (promotion plausible sinon)
+        let plancher = null;
+        try { plancher = require('./scraper').prixPlancher(titre_marchand || prod_nom); } catch (_) { /* plancher indisponible */ }
+        raison = raisonVariation({ prix, prixMoyen30j: prix_moyen_30j, medianeAutres: mediane_autres, nbAutres: nb_autres, plancher });
       }
 
       if (raison) {
@@ -144,6 +150,12 @@ async function detecterAnomalies() {
     } else {
       console.log('[ANOMALY] ✅ Aucune anomalie détectée');
     }
+
+    // AUD-180 : réintégration automatique des offres dont la raison ne tient plus et dont le prix est confirmé
+    try {
+      const re = await reevaluerQuarantaines(pool, { plancherDe: (titre) => { try { return require('./scraper').prixPlancher(titre); } catch (_) { return null; } } });
+      console.log(`[ANOMALY] ♻️  ${re.relachees} offre(s) relâchée(s) de la quarantaine sur ${re.examinees} examinée(s)`);
+    } catch (e) { console.warn('[ANOMALY] réévaluation des quarantaines:', e.message); }
 
     const elapsed = Date.now() - startTime;
     console.log(`[ANOMALY] ✅ Détection complète en ${elapsed}ms`);
