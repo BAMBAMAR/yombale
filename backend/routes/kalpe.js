@@ -227,6 +227,7 @@ router.post('/operation', async (req, res) => {
       tiers_nom,
       tiers_tel,
       date_operation,
+      moyen_paiement,
       boutique_id,
       objectif_id, // si type === 'versement_epargne'
     } = req.body;
@@ -257,7 +258,16 @@ router.post('/operation', async (req, res) => {
 
     const opRef = genRef(type === 'vente_express' ? 'VNT' : type === 'depense' ? 'DEP' : 'OP');
     const finalLibelle = libelle && libelle.trim() ? libelle.trim() : `${type.toUpperCase()} - ${categorie.trim()}`;
-    const finalDate = date_operation || new Date().toISOString().slice(0, 10);
+    // AUD-210 : date dictée ou saisie (AAAA-MM-JJ, jamais dans le futur) et moyen de paiement (métadonnée)
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    if (date_operation && (!/^\d{4}-\d{2}-\d{2}$/.test(String(date_operation)) || isNaN(Date.parse(date_operation)))) {
+      return res.status(400).json({ error: 'Date invalide (format AAAA-MM-JJ attendu)' });
+    }
+    if (date_operation && String(date_operation) > aujourdhui) {
+      return res.status(400).json({ error: 'La date ne peut pas être dans le futur' });
+    }
+    const finalDate = date_operation || aujourdhui;
+    const moyenPaiement = moyen_paiement ? String(moyen_paiement).trim().slice(0, 40) : null;
 
     const client = await pool.connect();
     try {
@@ -276,8 +286,9 @@ router.post('/operation', async (req, res) => {
           tiers_nom,
           tiers_tel,
           date_operation,
-          reference
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          reference,
+          metadata
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *
       `, [
         userId,
@@ -292,6 +303,7 @@ router.post('/operation', async (req, res) => {
         tiers_tel?.trim() || null,
         finalDate,
         opRef,
+        JSON.stringify(moyenPaiement ? { moyen_paiement: moyenPaiement } : {}),
       ]);
 
       // Si c'est un versement vers un objectif d'épargne

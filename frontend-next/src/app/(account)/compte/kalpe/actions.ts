@@ -54,6 +54,7 @@ export async function ajouterKalpeOperation(data: {
   tiers_nom?: string
   tiers_tel?: string
   date_operation?: string
+  moyen_paiement?: string
   boutique_id?: string
   objectif_id?: string
 }): Promise<{ success: boolean; operation?: KalpeOperation; error?: string }> {

@@ -52,6 +52,8 @@ export function KalpeSaisieModal({
   const [tiersTel, setTiersTel] = useState<string>('')
   const [tiersType, setTiersType] = useState<'particulier' | 'entreprise'>('particulier')
   const [dateEcheance, setDateEcheance] = useState<string>('')
+  const [dateOperation, setDateOperation] = useState<string>('')
+  const [moyenPaiement, setMoyenPaiement] = useState<string>('')
   const [detteSens, setDetteSens] = useState<'a_recevoir' | 'a_payer'>(initialDetteSens)
   const [selectedObjectifId, setSelectedObjectifId] = useState<string>('')
   const [loading, setLoading] = useState(false)
@@ -70,6 +72,9 @@ export function KalpeSaisieModal({
     setTiersType,
     setDateEcheance,
     setDetteSens,
+    setContexte,
+    setDateOperation,
+    setMoyenPaiement,
   })
 
   // AUD-196 : la réinitialisation ne se fait qu'à l'OUVERTURE. Elle ne doit jamais dépendre des données
@@ -87,6 +92,8 @@ export function KalpeSaisieModal({
       setTiersTel('')
       setTiersType('particulier')
       setDateEcheance('')
+      setDateOperation('')
+      setMoyenPaiement('')
       setVoiceFeedback(null)
       if (initialMode === 'depense') setCategorie(CATEGORIES_DEPENSE[0])
       else if (initialMode === 'revenu') setCategorie(CATEGORIES_REVENU[0])
@@ -165,6 +172,8 @@ export function KalpeSaisieModal({
           contexte,
           tiers_nom: tiersNom.trim() || undefined,
           tiers_tel: tiersTel.trim() || undefined,
+          date_operation: dateOperation || undefined,
+          moyen_paiement: moyenPaiement || undefined,
         })
         if (!res.success) {
           toast.error(res.error || 'Erreur enregistrement')
@@ -340,6 +349,10 @@ export function KalpeSaisieModal({
             setCategorie={setCategorie}
             libelle={libelle}
             setLibelle={setLibelle}
+            dateOperation={dateOperation}
+            setDateOperation={setDateOperation}
+            moyenPaiement={moyenPaiement}
+            setMoyenPaiement={setMoyenPaiement}
           />
 
           {/* Submit Button */}

@@ -51,6 +51,10 @@ interface KalpeSaisieFormFieldsProps {
   setCategorie: (val: string) => void
   libelle: string
   setLibelle: (val: string) => void
+  dateOperation?: string
+  setDateOperation?: (val: string) => void
+  moyenPaiement?: string
+  setMoyenPaiement?: (val: string) => void
 }
 
 export function KalpeSaisieFormFields({
@@ -72,6 +76,10 @@ export function KalpeSaisieFormFields({
   setCategorie,
   libelle,
   setLibelle,
+  dateOperation = '',
+  setDateOperation,
+  moyenPaiement = '',
+  setMoyenPaiement,
 }: KalpeSaisieFormFieldsProps) {
   return (
     <>
@@ -293,6 +301,39 @@ export function KalpeSaisieFormFields({
                 {cat}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Date et moyen de paiement (dictables : « hier », « le 3 octobre », « par Wave ») */}
+      {mode !== 'dette' && mode !== 'epargne' && setDateOperation && setMoyenPaiement && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: '#1C2B4A', display: 'block', marginBottom: '4px' }}>
+              Date (aujourd'hui par défaut)
+            </label>
+            <input
+              type="date"
+              value={dateOperation}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setDateOperation(e.target.value)}
+              style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E8DDD2', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: '#1C2B4A', display: 'block', marginBottom: '4px' }}>
+              Moyen de paiement
+            </label>
+            <select
+              value={moyenPaiement}
+              onChange={(e) => setMoyenPaiement(e.target.value)}
+              style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #E8DDD2', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box', background: '#fff' }}
+            >
+              <option value="">Non précisé</option>
+              {['Espèces', 'Wave', 'Orange Money', 'Carte', 'Virement / chèque'].map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
         </div>
       )}

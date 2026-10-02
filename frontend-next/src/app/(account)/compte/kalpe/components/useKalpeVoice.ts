@@ -24,6 +24,9 @@ interface UseKalpeVoiceParams {
   setTiersType: (val: 'particulier' | 'entreprise') => void
   setDateEcheance: (val: string) => void
   setDetteSens: (val: 'a_recevoir' | 'a_payer') => void
+  setContexte: (val: 'personnel' | 'activite') => void
+  setDateOperation: (val: string) => void
+  setMoyenPaiement: (val: string) => void
 }
 
 // AUD-207 : une seule session de reconnaissance à la fois, même si l'événement de démarrage arrive deux fois
@@ -43,6 +46,9 @@ export function useKalpeVoice({
   setTiersType,
   setDateEcheance,
   setDetteSens,
+  setContexte,
+  setDateOperation,
+  setMoyenPaiement,
 }: UseKalpeVoiceParams) {
   const { toast } = useToast()
   const [isListening, setIsListening] = useState(false)
@@ -92,6 +98,9 @@ export function useKalpeVoice({
     setVoiceFeedback(`Reconnu : "${transcript}"`)
     if (parsed.montant && parsed.montant > 0) setMontant(String(parsed.montant))
     if (desc) setLibelle(desc)
+    if (parsed.contexte) setContexte(parsed.contexte)
+    if (parsed.dateOperation) setDateOperation(parsed.dateOperation)
+    if (parsed.moyenPaiement) setMoyenPaiement(parsed.moyenPaiement)
 
     // Le sens (dépense / revenu) ne bascule que entre ces deux onglets : jamais depuis Épargne ou Vente express.
     let modeEffectif: SaisieMode = mode

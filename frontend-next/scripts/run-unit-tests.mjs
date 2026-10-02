@@ -34,6 +34,7 @@ import {
   parseDetteIntent,
   parseKalpeDetteIntent,
   separerQuantiteEtMontant,
+  extraireDateOperation,
   cleanVoiceSearchQuery,
   normaliserTexteVocal,
   parseAjoutProduitIntent,
@@ -624,6 +625,19 @@ it('AUD-200 separerQuantiteEtMontant: la quantité ne consomme jamais un mot du 
     const r = separerQuantiteEtMontant(t)
     assert.equal(r.quantite, q, t + ' quantité'); assert.equal(r.montant, m, t + ' montant')
   }
+})
+it('AUD-210 date, moyen de paiement et contexte dictés', () => {
+  const ref = new Date(2026, 9, 2)
+  assert.equal(extraireDateOperation('hier', ref), '2026-10-01')
+  assert.equal(extraireDateOperation('avant hier', ref), '2026-09-30')
+  assert.equal(extraireDateOperation('le 3 octobre', ref), '2025-10-03')
+  assert.equal(extraireDateOperation('le 15 septembre', ref), '2026-09-15')
+  assert.equal(extraireDateOperation('le 1 octobre 2026', ref), '2026-10-01')
+  assert.equal(extraireDateOperation('aujourd hui', ref), undefined)
+  const a = parseSaisieExpressIntent("j'ai payé 5000 par Wave à Moussa pour le transport hier pour ma boutique", 'depense')
+  assert.equal(a.moyenPaiement, 'Wave'); assert.equal(a.contexte, 'activite'); assert.match(a.dateOperation, /^\d{4}-\d{2}-\d{2}$/)
+  assert.equal(a.description, 'Moussa transport')
+  assert.equal(parseAjoutProduitIntent('Sac à main en cuir ñaari junni').nom, 'Sac à main en cuir')
 })
 it('cleanVoiceSearchQuery: extraction propre du mot-clé produit', () => {
   assert.equal(cleanVoiceSearchQuery('Cherche robe en wax'), 'robe en wax')

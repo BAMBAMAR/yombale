@@ -247,6 +247,10 @@ export interface SaisieExpressIntent {
   categorieRevenuKalpe?: string
   description?: string
   libelleProduit?: string
+  /** AAAA-MM-JJ : « hier », « le 3 octobre »… (absent = aujourd'hui) */
+  dateOperation?: string
+  moyenPaiement?: string
+  contexte?: 'personnel' | 'activite'
 }
 
 const sansAccents = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -257,7 +261,7 @@ const MOTS_VIDES_LIBELLE = new Set([
   'matin', 'soir', 'midi', 'aujourd', 'hui', 'aujourdhui', 'hier', 'demain', 'maintenant', 'tout', 'juste',
   'depense', 'depenses', 'depans', 'depanse', 'paye', 'payer', 'paiement', 'achete', 'recu', 'recue', 'recus', 'encaisse', 'encaissee',
   'gagne', 'gagnee', 'percu', 'percue', 'tombe', 'envoye', 'donne', 'vire', 'verse', 'vente', 'ventes', 'jaay', 'jaaye', 'jaayi',
-  'est', 'zero', 'francs', 'franc', 'fcfa', 'cfa', 'frs', 'f', 'euro', 'euros', 'recette', 'recettes', 'encaissement', 'dette', 'charge', 'charges', 'sortie', 'sorties',
+  'est', 'zero', 'avant', 'hier', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche', 'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre', 'wave', 'om', 'especes', 'espece', 'cash', 'carte', 'cheque', 'virement', 'boutique', 'activite', 'perso', 'personnel', 'francs', 'franc', 'fcfa', 'cfa', 'frs', 'f', 'euro', 'euros', 'recette', 'recettes', 'encaissement', 'dette', 'charge', 'charges', 'sortie', 'sorties',
 ])
 
 const MOTS_NOMBRES_LIBELLE = new Set<string>([
@@ -387,6 +391,7 @@ export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente
       categorie: cat,
       categorieKalpe: categorieKalpeDepense(clean),
       description: libelleDepuisTranscript(transcript) || descDefaut,
+      ...champsAnnexes(clean),
     }
   }
 
@@ -396,6 +401,7 @@ export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente
     montant: montant || 0,
     categorieRevenuKalpe: categorieKalpeRevenu(clean),
     libelleProduit: libelle || undefined,
+    ...champsAnnexes(clean),
   }
 }
 
@@ -564,7 +570,7 @@ export function parseAjoutProduitIntent(transcript: string): { nom: string; prix
       'juroom', 'juróom', 'diourom', 'djourom', 'juroomi', 'juróomi',
       'fukk', 'fuk', 'fouk', 'fukki'
     ]
-    const regexMots = new RegExp(`(?:^|\s+)(?:${motsNombres.join('|')})(?=\s+|$)`, 'gi')
+    const regexMots = new RegExp(`(?:^|\\s+)(?:${motsNombres.join('|')})(?=\\s+|$)`, 'gi')
     nomClean = nomClean.replace(regexMots, ' ')
     nomClean = nomClean.replace(regexMots, ' ')
   }
@@ -817,4 +823,53 @@ export function separerQuantiteEtMontant(texte: string): { quantite: number; mon
     }
   }
   return { quantite, montant, reste }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Champs annexes dictés (AUD-210) : date, moyen de paiement, contexte
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MOIS_FR = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre']
+
+/** « hier », « avant hier », « aujourd'hui », « le 3 octobre », « le 3/10 » → AAAA-MM-JJ ; jamais dans le futur. */
+export function extraireDateOperation(clean: string, aujourdhui: Date = new Date()): string | undefined {
+  const base = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate())
+  const p2 = (x: number) => String(x).padStart(2, '0')
+  const iso = (d: Date) => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate())
+  const moins = (n: number) => { const d = new Date(base); d.setDate(d.getDate() - n); return iso(d) }
+  if (/\bavant hier\b/.test(clean)) return moins(2)
+  if (/\bhier\b/.test(clean)) return moins(1)
+  const m = clean.match(new RegExp('\\b(?:le )?(\\d{1,2}) (' + MOIS_FR.join('|') + ')(?: (\\d{4}))?\\b'))
+  const n = clean.match(/\ble (\d{1,2})[\/ ](\d{1,2})\b/)
+  let jour = 0, mois = -1, annee = base.getFullYear()
+  if (m) { jour = parseInt(m[1], 10); mois = MOIS_FR.indexOf(m[2]); if (m[3]) annee = parseInt(m[3], 10) }
+  else if (n && parseInt(n[2], 10) <= 12) { jour = parseInt(n[1], 10); mois = parseInt(n[2], 10) - 1 }
+  if (mois >= 0 && jour >= 1 && jour <= 31) {
+    let d = new Date(annee, mois, jour)
+    if (!m || !m[3]) { if (d > base) d = new Date(annee - 1, mois, jour) } // sans année : la dernière occurrence passée
+    if (d.getMonth() === mois && d <= base) return iso(d)
+  }
+  return undefined
+}
+
+export function extraireMoyenPaiement(clean: string): string | undefined {
+  if (/\b(orange money|om)\b/.test(clean)) return 'Orange Money'
+  if (/\bwave\b/.test(clean)) return 'Wave'
+  if (/\b(especes|espece|cash|liquide)\b/.test(clean)) return 'Espèces'
+  if (/\bcarte\b/.test(clean)) return 'Carte'
+  if (/\b(cheque|virement)\b/.test(clean)) return 'Virement / chèque'
+  return undefined
+}
+
+export function detecterContexteKalpe(clean: string): 'personnel' | 'activite' | undefined {
+  if (/\b(boutique|activite|commerce|magasin|stock|clients?|professionnel|pro)\b/.test(clean)) return 'activite'
+  if (/\b(perso|personnel|personnelle|famille|maison|menage)\b/.test(clean)) return 'personnel'
+  return undefined
+}
+
+function champsAnnexes(clean: string): { dateOperation?: string; moyenPaiement?: string; contexte?: 'personnel' | 'activite' } {
+  const r: { dateOperation?: string; moyenPaiement?: string; contexte?: 'personnel' | 'activite' } = {}
+  const d = extraireDateOperation(clean); if (d) r.dateOperation = d
+  const p = extraireMoyenPaiement(clean); if (p) r.moyenPaiement = p
+  const c = detecterContexteKalpe(clean); if (c) r.contexte = c
+  return r
 }
