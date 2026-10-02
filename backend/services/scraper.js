@@ -6,6 +6,7 @@ const { pool } = require('../models/db');
 const scrapingLock = require('../lib/scrapingLock');
 const { RunCollecte, noterRequeteCourante, strict: statutsStricts } = require('../lib/scrapingRun');
 const { plafondPages } = require('../lib/scrapePagination');
+const { ordreParAnciennete } = require('../lib/ordreCollecte');
 const { parsePrix } = require('../lib/prix');
 const matching = require('./matching');
 
@@ -1278,6 +1279,10 @@ async function lancerScrapingNouveauxSites(siteIds = null) {
       runs.set(config.id, run);
       return run.executer(scraperLeSite);
     };
+    // AUD-194 : sites visités du plus ancien relevé réussi au plus récent (plus de famine en fin de liste après un redémarrage)
+    const ordre = await ordreParAnciennete(pool, require('./scraper-new-sites').SITES_CONFIG);
+    const rang = new Map(ordre.map((c, i) => [c.id, i]));
+    const ordonner = (configs) => [...configs].sort((a, b) => rang.get(a.id) - rang.get(b.id));
     await scraperTousNouveauxSites(siteIds, async (config, items) => {
       const run = runs.get(config.id) || new RunCollecte({ source: config.nom, systeme: 'produits', categoriesCibles: 1 });
       run.noterCategorie(config.nom, items.length);
@@ -1300,7 +1305,7 @@ async function lancerScrapingNouveauxSites(siteIds = null) {
       } else {
         console.warn(`[NEW-SITES] ${config.nom}: ${verdict.statut.toUpperCase()} (aucun article), derniere_sync inchangée`);
       }
-    }, enveloppe);
+    }, enveloppe, ordonner);
 
     return stats;
   } finally {

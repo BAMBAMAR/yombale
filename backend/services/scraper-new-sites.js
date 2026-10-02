@@ -350,10 +350,11 @@ async function diagnosticNouveauSite(siteId) {
 // l'insertion en base au fil de l'eau — évite d'accumuler les produits
 // de tous les sites (jusqu'à ~800 par site) en mémoire simultanément,
 // cause identifiée d'un dépassement mémoire sur le plan gratuit Render.
-async function scraperTousNouveauxSites(siteIds = null, onSiteScrape = null, enveloppe = (config, f) => f()) {
-  const configs = siteIds
+async function scraperTousNouveauxSites(siteIds = null, onSiteScrape = null, enveloppe = (config, f) => f(), ordonner = (c) => c) {
+  // AUD-194 : `ordonner` range les sites (le plus en retard d'abord) ; un passage interrompu reprend ainsi au suivant
+  const configs = ordonner(siteIds
     ? SITES_CONFIG.filter(s => siteIds.includes(s.id))
-    : SITES_CONFIG;
+    : SITES_CONFIG);
 
   console.log(`\n[NEW-SITES] ══════ DÉBUT (${configs.length} sites) ══════`);
   let total = 0;
