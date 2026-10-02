@@ -36,7 +36,8 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
   const [loading, setLoading] = useState(false)
   const [, startTransition] = useTransition()
 
-  // Recherche vocale Wolof / FR
+  // Recherche vocale (français, mots wolof usuels) : l'exemple proposé suit la page consultée
+  const exempleVocal = pathname?.startsWith('/immo') ? 'appartement à louer aux Almadies' : pathname?.startsWith('/boutiques') ? 'boutique de tissus wax' : pathname?.startsWith('/telecom') ? 'forfait internet Orange' : 'robe en wax, iPhone 13'
   const [isListeningVoice, setIsListeningVoice] = useState(false)
   const voiceRecRef = useRef<any>(null)
   useEffect(() => () => { try { voiceRecRef.current?.stop() } catch {} }, []) // AUD-212 : arrêt au démontage
@@ -63,8 +64,9 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
         if (cleaned) {
           setQuery(cleaned)
           inputRef.current?.focus()
+          showToast(`Recherche : « ${cleaned} ». Appuyez sur Entrée pour lancer.`, 'info', 'Recherche Vocale')
         } else {
-          showToast('Je n’ai pas compris. Dites par exemple : « robe en wax ».', 'info', 'Recherche Vocale')
+          showToast(`Je n’ai pas compris. Dites par exemple : « ${exempleVocal} ».`, 'info', 'Recherche Vocale')
         }
       }
     })
@@ -145,7 +147,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder={isListeningVoice ? "Parlez... Ex: Robe Bazin, iPhone..." : "Rechercher..."}
+            placeholder={isListeningVoice ? `Parlez... Ex : ${exempleVocal}` : "Rechercher..."}
             className="navbar-search-input"
             autoFocus
             aria-label="Recherche globale Nopalou"
@@ -166,7 +168,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
             type="button"
             onClick={toggleVoiceSearch}
             aria-label="Recherche vocale"
-            title={isListeningVoice ? "Arrêter l'écoute" : "Recherche vocale (Wolof / FR)"}
+            title={isListeningVoice ? "Arrêter l'écoute" : `Recherche vocale : dites par exemple « ${exempleVocal} »`}
             style={{
               background: isListeningVoice ? 'var(--accent, #C75B00)' : 'none',
               border: 'none',

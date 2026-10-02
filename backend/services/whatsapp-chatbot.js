@@ -2320,7 +2320,7 @@ async function handleIncomingInternal(msg) {
     const msgContexte = !audioUrl
       ? `Je n'ai pas pu enregistrer votre note vocale. Écrivez-moi votre consigne en message texte (adresse, quantité, horaire…), je la transmets au vendeur.`
       : (state?.startsWith('COMMANDE_') && (context?.boutique_nom || context?.boutique?.nom))
-      ? `Votre consigne vocale a bien été enregistrée et rattachée à votre commande en cours pour la boutique *${context.boutique_nom || context.boutique?.nom}*. Le vendeur l'écoutera directement.`
+      ? `Votre consigne vocale a bien été enregistrée et rattachée à votre commande en cours pour la boutique *${context.boutique_nom || context.boutique?.nom}*. Le vendeur l'écoutera directement (le bot ne comprend pas encore les notes vocales : pour une recherche ou une commande, écrivez-moi aussi en texte).`
       : context?.boutique_nom
         ? `Votre consigne vocale a bien été enregistrée pour la boutique *${context.boutique_nom}*. Le vendeur l'écoutera directement pour votre commande.`
         : `Si votre note vocale concerne une commande, le commerçant écoutera directement vos consignes.`;
