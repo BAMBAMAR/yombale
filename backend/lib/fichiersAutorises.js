@@ -9,6 +9,10 @@ const SIGNATURES = [
   { type: 'heic', test: (b) => b.length > 11 && b.slice(4, 8).toString('latin1') === 'ftyp' && /^(heic|heix|hevc|mif1|msf1|heim|heis)/.test(b.slice(8, 12).toString('latin1')) },
   { type: 'avif', test: (b) => b.length > 11 && b.slice(4, 8).toString('latin1') === 'ftyp' && /^(avif|avis)/.test(b.slice(8, 12).toString('latin1')) },
   { type: 'mp4',  test: (b) => b.length > 11 && b.slice(4, 8).toString('latin1') === 'ftyp' },
+  // AUD-201 : notes vocales WhatsApp (OGG/Opus), MP3, AAC (ADTS), AMR, M4A
+  { type: 'ogg',  test: (b) => b.length > 3 && b.slice(0, 4).toString('latin1') === 'OggS' },
+  { type: 'mp3',  test: (b) => b.length > 2 && (b.slice(0, 3).toString('latin1') === 'ID3' || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0 && (b[1] & 0x06) !== 0)) },
+  { type: 'amr',  test: (b) => b.length > 5 && b.slice(0, 6).toString('latin1') === '#!AMR\n' },
   { type: 'webm', test: (b) => b.length > 3 && b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3 },
 ];
 
@@ -17,6 +21,7 @@ const IMAGES = ['jpeg', 'png', 'webp', 'gif', 'heic', 'avif'];
 const IMAGES_OU_PDF = [...IMAGES, 'pdf'];
 const DOCUMENTS = ['pdf', 'jpeg', 'png', 'webp', 'heic'];
 const VIDEOS = ['mp4', 'webm'];
+const AUDIOS = ['ogg', 'mp3', 'amr', 'mp4', 'webm']; // mp4/webm : m4a et audio webm partagent le conteneur
 
 function detecterType(buffer) {
   if (!Buffer.isBuffer(buffer)) return null;
@@ -54,4 +59,4 @@ function controlerFichiers(autorises = DOCUMENTS) {
   };
 }
 
-module.exports = { detecterType, exigerTypes, controlerFichiers, IMAGES, IMAGES_OU_PDF, DOCUMENTS, VIDEOS };
+module.exports = { detecterType, exigerTypes, controlerFichiers, IMAGES, IMAGES_OU_PDF, DOCUMENTS, VIDEOS, AUDIOS };

@@ -7,7 +7,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const { exigerTypes, IMAGES_OU_PDF, VIDEOS, DOCUMENTS } = require('../lib/fichiersAutorises'); // AUD-146 : contenu réel contrôlé avant tout envoi
+const { exigerTypes, IMAGES_OU_PDF, VIDEOS, DOCUMENTS, AUDIOS } = require('../lib/fichiersAutorises'); // AUD-146 : contenu réel contrôlé avant tout envoi
 
 async function uploadBuffer(buffer, folder) {
   exigerTypes(buffer, IMAGES_OU_PDF, 'image');
@@ -59,6 +59,21 @@ async function uploadVideoBuffer(buffer, folder) {
   });
 }
 
+// AUD-201 : une note vocale est une ressource ideo pour Cloudinary (qui traite ainsi l'audio) ; ni filigrane ni transformation image.
+async function uploadAudioBuffer(buffer, folder) {
+  exigerTypes(buffer, AUDIOS, 'audio');
+  return new Promise(function(resolve, reject) {
+    var stream = cloudinary.uploader.upload_stream(
+      { folder: folder || 'notes_vocales', resource_type: 'video', max_bytes: 16 * 1024 * 1024 },
+      function(err, result) {
+        if (err) return reject(err);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
 async function uploadDocumentBuffer(buffer, folder, filename) {
   exigerTypes(buffer, DOCUMENTS, 'document');
   return new Promise(function(resolve, reject) {
@@ -97,4 +112,4 @@ async function uploadFromUrl(url, folder) {
   return result; // expose secure_url, public_id, etc.
 }
 
-module.exports = { uploadBuffer, uploadVideoBuffer, uploadDocumentBuffer, uploadFromUrl };
+module.exports = { uploadBuffer, uploadVideoBuffer, uploadAudioBuffer, uploadDocumentBuffer, uploadFromUrl };

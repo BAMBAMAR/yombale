@@ -38,7 +38,7 @@ const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 
 const attendre = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ── Téléchargement des médias WhatsApp (Photos produits) vers Cloudinary ──────
-async function telechargerMediaWhatsApp(mediaId) {
+async function telechargerMediaWhatsApp(mediaId, type = 'image') {
   try {
     const token = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_TOKEN;
     if (!token || !mediaId) {
@@ -84,8 +84,11 @@ async function telechargerMediaWhatsApp(mediaId) {
     const buffer = Buffer.from(arrayBuffer);
     console.log('[TELECHARGER MEDIA WA]: Téléchargé avec succès, taille =', buffer.length, 'octets');
 
-    const { uploadBuffer } = require('./cloudinary');
-    const url = await uploadBuffer(buffer, 'boutique_produits');
+    const cloud = require('./cloudinary');
+    // AUD-201 : une note vocale n'est pas une image (contrôle de contenu AUD-146 + ressource Cloudinary dédiée)
+    const url = type === 'audio'
+      ? await cloud.uploadAudioBuffer(buffer, 'notes_vocales')
+      : await cloud.uploadBuffer(buffer, 'boutique_produits');
     console.log('[TELECHARGER MEDIA WA]: Image Cloudinary uploadée =', url);
     return url;
   } catch (err) {
@@ -2267,7 +2270,7 @@ async function handleIncomingInternal(msg) {
 
     let audioUrl = null;
     try {
-      audioUrl = await telechargerMediaWhatsApp(msg.audio.id);
+      audioUrl = await telechargerMediaWhatsApp(msg.audio.id, 'audio');
     } catch (e) {
       console.warn('[WHATSAPP AUDIO ERR]: Téléchargement audio échoué', e.message);
     }
@@ -2313,7 +2316,10 @@ async function handleIncomingInternal(msg) {
     }
 
     // 2. Client / Acheteur
-    const msgContexte = (state?.startsWith('COMMANDE_') && (context?.boutique_nom || context?.boutique?.nom))
+    // AUD-201 : ne jamais annoncer un enregistrement qui n'a pas eu lieu
+    const msgContexte = !audioUrl
+      ? `Je n'ai pas pu enregistrer votre note vocale. Écrivez-moi votre consigne en message texte (adresse, quantité, horaire…), je la transmets au vendeur.`
+      : (state?.startsWith('COMMANDE_') && (context?.boutique_nom || context?.boutique?.nom))
       ? `Votre consigne vocale a bien été enregistrée et rattachée à votre commande en cours pour la boutique *${context.boutique_nom || context.boutique?.nom}*. Le vendeur l'écoutera directement.`
       : context?.boutique_nom
         ? `Votre consigne vocale a bien été enregistrée pour la boutique *${context.boutique_nom}*. Le vendeur l'écoutera directement pour votre commande.`
@@ -2321,7 +2327,7 @@ async function handleIncomingInternal(msg) {
 
     await sendWhatsAppButtons3(
       phone,
-      `🎙️ *Note vocale bien reçue — Jërëjëf !*\n\n${msgContexte}\n\nQue souhaitez-vous faire ?`,
+      `🎙️ *${audioUrl ? 'Note vocale bien reçue — Jërëjëf !' : 'Note vocale non enregistrée'}*\n\n${msgContexte}\n\nQue souhaitez-vous faire ?`,
       [
         { id: 'boutique_secteur_liste', title: '🏪 Nos Boutiques' },
         { id: 'order', title: '📦 Mes Commandes' },
