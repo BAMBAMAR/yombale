@@ -120,7 +120,7 @@ export function KalpeActivationCard({ onActivated }: KalpeActivationCardProps) {
           </div>
           <div>
             <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>Dictée bilingue</div>
-            <div style={{ fontSize: '11px', color: '#B5C4DA', lineHeight: '1.3' }}>Wolof & Français (téemeer, junni...)</div>
+            <div style={{ fontSize: '11px', color: '#B5C4DA', lineHeight: '1.3' }}>Français + mots wolof (téemeer, junni...)</div>
           </div>
         </div>
 

@@ -172,6 +172,13 @@ export function useCarnetVoice({
         const typeFinal = intent.type === 'remboursement' ? 'remboursement' : 'vente_credit'
         const montantFinal = intent.montant || 0
 
+        // AUD-211 : un remboursement d'un client inconnu ne devient jamais « nouveau client avec dette »
+        if (!clientCible && typeFinal === 'remboursement') {
+          setVoiceFeedback(`Client « ${intent.nomClient || 'inconnu'} » introuvable : aucun remboursement enregistré. Créez d'abord sa fiche.`)
+          jouerBipEtVibrer('alerte')
+          return
+        }
+
         setVoiceActionPending({
           type: clientCible ? typeFinal : intent.nomClient ? 'nouveau_client' : typeFinal,
           client: clientCible || undefined,

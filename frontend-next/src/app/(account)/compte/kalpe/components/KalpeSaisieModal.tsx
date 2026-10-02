@@ -56,7 +56,7 @@ export function KalpeSaisieModal({
   const [selectedObjectifId, setSelectedObjectifId] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
-  // Dictée vocale bilingue Wolof / Français
+  // Dictée vocale bilingue Français + mots wolof
   const { isListening, voiceFeedback, setVoiceFeedback, toggleListening } = useKalpeVoice({
     mode,
     isOpen,

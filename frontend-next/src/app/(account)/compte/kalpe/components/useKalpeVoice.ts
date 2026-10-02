@@ -88,7 +88,7 @@ export function useKalpeVoice({
 
   const traiterOperation = (transcript: string) => {
     const parsed = parseSaisieExpressIntent(transcript, mode === 'depense' ? 'depense' : 'vente')
-    const desc = parsed.libelleProduit || parsed.description
+    const desc = (parsed.libelleProduit || parsed.description || '').slice(0, 120) // AUD-209 : limite du champ
     setVoiceFeedback(`Reconnu : "${transcript}"`)
     if (parsed.montant && parsed.montant > 0) setMontant(String(parsed.montant))
     if (desc) setLibelle(desc)

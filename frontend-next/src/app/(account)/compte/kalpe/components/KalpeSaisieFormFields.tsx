@@ -306,6 +306,7 @@ export function KalpeSaisieFormFields({
           type="text"
           placeholder={mode === 'vente_express' ? 'Ex: Robe Wax ou Prestation coiffure' : 'Ex: Déjeuner, Ticket car, Matériel...'}
           value={libelle}
+          maxLength={120}
           onChange={(e) => setLibelle(e.target.value)}
           style={{
             width: '100%',

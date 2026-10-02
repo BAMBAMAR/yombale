@@ -195,6 +195,7 @@ export default function CarnetVoiceActionPrompt({
                 }}
                 style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 800, color: '#0f172a', background: '#fff' }}
               >
+                <option value="">Choisir le client…</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>{c.nom} ({c.telephone})</option>
                 ))}
@@ -284,6 +285,11 @@ export default function CarnetVoiceActionPrompt({
                   : `Enregistrer la dette de ${fcfa(voiceActionPending.montant)}`}
               </span>
             </button>
+            {!voiceActionLoading && (!voiceActionPending.client || !voiceActionPending.montant) && (
+              <span role="status" style={{ fontSize: 12, color: '#b45309', fontWeight: 700 }}>
+                {!voiceActionPending.client ? 'Choisissez le client dans la liste.' : 'Montant manquant : saisissez-le.'}
+              </span>
+            )}
 
             <button
               type="button"

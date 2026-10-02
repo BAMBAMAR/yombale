@@ -112,7 +112,7 @@ export default function KalpeHeader({
               flexShrink: 0,
               overflow: 'visible',
             }}
-            title="Assistant vocal bilingue Wolof / Français"
+            title="Assistant vocal bilingue Français + mots wolof"
             aria-label="Assistant vocal"
           >
             <Mic size={14} strokeWidth={2.4} style={{ color: isListeningVoice ? 'var(--accent, #C75B00)' : 'inherit', flexShrink: 0 }} />

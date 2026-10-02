@@ -100,7 +100,7 @@ export function ComptaSaisieExpressQuickSheet({
     },
     {
       id: 'vocal_wolof',
-      title: 'Commande Vocale (Wolof & Français)',
+      title: 'Commande Vocale (Français + mots wolof)',
       subtitle: 'Exemple : « Vente 5000 » ou « Dépense tiak-tiak 2000 »',
       icon: Mic,
       color: 'var(--navy, #1C2B4A)',

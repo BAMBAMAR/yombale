@@ -80,7 +80,7 @@ export default function PosVoiceInput({
     }
   }
 
-  // Analyse de la commande vocale (Wolof & Français).
+  // Analyse de la commande vocale (Français + mots wolof).
   // AUD-200 : le montant est extrait d'abord ; la quantité n'est cherchée que dans le reste de la phrase.
   const traiterCommandeVocale = (texte: string) => {
     const propre = (texte || '').trim()
@@ -144,7 +144,7 @@ export default function PosVoiceInput({
       <button
         type="button"
         onClick={toggleListen}
-        title={isListening ? 'Arrêter écoute vocale' : 'Assistant vocal caisse (Wolof & Français) : Dites un produit ou un montant'}
+        title={isListening ? 'Arrêter écoute vocale' : 'Assistant vocal caisse (Français + mots wolof) : Dites un produit ou un montant'}
         style={{
           display: 'inline-flex',
           alignItems: 'center',

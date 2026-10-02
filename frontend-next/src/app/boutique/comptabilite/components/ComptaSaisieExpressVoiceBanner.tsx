@@ -108,7 +108,7 @@ export function ComptaSaisieExpressVoiceBanner({
                   fontWeight: 600,
                 }}
               >
-                Wolof & Français · Ventes & Dépenses
+                Français + mots wolof · Ventes & Dépenses
               </p>
             </div>
           </div>

@@ -28,7 +28,7 @@ export function useProduitFormScanners({
   setPrixForm,
   setCodeBarreForm,
 }: UseProduitFormScannersProps) {
-  // Assistant Vocal Ajout Produit (Wolof & Français)
+  // Assistant Vocal Ajout Produit (Français + mots wolof)
   const [isListeningNom, setIsListeningNom] = useState<boolean>(false)
   const [voiceNomFeedback, setVoiceNomFeedback] = useState<string | null>(null)
   const voiceNomRecognitionRef = useRef<any>(null)

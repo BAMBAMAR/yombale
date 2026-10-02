@@ -165,7 +165,7 @@ export function ComptaSaisieExpressHeaderBar({
         <button
           type="button"
           onClick={onDemarrerEcouteVocale}
-          title="Assistant vocal & guide (Wolof & Français)"
+          title="Assistant vocal & guide (Français + mots wolof)"
           style={{
             height: 35,
             padding: '0 12px',

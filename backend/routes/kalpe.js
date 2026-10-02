@@ -239,6 +239,13 @@ router.post('/operation', async (req, res) => {
     if (!categorie || !categorie.trim()) {
       return res.status(400).json({ error: 'Catégorie obligatoire' });
     }
+    // AUD-209 : limites des colonnes (libelle VARCHAR(255), categorie VARCHAR(60)) : 400 explicite au lieu d'un 500
+    if (libelle && String(libelle).trim().length > 255) {
+      return res.status(400).json({ error: 'Libellé trop long (255 caractères maximum)' });
+    }
+    if (categorie.trim().length > 60) {
+      return res.status(400).json({ error: 'Catégorie trop longue (60 caractères maximum)' });
+    }
 
     // Détermination de la direction financière
     let direction = 'entree';

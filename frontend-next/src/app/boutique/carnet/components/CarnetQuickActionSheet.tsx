@@ -78,7 +78,7 @@ export default function CarnetQuickActionSheet({
     },
     {
       id: 'vocal_wolof',
-      title: 'Commande Vocale (Wolof & Français)',
+      title: 'Commande Vocale (Français + mots wolof)',
       subtitle: 'Exemple : « Bor Moussa 10 000 » ou « Moussa feyna 5000 »',
       icon: Mic,
       color: 'var(--accent, #C75B00)',
