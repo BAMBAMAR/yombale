@@ -100,6 +100,17 @@ describe('AUD-222 — une seule règle de publication immobilière pour le site 
   });
 });
 
+describe('AUD-223 — l\'erreur du wizard boutique est visible et compréhensible', () => {
+  test('erreur annoncée, amenée à l\'écran, messages sans « utilisez la connexion par e-mail » ni « Failed to fetch »', () => {
+    const src = lire('app/creer-boutique/page.tsx');
+    expect(src).toMatch(/role="alert"/);
+    expect(src).toMatch(/scrollIntoView/);
+    expect(src).toMatch(/data\?\.degraded/);
+    expect(src).toMatch(/instanceof TypeError/);
+    expect(src).not.toMatch(/setError\(err\.message\)/);
+  });
+});
+
 describe('AUD-219— dépôt d\'annonce : prévenu dès l\'ouverture, saisie conservée', () => {
   test('le formulaire avertit si l\'e-mail n\'est pas vérifié, reprend et efface le brouillon', () => {
     const f = lire('app/(account)/deposer-annonce/FormulaireAnnonce.tsx');
