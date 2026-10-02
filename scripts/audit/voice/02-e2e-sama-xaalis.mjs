@@ -1,4 +1,4 @@
-﻿// Sonde AUDIT VOIX n°2 : chaine complete Sama Xaalis dans un vrai navigateur (Chromium, viewport mobile 414x860), pile isolee.
+// Sonde AUDIT VOIX n°2 : chaine complete Sama Xaalis dans un vrai navigateur (Chromium, viewport mobile 414x860), pile isolee.
 //   transcription simulee -> createVoiceListener -> parseurs -> setters -> etat React -> DOM -> validation -> server action -> backend -> PostgreSQL
 // Usage : . scripts\audit\audit-env.ps1 ; node scripts/audit/voice/02-e2e-sama-xaalis.mjs [sortie.json] [filtreId]
 import fs from 'node:fs'
@@ -18,7 +18,7 @@ await connexionUI(page, user.email)
 
 async function nbOps() { return Number((await db.query('SELECT count(*) FROM kalpe_operations WHERE utilisateur_id=$1', [user.uid])).rows[0].count) }
 async function nbDettes() { return Number((await db.query('SELECT count(*) FROM kalpe_dettes WHERE utilisateur_id=$1', [user.uid])).rows[0].count) }
-async function derniereOp() { return (await db.query('SELECT type,direction,montant::int AS montant,categorie,libelle,contexte,date_operation::text FROM kalpe_operations WHERE utilisateur_id=$1 ORDER BY created_at DESC LIMIT 1', [user.uid])).rows[0] }
+async function derniereOp() { return (await db.query('SELECT type,direction,montant::int AS montant,categorie,libelle,contexte,date_operation::text,metadata FROM kalpe_operations WHERE utilisateur_id=$1 ORDER BY created_at DESC LIMIT 1', [user.uid])).rows[0] }
 async function derniereDette() { return (await db.query('SELECT direction,tiers_nom,tiers_telephone,tiers_type,montant_initial::int AS montant,date_echeance::text,note FROM kalpe_dettes WHERE utilisateur_id=$1 ORDER BY created_at DESC LIMIT 1', [user.uid])).rows[0] }
 
 async function scenario(s) {
@@ -96,6 +96,7 @@ const S = [
   // Etat perime : la modale a ete utilisee en mode dette, puis rouverte par le bouton FAB 'dicter' (onglet depense)
   { id: 'K20-etat-perime-apres-dette-puis-dicter', pre: 'dette', ui: 'dicter', voice: V("j'ai payé 5000 de transport"), sample: [150, 450, 900] },
   { id: 'K21-etat-perime-apres-revenu-puis-dicter', pre: 'revenu', ui: 'dicter', voice: V("j'ai payé 5000 de transport"), sample: [150, 450, 900] },
+  { id: 'K22-date-paiement-contexte', ui: 'depense', voice: V("j'ai payé 5000 par Wave pour le transport hier pour ma boutique", { autoSubmitAfterMs: 30 }), submit: true, sample: [150, 450, 900] },
   // C. Dettes
   { id: 'D01-je-dois-20000-a-moussa', ui: 'dette', voice: V('Je dois 20000 à Moussa', { autoSubmitAfterMs: 30 }), submit: true, sample: [150, 450, 1200] },
   { id: 'D02-moussa-me-doit', ui: 'dette', voice: V('Moussa me doit 10000', { autoSubmitAfterMs: 30 }), submit: true, sample: [150, 450, 1200] },
