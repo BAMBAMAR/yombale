@@ -26,6 +26,14 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Correction Crash 500 Commandes Boutique & Éradication des Erreurs d'Hydratation React SSR (#418, #423, #425)** :
+  - **Correction Base de Données Render** : Ajout de la colonne `idempotency_key` manquante sur `commandes_boutique`, `depenses`, `caisse_clients_credits`, `boutique_pos_sessions`, résolvant l'erreur 500 sur `creerCommandeBoutique`.
+  - **Correction SSR Frontend** : Remplacement des lectures synchrones de `localStorage` dans `useState` par des initialisations sécurisées SSR et réconciliation après montage dans `useCommandesData`, `GestionEntrepots`, `SocialShopManager`, `useCatalogueProduitsData` et `CatalogueProduits`.
+
+- **Correctifs Ergonomie & Design System (Panier Checkout & Actions Commandes)** :
+  - **Panier Checkout** : Suppression des émojis et flèches doubles dans `DrawerCartOnlineOrderForm.tsx` et locales, bouton fluide anti-débordement adaptatif pleine largeur.
+  - **Barre d'Actions Commande** : Suppression de `marginLeft: 'auto'` sur le bouton Annuler dans `CommandeActionsBar.tsx`, garantissant un alignement naturel sans décalage isolé à droite.
+
 - **Assainissement des Zones de Livraison & Éradication du Faux Libellé « Gratuit » (`CheckoutStep1Info.tsx`, `CommanderFormView.tsx`, `useCommander.ts`, `DrawerCartCheckout.tsx`, `useDrawerCartCheckout.ts`, `checkout-express/page.tsx`, `whatsapp-chatbot.js`)** :
   - **Suppression du Libellé « Gratuit » sur « Frais à convenir »** : L'option `Livraison (Frais à convenir avec le vendeur)` ayant techniquement un prix de 0 en base avant accord, l'interface lui accolait faussement `— Gratuit`, trompant le client. Seul le *Retrait en boutique* affiche désormais `Gratuit` ; l'option à convenir affiche son libellé exact sans suffixe de prix.
   - **Suppression des Fausses Zones Géographiques par Défaut (Dakar / Banlieue / Régions)** : Lorsqu'un marchand n'a pas configuré de zones de livraison, le système n'injecte plus arbitrairement des zones fictives avec des tarifs inventés (1 000 F, 1 500 F, 2 200 F). Seules les deux options universelles sont présentées : `Livraison (Frais à convenir avec le vendeur)` et `Retrait gratuit en boutique`.

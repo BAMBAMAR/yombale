@@ -1,5 +1,15 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Crash 500 Commandes Boutique & Éradication des Erreurs d'Hydratation React SSR (#418, #423, #425)** :
+  * **Cause Racine Crash 500 (`/api/comptabilite/:id/commandes`)** : La colonne `idempotency_key` (PWA offline idempotency) était absente de la table `commandes_boutique` sur la base de données PostgreSQL de production Render (erreur 42703).
+  * **Correction Base de Données** : Exécution DDL idempotente appliquant la colonne `idempotency_key VARCHAR(128)` et son index partiel unique sur `commandes_boutique`, `depenses`, `caisse_clients_credits`, `boutique_pos_sessions`, ainsi que la table `stock_ecarts`. Validation directe par exécution transactionnelle avec rollback de `creerCommandeBoutique` (succès 100%).
+  * **Cause Racine Erreurs React Minified (#418, #423, #425)** : Lectures synchrones de `localStorage` lors de l'initialisation de `useState` dans `useCommandesData`, `GestionEntrepots`, `SocialShopManager`, `useCatalogueProduitsData` et `CatalogueProduits` provoquant une divergence entre le rendu HTML côté serveur (SSR vide/squelette) et l'arbre de composants côté client lors de l'hydratation.
+  * **Correction Frontend SSR-Safe** : Initialisation stricte des états à vide côté serveur/hydratation et bascule des lectures `localStorage` dans des hooks `useEffect` ou sous verrouillage `mounted`. Validation complète : `npm run lint:slop` et `npx tsc --noEmit` sans aucune erreur.
+
+- **Correctifs Ergonomie & Design System (Panier Checkout & Actions Commandes)** :
+  * **Éradication Débordement & Troncature Bouton Payer (`DrawerCartOnlineOrderForm.tsx`, locales `fr`, `en`, `ar`)** : Nettoyage de la clé `validateAndPayBtn` (suppression de l'émoji non conforme et de la flèche textuelle redondante), libellé contextuel adapté selon la méthode de paiement (`Valider et Payer (X FCFA)` ou `Valider la commande (X FCFA)`), remplacement par une icône vectorielle SVG `ArrowRight`, et styles responsives (`minHeight: 48px`, `whiteSpace: normal`) garantissant un affichage parfait sur 100% de la largeur sans aucun débordement.
+  * **Repositionnement Bouton Annuler Commande (`CommandeActionsBar.tsx`)** : Suppression de `marginLeft: 'auto'` qui rejetait le bouton à l'extrême droite lorsqu'il passait sur une deuxième ligne en Flexbox. Harmonisation de la typographie (12px, 700), du padding et de l'ombre avec les boutons `Facture PDF` et `Dispatch Livreur`.
+
 - **Refonte Responsive Commandes Marchand & Correction Mobile Formulaires Support/Litige (29 septembre 2026)** :
   * **Commande Marchand (Desktop 2 Colonnes & Mobile Compact)** :
     - Remplacement de l'accordéon vertical étiré par une grille 2 colonnes équilibrée (`1.15fr 0.85fr`) sur grand écran.

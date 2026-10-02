@@ -38,33 +38,10 @@ interface ProduitSimple {
 }
 
 export default function GestionEntrepots({ boutiqueId }: { boutiqueId: string }) {
-  const [entrepots, setEntrepots] = useState<Entrepot[]>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem(`nopalou_offline_entrepots_${boutiqueId}`)
-      if (cached) try { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed } catch (_) {}
-    }
-    return []
-  })
-  const [stocks, setStocks] = useState<StockEntrepot[]>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem(`nopalou_offline_stocks_${boutiqueId}`)
-      if (cached) try { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed } catch (_) {}
-    }
-    return []
-  })
-  const [produits, setProduits] = useState<ProduitSimple[]>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem(`nopalou_offline_prods_${boutiqueId}`) || localStorage.getItem(`nopalou_pos_produits_${boutiqueId}`)
-      if (cached) try { const parsed = JSON.parse(cached); if (Array.isArray(parsed) && parsed.length > 0) return parsed } catch (_) {}
-    }
-    return []
-  })
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !localStorage.getItem(`nopalou_offline_entrepots_${boutiqueId}`)
-    }
-    return true
-  })
+  const [entrepots, setEntrepots] = useState<Entrepot[]>([])
+  const [stocks, setStocks] = useState<StockEntrepot[]>([])
+  const [produits, setProduits] = useState<ProduitSimple[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // Modale Ajout / Édition

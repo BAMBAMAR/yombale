@@ -11,26 +11,9 @@ import { useToast } from '@/context/ToastContext'
 export function useCommandesData(boutiqueId: string, t: any) {
   const { toast } = useToast()
   const [subTab, setSubTab] = useState<'commandes' | 'zones'>('commandes')
-  const [commandes, setCommandes] = useState<Commande[]>(() => {
-    if (typeof window !== 'undefined' && boutiqueId) {
-      try {
-        const cached = localStorage.getItem(`nopalou_offline_commandes_${boutiqueId}_`)
-        if (cached) {
-          const parsed = JSON.parse(cached)
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed
-        }
-      } catch (_) {}
-    }
-    return []
-  })
+  const [commandes, setCommandes] = useState<Commande[]>([])
   const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== 'undefined' && boutiqueId) {
-      const cached = localStorage.getItem(`nopalou_offline_commandes_${boutiqueId}_`)
-      if (cached) return false
-    }
-    return true
-  })
+  const [loading, setLoading] = useState(true)
   const [filtre, setFiltre] = useState('')
   const [filtreCanal, setFiltreCanal] = useState<'tous' | 'web' | 'caisse'>('tous')
 

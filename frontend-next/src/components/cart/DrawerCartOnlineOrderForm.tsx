@@ -2,7 +2,7 @@
 import React from 'react'
 import { fcfa } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, ArrowRight } from 'lucide-react'
 import EchelonnementConfigurator from '@/app/boutiques/[id]/commander/EchelonnementConfigurator'
 
 interface DrawerCartOnlineOrderFormProps {
@@ -274,16 +274,38 @@ export default function DrawerCartOnlineOrderForm({
       <button
         type="submit"
         disabled={loadingCheckout}
-        className="btn-npl btn-npl-primary btn-npl-lg"
+        className="btn-npl btn-npl-primary"
         style={{
-          marginTop: 6,
+          marginTop: 10,
           width: '100%',
-          fontSize: 14.5,
+          fontSize: 14,
+          fontWeight: 700,
+          minHeight: 48,
+          height: 'auto',
+          padding: '12px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          whiteSpace: 'normal',
+          textAlign: 'center',
+          lineHeight: 1.25,
+          boxSizing: 'border-box',
         }}
       >
-        {loadingCheckout
-          ? t('common.pleaseWait')
-          : `${t('shop.validateAndPayBtn')} • ${fcfa(totalGlobal)} →`}
+        {loadingCheckout ? (
+          <span>{t('common.pleaseWait')}</span>
+        ) : (
+          <>
+            <span>
+              {methodePaiement === 'especes' || methodePaiement === 'credit'
+                ? t('shop.validateOrderBtn')
+                : t('shop.validateAndPayBtn')}
+              {' '}({fcfa(totalGlobal)})
+            </span>
+            <ArrowRight size={15} style={{ flexShrink: 0 }} />
+          </>
+        )}
       </button>
     </form>
   )
