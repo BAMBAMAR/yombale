@@ -20,6 +20,7 @@ export {
 export {
   listZones,
   createZone,
+  updateZone,
   deleteZone,
   listVentes,
   declarerVente,

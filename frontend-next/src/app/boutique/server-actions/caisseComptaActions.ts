@@ -28,6 +28,22 @@ export async function createZone(boutiqueId: string, nom: string, prix: number):
   }
 }
 
+export async function updateZone(boutiqueId: string, zoneId: string, nom: string, prix: number): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/zones/${zoneId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ nom, prix }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { error: data.error ?? 'Impossible de modifier la zone' }
+    }
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function deleteZone(boutiqueId: string, zoneId: string): Promise<ActionState> {
   try {
     const res = await backendFetch(`/api/comptabilite/${boutiqueId}/zones/${zoneId}`, { method: 'DELETE' })

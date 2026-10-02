@@ -138,6 +138,35 @@ router.post(
   }
 );
 
+// PUT /api/comptabilite/:boutiqueId/zones/:zoneId
+router.put(
+  '/:boutiqueId/zones/:zoneId',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  param('zoneId').isUUID(),
+  body('nom').trim().isLength({ min: 1, max: 100 }),
+  body('prix').isFloat({ min: 0 }),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+      const { rows } = await pool.query(
+        'UPDATE zones_livraison SET nom=$1, prix=$2 WHERE id=$3 AND boutique_id=$4 RETURNING *',
+        [req.body.nom, req.body.prix, req.params.zoneId, req.params.boutiqueId]
+      );
+      if (!rows[0]) return res.status(404).json({ success: false, error: 'Not Found' });
+
+      enregistrerAuditLog(req.params.boutiqueId, req.user?.userId || null, req.user?.nom || null, 'zone_livraison_modifiee', `Modification de la zone de livraison "${req.body.nom}" (${req.body.prix} FCFA)`, { zoneId: req.params.zoneId, nom: req.body.nom, prix: req.body.prix }, req);
+
+      res.json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+);
+
 // DELETE /api/comptabilite/:boutiqueId/zones/:zoneId
 router.delete(
   '/:boutiqueId/zones/:zoneId',

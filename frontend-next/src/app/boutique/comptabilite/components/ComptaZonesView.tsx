@@ -1,13 +1,13 @@
 'use client'
 
 import React, { useState, useEffect, useTransition } from 'react'
-import { listZones, createZone, deleteZone } from '../../actions'
-import { fcfa } from '@/lib/format'
+import { listZones, createZone, updateZone, deleteZone } from '../../actions'
 import { useTranslation } from '@/i18n/context'
 import { useToast } from '@/context/ToastContext'
-import { MapPin, Sparkles, Plus, Trash2 } from 'lucide-react'
+import { MapPin, Sparkles, Plus } from 'lucide-react'
 import type { Zone } from '../types'
 import { inputStyle, labelStyle } from '../utils'
+import ZoneRow from './ZoneRow'
 
 const PRESETS_REGIONS = [
   { nom: 'Thiès (Centre & Gare)', prix: 2500 },
@@ -33,6 +33,7 @@ export default function ComptaZonesView({ boutiqueId }: { boutiqueId: string }) 
   const [nom, setNom] = useState('')
   const [prix, setPrix] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [, startTransition] = useTransition()
 
   async function load() {
@@ -81,6 +82,23 @@ export default function ComptaZonesView({ boutiqueId }: { boutiqueId: string }) 
         load()
       }
     })
+  }
+
+  async function save(zone: Zone, zoneNom: string, zonePrix: number): Promise<boolean> {
+    if (zoneNom === zone.nom && zonePrix === Number(zone.prix)) return true
+    setSaving(true)
+    try {
+      const res = await updateZone(boutiqueId, zone.id, zoneNom, zonePrix)
+      if (res?.error) {
+        toast.error(res.error)
+        return false
+      }
+      toast.success(`Zone « ${zoneNom} » mise à jour`)
+      await load()
+      return true
+    } finally {
+      setSaving(false)
+    }
   }
 
   function remove(id: string, zoneNom: string) {
@@ -151,7 +169,7 @@ export default function ComptaZonesView({ boutiqueId }: { boutiqueId: string }) 
 
           <button
             type="button"
-            onClick={() => injecterPresets(PRESETS_DAKAR, 'Grand Dakar')}
+            onClick={() => injecterPresets(PRESETS_DAKAR, 'Dakar')}
             disabled={injecting}
             style={{
               fontSize: 12,
@@ -169,7 +187,7 @@ export default function ComptaZonesView({ boutiqueId }: { boutiqueId: string }) 
             title="Ajouter en 1 clic Dakar Centre, Almadies/Ngor, et Banlieue"
           >
             <Sparkles size={13} />
-            <span>Grand Dakar</span>
+            <span>Dakar</span>
           </button>
 
           <button
@@ -264,44 +282,13 @@ export default function ComptaZonesView({ boutiqueId }: { boutiqueId: string }) 
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {zones.map((z) => (
-            <div
+            <ZoneRow
               key={z.id}
-              style={{
-                background: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: 10,
-                padding: '10px 16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <MapPin size={14} color="#64748b" />
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy, #1C2B4A)' }}>{z.nom}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--price, #0A5C36)' }}>{fcfa(z.prix)}</span>
-                <button
-                  onClick={() => remove(z.id, z.nom)}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #fecaca',
-                    color: '#dc2626',
-                    borderRadius: 6,
-                    padding: '4px 8px',
-                    cursor: 'pointer',
-                    fontSize: 12,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                  }}
-                  title="Supprimer cette zone"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            </div>
+              zone={z}
+              busy={saving}
+              onSave={save}
+              onDelete={(zone) => remove(zone.id, zone.nom)}
+            />
           ))}
         </div>
       )}
