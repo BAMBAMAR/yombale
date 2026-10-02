@@ -10,6 +10,23 @@ const request = require('supertest');
 const app = require('../../backend/app');
 const { pool } = require('../../backend/models/db');
 
+describe('AUD-218 — un SMS simulé n\'est jamais un envoi réussi en production', () => {
+  const avecEnv = async (env, fn) => {
+    const avant = process.env.NODE_ENV; process.env.NODE_ENV = env;
+    delete process.env.ORANGE_SMS_CLIENT_ID; delete process.env.ORANGE_SMS_AUTH_HEADER;
+    try { jest.resetModules(); return await fn(require('../../backend/services/sms')); } finally { process.env.NODE_ENV = avant; }
+  };
+  test('production : success=false', async () => {
+    const r = await avecEnv('production', (sms) => sms.sendSMS('+221770000001', 'Bonjour'));
+    expect(r.success).toBe(false);
+    expect(r.simulated).toBe(true);
+  });
+  test('hors production : la simulation reste un succès (tests et audits locaux)', async () => {
+    const r = await avecEnv('development', (sms) => sms.sendSMS('+221770000001', 'Bonjour'));
+    expect(r.success).toBe(true);
+  });
+});
+
 describe('AUD-215 — suivi public : jamais de joker', () => {
   beforeEach(() => { jest.clearAllMocks(); pool.query.mockResolvedValue({ rows: [{ id: 'x', reference: 'C-1', client_nom: 'A B', client_telephone: '770000001', statut: 'en_attente', montant_total: 1 }] }); });
 

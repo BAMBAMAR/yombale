@@ -119,6 +119,12 @@ async function sendSMS(to, message, options = {}) {
   // 2. Mode Fallback / Simulation Développeur & Hors Prod
   // Garantit la résilience applicative et évite les blocages lors des tests
   const simId = `sms_sim_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  // AUD-218 : en production, une simulation n'a rien livré. Elle ne doit jamais être comptée comme un envoi réussi
+  // (sinon la commande est marquée « notification transmise » alors que le vendeur n'a rien reçu).
+  if (process.env.NODE_ENV === 'production') {
+    console.error(`[NOPALOU:SMS ECHEC] Aucun fournisseur SMS disponible : message vers ${normPhone} NON envoyé (simulation interdite en production)`);
+    return { success: false, error: 'Aucun fournisseur SMS disponible', provider: 'simulation', simulated: true };
+  }
   console.log(`[NOPALOU:SMS FALLBACK SIMULATION] Vers ${normPhone} | De: ${senderName} | Msg: "${cleanMessage.slice(0, 80)}..." (ID: ${simId})`);
 
   return {
