@@ -9,6 +9,8 @@ interface DrawerCartSummaryProps {
   fraisLivraison: number
   totalGlobal: number
   promoCode?: string
+  /** AUD-217 : livraison à convenir = le total ne comprend pas encore la livraison */
+  aConvenir?: boolean
 }
 
 export default function DrawerCartSummary({
@@ -17,6 +19,7 @@ export default function DrawerCartSummary({
   fraisLivraison,
   totalGlobal,
   promoCode,
+  aConvenir = false,
 }: DrawerCartSummaryProps) {
   const { t } = useTranslation()
 
@@ -58,6 +61,12 @@ export default function DrawerCartSummary({
           <span>-{fcfa(reductionMontant)}</span>
         </div>
       )}
+      {aConvenir && fraisLivraison === 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text2, #6B5E52)' }}>
+          <span>{t('shop.deliveryLabel')}</span>
+          <span>{t('shop.deliveryToAgree')}</span>
+        </div>
+      )}
       {fraisLivraison > 0 && (
         <div
           style={{
@@ -83,7 +92,7 @@ export default function DrawerCartSummary({
           marginTop: 2,
         }}
       >
-        <span>{t('common.total')}</span>
+        <span>{aConvenir && fraisLivraison === 0 ? t('shop.totalItems') : t('common.total')}</span>
         <span>{fcfa(totalGlobal)}</span>
       </div>
     </div>

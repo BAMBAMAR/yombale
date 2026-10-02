@@ -8,6 +8,8 @@ export interface OrderSuccessData {
   boutiqueNom: string
   boutiqueId: string
   whatsapp?: string | null
+  /** AUD-217 : mode choisi, pour que les textes de fin correspondent (retrait, à convenir, livraison chiffrée) */
+  modeLivraison?: 'retrait' | 'a_convenir' | 'livraison'
   reference: string
   total: number
   sousTotal: number

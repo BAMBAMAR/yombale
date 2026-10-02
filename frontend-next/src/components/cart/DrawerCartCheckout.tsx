@@ -9,6 +9,7 @@ import { Zone } from './types'
 import DrawerCartPromoCode from './DrawerCartPromoCode'
 import DrawerCartSummary from './DrawerCartSummary'
 import DrawerCartOnlineOrderForm from './DrawerCartOnlineOrderForm'
+import { modeLivraisonDepuisZone } from './messageCommande'
 
 interface DrawerCartCheckoutProps {
   zones: Zone[]
@@ -121,7 +122,8 @@ export default function DrawerCartCheckout({
             {zones.map((z) => {
               const isRetrait = z.id === 'retrait-boutique' || z.nom.toLowerCase().includes('retrait')
               const isAConvenir = z.id === 'a-convenir' || z.id === 'a_convenir' || z.nom.toLowerCase().includes('convenir')
-              const labelPrix = isAConvenir ? '' : isRetrait ? ` (${t('shop.freeShopPickup')})` : ` (${fcfa(Number(z.prix))})`
+              // Le nom de la zone dit déjà « Retrait gratuit… » / « Frais à convenir… » : on n'y ajoute rien (AUD-232)
+              const labelPrix = isAConvenir || isRetrait ? '' : ` (${fcfa(Number(z.prix))})`
               return (
                 <option key={z.id} value={z.id}>
                   {z.nom}{labelPrix}
@@ -150,6 +152,7 @@ export default function DrawerCartCheckout({
         fraisLivraison={fraisLivraison}
         totalGlobal={totalGlobal}
         promoCode={promoApplique?.code}
+        aConvenir={modeLivraisonDepuisZone(zones.find((z) => z.id === zoneId)) === 'a_convenir'}
       />
 
       {/* SÉLECTEUR D'ONGLETS / MODE DE COMMANDE */}
@@ -168,7 +171,7 @@ export default function DrawerCartCheckout({
           }}
         >
           <Zap size={14} style={{ color: 'var(--accent, #C75B00)' }} />
-          <span>{t('shop.chooseOrderMode')} :</span>
+          <span>{t('shop.chooseOrderMode')}</span>
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -392,7 +395,7 @@ export default function DrawerCartCheckout({
           >
             <MessageCircle size={18} />
             <span>
-              {t('shop.orderViaWhatsAppDirect')} ({fcfa(totalGlobal)}) →
+              {t('shop.orderViaWhatsAppDirect')} ({fcfa(totalGlobal)})
             </span>
           </button>
 

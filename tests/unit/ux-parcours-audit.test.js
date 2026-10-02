@@ -46,6 +46,27 @@ describe('AUD-220 — jamais de lien wa.me construit à la main dans la vitrine 
   });
 });
 
+describe('AUD-217 — la confirmation de commande ne ment pas', () => {
+  test('aucune promesse « transmise avec succès » avant l\'envoi, aucun repli sur le numéro administrateur', () => {
+    for (const rel of ['components/cart/DrawerCartSuccessModal.tsx', 'components/cart/useDrawerCartCheckout.ts']) {
+      const src = lire(rel);
+      expect(src).not.toMatch(/transmise avec succès/);
+      expect(src).not.toMatch(/221777202086/);
+      expect(src).not.toMatch(/Pouvons-nous organiser la livraison/);
+    }
+    expect(lire('components/cart/DrawerCartSuccessModal.tsx')).toMatch(/Dernière étape/);
+    expect(lire('components/cart/DrawerCartSuccessModal.tsx')).toMatch(/suivi-commande\?ref=/);
+  });
+  test('libellés du panier sans ponctuation doublée ni emoji', () => {
+    for (const l of ['fr', 'en', 'ar']) {
+      const src = lire(`i18n/locales/${l}/shop.ts`);
+      expect(src).not.toMatch(/(chooseOrderMode|orderViaWhatsAppDirect|onlineFormOption): '[^']*(:|→)'/);
+      expect(src).not.toMatch(/(notifyVendorWhatsApp|directOnlineOrder): '[^']*[\u{1F300}-\u{1FAFF}]/u);
+      expect(src).toMatch(/deliveryToAgree:/);
+    }
+  });
+});
+
 describe('AUD-224 — message de connexion explicite', () => {
   test('un mauvais mot de passe ne répond plus « Accès non autorisé »', () => {
     const src = lire('app/connexion/ConnexionForm.tsx');

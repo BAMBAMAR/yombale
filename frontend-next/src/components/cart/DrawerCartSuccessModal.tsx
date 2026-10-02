@@ -1,7 +1,8 @@
 'use client'
 import React from 'react'
-import { fcfa } from '@/lib/format'
+import { fcfa, lienWhatsapp } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
+import { construireMessageCommande } from './messageCommande'
 import { CheckCircle, CreditCard, MessageCircle, AlertCircle } from 'lucide-react'
 import { OrderSuccessData } from './types'
 
@@ -18,8 +19,22 @@ export default function DrawerCartSuccessModal({
   const isCredit = orderSuccessData.methodePaiement === 'credit'
   const isWa = orderSuccessData.methodePaiement === 'whatsapp'
 
-  const waMsgSuccess = `Bonjour ${orderSuccessData.boutiqueNom} ! Je viens de valider ma commande${orderSuccessData.reference ? ` réf: *${orderSuccessData.reference}*` : ''} d'un montant de *${fcfa(orderSuccessData.total)}* sur votre boutique Nopalou.\n\nPouvons-nous confirmer les détails de livraison ?`
-  const waLinkDirect = `https://wa.me/${(orderSuccessData.whatsapp || '221777202086').replace(/\D/g, '')}?text=${encodeURIComponent(waMsgSuccess)}`
+  const mode = orderSuccessData.modeLivraison ?? 'livraison'
+  const aConvenir = mode === 'a_convenir'
+  // AUD-217 : même message que celui du panier (référence, mode de livraison réel) ; jamais le numéro d'un autre commerce
+  const waMsgSuccess = construireMessageCommande({
+    boutiqueNom: orderSuccessData.boutiqueNom,
+    items: orderSuccessData.items,
+    sousTotal: orderSuccessData.sousTotal,
+    fraisLivraison: orderSuccessData.fraisLivraison,
+    reduction: orderSuccessData.reduction,
+    codePromo: orderSuccessData.codePromo,
+    total: orderSuccessData.total,
+    reference: orderSuccessData.reference || undefined,
+    mode,
+  })
+  const waLinkDirect = lienWhatsapp(orderSuccessData.whatsapp, waMsgSuccess)
+  const lienSuivi = orderSuccessData.reference ? `/suivi-commande?ref=${encodeURIComponent(orderSuccessData.reference)}` : '/suivi-commande'
 
   return (
     <div
@@ -116,8 +131,8 @@ export default function DrawerCartSuccessModal({
             {isCredit
               ? t('caisse.creditRequestSentTitle')
               : isWa
-              ? 'Commande transmise sur WhatsApp !'
-              : t('caisse.orderSuccessTitle')}
+              ? 'Dernière étape : envoyez le message'
+              : 'Commande enregistrée'}
           </h3>
           <p style={{ margin: 0, fontSize: 14, color: '#334155', lineHeight: 1.5 }}>
             {isCredit ? (
@@ -129,11 +144,17 @@ export default function DrawerCartSuccessModal({
                 auprès de <strong>{orderSuccessData.boutiqueNom}</strong> a été enregistrée avec
                 succès. Le commerçant la validera dans son Carnet client !
               </>
+            ) : isWa ? (
+              <>
+                Votre commande pour <strong>{orderSuccessData.boutiqueNom}</strong> est prête.
+                Dans WhatsApp, appuyez sur <strong>« Envoyer »</strong> : le vendeur ne la reçoit
+                qu’une fois votre message envoyé.
+              </>
             ) : (
               <>
-                Votre commande auprès de <strong>{orderSuccessData.boutiqueNom}</strong> a été
-                transmise avec succès ! Le vendeur prendra contact avec vous très vite pour la
-                livraison.
+                Votre commande auprès de <strong>{orderSuccessData.boutiqueNom}</strong> est
+                enregistrée. Conservez la référence ci-dessus : elle vous permet de suivre son
+                avancement.
               </>
             )}
           </p>
@@ -192,9 +213,14 @@ export default function DrawerCartSuccessModal({
               marginTop: 2,
             }}
           >
-            <span>Total {isCredit ? 'à inscrire' : 'à régler'}</span>
+            <span>{isCredit ? 'Total à inscrire' : aConvenir ? 'Total des articles' : 'Total à régler'}</span>
             <span>{fcfa(orderSuccessData.total)}</span>
           </div>
+          {aConvenir && (
+            <div style={{ fontSize: 12, color: 'var(--text2, #6B5E52)' }}>
+              Livraison à convenir avec le vendeur : non comprise dans ce total.
+            </div>
+          )}
         </div>
 
         {isCredit && (
@@ -230,30 +256,49 @@ export default function DrawerCartSuccessModal({
             marginTop: 6,
           }}
         >
+          {waLinkDirect && (
+            <a
+              href={waLinkDirect}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                borderRadius: 14,
+                background: 'var(--wa-dark, #128C7E)',
+                color: '#fff',
+                fontWeight: 900,
+                fontSize: 15,
+                textDecoration: 'none',
+                textAlign: 'center',
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              <MessageCircle size={18} />
+              <span>{t('shop.notifyVendorWhatsApp')}</span>
+            </a>
+          )}
           <a
-            href={waLinkDirect}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={lienSuivi}
             style={{
               width: '100%',
-              padding: '14px 16px',
+              padding: '12px 16px',
               borderRadius: 14,
-              background: '#22c55e',
-              color: '#fff',
-              fontWeight: 900,
-              fontSize: 15,
+              border: '1.5px solid var(--border, #E8DDD2)',
+              background: '#fff',
+              color: 'var(--navy, #1C2B4A)',
+              fontWeight: 800,
+              fontSize: 14,
               textDecoration: 'none',
               textAlign: 'center',
               boxSizing: 'border-box',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              boxShadow: '0 4px 14px rgba(34,197,94,0.35)',
             }}
           >
-            <MessageCircle size={18} />
-            <span>{t('shop.notifyVendorWhatsApp')}</span>
+            Suivre ma commande
           </a>
           <button
             onClick={onClose}

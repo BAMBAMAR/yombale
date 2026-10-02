@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react'
 import { Zone, OrderSuccessData } from './types'
 import { useCart } from '@/context/CartContext'
-import { fcfa } from '@/lib/format'
+import { fcfa, lienWhatsapp } from '@/lib/format'
+import { construireMessageCommande, modeLivraisonDepuisZone } from './messageCommande'
 import { getSavedUtm, trackAnalyticsEvent } from '@/lib/analytics'
 import { ajouterCommandeHorsLigne } from '@/lib/db-offline'
 
@@ -192,39 +193,23 @@ export function useDrawerCartCheckout() {
     currentTotal?: number,
     reference?: string
   ) {
-    const lignedDetailles = currentItems
-      .map(
-        (i) =>
-          `• ${i.quantite}x ${i.nom}${i.detailsVariante ? ` [${i.detailsVariante}]` : ''} (${fcfa(i.prix * i.quantite)})`
-      )
-      .join('\n')
-    let msg = `Bonjour ${nomBoutique} ! Je souhaite passer la commande suivante${reference ? ` (Réf: *${reference}*)` : ''} :\n\n${lignedDetailles}\n\nSous-total: ${fcfa(currentSousTotal)}\n`
-    if (currentReduction > 0 && currentPromoCode) {
-      msg += `Code Promo (${currentPromoCode}): -${fcfa(currentReduction)}\n`
-    }
-    const isRetrait = zoneSelectionnee?.id === 'retrait-boutique' || zoneSelectionnee?.nom?.toLowerCase().includes('retrait')
-    const isAConvenir = zoneSelectionnee?.id === 'a-convenir' || zoneSelectionnee?.nom?.toLowerCase().includes('convenir')
-
-    if (currentFraisLivraison > 0) {
-      msg += `Livraison (${zoneSelectionnee?.nom || 'Zone choisie'}): ${fcfa(currentFraisLivraison)}\n`
-    } else if (isRetrait) {
-      msg += `Mode: Retrait gratuit en boutique\n`
-    } else if (isAConvenir) {
-      msg += `Livraison: Frais à convenir avec le vendeur\n`
-    }
-
-    if (isAConvenir) {
-      msg += `TOTAL: ${fcfa(currentSousTotal - currentReduction)} (+ livraison à régler à part)\n\nPouvons-nous organiser la livraison ?`
-    } else {
-      msg += `TOTAL: ${fcfa(currentTotal !== undefined ? currentTotal : currentSousTotal + currentFraisLivraison - currentReduction)}\n\nPouvons-nous organiser la livraison ?`
-    }
-    return msg
+    // AUD-217 : texte adapté au mode choisi (retrait, livraison à convenir, livraison chiffrée)
+    return construireMessageCommande({
+      boutiqueNom: nomBoutique,
+      items: currentItems,
+      sousTotal: currentSousTotal,
+      fraisLivraison: currentFraisLivraison,
+      reduction: currentReduction,
+      codePromo: currentPromoCode,
+      total: currentTotal !== undefined ? currentTotal : currentSousTotal + currentFraisLivraison - currentReduction,
+      reference,
+      mode: modeLivraisonDepuisZone(zoneSelectionnee),
+      zoneNom: zoneSelectionnee?.nom,
+    })
   }
 
-  function getLienWhatsapp(rawNumber?: string | null, customMsg?: string) {
-    const targetNumber = rawNumber || activeCart?.whatsapp || '221777202086'
-    const digits = targetNumber.replace(/\D/g, '')
-    const clean = digits.length === 9 ? '221' + digits : digits || '221777202086'
+  /** AUD-220 : lien wa.me avec indicatif ; null sans numéro valide (jamais de repli sur le numéro de l'administrateur). */
+  function getLienWhatsapp(rawNumber?: string | null, customMsg?: string): string | null {
     const message =
       customMsg ||
       getMessageWhatsapp(
@@ -236,7 +221,7 @@ export function useDrawerCartCheckout() {
         promoApplique?.code,
         totalGlobal
       )
-    return `https://wa.me/${clean}?text=${encodeURIComponent(message)}`
+    return lienWhatsapp(rawNumber || activeCart?.whatsapp, message)
   }
 
   /**
@@ -355,6 +340,7 @@ export function useDrawerCartCheckout() {
         boutiqueNom: currentBoutiqueNom,
         boutiqueId: currentBoutiqueId,
         whatsapp: currentWhatsapp,
+        modeLivraison: modeLivraisonDepuisZone(zoneSelectionnee),
         // AUD-095/099 : référence et total affichés = ceux ENREGISTRÉS par le serveur, jamais inventés ni recalculés
         reference: data.commande?.reference || '',
         total: Number(data.commande?.montant_total) > 0 ? Number(data.commande.montant_total) : currentTotal,
@@ -398,6 +384,12 @@ export function useDrawerCartCheckout() {
     const currentTotal = totalGlobal
 
     try {
+      // AUD-220 : sans numéro WhatsApp valide pour CETTE boutique, on n'enregistre rien (avant, le message partait
+      // vers le numéro de l'administrateur)
+      if (!lienWhatsapp(currentWhatsapp)) {
+        setErrorMsg('Cette boutique n’a pas de numéro WhatsApp enregistré. Choisissez « Paiement en ligne » pour commander.')
+        return
+      }
       if (!(await prixPanierInchanges())) return
 
       try {
@@ -493,12 +485,13 @@ export function useDrawerCartCheckout() {
         currentWhatsapp,
         getMessageWhatsapp(currentBoutiqueNom, currentItems, currentSousTotal, currentFraisLiv, currentReduction, currentPromoCode, totalAffiche, finalReference || undefined)
       )
-      window.open(waLink, '_blank')
+      if (waLink) window.open(waLink, '_blank')
 
       setOrderSuccessData({
         boutiqueNom: currentBoutiqueNom,
         boutiqueId: currentBoutiqueId,
         whatsapp: currentWhatsapp,
+        modeLivraison: modeLivraisonDepuisZone(zoneSelectionnee),
         reference: finalReference || '',
         total: totalAffiche,
         sousTotal: currentSousTotal,
