@@ -1073,6 +1073,17 @@ module.exports = async function migrateInline(customConnStr = null) {
     console.log('[MIGRATE] ✅ Colonnes modération boutique_produits OK');
   } catch (e) { console.warn('[MIGRATE] bp_moderation:', e.message); }
 
+  // AUD-227 : anciens articles de démarrage (« Produit — à modifier », « Article mode — à modifier », …) créés AVANT
+  // le statut 'exemple' (AUD-118) : restés publics et commandables, avec le libellé d'un brouillon. Idempotent : une
+  // seconde exécution ne touche plus aucune ligne.
+  try {
+    const exemples = await pool.query(
+      `UPDATE boutique_produits SET statut_moderation = 'exemple'
+       WHERE nom ~ ' — à modifier$' AND (statut_moderation IS NULL OR statut_moderation = 'actif')`
+    );
+    if (exemples.rowCount) console.log(`[MIGRATE] ✅ ${exemples.rowCount} ancien(s) article(s) de démarrage passé(s) en statut 'exemple'`);
+  } catch (e) { console.warn('[MIGRATE] bp_exemples_legacy:', e.message); }
+
   // Table Matrice de Variantes & SKUs (Prix, stock et code-barres par variante)
   try {
     await pool.query(`

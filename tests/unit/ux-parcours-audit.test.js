@@ -137,6 +137,16 @@ describe('AUD-231 — la bulle d\'assistant ne recouvre plus les pages de formul
   });
 });
 
+describe('AUD-227 — les anciens articles de démarrage ne sont plus publics', () => {
+  test('migration idempotente vers le statut « exemple » pour les libellés « — à modifier »', () => {
+    const src = fs.readFileSync(path.join(process.env.UXP_BACK_ROOT || path.join(__dirname, '../../backend'), 'migrate-inline.js'), 'utf8');
+    expect(src).toMatch(/SET statut_moderation = 'exemple'/);
+    expect(src).toMatch(/nom ~ ' — à modifier\$'/);
+    // idempotence : ne touche que les lignes encore publiques
+    expect(src).toMatch(/statut_moderation IS NULL OR statut_moderation = 'actif'\)`/);
+  });
+});
+
 describe('AUD-226 — carte « Commencez à vendre » lisible sur mobile', () => {
   test('le bloc de texte garde une base de largeur (il passe à la ligne au lieu d\'être écrasé) et les boutons font 44 px', () => {
     const src = lire('app/(account)/compte/tabs/hub/AccountHubRecentAnnonces.tsx');
