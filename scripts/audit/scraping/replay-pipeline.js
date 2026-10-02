@@ -1,4 +1,4 @@
-// Rejeu du pipeline produits : faux sites locaux (axios simulé) + copie locale de la base. Aucun accès réseau.
+﻿// Rejeu du pipeline produits : faux sites locaux (axios simulé) + copie locale de la base. Aucun accès réseau.
 // Préalable : DATABASE_URL doit viser une COPIE jetable (ex. nopalou_scrap_audit créée par
 // CREATE DATABASE nopalou_scrap_audit TEMPLATE nopalou_audit_data), migrée avec backend/migrate-inline.js,
 // et f_unaccent(text) créée à la main (aucune migration ne la crée : AUD-176).
@@ -118,12 +118,11 @@ const jumiaHtml = (cat, page, n = 40) => '<html><script type="application/ld+jso
   const o3c = await q("SELECT prix, quarantinee FROM offres WHERE titre_marchand LIKE $1", ['%' + tag3 + '%']);
   out('T3c chute de prix x10 acceptée sans quarantaine:', JSON.stringify(o3c));
 
-  // T7 : Decathlon WooCommerce XOF (minor_unit 0 ou 2) -> division par 100
-  for (const unit of [0, 2]) {
-    comportement = () => ({ data: [{ name: 'Maillot de foot adulte', permalink: 'https://www.decathlon.sn/p/maillot', prices: { price: unit === 0 ? '25000' : '2500000', currency_code: 'XOF', currency_minor_unit: unit }, images: [{ src: 'https://i/x.jpg' }] }] });
-    const d = await sc.scraperDecathlon('3745-tous-les-sports', 3);
-    out(`T7 Decathlon WC minor_unit=${unit}: prix extrait`, JSON.stringify(d.map(x => x.prix)), '(attendu 25000)');
-  }
+  // T7 (AUD-183) : Decathlon est un PrestaShop (cartes .product-card, prix .price_amount en FCFA entiers). Avant : strategie WooCommerce
+  // inexistante (404) et prix divise par 100 ; la categorie configuree etait une page produit (1 offre).
+  comportement = () => ({ data: '<html><body><div class="product-card"><a class="js-product-card-link" href="/p/1-maillot.html"><img alt="Maillot de foot adulte" src="https://i/x.jpg"></a><span class="price_amount">25 000 CFA</span></div></body></html>' });
+  const d = await sc.scraperDecathlon('3756-fitness-cardio', 1);
+  out('T7 Decathlon PrestaShop: prix extrait', JSON.stringify(d.map(x => x.prix)), '(attendu [25000])');
   await pool.end();
   process.exit(0);
 })().catch(e => { origLog('HARNAIS ERR', e); process.exit(1); });

@@ -23,7 +23,9 @@ const CATS = {
   coinafrique:['telephones-et-tablettes', 'electronique', 'ordinateurs', 'electromenager', 'vetements-femme', 'vetements-homme'],
   auchan:    ['104-epicerie-salee', '105-epicerie-sucree', '110-petit-dejeuner', '113-entretien-et-nettoyage', '112-hygiene-et-beaute', '107-cremerie-et-frais'],
   kaynoo:    ['produits-hightech', 'produits-electromenager', 'beaute-bien-etre', 'mode-sacs-accessoires'],
-  decathlon: ['3745-tous-les-sports'],
+  // AUD-183 : decathlon.sn est un PrestaShop ; l'ancienne entrée « 3745-tous-les-sports » était en réalité une page produit (1 seule offre).
+  // Catégories relevées dans le menu du site le 02/10/2026 (diagnostic en lecture seule).
+  decathlon: ['3756-fitness-cardio', '3081-course-a-pied', '3279-natation', '1734-football', '3371-basketball', '1396-volleyball', '1461-handball', '1484-randonnee', '1419-equipements-de-randonnee', '3109-chaussures-homme', '3110-chaussures-femme'],
   jiji:      ['mobile-phones', 'computers-and-accessories', 'tv-and-dvd-equipment', 'home-appliances']
 };
 
@@ -550,124 +552,49 @@ async function scraperAuchan(categorie='137-boissons', maxPages=3) {
 }
 
 // ══════════════════════════════════════════════════════
-//  SCRAPER 6 — Decathlon Sénégal (multi-stratégie)
-//  Stratégie 1 : WooCommerce Store API /wp-json/wc/store/v1/products
-//  Stratégie 2 : JSON-LD ItemList dans <script type="application/ld+json">
-//  Stratégie 3 : script[type="application/json"][data-src] (legacy)
-//  Stratégie 4 : CSS adaptatif (WooCommerce HTML)
+//  SCRAPER 6 — Decathlon Sénégal (AUD-183)
+//  decathlon.sn est un PrestaShop (l'API WooCommerce n'existe pas : 404). Pages de catégorie /{id}-{slug}?page=N,
+//  cartes `.product-card` (lien `a.js-product-card-link`, titre = alt de l'image, prix `.price_amount`).
+//  Le prix est déjà en FCFA entiers : jamais divisé (l'ancienne stratégie WooCommerce divisait par 100).
 // ══════════════════════════════════════════════════════
-async function scraperDecathlon(categorie = '3745-tous-les-sports', maxPages = 3) {
-  const resultats = [], base = `https://www.decathlon.sn/${categorie}`;
+async function scraperDecathlon(categorie = '3756-fitness-cardio', maxPages = 25) {
+  const resultats = [], vus = new Set(), base = `https://www.decathlon.sn/${categorie}`;
   console.log(`\n[DECATHLON] ${base}`);
-
-  // Stratégie 1 — WooCommerce Store API (JSON public, pas de JS requis)
-  try {
-    const apiUrl = 'https://www.decathlon.sn/wp-json/wc/store/v1/products?per_page=100&status=publish';
-    const { data: apiData } = await require('axios').get(apiUrl, {
-      headers: { 'User-Agent': randUA(), 'Accept': 'application/json' },
-      timeout: 15000,
-    });
-    if (Array.isArray(apiData) && apiData.length > 0) {
-      for (const p of apiData) {
-        const titre = nettoyerTitre(p.name);
-        const prix = nettoyerPrix(String(p.prices?.price || p.prices?.regular_price || ''));
-        const href = p.permalink || '';
-        const img = p.images?.[0]?.src || null;
-        if (titre.length > 3 && prix > 500) {
-          resultats.push({ titre, prix: Math.round(prix / 100), url: href, image_url: img });
-        }
-      }
-      if (resultats.length > 0) {
-        console.log(`[DECATHLON] Stratégie API WooCommerce : ${resultats.length} produits`);
-        return resultats;
-      }
-    }
-  } catch (e) {
-    console.warn('[DECATHLON] API WooCommerce inaccessible :', e.message);
-  }
-
-  // Stratégie 2–4 — Scraping HTML page par page
   let erreursConsec = 0;
   for (let page = 1; page <= maxPages; page++) {
     const url = page === 1 ? base : `${base}?page=${page}`;
     try {
       const html = await fetchPage(url);
       const $ = cheerio.load(html);
-      let found = 0;
-
-      // Stratégie 2 — JSON-LD ItemList
-      $('script[type="application/ld+json"]').each((_, el) => {
-        try {
-          const ld = JSON.parse($(el).html() || '{}');
-          const items = ld['@type'] === 'ItemList' ? (ld.itemListElement || [])
-                      : ld['@type'] === 'Product'  ? [ld]
-                      : [];
-          for (const it of items) {
-            const prod = it.item || it;
-            const titre = nettoyerTitre(prod.name || '');
-            const prix = nettoyerPrix(String(prod.offers?.price || prod.offers?.lowPrice || ''));
-            const href = prod.url || '';
-            const img = Array.isArray(prod.image) ? prod.image[0] : (prod.image || null);
-            if (titre.length > 3 && prix > 500 && href) {
-              resultats.push({ titre, prix, url: href, image_url: img }); found++;
-            }
-          }
-        } catch (e) {}
-      });
-
-      // Stratégie 3 — JSON inline data-src (legacy Decathlon)
-      if (found === 0) {
-        $('script[type="application/json"]').each((_, el) => {
-          try {
-            const jsonText = $(el).html() || '';
-            if (!jsonText.includes('price')) return;
-            const data = JSON.parse(jsonText);
-            const items = Array.isArray(data) ? data : (Array.isArray(data?.[0]) ? data[0] : []);
-            for (const p of items) {
-              const titre = nettoyerTitre(p.title || p.name || '');
-              const prix = parseInt(p.price?.amountRaw || p.price || '0', 10);
-              const href = p.cardLinkUrl || p.url || '';
-              const img = p.image?.url || p.thumbnail || null;
-              if (titre.length > 3 && prix > 500) {
-                resultats.push({ titre, prix, url: href, image_url: img }); found++;
-              }
-            }
-          } catch (e) {}
-        });
-      }
-
-      // Stratégie 4 — CSS WooCommerce adaptatif
-      if (found === 0) {
-        const essais = [
-          { c: 'li.product,.product-small,.product-card', t: '.woocommerce-loop-product__title,.product-title,h2,h3', p: '.price .amount,span.amount,.price', l: 'a.woocommerce-loop-product__link,a', i: 'img' },
-          { c: '.type-product',                           t: 'h2,h3,.product-title',                                  p: '.price',                            l: 'a[href]',                                                                i: 'img' },
-        ];
-        for (const s of essais) {
-          const items = $(s.c); if (!items.length) continue;
-          items.each((_, el) => {
-            const titre = nettoyerTitre($(el).find(s.t).first().text());
-            const prix  = nettoyerPrix($(el).find(s.p).first().text());
-            let href    = $(el).find(s.l).first().attr('href') || '';
-            if (href && !href.startsWith('http')) href = `https://www.decathlon.sn${href}`;
-            const img = $(el).find(s.i).first().attr('data-src') || $(el).find(s.i).first().attr('src') || null;
-            if (titre.length > 3 && prix > 500) { resultats.push({ titre, prix, url: href, image_url: img }); found++; }
-          });
-          if (found > 0) break;
+      let nouveaux = 0;
+      $('.product-card').each((_, el) => {
+        const lien = $(el).find('a.js-product-card-link, a[href*="/p/"]').first();
+        let href = lien.attr('href') || '';
+        if (href && !href.startsWith('http')) href = `https://www.decathlon.sn${href}`;
+        if (!href || vus.has(href)) return;
+        const img = $(el).find('img').first();
+        const titre = nettoyerTitre(img.attr('alt') || lien.attr('title') || $(el).find('a.link').first().text());
+        const prixTxt = $(el).find('.price_amount').first().text() || $(el).find('[class*="price"]').first().text();
+        const prix = nettoyerPrix(prixTxt);
+        const photo = img.attr('src') || img.attr('data-src') || null;
+        if (titre.length > 3 && prix > 500) {
+          vus.add(href);
+          resultats.push({ titre, prix, url: href, image_url: photo, prix_brut: String(prixTxt).replace(/\s+/g, ' ').trim().slice(0, 60) });
+          nouveaux++;
         }
-      }
-
-      console.log(`[DECATHLON] Page ${page}: ${found} résultats`);
-      if (found === 0) break;
+      });
+      console.log(`[DECATHLON] Page ${page}: ${nouveaux} nouveaux articles`);
+      if (nouveaux === 0) break; // fin de pagination, ou page déjà vue
+      erreursConsec = 0;
     } catch (err) {
       console.error(`[DECATHLON] Page ${page}:`, err.message);
-      break;
+      if (err.response?.status === 404 || page === 1 || ++erreursConsec >= 2) break;
     }
-    await sleep(2000);
+    await sleep(2500 + Math.random() * 1500);
   }
   console.log(`[DECATHLON] Total: ${resultats.length}`);
   return resultats;
 }
-
 // ══════════════════════════════════════════════════════
 //  SCRAPER 7 — Jiji Sénégal
 // ══════════════════════════════════════════════════════
@@ -1179,7 +1106,7 @@ function normaliserTitre(s) {
 
 async function diagnosticScraper(source, categorie) {
   const fns={expat:scraperExpatDakar,jumia:scraperJumia,coinafrique:scraperCoinAfrique,decathlon:scraperDecathlon,jiji:scraperJiji};
-  const cats={expat:'telephones-portables-et-tablettes',jumia:'telephones-tablettes',coinafrique:'telephonie',decathlon:'3745-tous-les-sports',jiji:'mobile-phones'};
+  const cats={expat:'telephones-portables-et-tablettes',jumia:'telephones-tablettes',coinafrique:'telephonie',decathlon:'3756-fitness-cardio',jiji:'mobile-phones'};
   if(!fns[source]) throw new Error(`Source inconnue: ${source}. Valeurs: expat, jumia, coinafrique, decathlon, jiji`);
   const items=await fns[source](categorie||cats[source],1);
   return {

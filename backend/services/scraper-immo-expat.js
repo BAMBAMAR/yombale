@@ -226,7 +226,8 @@ async function upsertAnnonce(a) {
       description = COALESCE(EXCLUDED.description, annonces_immo.description),
       contact_nom = COALESCE(EXCLUDED.contact_nom, annonces_immo.contact_nom),
       contact_tel = COALESCE(EXCLUDED.contact_tel, annonces_immo.contact_tel),
-      actif       = true,
+      -- AUD-189 : une annonce rejetée par la modération n'est jamais réactivée par un re-scrape (avant : actif = true et rejete = true)
+      actif       = CASE WHEN annonces_immo.rejete IS TRUE THEN annonces_immo.actif ELSE true END,
       updated_at  = NOW()
   `, [
     a.titre, a.type_bien, a.transaction, a.prix || null, a.surface_m2 || null,

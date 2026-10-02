@@ -26,6 +26,7 @@ const { pool } = require('../models/db');
 const scrapingLock = require('../lib/scrapingLock');
 const { RunCollecte } = require('../lib/scrapingRun');
 const { extrairePrixTexte } = require('../lib/prix');
+const { deduireTransaction, deduireTypeBien } = require('../lib/immoTexte');
 
 // Session sauvegardée via `node scripts/fb-login-setup.js` (gère le 2FA manuellement une fois)
 const SESSION_FILE = path.join(__dirname, '../.fb-session.json');
@@ -603,15 +604,21 @@ async function upsertAnnonceClassifiee(a) {
 
     // ── Miroir immédiat vers annonces_immo avec les photos Cloudinary ───────────
     if (a.categorie_slug === 'immo' && a.prix && a.prix >= 10000 && a.contact_tel) {
-      const transactionCalculee = ((a.titre || '') + ' ' + (a.description || '')).toLowerCase().includes('vente') ? 'vente' : 'location';
+      // AUD-188 : transaction et type déduits du texte (avant : « à vendre » devenait location, type toujours « appartement »)
+      const transactionCalculee = deduireTransaction(a.titre, a.description);
+      const typeBienCalcule = deduireTypeBien(a.titre, a.description);
+      let quartierDetecte = a.quartier || null;
+      if (!quartierDetecte) {
+        try { quartierDetecte = require('./prospection').detecterQuartier(`${a.titre || ''} ${a.description || ''}`) || null; } catch (_) { quartierDetecte = null; }
+      }
 
       await pool.query(`
         INSERT INTO annonces_immo (
           titre, description, prix, ville, quartier, type_bien, transaction,
-          photos, source, ref_externe, actif, supprimee, rejete, contact_nom, contact_tel, created_at, updated_at
+          photos, source, ref_externe, actif, supprimee, rejete, contact_nom, contact_tel, url_source, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, 'appartement', $6,
-          $7::jsonb, 'particulier_annonce', $8, true, false, false, $9, $10, NOW(), NOW()
+          $1, $2, $3, $4, $5, $11, $6,
+          $7::jsonb, 'particulier_annonce', $8, true, false, false, $9, $10, $12, NOW(), NOW()
         )
         ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
         DO UPDATE SET
@@ -623,12 +630,14 @@ async function upsertAnnonceClassifiee(a) {
         a.description,
         a.prix,
         a.ville || 'Dakar',
-        a.quartier || 'Dakar',
+        quartierDetecte,
         transactionCalculee,
         JSON.stringify(a.photos || []),
         a.ref_externe || `fb-${Date.now()}`,
         a.contact_nom || null,
-        a.contact_tel
+        a.contact_tel,
+        typeBienCalcule,
+        a.url_source || null
       ]).catch((err) => {
         console.error('[FB-SCRAPER-IMMO-MIRROR ERR]:', err.message);
       });
