@@ -337,8 +337,8 @@
 
 .filter-pill:hover,
 .filter-pill.filter-pill--active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-text, #A64800); /* AUD-230 : blanc sur --accent = 4,26:1 (< 4,5) */
+  border-color: var(--accent-text, #A64800);
   color: #fff;
 }
 
@@ -433,7 +433,7 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  background: var(--accent);
+  background: var(--accent-text, #A64800); /* AUD-230 : blanc sur --accent = 4,26:1 (< 4,5) */
   color: #fff;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

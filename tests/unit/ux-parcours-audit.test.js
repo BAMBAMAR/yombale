@@ -100,6 +100,34 @@ describe('AUD-222 — une seule règle de publication immobilière pour le site 
   });
 });
 
+describe('AUD-230 — couleurs lisibles (WCAG AA) sans toucher à la couleur de marque', () => {
+  const css = (rel) => fs.readFileSync(path.join(FRONT, rel), 'utf8');
+  test('jetons contrastés déclarés, couleur de marque inchangée', () => {
+    const t = css('styles/design-tokens.css');
+    expect(t).toMatch(/--accent:\s+#C75B00/);
+    expect(t).toMatch(/--accent-on-dark:\s+#F28C28/);
+    expect(t).toMatch(/--success-on-dark:\s+#4ADE80/);
+    expect(t).toMatch(/--wa-dark:\s+#0B7A5E/);
+  });
+  test('le pied de page n\'utilise plus l\'orange/vert de marque sur fond sombre', () => {
+    const l = lire('app/layout.tsx');
+    expect(l).toMatch(/Annuaire des Boutiques/);
+    expect(l).not.toMatch(/'var\(--accent, #C75B00\)' \}\}>(Annuaire des Boutiques|Agences Immobilières|Centre d)/);
+    expect(l).not.toMatch(/color: '#16a34a', fontWeight: 700 \}\}>Payer mon Loyer/);
+    expect(css('styles/footer.css')).toMatch(/footer-support-title[\s\S]{0,200}var\(--accent-on-dark/);
+  });
+  test('badges et pilules actives : fond contrasté pour le texte blanc', () => {
+    const h = css('styles/homepage.css');
+    expect(h).toMatch(/\.filter-pill\.filter-pill--active \{\s*background: var\(--accent-text/);
+    expect(h).toMatch(/\.badge-promo \{[\s\S]{0,120}background: var\(--accent-text/);
+  });
+  test('la page de recherche utilise --accent-text pour le texte orange et décode les entités', () => {
+    const r = lire('app/recherche/RechercheClient.tsx');
+    expect(r).not.toMatch(/color: '#C75B00'/);
+    expect(r).toMatch(/decodeHtml\(/);
+  });
+});
+
 describe('AUD-226 — carte « Commencez à vendre » lisible sur mobile', () => {
   test('le bloc de texte garde une base de largeur (il passe à la ligne au lieu d\'être écrasé) et les boutons font 44 px', () => {
     const src = lire('app/(account)/compte/tabs/hub/AccountHubRecentAnnonces.tsx');

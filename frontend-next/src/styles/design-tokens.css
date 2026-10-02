@@ -7,6 +7,11 @@
   --navy:        #1C2B4A;   /* marine sombre — logo, titres */
   --accent:      #C75B00;   /* orange brûlé — CTA, hover, identité */
   --accent-text: #A64800;   /* orange brûlé contrasté — liens & textes sur fond clair (WCAG AA ≥5:1) */
+  /* AUD-230 : variantes lisibles. --accent (#C75B00) ne passe pas WCAG AA en texte (3,3:1 sur le bleu nuit du pied de page,
+     3,9:1 sur --bg, 4,3:1 en blanc dessus) ; la couleur de marque reste inchangée. */
+  --accent-on-dark:  #F28C28; /* orange sur fond sombre (--navy) : ≥5,7:1 */
+  --success-on-dark: #4ADE80; /* vert sur fond sombre (--navy) : ≥8:1 */
+  --wa-dark:         #0B7A5E; /* vert WhatsApp foncé : texte blanc dessus ≥5:1 (le vert #25D366 donne 1,98:1) */
   --price:       #0A5C36;   /* vert forêt — prix, économies */
 
   --bg:      #F8F5F0;   /* sable chaud — fini le bleu Tailwind */

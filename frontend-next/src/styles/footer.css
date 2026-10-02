@@ -159,7 +159,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .08em;
-  color: var(--accent, #C75B00);
+  color: var(--accent-on-dark, #F28C28); /* AUD-230 : --accent sur ce fond sombre = 3,6:1 */
 }
 
 .footer-support-links {

@@ -358,7 +358,7 @@ export default async function RootLayout({
               {/* Colonne 2 — Solutions Commerçants & POS */}
               <div className="footer-col">
                 <p className="footer-col-titre">Boutique &amp; POS</p>
-                <a href="/boutiques" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Annuaire des Boutiques</a>
+                <a href="/boutiques" style={{ fontWeight: 800, color: 'var(--accent-on-dark, #F28C28)' }}>Annuaire des Boutiques</a>
                 <a href="/marchands">Créer une Boutique en Ligne</a>
                 <a href="/logiciel-caisse-senegal">Caisse Enregistreuse POS (Offline)</a>
                 <a href="/vendre-sur-whatsapp">Vendre sur WhatsApp</a>
@@ -373,9 +373,9 @@ export default async function RootLayout({
               {/* Colonne 3 — Immobilier & Agences Pro */}
               <div className="footer-col">
                 <p className="footer-col-titre">Immobilier &amp; Agences</p>
-                <a href="/agences" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Agences Immobilières</a>
+                <a href="/agences" style={{ fontWeight: 800, color: 'var(--accent-on-dark, #F28C28)' }}>Agences Immobilières</a>
                 <a href="/agence">Espace Agence Pro &amp; Baux</a>
-                <a href="/payer-loyer" style={{ color: '#16a34a', fontWeight: 700 }}>Payer mon Loyer (Wave/OM)</a>
+                <a href="/payer-loyer" style={{ color: 'var(--success-on-dark, #4ADE80)', fontWeight: 700 }}>Payer mon Loyer (Wave/OM)</a>
                 <a href="/immo">Biens &amp; Locations Dakar</a>
                 <a href="/deposer-immo">Publier un Bien Immo</a>
                 <a href="/guide-immo">Guide Immobilier &amp; Baux</a>
@@ -407,7 +407,7 @@ export default async function RootLayout({
                 <a href="/suivi-commande" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <Package size={13} style={{ color: 'var(--accent, #C75B00)' }} /> Suivre ma commande
                 </a>
-                <a href="/aide" style={{ fontWeight: 700, color: 'var(--accent, #C75B00)' }}>Centre d&apos;aide &amp; SAV</a>
+                <a href="/aide" style={{ fontWeight: 700, color: 'var(--accent-on-dark, #F28C28)' }}>Centre d&apos;aide &amp; SAV</a>
               </div>
             </div>
           </div>
@@ -417,7 +417,7 @@ export default async function RootLayout({
             <div className="footer-support-bar-inner">
               <span className="footer-support-title">Aide &amp; Contact :</span>
               <div className="footer-support-links">
-                <a href="/aide" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Centre d&apos;Aide &amp; SAV</a>
+                <a href="/aide" style={{ fontWeight: 800, color: 'var(--accent-on-dark, #F28C28)' }}>Centre d&apos;Aide &amp; SAV</a>
                 <span className="footer-support-sep">&bull;</span>
                 <a href="/guide-emploi">Comment ça marche ?</a>
                 <span className="footer-support-sep">&bull;</span>

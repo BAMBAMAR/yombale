@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useRef, useState, useTransition, Suspense } from 'react'
 import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
+import { decodeHtml } from '@/lib/format'
 
 function fcfa(n: number | null) {
   if (!n) return null
@@ -20,10 +21,11 @@ interface SearchData {
 }
 
 // Carte générique résultat
-function ResultCard({ href, image, titre, sub1, sub2, badge }: {
+function ResultCard({ href, image, titre: titreBrut, sub1, sub2, badge }: {
   href: string; image: string | null
   titre: string; sub1?: string | null; sub2?: string | null; badge?: string | null
 }) {
+  const titre = decodeHtml(titreBrut) // AUD-232 : certains imports laissent « &#8211; », « &eacute; »… dans les noms
   return (
     <Link href={href} style={{
       display: 'flex', gap: 12, padding: '12px 14px',
@@ -38,8 +40,8 @@ function ResultCard({ href, image, titre, sub1, sub2, badge }: {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontWeight: 600, fontSize: 14, lineHeight: 1.3 }}>{titre}</p>
-        {sub1 && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>{sub1}</p>}
-        {sub2 && <p style={{ margin: '2px 0 0', fontSize: 13, color: '#C75B00', fontWeight: 700 }}>{sub2}</p>}
+        {sub1 && <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text3, #73675E)' }}>{sub1}</p>}
+        {sub2 && <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--accent-text, #A64800)', fontWeight: 700 }}>{sub2}</p>}
         {badge && (
           <span style={{ display: 'inline-block', marginTop: 4, fontSize: 11, padding: '1px 7px', borderRadius: 20, background: '#eff6ff', color: '#1d4ed8', fontWeight: 600 }}>
             {badge}
@@ -161,7 +163,7 @@ function RechercheClientInner({ query, data, prixMax, tri }: { query: string; da
           {/* En-tête résultats */}
           <div style={{ marginBottom: 16 }}>
             <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 18, margin: '0 0 4px' }}>
-              Résultats pour <em style={{ fontStyle: 'normal', color: '#C75B00' }}>« {data.q} »</em>
+              Résultats pour <em style={{ fontStyle: 'normal', color: 'var(--accent-text, #A64800)' }}>« {data.q} »</em>
             </h1>
             <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
               {data.total} résultat{data.total > 1 ? 's' : ''} dans toutes les catégories
@@ -203,13 +205,13 @@ function RechercheClientInner({ query, data, prixMax, tri }: { query: string; da
                     <button key={t.key} onClick={() => setTab(t.key)} style={{
                       padding: '8px 14px', border: 'none', background: 'none', cursor: 'pointer',
                       fontSize: 13, fontWeight: tab === t.key ? 700 : 500,
-                      color: tab === t.key ? '#C75B00' : '#6b7280',
-                      borderBottom: tab === t.key ? '2px solid #C75B00' : '2px solid transparent',
+                      color: tab === t.key ? 'var(--accent-text, #A64800)' : '#6b7280',
+                      borderBottom: tab === t.key ? '2px solid var(--accent-text, #A64800)' : '2px solid transparent',
                       marginBottom: -2,
                     }}>
                       {t.emoji} {t.label}
                       {count != null && count > 0 && (
-                        <span style={{ marginLeft: 5, fontSize: 11, background: tab === t.key ? '#fff3e0' : '#f1f5f9', color: tab === t.key ? '#C75B00' : '#6b7280', padding: '1px 6px', borderRadius: 20, fontWeight: 700 }}>
+                        <span style={{ marginLeft: 5, fontSize: 11, background: tab === t.key ? '#fff3e0' : '#f1f5f9', color: tab === t.key ? 'var(--accent-text, #A64800)' : '#6b7280', padding: '1px 6px', borderRadius: 20, fontWeight: 700 }}>
                           {count}
                         </span>
                       )}
