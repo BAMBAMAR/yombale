@@ -135,38 +135,26 @@ export function useCaissePanier({
     }
   }
 
-  function ajouterAuPanier(p: ProduitCaisse) {
+  // AUD-200 : ajout par QUANTITÉ en un seul appel (plus de boucle) et mise à jour d'état pure.
+  function ajouterAuPanier(p: ProduitCaisse, quantite: number = 1) {
+    const qte = typeof quantite === 'number' && quantite >= 1 ? Math.floor(quantite) : 1
+    const ajouter = () =>
+      setPanier((prev) => {
+        const index = prev.findIndex((item) => item.produit.id === p.id)
+        if (index >= 0) return prev.map((item, k) => (k === index ? { ...item, quantite: item.quantite + qte } : item))
+        return [...prev, { produit: p, quantite: qte, prixUnitaire: p.prix }]
+      })
+
     if (typeof p.stock === 'number' && !isNaN(p.stock)) {
       const itemExistant = panier.find((i) => i.produit.id === p.id)
       const qteActuelle = itemExistant ? itemExistant.quantite : 0
-      if (qteActuelle >= p.stock) {
-        demanderValidationSuperviseur(
-          `Autoriser Vente Hors-Stock (${p.nom} : Stock disponible ${p.stock})`,
-          () => {
-            setPanier((prev) => {
-              const ex = prev.find((i) => i.produit.id === p.id)
-              if (ex) {
-                return prev.map((i) => (i.produit.id === p.id ? { ...i, quantite: i.quantite + 1 } : i))
-              }
-              return [...prev, { produit: p, quantite: 1, prixUnitaire: p.prix }]
-            })
-          }
-        )
+      if (qteActuelle + qte > p.stock) {
+        demanderValidationSuperviseur(`Autoriser Vente Hors-Stock (${p.nom} : Stock disponible ${p.stock})`, ajouter)
         return
       }
     }
-
-    setPanier((prev) => {
-      const index = prev.findIndex((item) => item.produit.id === p.id)
-      if (index >= 0) {
-        const copi = [...prev]
-        copi[index].quantite += 1
-        return copi
-      }
-      return [...prev, { produit: p, quantite: 1, prixUnitaire: p.prix }]
-    })
+    ajouter()
   }
-
   function modifierQuantite(id: string, delta: number) {
     const itemTarget = panier.find((i) => i.produit.id === id)
     if (!itemTarget) return

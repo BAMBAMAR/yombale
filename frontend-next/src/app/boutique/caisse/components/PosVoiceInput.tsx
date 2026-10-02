@@ -15,7 +15,7 @@ interface PosVoiceInputProps {
   onAjoutRapideLibre?: (nom: string, montant: number, quantite: number) => void
 }
 
-import { NOMBRES_MAPPING, DEVISES_WOLOF, normaliserTexteVocal, extraireMontantCFA } from '@/lib/voice-assistant'
+import { normaliserTexteVocal, separerQuantiteEtMontant } from '@/lib/voice-assistant'
 
 export default function PosVoiceInput({
   produits,
@@ -80,78 +80,63 @@ export default function PosVoiceInput({
     }
   }
 
-  // Analyse intelligente de la commande vocale (Wolof & Français)
+  // Analyse de la commande vocale (Wolof & Français).
+  // AUD-200 : le montant est extrait d'abord ; la quantité n'est cherchée que dans le reste de la phrase.
   const traiterCommandeVocale = (texte: string) => {
-    const clean = normaliserTexteVocal(texte)
-    const mots = clean.split(/\s+/)
+    const propre = (texte || '').trim()
+    if (!propre) {
+      setFeedback({ type: 'info', text: "Je n'ai rien compris. Réessayez en parlant plus près du micro." })
+      setTimeout(() => setFeedback(null), 5000)
+      return
+    }
+    const { quantite, montant: montantDetecte, reste } = separerQuantiteEtMontant(propre)
 
-    // 1. Détection de quantité
-    let quantite = 1
-    for (const [mot, val] of Object.entries(NOMBRES_MAPPING)) {
-      const regex = new RegExp(`\\b${mot}\\b`, 'i')
-      if (regex.test(clean)) {
-        quantite = val
-        break
-      }
+    if (quantite > 50) {
+      setFeedback({ type: 'info', text: `Quantité inhabituelle (${quantite}) non appliquée. Dites par exemple : « 2 Café Touba ».` })
+      setTimeout(() => setFeedback(null), 5000)
+      return
     }
 
-    // 2. Détection de montant en Franc CFA / Wolof (ex: "téemeer" = 500, "junni" = 5000, "5000 FCFA", "10k")
-    const montantDetecte = extraireMontantCFA(clean)
-
-    // 3. Recherche du produit le plus proche dans le catalogue
+    // Recherche du produit : uniquement sur des mots utiles (>= 3 lettres, hors mots vides)
+    const MOTS_VIDES = new Set(['vente', 'ventes', 'ajoute', 'ajouter', 'mets', 'mettre', 'donne', 'donner', 'prends', 'prendre', 'veux', 'encaisser', 'francs', 'franc', 'fcfa', 'cfa', 'pour', 'avec', 'les', 'des', 'une', 'aussi', 'svp', 'stp', 'plait'])
+    const motsUtiles = reste.split(/\s+/).filter(m => m.length >= 3 && !MOTS_VIDES.has(m) && !/^\d+$/.test(m))
     let meilleurProduit: ProduitCaisseVoice | null = null
-    let scoreMax = 0
-
-    for (const p of produits) {
-      const nomP = normaliserTexteVocal(p.nom)
-      const motsP = nomP.split(/\s+/)
-
-      let score = 0
-      for (const mot of mots) {
-        if (mot.length >= 3 && motsP.some(mp => mp.includes(mot) || mot.includes(mp))) {
-          score += 2
+    let meilleurRatio = 0
+    if (motsUtiles.length > 0) {
+      for (const p of produits) {
+        const motsP = normaliserTexteVocal(p.nom).split(/\s+/).filter(mp => mp.length >= 3)
+        let trouves = 0
+        for (const mot of motsUtiles) {
+          if (motsP.some(mp => mp === mot || (mot.length >= 4 && mp.length >= 4 && (mp.startsWith(mot) || mot.startsWith(mp))))) trouves++
         }
-      }
-
-      if (nomP.includes(clean) || clean.includes(nomP)) {
-        score += 5
-      }
-
-      if (score > scoreMax) {
-        scoreMax = score
-        meilleurProduit = p
+        const ratio = trouves / motsUtiles.length
+        if (trouves >= 1 && ratio > meilleurRatio) { meilleurRatio = ratio; meilleurProduit = p }
       }
     }
 
-    if (meilleurProduit && scoreMax >= 2) {
+    if (meilleurProduit && meilleurRatio >= 0.5) {
       onAjouterProduit(meilleurProduit, quantite)
-      setFeedback({
-        type: 'success',
-        text: `✓ Ajouté : ${quantite}x ${meilleurProduit.nom} (${(meilleurProduit.prix * quantite).toLocaleString()} FCFA)`,
-      })
+      setFeedback({ type: 'success', text: `Ajouté : ${quantite}x ${meilleurProduit.nom} (${(meilleurProduit.prix * quantite).toLocaleString()} FCFA)` })
       setTimeout(() => setFeedback(null), 4000)
       return
     }
 
-    // 4. Si pas de produit exact trouvé mais montant libre détecté
+    // Pas de produit reconnu mais un montant libre : confirmation au-delà d'un seuil
     if (montantDetecte && onAjoutRapideLibre) {
+      if (montantDetecte * quantite > 200000) {
+        setFeedback({ type: 'info', text: `Montant très élevé (${(montantDetecte * quantite).toLocaleString()} FCFA) : saisissez-le au clavier pour confirmer.` })
+        setTimeout(() => setFeedback(null), 6000)
+        return
+      }
       onAjoutRapideLibre('Article Vocal Comptoir', montantDetecte, quantite)
-      setFeedback({
-        type: 'success',
-        text: `✓ Ajout Vente Rapide : ${montantDetecte.toLocaleString()} FCFA (${quantite} unité)`,
-      })
+      setFeedback({ type: 'success', text: `Ajout Vente Rapide : ${montantDetecte.toLocaleString()} FCFA${quantite > 1 ? ` x ${quantite}` : ''}` })
       setTimeout(() => setFeedback(null), 4000)
       return
     }
 
-    // Si non reconnu
-    setFeedback({
-      type: 'info',
-      text: `🎤 Entendu : "${texte}". Dites par exemple : "2 Café Touba" ou "5000 FCFA".`,
-    })
+    setFeedback({ type: 'info', text: `Entendu : « ${propre} ». Dites par exemple : « 2 Café Touba » ou « 5000 FCFA ».` })
     setTimeout(() => setFeedback(null), 5000)
   }
-
   if (!isSupported) return null
 
   return (

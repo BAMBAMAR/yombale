@@ -126,8 +126,8 @@ function motEstNombre(t: string): boolean {
  * Gère : devises wolof composées (« junni ak téemeer » = 5 500), « 10 mille », « 10k », « 2,5 mille »,
  * « 1 million », « 1 500 000 », « 5.000 », nombres en lettres composés (« cent cinquante mille », « quatre vingt dix mille »).
  */
-export function extraireMontantsCFA(cleanText: string): number[] {
-  if (!cleanText) return []
+export function analyserMontants(cleanText: string): { montants: number[]; reste: string } {
+  if (!cleanText) return { montants: [], reste: '' }
   let t = normaliserTexteVocal(cleanText)
 
   // Neutraliser les numéros de téléphone sénégalais (9 chiffres commençant par 70, 75, 76, 77, 78, 33)
@@ -147,7 +147,10 @@ export function extraireMontantsCFA(cleanText: string): number[] {
     else if (avant && /^\d+$/.test(avant)) mult = parseInt(avant, 10)
     sommeWolof += mult * base
   })
-  if (wolof) return [sommeWolof]
+  if (wolof) {
+    const reste = mots.filter((m, i) => !DEVISES_WOLOF[m] && !(DEVISES_WOLOF[mots[i + 1]] && (NOMBRES_MAPPING[m] || /^\d+$/.test(m)))).join(' ')
+    return { montants: [sommeWolof], reste }
+  }
 
   const trouves: Array<{ pos: number; val: number }> = []
   const consommes: Array<[number, number]> = []
@@ -210,7 +213,14 @@ export function extraireMontantsCFA(cleanText: string): number[] {
     }
   }
 
-  return trouves.sort((a, b) => a.pos - b.pos).map(x => x.val)
+  const chars = t.split('')
+  for (const [a, b] of consommes) for (let k = a; k < b && k < chars.length; k++) chars[k] = ' '
+  return { montants: trouves.sort((a, b) => a.pos - b.pos).map(x => x.val), reste: chars.join('').replace(/\s+/g, ' ').trim() }
+}
+
+/** Tous les montants FCFA détectés, dans l'ordre de la phrase. */
+export function extraireMontantsCFA(cleanText: string): number[] {
+  return analyserMontants(cleanText).montants
 }
 
 /**
@@ -554,7 +564,7 @@ export function parseAjoutProduitIntent(transcript: string): { nom: string; prix
       'juroom', 'juróom', 'diourom', 'djourom', 'juroomi', 'juróomi',
       'fukk', 'fuk', 'fouk', 'fukki'
     ]
-    const regexMots = new RegExp(`(?:^|\\s+)(?:${motsNombres.join('|')})(?=\\s+|$)`, 'gi')
+    const regexMots = new RegExp(`(?:^|\s+)(?:${motsNombres.join('|')})(?=\s+|$)`, 'gi')
     nomClean = nomClean.replace(regexMots, ' ')
     nomClean = nomClean.replace(regexMots, ' ')
   }
@@ -779,4 +789,32 @@ export function parseKalpeDetteIntent(transcript: string, alternatives: string[]
     if (montant || nomClient) return intent
   }
   return meilleur as KalpeDetteIntent
+}
+
+/**
+ * AUD-200 : sépare le MONTANT de la QUANTITÉ. La quantité n'est cherchée que dans ce qui reste de la phrase
+ * une fois les mots du montant retirés (« cinq mille francs » n'est jamais « 5 unités »).
+ */
+export function separerQuantiteEtMontant(texte: string): { quantite: number; montant: number | null; reste: string } {
+  const clean = normaliserTexteVocal(texte)
+  const { montants, reste } = analyserMontants(clean)
+  const montant = montants.length ? Math.max(...montants) : null
+  let quantite = 1
+  const x = reste.match(/\bx\s*(\d{1,2})\b/)
+  if (x) quantite = parseInt(x[1], 10)
+  else {
+    const tok = reste.split(/\s+/)
+    for (let i = 0; i < tok.length; i++) {
+      if (/^\d{1,2}$/.test(tok[i])) { quantite = parseInt(tok[i], 10); break }
+      if (tok[i] in MOTS_UNITES && tok[i] !== 'et') {
+        const run: string[] = []
+        for (let j = i; j < tok.length && (tok[j] in MOTS_UNITES || tok[j] === 'et'); j++) run.push(tok[j])
+        quantite = evaluerMotsNombres(run).valeur || 1
+        break
+      }
+      const w = NOMBRES_MAPPING[tok[i]]
+      if (w && /^[a-z]+$/.test(tok[i]) && w < 10) { quantite = w; break }
+    }
+  }
+  return { quantite, montant, reste }
 }

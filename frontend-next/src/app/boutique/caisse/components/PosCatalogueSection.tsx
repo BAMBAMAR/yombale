@@ -35,7 +35,7 @@ interface PosCatalogueSectionProps {
   produits: ProduitCaisse[]
   produitsFiltres: ProduitCaisse[]
   panier: LignePanier[]
-  ajouterAuPanier: (p: ProduitCaisse) => void
+  ajouterAuPanier: (p: ProduitCaisse, quantite?: number) => void
   vueCatalogue: 'mosaique' | 'liste'
   setVueCatalogue: React.Dispatch<React.SetStateAction<'mosaique' | 'liste'>>
   categorieFiltre: string
@@ -209,9 +209,7 @@ export default function PosCatalogueSection({
           <PosVoiceInput
             produits={produits}
             onAjouterProduit={(p, q) => {
-              for (let i = 0; i < q; i++) {
-                ajouterAuPanier(p as any)
-              }
+              ajouterAuPanier(p as any, q)
             }}
             onAjoutRapideLibre={(nom, montant, qte) => {
               const itemLibre: ProduitCaisse = {
@@ -221,9 +219,7 @@ export default function PosCatalogueSection({
                 stock: 9999,
                 categorie: 'divers',
               }
-              for (let i = 0; i < qte; i++) {
-                ajouterAuPanier(itemLibre)
-              }
+              ajouterAuPanier(itemLibre, qte)
             }}
           />
         </div>

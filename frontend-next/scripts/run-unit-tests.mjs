@@ -33,6 +33,7 @@ import {
   parseSaisieExpressIntent,
   parseDetteIntent,
   parseKalpeDetteIntent,
+  separerQuantiteEtMontant,
   cleanVoiceSearchQuery,
   normaliserTexteVocal,
   parseAjoutProduitIntent,
@@ -612,6 +613,17 @@ it('AUD-198 parseKalpeDetteIntent: sens, nom, téléphone, échéance, entrepris
   assert.equal(r.nomClient, 'Moussa Diop'); assert.equal(r.telephone, '771234567'); assert.equal(r.montant, 10000); assert.match(r.dateEcheance, /^\d{4}-\d{2}-\d{2}$/)
   r = parseKalpeDetteIntent("J'ai emprunté 15000 à Awa"); assert.equal(r.sens, 'a_payer'); assert.equal(r.nomClient, 'Awa')
   r = parseKalpeDetteIntent('Je dois 30000 à la Senelec'); assert.equal(r.tiersType, 'entreprise'); assert.equal(r.sens, 'a_payer')
+})
+it('AUD-200 separerQuantiteEtMontant: la quantité ne consomme jamais un mot du montant', () => {
+  const cas = [
+    ['cinq mille francs', 1, 5000], ['10 mille', 1, 10000], ['ñaari junni', 1, 10000], ['mille francs', 1, 1000],
+    ['café touba 1000', 1, 1000], ['5000 FCFA', 1, 5000], ['2 Café Touba', 2, null], ['trois sucres', 3, null],
+    ['deux cafés touba 1500', 2, 1500], ['deux mille cinq cents francs', 1, 2500], ['vingt mille', 1, 20000],
+  ]
+  for (const [t, q, m] of cas) {
+    const r = separerQuantiteEtMontant(t)
+    assert.equal(r.quantite, q, t + ' quantité'); assert.equal(r.montant, m, t + ' montant')
+  }
 })
 it('cleanVoiceSearchQuery: extraction propre du mot-clé produit', () => {
   assert.equal(cleanVoiceSearchQuery('Cherche robe en wax'), 'robe en wax')
