@@ -7,17 +7,24 @@ const MARQUES = [
 
 const ACCESSOIRE_RE = /\b(coque|housse|etui|étui|verre trempe|film de protection|protecteur ecran|chargeur|cable|câble|adaptateur|support|sacoche|powerbank|power\s*bank|batterie externe|pochette|doigtier|lampe|boite|bobine|cordon)\b/i;
 
+// AUD-181 : décodage complet (avant, seuls &#8211; &#8217; &amp; &quot; &Prime; &lt; &gt; l'étaient : 614 produits gardaient
+// des entités comme &#8221; dans leur nom, ce qui empêchait deux titres identiques de se reconnaître).
+const ENTITES_NOMMEES = {
+  amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ', Prime: '"', prime: "'", rdquo: '"', ldquo: '"', rsquo: "'", lsquo: "'",
+  ndash: '-', mdash: '-', hellip: '...', deg: '°', euro: '€', eacute: 'é', egrave: 'è', agrave: 'à', ecirc: 'ê', ocirc: 'ô',
+  ccedil: 'ç', ugrave: 'ù', acirc: 'â', icirc: 'î', ucirc: 'û', Eacute: 'É',
+};
+const POINTS_ASSIMILES = { 8211: '-', 8212: '-', 8216: "'", 8217: "'", 8220: '"', 8221: '"', 8243: '"' };
+function pointDeCode(n) {
+  if (POINTS_ASSIMILES[n]) return POINTS_ASSIMILES[n];
+  try { return String.fromCodePoint(n); } catch { return ''; }
+}
 function decoderHtmlEntities(str) {
   return (str || '')
-    .replace(/&#8211;/g, '-')
-    .replace(/&#8217;/g, "'")
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&Prime;/g, '"')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>');
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => pointDeCode(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => pointDeCode(parseInt(d, 10)))
+    .replace(/&([a-zA-Z]+);/g, (m, n) => (Object.prototype.hasOwnProperty.call(ENTITES_NOMMEES, n) ? ENTITES_NOMMEES[n] : m));
 }
-
 function normaliserTitre(titre) {
   let s = decoderHtmlEntities(titre).toLowerCase();
   s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -195,6 +202,15 @@ function sontMemeProduit(itemA, itemB) {
     return { match: false, raison: 'marques_incompatibles' };
   }
 
+  // AUD-181 : un titre normalisé strictement identique est le même article, quel que soit l'écart de prix (avant, le verrou de prix
+  // refusait deux fiches « Téléviseur Sony 98 » identiques parce qu'un prix était aberrant ; l'écart est traité par la quarantaine).
+  // 7. Titres normalisés strictement identiques
+  const normA = normaliserTitre(titreA);
+  const normB = normaliserTitre(titreB);
+  if (normA && normA === normB) {
+    return { match: true, methode: 'titre_exact', confiance: 0.98 };
+  }
+
   // 6. Vérification de la cohérence de prix (si présents)
   const pA = itemA.prix || itemA.prix_min;
   const pB = itemB.prix || itemB.prix_min;
@@ -203,13 +219,6 @@ function sontMemeProduit(itemA, itemB) {
     if (ratio < 0.35 || ratio > 2.8) {
       return { match: false, raison: 'ecart_prix_excessif' };
     }
-  }
-
-  // 7. Titres normalisés strictement identiques
-  const normA = normaliserTitre(titreA);
-  const normB = normaliserTitre(titreB);
-  if (normA && normA === normB) {
-    return { match: true, methode: 'titre_exact', confiance: 0.98 };
   }
 
   // 8. Vérification stricte des déclinaisons / suffixes (Ultra, Pro, Plus, Max, Mini, Lite, Fe, Play, Neo)
@@ -318,9 +327,9 @@ async function trouverProduitCorrespondant(pool, item, catId = null) {
 
   // 3. Recherche par titre normalisé exact (insensible aux accents via f_unaccent)
   const { rows: exacts } = await pool.query(
-    `SELECT * FROM produits 
-     WHERE f_unaccent(LOWER(nom)) = LOWER($1) 
-     ORDER BY (nb_offres > 0) DESC, created_at ASC 
+    `SELECT * FROM produits
+     WHERE nom_normalise = $1 OR f_unaccent(LOWER(nom)) = LOWER($1)
+     ORDER BY (nb_offres > 0) DESC, created_at ASC
      LIMIT 1`,
     [normTitre]
   );

@@ -140,7 +140,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // AUD-187 : parseur de prix commun (lib/prix.js) ; 0 = prix illisible ou < 100
 function nettoyerPrix(t) { return parsePrix(t, { min: 100 }) || 0; }
 
-function nettoyerTitre(t) { return (t||'').trim().replace(/\s+/g,' ').slice(0,255); }
+function nettoyerTitre(t) { return matching.decoderHtmlEntities(t||'').trim().replace(/\s+/g,' ').slice(0,255); } // AUD-181 : entités HTML décodées à l'entrée
 function extraireMarque(titre) { const t=titre.toLowerCase(); return MARQUES.find(m=>t.includes(m.toLowerCase()))||null; }
 
 let _catCache=null;
@@ -1049,8 +1049,8 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       } else {
         const marqueDetectee = matching.extraireMarque(item.titre) || extraireMarque(item.titre);
         const { rows: n } = await pool.query(
-          'INSERT INTO produits(nom, marque, categorie_id, ean, image_url, description) VALUES($1, $2, $3, $4, $5, $6) RETURNING id',
-          [item.titre, marqueDetectee, catId, item.ean || null, item.image_url, item.description || item.titre]
+          'INSERT INTO produits(nom, marque, categorie_id, ean, image_url, description, nom_normalise) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+          [item.titre, marqueDetectee, catId, item.ean || null, item.image_url, item.description || item.titre, matching.normaliserTitre(item.titre)]
         );
         produitId = n[0].id;
         produitCreeId = produitId;

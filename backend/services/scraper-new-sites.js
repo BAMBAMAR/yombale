@@ -34,7 +34,7 @@ const sleep  = ms => new Promise(r => setTimeout(r, ms));
 function nettoyerPrix(t) { return parsePrix(t, { min: 500 }) || 0; }
 
 function nettoyerTitre(t) {
-  return (t || '').trim().replace(/\s+/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '').slice(0, 255);
+  return require('./matching').decoderHtmlEntities(t || '').trim().replace(/\s+/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '').slice(0, 255); // AUD-181 : entités HTML décodées
 }
 
 function buildHeaders(referer = '') {

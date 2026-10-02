@@ -2982,6 +2982,18 @@ module.exports = async function migrateInline(customConnStr = null) {
     `CREATE INDEX IF NOT EXISTS idx_scraping_runs_source ON scraping_runs(source, started_at DESC)`,
     // AUD-187 : prix tel que publié par la source (provenance), à côté du prix normalisé
     `ALTER TABLE offres ADD COLUMN IF NOT EXISTS prix_brut TEXT`,
+    // AUD-181 : nom normalisé (même normalisation que matching.js), indexé ; alias des fiches fusionnées (retour arrière possible)
+    `ALTER TABLE produits ADD COLUMN IF NOT EXISTS nom_normalise TEXT`,
+    `CREATE INDEX IF NOT EXISTS idx_produits_nom_normalise ON produits(nom_normalise)`,
+    `CREATE TABLE IF NOT EXISTS produits_alias (
+       ancien_id    UUID PRIMARY KEY,
+       canonique_id UUID NOT NULL,
+       ancien_nom   TEXT,
+       offres_deplacees JSONB DEFAULT '[]'::jsonb,
+       fusionne_le  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       motif        TEXT NOT NULL DEFAULT 'nom_normalise_identique'
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_produits_alias_canonique ON produits_alias(canonique_id)`,
     `CREATE TABLE IF NOT EXISTS scraping_run_pages (
        id          BIGSERIAL PRIMARY KEY,
        run_id      BIGINT REFERENCES scraping_runs(id) ON DELETE CASCADE,
