@@ -10,6 +10,10 @@ interface ModalBoutiqueCreeeSuccesProps {
   boutiqueId: string
   slug?: string | null
   telephone?: string
+  /** AUD-213 : affichage en page (route /creer-boutique/succes) au lieu d'une surcouche plein écran */
+  asPage?: boolean
+  /** AUD-213 : la session n'a pas pu être ouverte (la boutique, elle, est créée) */
+  sessionNonOuverte?: boolean
 }
 
 export default function ModalBoutiqueCreeeSucces({
@@ -17,6 +21,8 @@ export default function ModalBoutiqueCreeeSucces({
   boutiqueId,
   slug,
   telephone,
+  asPage = false,
+  sessionNonOuverte = false,
 }: ModalBoutiqueCreeeSuccesProps) {
   const { toast } = useToast()
   const [copie, setCopie] = useState(false)
@@ -90,25 +96,31 @@ export default function ModalBoutiqueCreeeSucces({
   }
 
   const handleAllerDashboard = () => {
-    window.location.href = `/boutique?manage=${boutiqueId}&bienvenue=true`
+    // Sans session ouverte, l'espace marchand renverrait vers la connexion : on y va directement avec le bon retour
+    const destination = `/boutique?manage=${boutiqueId}&bienvenue=true`
+    window.location.href = sessionNonOuverte ? `/connexion?redirect=${encodeURIComponent(destination)}` : destination
   }
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.82)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        overflowY: 'auto',
-      }}
+      role={asPage ? undefined : 'dialog'}
+      aria-modal={asPage ? undefined : true}
+      style={
+        asPage
+          ? { display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 16px 48px', width: '100%', boxSizing: 'border-box' }
+          : {
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(15, 23, 42, 0.82)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 99999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
+              overflowY: 'auto',
+            }
+      }
     >
       <div
         style={{
@@ -187,6 +199,11 @@ export default function ModalBoutiqueCreeeSucces({
           >
             Votre vitrine digitale est opérationnelle et prête à recevoir vos commandes et paiements Wave.
           </p>
+          {sessionNonOuverte && (
+            <p role="status" style={{ fontSize: 13, color: 'var(--navy, #1C2B4A)', background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)', borderRadius: 12, padding: '10px 12px', margin: '12px 0 0', lineHeight: 1.45, fontWeight: 600 }}>
+              Votre boutique est créée. Connectez-vous avec votre numéro WhatsApp pour la gérer.
+            </p>
+          )}
         </div>
 
         {/* Aperçu QR Code de comptoir */}

@@ -67,6 +67,23 @@ describe('AUD-217 — la confirmation de commande ne ment pas', () => {
   });
 });
 
+describe('AUD-213 — le succès de création de boutique ne dépend plus d\'un état local', () => {
+  test('le wizard navigue vers /creer-boutique/succes et ne garde plus de boutiqueCreee', () => {
+    const src = lire('app/creer-boutique/page.tsx');
+    expect(src).toMatch(/router\.replace\(`\/creer-boutique\/succes\?/);
+    expect(src).not.toMatch(/setBoutiqueCreee|boutiqueCreee/);
+    // la navigation vient après la tentative d'ouverture de session, même si elle échoue
+    expect(src.indexOf('setAuthCookieAction(data.token)')).toBeLessThan(src.indexOf('router.replace(`/creer-boutique/succes'));
+    expect(src).toMatch(/sessionOuverte = false/);
+  });
+  test('la page de succès existe et lit tout depuis l\'adresse', () => {
+    const src = lire('app/creer-boutique/succes/page.tsx');
+    expect(src).toMatch(/useSearchParams/);
+    expect(src).toMatch(/asPage/);
+    expect(lire('app/creer-boutique/components/ModalBoutiqueCreeeSucces.tsx')).toMatch(/sessionNonOuverte/);
+  });
+});
+
 describe('AUD-224 — message de connexion explicite', () => {
   test('un mauvais mot de passe ne répond plus « Accès non autorisé »', () => {
     const src = lire('app/connexion/ConnexionForm.tsx');

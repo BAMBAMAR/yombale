@@ -6,7 +6,6 @@ import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { setAuthCookieAction } from '@/app/actions/auth'
 import { trackFunnel } from '@/lib/analytics'
 import { CATEGORIES } from '@/lib/categories'
-import ModalBoutiqueCreeeSucces from './components/ModalBoutiqueCreeeSucces'
 import ModalContratVendeur from './components/ModalContratVendeur'
 import WizardStepPlanStyle, { PlansConfig, DEFAULT_PLANS } from './components/WizardStepPlanStyle'
 import StepIdentity from './components/StepIdentity'
@@ -35,12 +34,6 @@ export default function CreerBoutiqueWizard() {
   const [contratRequis, setContratRequis] = useState<boolean>(true)
   const [accepteContrat, setAccepteContrat] = useState<boolean>(false)
   const [showContratModal, setShowContratModal] = useState<boolean>(false)
-  const [boutiqueCreee, setBoutiqueCreee] = useState<{
-    id: string | number
-    nom: string
-    slug?: string | null
-    telephone?: string
-  } | null>(null)
 
   const [plansConfig, setPlansConfig] = useState<PlansConfig>(DEFAULT_PLANS)
 
@@ -205,18 +198,27 @@ export default function CreerBoutiqueWizard() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur lors de la création de la boutique.')
 
-      if (data.token) {
-        await setAuthCookieAction(data.token)
-      }
-
       trackFunnel('wizard_cree', { plan })
-      setBoutiqueCreee({
+
+      // AUD-213 : la boutique EST créée à ce stade. L'ouverture de la session (cookie posé par une Server Action)
+      // réinitialise la page : on ne garde donc aucun état local, le succès vit dans l'adresse de la page suivante.
+      let sessionOuverte = true
+      if (data.token) {
+        try {
+          await setAuthCookieAction(data.token)
+        } catch (cookieErr) {
+          console.error('[creer-boutique] session non ouverte :', cookieErr)
+          sessionOuverte = false
+        }
+      }
+      const q = new URLSearchParams({
         id: String(data.boutiqueId),
         nom: nom.trim(),
-        slug: data.slug || null,
-        telephone: telephone.trim(),
+        tel: telephone.trim(),
+        session: sessionOuverte ? '1' : '0',
       })
-      setLoading(false)
+      if (data.slug) q.set('slug', String(data.slug))
+      router.replace(`/creer-boutique/succes?${q.toString()}`)
     } catch (err: any) {
       setError(err.message)
       setLoading(false)
@@ -433,16 +435,6 @@ export default function CreerBoutiqueWizard() {
           }}
           contratTexte={contratTexte}
         />
-
-        {/* Modale de célébration et QR code 1-clic */}
-        {boutiqueCreee && (
-          <ModalBoutiqueCreeeSucces
-            boutiqueId={String(boutiqueCreee.id)}
-            nom={boutiqueCreee.nom}
-            slug={boutiqueCreee.slug}
-            telephone={boutiqueCreee.telephone}
-          />
-        )}
       </div>
     </div>
   )
