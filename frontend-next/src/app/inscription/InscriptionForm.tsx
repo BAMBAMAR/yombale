@@ -582,7 +582,7 @@ export default function InscriptionForm() {
             <Link href="/confidentialite" className="auth-link">{t('auth.privacyPolicy')}</Link>.
           </p>
 
-          <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: '#25D366' }}>
+          <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: 'var(--wa-dark, #0B7A5E)' }}>
             {loadingWa ? (
               <><span className="auth-spinner" />{t('common.pleaseWait')}</>
             ) : stepWhatsapp === 'form' ? t('auth.waSendCode') : t('auth.registerBtn')}

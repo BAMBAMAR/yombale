@@ -73,7 +73,7 @@ export default function PageHeader({ breadcrumb, emoji, titre, compteur, cta, ce
             ) : (
               <span
                 style={{
-                  color: 'var(--accent, #C75B00)',
+                  color: 'var(--accent-text, #A64800)', // AUD-230 : --accent sur blanc = 4,26:1
                   fontWeight: 800,
                   background: '#ffffff',
                   padding: '2px 8px',

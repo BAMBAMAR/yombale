@@ -265,7 +265,7 @@ export default function DrawerCartSuccessModal({
                 width: '100%',
                 padding: '14px 16px',
                 borderRadius: 14,
-                background: 'var(--wa-dark, #128C7E)',
+                background: 'var(--wa-dark, #0B7A5E)',
                 color: '#fff',
                 fontWeight: 900,
                 fontSize: 15,

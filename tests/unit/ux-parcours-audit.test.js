@@ -459,6 +459,25 @@ describe('AUD-232 — suivi public : masque de téléphone et nom de boutique ho
   });
 });
 
+describe('AUD-230 (suite 2) / AUD-233 — restes de contraste et cibles tactiles du panier', () => {
+  const g = (rel) => fs.readFileSync(path.join(FRONT, rel), 'utf8');
+  test('boutons et liens d\'authentification contrastés, bouton WhatsApp en vert foncé', () => {
+    const css = g('app/globals.css');
+    expect(css).toMatch(/\.auth-submit-btn \{[\s\S]{0,80}background: var\(--accent-text/);
+    expect(css).toMatch(/\.auth-link \{\s*color: var\(--accent-text/);
+    expect(lire('app/connexion/ConnexionForm.tsx')).toMatch(/background: 'var\(--wa-dark, #0B7A5E\)'/);
+    expect(lire('app/inscription/InscriptionForm.tsx')).toMatch(/background: 'var\(--wa-dark, #0B7A5E\)'/);
+    expect(lire('app/connexion/ConnexionForm.tsx')).not.toMatch(/background: '#25D366'/);
+    expect(lire('components/PageHeader.tsx')).toMatch(/color: 'var\(--accent-text, #A64800\)'/);
+    expect(lire('components/cart/DrawerCartSuccessModal.tsx')).toMatch(/var\(--wa-dark, #0B7A5E\)/);
+  });
+  test('boutons − et + du panier de 40 px au moins', () => {
+    const s = g('components/cart/DrawerCartItemList.tsx');
+    expect(s.match(/minWidth: 40,\s+height: 40,/g)?.length).toBe(2);
+    expect(s).not.toMatch(/minWidth: 26,/);
+  });
+});
+
 describe('AUD-230 (suite) — champs de recherche et tri avec un nom accessible', () => {
   test.each([
     ['app/boutiques/[id]/components/BoutiqueFilterBar.tsx', /aria-label="Trier les produits"/],

@@ -518,7 +518,7 @@ export default function ConnexionForm() {
             </div>
           )}
 
-          <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: '#25D366', marginTop: 14 }}>
+          <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: 'var(--wa-dark, #0B7A5E)', marginTop: 14 }}>
             {loadingWa ? (
               <><span className="auth-spinner" />{t('common.pleaseWait')}</>
             ) : stepWhatsapp === 'phone' ? t('auth.waSendCode') : t('auth.waVerifyLogin')}
