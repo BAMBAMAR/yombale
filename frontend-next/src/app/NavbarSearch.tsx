@@ -39,6 +39,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
   // Recherche vocale Wolof / FR
   const [isListeningVoice, setIsListeningVoice] = useState(false)
   const voiceRecRef = useRef<any>(null)
+  useEffect(() => () => { try { voiceRecRef.current?.stop() } catch {} }, []) // AUD-212 : arrêt au démontage
 
   const toggleVoiceSearch = () => {
     if (isListeningVoice) {
@@ -62,6 +63,8 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
         if (cleaned) {
           setQuery(cleaned)
           inputRef.current?.focus()
+        } else {
+          showToast('Je n’ai pas compris. Dites par exemple : « robe en wax ».', 'info', 'Recherche Vocale')
         }
       }
     })

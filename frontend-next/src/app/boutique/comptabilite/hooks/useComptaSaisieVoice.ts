@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { fcfa } from '@/lib/format'
 import { jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { createVoiceListener, parseSaisieExpressIntent, demanderPermissionMicrophone, getMessageErreurMicro } from '@/lib/voice-assistant'
@@ -29,6 +29,7 @@ export function useComptaSaisieVoice({
   const [isListeningVoice, setIsListeningVoice] = useState(false)
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
   const voiceRecognitionRef = useRef<any>(null)
+  useEffect(() => () => { try { voiceRecognitionRef.current?.stop() } catch {} }, []) // AUD-212 : arrêt de l'écoute au démontage
 
   const demarrerEcouteVocale = async () => {
     if (isListeningVoice) {

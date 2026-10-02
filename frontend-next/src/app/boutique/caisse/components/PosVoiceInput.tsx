@@ -60,6 +60,7 @@ export default function PosVoiceInput({
       }
 
       recognitionRef.current = recognition
+      return () => { try { recognition.abort() } catch {} } // AUD-212 : une seule session, arrêt au démontage
     }
   }, [produits])
 

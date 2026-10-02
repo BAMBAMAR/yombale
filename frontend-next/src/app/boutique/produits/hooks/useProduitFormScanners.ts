@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { fcfa } from '@/lib/format'
 import {
   CONFIG_SCANNER_EAN_PRO,
@@ -32,6 +32,7 @@ export function useProduitFormScanners({
   const [isListeningNom, setIsListeningNom] = useState<boolean>(false)
   const [voiceNomFeedback, setVoiceNomFeedback] = useState<string | null>(null)
   const voiceNomRecognitionRef = useRef<any>(null)
+  useEffect(() => () => { try { voiceNomRecognitionRef.current?.stop() } catch {} }, []) // AUD-212
 
   const demarrerEcouteVocaleNom = async () => {
     if (isListeningNom) {
@@ -71,7 +72,7 @@ export function useProduitFormScanners({
           setPrixForm(String(parsed.prix))
           setVoiceNomFeedback(`Dictée réussie : "${parsed.nom}" · Prix : ${fcfa(parsed.prix)}`)
         } else {
-          setVoiceNomFeedback(`Nom dicté : "${parsed.nom}"`)
+          setVoiceNomFeedback(`Nom dicté : "${parsed.nom}" · prix non entendu, il reste inchangé`)
         }
         jouerBipEtVibrer('succes')
       },

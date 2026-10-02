@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import {
   createVoiceListener,
   parseDetteIntent,
@@ -38,6 +38,7 @@ export function useCarnetVoice({
   const [isListeningVoice, setIsListeningVoice] = useState(false)
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
   const voiceRecognitionRef = useRef<any>(null)
+  useEffect(() => () => { try { voiceRecognitionRef.current?.stop() } catch {} }, []) // AUD-212 : arrêt de l'écoute au démontage
 
   const validerActionVocaleDirecte = useCallback(
     async (action: VoiceActionPending) => {
