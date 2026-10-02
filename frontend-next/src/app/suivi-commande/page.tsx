@@ -19,7 +19,7 @@ interface CommandeSuivie {
   produit_id?: string
   nom_produit?: string
   quantite?: number
-  boutique_nom: string
+  boutique_nom: string | null
   boutique_slug?: string
   boutique_whatsapp?: string
 }
@@ -152,7 +152,7 @@ function SuiviCommandeContent() {
                 <div key={cmd.id} style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.03)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #f1f5f9', paddingBottom: 12 }}>
                     <div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Boutique : {cmd.boutique_nom}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{cmd.boutique_nom ? `Boutique : ${cmd.boutique_nom}` : 'Boutique : saisissez la référence pour la voir'}</span>
                       <h3 style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 800, color: '#1C2B4A' }}>Réf : {cmd.reference || cmd.id.slice(0, 8)}</h3>
                     </div>
                     <span style={{ fontSize: 15, fontWeight: 800, color: isAnnulee ? '#dc2626' : '#15803d' }}>

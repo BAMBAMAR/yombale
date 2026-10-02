@@ -659,8 +659,10 @@ router.get('/commandes/suivi', async (req, res) => {
 
     // Masquage RGPD / PII des coordonnées personnelles pour la consultation publique
     const sanitizedRows = rows.map(cmd => {
-      const tel = cmd.client_telephone || '';
-      const maskedTel = tel.length >= 6 ? `${tel.slice(0, 2)} *** ** ${tel.slice(-2)}` : 'Numéro masqué';
+      // AUD-232 : masque calculé sur les 9 derniers CHIFFRES (« +221 77… » donnait « +2 *** ** … ») ; un client WhatsApp sans
+      // numéro (« Via WhatsApp ») ne donne plus « Vi *** ** pp ».
+      const neufDerniers = String(cmd.client_telephone || '').replace(/\D/g, '').slice(-9);
+      const maskedTel = neufDerniers.length === 9 ? `${neufDerniers.slice(0, 2)} *** ** ${neufDerniers.slice(-2)}` : 'Numéro non renseigné';
       const nomParts = (cmd.client_nom || 'Client').trim().split(' ');
       const maskedNom = nomParts.length > 1 ? `${nomParts[0]} ${nomParts[1].charAt(0)}.` : nomParts[0];
 
@@ -678,7 +680,8 @@ router.get('/commandes/suivi', async (req, res) => {
           client_nom: maskedNom,
           client_telephone: maskedTel,
           // PII/détails retirés sur recherche par téléphone uniquement :
-          boutique_nom: 'Boutique Nopalou',
+          // AUD-232 : null (et non un faux nom « Boutique Nopalou ») : l'interface explique qu'il faut la référence
+          boutique_nom: null,
           boutique_slug: null,
           boutique_whatsapp: null,
           nom_produit: null,

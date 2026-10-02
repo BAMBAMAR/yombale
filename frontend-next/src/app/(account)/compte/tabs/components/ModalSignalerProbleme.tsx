@@ -18,7 +18,7 @@ interface CommandeRef {
   client_nom: string
   client_telephone: string
   boutique_id?: string
-  boutique_nom: string
+  boutique_nom: string | null
 }
 
 interface ModalSignalerProblemeProps {
@@ -151,7 +151,7 @@ export default function ModalSignalerProbleme({
                 Signaler un problème
               </h3>
               <span style={{ fontSize: '12px', color: 'var(--text3, #888)' }}>
-                Commande #{commande.reference} &bull; {commande.boutique_nom}
+                Commande #{commande.reference}{commande.boutique_nom ? <> &bull; {commande.boutique_nom}</> : null}
               </span>
             </div>
           </div>

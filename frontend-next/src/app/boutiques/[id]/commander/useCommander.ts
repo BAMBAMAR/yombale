@@ -84,7 +84,7 @@ export function useCommander({
           const hasConvenir = data.some((z: Zone) => z.id === 'a_convenir' || z.nom.toLowerCase().includes('convenir'))
           const merged = [...data]
           if (!hasConvenir) {
-            merged.push({ id: 'a_convenir', nom: 'Autre zone (Frais à convenir avec le vendeur)', prix: 0 })
+            merged.push({ id: 'a_convenir', nom: 'Autre zone, frais à convenir', prix: 0 })
           }
           if (!hasRetrait) {
             merged.push({ id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 })

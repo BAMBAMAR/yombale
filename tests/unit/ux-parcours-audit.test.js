@@ -426,6 +426,39 @@ describe('AUD-216 — recherche globale : pertinence, vrais totaux, budget', () 
   });
 });
 
+describe('AUD-232 — suivi public : masque de téléphone et nom de boutique honnêtes', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+  const ligne = (tel) => ({ id: 'x', reference: 'C-1', client_nom: 'Awa Diop', client_telephone: tel, statut: 'en_attente', montant_total: 1 });
+
+  test.each([
+    ['770000001', '77 *** ** 01'],
+    ['+221 77 000 00 01', '77 *** ** 01'],
+    ['Via WhatsApp', 'Numéro non renseigné'],
+    ['', 'Numéro non renseigné'],
+  ])('téléphone « %s » masqué en « %s »', async (tel, attendu) => {
+    pool.query.mockResolvedValue({ rows: [ligne(tel)] });
+    const res = await request(app).get('/api/boutiques/commandes/suivi').query({ tel: '770000001' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.commandes[0].client_telephone).toBe(attendu);
+  });
+
+  test('par téléphone, aucun faux nom de boutique (null) ; par référence, le vrai nom', async () => {
+    pool.query.mockResolvedValue({ rows: [{ ...ligne('770000001'), boutique_nom: 'DIEVO STYLE' }] });
+    const parTel = await request(app).get('/api/boutiques/commandes/suivi').query({ tel: '770000001' });
+    expect(parTel.body.commandes[0].boutique_nom).toBeNull();
+    const parRef = await request(app).get('/api/boutiques/commandes/suivi').query({ ref: 'C-MUR0MZMR70C8' });
+    expect(parRef.body.commandes[0].boutique_nom).toBe('DIEVO STYLE');
+  });
+
+  test('libellés de zone du panier courts (plus de « …avec le vende » tronqué)', () => {
+    expect(lire('components/cart/useDrawerCartCheckout.ts')).toMatch(/nom: 'Livraison, frais à convenir'/);
+    for (const rel of [
+      'components/cart/useDrawerCartCheckout.ts', 'app/boutiques/[id]/commander/useCommander.ts',
+      'app/boutiques/[id]/commander/types.ts', 'app/checkout-express/page.tsx',
+    ]) expect(lire(rel)).not.toMatch(/nom: '[^']*Frais à convenir avec le vendeur/);
+  });
+});
+
 describe('AUD-215 — suivi public : jamais de joker', () => {
   beforeEach(() => { jest.clearAllMocks(); pool.query.mockResolvedValue({ rows: [{ id: 'x', reference: 'C-1', client_nom: 'A B', client_telephone: '770000001', statut: 'en_attente', montant_total: 1 }] }); });
 

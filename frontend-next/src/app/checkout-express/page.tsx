@@ -17,7 +17,7 @@ interface Zone {
 }
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'a-convenir', nom: 'Livraison (Frais à convenir avec le vendeur)', prix: 0 },
+  { id: 'a-convenir', nom: 'Livraison, frais à convenir', prix: 0 },
   { id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 },
 ]
 

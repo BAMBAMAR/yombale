@@ -8,7 +8,8 @@ import { getSavedUtm, trackAnalyticsEvent } from '@/lib/analytics'
 import { ajouterCommandeHorsLigne } from '@/lib/db-offline'
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'a-convenir', nom: 'Livraison (Frais à convenir avec le vendeur)', prix: 0 },
+  // Libellés courts : l'ancien libellé, plus long, était tronqué sur mobile (AUD-232)
+  { id: 'a-convenir', nom: 'Livraison, frais à convenir', prix: 0 },
   { id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 },
 ]
 
@@ -69,7 +70,7 @@ export function useDrawerCartCheckout() {
             const hasConvenir = data.some((z: Zone) => z.id === 'a-convenir' || z.nom.toLowerCase().includes('convenir'))
             const merged = [...data]
             if (!hasConvenir) {
-              merged.push({ id: 'a-convenir', nom: 'Autre quartier (Frais à convenir avec le vendeur)', prix: 0 })
+              merged.push({ id: 'a-convenir', nom: 'Autre quartier, frais à convenir', prix: 0 })
             }
             if (!hasRetrait) {
               merged.push({ id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 })
