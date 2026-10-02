@@ -128,6 +128,31 @@ describe('AUD-230 — couleurs lisibles (WCAG AA) sans toucher à la couleur de 
   });
 });
 
+describe('AUD-229 — aucun <style>{texte}</style> contenant « > » (erreur d\'hydratation #425)', () => {
+  // React échappe « > » en « &gt; » dans un enfant texte rendu côté serveur, pas côté client : les deux textes diffèrent
+  function fichiersTsx(dir) {
+    return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) return e.name === '__tests__' ? [] : fichiersTsx(p);
+      return e.name.endsWith('.tsx') ? [p] : [];
+    });
+  }
+  test('les blocs <style> à enfant texte ne contiennent pas de sélecteur « > »', () => {
+    const fautifs = [];
+    for (const f of fichiersTsx(FRONT)) {
+      const src = fs.readFileSync(f, 'utf8');
+      const re = /<style>\{`([\s\S]*?)`\}<\/style>/g;
+      let m;
+      while ((m = re.exec(src))) if (/[^=\-]>/.test(m[1].replace(/=>/g, ''))) fautifs.push(path.relative(FRONT, f));
+    }
+    expect(fautifs).toEqual([]);
+  });
+  test('les listes boutiques et agences utilisent dangerouslySetInnerHTML', () => {
+    expect(lire('app/boutiques/components/BoutiquesDirectoryList.tsx')).toMatch(/<style dangerouslySetInnerHTML/);
+    expect(lire('app/agences/components/AgencesDirectoryList.tsx')).toMatch(/<style dangerouslySetInnerHTML/);
+  });
+});
+
 describe('AUD-231 — la bulle d\'assistant ne recouvre plus les pages de formulaire', () => {
   test('le widget consulte la liste de pages sans bulle', () => {
     const w = lire('components/chat/ChatbotWidget.tsx');

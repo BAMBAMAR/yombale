@@ -60,7 +60,9 @@ export default function BoutiquesDirectoryList({ boutiques, searchQuery = '' }: 
 
   return (
     <div>
-      <style>{`
+      {/* AUD-229 : `>` (sélecteurs enfant) dans un <style>{texte}</style> : React l'échappe en `&gt;` côté serveur mais pas côté
+          client, d'où l'erreur d'hydratation #425 et le re-rendu complet de la page. Contenu statique : innerHTML identique des deux côtés. */}
+      <style dangerouslySetInnerHTML={{ __html: `
         /* Desktop: always a responsive grid */
         .boutiques-display-container {
           display: grid;
@@ -106,7 +108,7 @@ export default function BoutiquesDirectoryList({ boutiques, searchQuery = '' }: 
             width: 100% !important;
           }
         }
-      `}</style>
+      ` }} />
 
       {/* Barre de contrôle Mobile : Mode Carrousel Horizontal vs Liste Verticale */}
       <div className="boutiques-mobile-controls">

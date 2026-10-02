@@ -63,7 +63,9 @@ export default function AgencesDirectoryList({ agences }: Props) {
 
   return (
     <div>
-      <style>{`
+      {/* AUD-229 : `>` dans un <style>{texte}</style> = `&gt;` côté serveur, `>` côté client : erreur d'hydratation #425.
+          Contenu statique : innerHTML identique des deux côtés. */}
+      <style dangerouslySetInnerHTML={{ __html: `
         /* Desktop: always a responsive grid */
         .agences-display-container {
           display: grid;
@@ -109,7 +111,7 @@ export default function AgencesDirectoryList({ agences }: Props) {
             width: 100% !important;
           }
         }
-      `}</style>
+      ` }} />
 
       {/* Barre de contrôle Mobile : Mode Carrousel Horizontal vs Liste Verticale */}
       <div className="agences-mobile-controls">
