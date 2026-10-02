@@ -26,6 +26,7 @@ interface Commande {
   methode_paiement?: string
   source?: string
   notes?: string
+  payout_ref?: string | null
   created_at: string
 }
 
@@ -488,7 +489,7 @@ export default function AdminCommandesClient({
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                {selectedCmd.methode_paiement?.toLowerCase().includes('wave') && selectedCmd.statut !== 'reverse' && (
+                {selectedCmd.methode_paiement?.toLowerCase().includes('wave') && selectedCmd.statut === 'livree' && !selectedCmd.payout_ref && (
                   <button
                     type="button"
                     onClick={() => handleReversementWave(selectedCmd)}
@@ -512,7 +513,7 @@ export default function AdminCommandesClient({
                     <span>{payingWaveId === selectedCmd.id ? 'Payout en cours…' : 'Reversement Wave 1-Clic'}</span>
                   </button>
                 )}
-                {selectedCmd.statut === 'reverse' && (
+                {(selectedCmd.statut === 'reverse' || (selectedCmd.payout_ref && !selectedCmd.payout_ref.endsWith('_en_cours'))) && (
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <CheckCircle2 size={14} /> Déjà Reversé
                   </span>

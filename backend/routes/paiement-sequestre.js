@@ -199,6 +199,9 @@ router.post('/debloquer', async (req, res) => {
     );
 
     // Déclencher le versement Wave payout au marchand si applicable
+    const { declencherReversementAuto } = require('../services/reversement-marchand');
+    declencherReversementAuto(cmd.id, { source: 'pay_safe' }).catch(() => {});
+
     if (cmd.boutique_id) {
       try {
         const bqRes = await pool.query('SELECT telephone, whatsapp, nom FROM boutiques WHERE id = $1', [cmd.boutique_id]);

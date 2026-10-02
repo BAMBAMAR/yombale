@@ -163,7 +163,7 @@ function verifyWebhookSignature(req) {
  *  - Header Wave-Signature obligatoire si request signing activé sur la clé (WAVE_SIGNING_SECRET présent)
  *  - Authentification : Authorization: Bearer <WAVE_API_KEY>
  */
-async function sendPayout({ amount, mobile, client_reference, boutique_nom, reference_commande }) {
+async function sendPayout({ amount, mobile, client_reference, boutique_nom, reference_commande, idempotency_key }) {
   const cfg = require('../lib/settingsCache');
   const { randomUUID } = require('crypto');
 
@@ -198,11 +198,12 @@ async function sendPayout({ amount, mobile, client_reference, boutique_nom, refe
     ...(reference_commande ? { payment_reason: `Reversement Nopalou ${reference_commande}`.slice(0, 40) } : {}),
   };
 
-  // Idempotency-Key obligatoire sur les POST (Wave rejette sans lui)
-  // Clé déterministe par référence de virement : un rejeu (deux clics, reprise) ne peut pas payer deux fois (AUD-072)
-  const idempotencyKey = client_reference
+  // Idempotency-Key obligatoire sur les POST (Wave rejette sans lui).
+  // Priorité à la clé stable par commande fournie par l'appelant (partagée par le reversement auto et admin),
+  // sinon clé déterministe par référence de virement (AUD-072) : un rejeu ne peut pas payer deux fois.
+  const idempotencyKey = idempotency_key || (client_reference
     ? require('crypto').createHash('sha256').update(`nopalou-payout:${client_reference}`).digest('hex').replace(/^(.{8})(.{4}).(.{3}).(.{3})(.{12}).*$/, '$1-$2-4$3-8$4-$5')
-    : randomUUID();
+    : randomUUID());
 
   const headers = {
     'Authorization': `Bearer ${apiKey}`,

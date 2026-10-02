@@ -74,10 +74,11 @@ function SuiviCommandeContent() {
 
   function getStepIndex(statut: string) {
     const s = (statut || '').toLowerCase()
-    if (s === 'livree' || s === 'payee') return 4
+    // 'payee' = paiement reçu mais commande pas encore traitée par le vendeur → reste à l'étape 1
+    if (s === 'livree' || s === 'reverse') return 4
     if (s === 'en_livraison' || s === 'expediee') return 3
-    if (s === 'en_preparation' || s === 'validee') return 2
-    return 1 // en_attente
+    if (s === 'en_preparation' || s === 'validee' || s === 'confirmee') return 2
+    return 1 // en_attente, payee
   }
 
   const fcfa = (v: number) => (new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v) + ' FCFA').replace(/[\u202F\u00A0]/g, ' ')

@@ -2863,7 +2863,9 @@ async function handleIncomingInternal(msg) {
   const matchStatutCmd = interactiveId.match(/^cmd_statut_([a-f0-9\-]+)_(confirmee|en_livraison|livree|annulee)$/i);
   if (matchStatutCmd) {
     const [_, cmdId, targetStatut] = matchStatutCmd;
-    const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    // Anti-IDOR : seule la boutique du numéro marchand authentifié peut changer le statut
+    // (context.boutique peut être une boutique tierce consultée en tant que client).
+    const bqMarchand = await trouverBoutiqueMarchand(phone);
     if (bqMarchand) {
       try {
         const { rows } = await pool.query(
@@ -2886,6 +2888,11 @@ async function handleIncomingInternal(msg) {
             phone,
             `✅ Commande *${cmd.reference}* (${cmd.client_nom}) mise à jour : *${label}* !`
           );
+
+          if (targetStatut === 'livree') {
+            const { declencherReversementAuto } = require('./reversement-marchand');
+            declencherReversementAuto(cmd.id, { source: 'whatsapp_marchand' }).catch(() => {});
+          }
 
           // Notification WhatsApp automatique au client si numéro disponible
           if (cmd.client_telephone) {

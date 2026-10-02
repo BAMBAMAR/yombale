@@ -31,6 +31,7 @@ export interface PanierAbandonne {
 
 export const STATUTS_META: { key: string; color: string; bg: string }[] = [
   { key: 'en_attente', color: '#92400e', bg: '#fef3c7' },
+  { key: 'payee', color: 'var(--price, #0A5C36)', bg: '#ecfdf5' },
   { key: 'confirmee', color: '#1d4ed8', bg: '#eff6ff' },
   { key: 'en_preparation', color: '#6d28d9', bg: '#f5f3ff' },
   { key: 'expediee', color: '#0369a1', bg: '#e0f2fe' },
@@ -40,6 +41,7 @@ export const STATUTS_META: { key: string; color: string; bg: string }[] = [
 
 export const TRANSITIONS: Record<string, string[]> = {
   en_attente: ['confirmee', 'annulee'],
+  payee: ['confirmee', 'annulee'],
   confirmee: ['en_preparation', 'annulee'],
   en_preparation: ['expediee', 'annulee'],
   expediee: ['livree', 'annulee'],
@@ -51,6 +53,8 @@ export function getStatutLabel(key: string, t: any) {
   switch (key) {
     case 'en_attente':
       return t('shop.statusPending')
+    case 'payee':
+      return t('shop.statusPaid')
     case 'confirmee':
       return t('shop.statusConfirmed')
     case 'en_preparation':

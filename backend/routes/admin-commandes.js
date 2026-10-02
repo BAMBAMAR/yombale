@@ -5,6 +5,7 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
+const { declencherReversementAuto } = require('../services/reversement-marchand');
 
 const { adminAccess } = require('../middlewares/admin-rbac');
 // ── GET /api/admin/commandes — Liste paginée avec filtres
@@ -140,6 +141,10 @@ router.put('/:id/statut', ...adminAccess('commandes'), async (req, res) => {
       nouvelleValeur: { statut },
       req,
     });
+
+    if (statut === 'livree') {
+      declencherReversementAuto(id, { source: 'admin_commandes' }).catch(() => {});
+    }
 
     res.json({ success: true, commande: rows[0] });
   } catch (err) {

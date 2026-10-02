@@ -15,6 +15,7 @@ const { controlerFichiers, IMAGES_OU_PDF } = require('../lib/fichiersAutorises')
 const { enregistrerAuditLog } = require('../lib/auditLogger');
 const { syncProduit } = require('../services/whatsapp-catalog');
 const { limiterCommandeExpress } = require('../middlewares/rateLimit');
+const { declencherReversementAuto, calculerNetReversement, cleIdempotencePayout } = require('../services/reversement-marchand');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -1325,74 +1326,9 @@ router.patch(
           console.error('[CMD LIVREE COMPTA ERR]', eComptaCmd.message);
         }
 
-        // Reversement 100% Automatique Wave Payout vers le marchand si activé
-        // AUD-072 : virement seulement si le paiement est réellement encaissé, et une seule fois (réservation atomique de payout_ref)
-        let payoutReserve = false;
-
-        const cfgCompta = require('../lib/settingsCache');
-        const wavePayoutKey = (process.env.WAVE_API_KEY || (await cfgCompta.get('wave_api_key')) || '').trim();
-        const hasWavePayoutKey = Boolean(wavePayoutKey && !wavePayoutKey.includes('xxxxxxxx'));
-
-        if ((commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') && process.env.REVERSEMENT_AUTOMATIQUE_WAVE !== 'false' && hasWavePayoutKey) {
-
-          if (commande.paiement_recu === true) {
-            const { rowCount } = await pool.query(
-              `UPDATE commandes_boutique SET payout_ref = 'auto_en_cours', payout_date = NOW()
-                WHERE id = $1 AND paiement_recu = true AND payout_ref IS NULL`,
-              [commande.id]
-            );
-            payoutReserve = rowCount === 1;
-          }
-        }
-        if (payoutReserve) {
-          try {
-            const mobile = boutique.whatsapp || boutique.telephone;
-            if (!mobile) {
-              await pool.query(`UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'auto_en_cours'`, [commande.id]);
-            }
-            if (mobile) {
-              const commission = (b?.commission_rate > 0) ? (commande.montant_total * b.commission_rate / 100) : 0;
-              const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
-              const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - commission - fraisWaveTotaux)); // la remise Club VIP est à la charge du marchand (déjà déduite du total payé)
-              const wave = require('../services/wave');
-              const payout = await wave.sendPayout({
-                amount: netAmount,
-                mobile,
-                client_reference: `auto_payout_${commande.reference}`,
-                boutique_nom: boutique.nom,
-                reference_commande: commande.reference,
-              });
-              await pool.query(`UPDATE commandes_boutique SET payout_ref = $2, payout_date = NOW() WHERE id = $1`, [commande.id, String((payout && payout.id) || `auto_payout_${commande.reference}`).slice(0, 120)]);
-              console.log(`[AUTO PAYOUT WAVE SUCCESS] ⚡ ${netAmount} FCFA transférés automatiquement à ${boutique.nom} (${mobile}) [Déduction Frais Wave 2% (1%+1%): ${fraisWaveTotaux} FCFA]`);
-
-              const { alerterReversementMarchand } = require('../services/admin-alerts');
-              alerterReversementMarchand({
-                reference: commande.reference,
-                montant: netAmount,
-                boutiqueNom: boutique.nom,
-                telephone: mobile,
-                statut: 'succes',
-                mode: 'auto_payout_wave',
-              }).catch(() => {});
-            }
-          } catch (autoErr) {
-            console.error('[AUTO PAYOUT WAVE ERR]:', autoErr.message);
-            // Échec : on libère la réservation pour qu'un reversement manuel (admin) reste possible
-            await pool.query(`UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'auto_en_cours'`, [commande.id]).catch(() => {});
-            try {
-              const { alerterReversementMarchand } = require('../services/admin-alerts');
-              alerterReversementMarchand({
-                reference: commande.reference,
-                montant: commande.montant_total,
-                boutiqueNom: boutique.nom,
-                telephone: boutique.whatsapp || boutique.telephone || 'N/A',
-                statut: 'echec',
-                motifErreur: autoErr.message,
-                mode: 'auto_payout_wave',
-              }).catch(() => {});
-            } catch (_) {}
-          }
-        }
+        // Reversement automatique Wave Payout (service unique : livrée + encaissée (AUD-072), réservation atomique, idempotence).
+        // Attendu comme avant la fusion : le service ne lève jamais, la réponse au marchand reflète l'état final.
+        await declencherReversementAuto(commande.id, { source: 'marchand_web' });
 
         // Déclencher le suivi de fidélité automatique (Audit 94+/100 : Coupon 10% au 5ème achat)
         if (commande.client_telephone) {
@@ -2118,15 +2054,17 @@ router.get('/admin/reversements-dus', requireAdminAuth, requireAdminRole('super_
   try {
     const { rows } = await pool.query(`
       SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut, c.created_at,
+             c.paiement_recu,
              b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp, b.id AS boutique_id,
              u.nom AS marchant_nom, u.telephone AS marchant_telephone
       FROM commandes_boutique c
       JOIN boutiques b ON b.id = c.boutique_id
       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-      WHERE (c.paiement_recu = true OR c.statut IN ('payee', 'livree'))
-        AND c.statut NOT IN ('reverse', 'annulee')
+      -- Uniquement les commandes livrées et jamais reversées (payout_ref renseigné = déjà payé ou en cours).
+      -- paiement_recu est renvoyé : sans encaissement constaté, seul le mode manuel est accepté (AUD-072).
+      WHERE c.statut = 'livree'
         AND c.payout_ref IS NULL
-        AND (c.methode_paiement ILIKE '%wave%' OR c.methode_paiement = 'pay_wave')
+        AND c.methode_paiement ILIKE '%wave%'
       ORDER BY c.created_at DESC
       LIMIT 150
     `);
@@ -2138,40 +2076,49 @@ router.get('/admin/reversements-dus', requireAdminAuth, requireAdminRole('super_
 
 // POST /api/comptabilite/admin/reversements/:commandeId/payer — Déclencher le Payout Wave vers le marchand
 router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAdminRole('super_admin', 'finance', 'admin_operationnel'), async (req, res) => {
+  let reserve = false;
   try {
     const { mode = 'wave_api', reference_manuelle } = req.body || {};
     const { rows: [commande] } = await pool.query(`
       SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut,
-             c.paiement_recu, c.payout_ref,             b.nom AS boutique_nom, b.telephone AS boutique_telephone, b.whatsapp AS boutique_whatsapp
+             c.paiement_recu, c.payout_ref,
+             b.nom AS boutique_nom, b.commission_rate,
+             COALESCE(b.whatsapp, b.telephone, u.telephone) AS mobile
       FROM commandes_boutique c
       JOIN boutiques b ON b.id = c.boutique_id
+      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
       WHERE c.id = $1
     `, [req.params.commandeId]);
 
     if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
 
     if (commande.statut === 'reverse' || commande.payout_ref) {
-      return res.status(400).json({ error: 'Cette commande a déjà fait l\'objet d\'un reversement.' });
+      return res.status(400).json({ error: 'Cette commande a déjà fait l\'objet d\'un reversement (ou un reversement est en cours).' });
+    }
+    if (commande.statut !== 'livree') {
+      return res.status(400).json({ error: 'La commande doit être livrée avant de reverser les fonds au marchand.' });
     }
     // AUD-072 : jamais de virement API sur une commande dont l'encaissement n'est pas constaté (le mode manuel reste
     // possible après vérification humaine dans le back-office Wave)
     if (mode === 'wave_api' && commande.paiement_recu !== true) {
       return res.status(409).json({ error: 'Paiement non constaté pour cette commande : virement API refusé. Vérifiez l\'encaissement Wave puis utilisez le mode manuel.' });
     }
-    // Réservation atomique : un second clic ou un virement automatique concurrent est refusé
-    const reserve = await pool.query(
+
+    const mobile = commande.mobile;
+    if (!mobile) return res.status(400).json({ error: 'Numéro de téléphone du marchand introuvable' });
+
+    // Réservation atomique : bloque un double clic ou un reversement automatique concurrent
+    const { rowCount } = await pool.query(
       `UPDATE commandes_boutique SET payout_ref = 'admin_en_cours', payout_date = NOW()
-        WHERE id = $1 AND payout_ref IS NULL AND statut != 'reverse'`, [req.params.commandeId]);
-    if (reserve.rowCount !== 1) return res.status(409).json({ error: 'Reversement déjà en cours ou effectué pour cette commande.' });
-
-    const mobile = commande.boutique_whatsapp || commande.boutique_telephone;
-    if (!mobile) {
-      await pool.query(`UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'admin_en_cours'`, [req.params.commandeId]);
-      return res.status(400).json({ error: 'Numéro de téléphone du marchand introuvable' });
+        WHERE id = $1 AND statut = 'livree' AND payout_ref IS NULL`,
+      [commande.id]
+    );
+    if (rowCount !== 1) {
+      return res.status(409).json({ error: 'Un reversement est déjà en cours pour cette commande.' });
     }
+    reserve = true;
 
-    const fraisWaveTotaux = Math.round(Number(commande.montant_total) * 0.02); // 1% encaissement + 1% payout
-    const netAmount = Math.max(0, Math.round(Number(commande.montant_total) - (Number(commande.montant_commission) || 0) - fraisWaveTotaux)); // la remise Club VIP est à la charge du marchand (déjà déduite du total payé)
+    const { netAmount, fraisWave: fraisWaveTotaux } = calculerNetReversement(commande, commande.commission_rate);
 
     let payoutResult = { id: `payout_${commande.reference}` };
 
@@ -2183,6 +2130,7 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
         client_reference: `payout_${commande.reference}`,
         boutique_nom: commande.boutique_nom,
         reference_commande: commande.reference,
+        idempotency_key: cleIdempotencePayout(commande.id),
       });
     } else {
       payoutResult = {
@@ -2249,8 +2197,14 @@ router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAd
     res.json({ success: true, payout: payoutResult, net_amount: netAmount, frais_wave: fraisWaveTotaux, mobile });
   } catch (err) {
     console.error('[ADMIN PAYOUT ERR]', err);
-    // L'échec du virement libère la réservation pour permettre un nouvel essai
-    await pool.query(`UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'admin_en_cours'`, [req.params.commandeId]).catch(() => {});
+
+    // Libère la réservation pour permettre une nouvelle tentative (même clé d'idempotence Wave)
+    if (reserve) {
+      await pool.query(
+        `UPDATE commandes_boutique SET payout_ref = NULL, payout_date = NULL WHERE id = $1 AND payout_ref = 'admin_en_cours'`,
+        [req.params.commandeId]
+      ).catch(() => {});
+    }
 
     // Mapper les error_code Wave documentés vers des messages compréhensibles
     const waveErrorMessages = {
@@ -2305,9 +2259,10 @@ router.post('/admin/reversements/valider-lot', requireAdminAuth, requireAdminRol
 
     const r = await pool.query(
       `UPDATE commandes_boutique 
-       SET statut = 'reverse', 
+       SET statut = 'reverse',
+           payout_ref = COALESCE(payout_ref, 'lot_manuel'),
            payout_date = NOW(),
-           updated_at = NOW() 
+           updated_at = NOW()
        WHERE (id = ANY($1::text[]) OR reference = ANY($1::text[])) AND statut != 'reverse'
        RETURNING id, reference`,
       [ids]

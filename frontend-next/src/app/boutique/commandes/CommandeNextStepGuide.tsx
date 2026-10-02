@@ -41,7 +41,9 @@ export default function CommandeNextStepGuide({
     commande.note?.toLowerCase().includes('crédit')
 
   // Configurations adaptatives selon l'état actuel de la commande
-  if (commande.statut === 'en_attente') {
+  // 'payee' : paiement en ligne reçu (webhook Wave/Stripe), la commande reste à valider par le vendeur
+  if (commande.statut === 'en_attente' || commande.statut === 'payee') {
+    const estPayee = commande.statut === 'payee'
     const isAConvenir = (!commande.frais_livraison || commande.frais_livraison === 0) && (
       Boolean(commande.note && (commande.note.includes('À convenir') || commande.note.includes('a convenir')))
     )
@@ -69,9 +71,11 @@ export default function CommandeNextStepGuide({
           </span>
         </div>
         <p style={{ margin: 0, fontSize: 12.5, color: '#78350f', lineHeight: 1.4 }}>
-          {isCredit
-            ? "Le client sollicite un achat à crédit. Validez ou refusez l'inscription dans son carnet."
-            : "Nouvelle commande reçue. Confirmez la commande pour engager sa préparation."}
+          {estPayee
+            ? 'Paiement en ligne reçu. Confirmez la commande pour engager sa préparation.'
+            : isCredit
+              ? "Le client sollicite un achat à crédit. Validez ou refusez l'inscription dans son carnet."
+              : 'Nouvelle commande reçue. Confirmez la commande pour engager sa préparation.'}
         </p>
 
         {isAConvenir && (
@@ -219,7 +223,7 @@ export default function CommandeNextStepGuide({
                 <CheckCircle2 size={16} />
                 <span>{t('shop.statusConfirmed')}</span>
               </button>
-              {onRelancerWave && (
+              {onRelancerWave && !estPayee && (
                 <button
                   type="button"
                   onClick={onRelancerWave}
