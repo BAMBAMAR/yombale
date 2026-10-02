@@ -100,6 +100,14 @@ describe('AUD-222 — une seule règle de publication immobilière pour le site 
   });
 });
 
+describe('AUD-226 — carte « Commencez à vendre » lisible sur mobile', () => {
+  test('le bloc de texte garde une base de largeur (il passe à la ligne au lieu d\'être écrasé) et les boutons font 44 px', () => {
+    const src = lire('app/(account)/compte/tabs/hub/AccountHubRecentAnnonces.tsx');
+    expect(src).toMatch(/flex: '1 1 240px'/);
+    expect(src.match(/minHeight: 44/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe('AUD-221 — l\'assistant du site comprend les demandes courantes', () => {
   const { normaliser, estSalutation, extraireReferenceCommande, extraireBudget, decoderEntites } = require('../../backend/lib/chat-intentions');
   const BACK = process.env.UXP_BACK_ROOT || path.join(__dirname, '../../backend');

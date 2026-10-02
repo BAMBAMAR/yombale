@@ -35,7 +35,9 @@ export default function AccountHubRecentAnnonces({
           gap: 14,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+        {/* AUD-226 : base de 240 px. Avec `flex: 1` (base 0) la rangée ne passait jamais à la ligne et le texte
+            était écrasé à 79 px de large, recouvert par le bouton « Publier » sur mobile. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 240px' }}>
           <div
             style={{
               width: 40,
@@ -69,6 +71,7 @@ export default function AccountHubRecentAnnonces({
               alignItems: 'center',
               gap: 6,
               padding: '8px 14px',
+              minHeight: 44,
               borderRadius: 8,
               background: 'var(--accent, #C75B00)',
               color: '#ffffff',
@@ -88,6 +91,7 @@ export default function AccountHubRecentAnnonces({
                 alignItems: 'center',
                 gap: 6,
                 padding: '8px 14px',
+                minHeight: 44,
                 borderRadius: 8,
                 background: '#FAF8F5',
                 border: '1px solid #E8DDD2',
