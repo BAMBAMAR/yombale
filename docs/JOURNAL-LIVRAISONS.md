@@ -1,5 +1,12 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Paiement Panier (ReferenceError commande-service) & Éradication des Erreurs d'Hydratation React SSR (#425, #418, #423) (02 octobre 2026)** :
+  * **Cause Racine Blocage Paiement Panier** : Dans `backend/services/commande-service.js` (`notifierVendeurCommande`), une référence `commande.zone_nom` non définie déclenchait `ReferenceError: commande is not defined` dès que la note ne contenait pas "À convenir". Cette exception interrompait `POST /api/comptabilite/:boutiqueId/commandes` juste après l'écriture en base, retournant une 500 avant que la session Wave ne soit créée (alors que la commande express n'appelait pas cette méthode).
+  * **Correction Backend** : Suppression de la référence invalide à `commande.zone_nom` dans `commande-service.js`. La validation du checkout panier se termine sans erreur et retourne bien l'URL de paiement Wave/OM.
+  * **Cause Racine Erreur #425 (Text Content Mismatch)** : Sous Node.js 18+ (SSR), `Intl.NumberFormat('fr-FR')` génère par défaut un espace insécable étroit Unicode (`\u202F`) séparant les milliers (ex: `15 000 FCFA`), alors que le navigateur rend un espace standard ou `\u00A0`. Cet écart sur les prix produisait l'invalidation React #425.
+  * **Correction Frontend Formatage** : Normalisation globale de `fcfa()` et `formatNombre()` avec `.replace(/[\u202F\u00A0]/g, ' ')` dans `lib/format.ts`, `commander/types.ts`, `checkout-express/page.tsx` et `suivi-commande/page.tsx`.
+  * **Correction Frontend Badges Panier (#418, #423)** : Verrouillage avec indicateur `mounted` dans `NavbarCartBtn.tsx` et `BoutiqueStickyBar.tsx` pour empêcher l'affichage immédiat d'articles lus depuis `localStorage` lors de la passe d'hydratation initiale.
+
 - **Fiabilisation des Paiements en Ligne (Wave & Orange Money) et Reversements Marchands (02 octobre 2026)** :
   * **Cause Racine Absence de Paiement / Payout** : Clé API Wave révoquée par Wave (`code: api-key-revoked`) suite à l'émission d'une nouvelle clé sur le portail Wave Business, et absence de lecture dynamique depuis la base de données PostgreSQL dans `comptabilite.js` (qui vérifiait uniquement `process.env.WAVE_API_KEY`).
   * **Résolution Dynamique Clé Wave (DB & Env)** : `process.env.WAVE_API_KEY || (await cfg.get('wave_api_key'))` appliqué sur l'initialisation du checkout et sur le reversement automatique (`sendPayout`) lors de la livraison (`statut: 'livree'`).

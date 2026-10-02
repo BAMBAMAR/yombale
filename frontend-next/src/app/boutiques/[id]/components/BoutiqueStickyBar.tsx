@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Store, ShoppingCart, MessageCircle, CreditCard } from 'lucide-react'
 import { BoutiqueData } from './types'
 
@@ -29,6 +29,9 @@ export default function BoutiqueStickyBar({
   cartCount,
   openCart,
 }: BoutiqueStickyBarProps) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   return (
     <>
       {/* BARRE STICKY D'EN-TÊTE AU DÉFILEMENT */}
@@ -113,7 +116,7 @@ export default function BoutiqueStickyBar({
             >
               <ShoppingCart size={15} />
               <span>Panier</span>
-              {cartCount > 0 && (
+              {mounted && cartCount > 0 && (
                 <span
                   style={{
                     background: '#fff',

@@ -80,7 +80,7 @@ function SuiviCommandeContent() {
     return 1 // en_attente
   }
 
-  const fcfa = (v: number) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v) + ' FCFA'
+  const fcfa = (v: number) => (new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v) + ' FCFA').replace(/[\u202F\u00A0]/g, ' ')
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '40px 16px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>

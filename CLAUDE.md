@@ -26,6 +26,11 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Correction Paiement Panier (ReferenceError commande-service) & Éradication des Erreurs d'Hydratation React SSR (#425, #418, #423)** :
+  - **Résolution Blocage Paiement Spécifique au Panier (`commande-service.js`)** : Correction d'une exception `ReferenceError: commande is not defined` dans `notifierVendeurCommande` qui faisait crasher `POST /api/comptabilite/:id/commandes` en HTTP 500 après insertion en base, empêchant la génération de la session Wave (tandis que la commande express utilisait une autre route).
+  - **Éradication Erreur React #425 (Text Content Mismatch)** : Normalisation des espaces de formatage de prix (`fcfa`, `formatNombre`) en ASCII (`.replace(/[\u202F\u00A0]/g, ' ')`) dans `format.ts`, `commander/types.ts`, `checkout-express/page.tsx`, `suivi-commande/page.tsx`.
+  - **Éradication Erreurs React #418 & #423 (Hydration Mismatch / Bailout)** : Verrouillage des compteurs de panier du `localStorage` avec indicateur `mounted` dans `NavbarCartBtn.tsx` et `BoutiqueStickyBar.tsx`.
+
 - **Fiabilisation des Paiements en Ligne (Wave & Orange Money) et Reversements Marchands (`comptabilite.js`, `boutiques-commandes.js`, `useDrawerCartCheckout.ts`, `TarifsClient.tsx`)** :
   - **Résolution Dynamique de la Clé Wave (DB & Env)** : Remplacement de la vérification rigide `process.env.WAVE_API_KEY` par `process.env.WAVE_API_KEY || (await cfg.get('wave_api_key'))` dans la création de commande boutique et le reversement automatique lors de la livraison.
   - **Intégration d'Orange Money dans le Panier** : Ajout du flux d'initialisation Orange Money (`createWebPayment`) sur la route `POST /api/comptabilite/:id/commandes` et redirection automatique (`om_url` / `payment_url`) dans `useDrawerCartCheckout.ts`.

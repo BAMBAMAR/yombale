@@ -1,11 +1,16 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { ShoppingCart } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 
 export default function NavbarCartBtn() {
   const { totalItemCount, openCart } = useCart()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <div
@@ -21,7 +26,7 @@ export default function NavbarCartBtn() {
         type="button"
         onClick={() => openCart()}
         className="navbar-cart-btn"
-        aria-label={`Panier (${totalItemCount} article${totalItemCount > 1 ? 's' : ''})`}
+        aria-label={mounted ? `Panier (${totalItemCount} article${totalItemCount > 1 ? 's' : ''})` : 'Mon panier'}
         title="Mon panier"
         style={{
           display: 'inline-flex',
@@ -41,7 +46,7 @@ export default function NavbarCartBtn() {
         <ShoppingCart size={18} />
       </button>
 
-      {totalItemCount > 0 && (
+      {mounted && totalItemCount > 0 && (
         <span
           style={{
             position: 'absolute',

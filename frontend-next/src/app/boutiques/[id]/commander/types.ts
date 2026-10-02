@@ -34,7 +34,7 @@ export interface CommanderModalProps {
 }
 
 export function fcfa(n: number): string {
-  return new Intl.NumberFormat('fr-FR').format(n) + ' FCFA'
+  return (new Intl.NumberFormat('fr-FR').format(n) + ' FCFA').replace(/[\u202F\u00A0]/g, ' ')
 }
 
 export function helperLienWhatsapp(tel: string | null | undefined, message: string): string {

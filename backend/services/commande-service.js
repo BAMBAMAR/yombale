@@ -46,12 +46,10 @@ async function notifierVendeurCommande(boutique, {
   const btnParam = bRef ? `boutique?manage=${bRef}&tab=commandes` : 'boutique?tab=commandes';
   const montantFmt = new Intl.NumberFormat('fr-FR').format(montantTotal);
   const isAConvenir = (!fraisLivraison || fraisLivraison === 0) && (
-    (note && (note.includes('À convenir') || note.includes('a convenir'))) ||
-    (commande.zone_nom && commande.zone_nom.toLowerCase().includes('convenir'))
+    (note && (note.includes('À convenir') || note.includes('a convenir')))
   );
   const isRetrait = (!fraisLivraison || fraisLivraison === 0) && (
     (note && note.toLowerCase().includes('retrait')) ||
-    (commande.zone_nom && commande.zone_nom.toLowerCase().includes('retrait')) ||
     (clientAdresse && clientAdresse.toLowerCase().includes('retrait'))
   );
 

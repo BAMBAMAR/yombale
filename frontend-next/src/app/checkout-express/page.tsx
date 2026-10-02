@@ -22,7 +22,7 @@ const DEFAULT_ZONES: Zone[] = [
 ]
 
 function fcfa(amount: number) {
-  return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA'
+  return (new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA').replace(/[\u202F\u00A0]/g, ' ')
 }
 
 function CheckoutExpressContent() {
