@@ -236,7 +236,7 @@ export default function CreerBoutiqueWizard() {
       if (data.slug) q.set('slug', String(data.slug))
       router.replace(`/creer-boutique/succes?${q.toString()}`)
     } catch (err: any) {
-      setError(err.message)
+      setError(texteErreur(err, 'Erreur lors de la création de la boutique.'))
       setLoading(false)
     }
   }
