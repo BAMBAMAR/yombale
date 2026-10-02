@@ -8,6 +8,7 @@ const { RunCollecte, noterRequeteCourante, strict: statutsStricts } = require('.
 const { plafondPages } = require('../lib/scrapePagination');
 const { ordreParAnciennete } = require('../lib/ordreCollecte');
 const { normaliserUrlAchat } = require('../lib/urlAchat');
+const { vendeurRefOffre } = require('../lib/vendeurRef');
 const { parsePrix } = require('../lib/prix');
 const matching = require('./matching');
 
@@ -967,6 +968,8 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         }
       }
 
+      const vendeurRef = vendeurRefOffre(marchandNom, item, cleanUrl); // AUD-182 : une offre par vendeur sur les places de marché
+
       // 1. Recherche du produit correspondant via le moteur de matching
       const catId = await getCatId(item.titre);
       const correspondant = await matching.trouverProduitCorrespondant(pool, item, catId);
@@ -1002,9 +1005,9 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
 
       // 2. Insertion de l'offre avec protection contre les doublons (produit_id, marchand_id)
       const { rows: resOffre } = await pool.query(
-        `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock, prix_brut)
-         VALUES($1, $2, $3, $4, $5, $6, NOW(), true, $7)
-         ON CONFLICT (produit_id, marchand_id)
+        `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock, prix_brut, vendeur_ref)
+         VALUES($1, $2, $3, $4, $5, $6, NOW(), true, $7, $8)
+         ON CONFLICT (produit_id, marchand_id, vendeur_ref)
          DO UPDATE SET url_achat = COALESCE(EXCLUDED.url_achat, offres.url_achat),
                        prix = EXCLUDED.prix,
                        titre_marchand = EXCLUDED.titre_marchand,
@@ -1013,7 +1016,7 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
                        stock = true,
                        prix_brut = COALESCE(EXCLUDED.prix_brut, offres.prix_brut)
          RETURNING id`,
-        [produitId, marchandId, item.prix, cleanUrl, item.titre, JSON.stringify(specs), item.prix_brut || null]
+        [produitId, marchandId, item.prix, cleanUrl, item.titre, JSON.stringify(specs), item.prix_brut || null, vendeurRef]
       );
       offreRows = resOffre;
 

@@ -97,30 +97,36 @@ module.exports = async function migrateInline(customConnStr = null) {
       CREATE INDEX IF NOT EXISTS idx_offres_prix    ON offres(prix);
       CREATE INDEX IF NOT EXISTS idx_offres_produit_stock_prix ON offres(produit_id, stock, prix);
 
+      -- AUD-182 : clé de vendeur (une offre par vendeur sur les places de marché ; vide ailleurs)
+      ALTER TABLE offres ADD COLUMN IF NOT EXISTS vendeur_ref TEXT NOT NULL DEFAULT '';
+
       -- Dédoublonnage robuste d'offres & Index UNIQUE (TECH-02)
       DO $$ 
       DECLARE
         r RECORD;
       BEGIN
         IF EXISTS (
-          SELECT 1 FROM offres GROUP BY produit_id, marchand_id HAVING count(*) > 1 LIMIT 1
+          SELECT 1 FROM offres GROUP BY produit_id, marchand_id, vendeur_ref HAVING count(*) > 1 LIMIT 1
         ) THEN
           FOR r IN 
-            SELECT produit_id, marchand_id, 
-                   (SELECT id FROM offres o2 WHERE o2.produit_id = o1.produit_id AND o2.marchand_id = o1.marchand_id ORDER BY prix ASC, scraped_at DESC LIMIT 1) AS winner_id
+            SELECT produit_id, marchand_id, vendeur_ref,
+                   (SELECT id FROM offres o2 WHERE o2.produit_id = o1.produit_id AND o2.marchand_id = o1.marchand_id AND o2.vendeur_ref = o1.vendeur_ref ORDER BY prix ASC, scraped_at DESC LIMIT 1) AS winner_id
             FROM offres o1
-            GROUP BY produit_id, marchand_id
+            GROUP BY produit_id, marchand_id, vendeur_ref
             HAVING count(*) > 1
           LOOP
             UPDATE historique_prix SET offre_id = r.winner_id 
-            WHERE offre_id IN (SELECT id FROM offres WHERE produit_id = r.produit_id AND marchand_id = r.marchand_id AND id != r.winner_id);
+            WHERE offre_id IN (SELECT id FROM offres WHERE produit_id = r.produit_id AND marchand_id = r.marchand_id AND vendeur_ref = r.vendeur_ref AND id != r.winner_id);
             
-            DELETE FROM offres WHERE produit_id = r.produit_id AND marchand_id = r.marchand_id AND id != r.winner_id;
+            DELETE FROM offres WHERE produit_id = r.produit_id AND marchand_id = r.marchand_id AND vendeur_ref = r.vendeur_ref AND id != r.winner_id;
           END LOOP;
         END IF;
       EXCEPTION WHEN others THEN NULL; END $$;
 
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_offres_produit_marchand ON offres(produit_id, marchand_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_offres_produit_marchand_vendeur ON offres(produit_id, marchand_id, vendeur_ref);
+      -- AUD-182 : l'ancienne unicité (produit, marchand) est remplacée ; le nouvel index existe avant la suppression des anciens
+      DROP INDEX IF EXISTS idx_offres_produit_marchand;
+      ALTER TABLE offres DROP CONSTRAINT IF EXISTS offres_produit_id_marchand_id_key;
 
       CREATE TABLE IF NOT EXISTS historique_prix (
         id       BIGSERIAL PRIMARY KEY,

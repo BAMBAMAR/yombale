@@ -104,6 +104,6 @@ describe('AUD-187 : le prix brut de la source est conservé à côté du prix no
     const maj = appels.find((a) => /UPDATE offres SET/.test(a.sql));
     expect(maj.sql).toMatch(/prix_brut = COALESCE\(\$5, prix_brut\)/);
     expect(maj.params[4]).toBe('1,5M FCFA');
-    expect(lire('services/scraper.js')).toMatch(/INSERT INTO offres\(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock, prix_brut\)/);
+    expect(lire('services/scraper.js')).toMatch(/INSERT INTO offres\(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock, prix_brut, vendeur_ref\)/);
   });
 });
