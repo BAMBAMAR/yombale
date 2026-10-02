@@ -231,124 +231,161 @@ export interface SaisieExpressIntent {
   mode: 'depense' | 'vente'
   montant: number | null
   categorie?: 'loyer' | 'stock' | 'transport' | 'salaires' | 'marketing' | 'fournitures' | 'taxes' | 'ecole' | 'pressing' | 'autre'
+  /** Libellé de puce Sama Xaalis (dépense) — toujours une valeur de CATEGORIES_DEPENSE */
+  categorieKalpe?: string
+  /** Libellé de puce Sama Xaalis (revenu) — toujours une valeur de CATEGORIES_REVENU */
+  categorieRevenuKalpe?: string
   description?: string
   libelleProduit?: string
 }
 
+const sansAccents = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+
+const MOTS_VIDES_LIBELLE = new Set([
+  'j', 'ai', 'je', 'me', 'm', 'a', 'as', 'ete', 'suis', 'on', 'il', 'elle', 'pour', 'de', 'du', 'des', 'd', 'le', 'la', 'les', 'l',
+  'un', 'une', 'au', 'aux', 'en', 'ce', 'cet', 'cette', 'ca', 'et', 'ou', 'mon', 'ma', 'mes', 'ton', 'ta', 'sur', 'dans', 'par', 'avec',
+  'matin', 'soir', 'midi', 'aujourd', 'hui', 'aujourdhui', 'hier', 'demain', 'maintenant', 'tout', 'juste',
+  'depense', 'depenses', 'depans', 'depanse', 'paye', 'payer', 'paiement', 'achete', 'recu', 'recue', 'recus', 'encaisse', 'encaissee',
+  'gagne', 'gagnee', 'percu', 'percue', 'tombe', 'envoye', 'donne', 'vire', 'verse', 'vente', 'ventes', 'jaay', 'jaaye', 'jaayi',
+  'est', 'zero', 'francs', 'franc', 'fcfa', 'cfa', 'frs', 'f', 'euro', 'euros', 'recette', 'recettes', 'encaissement', 'dette', 'charge', 'charges', 'sortie', 'sorties',
+])
+
+const MOTS_NOMBRES_LIBELLE = new Set<string>([
+  ...Object.keys(MOTS_UNITES_PUBLICS()),
+  'cent', 'cents', 'mille', 'million', 'millions', 'k',
+  ...Object.keys(NOMBRES_MAPPING).map(sansAccents),
+  ...Object.keys(DEVISES_WOLOF).map(sansAccents),
+])
+
+function MOTS_UNITES_PUBLICS(): Record<string, number> {
+  return {
+    un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, neuf: 9, dix: 10, onze: 11, douze: 12, treize: 13,
+    quatorze: 14, quinze: 15, seize: 16, vingt: 20, vingts: 20, trente: 30, quarante: 40, cinquante: 50, soixante: 60,
+  }
+}
+
 /**
- * Parse vocal pour la Saisie Express Comptable :
- * Exemples Dépenses :
- * - "Dépense transport 2500" / "Dépenses transport 2500" -> depense, transport, 2500
- * - "Dépens benn téemeer essence" -> depense, transport, 500
- * - "Essence 2000" / "Transport 1500" / "Loyer 50000" -> depense automatique
- * - "Senelec 10000" / "Woyofal 5000" / "Repas midi 2000" -> depense automatique
- * - Si l'utilisateur est déjà sur l'onglet Dépense (modeActuel === 'depense'), toute dictée reste une dépense sauf mot Vente explicite.
- *
- * Exemples Ventes :
- * - "Vente café Touba 500" -> vente, 500, libellé "Café Touba"
- * - "Vente 10 000" / "Jaay 5000" -> vente
+ * AUD-203 : libellé construit à partir de la parole d'ORIGINE (accents et casse conservés),
+ * en retirant montants, verbes d'amorce et mots vides — et non à partir du texte normalisé.
+ */
+export function libelleDepuisTranscript(transcript: string, motsExclus: string[] = []): string {
+  const exclus = new Set(motsExclus.map(sansAccents))
+  const garde: string[] = []
+  for (const brut of transcript.replace(/[’']/g, ' ').split(/\s+/)) {
+    const w = brut.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
+    if (!w) continue
+    const n = sansAccents(w).replace(/-/g, ' ')
+    if (/^\d/.test(n)) continue
+    if (MOTS_VIDES_LIBELLE.has(n) || MOTS_NOMBRES_LIBELLE.has(n) || exclus.has(n)) continue
+    if (n.includes(' ') && n.split(' ').every(p => MOTS_NOMBRES_LIBELLE.has(p))) continue
+    garde.push(w)
+  }
+  const texte = garde.join(' ').trim()
+  return texte ? texte.charAt(0).toUpperCase() + texte.slice(1) : ''
+}
+
+/** AUD-202 : catégorie de puce Sama Xaalis (dépense) déduite des mots dictés. Toujours une valeur valide. */
+export function categorieKalpeDepense(clean: string): string {
+  const t = clean
+  const re = (r: RegExp) => r.test(t)
+  if (re(/\b(ecole|scolarite|mensualite|etudes|inscription|daara|creche|universite|college|lycee)\b/)) return 'École & Scolarité'
+  if (re(/\b(pressing|blanchisserie|repassage|lavage|teinturerie)\b/)) return 'Pressing & Blanchisserie'
+  if (re(/\b(essence|carburant|gasoil|gazoil|diesel)\b/)) return 'Carburant & Essence'
+  if (re(/\b(transport|transports|taxi|taxis|tiak|tiaktiak|clando|peage|autoroute|car rapide|bus|ndiaga)\b/)) return 'Transport & Déplacement'
+  if (re(/\b(woyofal|senelec|sde|sen eau|seneau|electricite|eau|facture|factures)\b/)) return 'Factures (Senelec/Woyofal/Eau)'
+  if (re(/\b(loyer|loyers|bail|caution)\b/)) return 'Loyer & Charges'
+  if (re(/\b(sonatel|orange|wifi|forfait|credit telephone|recharge|internet|data)\b/)) return 'Communication & Forfait'
+  if (re(/\b(pharmacie|medicament|medicaments|hopital|docteur|medecin|consultation|ordonnance|clinique|sante)\b/)) return 'Santé & Pharmacie'
+  if (re(/\b(couture|tailleur|couturier|habit|habits|vetement|vetements|tissu|chaussure|chaussures|robe)\b/)) return 'Habillement & Couture'
+  if (re(/\b(famille|mere|pere|maman|papa|frere|soeur|enfant|enfants|bebe|cousin|oncle|tante|teranga|bapteme|mariage|deces)\b/)) return 'Famille & Teranga'
+  if (re(/\b(don|dons|sadaka|aumone|mosquee|eglise|zakat|touba|serigne|offrande|culte)\b/)) return 'Dons & Culte'
+  if (re(/\b(stock|marchandise|marchandises|fournisseur|approvisionnement|reappro|colis)\b/)) return 'Fournisseur & Stock'
+  if (re(/\b(dejeuner|diner|repas|manger|pain|riz|marche|poisson|viande|legume|legumes|nourriture|thieb|ndekki|courses|epicerie|petit dejeuner|cafe|lait|sucre|huile)\b/)) return 'Alimentation & Marché'
+  return 'Autre'
+}
+
+/** AUD-197/202 : catégorie de puce Sama Xaalis (revenu). */
+export function categorieKalpeRevenu(clean: string): string {
+  if (/\b(salaire|paie|paye mensuelle|traitement)\b/.test(clean)) return 'Salaire & Emploi'
+  if (/\b(tontine|natt)\b/.test(clean)) return 'Tontine'
+  if (/\b(loyer|loyers)\b/.test(clean)) return 'Loyer perçu'
+  if (/\b(wave|om|orange money|virement|transfert|envoye|envoyee|viré|vire|western|moneygram)\b/.test(clean)) return 'Transfert reçu (Wave/OM)'
+  if (/\b(prestation|service|services|coiffure|couture|reparation|travail|mission|cours|livraison)\b/.test(clean)) return 'Prestation & Service'
+  if (/\b(vente|ventes|vendu|jaay|client|clients|commerce|recette|recettes)\b/.test(clean)) return 'Vente & Commerce'
+  return 'Autre'
+}
+
+/** Verbes de RÉCEPTION d'argent : le sens de la phrase prime sur les mots de catégorie (AUD-197). */
+function detecterReception(clean: string): boolean {
+  if (/\b(recu|recue|recus|recois|recevoir|percu|percue|gagne|gagnee|gagner|encaisse|encaissee|encaisser|tombe|rentre|rentree|touche)\b/.test(clean)) return true
+  if (/\b(on|il|elle|ils|elles|m|me)\s+(a|ont|as)?\s*(paye|payee|envoye|envoyee|donne|donnee|vire|viree|verse|versee)\b/.test(clean)) return true
+  if (/\bm\s+(a|ont)\s+(paye|envoye|donne|vire|verse)\b/.test(clean)) return true
+  return false
+}
+
+/**
+ * Parse vocal pour la Saisie Express Comptable et Sama Xaalis.
+ * Le SENS (reçu / payé) est décidé par le verbe avant la catégorie ; en cas d'ambiguïté totale,
+ * l'onglet courant tranche.
  */
 export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente' | 'depense'): SaisieExpressIntent {
   const clean = normaliserTexteVocal(transcript)
   const montant = extraireMontantCFA(clean)
 
-  // 1. Détection explicite des mots-clés de Dépense (singulier, pluriel, wolof, variantes)
-  const hasMotCleDepense = /\b(depense|depenses|depans|depanse|depanser|depanseur|charge|charges|sortie|sorties|payer|paiement|paiements|facture|factures|frais|perte|pertes|decaissement|decaissements|remboursement|rembourser|dette|reglement)\b/i.test(clean)
+  const reception = detecterReception(clean)
+  // Verbes de sortie explicites (« m'a payé » = réception, retiré avant ce test)
+  const cleanSansReception = clean.replace(/\b(on|il|elle|ils|elles|m|me)\s+(a|ont|as)?\s*(paye|payee|envoye|envoyee|donne|donnee|vire|viree|verse|versee)\b/g, ' ')
+  const hasMotCleDepense = /\b(depense|depenses|depans|depanse|depanser|depanseur|charge|charges|sortie|sorties|payer|paye|payee|paiement|paiements|achete|facture|factures|frais|perte|pertes|decaissement|decaissements|remboursement|rembourser|dette|reglement)\b/.test(cleanSansReception)
 
-  // 2. Détection des catégories typiquement Dépenses même sans le mot "dépense"
-  const isEcole = /\b(ecole|école|scolarite|scolarité|mensualite|mensualité|etudes|études|fournitures scolaires|inscription|daara|creche|crèche|universite|université|college|collège|lycee|lycée)\b/i.test(clean)
-  const isPressing = /\b(pressing|blanchisserie|repassage|lavage|linge|nettoyage vetement|teinturerie)\b/i.test(clean)
-  const isTransport = /\b(transport|transports|essence|carburant|gasoil|gazoil|diesel|taxi|taxis|tiak|tiaktiak|clando|peage|autoroute)\b/i.test(clean)
-  const isLoyer = /\b(loyer|loyers|magasin|bail|locataire)\b/i.test(clean)
-  const isFourniture = /\b(fourniture|fournitures|sachet|sachets|emballage|emballages|carton|cartons|papier|papiers|scotch|etiquette|etiquettes|sac|sacs|sacs plastiques|sac plastique)\b/i.test(clean)
-  const isSalaire = /\b(salaire|salaires|employe|employes|personnel|gardien|commission|commissions|avance salaire)\b/i.test(clean)
-  const isTaxes = /\b(taxe|taxes|impot|impots|patente|mairie|douane|fiscalite)\b/i.test(clean)
-  const isChargesCourantes = /\b(woyofal|senelec|sde|sen eau|seneau|electricite|eau|sonatel|orange|wifi|forfait|credit telephone|repas|dejeuner|diner|manger|thieb|ndekki|nourriture|recharge)\b/i.test(clean)
-  const isAchatStock = /\b(achat stock|achat fournisseur|achat marchandise|approvisionnement|reappro)\b/i.test(clean)
+  const isEcole = /\b(ecole|scolarite|mensualite|etudes|fournitures scolaires|inscription|daara|creche|universite|college|lycee)\b/.test(clean)
+  const isPressing = /\b(pressing|blanchisserie|repassage|lavage|linge|nettoyage vetement|teinturerie)\b/.test(clean)
+  const isTransport = /\b(transport|transports|essence|carburant|gasoil|gazoil|diesel|taxi|taxis|tiak|tiaktiak|clando|peage|autoroute)\b/.test(clean)
+  const isLoyer = /\b(loyer|loyers|magasin|bail|locataire)\b/.test(clean)
+  const isFourniture = /\b(fourniture|fournitures|sachet|sachets|emballage|emballages|carton|cartons|papier|papiers|scotch|etiquette|etiquettes|sac|sacs|sacs plastiques|sac plastique)\b/.test(clean)
+  const isSalaire = /\b(salaire|salaires|employe|employes|personnel|gardien|commission|commissions|avance salaire)\b/.test(clean)
+  const isTaxes = /\b(taxe|taxes|impot|impots|patente|mairie|douane|fiscalite)\b/.test(clean)
+  const isChargesCourantes = /\b(woyofal|senelec|sde|sen eau|seneau|electricite|eau|sonatel|orange|wifi|forfait|credit telephone|repas|dejeuner|diner|manger|thieb|ndekki|nourriture|recharge)\b/.test(clean)
+  const isAchatStock = /\b(achat stock|achat fournisseur|achat marchandise|approvisionnement|reappro)\b/.test(clean)
+  const hasMotCleVente = /\b(vente|ventes|jaay|jaaye|jaayi|vendre|vendu|vendus|encaissement|recette|recettes)\b/.test(clean)
 
-  // 3. Détection explicite de Vente (singulier, pluriel, wolof)
-  const hasMotCleVente = /\b(vente|ventes|jaay|jaaye|jaayi|vendre|vendu|vendus|encaissement|recette|recettes)\b/i.test(clean)
+  const categorieFlag = isEcole || isPressing || isTransport || isLoyer || isFourniture || isSalaire || isTaxes || isChargesCourantes || isAchatStock
 
-  // Détermination du mode :
-  // - Si mot-clé explicite dépense OU catégorie typique de dépense -> DÉPENSE
-  // - Si mot-clé explicite de vente (ex: "Vente...") -> VENTE
-  // - Si aucun mot-clé explicite, respecter le mode sélectionné par l'utilisateur (onglet Dépense vs Vente)
-  let isDepense = false
-  if (hasMotCleDepense || isEcole || isPressing || isTransport || isLoyer || isFourniture || isSalaire || isTaxes || isChargesCourantes || isAchatStock) {
-    isDepense = true
-  } else if (hasMotCleVente) {
-    isDepense = false
-  } else if (modeActuel === 'depense') {
-    isDepense = true
-  } else {
-    isDepense = false
-  }
+  let isDepense: boolean
+  if (reception && !hasMotCleDepense) isDepense = false // « j'ai reçu 25 000 de salaire » = revenu
+  else if (hasMotCleDepense) isDepense = true
+  else if (hasMotCleVente) isDepense = false
+  else if (/\bsalaire\b/.test(clean) && !/\b(gardien|employe|employes|personnel|avance)\b/.test(clean) && !(isEcole || isPressing || isTransport || isLoyer || isFourniture || isTaxes || isChargesCourantes || isAchatStock) && modeActuel === 'vente') isDepense = false // « salaire 25000 » dans l'onglet Revenu
+  else if (categorieFlag) isDepense = true
+  else isDepense = modeActuel === 'depense'
 
   if (isDepense) {
     let cat: SaisieExpressIntent['categorie'] = 'autre'
     let descDefaut = 'Dépense'
-
-    if (isEcole) {
-      cat = 'ecole'
-      descDefaut = 'Frais de scolarité / École'
-    } else if (isPressing) {
-      cat = 'pressing'
-      descDefaut = 'Pressing / Blanchisserie'
-    } else if (isTransport) {
-      cat = 'transport'
-      descDefaut = 'Frais de transport'
-    } else if (isLoyer) {
-      cat = 'loyer'
-      descDefaut = 'Paiement loyer'
-    } else if (isFourniture) {
-      cat = 'fournitures'
-      descDefaut = 'Fournitures / Emballages'
-    } else if (isAchatStock || /\b(stock|marchandise|fournisseur|achat|colis)\b/i.test(clean)) {
-      cat = 'stock'
-      descDefaut = 'Achat de stock'
-    } else if (isSalaire) {
-      cat = 'salaires'
-      descDefaut = 'Salaires / Équipe'
-    } else if (/\b(marketing|pub|publicite|sponsor|flyer|flyers)\b/i.test(clean)) {
-      cat = 'marketing'
-      descDefaut = 'Marketing / Publicité'
-    } else if (isTaxes) {
-      cat = 'taxes'
-      descDefaut = 'Taxes / Impôts'
-    }
-
-    // Extraire une description propre à partir des mots dictés
-    let descClean = clean
-      .replace(/\b(depense|depenses|depans|depanse|depanser|pour|de|du|des|le|la|les|un|une)\b/gi, '')
-      .replace(/\b(\d{2,7})\b/g, '')
-      .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs)\b/gi, '')
-      .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt|trente|quarante|cinquante|cent|mille|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-
-    let descFinale = descClean ? descClean.charAt(0).toUpperCase() + descClean.slice(1) : descDefaut
+    if (isEcole) { cat = 'ecole'; descDefaut = 'Frais de scolarité / École' }
+    else if (isPressing) { cat = 'pressing'; descDefaut = 'Pressing / Blanchisserie' }
+    else if (isTransport) { cat = 'transport'; descDefaut = 'Frais de transport' }
+    else if (isLoyer) { cat = 'loyer'; descDefaut = 'Paiement loyer' }
+    else if (isFourniture) { cat = 'fournitures'; descDefaut = 'Fournitures / Emballages' }
+    else if (isAchatStock || /\b(stock|marchandise|fournisseur|achat|colis)\b/.test(clean)) { cat = 'stock'; descDefaut = 'Achat de stock' }
+    else if (isSalaire) { cat = 'salaires'; descDefaut = 'Salaires / Équipe' }
+    else if (/\b(marketing|pub|publicite|sponsor|flyer|flyers)\b/.test(clean)) { cat = 'marketing'; descDefaut = 'Marketing / Publicité' }
+    else if (isTaxes) { cat = 'taxes'; descDefaut = 'Taxes / Impôts' }
 
     return {
       mode: 'depense',
       montant: montant || 0,
       categorie: cat,
-      description: descFinale
+      categorieKalpe: categorieKalpeDepense(clean),
+      description: libelleDepuisTranscript(transcript) || descDefaut,
     }
   }
 
-  // Intention Vente
-  let libelle = clean
-    .replace(/\b(vente|ventes|jaay|jaaye|jaayi|encaisser|vendre|ajouter|pour|de|du|des)\b/gi, '')
-    .replace(/\b(\d{2,7})\b/g, '')
-    .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs)\b/gi, '')
-    .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt|trente|quarante|cinquante|cent|mille|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-
+  const libelle = libelleDepuisTranscript(transcript)
   return {
     mode: 'vente',
     montant: montant || 0,
-    libelleProduit: libelle ? libelle.charAt(0).toUpperCase() + libelle.slice(1) : undefined
+    categorieRevenuKalpe: categorieKalpeRevenu(clean),
+    libelleProduit: libelle || undefined,
   }
 }
 
@@ -544,7 +581,7 @@ export function parseAjoutProduitIntent(transcript: string): { nom: string; prix
  */
 export function getMessageErreurMicro(err: string): string {
   if (err === 'not-allowed' || err === 'PermissionDeniedError' || err === 'NotAllowedError') {
-    return "Microphone bloqué par votre navigateur. Cliquez sur l'icône de cadenas 🔒 (ou de réglages) à gauche de l'adresse du site (URL) -> Autorisez le Microphone, puis réessayez."
+    return "Microphone bloqué par votre navigateur. Cliquez sur l'icône de cadenas (ou de réglages) à gauche de l'adresse du site (URL) -> Autorisez le Microphone, puis réessayez."
   }
   if (err === 'no-speech') {
     return "Aucune voix détectée. Veuillez parler plus près de votre micro."
@@ -555,7 +592,11 @@ export function getMessageErreurMicro(err: string): string {
   if (err === 'audio-capture') {
     return "Aucun microphone détecté sur cet appareil. Branchez un micro ou des écouteurs."
   }
-  return `Micro indisponible (${err}). Réessayez ou vérifiez les autorisations de votre navigateur.`
+  if (err === 'language-not-supported') return "La langue de reconnaissance n'est pas prise en charge par ce navigateur. Saisissez au clavier."
+  if (err === 'aborted') return "L'écoute a été interrompue. Appuyez de nouveau sur le micro."
+  if (err === 'service-not-allowed') return "Le service de reconnaissance vocale est bloqué sur cet appareil. Saisissez au clavier."
+  if (err === 'NotFoundError') return "Aucun microphone détecté sur cet appareil. Branchez un micro ou des écouteurs."
+  return "Le micro ne répond pas. Réessayez ou saisissez au clavier."
 }
 
 /**
@@ -643,3 +684,99 @@ export function createVoiceListener({
   return recognition
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sama Xaalis : dettes et créances personnelles (AUD-198)
+// Sémantique distincte du Carnet boutique : « me doit » = on me doit (a_recevoir), « je dois » = à payer (a_payer).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface KalpeDetteIntent {
+  /** null = sens non précisé (le formulaire garde son choix actuel) */
+  sens: 'a_recevoir' | 'a_payer' | null
+  /** « m'a remboursé » : à enregistrer comme règlement d'une créance existante, pas comme nouvelle dette */
+  remboursement: boolean
+  nomClient?: string
+  tiersType: 'particulier' | 'entreprise'
+  telephone?: string
+  /** AAAA-MM-JJ */
+  dateEcheance?: string
+  montant: number | null
+}
+
+const JOURS_SEMAINE = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
+
+function isoLocal(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+/** Échéance dictée (« demain », « avant vendredi », « dans 3 jours », « fin du mois ») → AAAA-MM-JJ. */
+export function extraireEcheance(clean: string, aujourdhui: Date = new Date()): { date?: string; mots: string[] } {
+  const base = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate())
+  const ajout = (n: number) => { const d = new Date(base); d.setDate(d.getDate() + n); return isoLocal(d) }
+  if (/\bapres demain\b/.test(clean)) return { date: ajout(2), mots: ['apres', 'demain'] }
+  if (/\bdemain\b/.test(clean)) return { date: ajout(1), mots: ['demain'] }
+  const dans = clean.match(/\bdans (\d{1,2}) (jour|jours|semaine|semaines)\b/)
+  if (dans) return { date: ajout(parseInt(dans[1], 10) * (dans[2].startsWith('semaine') ? 7 : 1)), mots: dans[0].split(' ') }
+  if (/\bfin (du|de) mois\b/.test(clean)) {
+    return { date: isoLocal(new Date(base.getFullYear(), base.getMonth() + 1, 0)), mots: ['fin', 'du', 'de', 'mois'] }
+  }
+  for (let i = 0; i < 7; i++) {
+    if (new RegExp(`\\b${JOURS_SEMAINE[i]}\\b`).test(clean)) {
+      let delta = (i - base.getDay() + 7) % 7
+      if (delta === 0) delta = 7
+      return { date: ajout(delta), mots: [JOURS_SEMAINE[i], 'avant', 'pour', 'le'] }
+    }
+  }
+  return { mots: [] }
+}
+
+const MOTS_VIDES_DETTE = new Set([
+  'bonjour', 'bonsoir', 'salam', 'salut', 'allo', 'merci', 'stp', 'svp', 'je', 'j', 'ai', 'me', 'm', 'a', 'as', 'on', 'il', 'elle', 'mon', 'ma',
+  'dois', 'doit', 'doivent', 'devoir', 'dette', 'dettes', 'creance', 'creances', 'credit', 'bor', 'bore', 'emprunte', 'empruntee', 'prete', 'pretee',
+  'preter', 'avance', 'avancer', 'rembourse', 'rembourser', 'remboursement', 'paye', 'payer', 'verse', 'envers', 'pour', 'de', 'du', 'des', 'd',
+  'le', 'la', 'les', 'l', 'au', 'aux', 'a', 'ak', 'et', 'un', 'une', 'avant', 'apres', 'demain', 'aujourdhui', 'dans', 'fin', 'mois', 'jours', 'jour',
+  'semaine', 'semaines', 'francs', 'franc', 'fcfa', 'cfa', 'frs', 'f', 'euro', 'euros', 'noter', 'note', 'ajoute', 'ajouter', 'enregistre', 'client', 'monsieur', 'madame',
+  ...JOURS_SEMAINE,
+])
+
+const MOTS_ENTREPRISE = /\b(ecole|college|lycee|universite|senelec|sde|sonatel|orange|free|expresso|societe|entreprise|banque|pressing|boutique|sarl|clinique|hopital|mairie|association|groupe|cabinet|agence|garage|restaurant|pharmacie|mosquee|gie|ong)\b/
+
+/** Analyse une phrase dictée dans la modale « Dette / Créance » de Sama Xaalis. */
+export function parseKalpeDetteIntent(transcript: string, alternatives: string[] = []): KalpeDetteIntent {
+  const candidats = [transcript, ...alternatives.filter(a => a && a !== transcript)]
+  let meilleur: KalpeDetteIntent | null = null
+  for (const phrase of candidats) {
+    const clean = normaliserTexteVocal(phrase)
+    const brut = clean.replace(/(?:\+?221\s*)?(?:7[05678]|33)(?:\s*\d{3}\s*\d{2}\s*\d{2}|\s*\d{2}\s*\d{2}\s*\d{3}|\s*\d{7})\b/g, ' ')
+    const tel = clean.match(/(?:\+?221\s*)?((?:7[05678]|33)(?:\s*\d{3}\s*\d{2}\s*\d{2}|\s*\d{2}\s*\d{2}\s*\d{3}|\s*\d{7}))\b/)
+    const telephone = tel ? tel[1].replace(/\s+/g, '') : undefined
+
+    const remboursement = /\b(m a rembourse|ma rembourse|m ont rembourse|rembourse moi|rembourse|a rembourse|ont rembourse|a solde)\b/.test(clean) && !/\bje (dois|rembourse)\b/.test(clean) && !/\bj ai rembourse\b/.test(clean)
+    let sens: KalpeDetteIntent['sens'] = null
+    if (/\b(je dois|je lui dois|j ai emprunte|j ai pris a credit|j ai une dette|dette envers|je doit)\b/.test(clean)) sens = 'a_payer'
+    else if (/\b(me doit|me doivent|m a emprunte|m ont emprunte|j ai prete|on me doit|creance|doit me)\b/.test(clean) || remboursement) sens = 'a_recevoir'
+    else if (/\bj ai rembourse\b/.test(clean)) sens = 'a_payer'
+
+    const { date, mots: motsDate } = extraireEcheance(clean)
+    const montant = extraireMontantCFA(brut)
+    const tiersType: KalpeDetteIntent['tiersType'] = MOTS_ENTREPRISE.test(clean) ? 'entreprise' : 'particulier'
+
+    // Nom : mots de la parole d'origine hors mots vides, nombres, date et téléphone
+    const exclusDate = new Set(motsDate)
+    const garde: string[] = []
+    for (const b of phrase.replace(/[’']/g, ' ').split(/\s+/)) {
+      const w = b.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
+      if (!w) continue
+      const n = sansAccents(w)
+      if (/^\d/.test(n)) continue
+      if (MOTS_VIDES_DETTE.has(n) || MOTS_NOMBRES_LIBELLE.has(n) || exclusDate.has(n)) continue
+      garde.push(w.charAt(0).toUpperCase() + w.slice(1))
+    }
+    const nomClient = garde.length ? garde.join(' ') : undefined
+    const intent: KalpeDetteIntent = { sens, remboursement, nomClient, tiersType, telephone, dateEcheance: date, montant }
+    if (!meilleur) meilleur = intent
+    if (montant || nomClient) return intent
+  }
+  return meilleur as KalpeDetteIntent
+}

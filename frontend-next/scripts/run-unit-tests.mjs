@@ -32,6 +32,7 @@ import {
   extraireMontantCFA,
   parseSaisieExpressIntent,
   parseDetteIntent,
+  parseKalpeDetteIntent,
   cleanVoiceSearchQuery,
   normaliserTexteVocal,
   parseAjoutProduitIntent,
@@ -518,7 +519,7 @@ it('parseSaisieExpressIntent: détection automatique dépense / vente et catégo
   const v1 = parseSaisieExpressIntent('Vente café Touba 500')
   assert.equal(v1.mode, 'vente')
   assert.equal(v1.montant, 500)
-  assert.equal(v1.libelleProduit?.toLowerCase().includes('cafe touba'), true)
+  assert.equal(v1.libelleProduit?.toLowerCase().includes('café touba'), true)
 })
 
 it('parseDetteIntent: détection crédit, remboursement et client', () => {
@@ -583,6 +584,34 @@ it('AUD-199 extraireMontantCFA: nombres en lettres composés, milliers, millions
   ]
   for (const [texte, attendu] of cas) assert.equal(extraireMontantCFA(texte), attendu, texte)
   assert.equal(extraireMontantCFA('zéro'), null)
+})
+it('AUD-197 parseSaisieExpressIntent: le sens (reçu / payé) prime sur la catégorie', () => {
+  for (const [t, mode] of [
+    ["Aujourd'hui j'ai reçu 25 000 francs de salaire", 'depense'], ["j'ai reçu 25000", 'depense'], ["j'ai gagné 5000 francs", 'depense'],
+    ["j'ai encaissé 8000 de loyer", 'depense'], ['le salaire est tombé 200000', 'depense'], ['Wave reçu 10000', 'depense'],
+    ["j'ai reçu 25000 pour le transport de marchandises", 'depense'], ['salaire 25000', 'vente'],
+  ]) assert.equal(parseSaisieExpressIntent(t, mode).mode, 'vente', t)
+  for (const t of ["j'ai payé 5000 de transport", 'salaire gardien 40000', "j'ai payé le salaire 40000", "j'ai dépensé 5000 francs"]) {
+    assert.equal(parseSaisieExpressIntent(t, 'vente').mode, 'depense', t)
+  }
+  assert.equal(parseSaisieExpressIntent("Aujourd'hui j'ai reçu 25 000 francs de salaire", 'vente').categorieRevenuKalpe, 'Salaire & Emploi')
+})
+it('AUD-202/203 parseSaisieExpressIntent: catégorie valide et libellé issu de la parole', () => {
+  const a = parseSaisieExpressIntent("J'ai payé 3000 francs pour le déjeuner", 'depense')
+  assert.equal(a.categorieKalpe, 'Alimentation & Marché'); assert.equal(a.description, 'Déjeuner')
+  assert.equal(parseSaisieExpressIntent("Ce matin j'ai payé 5000 FCFA de transport", 'depense').description, 'Transport')
+  assert.equal(parseSaisieExpressIntent("j'ai payé la scolarité 25000", 'depense').categorieKalpe, 'École & Scolarité')
+  assert.equal(parseSaisieExpressIntent('dépense ñaari junni loyer', 'depense').description, 'Loyer')
+  assert.equal(parseSaisieExpressIntent("j'ai dépensé 5000 francs", 'depense').description, 'Dépense')
+})
+it('AUD-198 parseKalpeDetteIntent: sens, nom, téléphone, échéance, entreprise', () => {
+  let r = parseKalpeDetteIntent('Je dois 20000 à Moussa'); assert.equal(r.sens, 'a_payer'); assert.equal(r.nomClient, 'Moussa'); assert.equal(r.montant, 20000)
+  r = parseKalpeDetteIntent('Moussa me doit 10000'); assert.equal(r.sens, 'a_recevoir'); assert.equal(r.nomClient, 'Moussa')
+  r = parseKalpeDetteIntent("Awa m'a remboursé 5000"); assert.equal(r.remboursement, true); assert.equal(r.nomClient, 'Awa')
+  r = parseKalpeDetteIntent('Moussa Diop 77 123 45 67 me doit 10000 avant vendredi')
+  assert.equal(r.nomClient, 'Moussa Diop'); assert.equal(r.telephone, '771234567'); assert.equal(r.montant, 10000); assert.match(r.dateEcheance, /^\d{4}-\d{2}-\d{2}$/)
+  r = parseKalpeDetteIntent("J'ai emprunté 15000 à Awa"); assert.equal(r.sens, 'a_payer'); assert.equal(r.nomClient, 'Awa')
+  r = parseKalpeDetteIntent('Je dois 30000 à la Senelec'); assert.equal(r.tiersType, 'entreprise'); assert.equal(r.sens, 'a_payer')
 })
 it('cleanVoiceSearchQuery: extraction propre du mot-clé produit', () => {
   assert.equal(cleanVoiceSearchQuery('Cherche robe en wax'), 'robe en wax')

@@ -62,7 +62,8 @@ export function useComptaSaisieVoice({
         if (intent.mode === 'depense') {
           setMode('depense')
           if (intent.montant && intent.montant > 0) setMontantDepense(String(intent.montant))
-          if (intent.categorie) setCatDepense(intent.categorie)
+          // AUD-202 : seules les catégories existant dans le formulaire sont posées (ecole, pressing -> autre, le libellé les conserve)
+          if (intent.categorie) setCatDepense(['transport', 'stock', 'loyer', 'salaires', 'marketing', 'fournitures', 'taxes', 'autre'].includes(intent.categorie) ? intent.categorie : 'autre')
           if (intent.description) setDescDepense(intent.description)
           setVoiceFeedback(`Dépense reconnue : ${intent.description || intent.categorie} (${intent.montant ? fcfa(intent.montant) : '0 FCFA'})`)
           jouerBipEtVibrer('succes')

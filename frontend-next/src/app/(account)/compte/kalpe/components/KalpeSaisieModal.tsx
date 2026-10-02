@@ -66,6 +66,9 @@ export function KalpeSaisieModal({
     setCategorie,
     setMode,
     setTiersNom,
+    setTiersTel,
+    setTiersType,
+    setDateEcheance,
     setDetteSens,
   })
 
