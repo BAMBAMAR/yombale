@@ -109,6 +109,7 @@ export default function AgencesSearch({
 
       <input
         type="text"
+        aria-label="Rechercher une agence ou un bien"
         value={q}
         onChange={e => setQ(e.target.value)}
         placeholder="Rechercher une agence, bien..."

@@ -459,6 +459,16 @@ describe('AUD-232 — suivi public : masque de téléphone et nom de boutique ho
   });
 });
 
+describe('AUD-230 (suite) — champs de recherche et tri avec un nom accessible', () => {
+  test.each([
+    ['app/boutiques/[id]/components/BoutiqueFilterBar.tsx', /aria-label="Trier les produits"/],
+    ['app/boutiques/BoutiquesSearch.tsx', /aria-label="Rechercher une boutique ou un produit"/],
+    ['app/agences/components/AgencesSearch.tsx', /aria-label="Rechercher une agence ou un bien"/],
+    ['app/recherche/RechercheClient.tsx', /aria-label="Rechercher sur Nopalou"/],
+    ['app/SearchWithAnchor.tsx', /aria-label=\{placeholder/],
+  ])('%s', (rel, motif) => expect(lire(rel)).toMatch(motif));
+});
+
 describe('AUD-232 (lot 2) — pluriels et annonce introuvable expliquée', () => {
   test('pluriels français sur les compteurs des annuaires', () => {
     expect(lire('app/agences/page.tsx')).toMatch(/pluriel\(total, 'agence'\)/);

@@ -127,6 +127,7 @@ function RechercheClientInner({ query, data, prixMax, tri }: { query: string; da
         <input
           ref={inputRef}
           type="search"
+          aria-label="Rechercher sur Nopalou"
           value={inputVal}
           onChange={e => setInputVal(e.target.value)}
           placeholder="Rechercher produits, boutiques, annonces, immo…"

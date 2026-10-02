@@ -213,6 +213,7 @@ export default function BoutiqueFilterBar({
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {/* Option Tri */}
           <select
+            aria-label="Trier les produits"
             value={sortOption}
             onChange={e => setSortOption(e.target.value)}
             style={{

@@ -105,6 +105,7 @@ export default function BoutiquesSearch({
 
       <input
         type="text"
+        aria-label="Rechercher une boutique ou un produit"
         value={q}
         onChange={e => setQ(e.target.value)}
         placeholder="Rechercher une boutique, produit..."

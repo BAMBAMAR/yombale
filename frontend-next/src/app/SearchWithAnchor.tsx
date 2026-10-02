@@ -34,6 +34,7 @@ export default function SearchWithAnchor({ action, defaultValue, placeholder, hi
       <input
         type="text"
         name="q"
+        aria-label={placeholder.split(/\s*\(/)[0] || 'Rechercher'}
         defaultValue={defaultValue}
         placeholder={placeholder}
         className="annonces-search-input"
