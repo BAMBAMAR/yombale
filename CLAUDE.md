@@ -34,6 +34,10 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Correctifs Ergonomie & Design System (Panier Checkout & Actions Commandes)** :
+  - **Panier Checkout** : Suppression des émojis et flèches doubles dans `DrawerCartOnlineOrderForm.tsx` et locales, bouton fluide anti-débordement adaptatif pleine largeur.
+  - **Barre d'Actions Commande** : Suppression de `marginLeft: 'auto'` sur le bouton Annuler dans `CommandeActionsBar.tsx`, garantissant un alignement naturel sans décalage isolé à droite.
+
 - **Correction Crash 500 Commandes Boutique & Éradication des Erreurs d'Hydratation React SSR (#418, #423, #425)** :
   - **Correction Base de Données Render** : Ajout de la colonne `idempotency_key` manquante sur `commandes_boutique`, `depenses`, `caisse_clients_credits`, `boutique_pos_sessions`, résolvant l'erreur 500 sur `creerCommandeBoutique`.
   - **Correction SSR Frontend** : Remplacement des lectures synchrones de `localStorage` dans `useState` par des initialisations sécurisées SSR et réconciliation après montage dans `useCommandesData`, `GestionEntrepots`, `SocialShopManager`, `useCatalogueProduitsData` et `CatalogueProduits`.

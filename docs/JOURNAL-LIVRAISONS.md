@@ -1,5 +1,9 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correctifs Ergonomie & Design System (Panier Checkout & Actions Commandes)** :
+  * **Éradication Débordement & Troncature Bouton Payer (`DrawerCartOnlineOrderForm.tsx`, locales `fr`, `en`, `ar`)** : Nettoyage de la clé `validateAndPayBtn` (suppression de l'émoji non conforme et de la flèche textuelle redondante), libellé contextuel adapté selon la méthode de paiement (`Valider et Payer (X FCFA)` ou `Valider la commande (X FCFA)`), remplacement par une icône vectorielle SVG `ArrowRight`, et styles responsives (`minHeight: 48px`, `whiteSpace: normal`) garantissant un affichage parfait sur 100% de la largeur sans aucun débordement.
+  * **Repositionnement Bouton Annuler Commande (`CommandeActionsBar.tsx`)** : Suppression de `marginLeft: 'auto'` qui rejetait le bouton à l'extrême droite lorsqu'il passait sur une deuxième ligne en Flexbox. Harmonisation de la typographie (12px, 700), du padding et de l'ombre avec les boutons `Facture PDF` et `Dispatch Livreur`.
+
 - **Correction Crash 500 Commandes Boutique & Éradication des Erreurs d'Hydratation React SSR (#418, #423, #425)** :
   * **Cause Racine Crash 500 (`/api/comptabilite/:id/commandes`)** : La colonne `idempotency_key` (PWA offline idempotency) était absente de la table `commandes_boutique` sur la base de données PostgreSQL de production Render (erreur 42703).
   * **Correction Base de Données** : Exécution DDL idempotente appliquant la colonne `idempotency_key VARCHAR(128)` et son index partiel unique sur `commandes_boutique`, `depenses`, `caisse_clients_credits`, `boutique_pos_sessions`, ainsi que la table `stock_ecarts`. Validation directe par exécution transactionnelle avec rollback de `creerCommandeBoutique` (succès 100%).

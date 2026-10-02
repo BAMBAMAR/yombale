@@ -134,18 +134,18 @@ export default function CommandeActionsBar({
             onClick={onAnnuler}
             disabled={loading}
             style={{
-              padding: '6px 10px',
+              padding: '6px 12px',
               background: '#ffffff',
               color: '#dc2626',
               border: '1px solid #fecaca',
               borderRadius: 6,
-              fontSize: 11.5,
-              fontWeight: 600,
+              fontSize: 12,
+              fontWeight: 700,
               cursor: loading ? 'not-allowed' : 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 4,
-              marginLeft: 'auto',
+              gap: 5,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
             }}
             title="Annuler cette commande"
           >
