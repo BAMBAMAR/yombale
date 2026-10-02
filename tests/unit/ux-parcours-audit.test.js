@@ -55,6 +55,47 @@ describe('AUD-224 — message de connexion explicite', () => {
   });
 });
 
+describe('AUD-216 — recherche globale : pertinence, vrais totaux, budget', () => {
+  const ligne = (n, extra = {}) => ({ id: String(n), nom: 'x', total_count: '176', ...extra });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    pool.query.mockImplementation(async (sql) => {
+      if (/FROM produits p/.test(sql)) return { rows: [ligne(1, { prix: 120000 }), ligne(2, { prix: 130000 })] };
+      if (/FROM boutiques b/.test(sql)) return { rows: [] };
+      if (/annonces_classifiees/.test(sql)) return { rows: [ligne(3, { total_count: '44' })] };
+      return { rows: [] };
+    });
+  });
+  const produitsSql = () => pool.query.mock.calls.map(c => c[0]).find(s => /FROM produits p/.test(s));
+  const produitsParams = () => pool.query.mock.calls.find(c => /FROM produits p/.test(c[0]))[1];
+
+  test('le total est le vrai nombre de correspondances, pas la taille de la page', async () => {
+    const res = await request(app).get('/api/search').query({ q: 'iphone', limit: 12 });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.totaux).toMatchObject({ produits: 176, annonces: 44 });
+    expect(res.body.total).toBe(176 + 44);
+  });
+
+  test('seules les offres en stock comptent ; les prix très inférieurs à la médiane passent en fin de liste', async () => {
+    await request(app).get('/api/search').query({ q: 'iphone' });
+    const sql = produitsSql();
+    expect(sql).toMatch(/EXISTS \(SELECT 1 FROM offres o/);
+    expect(sql).toMatch(/percentile_cont/);
+    expect(sql).not.toMatch(/ORDER BY\s+CASE WHEN p\.nom ILIKE \$2 THEN 0 ELSE 1 END,\s+p\.prix_min ASC/);
+  });
+
+  test('budget : prix_max et tri sont transmis, tri inconnu ignoré (aucune injection)', async () => {
+    await request(app).get('/api/search').query({ q: 'iphone', prix_max: '200000', tri: 'prix_asc' });
+    expect(produitsParams()).toContain(200000);
+    expect(produitsSql()).toMatch(/ORDER BY[\s\S]*m\.prix_min ASC/);
+    // PostgreSQL refuse un paramètre non référencé (« impossible de déterminer le type du paramètre $2 ») : constaté sur base réelle
+    expect(produitsSql()).toMatch(/\$2::text IS NOT NULL/);
+    jest.clearAllMocks();
+    await request(app).get('/api/search').query({ q: 'iphone', tri: 'x; DROP TABLE produits' });
+    expect(produitsSql()).not.toMatch(/DROP TABLE/);
+  });
+});
+
 describe('AUD-215 — suivi public : jamais de joker', () => {
   beforeEach(() => { jest.clearAllMocks(); pool.query.mockResolvedValue({ rows: [{ id: 'x', reference: 'C-1', client_nom: 'A B', client_telephone: '770000001', statut: 'en_attente', montant_total: 1 }] }); });
 

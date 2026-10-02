@@ -12,6 +12,7 @@ function fcfa(n: number | null) {
 interface SearchData {
   q: string
   total: number
+  totaux?: { produits: number; boutiques: number; annonces: number; immo: number }
   produits: { id: string; nom: string; marque: string | null; prix: number | null; image: string | null; marchand: string | null }[]
   boutiques: { type: string; id: string; nom: string; description: string | null; categorie: string | null; ville: string | null; image: string | null; slug: string | null; prix: number | null }[]
   annonces: { id: string; nom: string; description: string | null; prix: number | null; ville: string | null; image: string | null; categorie: string | null }[]
@@ -50,19 +51,43 @@ function ResultCard({ href, image, titre, sub1, sub2, badge }: {
   )
 }
 
-function EmptyState({ q }: { q: string }) {
+function EmptyState({ q, prixMax }: { q: string; prixMax?: string }) {
   return (
     <div style={{ textAlign: 'center', padding: '48px 20px', color: '#6b7280' }}>
-      <div style={{ fontSize: 48, marginBottom: 12 }}></div>
-      <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Aucun résultat pour « {q} »</p>
-      <p style={{ fontSize: 13 }}>Vérifiez l&apos;orthographe ou essayez un terme plus général.</p>
+      <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>
+        {prixMax ? `Aucun résultat pour « ${q} » à ce budget` : `Aucun résultat pour « ${q} »`}
+      </p>
+      <p style={{ fontSize: 13 }}>
+        {prixMax ? 'Choisissez un budget plus élevé ou « Tout budget » ci-dessus.' : 'Vérifiez l’orthographe ou essayez un terme plus général.'}
+      </p>
     </div>
   )
 }
 
 type Tab = 'tout' | 'produits' | 'boutiques' | 'annonces' | 'immo'
 
-function RechercheClientInner({ query, data }: { query: string; data: SearchData | null }) {
+// AUD-216 : budget et tri conservés dans l'adresse (la recherche garde son contexte au retour arrière)
+const BUDGETS = [
+  { label: 'Tout budget', valeur: '' },
+  { label: '≤ 50 000', valeur: '50000' },
+  { label: '≤ 100 000', valeur: '100000' },
+  { label: '≤ 200 000', valeur: '200000' },
+  { label: '≤ 500 000', valeur: '500000' },
+]
+const TRIS = [
+  { label: 'Pertinence', valeur: '' },
+  { label: 'Prix croissant', valeur: 'prix_asc' },
+  { label: 'Prix décroissant', valeur: 'prix_desc' },
+]
+
+function lienRecherche(q: string, prixMax: string, tri: string) {
+  const p = new URLSearchParams({ q })
+  if (prixMax) p.set('prix_max', prixMax)
+  if (tri) p.set('tri', tri)
+  return `/recherche?${p.toString()}`
+}
+
+function RechercheClientInner({ query, data, prixMax, tri }: { query: string; data: SearchData | null; prixMax: string; tri: string }) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('tout')
   const [inputVal, setInputVal] = useState(query)
@@ -72,15 +97,16 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     const q = inputVal.trim()
-    if (q) startTransition(() => router.push(`/recherche?q=${encodeURIComponent(q)}`))
+    if (q) startTransition(() => router.push(lienRecherche(q, prixMax, tri)))
   }
 
+  // Vrais totaux (nombre de correspondances), pas la taille de la page affichée
   const counts = data ? {
     tout: data.total,
-    produits: data.produits.length,
-    boutiques: data.boutiques.length,
-    annonces: data.annonces.length,
-    immo: data.immo.length,
+    produits: data.totaux?.produits ?? data.produits.length,
+    boutiques: data.totaux?.boutiques ?? data.boutiques.length,
+    annonces: data.totaux?.annonces ?? data.annonces.length,
+    immo: data.totaux?.immo ?? data.immo.length,
   } : null
 
   const tabs: { key: Tab; label: string; emoji: string }[] = [
@@ -142,8 +168,30 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
             </p>
           </div>
 
+          {/* Budget et tri : visibles dès qu'il y a une recherche, y compris quand le budget ne laisse aucun résultat */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            <div role="group" aria-label="Budget maximum" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+              {BUDGETS.map(b => (
+                <Link key={b.valeur || 'tout'} href={lienRecherche(data.q, b.valeur, tri)} aria-current={prixMax === b.valeur ? 'true' : undefined}
+                  style={{ flexShrink: 0, whiteSpace: 'nowrap', padding: '8px 12px', minHeight: 36, borderRadius: 999, fontSize: 13, fontWeight: 700, textDecoration: 'none', border: '1px solid var(--border, #E8DDD2)',
+                    background: prixMax === b.valeur ? 'var(--navy, #1C2B4A)' : '#fff', color: prixMax === b.valeur ? '#fff' : 'var(--navy, #1C2B4A)' }}>
+                  {b.label}
+                </Link>
+              ))}
+            </div>
+            <div role="group" aria-label="Trier les résultats" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+              {TRIS.map(t => (
+                <Link key={t.valeur || 'pertinence'} href={lienRecherche(data.q, prixMax, t.valeur)} aria-current={tri === t.valeur ? 'true' : undefined}
+                  style={{ flexShrink: 0, whiteSpace: 'nowrap', padding: '8px 12px', minHeight: 36, borderRadius: 999, fontSize: 13, fontWeight: 600, textDecoration: 'none', border: '1px solid var(--border, #E8DDD2)',
+                    background: tri === t.valeur ? 'var(--bg, #F8F5F0)' : '#fff', color: 'var(--navy, #1C2B4A)' }}>
+                  {t.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
           {data.total === 0 ? (
-            <EmptyState q={data.q} />
+            <EmptyState q={data.q} prixMax={prixMax} />
           ) : (
             <>
               {/* Onglets */}
@@ -186,7 +234,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
                       />
                     ))}
                   </div>
-                  {tab === 'tout' && data.produits.length >= 10 && (
+                  {tab === 'tout' && counts!.produits > data.produits.length && (
                     <Link href={`/?q=${encodeURIComponent(data.q)}`} style={{ display: 'block', textAlign: 'right', fontSize: 13, color: '#1d4ed8', marginTop: 8 }}>
                       Voir tous les produits →
                     </Link>
@@ -230,7 +278,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
                       />
                     ))}
                   </div>
-                  {tab === 'tout' && data.annonces.length >= 10 && (
+                  {tab === 'tout' && counts!.annonces > data.annonces.length && (
                     <Link href={`/annonces?q=${encodeURIComponent(data.q)}`} style={{ display: 'block', textAlign: 'right', fontSize: 13, color: '#1d4ed8', marginTop: 8 }}>
                       Voir toutes les annonces →
                     </Link>
@@ -254,7 +302,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
                       />
                     ))}
                   </div>
-                  {tab === 'tout' && data.immo.length >= 10 && (
+                  {tab === 'tout' && counts!.immo > data.immo.length && (
                     <Link href={`/immo?q=${encodeURIComponent(data.q)}`} style={{ display: 'block', textAlign: 'right', fontSize: 13, color: '#1d4ed8', marginTop: 8 }}>
                       Voir toutes les annonces immo →
                     </Link>
@@ -269,10 +317,10 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
   )
 }
 
-export default function RechercheClient({ query, data }: { query: string; data: SearchData | null }) {
+export default function RechercheClient({ query, data, prixMax = '', tri = '' }: { query: string; data: SearchData | null; prixMax?: string; tri?: string }) {
   return (
     <Suspense>
-      <RechercheClientInner query={query} data={data} />
+      <RechercheClientInner query={query} data={data} prixMax={prixMax} tri={tri} />
     </Suspense>
   )
 }
