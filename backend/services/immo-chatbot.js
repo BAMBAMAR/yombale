@@ -2,6 +2,7 @@
 // Assistant Immobilier Intelligent WhatsApp Nopalou (Bimodal : Public Visiteur & Agent Pro)
 
 const { pool } = require('../models/db');
+const { conditionImmoPubliable, titreCourt } = require('../lib/immo-publiable');
 const { sendWhatsAppText, sendWhatsAppCarousel, sendWhatsAppButtons3, sendWhatsAppInteractive } = require('./whatsapp');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
@@ -301,7 +302,7 @@ async function traiterRechercheImmoPublic(phone, texte) {
            ai.surface_m2, ai.photos, ag.nom AS agence_nom, ag.id AS agence_id
     FROM annonces_immo ai
     LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
-    WHERE ai.actif = true AND ai.supprimee = false
+    WHERE ${conditionImmoPubliable('ai')}
   `;
   const params = [];
   let pIdx = 1;
@@ -362,7 +363,7 @@ async function traiterRechercheImmoPublic(phone, texte) {
   let reponse = `🏠 *Opportunités Immobilières Nopalou (${transaction === 'vente' ? 'Vente' : 'Location'})* :\n\n`;
 
   rows.forEach((b, idx) => {
-    reponse += `${idx + 1}. *${b.titre}*\n`;
+    reponse += `${idx + 1}. *${titreCourt(b.titre)}*\n`;
     reponse += `   💰 Prix : *${prixFmt(b.prix)}*${b.transaction === 'location' ? ' /mois' : ''}\n`;
     reponse += `   📍 ${[b.quartier, b.ville].filter(Boolean).join(', ') || 'Sénégal'}`;
     if (b.surface_m2) reponse += ` · ${Math.round(b.surface_m2)} m²`;

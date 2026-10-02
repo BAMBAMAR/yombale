@@ -4,6 +4,7 @@ const { pool } = require('../models/db');
 const { limiterRecherche } = require('../middlewares/rateLimit');
 const { recordSearch } = require('../lib/searchLogger');
 const { expandQuery } = require('../services/search-service');
+const { conditionImmoPubliable } = require('../lib/immo-publiable');
 
 // GET /api/search?q=…&limit=10
 router.get('/', limiterRecherche, async (req, res) => {
@@ -124,7 +125,7 @@ router.get('/', limiterRecherche, async (req, res) => {
                 CASE WHEN ai.actif THEN 'publiee' ELSE 'inactive' END AS statut,
                 COUNT(*) OVER() AS total_count
          FROM annonces_immo ai
-         WHERE ai.actif = true AND ai.supprimee = false
+         WHERE ${conditionImmoPubliable('ai')}
            AND (ai.titre ILIKE ANY($1::text[]) OR ai.ville ILIKE ANY($1::text[]) OR ai.quartier ILIKE ANY($1::text[])
                 OR ai.type_bien ILIKE ANY($1::text[]) OR ai.description ILIKE ANY($1::text[]))
          ORDER BY

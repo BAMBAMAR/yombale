@@ -15,6 +15,7 @@ const {
 
 const WA_PHONE = '221708717942';
 const { FAQ_WEB } = require('../lib/faq');
+const { conditionImmoPubliable } = require('../lib/immo-publiable');
 
 // ── Fonctions de recherche spécialisées ───────────────────────────────────────
 
@@ -73,7 +74,7 @@ async function searchImmoIlike(rawText) {
            ag.nom AS agence_nom, ag.slug AS agence_slug, ag.id::text AS agence_id
     FROM annonces_immo ai
     LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
-    WHERE ai.actif = true AND ai.supprimee = false
+    WHERE ${conditionImmoPubliable('ai')}
   `;
   const params = [];
   let pIdx = 1;

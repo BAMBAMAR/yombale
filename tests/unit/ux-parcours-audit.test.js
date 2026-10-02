@@ -67,7 +67,40 @@ describe('AUD-217 — la confirmation de commande ne ment pas', () => {
   });
 });
 
-describe('AUD-219 — dépôt d\'annonce : prévenu dès l\'ouverture, saisie conservée', () => {
+describe('AUD-222 — une seule règle de publication immobilière pour le site et les assistants', () => {
+  const { conditionImmoPubliable, titreCourt, PRIX_MIN_IMMO } = require('../../backend/lib/immo-publiable');
+  const BACK = process.env.UXP_BACK_ROOT || path.join(__dirname, '../../backend');
+  const lireBack = (rel) => fs.readFileSync(path.join(BACK, rel), 'utf8');
+
+  test('la règle exige un prix, exclut supprimées et rejetées', () => {
+    const sql = conditionImmoPubliable('ai');
+    expect(sql).toMatch(/ai\.prix IS NOT NULL AND ai\.prix >= 10000/);
+    expect(sql).toMatch(/ai\.supprimee/);
+    expect(sql).toMatch(/ai\.rejete/);
+    expect(PRIX_MIN_IMMO).toBe(10000);
+    expect(conditionImmoPubliable('')).toMatch(/^actif = true/);
+  });
+
+  test('titreCourt tronque les descriptions importées', () => {
+    expect(titreCourt('x'.repeat(250)).length).toBeLessThanOrEqual(80);
+    expect(titreCourt('Studio  Almadies')).toBe('Studio Almadies');
+  });
+
+  test.each([
+    'routes/chat.js',
+    'routes/search.js',
+    'services/immo-chatbot.js',
+    'services/whatsapp-chatbot.js',
+  ])('%s applique la règle commune', (rel) => {
+    expect(lireBack(rel)).toMatch(/conditionImmoPubliable\(/);
+  });
+
+  test('le bot WhatsApp raccourcit les titres de biens', () => {
+    expect(lireBack('services/immo-chatbot.js')).toMatch(/titreCourt\(/);
+  });
+});
+
+describe('AUD-219— dépôt d\'annonce : prévenu dès l\'ouverture, saisie conservée', () => {
   test('le formulaire avertit si l\'e-mail n\'est pas vérifié, reprend et efface le brouillon', () => {
     const f = lire('app/(account)/deposer-annonce/FormulaireAnnonce.tsx');
     expect(f).toMatch(/AvisEmailAPublier/);

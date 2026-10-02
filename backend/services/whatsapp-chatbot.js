@@ -1,5 +1,6 @@
 // backend/services/whatsapp-chatbot.js
 const { pool } = require('../models/db');
+const { conditionImmoPubliable } = require('../lib/immo-publiable');
 const {
   sendWhatsAppText,
   sendWhatsAppTemplate,
@@ -1415,7 +1416,7 @@ async function searchContent(query, excludeIds = []) {
     (
       SELECT 'immo', id::text, titre, prix, (photos->>0), NULL::text, NULL::text, ville
       FROM annonces_immo
-      WHERE actif=true AND jsonb_array_length(photos) > 0
+      WHERE ${conditionImmoPubliable('')} AND jsonb_array_length(photos) > 0
         AND to_tsvector('french', titre || ' ' || COALESCE(description,''))
             @@ plainto_tsquery('french', $1)
         AND id::text <> ALL($2::text[])
@@ -1458,7 +1459,7 @@ async function searchContentIlike(query) {
                NULL::text AS boutique_slug, NULL::text AS boutique_nom,
                ville, NULL::text AS boutique_id
         FROM annonces_immo
-        WHERE actif=true AND jsonb_array_length(photos) > 0
+        WHERE ${conditionImmoPubliable('')} AND jsonb_array_length(photos) > 0
           AND (titre ILIKE $1 OR COALESCE(description, '') ILIKE $1 OR ville ILIKE $1)
         LIMIT 3
       )
@@ -1475,7 +1476,7 @@ async function searchContentIlike(query) {
 async function envoyerListeImmo(phone, excludeIds = []) {
   const r = await pool.query(
     `SELECT id, titre, prix, (photos->>0) AS photo FROM annonces_immo
-     WHERE actif=true AND jsonb_array_length(photos) > 0
+     WHERE ${conditionImmoPubliable('')} AND jsonb_array_length(photos) > 0
        AND id::text <> ALL($1::text[])
      ORDER BY created_at DESC LIMIT 3`,
     [excludeIds]
