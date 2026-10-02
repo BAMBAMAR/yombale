@@ -599,6 +599,9 @@ export function getMessageErreurMicro(err: string): string {
   if (err === 'not-allowed' || err === 'PermissionDeniedError' || err === 'NotAllowedError') {
     return "Microphone bloqué par votre navigateur. Cliquez sur l'icône de cadenas (ou de réglages) à gauche de l'adresse du site (URL) -> Autorisez le Microphone, puis réessayez."
   }
+  if (err === 'consent-refused') {
+    return "Micro non activé. Appuyez de nouveau sur le micro quand vous voulez parler, ou saisissez au clavier."
+  }
   if (err === 'no-speech') {
     return "Aucune voix détectée. Veuillez parler plus près de votre micro."
   }
@@ -618,8 +621,35 @@ export function getMessageErreurMicro(err: string): string {
 /**
  * Tente d'obtenir la permission du micro via getUserMedia (déclenche la demande native du navigateur si besoin)
  */
+const CLE_CONSENTEMENT_MICRO = 'nopalou_voice_consent_v1'
+
+export function consentementMicroDonne(): boolean {
+  try { return typeof window !== 'undefined' && window.localStorage.getItem(CLE_CONSENTEMENT_MICRO) === '1' } catch { return false }
+}
+
+/**
+ * Écran d'information avant la toute première demande du navigateur (une fois par appareil, mémorisé en local, rien côté serveur).
+ * Le composant VoiceConsentHost écoute l'événement ; sans hôte monté (tests), la demande continue.
+ */
+async function obtenirConsentementMicro(): Promise<boolean> {
+  if (consentementMicroDonne()) return true
+  return new Promise<boolean>((resolve) => {
+    let pris = false
+    const detail = {
+      prendre: () => { pris = true },
+      repondre: (ok: boolean) => {
+        if (ok) { try { window.localStorage.setItem(CLE_CONSENTEMENT_MICRO, '1') } catch { /* stockage indisponible : on redemandera */ } }
+        resolve(ok)
+      },
+    }
+    window.dispatchEvent(new CustomEvent('nopalou:voice-consent', { detail }))
+    if (!pris) resolve(true)
+  })
+}
+
 export async function demanderPermissionMicrophone(): Promise<{ ok: boolean; error?: string }> {
   if (typeof window === 'undefined') return { ok: false, error: 'window-undefined' }
+  if (!(await obtenirConsentementMicro())) return { ok: false, error: 'consent-refused' }
 
   // Si navigator.mediaDevices est indisponible (ex: HTTP au lieu de HTTPS), on prévient gentiment
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {

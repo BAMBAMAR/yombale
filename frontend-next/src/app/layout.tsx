@@ -37,6 +37,7 @@ import { getOptionalSession } from '@/lib/dal';
 import I18nClientProvider from '@/components/I18nClientProvider';
 import { EssaiProvider } from '@/components/EssaiProvider';
 import { ToastProvider } from '@/context/ToastContext';
+import VoiceConsentHost from '@/components/VoiceConsentHost';
 import { getValidLocale, isRTL, isI18nScopedRoute } from '@/i18n/config';
 
 // ── Sentry (optionnel, front-end error tracking) ────────────────
@@ -314,6 +315,7 @@ export default async function RootLayout({
         <ChatbotWidget />
         <MobileBottomNav isLoggedIn={!!session} />
         <RegisterSW />
+        <VoiceConsentHost />
         <WebVitals />
         <PwaInstallPrompt />
         <FavToast />

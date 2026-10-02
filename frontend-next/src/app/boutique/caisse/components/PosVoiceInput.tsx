@@ -15,7 +15,7 @@ interface PosVoiceInputProps {
   onAjoutRapideLibre?: (nom: string, montant: number, quantite: number) => void
 }
 
-import { normaliserTexteVocal, separerQuantiteEtMontant } from '@/lib/voice-assistant'
+import { normaliserTexteVocal, separerQuantiteEtMontant, consentementMicroDonne, demanderPermissionMicrophone, getMessageErreurMicro } from '@/lib/voice-assistant'
 
 export default function PosVoiceInput({
   produits,
@@ -64,8 +64,12 @@ export default function PosVoiceInput({
     }
   }, [produits])
 
-  const toggleListen = () => {
+  const toggleListen = async () => {
     if (!recognitionRef.current) return
+    if (!isListening && !consentementMicroDonne()) {
+      const perm = await demanderPermissionMicrophone() // écran d'information, puis demande du navigateur
+      if (!perm.ok) { setFeedback({ type: 'info', text: getMessageErreurMicro(perm.error || 'not-allowed') }); return }
+    }
     if (isListening) {
       recognitionRef.current.stop()
       setIsListening(false)

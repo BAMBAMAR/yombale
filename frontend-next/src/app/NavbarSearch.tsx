@@ -5,7 +5,7 @@ import { useRef, useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
-import { createVoiceListener, cleanVoiceSearchQuery } from '@/lib/voice-assistant'
+import { createVoiceListener, cleanVoiceSearchQuery, consentementMicroDonne, demanderPermissionMicrophone, getMessageErreurMicro } from '@/lib/voice-assistant'
 import { showToast } from '@/context/ToastContext'
 
 interface ProduitResult {
@@ -42,11 +42,15 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
   const voiceRecRef = useRef<any>(null)
   useEffect(() => () => { try { voiceRecRef.current?.stop() } catch {} }, []) // AUD-212 : arrêt au démontage
 
-  const toggleVoiceSearch = () => {
+  const toggleVoiceSearch = async () => {
     if (isListeningVoice) {
       voiceRecRef.current?.stop()
       setIsListeningVoice(false)
       return
+    }
+    if (!consentementMicroDonne()) {
+      const perm = await demanderPermissionMicrophone() // écran d'information, puis demande du navigateur
+      if (!perm.ok) { showToast(getMessageErreurMicro(perm.error || 'not-allowed'), 'info', 'Recherche Vocale'); return }
     }
 
     if (!open && !alwaysOpen) {
