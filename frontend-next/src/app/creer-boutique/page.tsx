@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { setAuthCookieAction } from '@/app/actions/auth'
@@ -37,6 +37,13 @@ export default function CreerBoutiqueWizard() {
   const [showContratModal, setShowContratModal] = useState<boolean>(false)
 
   const [plansConfig, setPlansConfig] = useState<PlansConfig>(DEFAULT_PLANS)
+
+  // AUD-223 : sur mobile la page est défilée quand on appuie sur « Continuer » ; l'erreur, affichée en haut, restait
+  // hors de l'écran (à -143 px) et l'utilisateur croyait que rien ne se passait. On l'amène à l'écran et on l'annonce.
+  const erreurRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (error) erreurRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [error])
 
   // AUD-116 : une étape vue = un événement (le départ se lit comme l'écart entre deux étapes)
   useEffect(() => {
@@ -96,6 +103,17 @@ export default function CreerBoutiqueWizard() {
       .catch(() => {})
   }, [])
 
+  // AUD-223 : messages d'erreur lisibles. « Failed to fetch » (réseau) et l'invitation à « utiliser la connexion par
+  // e-mail » (service OTP indisponible) ne mènent nulle part dans ce parcours.
+  const texteErreur = (err: unknown, repli: string) =>
+    err instanceof TypeError ? 'Connexion impossible. Vérifiez votre réseau puis réessayez.' : (err as Error)?.message || repli
+  const erreurEnvoiCode = (res: Response, data: any) =>
+    new Error(
+      data?.degraded
+        ? 'Le code WhatsApp ne peut pas être envoyé pour l’instant. Réessayez dans quelques minutes.'
+        : data?.error || 'Impossible d’envoyer le code. Réessayez dans un instant.'
+    )
+
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault()
     if (step === 1 && !nom.trim()) {
@@ -122,11 +140,11 @@ export default function CreerBoutiqueWizard() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ telephone, type: 'boutique' }),
         })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'envoi du code')
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw erreurEnvoiCode(res, data)
         setStep(3)
       } catch (err: any) {
-        setError(err.message)
+        setError(texteErreur(err, 'Impossible d’envoyer le code. Réessayez dans un instant.'))
       } finally {
         setLoading(false)
       }
@@ -150,7 +168,7 @@ export default function CreerBoutiqueWizard() {
         setPreuveTelephone(data.preuve_telephone || '')
         setStep(4)
       } catch (err: any) {
-        setError(err.message)
+        setError(texteErreur(err, 'Ce code ne correspond pas. Demandez un nouveau code.'))
       } finally {
         setLoading(false)
       }
@@ -169,11 +187,11 @@ export default function CreerBoutiqueWizard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telephone, type: 'boutique' }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Impossible d\'envoyer le code. Réessayez dans un instant.')
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw erreurEnvoiCode(res, data)
       setCode('')
     } catch (err: any) {
-      setError(err.message)
+      setError(texteErreur(err, 'Impossible d’envoyer le code. Réessayez dans un instant.'))
     }
   }
 
@@ -289,6 +307,8 @@ export default function CreerBoutiqueWizard() {
 
         {error && (
           <div
+            ref={erreurRef}
+            role="alert"
             style={{
               background: '#fef2f2',
               border: '1.5px solid #fecaca',
