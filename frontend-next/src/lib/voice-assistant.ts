@@ -94,109 +94,133 @@ export function extraireQuantite(cleanText: string): number {
   return 1
 }
 
+// ── Extraction de montants (AUD-199) : analyseur compositionnel, plus de table figée ──────────────
+
+const MOTS_UNITES: Record<string, number> = {
+  un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, neuf: 9,
+  dix: 10, onze: 11, douze: 12, treize: 13, quatorze: 14, quinze: 15, seize: 16,
+  vingt: 20, vingts: 20, trente: 30, quarante: 40, cinquante: 50, soixante: 60, quatrevingt: 80,
+}
+
+/** Valeur d'une suite de mots-nombres français (« trois mille cinq cents » = 3500). */
+function evaluerMotsNombres(tokens: string[]): { valeur: number; grand: boolean } {
+  let total = 0
+  let courant = 0
+  let grand = false
+  for (const t of tokens) {
+    if (t === 'et') continue
+    if (t in MOTS_UNITES) courant += MOTS_UNITES[t]
+    else if (t === 'cent' || t === 'cents') { courant = (courant || 1) * 100; grand = true }
+    else if (t === 'mille') { total += (courant || 1) * 1000; courant = 0; grand = true }
+    else if (t === 'million' || t === 'millions') { total += (courant || 1) * 1000000; courant = 0; grand = true }
+  }
+  return { valeur: total + courant, grand }
+}
+
+function motEstNombre(t: string): boolean {
+  return t in MOTS_UNITES || t === 'cent' || t === 'cents' || t === 'mille' || t === 'million' || t === 'millions'
+}
+
 /**
- * Extrait un montant financier en Francs CFA à partir d'un texte mixte Wolof / Français.
- * Gère les syntaxes :
- * - "benn téemeer" -> 500, "ñaari junni" -> 10 000
- * - "10 000", "2500", "50000"
- * - "10 mille", "10k", "2.5 mille" -> 10000, 2500
- * - "dix mille", "quinze mille", "vingt-cinq mille", "cinquante mille", "cent mille"
+ * Tous les montants FCFA détectés, dans l'ordre de la phrase.
+ * Gère : devises wolof composées (« junni ak téemeer » = 5 500), « 10 mille », « 10k », « 2,5 mille »,
+ * « 1 million », « 1 500 000 », « 5.000 », nombres en lettres composés (« cent cinquante mille », « quatre vingt dix mille »).
+ */
+export function extraireMontantsCFA(cleanText: string): number[] {
+  if (!cleanText) return []
+  let t = normaliserTexteVocal(cleanText)
+
+  // Neutraliser les numéros de téléphone sénégalais (9 chiffres commençant par 70, 75, 76, 77, 78, 33)
+  t = t.replace(/(?:\+?221\s*)?(?:7[05678]|33)(?:\s*\d{3}\s*\d{2}\s*\d{2}|\s*\d{2}\s*\d{2}\s*\d{3}|\s*\d{7})\b/g, ' ')
+
+  // 0. Devises wolof : somme de toutes les occurrences, chacune avec son multiplicateur (« ñaari téemeer ak junni »)
+  const mots = t.split(/\s+/).filter(Boolean)
+  let sommeWolof = 0
+  let wolof = false
+  mots.forEach((m, i) => {
+    const base = DEVISES_WOLOF[m]
+    if (!base) return
+    wolof = true
+    const avant = mots[i - 1]
+    let mult = 1
+    if (avant && NOMBRES_MAPPING[avant] && !DEVISES_WOLOF[avant]) mult = NOMBRES_MAPPING[avant]
+    else if (avant && /^\d+$/.test(avant)) mult = parseInt(avant, 10)
+    sommeWolof += mult * base
+  })
+  if (wolof) return [sommeWolof]
+
+  const trouves: Array<{ pos: number; val: number }> = []
+  const consommes: Array<[number, number]> = []
+  const dejaPris = (a: number, b: number) => consommes.some(([x, y]) => a < y && b > x)
+  const ajouter = (pos: number, fin: number, val: number) => {
+    if (!Number.isFinite(val) || val <= 0 || dejaPris(pos, fin)) return
+    consommes.push([pos, fin])
+    trouves.push({ pos, val })
+  }
+
+  // 1. « chiffre + mille/k/million(s) » : 10 mille, 10k, 2.5 mille, 1 million, 2,5 millions
+  const reMult = /\b(\d+(?:\.\d+)?)\s*(millions?|mille|mil|k)\b/g
+  let m: RegExpExecArray | null
+  while ((m = reMult.exec(t))) {
+    const facteur = m[2].startsWith('million') ? 1000000 : 1000
+    ajouter(m.index, m.index + m[0].length, Math.round(parseFloat(m[1]) * facteur))
+  }
+
+  // 2. Chiffres groupés par milliers : « 1500 000 », « 1 500 000 », « 5.000 »
+  const reGroupes = /\b(\d{1,9})((?:\s\d{3})+)\b/g
+  while ((m = reGroupes.exec(t))) ajouter(m.index, m.index + m[0].length, parseInt(m[1] + m[2].replace(/\s/g, ''), 10))
+  const reMilliersPoint = /\b(\d{1,3})\.(\d{3})\b(?!\s*(?:k|mille|mil|million))/g
+  while ((m = reMilliersPoint.exec(t))) ajouter(m.index, m.index + m[0].length, parseInt(m[1] + m[2], 10))
+
+  // 3. Nombres en lettres (suites de mots-nombres), « quatre vingt(s) » ramené à un seul mot
+  const tLettres = t.replace(/\bquatre vingts?\b/g, 'quatrevingt')
+  const reMots = /[a-z]+/g
+  const run: Array<{ mot: string; pos: number; fin: number }> = []
+  const viderRun = () => {
+    if (run.length) {
+      const { valeur, grand } = evaluerMotsNombres(run.map(r => r.mot))
+      // Un petit nombre isolé (« deux », « trois ») est une quantité, pas un montant
+      if (grand || valeur >= 100) ajouter(run[0].pos, run[run.length - 1].fin, valeur)
+    }
+    run.length = 0
+  }
+  let dernierFin = -1
+  while ((m = reMots.exec(tLettres))) {
+    const mot = m[0]
+    const suit = dernierFin >= 0 && /^\s+$/.test(tLettres.slice(dernierFin, m.index))
+    if (motEstNombre(mot) || (mot === 'et' && run.length)) {
+      if (run.length && !suit) viderRun()
+      run.push({ mot, pos: m.index, fin: m.index + mot.length })
+    } else {
+      viderRun()
+    }
+    dernierFin = m.index + mot.length
+  }
+  viderRun()
+  // « et » final orphelin ne change pas la valeur (ignoré par evaluerMotsNombres)
+
+  // 4. Chiffres seuls
+  const reChiffres = /\b\d{3,9}\b/g
+  while ((m = reChiffres.exec(t))) ajouter(m.index, m.index + m[0].length, parseInt(m[0], 10))
+  if (!trouves.length) {
+    const reDeux = /\b\d{2}\b/g
+    while ((m = reDeux.exec(t))) {
+      const n = parseInt(m[0], 10)
+      if (![77, 78, 76, 75, 70, 33].includes(n)) ajouter(m.index, m.index + 2, n)
+    }
+  }
+
+  return trouves.sort((a, b) => a.pos - b.pos).map(x => x.val)
+}
+
+/**
+ * Extrait UN montant en FCFA (le plus grand quand la phrase en contient plusieurs ; utiliser
+ * `extraireMontantsCFA` pour détecter l'ambiguïté).
  */
 export function extraireMontantCFA(cleanText: string): number | null {
-  if (!cleanText) return null
-  const clean = normaliserTexteVocal(cleanText)
-
-  // 0. Neutraliser les numéros de téléphone sénégalais (exactement 9 chiffres commençant par 70, 75, 76, 77, 78, 33)
-  const cleanSansTel = clean.replace(/(?:\+?221\s*)?(?:7[05678]|33)(?:\s*\d{3}\s*\d{2}\s*\d{2}|\s*\d{2}\s*\d{2}\s*\d{3}|\s*\d{7})\b/g, ' ')
-
-  // 1. Détection des devises Wolof (téemeer, junni) avec multiplicateur
-  for (const [motW, baseVal] of Object.entries(DEVISES_WOLOF)) {
-    if (cleanSansTel.includes(motW)) {
-      const mots = cleanSansTel.split(/\s+/)
-      const idx = mots.indexOf(motW)
-      let mult = 1
-      if (idx > 0) {
-        const motAvant = mots[idx - 1]
-        if (NOMBRES_MAPPING[motAvant]) {
-          mult = NOMBRES_MAPPING[motAvant]
-        } else if (/^\d+$/.test(motAvant)) {
-          mult = parseInt(motAvant, 10)
-        }
-      }
-      return mult * baseVal
-    }
-  }
-
-  // 2. Détection de notation "chiffre + mille" ou "chiffre + k" (ex: "10 mille", "10k", "2.5 mille", "2,5 k")
-  const matchChiffreMille = cleanSansTel.match(/\b(\d+(?:\.\d+)?)\s*(?:k|mille|mil)\b/i)
-  if (matchChiffreMille) {
-    const val = parseFloat(matchChiffreMille[1])
-    return Math.round(val * 1000)
-  }
-
-  // 3. Détection de nombres composés en lettres (priorité aux plus grands)
-  const motsMille = [
-    { pattern: /\b(un|benn)\s+million\b/i, val: 1000000 },
-    { pattern: /\b(cinq\s+cent\s+mille|500\s+mille)\b/i, val: 500000 },
-    { pattern: /\b(deux\s+cent\s+mille|200\s+mille)\b/i, val: 200000 },
-    { pattern: /\b(cent\s+mille|100\s+mille)\b/i, val: 100000 },
-    { pattern: /\b(soixante\s+dix\s+mille|70\s+mille)\b/i, val: 70000 },
-    { pattern: /\b(soixante\s+mille|60\s+mille)\b/i, val: 60000 },
-    { pattern: /\b(cinquante\s+mille|50\s+mille)\b/i, val: 50000 },
-    { pattern: /\b(quarante\s+cinq\s+mille|45\s+mille)\b/i, val: 45000 },
-    { pattern: /\b(quarante\s+mille|40\s+mille)\b/i, val: 40000 },
-    { pattern: /\b(trente\s+cinq\s+mille|35\s+mille)\b/i, val: 35000 },
-    { pattern: /\b(trente\s+mille|30\s+mille)\b/i, val: 30000 },
-    { pattern: /\b(vingt\s+cinq\s+mille|25\s+mille)\b/i, val: 25000 },
-    { pattern: /\b(vingt\s+mille|20\s+mille)\b/i, val: 20000 },
-    { pattern: /\b(dix\s+huit\s+mille|18\s+mille)\b/i, val: 18000 },
-    { pattern: /\b(dix\s+sept\s+mille|17\s+mille)\b/i, val: 17000 },
-    { pattern: /\b(seize\s+mille|16\s+mille)\b/i, val: 16000 },
-    { pattern: /\b(quinze\s+mille|15\s+mille)\b/i, val: 15000 },
-    { pattern: /\b(quatorze\s+mille|14\s+mille)\b/i, val: 14000 },
-    { pattern: /\b(treize\s+mille|13\s+mille)\b/i, val: 13000 },
-    { pattern: /\b(douze\s+mille|12\s+mille)\b/i, val: 12000 },
-    { pattern: /\b(onze\s+mille|11\s+mille)\b/i, val: 11000 },
-    { pattern: /\b(dix\s+mille|10\s+mille)\b/i, val: 10000 },
-    { pattern: /\b(neuf\s+mille|9\s+mille)\b/i, val: 9000 },
-    { pattern: /\b(huit\s+mille|8\s+mille)\b/i, val: 8000 },
-    { pattern: /\b(sept\s+mille|7\s+mille)\b/i, val: 7000 },
-    { pattern: /\b(six\s+mille|6\s+mille)\b/i, val: 6000 },
-    { pattern: /\b(cinq\s+mille|5\s+mille)\b/i, val: 5000 },
-    { pattern: /\b(quatre\s+mille|4\s+mille)\b/i, val: 4000 },
-    { pattern: /\b(trois\s+mille|3\s+mille)\b/i, val: 3000 },
-    { pattern: /\b(deux\s+mille\s+cinq\s+cent(?:s)?)\b/i, val: 2500 },
-    { pattern: /\b(deux\s+mille|2\s+mille)\b/i, val: 2000 },
-    { pattern: /\b(mille\s+cinq\s+cent(?:s)?|1500)\b/i, val: 1500 },
-    { pattern: /\b(mille|1\s+mille)\b/i, val: 1000 },
-    { pattern: /\b(sept\s+cent\s+cinquante|750)\b/i, val: 750 },
-    { pattern: /\b(cinq\s+cent(?:s)?|500)\b/i, val: 500 },
-  ]
-
-  for (const item of motsMille) {
-    if (item.pattern.test(cleanSansTel)) {
-      return item.val
-    }
-  }
-
-  // 4. Détection de nombres écrits en chiffres directs (ex: 2500, 10000, 50000)
-  const regexChiffres = /\b(\d{3,8})\b/g
-  const matches = cleanSansTel.match(regexChiffres)
-  if (matches && matches.length > 0) {
-    const nombres = matches.map(n => parseInt(n, 10))
-    return Math.max(...nombres)
-  }
-
-  // 5. Nombres 2 chiffres (ex: 50, 75, 100) si aucun plus grand
-  const regexPetitsChiffres = /\b(\d{2})\b/g
-  const matchPetits = cleanSansTel.match(regexPetitsChiffres)
-  if (matchPetits && matchPetits.length > 0) {
-    const nombres = matchPetits.map(n => parseInt(n, 10))
-    const nonTel = nombres.filter(n => n !== 77 && n !== 78 && n !== 76 && n !== 75 && n !== 70 && n !== 33)
-    if (nonTel.length > 0) return Math.max(...nonTel)
-  }
-
-  return null
+  const liste = extraireMontantsCFA(cleanText)
+  if (!liste.length) return null
+  return Math.max(...liste)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

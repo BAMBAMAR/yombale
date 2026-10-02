@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { X, Check } from 'lucide-react'
 import {
   ajouterKalpeOperation,
@@ -69,6 +69,10 @@ export function KalpeSaisieModal({
     setDetteSens,
   })
 
+  // AUD-196 : la réinitialisation ne se fait qu'à l'OUVERTURE. Elle ne doit jamais dépendre des données
+  // rechargées (objectifs) : elle effaçait la saisie dictée ou tapée en cours.
+  const objectifsRef = useRef(objectifs)
+  objectifsRef.current = objectifs
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode)
@@ -83,9 +87,15 @@ export function KalpeSaisieModal({
       setVoiceFeedback(null)
       if (initialMode === 'depense') setCategorie(CATEGORIES_DEPENSE[0])
       else if (initialMode === 'revenu') setCategorie(CATEGORIES_REVENU[0])
-      else if (initialMode === 'epargne' && objectifs.length > 0) setSelectedObjectifId(objectifs[0].id)
+      else if (initialMode === 'epargne' && objectifsRef.current.length > 0) setSelectedObjectifId(objectifsRef.current[0].id)
     }
-  }, [isOpen, initialMode, initialContexte, initialDetteSens, objectifs, setVoiceFeedback])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialMode, initialContexte, initialDetteSens, setVoiceFeedback])
+
+  // Objectif d'épargne par défaut quand la liste arrive après l'ouverture (ne touche à aucun autre champ).
+  useEffect(() => {
+    if (isOpen && mode === 'epargne' && !selectedObjectifId && objectifs.length > 0) setSelectedObjectifId(objectifs[0].id)
+  }, [isOpen, mode, selectedObjectifId, objectifs])
 
   if (!isOpen) return null
 

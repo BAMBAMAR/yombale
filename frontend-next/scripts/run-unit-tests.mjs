@@ -572,6 +572,18 @@ it('parseDetteIntent: détection crédit, remboursement et client', () => {
   assert.equal(s1.nomClient, 'Moussa Diallo')
 })
 
+it('AUD-199 extraireMontantCFA: nombres en lettres composés, milliers, millions, wolof composé', () => {
+  const cas = [
+    ['trois mille cinq cents', 3500], ['quatre mille cinq cents', 4500], ['douze mille cinq cents', 12500],
+    ['mille deux cents', 1200], ['cent cinquante mille', 150000], ['cent vingt mille', 120000],
+    ['soixante-quinze mille', 75000], ['quatre-vingt mille', 80000], ['quatre vingt dix mille', 90000],
+    ['huit cent mille', 800000], ['deux millions', 2000000], ['1 million', 1000000], ['1 500 000', 1500000],
+    ['100 000 000', 100000000], ['5.000', 5000], ['2,5 mille', 2500], ['10k', 10000], ['junni ak téemeer', 5500],
+    ['ñaari junni', 10000], ['cinq mille francs', 5000], ['77 123 45 67 dix mille', 10000],
+  ]
+  for (const [texte, attendu] of cas) assert.equal(extraireMontantCFA(texte), attendu, texte)
+  assert.equal(extraireMontantCFA('zéro'), null)
+})
 it('cleanVoiceSearchQuery: extraction propre du mot-clé produit', () => {
   assert.equal(cleanVoiceSearchQuery('Cherche robe en wax'), 'robe en wax')
   assert.equal(cleanVoiceSearchQuery('Trouve-moi des chaussures'), 'des chaussures')

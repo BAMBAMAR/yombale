@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
 
@@ -121,22 +121,29 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }
   }, [addToast, confirmModal])
 
-  const toastHelpers = Object.assign(
-    (opts: { message: string; title?: string; type?: ToastType; duration?: number }) => addToast(opts),
-    {
-      success: (message: string, title?: string, duration = 3500) =>
-        addToast({ message, title, type: 'success', duration }),
-      error: (message: string, title?: string, duration = 4500) =>
-        addToast({ message, title, type: 'error', duration }),
-      warning: (message: string, title?: string, duration = 4000) =>
-        addToast({ message, title, type: 'warning', duration }),
-      info: (message: string, title?: string, duration = 3500) =>
-        addToast({ message, title, type: 'info', duration }),
-    }
+  // AUD-196 / AUD-208 : identité stable. Un `toast` recréé à chaque rendu relançait les rechargements
+  // des composants qui le listent en dépendance (et effaçait leurs formulaires).
+  const toastHelpers = useMemo(
+    () =>
+      Object.assign(
+        (opts: { message: string; title?: string; type?: ToastType; duration?: number }) => addToast(opts),
+        {
+          success: (message: string, title?: string, duration = 3500) =>
+            addToast({ message, title, type: 'success', duration }),
+          error: (message: string, title?: string, duration = 4500) =>
+            addToast({ message, title, type: 'error', duration }),
+          warning: (message: string, title?: string, duration = 4000) =>
+            addToast({ message, title, type: 'warning', duration }),
+          info: (message: string, title?: string, duration = 3500) =>
+            addToast({ message, title, type: 'info', duration }),
+        }
+      ),
+    [addToast]
   )
+  const contextValue = useMemo(() => ({ toast: toastHelpers, confirmModal }), [toastHelpers, confirmModal])
 
   return (
-    <ToastContext.Provider value={{ toast: toastHelpers, confirmModal }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       {mounted &&
         createPortal(
