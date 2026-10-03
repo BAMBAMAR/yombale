@@ -1131,6 +1131,10 @@
   text-overflow: ellipsis;
 }
 
+/* Labels adaptatifs : full = long, short = court (déclarés AVANT la règle @container : à spécificité égale, la dernière gagne) */
+.tab-label-short { display: none; }
+.tab-label-full  { display: inline; }
+
 /* Les libellés courts s'activent selon la largeur réelle du sélecteur, pas seulement celle de l'écran */
 .hero-mode-tabs-host {
   container-type: inline-size;
@@ -1148,10 +1152,6 @@
   font-weight: 800;
   box-shadow: 0 3px 10px rgba(28,43,74,0.25);
 }
-
-/* Labels adaptatifs : full = long, short = court */
-.tab-label-short { display: none; }
-.tab-label-full  { display: inline; }
 
 /* Badge PRO dans les tabs */
 .tab-badge-pro {
