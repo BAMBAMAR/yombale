@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useRef } from 'react'
 import { logout } from '@/app/actions/auth'
-import { LogOut } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 import { preparerDeconnexion } from '@/lib/deconnexion'
 import { purgerDonneesLocalesPrivees } from '@/lib/db-offline'
 
@@ -47,7 +47,9 @@ export default function NavbarActions({ nom, userId }: Props) {
     <div className="navbar-actions-compte">
       <a
         href="/compte"
-        title={`Connecté : ${nom}`}
+        title={`Mon compte : ${nom}`}
+        aria-label={`Mon compte : ${nom}`}
+        className="navbar-compte-lien"
         style={{
           padding: '6px 10px',
           borderRadius: '8px',
@@ -59,15 +61,15 @@ export default function NavbarActions({ nom, userId }: Props) {
           whiteSpace: 'nowrap',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '4px',
+          gap: '6px',
           textDecoration: 'none',
           maxWidth: '160px',
-          minWidth: 0,
+          minWidth: '36px',
           overflow: 'hidden',
-          textOverflow: 'ellipsis',
         }}
       >
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{nom}</span>
+        <User size={16} style={{ flexShrink: 0 }} />
+        <span className="navbar-compte-nom" style={{ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{nom}</span>
       </a>
       <form action={logout} style={{ margin: 0 }}>
         <button

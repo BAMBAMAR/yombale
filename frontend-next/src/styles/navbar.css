@@ -198,6 +198,11 @@
   flex-shrink: 0;
 }
 
+/* L'icône du compte reste toujours visible : seul le nom peut se réduire */
+.navbar-compte-lien {
+  flex-shrink: 0;
+}
+
 .navbar-deposer {
   padding: 6px clamp(8px, 0.8vw, 13px);
   background: var(--accent);
@@ -230,9 +235,12 @@
   color: #fff;
 }
 
-@media (max-width: 1640px) {
-  /* Masquer le texte secondaire et compacter entre 1140px et 1640px pour éviter tout débordement
-     (la barre complète d'un compte connecté mesure ~1610px : en dessous, le nom sortait de l'écran) */
+@media (max-width: 2000px) {
+  /* Masquer le texte secondaire et compacter entre 1140px et 2000px pour éviter tout débordement
+     (un compte connecté avec « Espaces Pro » débordait encore vers 1900px : le compte était rogné) */
+  .navbar-compte-lien .navbar-compte-nom {
+    max-width: 110px;
+  }
   .navbar-taftaf {
     display: none !important;
   }
