@@ -21,6 +21,26 @@ function estSalutation(texte) {
   return mots.length > 0 && mots.length <= 4 && MOTS_SALUTATION.has(mots[0]);
 }
 
+const MOTS_REMERCIEMENT = new Set(['merci', 'thanks', 'thx', 'jerejef', 'jerejeff', 'barkelou', 'baarkelu', 'super', 'parfait', 'nickel', 'genial']);
+
+/** Simple remerciement (« merci », « merci beaucoup », « ok super merci ») : à remercier, jamais à chercher. */
+function estRemerciement(texte) {
+  const mots = normaliser(texte).replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+  if (mots.length === 0 || mots.length > 4) return false;
+  const filler = new Set(['ok', 'okay', 'oui', 'beaucoup', 'bien', 'vraiment', 'infiniment', 'a', 'vous', 'toi', 'tres', 'bcp', 'd', 'accord']);
+  return mots.some((m) => MOTS_REMERCIEMENT.has(m)) && mots.every((m) => MOTS_REMERCIEMENT.has(m) || filler.has(m));
+}
+
+const DEBUT_QUESTION = /^(comment|pourquoi|ou|quand|quel|quelle|quels|quelles|est ce|puis je|peut on|combien|qui|que|qu|c est quoi|je voudrais savoir|j aimerais savoir|besoin d aide)\b/;
+
+/** Message formulé comme une question d'aide (« comment… », « puis-je… », se termine par « ? ») plutôt qu'un nom de produit. */
+function estQuestion(texte) {
+  const brut = String(texte || '').trim();
+  if (!brut) return false;
+  const n = normaliser(brut).replace(/['’-]/g, ' ').replace(/\s+/g, ' ');
+  return brut.endsWith('?') || DEBUT_QUESTION.test(n);
+}
+
 /** Référence de commande présente dans le message (CMD-…, C-…, PAY-…, V-…), en majuscules, ou null. */
 function extraireReferenceCommande(texte) {
   const m = String(texte || '').match(/\b((?:CMD|PAY|V|C)-[A-Z0-9-]{3,60})\b/i);
@@ -65,4 +85,4 @@ function decoderEntites(texte) {
   });
 }
 
-module.exports = { normaliser, estSalutation, extraireReferenceCommande, extraireBudget, decoderEntites };
+module.exports = { normaliser, estSalutation, estRemerciement, estQuestion, extraireReferenceCommande, extraireBudget, decoderEntites };

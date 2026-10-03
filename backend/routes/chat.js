@@ -14,9 +14,9 @@ const {
 } = require('../services/whatsapp-comparator');
 
 const WA_PHONE = '221708717942';
-const { FAQ_WEB } = require('../lib/faq');
+const { trouverFAQWeb, actionsFAQ } = require('../lib/faq');
 const { conditionImmoPubliable } = require('../lib/immo-publiable');
-const { normaliser, estSalutation, extraireReferenceCommande, extraireBudget, decoderEntites } = require('../lib/chat-intentions');
+const { estSalutation, estRemerciement, estQuestion, extraireReferenceCommande, extraireBudget, decoderEntites } = require('../lib/chat-intentions');
 
 // ── Fonctions de recherche spécialisées ───────────────────────────────────────
 
@@ -281,6 +281,21 @@ router.post('/message', limiterRecherche, async (req, res) => {
     });
   }
 
+  // 0.06 Remerciement : on répond poliment, on ne cherche pas « merci » dans le catalogue
+  if (estRemerciement(rawText)) {
+    return res.json({
+      success: true,
+      reply: 'Avec plaisir ! Je reste disponible si vous avez une autre question sur Nopalou.',
+      correction: null,
+      items: [],
+      chips: [
+        { label: 'Boutiques partenaires', url: '/boutiques' },
+        { label: 'Biens immobiliers', url: '/immo' },
+      ],
+      whatsappUrl,
+    });
+  }
+
   // 0.1 Détection Comparateur de Prix Multi-Marchands
   if (detecterIntentionComparateur(rawText)) {
     try {
@@ -329,15 +344,8 @@ router.post('/message', limiterRecherche, async (req, res) => {
 
   // 1. Détection FAQ Web
   // AUD-221 : comparaison sans accents (« créer une boutique » ne contenait pas « creer boutique »)
-  const textNorm = normaliser(rawText);
-  const faqTrouvee = FAQ_WEB.find((f) =>
-    f.motsCles.some((mot) => {
-      if (mot === 'om') {
-        return /\bom\b/i.test(rawText);
-      }
-      return textNorm.includes(normaliser(mot));
-    })
-  );
+  // Le sujet dont le mot-clé est le plus précis l'emporte (« publier une annonce » avant « publier »)
+  const faqTrouvee = trouverFAQWeb(rawText);
   const referenceCommande = extraireReferenceCommande(rawText);
 
   // 2. Détection Intentions Spécifiques
@@ -354,21 +362,22 @@ router.post('/message', limiterRecherche, async (req, res) => {
 
   if (faqTrouvee) {
     reply = faqTrouvee.reponse;
-    if (faqTrouvee.actionLabel && faqTrouvee.actionUrl) {
+    const actionsFaq = actionsFAQ(faqTrouvee);
+    for (const action of actionsFaq) {
       // Référence donnée dans le message : on mène directement à SON suivi
-      const lienAction = referenceCommande && faqTrouvee.actionUrl === '/suivi-commande'
-        ? `/suivi-commande?ref=${encodeURIComponent(referenceCommande)}`
-        : faqTrouvee.actionUrl;
-      chips.push({ label: referenceCommande && faqTrouvee.actionUrl === '/suivi-commande' ? `Suivre ${referenceCommande}` : faqTrouvee.actionLabel, url: lienAction });
+      const versSuivi = referenceCommande && action.url === '/suivi-commande';
+      chips.push({
+        label: versSuivi ? `Suivre ${referenceCommande}` : action.label,
+        url: versSuivi ? `/suivi-commande?ref=${encodeURIComponent(referenceCommande)}` : action.url,
+      });
     }
-    if (faqTrouvee.actionUrl === '/agences' || isAgenceQuery) {
+    const pointeVers = (url) => actionsFaq.some((a) => a.url === url);
+    if (pointeVers('/agences') || isAgenceQuery) {
       items = await searchAgencesIlike(rawText.replace(/\b(agences?|courtiers?|cabinets?\s+immo)\b/gi, '').trim());
       chips.push({ label: 'Biens immobiliers', url: '/immo' });
-    } else if (faqTrouvee.actionUrl === '/boutiques' || isBoutiqueQuery) {
+    } else if (pointeVers('/boutiques') || isBoutiqueQuery) {
       items = await searchBoutiquesIlike('');
       chips.push({ label: 'Offres du moment', url: '/' });
-    } else {
-      chips.push({ label: 'Toutes les boutiques', url: '/boutiques' });
     }
   } else if (isAgenceQuery) {
     const searchParam = rawText.replace(/\b(agences?|courtiers?|cabinets?\s+immo)\b/gi, '').trim() || rawText;
@@ -479,17 +488,28 @@ router.post('/message', limiterRecherche, async (req, res) => {
         searchQuery: requeteRecherche,
       });
 
+      const questionSansReponse = estQuestion(rawText);
       if (aiResponse.success && aiResponse.reply) {
         reply = aiResponse.reply;
+      } else if (questionSansReponse) {
+        // Une question (« comment… », « puis-je… ») n'est pas une recherche de produit : on oriente vers l'aide
+        reply = `Je n'ai pas de réponse précise à cette question. Le guide d'utilisation et la page Aide couvrent la plupart des cas, et un conseiller Nopalou peut vous répondre sur WhatsApp :`;
       } else {
         reply = `Je n'ai pas trouvé de produit correspondant exactement à "${rawText}". Vous pouvez reformuler votre recherche ou échanger directement avec un conseiller sur WhatsApp :`;
       }
 
-      chips.push(
-        { label: 'Explorer les boutiques', url: '/boutiques' },
-        { label: 'Offres du moment', url: '/' },
-        { label: 'Biens immobiliers', url: '/immo' }
-      );
+      if (questionSansReponse) {
+        chips.push(
+          { label: 'Guide d’utilisation', url: '/guide-utilisation' },
+          { label: 'Centre d’aide', url: '/aide' }
+        );
+      } else {
+        chips.push(
+          { label: 'Explorer les boutiques', url: '/boutiques' },
+          { label: 'Offres du moment', url: '/' },
+          { label: 'Biens immobiliers', url: '/immo' }
+        );
+      }
     }
   }
 
