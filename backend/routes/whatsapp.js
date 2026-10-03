@@ -99,6 +99,14 @@ router.post('/webhook', verifyHmac, async (req, res) => {
           recipient_id: statusObj.recipient_id,
         });
 
+        // Notification suivie (commande vendeur...) : l'échec réel déclenche le repli e-mail / SMS.
+        // Le 131047 ne concerne que le texte libre, jamais suivi : il est sans effet ici.
+        try {
+          await require('../services/notification-envois').traiterStatut({ wamid: statusObj.id, statut: 'echec', erreur: humanReason });
+        } catch (eEnvoi) {
+          console.error('[WHATSAPP STATUS ENVOI ERR]:', eEnvoi.message);
+        }
+
         // Règle d'or Meta : L'erreur 131047 concerne EXCLUSIVEMENT le texte libre hors fenêtre 24h.
         // Elle ne doit JAMAIS écraser ou marquer un message de prospection template en échec.
         if (errCode !== 131047) {
@@ -171,6 +179,11 @@ router.post('/webhook', verifyHmac, async (req, res) => {
       } else if (['sent', 'delivered', 'read'].includes(statusObj.status)) {
         whatsappHealth.recordSuccess();
         if (statusObj.status === 'delivered' || statusObj.status === 'read') {
+          try {
+            await require('../services/notification-envois').traiterStatut({ wamid: statusObj.id, statut: statusObj.status });
+          } catch (eEnvoi) {
+            console.error('[WHATSAPP STATUS ENVOI ERR]:', eEnvoi.message);
+          }
           try {
             const { pool } = require('../models/db');
             const dest = statusObj.recipient_id;

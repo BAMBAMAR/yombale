@@ -3342,7 +3342,7 @@ async function handleIncomingInternal(msg) {
             en_stock: true,
           }).catch(err => {
             pool.query(
-              `INSERT INTO notification_echecs (type_notification, destinataire, erreur) VALUES ($1, $2, $3)`,
+              `INSERT INTO notification_echecs (type, reference_id, erreur) VALUES ($1, $2, $3)`,
               ['whatsapp_catalog_sync', normPh, err.message]
             ).catch(() => {});
           });
@@ -6144,7 +6144,7 @@ async function handleIncomingInternal(msg) {
               en_stock: true,
             }).catch(err => {
               pool.query(
-                `INSERT INTO notification_echecs (type_notification, destinataire, erreur) VALUES ($1, $2, $3)`,
+                `INSERT INTO notification_echecs (type, reference_id, erreur) VALUES ($1, $2, $3)`,
                 ['whatsapp_catalog_sync', normPh, err.message]
               ).catch(() => {});
             });
@@ -6428,7 +6428,7 @@ async function handleIncomingInternal(msg) {
             en_stock: true,
           }).catch(err => {
             pool.query(
-              `INSERT INTO notification_echecs (type_notification, destinataire, erreur) VALUES ($1, $2, $3)`,
+              `INSERT INTO notification_echecs (type, reference_id, erreur) VALUES ($1, $2, $3)`,
               ['whatsapp_catalog_sync', normPh, err.message]
             ).catch(() => {});
           });

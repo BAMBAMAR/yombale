@@ -3,6 +3,7 @@
 
 const { pool } = require('../models/db');
 const { sendWhatsAppNotification } = require('./whatsapp');
+const notificationEnvois = require('./notification-envois');
 
 const STATUTS_VALIDES = ['en_attente', 'confirmee', 'en_preparation', 'expediee', 'livree', 'annulee'];
 
@@ -105,6 +106,16 @@ async function notifierVendeurCommande(boutique, {
     `\n💳 Paiement : ${payLabel}` +
     (fraisLivraison > 0 ? ` | Livr: ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} F` : isRetrait ? ' | Retrait magasin' : isAConvenir ? ' | Livr: À convenir' : '');
 
+  // Contenu du repli e-mail / SMS, si Meta refuse ou n'accuse pas réception (voir notification-envois.js)
+  const payloadRepli = {
+    utilisateur_id: boutique.utilisateur_id || null,
+    boutique_id: boutique.id || null,
+    titre: isCredit ? 'Demande d\'achat à crédit' : 'Nouvelle commande',
+    resume: `${boutique.nom}\nRéf ${reference} : ${libelleProduit(nomProduit, quantite)}${montantTotal > 0 ? ` (${montantFmt} FCFA)` : ''}\nClient : ${clientNom || 'Client'} ${clientTelephone || ''}`.trim(),
+    lien: lienCommandes,
+    lienChemin: bRef ? `/boutique?manage=${bRef}&tab=commandes&ref=${encodeURIComponent(reference)}` : `/boutique?tab=commandes&ref=${encodeURIComponent(reference)}`,
+  };
+
   sendWhatsAppNotification(vendeurTel, {
     textMessage: msg,
     title: titleTpl,
@@ -117,15 +128,30 @@ async function notifierVendeurCommande(boutique, {
     .then(async (res) => {
       // AUD-102 : sendWhatsAppNotification ne rejette pas en cas d'échec (elle renvoie null après l'échec du
       // modèle et du repli SMS). Seule une réponse porteuse d'un identifiant de message prouve l'envoi.
-      const livree = Boolean(res && res.success !== false && (res.messages?.[0]?.id || res.fallback_sms));
+      const wamid = res?.messages?.[0]?.id;
+      const livree = Boolean(res && res.success !== false && (wamid || res.fallback_sms));
       if (!livree) throw new Error('Notification non délivrée (modèle et repli SMS en échec)');
-      console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`);
-      try {
-        await pool.query(
-          `UPDATE commandes_boutique SET note = COALESCE(note, '') || ' [Notif WhatsApp vendeur transmise]' WHERE reference = $1`,
-          [reference]
-        );
-      } catch (_) {}
+      console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} acceptée pour ${vendeurTel}`);
+      if (res.fallback_sms) {
+        try {
+          await pool.query(
+            `UPDATE commandes_boutique SET note = COALESCE(note, '') || ' [Notif vendeur transmise par SMS]' WHERE reference = $1`,
+            [reference]
+          );
+        } catch (_) {}
+        return;
+      }
+      // Meta a ACCEPTÉ le message ; il peut encore le refuser par webhook (facture Meta impayée, numéro hors
+      // WhatsApp...). La mention « transmise » n'est écrite qu'à l'accusé « delivered » (notification-envois.js) et
+      // un échec ou un silence déclenche le repli e-mail / SMS.
+      await notificationEnvois.enregistrerEnvoi({
+        wamid,
+        type: 'commande',
+        referenceId: reference,
+        destinataire: vendeurTel,
+        boutiqueId: boutique.id,
+        payload: payloadRepli,
+      });
     })
     .catch(async (err) => {
       console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message);
@@ -139,6 +165,17 @@ async function notifierVendeurCommande(boutique, {
           ['notif_vendeur_commande', reference, err.message.slice(0, 300)]
         );
       } catch (_) {}
+      // Échec immédiat (modèle refusé et SMS impossible) : l'e-mail est le dernier canal disponible.
+      try {
+        const envoi = await pool.query(
+          `INSERT INTO notification_envois (wamid, type, reference_id, destinataire, boutique_id, statut, erreur, payload)
+           VALUES (NULL, 'commande', $1, $2, $3, 'echec', $4, $5) RETURNING *`,
+          [reference, vendeurTel, boutique.id ? String(boutique.id) : null, err.message.slice(0, 300), JSON.stringify(payloadRepli)]
+        );
+        await notificationEnvois.declencherRepli(envoi.rows[0], { motif: err.message, avecSms: false });
+      } catch (eRepli) {
+        console.error('[NOTIF REPLI] impossible après échec immédiat:', eRepli.message);
+      }
     });
 }
 

@@ -2625,6 +2625,27 @@ module.exports = async function migrateInline(customConnStr = null) {
       );
       CREATE INDEX IF NOT EXISTS idx_notif_echecs_type ON notification_echecs(type, created_at DESC);
 
+      -- Suivi de la livraison réelle des notifications WhatsApp (Meta accepte un message puis peut le refuser
+      -- par webhook : impayé, numéro hors WhatsApp...). repli_at : le repli e-mail/SMS n'est déclenché qu'une fois.
+      CREATE TABLE IF NOT EXISTS notification_envois (
+        id           SERIAL      PRIMARY KEY,
+        wamid        TEXT        UNIQUE,
+        type         VARCHAR(50) NOT NULL,
+        reference_id TEXT,
+        destinataire TEXT,
+        boutique_id  TEXT,
+        canal        VARCHAR(20) DEFAULT 'whatsapp',
+        statut       VARCHAR(20) DEFAULT 'envoye',
+        erreur       TEXT,
+        payload      JSONB,
+        repli_at     TIMESTAMPTZ DEFAULT NULL,
+        repli_canaux TEXT,
+        created_at   TIMESTAMPTZ DEFAULT NOW(),
+        updated_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_notif_envois_sans_accuse
+        ON notification_envois(created_at) WHERE statut = 'envoye' AND repli_at IS NULL;
+
       -- Performance Indexes (Sprint 3)
       CREATE INDEX IF NOT EXISTS idx_commandes_boutique_perf
         ON commandes_boutique(boutique_id, created_at DESC, statut)
