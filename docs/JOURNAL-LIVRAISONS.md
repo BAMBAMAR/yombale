@@ -1,5 +1,11 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Mobile : alignement du bandeau `/boutiques` et `/agences`, sélecteur Acheter / Vendre / Agences, navbar compacte (03 octobre 2026)** :
+  * **Alignement (`boutiques/page.tsx`, `agences/page.tsx`)** : `homepage.css` centre `.hero-main-title` / `.hero-subtitle` sur mobile (héros de l'accueil) ; ces classes étant globales, le titre et le sous-titre des deux annuaires étaient centrés alors que puces et boutons étaient à gauche. Titre et sous-titre sont forcés à gauche, limités à `.hero-banner-container` / `.hero-immo-card` (le héros de l'accueil n'est pas touché).
+  * **Sélecteur de mode (`HeroDualTrack.tsx`, `homepage.css`)** : les 3 onglets avaient des largeurs égales (`flex: 1 1 0`), « Vendre : boutique et caisse PRO » débordait sur « Acheter ». Largeur proportionnelle au contenu, débordement masqué avec ellipse, libellés courts selon la largeur réelle du sélecteur (`@container`, 720 px).
+  * **Navbar (`NavbarProSwitcher.tsx`, `navbar.css`)** : « Espaces Pro » devient « Pro » sous 2000 px, nom du compte limité à 80 px, réduit à l'icône sous 1500 px, pour que le bouton Quitter reste visible.
+  * **Validation** : `tsc --noEmit` 0 erreur. Non vérifié : rendu réel dans le navigateur.
+
 - **Notifications WhatsApp, lot 2 : fenêtre de 24 h, classification de l'impayé Meta, alerte sonore marchand (03 octobre 2026)** :
   * **Texte libre selon la fenêtre (`whatsapp.js`)** : `sendWhatsAppNotification` ne tente plus le texte libre (voué au 131047 et au bruit dans les journaux) que si le destinataire a écrit au bot dans les 23 h 30 (`whatsapp_conversation_log`, `direction = 'IN'`, index `idx_conv_log_phone`). Le template part TOUJOURS ; en cas de doute (base indisponible) le texte est tenté comme avant : aucun message n'est retiré à tort.
   * **Classification des erreurs Meta (`whatsapp-health.js`)** : le vrai code d'impayé est **131042** (« Business eligibility payment issue ») ; il était étiqueté « numéro suspendu » dans un de ses deux messages de production. À l'inverse **131056** (limite de débit par destinataire, déjà traité ainsi dans `prospection.js`) était pris pour un impayé et aurait déclenché une fausse alerte critique + mode dégradé. L'alerte admin d'impayé part déjà par e-mail et Telegram sans WhatsApp (`alerterWhatsAppPanne`, `envoyerSurWhatsApp: false`).

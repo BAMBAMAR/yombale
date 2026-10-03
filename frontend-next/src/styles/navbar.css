@@ -319,7 +319,11 @@
   /* Masquer le texte secondaire et compacter entre 1140px et 2000px pour éviter tout débordement
      (un compte connecté avec « Espaces Pro » débordait encore vers 1900px : le compte était rogné) */
   .navbar-compte-lien .navbar-compte-nom {
-    max-width: 90px;
+    max-width: 80px;
+  }
+  /* « Espaces Pro » devient « Pro » pour laisser la place au bouton Quitter */
+  .navbar-pro-long {
+    display: none;
   }
   .navbar-taftaf {
     display: none !important;
@@ -336,6 +340,13 @@
   .navbar-link {
     padding: 6px 6px !important;
     font-size: 12.5px !important;
+  }
+}
+
+/* Barre très serrée : le compte se réduit à son icône (le nom reste dans l'infobulle) */
+@media (max-width: 1500px) {
+  .navbar-compte-lien .navbar-compte-nom {
+    display: none;
   }
 }
 

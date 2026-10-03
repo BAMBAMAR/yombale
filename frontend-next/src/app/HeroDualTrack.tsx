@@ -61,6 +61,7 @@ export default function HeroDualTrack({
 
   // ── Sélecteur d'intention tripartite ──────────────────────────────────────
   const tabSelector = (
+    <div className="hero-mode-tabs-host">
     <div
       role="tablist"
       aria-label="Mode d'utilisation Nopalou"
@@ -100,6 +101,7 @@ export default function HeroDualTrack({
         <span className="tab-label-short">Agences</span>
         <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
       </button>
+    </div>
     </div>
   )
 

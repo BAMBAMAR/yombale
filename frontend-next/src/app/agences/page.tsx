@@ -288,6 +288,14 @@ export default async function PublicAgencesDirectoryPage({
               line-height: 1.35 !important;
               margin: 0 0 6px !important;
             }
+            /* homepage.css centre .hero-subtitle sur mobile (héros de l'accueil) : ce bandeau a un titre, des puces
+               et des boutons alignés à gauche, tout le bloc reste donc aligné à gauche. */
+            .hero-immo-card .hero-title,
+            .hero-immo-card .hero-subtitle {
+              text-align: left !important;
+              margin-left: 0 !important;
+              margin-right: 0 !important;
+            }
             .hero-values-strip {
               display: flex !important;
               flex-wrap: wrap !important;

@@ -114,7 +114,7 @@ export default function NavbarProSwitcher() {
           }}
         >
           <Sparkles size={13} style={{ color: 'var(--accent, #C75B00)' }} />
-          <span>Espaces Pro</span>
+          <span><span className="navbar-pro-long">Espaces </span>Pro</span>
           <ChevronDown
             size={13}
             style={{

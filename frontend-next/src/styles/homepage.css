@@ -1119,8 +1119,27 @@
   transition: all 0.15s ease;
   white-space: nowrap;
   box-sizing: border-box;
-  flex: 1 1 0;
+  /* Largeur proportionnelle au contenu : des tiers égaux faisaient déborder « Vendre : boutique et caisse » sur « Acheter » */
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+}
+
+.hero-mode-tab-btn > span:not(.tab-badge-pro) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Les libellés courts s'activent selon la largeur réelle du sélecteur, pas seulement celle de l'écran */
+.hero-mode-tabs-host {
+  container-type: inline-size;
+  width: 100%;
+}
+
+@container (max-width: 720px) {
+  .tab-label-full  { display: none; }
+  .tab-label-short { display: inline; }
 }
 
 .hero-mode-tab-btn.active {

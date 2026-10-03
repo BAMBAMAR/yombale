@@ -372,6 +372,14 @@ export default async function BoutiquesPage({
               line-height: 1.25 !important;
               margin: 0 0 3px !important;
             }
+            /* homepage.css centre .hero-main-title / .hero-subtitle sur mobile (héros de l'accueil) : ce bandeau
+               a des puces et des boutons alignés à gauche, tout le bloc reste donc aligné à gauche. */
+            .hero-banner-container .hero-main-title,
+            .hero-banner-container .hero-subtitle {
+              text-align: left !important;
+              margin-left: 0 !important;
+              margin-right: 0 !important;
+            }
             .hero-subtitle {
               font-size: 11.5px !important;
               line-height: 1.35 !important;
