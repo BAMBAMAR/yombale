@@ -1,5 +1,11 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Navbar sans débordement, tri de l'annuaire par taille de catalogue, Crawler IA fiabilisé (03 octobre 2026)** :
+  * **Navbar (`navbar.css`, `NavbarActions.tsx`)** : la barre d'un compte connecté (~1610 px) débordait entre 1400 et ~1620 px, le nom du compte sortait de l'écran. Seuil de compaction relevé de 1400 à 1640 px ; en dernier recours seul le nom se rétracte (ellipse) ; `<span>` vide orphelin supprimé.
+  * **Annuaire `/boutiques` (`boutiques-crud.js`)** : tri par défaut = sponsorisées, puis Business / Pro **ayant au moins 5 produits**, puis nombre de produits en stock non modérés décroissant, puis date de création. Un forfait payant avec moins de 5 produits ne passe plus devant les autres. Tris explicites (récent, nom, prix) inchangés.
+  * **Crawler Sémantique IA (`intelligent-crawler.js`, `CrawlerAiCard.tsx`)** : l'enrichissement profond remplaçait la description de la carte par celle de la fiche détail, qui ne contient pas le prix → toutes les annonces écartées (+0 créée ; vérifié sur 3 fiches Expat-Dakar sur 3). Prix et texte de la carte conservés jusqu'à l'enregistrement ; attente des cartes (8 s max) avant analyse ; diagnostic renvoyé (code HTTP, titre de la page reçue) et affiché en avertissement au lieu de « terminé avec succès » quand rien n'est créé.
+  * **Validation** : `node --check` backend OK, `tsc --noEmit` 0 erreur ; sondes lecture seule sur le listing Expat-Dakar (10 cartes avec prix). Non vérifié : rendu navigateur de la navbar, requête de tri rejouée sur base, crawl complet avec écriture en base.
+
 - **Carte commande marchand : actions rapides sur une seule ligne (03 octobre 2026)** : dans `CommandeActionsBar.tsx`, « Annuler » passait seul à la ligne sur mobile (`flexWrap: 'wrap'`). Rangée en `nowrap`, boutons `flexShrink: 0` + `whiteSpace: 'nowrap'`, padding horizontal 12 → 10 px, défilement horizontal discret en dernier recours (4 boutons sur très petit écran) ; style des 4 boutons factorisé. `tsc --noEmit` 0 erreur.
 
 - **Hub `/agence` : plus de saut au chargement (03 octobre 2026)** :

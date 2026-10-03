@@ -44,7 +44,7 @@ export default function NavbarActions({ nom, userId }: Props) {
   }, [userId])
 
   return (
-    <div className="navbar-actions-compte" style={{ alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+    <div className="navbar-actions-compte">
       <a
         href="/compte"
         title={`Connecté : ${nom}`}
@@ -62,11 +62,11 @@ export default function NavbarActions({ nom, userId }: Props) {
           gap: '4px',
           textDecoration: 'none',
           maxWidth: '160px',
+          minWidth: 0,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}
       >
-        <span style={{ flexShrink: 0 }}></span>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{nom}</span>
       </a>
       <form action={logout} style={{ margin: 0 }}>

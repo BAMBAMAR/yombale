@@ -297,7 +297,14 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
     });
 
     const page = await context.newPage();
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 35000 });
+    const reponse = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 35000 });
+    const statutHttp = reponse ? reponse.status() : null;
+
+    // Attendre les cartes d'annonces (rendu différé ou page d'attente anti-bot) avant d'analyser le DOM
+    await page.waitForSelector(
+      'a[href*="/annonce/"], a.listing-card__inner, a[href*="/ad/"], a[href*="/item/"], [data-t-listing]',
+      { timeout: 8000 }
+    ).catch(() => {});
 
     // Scroll automatique pour déclencher le chargement dynamique (Lazy loading)
     await page.evaluate(async () => {
@@ -437,6 +444,10 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
         items.push({
           titre,
           description: blocTexte,
+          // Le prix et la localité ne figurent que sur la carte du listing : la description de la fiche
+          // détail (enrichissement profond) ne les reprend pas, ils sont donc conservés ici.
+          texteCarte: blocTexte,
+          prixCarte: prixDetecte,
           url: itemUrl || url,
           telephoneDirect: telExtrait,
           photos: blocPhotos.length > 0 ? blocPhotos : photosCandidates.slice(0, 2)
@@ -447,6 +458,8 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
     if (items.length === 0) {
       // Analyse de repli : annonce unique ou page pleine
       const titrePage = $('h1').first().text().trim() || $('title').text().trim();
+      resultats.modeRepli = true;
+      resultats.diagnostic = `Aucune liste d'annonces détectée sur la page reçue (HTTP ${statutHttp ?? '?'}, titre « ${titrePage.slice(0, 80) || 'vide'} », ${htmlComplet.length} caractères). Si ce titre n'est pas celui du site cible, le site a servi une page de blocage anti-robot au serveur.`;
       items.push({
         titre: titrePage.slice(0, 90),
         description: texteEpure.slice(0, 1000),
@@ -485,7 +498,8 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
 
     // Enregistrement en base de données PostgreSQL
     for (const item of items) {
-      const entites = extraireEntitesSemantiques(item.description, item.titre);
+      const entites = extraireEntitesSemantiques(`${item.description} ${item.texteCarte || ''}`, item.titre);
+      if (item.prixCarte) entites.prix = item.prixCarte;
       const telephoneFinal = item.telephoneDirect || entites.telephone;
 
       if (!entites.prix || entites.prix < 5000) continue;
@@ -597,6 +611,9 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
       resultats.annoncesInserees++;
     }
 
+    if (resultats.annoncesInserees === 0 && !resultats.diagnostic) {
+      resultats.diagnostic = `${items.length} annonce(s) analysée(s) mais aucune avec un prix exploitable (>= 5 000 FCFA).`;
+    }
     resultats.succes = true;
   } catch (err) {
     resultats.erreurs.push(err.message);

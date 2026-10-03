@@ -473,9 +473,9 @@ router.get('/', tokenOptional, limiterBudget, async (req, res) => {
                   : tri === 'nom_asc' ? 'b.nom ASC'
                   : tri === 'prix_asc' ? `(SELECT MIN(bp_min.prix) FROM boutique_produits bp_min WHERE bp_min.boutique_id = b.id AND bp_min.en_stock = true AND (bp_min.statut_moderation IS NULL OR bp_min.statut_moderation = 'actif')) ASC NULLS LAST, b.created_at DESC`
                   : tri === 'prix_desc' ? `(SELECT MAX(bp_max.prix) FROM boutique_produits bp_max WHERE bp_max.boutique_id = b.id AND bp_max.en_stock = true AND (bp_max.statut_moderation IS NULL OR bp_max.statut_moderation = 'actif')) DESC NULLS LAST, b.created_at DESC`
-                  : `CASE a.plan WHEN 'business' THEN 0 WHEN 'pro' THEN 1 ELSE 2 END ASC,
-                     (b.sponsorise = true AND (b.sponsor_jusqu_au IS NULL OR b.sponsor_jusqu_au > NOW())) DESC,
-                     (EXISTS (SELECT 1 FROM boutique_produits bp_ex WHERE bp_ex.boutique_id = b.id AND bp_ex.en_stock = true AND (bp_ex.statut_moderation IS NULL OR bp_ex.statut_moderation = 'actif'))) DESC,
+                  : `(b.sponsorise = true AND (b.sponsor_jusqu_au IS NULL OR b.sponsor_jusqu_au > NOW())) DESC,
+                     CASE WHEN COALESCE(p_agg.total_produits, 0) < 5 THEN 2 WHEN a.plan = 'business' THEN 0 WHEN a.plan = 'pro' THEN 1 ELSE 2 END ASC,
+                     COALESCE(p_agg.total_produits, 0) DESC,
                      b.created_at DESC`;
 
     const where = 'WHERE ' + conds.join(' AND ');

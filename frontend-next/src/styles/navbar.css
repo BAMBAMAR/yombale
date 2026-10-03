@@ -177,13 +177,24 @@
   display: flex;
   align-items: center;
   gap: clamp(4px, 0.6vw, 8px);
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.navbar-actions > * {
   flex-shrink: 0;
 }
 
-.navbar-actions-compte {
+/* Dernier recours : seul le nom du compte se rétracte (ellipse) au lieu de sortir du viewport */
+.navbar-actions > .navbar-actions-compte {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.navbar-actions-compte > form {
   flex-shrink: 0;
 }
 
@@ -219,8 +230,9 @@
   color: #fff;
 }
 
-@media (max-width: 1400px) {
-  /* Masquer le texte secondaire et compacter entre 1140px et 1400px pour éviter tout débordement */
+@media (max-width: 1640px) {
+  /* Masquer le texte secondaire et compacter entre 1140px et 1640px pour éviter tout débordement
+     (la barre complète d'un compte connecté mesure ~1610px : en dessous, le nom sortait de l'écran) */
   .navbar-taftaf {
     display: none !important;
   }

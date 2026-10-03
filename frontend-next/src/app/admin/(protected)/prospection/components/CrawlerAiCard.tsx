@@ -14,6 +14,7 @@ interface CrawlResult {
   annoncesInserees: number
   leadsSynchronises: number
   erreurs?: string[]
+  diagnostic?: string
 }
 
 export default function CrawlerAiCard({ secret, onSuccess }: Props) {
@@ -58,6 +59,7 @@ export default function CrawlerAiCard({ secret, onSuccess }: Props) {
         annoncesInserees: data.annoncesInserees || 0,
         leadsSynchronises: data.leadsSynchronises || 0,
         erreurs: data.erreurs,
+        diagnostic: data.diagnostic,
       })
 
       if (onSuccess) {
@@ -234,17 +236,29 @@ export default function CrawlerAiCard({ secret, onSuccess }: Props) {
           style={{
             padding: '14px 16px',
             borderRadius: 10,
-            background: 'rgba(10, 92, 54, 0.08)',
-            border: '1px solid rgba(10, 92, 54, 0.25)',
+            background: result.annoncesInserees > 0 ? 'rgba(10, 92, 54, 0.08)' : 'rgba(199, 91, 0, 0.08)',
+            border: result.annoncesInserees > 0 ? '1px solid rgba(10, 92, 54, 0.25)' : '1px solid rgba(199, 91, 0, 0.3)',
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#0A5C36', fontWeight: 800, fontSize: 14 }}>
-            <CheckCircle2 size={18} />
-            <span>Crawling terminé avec succès !</span>
-          </div>
+          {result.annoncesInserees > 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--price)', fontWeight: 800, fontSize: 14 }}>
+              <CheckCircle2 size={18} />
+              <span>Crawling terminé avec succès !</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontWeight: 800, fontSize: 14 }}>
+              <AlertCircle size={18} />
+              <span>Crawling terminé : aucune annonce créée</span>
+            </div>
+          )}
+          {(result.diagnostic || (result.erreurs && result.erreurs.length > 0)) && (
+            <div style={{ fontSize: 12.5, color: 'var(--navy)', lineHeight: 1.45 }}>
+              {[result.diagnostic, ...(result.erreurs || [])].filter(Boolean).join(' — ')}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, color: '#1C2B4A' }}>
             <span><strong>{result.annoncesTrouvees}</strong> annonces analysées</span>
             <span>•</span>
