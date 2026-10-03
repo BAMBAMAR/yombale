@@ -1,5 +1,7 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Carte commande marchand : actions rapides sur une seule ligne (03 octobre 2026)** : dans `CommandeActionsBar.tsx`, « Annuler » passait seul à la ligne sur mobile (`flexWrap: 'wrap'`). Rangée en `nowrap`, boutons `flexShrink: 0` + `whiteSpace: 'nowrap'`, padding horizontal 12 → 10 px, défilement horizontal discret en dernier recours (4 boutons sur très petit écran) ; style des 4 boutons factorisé. `tsc --noEmit` 0 erreur.
+
 - **Hub `/agence` : plus de saut au chargement (03 octobre 2026)** :
   * **Hydratation** : `agence/page.tsx` lisait `localStorage` dans les initialiseurs `useState` (rendu serveur « Chargement… », rendu client liste en cache) → erreurs React #418/#423 et page redessinée. État initial identique serveur/client ; le cache hors-ligne reste lu dans `chargerAgences()` après montage.
   * **Redirection supprimée** : un compte avec une seule agence n'est plus renvoyé automatiquement vers `/agence/<slug>` ; la liste des agences s'affiche toujours (paramètre `?hub=true` devenu inutile).

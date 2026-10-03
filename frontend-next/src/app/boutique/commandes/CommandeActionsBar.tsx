@@ -31,6 +31,23 @@ export default function CommandeActionsBar({
   const canReturn = ['livree', 'expediee', 'confirmee'].includes(commande.statut)
   const canCancel = !['annulee', 'livree'].includes(commande.statut)
 
+  // Boutons sur une seule ligne : pas de retour à la ligne ni de texte coupé ;
+  // défilement horizontal en dernier recours (4 boutons sur petit écran).
+  const btnBase: React.CSSProperties = {
+    padding: '6px 10px',
+    background: '#ffffff',
+    borderRadius: 6,
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: loading ? 'not-allowed' : 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+  }
+
   return (
     <div
       style={{
@@ -47,26 +64,13 @@ export default function CommandeActionsBar({
         {t('shop.quickActions') || 'Actions secondaires & Documents'}
       </span>
 
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', alignItems: 'center', overflowX: 'auto', scrollbarWidth: 'none' }}>
         {/* Facture PDF */}
         <button
           type="button"
           onClick={onFacture}
           disabled={loading}
-          style={{
-            padding: '6px 12px',
-            background: '#ffffff',
-            color: 'var(--navy, #1C2B4A)',
-            border: '1px solid #cbd5e1',
-            borderRadius: 6,
-            fontSize: 12,
-            fontWeight: 700,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-          }}
+          style={{ ...btnBase, color: 'var(--navy, #1C2B4A)', border: '1px solid #cbd5e1' }}
           title="Générer une facture PDF pour cette commande"
         >
           <FileText size={13} color="#0284c7" />
@@ -79,20 +83,7 @@ export default function CommandeActionsBar({
             type="button"
             onClick={() => onDispatch(commande)}
             disabled={loading}
-            style={{
-              padding: '6px 12px',
-              background: '#ffffff',
-              color: 'var(--accent, #C75B00)',
-              border: '1px solid #fed7aa',
-              borderRadius: 6,
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-            }}
+            style={{ ...btnBase, color: 'var(--accent, #C75B00)', border: '1px solid #fed7aa' }}
             title="Générer et envoyer la fiche de livraison aux livreurs"
           >
             <Bike size={13} />
@@ -106,20 +97,7 @@ export default function CommandeActionsBar({
             type="button"
             onClick={() => onRetour(commande)}
             disabled={loading}
-            style={{
-              padding: '6px 12px',
-              background: '#ffffff',
-              color: '#475569',
-              border: '1px solid #cbd5e1',
-              borderRadius: 6,
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-            }}
+            style={{ ...btnBase, color: '#475569', border: '1px solid #cbd5e1' }}
             title="Enregistrer un retour client et émettre un bon d'avoir déductible"
           >
             <RotateCcw size={13} />
@@ -133,20 +111,7 @@ export default function CommandeActionsBar({
             type="button"
             onClick={onAnnuler}
             disabled={loading}
-            style={{
-              padding: '6px 12px',
-              background: '#ffffff',
-              color: '#dc2626',
-              border: '1px solid #fecaca',
-              borderRadius: 6,
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-            }}
+            style={{ ...btnBase, color: '#dc2626', border: '1px solid #fecaca' }}
             title="Annuler cette commande"
           >
             <XCircle size={13} />
