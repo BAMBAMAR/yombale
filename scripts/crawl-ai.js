@@ -51,6 +51,7 @@ async function main() {
       console.log(`   - 🔍 Annonces détectées : ${res.annoncesTrouvees}`);
       console.log(`   - 💾 Annonces insérées dans le catalogue : ${res.annoncesInserees}`);
       console.log(`   - 📲 Leads synchronisés CRM WhatsApp : ${res.leadsSynchronises}`);
+      if (res.diagnostic) console.log(`   - ⚠️ ${res.diagnostic}`);
     } else {
       console.log('\n⚠️ Le crawling s\'est terminé avec des alertes :');
       res.erreurs.forEach(e => console.log('   -', e));
