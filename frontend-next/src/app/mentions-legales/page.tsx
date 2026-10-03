@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import EmailLien from '@/components/EmailLien'
 
 export const metadata: Metadata = {
   alternates: { canonical: '/mentions-legales' },
@@ -19,7 +20,7 @@ export default function MentionsLegalesPage() {
         <p>Siège social : Cité Khandar Ouest, T Foirelot 10 N°106, Yoff, Dakar, Sénégal</p>
         <p>Service client &amp; WhatsApp : <a href="tel:+221708717942">+221 70 871 79 42</a> (Lun-Sam 8h-20h)</p>
         <p>Siège administratif : <a href="tel:+221777202086">+221 77 720 20 86</a></p>
-        <p>Email officiel : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a></p>
+        <p>Email officiel : <EmailLien /></p>
       </section>
 
       <section className="legal-section">

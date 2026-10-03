@@ -297,6 +297,15 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
     });
 
     const page = await context.newPage();
+    // Les paramètres de campagne publicitaire (gclid, gad_*, utm_*...) déclenchent des redirections de suivi inutiles
+    try {
+      const u = new URL(url);
+      [...u.searchParams.keys()]
+        .filter((k) => /^(gclid|gbraid|wbraid|fbclid|msclkid|gad_.*|utm_.*)$/i.test(k))
+        .forEach((k) => u.searchParams.delete(k));
+      url = u.toString();
+    } catch (_) {}
+
     const reponse = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 35000 });
     const statutHttp = reponse ? reponse.status() : null;
 
@@ -306,25 +315,39 @@ async function crawlerPageIntelligente({ url, maxItems = 15, sourceLabel = 'craw
       { timeout: 8000 }
     ).catch(() => {});
 
-    // Scroll automatique pour déclencher le chargement dynamique (Lazy loading)
-    await page.evaluate(async () => {
-      await new Promise((resolve) => {
-        let totalHeight = 0;
-        const distance = 400;
-        const timer = setInterval(() => {
-          window.scrollBy(0, distance);
-          totalHeight += distance;
-          if (totalHeight >= 2400) {
-            clearInterval(timer);
-            resolve();
-          }
-        }, 200);
-      });
-    });
+    // Scroll automatique pour déclencher le chargement dynamique (Lazy loading).
+    // Une page qui se recharge pendant le scroll (redirection, défi anti-robot) détruit le contexte
+    // d'exécution : on attend la stabilisation puis on réessaie, sans faire échouer tout le crawl.
+    for (let essai = 0; essai < 3; essai++) {
+      try {
+        await page.waitForLoadState('load', { timeout: 15000 }).catch(() => {});
+        await page.evaluate(async () => {
+          await new Promise((resolve) => {
+            let totalHeight = 0;
+            const distance = 400;
+            const timer = setInterval(() => {
+              window.scrollBy(0, distance);
+              totalHeight += distance;
+              if (totalHeight >= 2400) {
+                clearInterval(timer);
+                resolve();
+              }
+            }, 200);
+          });
+        });
+        break;
+      } catch (errScroll) {
+        if (!/context was destroyed|navigation/i.test(errScroll.message)) break;
+        await page.waitForTimeout(2000);
+      }
+    }
 
     await page.waitForTimeout(1500);
 
-    const htmlComplet = await page.content();
+    const htmlComplet = await page.content().catch(async () => {
+      await page.waitForLoadState('load', { timeout: 15000 }).catch(() => {});
+      return page.content();
+    });
     const { $, texteEpure, photosCandidates } = nettoyerBruitHTML(htmlComplet);
 
     // Découpage automatique des blocs d'annonces avec cascade de sélecteurs prioritaires

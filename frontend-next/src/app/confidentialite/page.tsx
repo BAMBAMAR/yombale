@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import EmailLien from '@/components/EmailLien'
 
 export const metadata: Metadata = {
   alternates: { canonical: '/confidentialite' },
@@ -37,7 +38,7 @@ export default function ConfidentialitePage() {
 
       <section className="legal-section">
         <h2>Conservation des données</h2>
-        <p>Vos données sont conservées tant que votre compte est actif. Vous pouvez demander la suppression de votre compte en contactant <a href="mailto:contact@nopalou.com">contact@nopalou.com</a>.</p>
+        <p>Vos données sont conservées tant que votre compte est actif. Vous pouvez demander la suppression de votre compte en contactant <EmailLien />.</p>
       </section>
 
       <section className="legal-section">
@@ -56,7 +57,7 @@ export default function ConfidentialitePage() {
         <ul>
           <li><strong>Droit de retrait immédiat d&apos;annonce / numéro :</strong> Si votre numéro de téléphone ou votre annonce apparaît sur Nopalou, vous pouvez demander son retrait immédiat en envoyant le mot <strong>&quot;supprimer&quot;</strong> à notre <a href="/assistant-whatsapp">Assistant WhatsApp</a>. Vos annonces et coordonnées associées seront automatiquement désactivées et retirées.</li>
           <li><strong>Désinscription des communications (Opt-out) :</strong> Vous pouvez refuser toute réception de message WhatsApp de notre part en envoyant le mot <strong>&quot;STOP&quot;</strong> au chatbot WhatsApp. Votre numéro sera immédiatement placé en liste noire. (Envoi du mot <strong>&quot;START&quot;</strong> pour annuler la désinscription).</li>
-          <li><strong>Demande d&apos;effacement par e-mail :</strong> Vous pouvez exercer vos droits d&apos;accès, de rectification et d&apos;effacement à tout moment en écrivant à <a href="mailto:contact@nopalou.com?subject=Exercice%20droits%20RGPD%20APDP">contact@nopalou.com</a> (traitement sous 24h).</li>
+          <li><strong>Demande d&apos;effacement par e-mail :</strong> Vous pouvez exercer vos droits d&apos;accès, de rectification et d&apos;effacement à tout moment en écrivant à <EmailLien sujet="Exercice droits RGPD APDP" /> (traitement sous 24h).</li>
         </ul>
       </section>
 

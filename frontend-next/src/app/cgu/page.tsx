@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import EmailLien from '@/components/EmailLien'
 
 export const metadata: Metadata = {
   alternates: { canonical: '/cgu' },
@@ -72,14 +73,14 @@ export default async function CguPage() {
         <ul>
           <li><strong>Retrait immédiat d&apos;une annonce ou d&apos;un numéro de téléphone :</strong> Si votre numéro de téléphone ou votre annonce apparaît sur Nopalou et que vous souhaitez sa suppression immédiate, envoyez simplement le mot <strong>&quot;supprimer&quot;</strong> à notre <a href="/assistant-whatsapp">Assistant WhatsApp (wa.me/221708717942)</a>. Le système désactivera automatiquement toutes les annonces et coordonnées associées à votre numéro.</li>
           <li><strong>Refus de réception de messages (Désinscription / Opt-Out) :</strong> Si vous ne souhaitez plus jamais recevoir aucun message ou notification de Nopalou sur WhatsApp, envoyez simplement <strong>&quot;STOP&quot;</strong> au chatbot WhatsApp. Votre numéro sera inscrit en liste noire et aucun message ne vous sera plus adressé. (Tapez <strong>&quot;START&quot;</strong> si vous souhaitez vous réinscrire).</li>
-          <li><strong>Demande d&apos;effacement par e-mail :</strong> Vous pouvez également adresser votre demande de suppression à tout moment par e-mail à <a href="mailto:contact@nopalou.com?subject=Demande%20de%20suppression%20donnees">contact@nopalou.com</a>. Le traitement est effectué sous 24h ouvrées.</li>
+          <li><strong>Demande d&apos;effacement par e-mail :</strong> Vous pouvez également adresser votre demande de suppression à tout moment par e-mail à <EmailLien sujet="Demande de suppression donnees" />. Le traitement est effectué sous 24h ouvrées.</li>
         </ul>
       </section>
 
       <section className="legal-section">
         <h2>5. Paiements</h2>
         <p>Les paiements sont traités par <strong>Wave</strong> et <strong>Orange Money</strong>. Nopalou ne stocke aucune donnée bancaire. Les transactions sont sécurisées par les prestataires de paiement.</p>
-        <p>En cas de problème de paiement, contactez <a href="mailto:contact@nopalou.com">contact@nopalou.com</a> avec votre référence de transaction.</p>
+        <p>En cas de problème de paiement, contactez <EmailLien /> avec votre référence de transaction.</p>
       </section>
 
       <section className="legal-section">
@@ -116,7 +117,7 @@ export default async function CguPage() {
 
       <section className="legal-section">
         <h2>10. Contact</h2>
-        <p>Pour toute question relative aux présentes CGU : <a href="mailto:contact@nopalou.com">contact@nopalou.com</a></p>
+        <p>Pour toute question relative aux présentes CGU : <EmailLien /></p>
       </section>
     </div>
   )

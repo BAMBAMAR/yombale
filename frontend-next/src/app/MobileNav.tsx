@@ -383,7 +383,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                 <MessageCircle size={13} style={{ color: '#25D366' }} /> Assistant WhatsApp
               </a>
               <a href="mailto:contact@nopalou.com" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--navy, #1C2B4A)', textDecoration: 'none' }}>
-                <Mail size={13} style={{ color: 'var(--accent)' }} /> contact@nopalou.com
+                <Mail size={13} style={{ color: 'var(--accent)' }} /> {'contact'}{'@'}{'nopalou.com'}
               </a>
               <a href="tel:+221708717942" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-subtle)', textDecoration: 'none' }}>
                 <Phone size={13} style={{ color: 'var(--accent)' }} /> <span>+221 70 871 79 42 • Dakar</span>

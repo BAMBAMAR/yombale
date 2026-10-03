@@ -64,6 +64,7 @@ import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
 import NavbarLinksNav from './components/NavbarLinksNav';
 import NavbarProSwitcher from '@/components/NavbarProSwitcher';
+import EmailLien from '@/components/EmailLien';
 import MobileNav from './MobileNav';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import NavbarCartBtn from '@/components/NavbarCartBtn';
@@ -429,7 +430,7 @@ export default async function RootLayout({
                 <span className="footer-support-sep">&bull;</span>
                 <a href="/guide-creer-boutique">Guide Vendeur</a>
                 <span className="footer-support-sep">&bull;</span>
-                <a href="mailto:contact@nopalou.com" style={{ fontWeight: 700 }}>contact@nopalou.com</a>
+                <EmailLien style={{ fontWeight: 700 }} />
                 <span className="footer-support-sep">&bull;</span>
                 <span style={{ color: 'rgba(255,255,255,.85)' }}>+221 70 871 79 42 &bull; Yoff, Dakar</span>
               </div>
