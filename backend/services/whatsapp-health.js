@@ -17,8 +17,11 @@ function estErreurCritique(errObj = {}) {
   const msg = String(errObj.message || errObj.details || '').toLowerCase();
   const title = String(errObj.title || '').toLowerCase();
 
-  // 131056 : Meta WhatsApp Business unsettled payments / impayé
-  if (code === 131056 || msg.includes('unsettled payments') || msg.includes('billing_hub') || title.includes('payment issue')) {
+  // 131042 : « Business eligibility payment issue » = facture Meta impayée ou moyen de paiement refusé
+  // (tous les templates sont alors bloqués). Les journaux de production l'ont montré avec deux messages :
+  // « unsettled payments » puis « errors related to your payment method » (seul le code les relie).
+  // Attention : 131056 n'est PAS un impayé, c'est la limite de débit par destinataire (voir estErreurDestinataire).
+  if (code === 131042 || msg.includes('unsettled payments') || msg.includes('billing_hub') || msg.includes('payment issue') || msg.includes('payment method') || title.includes('payment issue')) {
     return {
       critique: true,
       type: 'PAIEMENT_IMPAYE',
@@ -35,8 +38,8 @@ function estErreurCritique(errObj = {}) {
     };
   }
 
-  // 131042 / 131045 : Numéro suspendu ou restriction de compte
-  if (code === 131042 || code === 131045 || msg.includes('account has been restricted') || msg.includes('spam')) {
+  // 131045 : numéro non enregistré / restriction de compte
+  if (code === 131045 || msg.includes('account has been restricted') || msg.includes('spam')) {
     return {
       critique: true,
       type: 'COMPTE_RESTREINT',
@@ -98,8 +101,8 @@ function estErreurDestinataire(errObj = {}) {
     };
   }
 
-  // 130429 : Rate limit individuel par utilisateur (spam/fréquence vers un seul utilisateur)
-  if (code === 130429 || msg.includes('rate limit hit')) {
+  // 130429 / 131056 : Rate limit individuel (trop de messages vers un même utilisateur / paire expéditeur-destinataire)
+  if (code === 130429 || code === 131056 || msg.includes('rate limit hit')) {
     return {
       destinataire: true,
       motif: 'Limite de messages atteinte vers ce destinataire',

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { playWebOrderChime } from '@/lib/audio-chime'
 import type { Boutique, ManageTab, NavGroup } from '../../types'
 import { VALID_TABS, getBoutiqueNavSections, getNavEssential, getNavCommerce, getNavAdvanced, getTabInfoMap } from './constants'
 
@@ -142,6 +143,11 @@ export function useBoutiqueManageNav({
   // Polling for pending orders count
   useEffect(() => {
     let lastCount = -1
+    const PREFIXE_ALERTE = /^\(\d+\) Nouvelle commande - /
+    // Onglet en arrière-plan : le titre signale la commande tant que le marchand n'est pas revenu dessus.
+    // On retire seulement le préfixe (jamais un titre mémorisé) pour ne pas écraser le titre d'une autre page.
+    const retirerPrefixe = () => { document.title = document.title.replace(PREFIXE_ALERTE, '') }
+    const restaurerTitre = () => { if (!document.hidden) retirerPrefixe() }
     async function check() {
       try {
         const res = await fetch(`/api/compta-proxy/${boutique.id}/commandes-count`)
@@ -151,6 +157,11 @@ export function useBoutiqueManageNav({
           const diff = count - lastCount
           setToast(`${diff} nouvelle${diff > 1 ? 's' : ''} commande${diff > 1 ? 's' : ''} en attente !`)
           setTimeout(() => setToast(null), 6000)
+          try { playWebOrderChime() } catch { /* son bloqué par le navigateur : le toast reste */ }
+          if (document.hidden) {
+            retirerPrefixe()
+            document.title = `(${count}) Nouvelle commande - ${document.title}`
+          }
         }
         lastCount = count
         setNbEnAttente(count)
@@ -159,8 +170,13 @@ export function useBoutiqueManageNav({
       }
     }
     check()
+    document.addEventListener('visibilitychange', restaurerTitre)
     const id = setInterval(check, 30_000)
-    return () => clearInterval(id)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', restaurerTitre)
+      retirerPrefixe()
+    }
   }, [boutique.id])
 
   const allNavItems = useMemo(() => navGroups.flatMap((g) => g.items), [navGroups])

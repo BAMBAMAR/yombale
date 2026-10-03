@@ -177,6 +177,29 @@ async function isTemplateApproved(templateName) {
   }
 }
 
+// Marge sous les 24 h de Meta : un message reçu il y a 23 h 30 laisserait la fenêtre se fermer pendant l'envoi.
+const FENETRE_SERVICE_MINUTES = 23 * 60 + 30;
+
+/**
+ * La fenêtre de service de 24 h de Meta est-elle ouverte (le destinataire a écrit au bot récemment) ?
+ * Hors fenêtre, un texte libre est refusé (erreur 131047) : inutile de le tenter. En cas de doute (base
+ * indisponible), on répond « ouverte » : comportement historique, jamais de message retiré à tort.
+ */
+async function fenetreServiceOuverte(phone) {
+  try {
+    const { pool } = require('../models/db');
+    const r = await pool.query(
+      `SELECT 1 FROM whatsapp_conversation_log
+       WHERE phone = $1 AND direction = 'IN' AND created_at > NOW() - ($2::int * INTERVAL '1 minute')
+       LIMIT 1`,
+      [phone, FENETRE_SERVICE_MINUTES]
+    );
+    return r.rows.length > 0;
+  } catch {
+    return true;
+  }
+}
+
 /**
  * Envoie une notification transactionnelle garantie à un numéro (client ou marchand).
  * 1. Tente d'envoyer le message texte libre détaillé (s'affichera si l'utilisateur a écrit dans les 24h).
@@ -197,8 +220,9 @@ async function sendWhatsAppNotification(phone, {
   if (!phone) return null;
   const normPhone = normalisePhone(phone);
 
-  // 1. Envoi du message texte libre (uniquement si non exclu par templateOnly, actif si fenêtre 24h ouverte)
-  if (textMessage && !templateOnly) {
+  // 1. Envoi du message texte libre, uniquement si la fenêtre de 24 h est ouverte (sinon Meta le refuse en 131047,
+  //    ce qui ne produisait que des échecs et du bruit). Le template ci-dessous part TOUJOURS : il porte le message.
+  if (textMessage && !templateOnly && await fenetreServiceOuverte(normPhone)) {
     sendWhatsAppText(normPhone, textMessage).catch(err => {
       console.warn(`[WHATSAPP NOTIF TEXT INFO] (${normPhone}):`, err.response?.data?.error?.message || err.message);
     });

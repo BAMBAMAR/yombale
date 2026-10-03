@@ -162,4 +162,46 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
     expect(tplCall[1].template.components[0].parameters[0].text).toBe('Caisse tactile & boutique WhatsApp · Factures directes');
     expect(tplCall[1].template.components[0].parameters[1].text).toBe('Tapez Nopalou sur Google 🇸🇳');
   });
+
+  describe('texte libre selon la fenêtre de service de 24 h', () => {
+    const { pool } = require('../../backend/models/db');
+    const appelsTexte = () => axios.post.mock.calls.filter(c => c[1]?.type === 'text');
+    const appelsTemplate = () => axios.post.mock.calls.filter(c => c[1]?.type === 'template');
+    const notifier = () => sendWhatsAppNotification('771234567', { textMessage: 'Détail commande', title: 'Nouvelle commande', detail: 'Détail', type: 'commande' });
+
+    beforeEach(() => axios.post.mockResolvedValue({ data: { messages: [{ id: 'wamid.fenetre' }] } }));
+
+    test('fenêtre fermée (aucun message reçu depuis 23 h 30) : pas de texte libre voué au 131047, le template part toujours', async () => {
+      pool.query.mockResolvedValue({ rows: [] });
+      await notifier();
+      await new Promise(r => setImmediate(r));
+      expect(appelsTexte()).toHaveLength(0);
+      expect(appelsTemplate()).toHaveLength(1);
+      const fenetre = pool.query.mock.calls.find(([sql]) => String(sql).includes('whatsapp_conversation_log'));
+      expect(fenetre[0]).toContain("direction = 'IN'");
+      expect(fenetre[1][0]).toBe('221771234567');
+    });
+
+    test('fenêtre ouverte (le marchand a écrit récemment) : texte libre ET template', async () => {
+      pool.query.mockImplementation(async (sql) => (String(sql).includes('whatsapp_conversation_log') ? { rows: [{ '?column?': 1 }] } : { rows: [] }));
+      await notifier();
+      await new Promise(r => setImmediate(r));
+      expect(appelsTexte()).toHaveLength(1);
+      expect(appelsTexte()[0][1].text.body).toBe('Détail commande');
+      expect(appelsTemplate()).toHaveLength(1);
+    });
+
+    test('base indisponible : comportement historique, le texte libre est tenté (jamais retiré à tort)', async () => {
+      pool.query.mockImplementation(async (sql) => {
+        if (String(sql).includes('whatsapp_conversation_log')) throw new Error('db down');
+        return { rows: [] };
+      });
+      await notifier();
+      await new Promise(r => setImmediate(r));
+      expect(appelsTexte()).toHaveLength(1);
+      expect(appelsTemplate()).toHaveLength(1);
+    });
+
+    afterEach(() => pool.query.mockReset().mockResolvedValue({ rows: [] }));
+  });
 });
