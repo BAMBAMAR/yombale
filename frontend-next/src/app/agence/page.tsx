@@ -26,34 +26,11 @@ interface QuotaData {
 
 export default function AgencesHubPage() {
   const router = useRouter()
-  const [agences, setAgences] = useState<AgenceItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('nopalou_offline_agences_mine')
-        if (cached) {
-          const parsed = JSON.parse(cached)
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed
-        }
-      } catch (_) {}
-    }
-    return []
-  })
-  const [quotas, setQuotas] = useState<QuotaData | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('nopalou_offline_agences_quotas')
-        if (cached) return JSON.parse(cached)
-      } catch (_) {}
-    }
-    return null
-  })
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('nopalou_offline_agences_mine')
-      if (cached) return false
-    }
-    return true
-  })
+  // État initial identique serveur/client : le cache hors-ligne est lu dans
+  // chargerAgences() après hydratation (sinon erreurs React #418/#423).
+  const [agences, setAgences] = useState<AgenceItem[]>([])
+  const [quotas, setQuotas] = useState<QuotaData | null>(null)
+  const [loading, setLoading] = useState(true)
   const [isUnauthenticated, setIsUnauthenticated] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [showMultiModal, setShowMultiModal] = useState(false)
@@ -115,11 +92,6 @@ export default function AgencesHubPage() {
           if (typeof window !== 'undefined') {
             localStorage.setItem('nopalou_offline_agences_quotas', JSON.stringify(data.quotas))
           }
-        }
-        // Si l'utilisateur possède une agence unique, redirection fluide directe vers son dashboard
-        if (agencesList.length === 1 && typeof window !== 'undefined' && !window.location.search.includes('hub=true')) {
-          router.replace(`/agence/${agencesList[0].slug}`)
-          return
         }
       }
     } catch (err) {
