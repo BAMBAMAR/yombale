@@ -1,5 +1,10 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Navbar : bouton « + » (menu de création) à la place de « + Publier » (03 octobre 2026)** :
+  * **Cause** : la barre d'un compte connecté débordait encore (Compte rogné) malgré la compaction ; « + Publier » occupait ~110 px.
+  * **Correctif** : nouveau composant `components/NavbarCreerMenu.tsx` (bouton « + » 38 px, menu : Publier une annonce `/deposer-annonce`, Publier un bien immobilier `/deposer-immo`, Créer une boutique `/creer-boutique`, Créer une agence immo `/agence` ; fermeture au clic extérieur / Échap) branché dans `layout.tsx`, styles `.navbar-creer*` dans `navbar.css` (tokens Nopalou, icônes lucide) ; nom du compte limité à 90 px.
+  * **Validation** : `tsc --noEmit` 0 erreur, `lint:slop` sans nouvelle violation. Non vérifié : rendu réel dans le navigateur.
+
 - **Navbar : le bouton Compte reste visible pour un compte connecté (03 octobre 2026)** :
   * **Cause** : le correctif précédent laissait le nom du compte se rétracter jusqu'à 0 px (cadre vide) et le bouton Quitter était rogné ; le mode compact ne démarrait que sous 1640 px alors que la barre (avec « Espaces Pro ») débordait encore vers 1900 px.
   * **Correctif (`NavbarActions.tsx`, `navbar.css`)** : icône `User` (lucide) toujours visible et non rétractable, largeur minimale 36 px, seul le nom se tronque (110 px max) ; seuil de compaction relevé de 1640 à 2000 px.

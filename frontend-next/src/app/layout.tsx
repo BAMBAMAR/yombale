@@ -64,6 +64,7 @@ import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
 import NavbarLinksNav from './components/NavbarLinksNav';
 import NavbarProSwitcher from '@/components/NavbarProSwitcher';
+import NavbarCreerMenu from '@/components/NavbarCreerMenu';
 import EmailLien from '@/components/EmailLien';
 import MobileNav from './MobileNav';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -281,9 +282,7 @@ export default async function RootLayout({
                     <span style={{ background: '#16A34A', color: '#fff', fontSize: 9.5, padding: '1px 5px', borderRadius: 6, fontWeight: 800 }}>Offert</span>
                   </a>
                 )}
-                <a href="/deposer-annonce" className="navbar-deposer" aria-label="Publier une nouvelle annonce" style={{ whiteSpace: 'nowrap' }}>
-                  + Publier
-                </a>
+                <NavbarCreerMenu />
                 {session ? (
                   <NavbarActions
                     nom={session.nom?.trim() || session.email?.trim() || 'Mon compte'}
