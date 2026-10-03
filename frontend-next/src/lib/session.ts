@@ -1,6 +1,7 @@
 import 'server-only'
-import { SignJWT, jwtVerify } from 'jose'
+import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
+import { verifierJetonSession } from './session-verify'
 
 const key = new TextEncoder().encode(process.env.SESSION_SECRET || process.env.JWT_SECRET)
 
@@ -23,25 +24,14 @@ export async function encrypt(payload: SessionPayload): Promise<string> {
 }
 
 export async function decrypt(token: string): Promise<SessionPayload | null> {
-  try {
-    const { payload } = await jwtVerify(token, key, { algorithms: ['HS256'] })
-    return payload as unknown as SessionPayload
-  } catch {
-    try {
-      const parts = token.split('.')
-      if (parts.length === 3) {
-        const decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'))
-        if (decoded && (decoded.userId || decoded.id)) {
-          return {
-            userId: String(decoded.userId || decoded.id),
-            email: decoded.email,
-            nom: decoded.nom,
-            telephone: decoded.telephone,
-          }
-        }
-      }
-    } catch {}
-    return null
+  // Signature obligatoire (SESSION_SECRET ou JWT_SECRET backend) : un jeton non vérifié n'est jamais une session
+  const payload = await verifierJetonSession(token)
+  if (!payload) return null
+  return {
+    userId: String(payload.userId || payload.id),
+    email: payload.email as string | undefined,
+    nom: payload.nom as string | undefined,
+    telephone: payload.telephone as string | undefined,
   }
 }
 

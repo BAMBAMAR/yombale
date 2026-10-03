@@ -1,6 +1,7 @@
 'use server'
 import { redirect } from 'next/navigation'
 import { createSession, deleteSession, getSession } from '@/lib/session'
+import { verifierJetonSession } from '@/lib/session-verify'
 import { backendFetch } from '@/lib/backend-fetch'
 import { validerForceMotDePasse } from '@/lib/password-validator'
 
@@ -137,37 +138,24 @@ export interface AuthState {
   message?: string
 }
 
-export async function setAuthCookieAction(input: any) {
-  let userId = ''
-  let nom = ''
-  let email = ''
-  let telephone = ''
-
-  if (typeof input === 'string') {
-    const parts = input.split('.')
-    if (parts.length === 3) {
-      try {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'))
-        userId = payload.userId || payload.id || ''
-        nom = payload.nom || ''
-        email = payload.email || ''
-        telephone = payload.telephone || ''
-      } catch (e) {
-        console.error('[setAuthCookieAction] Error parsing token:', e)
-      }
-    }
-  } else if (input && typeof input === 'object') {
-    userId = input.id || input.userId || ''
-    nom = input.nom || ''
-    email = input.email || ''
-    telephone = input.telephone || ''
+// Server Action appelable par n'importe quel client : n'accepte QUE un jeton signé par le backend.
+// Jamais d'objet ni de payload non vérifié (sinon prise de contrôle de compte par simple userId).
+export async function setAuthCookieAction(token: unknown) {
+  if (typeof token !== 'string') {
+    console.error('[setAuthCookieAction] Jeton absent ou invalide')
+    return
   }
-
-  if (userId) {
-    await createSession({ userId, nom, email, telephone })
-  } else {
-    console.error('[setAuthCookieAction] Impossible de créer la session, userId manquant:', input)
+  const payload = await verifierJetonSession(token)
+  if (!payload) {
+    console.error('[setAuthCookieAction] Signature du jeton invalide')
+    return
   }
+  await createSession({
+    userId: String(payload.userId || payload.id),
+    nom: (payload.nom as string) || '',
+    email: (payload.email as string) || '',
+    telephone: (payload.telephone as string) || '',
+  })
 }
 
 // ── Suppression de compte autonome (RGPD Art. 17) ───────────────────

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
 import { isI18nScopedRoute } from './i18n/config'
+import { verifierJetonSession } from './lib/session-verify'
 
-const key = new TextEncoder().encode(process.env.SESSION_SECRET || process.env.JWT_SECRET)
 const COOKIE_NAME = 'nopalou_session'
 
 // Routes qui nécessitent une session valide
@@ -12,14 +11,7 @@ const PROTECTED_EXACT = ['/boutique']
 // Routes accessibles uniquement si NON connecté
 const AUTH_ROUTES = ['/connexion', '/inscription']
 
-async function verifyToken(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, key, { algorithms: ['HS256'] })
-    return payload
-  } catch {
-    return null
-  }
-}
+const verifyToken = verifierJetonSession
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl

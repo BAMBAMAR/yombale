@@ -28,7 +28,7 @@ export default function BoutiqueListHeader({
   onOpenProductTour,
   onCreateShop,
 }: BoutiqueListHeaderProps) {
-  const { t } = useTranslation()
+  const { t, formatNumber } = useTranslation()
 
   return (
     <>
@@ -255,7 +255,7 @@ export default function BoutiqueListHeader({
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#92400e' }}>{t('shop.proBannerTitle')}</p>
             <p style={{ margin: '2px 0 0', fontSize: 13, color: '#b45309' }}>
-              {t('shop.proBannerDesc')} — {prixPro.toLocaleString('fr-FR')} FCFA/mois
+              {t('shop.proBannerDesc')} — {formatNumber(prixPro)} FCFA/mois
             </p>
           </div>
           <span style={{ color: '#C75B00', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
