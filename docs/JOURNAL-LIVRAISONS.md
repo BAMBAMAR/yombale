@@ -3,7 +3,8 @@
 - **Hub `/agence` : plus de saut au chargement (03 octobre 2026)** :
   * **Hydratation** : `agence/page.tsx` lisait `localStorage` dans les initialiseurs `useState` (rendu serveur « Chargement… », rendu client liste en cache) → erreurs React #418/#423 et page redessinée. État initial identique serveur/client ; le cache hors-ligne reste lu dans `chargerAgences()` après montage.
   * **Redirection supprimée** : un compte avec une seule agence n'est plus renvoyé automatiquement vers `/agence/<slug>` ; la liste des agences s'affiche toujours (paramètre `?hub=true` devenu inutile).
-  * **Validation** : `tsc --noEmit` 0 erreur.
+  * **Visiteur non connecté : page publique dès le HTML serveur** : `agence/page.tsx` devient un composant serveur qui lit la session signée (`getOptionalSession`) ; la vue client passe dans `AgencesHubClient.tsx`. Sans session, la page publique est rendue directement (plus d'écran « Chargement… » suivi d'un 401, contenu indexable). Un jeton localStorage seul (invisible du serveur) déclenche encore le chargement de la liste après montage ; une session révoquée (401) retombe sur la page publique.
+  * **Validation** : `tsc --noEmit` 0 erreur. Navigateur (Playwright, pile d'audit locale) : anonyme → page publique dans le HTML serveur ; compte avec agence → liste affichée, URL inchangée, 0 erreur console ; cookie signé avec une mauvaise clé → page publique.
 
 - **Reversement Wave Automatique Unifié (fusion avec AUD-072) & Modification des Zones de Livraison (03 octobre 2026)** :
   * **Zones de livraison** : route `PUT /api/comptabilite/:boutiqueId/zones/:zoneId` (propriété, validation, 404 JSON, audit), action `updateZone`, composant `ZoneRow` (édition en ligne nom + prix, y compris zones issues des préréglages), préréglage « Grand Dakar » renommé « Dakar ».
