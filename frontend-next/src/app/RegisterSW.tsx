@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
+import { usePrechauffagePages } from '@/lib/usePrechauffagePages'
 
 export default function RegisterSW() {
   const isOnline = useOnlineStatus()
+  usePrechauffagePages(isOnline)
   const [showOnlineToast, setShowOnlineToast] = useState(false)
   const [wasOffline, setWasOffline] = useState(false)
   const [swUpdateAvailable, setSwUpdateAvailable] = useState(false)

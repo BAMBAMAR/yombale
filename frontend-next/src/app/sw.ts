@@ -254,6 +254,50 @@ function onlyTrackingParams(rawUrl: string): boolean {
   }
 }
 
+// Pages de l'espace connecté dont le contenu vient de l'état local (localStorage / IndexedDB) : hors-ligne, une URL
+// de ces sections qui n'a jamais été visitée telle quelle (autre onglet `?tab=`, `?manage=`, `?b=`) retombe sur la
+// page mémorisée de la section plutôt que sur l'écran « connexion interrompue ».
+const SECTIONS_CONNECTEES = /^\/(boutique|compte|favoris|mes-annonces|mes-annonces-immo|mes-alertes|deposer-annonce|deposer-immo)(\/|$)/;
+
+async function pageMemoriseeDeLaSection(request: Request): Promise<Response | undefined> {
+  const url = new URL(request.url);
+  const m = SECTIONS_CONNECTEES.exec(url.pathname);
+  if (!m) return undefined;
+  const candidats = [url.pathname];
+  if (m[1] === 'boutique' || m[1] === 'compte') candidats.push(`/${m[1]}`);
+  // /favoris, /mes-annonces… ne sont que des redirections serveur vers /compte?tab=… : leur contenu est la page /compte.
+  else if (/^(favoris|mes-)/.test(m[1])) candidats.push('/compte');
+  for (const chemin of candidats) {
+    const trouvee = await caches.match(url.origin + chemin, { ignoreSearch: true });
+    if (trouvee) return trouvee;
+  }
+  return undefined;
+}
+
+// Préchauffage : à la connexion, l'application demande la mémorisation des pages principales pour que toute la
+// navigation reste possible sans réseau, y compris les pages jamais ouvertes. Les réponses redirigées (session
+// expirée → /connexion) ne sont jamais stockées : une réponse redirigée ne peut de toute façon pas servir une navigation.
+async function prechaufferPages(urls: string[]): Promise<{ ok: number; total: number }> {
+  const cache = await caches.open(`nopalou-html-cache-${CACHE_VERSION}`);
+  const file = urls.filter((u) => typeof u === 'string' && u.startsWith('/') && !u.startsWith('//'));
+  let ok = 0;
+  const prendreUne = async () => {
+    for (let u = file.shift(); u !== undefined; u = file.shift()) {
+      try {
+        const res = await fetch(u, { credentials: 'same-origin', headers: { Accept: 'text/html,application/xhtml+xml' } });
+        if (!res.ok || res.redirected || !(res.headers.get('content-type') || '').includes('text/html')) continue;
+        await cache.put(new Request(u), res);
+        ok++;
+      } catch {
+        /* page ignorée : le prochain préchauffage la retentera */
+      }
+    }
+  };
+  const total = file.length;
+  await Promise.all([prendreUne(), prendreUne(), prendreUne()]);
+  return { ok, total };
+}
+
 // Filtrer le manifest pour exclure les chunks d'administration volumineux non nécessaires pour le fonctionnement PWA hors-ligne
 const precacheManifest = (self.__SW_MANIFEST || []).filter((entry) => {
   const url = typeof entry === 'string' ? entry : entry.url;
@@ -298,7 +342,7 @@ const serwist = new Serwist({
         plugins: [
           signalerCache,
           new ExpirationPlugin({
-            maxEntries: 60,
+            maxEntries: 120,
             maxAgeSeconds: 24 * 60 * 60 * 7,
           }),
         ],
@@ -407,23 +451,9 @@ const serwist = new Serwist({
       }),
     },
   ],
-  fallbacks: {
-    entries: [
-      {
-        url: "/offline.html",
-        matcher({ request }: any) {
-          if (!request || request.destination !== "document") return false;
-          try {
-            const url = new URL(request.url);
-            if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {
-              return false;
-            }
-          } catch (err) { console.warn('[Nopalou:sw:L246]', err); }
-          return true;
-        },
-      },
-    ],
-  },
+  // Pas d'option `fallbacks` : elle servait le /offline.html statique de public/ (précaché) AVANT le gestionnaire
+  // ci-dessous, qui court-circuitait le repli vers la page mémorisée de la section (pageMemoriseeDeLaSection).
+  // setCatchHandler gère les documents, les images, les RSC et l'API.
 });
 
 // ── Installation : pré-cacher /offline.html & skipWaiting ────────────────
@@ -477,7 +507,13 @@ serwist.setCatchHandler(async ({ request }: any) => {
       avertirPageDepuisCache(request.url);
       return cached;
     }
-    const fallback = await caches.match("/offline.html", { ignoreSearch: true });
+    const memorisee = await pageMemoriseeDeLaSection(request);
+    if (memorisee) {
+      avertirPageDepuisCache(request.url);
+      return memorisee;
+    }
+    // Notre écran de secours (liens Caisse / Carnet), pas le /offline.html statique de public/.
+    const fallback = await (await caches.open(`nopalou-offline-fallback-${CACHE_VERSION}`)).match("/offline.html");
     if (fallback) return fallback;
     return new Response(FALLBACK_HTML, {
       status: 200,
@@ -510,11 +546,12 @@ serwist.setCatchHandler(async ({ request }: any) => {
   ) {
     const cachedRsc = await caches.match(request, { ignoreSearch: false });
     if (cachedRsc) return cachedRsc;
-    // Hors-ligne sans RSC en cache : renvoyer 204 No Content pour signaler l'absence de payload sans lever de TypeError
-    return new Response(null, {
-      status: 204,
-      statusText: "No Content",
-      headers: { "Content-Type": "text/x-component; charset=utf-8" },
+    // Hors-ligne sans RSC en cache : réponse non-« flight » en erreur. Next.js bascule alors sur une navigation
+    // complète (document HTML), servie depuis le cache des pages, au lieu d'essayer de lire une charge vide.
+    return new Response("Hors-ligne", {
+      status: 503,
+      statusText: "Service Unavailable",
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   }
 
@@ -542,6 +579,18 @@ serwist.setCatchHandler(async ({ request }: any) => {
 self.addEventListener("message", (event: any) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     (self as any).skipWaiting();
+  }
+});
+
+// ── Préchauffage des pages à la connexion (voir prechaufferPages) ─────────
+self.addEventListener("message", (event: any) => {
+  if (event.data && event.data.type === "NOPALOU_PRECACHE_PAGES" && Array.isArray(event.data.urls)) {
+    const source = event.source;
+    event.waitUntil(
+      prechaufferPages(event.data.urls)
+        .then((r) => source?.postMessage({ type: "NOPALOU_PRECACHE_DONE", ...r }))
+        .catch(() => {})
+    );
   }
 });
 
