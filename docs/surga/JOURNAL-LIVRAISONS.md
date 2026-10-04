@@ -3,6 +3,46 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-04] — Détachement Total de l'Interface Web & Support Sous-Domaine (`surga.nopalou.com`)
+- **Tâches complétées :**
+  - **Omission SSR Totale dans le Root Layout (`frontend-next/src/app/layout.tsx`)** :
+    - Détection au rendu serveur : `const isSurga = pathname === '/surga' || pathname.startsWith('/surga/') || headerList.get('x-is-surga') === 'true'`.
+    - Omission stricte au rendu serveur de tous les composants marketplace Nopalou : `<header role="banner">` (navbar Nopalou), `<DrawerCart>`, `<ChatbotWidget>`, `<MobileBottomNav>`, `<BottomBars>`, `<PwaInstallPrompt>`, `<FavToast>`, `<VerifyEmailToast>`, `<UtmTracker>` et `<footer className="site-footer">`.
+    - Conteneur `<main id="app-main">` calibré sans marges parasites (`padding: 0, margin: 0, minHeight: 100vh`).
+  - **Verrouillage Défensif CSS (`frontend-next/src/styles/surga.css`)** :
+    - Règle globale `body:has(.surga-root) header[role="banner"], .site-footer, .mobile-bottom-nav, .drawer-cart, .bottom-bars, #chat-widget-root, .pwa-install-prompt, .fav-toast { display: none !important; }`.
+    - Nettoyage et suppression de l'ancienne classe `.surga-home-banner` qui pointait vers l'accueil Nopalou.
+  - **Support du Sous-Domaine Transparent (`frontend-next/src/middleware.ts`)** :
+    - Détection de l'en-tête `host` commençant par `surga.` (`surga.nopalou.com` ou `surga.localhost`).
+    - Réécriture transparente (`NextResponse.rewrite`) de la racine `/` vers `/surga` (l'utilisateur reste sur `surga.nopalou.com/` sans voir d'URL marketplace).
+    - Injection de l'en-tête interne `x-is-surga: true` pour alerter le Root Layout.
+  - **Résolution des Routes & Catch-All (`frontend-next/src/app/[slug]/route.ts`)** :
+    - Ajout de `'surga'` dans `RESERVED_ROUTES` pour empêcher le catch-all de slug de détourner `/surga` vers une boutique e-commerce.
+  - **Harmonisation de l'Identité PWA & Manifest (`manifest.json` & `layout.tsx`)** :
+    - Identité autonome : "Surga — Assistant Personnel de Poche", URL canonique `https://surga.nopalou.com`, `og:site_name: Surga`.
+    - Messages de partage WhatsApp et modales nettoyés de toute mention ambiguë ("Surga Nopalou" -> "Surga").
+  - **Validation & Tests** :
+    - Compilation TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Tests Jest Surga : **91/91 passés (100%)**.
+    - Tests frontend Next.js : **97/97 passés (100%)**.
+    - Vérification en direct sur le serveur local : HTTP 200 OK sur `http://localhost:3001/surga`, inspection HTML validant 0 balise navbar/footer Nopalou dans le flux rendu.
+- **Fichiers modifiés/créés :**
+  - `frontend-next/src/app/layout.tsx`
+  - `frontend-next/src/middleware.ts`
+  - `frontend-next/src/styles/surga.css`
+  - `frontend-next/src/app/[slug]/route.ts`
+  - `frontend-next/src/app/surga/layout.tsx`
+  - `frontend-next/public/surga/manifest.json`
+  - `frontend-next/src/app/surga/components/SurgaPlaceCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPlaceDetailModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoDashboardCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoAlerteModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaKiosqueUnes.tsx`
+  - `docs/surga/DECISIONS.md`
+  - `CLAUDE.md`
+
 ### [2026-10-04] — Tranche 16 / Durcissement, Sécurité Anti-IDOR, Export/Suppression RGPD & Clôture
 - **Tâches complétées :**
   - **Revue de Sécurité Anti-IDOR & Étanchéité Multi-Tenant** :
