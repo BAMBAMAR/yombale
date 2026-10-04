@@ -1182,7 +1182,33 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(regexEmoji.test(synthese)).toBe(false);
     });
   });
+
+  describe('Administration Surga — Tout dynamique et administrable', () => {
+    test('Le routeur d administration Surga charge sans erreur', () => {
+      const adminRouter = require('../../backend/routes/admin-surga');
+      expect(adminRouter).toBeDefined();
+      expect(typeof adminRouter).toBe('function');
+    });
+
+    test('Présence des routes d administration pour les 4 piliers de Surga', () => {
+      const adminRouter = require('../../backend/routes/admin-surga');
+      const routes = adminRouter.stack
+        .filter(layer => layer.route)
+        .map(layer => ({
+          path: layer.route.path,
+          methods: Object.keys(layer.route.methods),
+        }));
+
+      const paths = routes.map(r => r.path);
+      expect(paths).toContain('/stats');
+      expect(paths).toContain('/places');
+      expect(paths).toContain('/concours');
+      expect(paths).toContain('/unes');
+      expect(paths).toContain('/signalements');
+    });
+  });
 });
+
 
 
 

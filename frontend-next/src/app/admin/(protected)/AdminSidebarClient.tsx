@@ -142,6 +142,7 @@ const DOMAINS: DomainSection[] = [
     title: 'Contenu & Modération',
     items: [
       { href: '/admin/categories', label: 'Arborescence Catégories', icon: <Layers size={15} /> },
+      { href: '/admin/surga', label: 'Surga (Assistant & Contenus)', icon: <Sparkles size={15} />, highlight: '#C75B00' },
       { href: '/admin/annonces', label: 'Annonces Classifiées', icon: <FileText size={15} /> },
       { href: '/admin/signalements', label: 'Signalements d\'Abus', icon: <AlertTriangle size={15} />, highlight: '#ef4444' },
       { href: '/admin/whatsapp', label: 'WhatsApp Bot & Automation', icon: <MessageCircle size={15} /> },

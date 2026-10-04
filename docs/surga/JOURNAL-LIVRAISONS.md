@@ -3,6 +3,47 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-04] — Console d'Administration Surga (`/admin/surga`) — Tout Dynamique & Modifiable
+- **Tâches complétées :**
+  - **Routeur d'Administration Backend (`backend/routes/admin-surga.js`)** :
+    - Protection RBAC stricte (`requireAdminAuth`, `requireAdminRole('super_admin', 'admin_operationnel', 'moderateur')`) et traçabilité des logs administratifs (`enregistrerAdminLog`).
+    - API CRUD complète sur les **Bonnes Adresses** (`GET /places`, `POST /places`, `PUT /places/:id`, `DELETE /places/:id`).
+    - API CRUD complète sur les **Concours & Examens** (`GET /concours`, `POST /concours`, `PUT /concours/:id`, `DELETE /concours/:id`).
+    - API de publication du **Kiosque des Unes** (`GET /unes`, `POST /unes`, `DELETE /unes/:id`).
+    - API de **Modération Trafic** en temps réel (`GET /signalements`, `PATCH /signalements/:id/statut`, `DELETE /signalements/:id`).
+    - API de **Statistiques Métier** (`GET /stats`).
+  - **Interface Web Admin Nopalou (`frontend-next/src/app/admin/(protected)/surga/`)** :
+    - `page.tsx` (68 lignes) : Server Component avec vérification des jetons d'administration et chargement des métriques.
+    - `AdminSurgaClient.tsx` (358 lignes) : Vue d'ensemble avec 4 cartes KPI inspirées du standard Nopalou (*Bonnes Adresses Actives*, *Concours Nationaux Ouverts*, *Unes du Kiosque*, *Signalements Citoyens en Attente*) et navigation par onglets.
+    - `components/AdminPlacesTab.tsx` (372 lignes) & `components/AdminPlaceModal.tsx` (311 lignes) : Gestion des adresses, filtres quartier/catégorie/recherche, bascule actif/inactif, formulaires d'ajout et édition complets.
+    - `components/AdminConcoursTab.tsx` (361 lignes) & `components/AdminConcoursModal.tsx` (314 lignes) : Gestion des concours de la fonction publique et grandes écoles, dates de clôture, frais, pièces administratives requises.
+    - `components/AdminUnesTab.tsx` (419 lignes) : Galerie et publication des Unes quotidiennes avec prévisualisation des maquettes de presse.
+    - `components/AdminTraficTab.tsx` (324 lignes) : Console de modération des signalements citoyens (Valider / Rejeter / Supprimer).
+  - **Navigation & Barre Latérale Admin (`AdminSidebarClient.tsx`)** :
+    - Ajout du point d'accès direct « Surga (Assistant & Contenus) » avec icône Sparkles dans le domaine *Contenu & Modération*.
+  - **Règle d'or #2 scrupuleusement respectée** : 100% des composants < 450 lignes (aucun monolithe).
+  - **Tests unitaires Jest enrichis** : **83/83 passés (100%)**.
+- **Fichiers modifiés/créés :**
+  - `backend/routes/admin-surga.js`
+  - `backend/app.js`
+  - `frontend-next/src/app/admin/(protected)/AdminSidebarClient.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/page.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/AdminSurgaClient.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/components/AdminPlacesTab.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/components/AdminPlaceModal.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/components/AdminConcoursTab.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/components/AdminConcoursModal.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/components/AdminUnesTab.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/components/AdminTraficTab.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 83/83 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Tous les composants d'administration strictement < 450 lignes.
+
 ### [2026-10-04] — Tranche 14 / Bons Plans & Bonnes Adresses à Dakar (Résumés honnêtes & Envies)
 - **Tâches complétées :**
   - Migration SQL idempotente des tables `surga_places` et `surga_favoris_places` avec index de performance (`idx_surga_places_cat`, `idx_surga_places_quartier`, `idx_surga_places_actif`, `idx_surga_favoris_places_user`) dans `backend/migrate-inline.js`.

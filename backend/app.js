@@ -355,6 +355,7 @@ app.use('/api/admin/support',      require('./routes/admin-support'));
 app.use('/api/support',            require('./routes/support'));
 app.use('/api/admin/avis',         require('./routes/admin-avis'));
 app.use('/api/admin/signalements', require('./routes/admin-signalements'));
+app.use('/api/admin/surga',        require('./routes/admin-surga'));
 app.use('/api/click',           require('./routes/click'));
 app.use('/api/analytics',       require('./routes/analytics'));
 app.use('/api/whatsapp',        require('./routes/whatsapp'));
