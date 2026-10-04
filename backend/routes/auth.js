@@ -47,20 +47,38 @@ router.post('/inscription',
   }),
   // AUD-066 : type et longueur du nom validés explicitement (évite les 500 sur objets/chaînes géantes)
   body('nom').isString().withMessage('Le nom doit être une chaîne de caractères').trim().notEmpty().withMessage('Le nom complet est obligatoire').isLength({ max: 200 }).withMessage('Le nom ne doit pas dépasser 200 caractères'),
+  body('telephone').optional({ nullable: true, checkFalsy: true }).isString().trim(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     try {
-      const { nom, email, mot_de_passe } = req.body;
+      const { nom, email, mot_de_passe, telephone } = req.body;
       const exist = await pool.query('SELECT id FROM utilisateurs WHERE email=$1', [email]);
       if (exist.rows.length) return res.status(409).json({ error: 'Email déjà utilisé' });
+
+      // Option 1.A : Validation stricte et vérification d'unicité pour empêcher le squat / blocage OTP (VAL8-001, VAL8-002, VAL8-003)
+      let telNormalise = null;
+      if (telephone) {
+        const cleanTel = String(telephone).replace(/[^\d+]/g, '').trim();
+        const digitsOnly = cleanTel.replace(/\D/g, '');
+        if (digitsOnly.length < 8 || digitsOnly.length > 15 || cleanTel.length > 20) {
+          return res.status(400).json({ error: 'Numéro de téléphone invalide' });
+        }
+        const libre = await telephoneEstLibrePourCompte(pool, digitsOnly, null);
+        if (!libre) {
+          return res.status(409).json({ error: 'Ce numéro de téléphone est déjà associé à un autre compte.' });
+        }
+        const norm = normalisePhone(telephone);
+        telNormalise = norm ? (norm.startsWith('+') ? norm : '+' + norm) : ('+' + digitsOnly);
+      }
+
       const hash = await bcrypt.hash(mot_de_passe, 12);
       const codeApporteur = await genererCodeUnique();
       let rows;
       try {
         ({ rows } = await pool.query(
-          'INSERT INTO utilisateurs (nom,email,mot_de_passe_hash,est_apporteur,code_apporteur,jwt_version) VALUES ($1,$2,$3,true,$4,1) RETURNING id,nom,email,code_apporteur,jwt_version',
-          [nom, email, hash, codeApporteur]
+          'INSERT INTO utilisateurs (nom, email, mot_de_passe_hash, telephone, est_apporteur, code_apporteur, jwt_version) VALUES ($1, $2, $3, $4, true, $5, 1) RETURNING id, nom, email, telephone, code_apporteur, jwt_version',
+          [nom, email, hash, telNormalise, codeApporteur]
         ));
       } catch (insertErr) {
         // AUD-063 : course d'inscription simultanée du même e-mail → 409 propre, pas un 500 générique
@@ -521,8 +539,8 @@ router.get('/parrainage', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
 });
 
-// GET /api/auth/profil — obtenir les informations du profil utilisateur
-router.get('/profil', verifierToken, async (req, res) => {
+// GET /api/auth/profil & alias GET /api/auth/moi — obtenir les informations du profil utilisateur
+const getProfilHandler = async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT id, nom, email, telephone, email_verifie, created_at FROM utilisateurs WHERE id=$1',
@@ -531,7 +549,10 @@ router.get('/profil', verifierToken, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
     res.json({ user: rows[0] });
   } catch (err) { res.status(500).json({ error: erreurPublique(err, req) }); }
-});
+};
+
+router.get('/profil', verifierToken, getProfilHandler);
+router.get('/moi', verifierToken, getProfilHandler);
 
 // PUT /api/auth/profil — modifier nom, email et/ou telephone
 router.put('/profil',

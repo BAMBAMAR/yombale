@@ -1,0 +1,23 @@
+{
+  "status": "FAIL",
+  "observed": {
+    "http_status": 201,
+    "response_data": {
+      "user": {
+        "id": "6db4e9c4-cf3d-4ee7-9fe0-c5a736cdf97f",
+        "nom": "Ndiaye",
+        "email": "aminata.ndiaye@example.com",
+        "code_apporteur": "WUA4FM",
+        "jwt_version": 1
+      },
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ZGI0ZTljNC1jZjNkLTRlZTctOWZlMC1jNWE3MzZjZGY5N2YiLCJqd3RWZXJzaW9uIjoxLCJpYXQiOjE3OTExMTU3ODQsImV4cCI6MTc5MTcyMDU4NH0.gu_djMB0lQKT18uSRYZOrN7WRlizzTAF6XH6KYYkiOA"
+    },
+    "db_record": {
+      "id": "6db4e9c4-cf3d-4ee7-9fe0-c5a736cdf97f",
+      "email": "aminata.ndiaye@example.com",
+      "telephone": null,
+      "mot_de_passe_hash": "$2a$12$b2to76Ls9F32EF53wMXCNeGIvc1hsgfOh3ocIuZJBzQhd1uiDz2im",
+      "jwt_version": 1
+    }
+  }
+}

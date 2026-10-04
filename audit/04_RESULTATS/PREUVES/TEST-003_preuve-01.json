@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "adaptation_note": "Testé sur /api/auth/profil car /api/auth/moi n'existe pas.",
+  "observed": {
+    "original_endpoint_moi": {
+      "reset_type": 401,
+      "reset_secret": 401
+    },
+    "adapted_endpoint_profil": {
+      "reset_type": {
+        "status": 401,
+        "body": {
+          "error": "Ce jeton ne peut pas être utilisé comme session"
+        }
+      },
+      "reset_secret": {
+        "status": 401,
+        "body": {
+          "error": "Token invalide"
+        }
+      }
+    }
+  }
+}

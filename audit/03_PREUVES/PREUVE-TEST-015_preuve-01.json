@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "observed": {
+    "algorithmic_evaluation": {
+      "smartphone1_vs_smartphone2": {
+        "match": true,
+        "methode": "modele",
+        "modele": "galaxy s23",
+        "confiance": 0.92
+      },
+      "smartphone1_vs_coque": {
+        "match": false,
+        "raison": "accessoire_vs_appareil"
+      },
+      "smartphone2_vs_coque": {
+        "match": false,
+        "raison": "accessoire_vs_appareil"
+      }
+    },
+    "db_attachments": {
+      "offre1_produit_id": "9593d06a-dfed-4c7f-a8eb-ce35ed7ca56f",
+      "offre2_produit_id": "9593d06a-dfed-4c7f-a8eb-ce35ed7ca56f",
+      "offre3_coque_produit_id": "fb719ec0-3fd8-43a2-824c-ff7cabd1c5e4",
+      "same_product_for_smartphones": true,
+      "distinct_product_for_coque": true,
+      "total_master_products_created": 2
+    },
+    "db_records": [
+      {
+        "id": "9593d06a-dfed-4c7f-a8eb-ce35ed7ca56f",
+        "nom": "Samsung Galaxy s23 venant 256go ram 8go 5g",
+        "marque": "Samsung",
+        "nom_normalise": null,
+        "offres": [
+          {
+            "id": "3e30624d-0a8b-42a8-9760-998bf1e91c40",
+            "titre": "Samsung Galaxy s23 venant 256go ram 8go 5g",
+            "prix": 175000
+          },
+          {
+            "id": "ec03336e-f41a-44ed-b64e-f6be46882ce1",
+            "titre": "Samsung Galaxy S23 -512Gb",
+            "prix": 310000
+          },
+          {
+            "id": "e46e35b6-29f7-474d-ac0e-f7327423f637",
+            "titre": "Samsung Galaxy S23 - 256Gb",
+            "prix": 360000
+          },
+          {
+            "id": "52b7e4cc-1261-419c-89a5-fb4d99f02302",
+            "titre": "Samsung Galaxy S23 – Mémoire 256 Go – RAM 8 Go – Ecran 6.1″ – Photo 12 Mpx",
+            "prix": 375000
+          },
+          {
+            "id": "be0c20a0-0959-4a95-aace-6cb36c4c2b15",
+            "titre": "Samsung Galaxy S23 128Go",
+            "prix": 450000
+          }
+        ]
+      },
+      {
+        "id": "fb719ec0-3fd8-43a2-824c-ff7cabd1c5e4",
+        "nom": "Coque silicone Samsung Galaxy S23",
+        "marque": "Samsung",
+        "nom_normalise": "coque silicone samsung galaxy s23",
+        "offres": [
+          {
+            "id": "2ad3eaa5-5a41-4be0-97cd-7b45f8041c33",
+            "titre": "Coque silicone Samsung Galaxy S23",
+            "prix": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

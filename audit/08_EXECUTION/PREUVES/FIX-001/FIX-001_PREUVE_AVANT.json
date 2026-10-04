@@ -1,0 +1,22 @@
+{
+  "anomalie_id": "ANOM-001",
+  "test_id": "TEST-001",
+  "status": "FAIL",
+  "observed": {
+    "http_status": 201,
+    "endpoint": "POST /api/auth/inscription",
+    "payload_sent": {
+      "nom": "Ndiaye",
+      "prenom": "Aminata",
+      "email": "aminata.ndiaye@example.com",
+      "telephone": "77 123 45 67",
+      "mot_de_passe": "TestPassword2026!"
+    },
+    "db_record": {
+      "email": "aminata.ndiaye@example.com",
+      "telephone": null,
+      "jwt_version": 1
+    },
+    "constat": "Le numéro de téléphone transmis n’est pas persisté en base et vaut NULL dans utilisateurs."
+  }
+}

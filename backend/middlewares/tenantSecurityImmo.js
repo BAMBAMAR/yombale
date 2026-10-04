@@ -120,7 +120,7 @@ function requireAgenceAccess(requiredRoleOrPerm = null, paramName = 'id') {
     try {
       const access = await checkAgenceAccess(agenceIdOrSlug, userId);
       if (!access) {
-        logSecurityViolation({
+        await logSecurityViolation({
           eventType: 'IDOR_AGENCE_ACCESS_DENIED',
           userId,
           tenantType: 'agence',

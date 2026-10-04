@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "observed": {
+    "get_commandes_cross_attempt": {
+      "status": 403,
+      "body": {
+        "error": "Accès refusé : vous n'êtes pas propriétaire de cette boutique"
+      }
+    },
+    "post_produit_cross_attempt": {
+      "status": 403,
+      "body": {
+        "error": "Accès refusé"
+      }
+    },
+    "vault_events_count": 2,
+    "vault_records": [
+      {
+        "id": "cbf8cc4c-4ee3-4b3c-89c7-a36f912ba81c",
+        "event_type": "IDOR_BOUTIQUE_ACCESS_DENIED",
+        "user_id": "f562d3b4-8452-46d0-a649-adbe1ae75e56",
+        "tenant_type": "boutique",
+        "target_id": "a9317928-433d-46d0-9ca8-bac19bcc74a0",
+        "endpoint": "/api/comptabilite/a9317928-433d-46d0-9ca8-bac19bcc74a0/commandes",
+        "method": "GET",
+        "created_at": "2026-10-04T12:10:02.208Z"
+      },
+      {
+        "id": "2f1b0bbb-651a-4449-bb8b-4a0cf6eba817",
+        "event_type": "IDOR_BOUTIQUE_ACCESS_DENIED",
+        "user_id": "f562d3b4-8452-46d0-a649-adbe1ae75e56",
+        "tenant_type": "boutique",
+        "target_id": "a9317928-433d-46d0-9ca8-bac19bcc74a0",
+        "endpoint": "/api/boutiques/a9317928-433d-46d0-9ca8-bac19bcc74a0/produits",
+        "method": "POST",
+        "created_at": "2026-10-04T12:10:02.217Z"
+      }
+    ]
+  }
+}

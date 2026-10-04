@@ -1,0 +1,14 @@
+{
+  "anomalie_id": "ANOM-002",
+  "test_id": "TEST-002",
+  "status": "FAIL",
+  "observed": {
+    "endpoint_called": "GET /api/auth/moi",
+    "http_status": 404,
+    "body": {
+      "error": "Not Found",
+      "code": "NOT_FOUND"
+    },
+    "constat": "Route /api/auth/moi inexistante (HTTP 404), seule /api/auth/profil était exposée."
+  }
+}

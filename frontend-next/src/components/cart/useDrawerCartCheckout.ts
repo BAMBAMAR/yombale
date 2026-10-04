@@ -360,6 +360,9 @@ export function useDrawerCartCheckout() {
           prix: i.prix,
           detailsVariante: i.detailsVariante,
         })),
+        fallbackManuel: Boolean(data.fallback_manuel),
+        numeroDepot: data.numero_depot || '777202086',
+        operateurManuel: data.operateur || (currentMethode.includes('wave') ? 'Wave' : 'Orange Money'),
       })
 
       trackAnalyticsEvent('commande_confirmee', currentBoutiqueId, { valeur: currentTotal })

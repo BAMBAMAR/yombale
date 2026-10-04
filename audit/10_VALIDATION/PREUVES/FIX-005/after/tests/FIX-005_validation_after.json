@@ -1,0 +1,225 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-005",
+  "label": "after",
+  "base_url": "http://localhost:4100",
+  "date": "2026-10-04T12:02:33.472Z",
+  "resume": {
+    "total": 11,
+    "pass": 9,
+    "fail": 2,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V5-01",
+      "titre": "Les anciennes URLs du plan (/pos/sessions/ouvrir, /pos/tiroir, /pos/sessions/fermer) restent 404 : le correctif est documentaire, aucune route produit ajoutée",
+      "status": "PASS",
+      "expected": "404 ×3",
+      "observed": {
+        "ouvrir": 404,
+        "tiroir": 404,
+        "fermer": 404
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-02",
+      "titre": "Ouverture de session (routes réelles) => 201 + session persistée avec fond 25 000",
+      "status": "PASS",
+      "expected": {
+        "http": 201,
+        "fond": 25000
+      },
+      "observed": {
+        "http": 201,
+        "body": {
+          "success": true,
+          "session": {
+            "id": "8c09a1c4-7ba0-484d-8fde-d354b7fd8a23",
+            "boutique_id": "ebd4affb-f863-4051-88dd-869c4dc896df",
+            "caissier_id": null,
+            "caissier_nom": "Caissier Principal",
+            "fond_caisse_initial": "25000.00",
+            "ventes_especes": "0.00",
+            "ventes_wave": "0.00",
+            "ventes_orange_money": "0.00",
+            "ventes_carte": "0.00",
+            "ventes_total": "0.00",
+            "nb_ventes": 0,
+            "especes_comptees": null,
+            "ecart_caisse": null,
+            "date_ouverture": "2026-10-04T12:02:33.207Z",
+            "date_cloture": null,
+            "statut": "ouverte",
+            "detail_billets": {},
+            "total_remises": "0.00",
+            "total_entrees_especes": "0.00",
+            "total_sorties_especes": "0.00",
+            "idempotency_key": null
+          }
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-03",
+      "titre": "Double ouverture : refusée (4xx) ou idempotente — jamais deux sessions ouvertes simultanées",
+      "status": "FAIL",
+      "expected": "<=1 session ouverte",
+      "observed": {
+        "http": 201,
+        "body": {
+          "success": true,
+          "session": {
+            "id": "86d12943-605b-4278-adf0-d9a00c5690a9",
+            "boutique_id": "ebd4affb-f863-4051-88dd-869c4dc896df",
+            "caissier_id": null,
+            "caissier_nom": "Autre",
+            "fond_caisse_initial": "1000.00",
+            "ventes_especes": "0.00",
+            "ventes_wave": "0.00",
+            "ventes_orange_money": "0.00",
+            "ventes_carte": "0.00",
+            "ventes_total": "0.00",
+            "nb_ventes": 0,
+            "especes_comptees": null,
+            "ecart_caisse": null,
+            "date_ouverture": "2026-10-04T12:02:33.237Z",
+            "date_cloture": null,
+            "statut": "ouverte",
+            "detail_billets": {},
+            "total_remises": "0.00",
+            "total_entrees_especes": "0.00",
+            "total_sorties_especes": "0.00",
+            "idempotency_key": null
+          }
+        },
+        "sessions_ouvertes": 2
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-04",
+      "titre": "Mouvement de tiroir : sortie 5 000 acceptée (200) ; montant négatif et type invalide refusés (4xx) ; total_sorties = 5 000",
+      "status": "PASS",
+      "expected": {
+        "nominal": 200,
+        "negatif": "4xx",
+        "type_invalide": "4xx",
+        "total_sorties": 5000
+      },
+      "observed": {
+        "nominal": 200,
+        "negatif": 400,
+        "type_invalide": 400,
+        "total_sorties_db": "5000.00"
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-05",
+      "titre": "TEST-010 original : clôture 20 000 comptés => 200, statut clôturé, écart 0,00 FCFA en base",
+      "status": "PASS",
+      "expected": {
+        "http": 200,
+        "ecart": 0
+      },
+      "observed": {
+        "http": 200,
+        "statut": "cloturee",
+        "ecart": "0.00",
+        "comptes": "20000.00",
+        "body": {
+          "success": true,
+          "message": "Session clôturée avec succès"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-06",
+      "titre": "Écart non nul : fond 10 000, comptés 9 000 => écart -1 000 calculé et persisté",
+      "status": "PASS",
+      "expected": {
+        "ecart": -1000
+      },
+      "observed": {
+        "http": 200,
+        "ecart": "-1000.00"
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-07",
+      "titre": "Mouvement sur session clôturée refusé (4xx) et totaux inchangés",
+      "status": "FAIL",
+      "expected": "4xx",
+      "observed": {
+        "http": 200,
+        "body": {
+          "success": true,
+          "mouvement": {
+            "id": "277d3587-4de5-4982-9b1c-de1ab9033722",
+            "boutique_id": "ebd4affb-f863-4051-88dd-869c4dc896df",
+            "session_id": "8c09a1c4-7ba0-484d-8fde-d354b7fd8a23",
+            "type": "sortie",
+            "montant": "100.00",
+            "motif": "après clôture",
+            "beneficiaire": null,
+            "caissier_nom": "Caissier",
+            "created_at": "2026-10-04T12:02:33.330Z"
+          }
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-08",
+      "titre": "Isolation : B ne peut ni ouvrir, ni lire, ni clôturer une session de la boutique de A (403/404)",
+      "status": "PASS",
+      "expected": "403/404 ×3",
+      "observed": {
+        "ouvrir": 403,
+        "lire": 403,
+        "cloturer": 403
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-09",
+      "titre": "Non connecté : 401",
+      "status": "PASS",
+      "expected": 401,
+      "observed": 401,
+      "note": ""
+    },
+    {
+      "id": "V5-10",
+      "titre": "TEST-011 (Grappe B) : vente rejouée => 1ère 200/201, 2e 200 duplicate:true, 1 vente en base, stock 10->9",
+      "status": "PASS",
+      "expected": "idempotent",
+      "observed": {
+        "v1": 201,
+        "v2": 200,
+        "duplicate": true,
+        "ventes": 1,
+        "stock": 9
+      },
+      "note": ""
+    },
+    {
+      "id": "V5-11",
+      "titre": "PLAN_TESTS.md référence les routes réelles /pos-sessions/ouvrir, /:sessionId/mouvements, /cloturer et plus les routes fantômes",
+      "status": "PASS",
+      "expected": "routes réelles",
+      "observed": [
+        "  1. `POST /api/boutiques/:id/pos-sessions/ouvrir` avec `{ \"fondDeCaisse\": 25000, \"caissierNom\": \"Caissier Principal\" }` (HTTP 201).",
+        "  2. `POST /api/boutiques/:id/pos-sessions/:sessionId/mouvements` avec `{ \"type\": \"sortie\", \"montant\": 5000, \"motif\": \"Achat monnaie\", \"caissier_nom\": \"Caissier Principal\" }` (HTTP 200).",
+        "  3. `POST /api/boutiques/:id/pos-sessions/cloturer` avec `{ \"sessionId\": sessionId, \"especesComptees\": 20000, \"ventesEspeces\": 0, \"caissierNom\": \"Caissier Principal\" }` (HTTP 200)."
+      ],
+      "note": ""
+    }
+  ],
+  "extra": {}
+}

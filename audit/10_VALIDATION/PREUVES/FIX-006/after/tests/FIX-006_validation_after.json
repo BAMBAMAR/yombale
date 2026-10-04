@@ -1,0 +1,250 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-006",
+  "label": "after",
+  "base_url": "http://localhost:4100",
+  "date": "2026-10-04T12:03:16.683Z",
+  "resume": {
+    "total": 14,
+    "pass": 12,
+    "fail": 2,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V6-01",
+      "titre": "URL initiale /locatif-immo/baux (sans agence) reste 404 : correctif documentaire, route produit inchangée",
+      "status": "PASS",
+      "expected": 404,
+      "observed": {
+        "http": 404
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-02",
+      "titre": "TEST-014 adapté : création du bail via /agence/:id/baux => 201, bail persisté + 12 échéances générées",
+      "status": "PASS",
+      "expected": {
+        "http": 201,
+        "echeances": 12
+      },
+      "observed": {
+        "http": 201,
+        "bail_id": "2c1ebb8d-78ff-4ec6-b94c-0fa14d29cdac",
+        "nb_echeances": 12,
+        "premiere": {
+          "montant_du": "160000.00",
+          "statut": "en_attente"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-03",
+      "titre": "Création de bail via le SLUG de l'agence (:slugOrId) => 201",
+      "status": "PASS",
+      "expected": 201,
+      "observed": {
+        "http": 201
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-04",
+      "titre": "Encaissement exact => 200, échéance payée, reste 0, date de paiement renseignée (rechargé depuis la DB)",
+      "status": "PASS",
+      "expected": {
+        "http": 200,
+        "statut": "paye",
+        "restant": 0
+      },
+      "observed": {
+        "http": 200,
+        "db": {
+          "statut": "paye",
+          "montant_paye": "160000.00",
+          "montant_restant": "0.00",
+          "date_paiement": "2026-10-04T00:00:00.000Z"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-05",
+      "titre": "Cas limites : partiel => restant = moitié ; surpaiement (x5) refusé ou plafonné ; ré-encaissement d'une échéance soldée refusé",
+      "status": "PASS",
+      "expected": "pas de sur-encaissement",
+      "observed": {
+        "partiel": {
+          "http": 200,
+          "db": {
+            "statut": "partiel",
+            "montant_paye": "80000.00",
+            "montant_restant": "80000.00"
+          }
+        },
+        "surpaiement": {
+          "http": 200,
+          "db": {
+            "statut": "paye",
+            "montant_paye": "160000.00",
+            "montant_restant": "0.00"
+          }
+        },
+        "re_encaissement": {
+          "http": 400,
+          "db": {
+            "statut": "paye",
+            "montant_paye": "160000.00",
+            "montant_restant": "0.00"
+          }
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-06",
+      "titre": "Quittance PDF : 200, application/pdf, signature %PDF + %%EOF, polices système uniquement, aucune URL externe",
+      "status": "PASS",
+      "expected": {
+        "http": 200,
+        "pdf_valide": true
+      },
+      "observed": {
+        "http": 200,
+        "ct": "application/pdf",
+        "taille": 3140,
+        "polices": [
+          "Helvetica",
+          "Helvetica-Bold"
+        ],
+        "urls_externes": []
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-07",
+      "titre": "Quittance PDF : contenu métier réel (locataire, bien, montant, période, mentions légales COCC) — pas seulement une taille",
+      "status": "PASS",
+      "expected": {
+        "locataire": true,
+        "montant": true,
+        "mot_quittance": true,
+        "cocc": true
+      },
+      "observed": {
+        "mentions": {
+          "locataire": true,
+          "prenom": true,
+          "bien_ou_quartier": true,
+          "montant": true,
+          "mot_quittance": true,
+          "cocc": true,
+          "periode": true
+        },
+        "nb_streams": 1,
+        "extrait_texte": "RÉPUBLIQ UE DU SÉNÉGAL  CODE DES OBLIGA TIONS CIVILES ET COMMERCIALES (COCC)  GESTION LOCA TIVE CONFORME Ag ence X 006 T él :  773330006 Q UITT ANCE DE LO YER Réf :  Q UITT ANCE-2026-10-MUTR V0VQ P ér iode acquittée :  2026-10 Date d'émission :  04 octobre 2026 LOCA T AIRE (PRENEUR) Abdoula y e So w T éléphone :  775550006 Email :  N/A Bail Réf :  2C1EBB8D BIEN LOUÉ & PR OPRIÉT AIRE Appar tement F4 X1  (Almadies) - Dakar Bailleur :  Ousmane Diagne (représenté) DÉSIGNA TION DES SOMMES A CQ UITTÉES PÉRIODE MONT ANT Lo y er pr incipal d'habitation 2026-10 140 000 FCF A Pro visions pour charges "
+      },
+      "note": "Si le texte n'est pas extractible (PDF compressé non standard), ce test est inconclusif : voir extrait."
+    },
+    {
+      "id": "V6-08",
+      "titre": "Deux quittances (échéances différentes) ont des contenus différents",
+      "status": "PASS",
+      "expected": "contenus distincts",
+      "observed": {
+        "http": 200,
+        "tailles": [
+          3140,
+          3138
+        ],
+        "identiques": false
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-09",
+      "titre": "Quittance d'une échéance impayée : refusée (4xx), pas de quittance frauduleuse",
+      "status": "PASS",
+      "expected": "4xx",
+      "observed": {
+        "http": 404,
+        "body": {
+          "success": false,
+          "error": "Quittance introuvable ou loyer non acquitté"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-10",
+      "titre": "Identifiant invalide / inconnu : 4xx, jamais 500",
+      "status": "FAIL",
+      "expected": "4xx",
+      "observed": {
+        "invalide": 500,
+        "inconnu": 404
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-12a",
+      "titre": "Isolation : X ne crée pas de bail dans l'agence de Y (403) + trace IDOR_AGENCE_ACCESS_DENIED",
+      "status": "PASS",
+      "expected": "403 + trace",
+      "observed": {
+        "http": 403,
+        "vault": [
+          "IDOR_AGENCE_ACCESS_DENIED"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-12b",
+      "titre": "Isolation des références : X ne peut PAS créer, dans SA agence, un bail visant le bien/locataire/propriétaire de l'agence Y (attendu 4xx)",
+      "status": "FAIL",
+      "expected": "4xx",
+      "observed": {
+        "http": 201,
+        "bail_cree": {
+          "id": "b5e2df6b-5968-41bb-a18d-0ef81450fe90",
+          "agence_id": "8f61accc-03db-4dd6-a191-ea11c5074d68",
+          "bien_id": "89fc1d7d-24b6-4a5e-b88b-a7792e49085e",
+          "locataire_id": "2a6897a6-1ba9-4761-a954-aca00d287284",
+          "proprietaire_id": "027f583d-5226-4c2a-a4c3-5c4988e357d5"
+        }
+      },
+      "note": "Anomalie PRÉ-EXISTANTE non liée à FIX-006 si observée à l'identique en before/after."
+    },
+    {
+      "id": "V6-12c",
+      "titre": "Isolation : Y ne peut pas encaisser un loyer de l'agence X (403)",
+      "status": "PASS",
+      "expected": 403,
+      "observed": {
+        "http": 403
+      },
+      "note": ""
+    },
+    {
+      "id": "V6-13",
+      "titre": "Non connecté : création de bail refusée (401)",
+      "status": "PASS",
+      "expected": 401,
+      "observed": 401,
+      "note": ""
+    }
+  ],
+  "extra": {
+    "route_matrice_agent5_quittance_id_pdf": {
+      "http": 404
+    },
+    "identifiants": {
+      "agenceX": "8f61accc-03db-4dd6-a191-ea11c5074d68",
+      "bail": "2c1ebb8d-78ff-4ec6-b94c-0fa14d29cdac",
+      "echeance_payee": "5b6479d2-e424-41a7-a598-8be721184684"
+    }
+  }
+}

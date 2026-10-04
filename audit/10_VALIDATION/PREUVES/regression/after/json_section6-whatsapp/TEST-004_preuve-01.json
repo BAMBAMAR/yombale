@@ -1,0 +1,66 @@
+{
+  "status": "PASS",
+  "adaptation_note": "1) Le payload original exigeait { confirmation: 'SUPPRIMER' }. 2) Comme /api/auth/supprimer-compte révoque immédiatement les sessions existantes en incrémentant jwt_version, l'utilisateur doit se reconnecter pour récupérer sa session de grâce avant d'annuler.",
+  "observed": {
+    "original_payload_call": {
+      "status": 400,
+      "body": {
+        "error": "Veuillez saisir \"SUPPRIMER\" pour confirmer la suppression."
+      }
+    },
+    "adapted_payload_call": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "message": "Votre compte sera supprimé dans 30 jours (le 3 novembre 2026). Vous pouvez vous reconnecter à tout moment pour annuler cette demande.",
+        "supprime_le": "2026-10-04T12:10:01.124Z",
+        "date_limite": "3 novembre 2026"
+      }
+    },
+    "db_step2": {
+      "id": "53297e52-8da0-4600-a63c-413b4d01c223",
+      "email": "aminata.ndiaye@example.com",
+      "supprime_le": "2026-10-04T12:10:01.124Z",
+      "supprime_par_utilisateur": true
+    },
+    "relogin_grace": {
+      "status": 200,
+      "user": {
+        "id": "53297e52-8da0-4600-a63c-413b4d01c223",
+        "nom": "Ndiaye",
+        "email": "aminata.ndiaye@example.com",
+        "telephone": "+221771234567",
+        "email_verifie": false,
+        "supprime_le": "2026-10-04T12:10:01.124Z",
+        "anonymise_le": null,
+        "jwt_version": 3,
+        "a2f_actif": false,
+        "a2f_telephone": null,
+        "en_cours_de_suppression": true
+      }
+    },
+    "statut_call": {
+      "status": 200,
+      "body": {
+        "en_cours_de_suppression": true,
+        "supprime_le": "2026-10-04T12:10:01.124Z",
+        "supprime_par_utilisateur": true,
+        "jours_restants": 30,
+        "date_limite": "3 novembre 2026"
+      }
+    },
+    "cancel_call": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "message": "La suppression de votre compte a été annulée avec succès. Votre compte reste actif."
+      }
+    },
+    "db_step5": {
+      "id": "53297e52-8da0-4600-a63c-413b4d01c223",
+      "email": "aminata.ndiaye@example.com",
+      "supprime_le": null,
+      "supprime_par_utilisateur": false
+    }
+  }
+}

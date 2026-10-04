@@ -1,0 +1,13 @@
+{
+  "anomalie_id": "ANOM-005",
+  "test_id": "TEST-010",
+  "status": "FAIL",
+  "observed": {
+    "strict_endpoints_status": {
+      "/pos/sessions/ouvrir": 404,
+      "/pos/tiroir": 404,
+      "/pos/sessions/fermer": 404
+    },
+    "constat": "Divergence entre la spécification PLAN_TESTS.md et la convention unifiée /pos-sessions/... du backend et de la synchronisation offline."
+  }
+}

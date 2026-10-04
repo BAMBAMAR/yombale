@@ -3,7 +3,7 @@ import React from 'react'
 import { fcfa, lienWhatsapp } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
 import { construireMessageCommande } from './messageCommande'
-import { CheckCircle, CreditCard, MessageCircle, AlertCircle } from 'lucide-react'
+import { CheckCircle, CreditCard, MessageCircle, AlertCircle, Info, Phone } from 'lucide-react'
 import { OrderSuccessData } from './types'
 
 interface DrawerCartSuccessModalProps {
@@ -18,11 +18,14 @@ export default function DrawerCartSuccessModal({
   const { t } = useTranslation()
   const isCredit = orderSuccessData.methodePaiement === 'credit'
   const isWa = orderSuccessData.methodePaiement === 'whatsapp'
+  const isFallback = Boolean(orderSuccessData.fallbackManuel)
+  const numDepot = orderSuccessData.numeroDepot || '777202086'
+  const operateur = orderSuccessData.operateurManuel || 'Wave'
 
   const mode = orderSuccessData.modeLivraison ?? 'livraison'
   const aConvenir = mode === 'a_convenir'
   // AUD-217 : même message que celui du panier (référence, mode de livraison réel) ; jamais le numéro d'un autre commerce
-  const waMsgSuccess = construireMessageCommande({
+  const baseWaMsg = construireMessageCommande({
     boutiqueNom: orderSuccessData.boutiqueNom,
     items: orderSuccessData.items,
     sousTotal: orderSuccessData.sousTotal,
@@ -33,6 +36,9 @@ export default function DrawerCartSuccessModal({
     reference: orderSuccessData.reference || undefined,
     mode,
   })
+  const waMsgSuccess = isFallback
+    ? `${baseWaMsg}\n\nPaiement en cours via transfert manuel ${operateur} au ${numDepot} (Réf: ${orderSuccessData.reference}).`
+    : baseWaMsg
   const waLinkDirect = lienWhatsapp(orderSuccessData.whatsapp, waMsgSuccess)
   const lienSuivi = orderSuccessData.reference ? `/suivi-commande?ref=${encodeURIComponent(orderSuccessData.reference)}` : '/suivi-commande'
 
@@ -222,6 +228,54 @@ export default function DrawerCartSuccessModal({
             </div>
           )}
         </div>
+
+        {isFallback && (
+          <div
+            style={{
+              width: '100%',
+              padding: '14px 16px',
+              background: 'var(--bg, #F8F5F0)',
+              border: '1.5px solid var(--accent, #C75B00)',
+              borderRadius: 14,
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              boxSizing: 'border-box',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent, #C75B00)', fontWeight: 800, fontSize: 14 }}>
+              <AlertCircle size={18} style={{ flexShrink: 0 }} />
+              <span>Paiement manuel requis ({operateur})</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--navy, #1C2B4A)', lineHeight: 1.5 }}>
+              La passerelle automatique est temporairement indisponible. Votre commande est bien réservée. Veuillez effectuer votre transfert vers le numéro :
+            </p>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: '#ffffff',
+                border: '1.5px dashed var(--accent, #C75B00)',
+                borderRadius: 10,
+                padding: '8px 12px',
+              }}
+            >
+              <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--navy, #1C2B4A)', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Phone size={16} color="var(--accent, #C75B00)" />
+                {numDepot}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent, #C75B00)', background: 'var(--bg, #F8F5F0)', padding: '2px 8px', borderRadius: 6 }}>
+                {operateur}
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text2, #6B5E52)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Info size={14} style={{ flexShrink: 0 }} />
+              <span>Précisez la référence <strong>{orderSuccessData.reference}</strong> en motif de transfert.</span>
+            </div>
+          </div>
+        )}
 
         {isCredit && (
           <p

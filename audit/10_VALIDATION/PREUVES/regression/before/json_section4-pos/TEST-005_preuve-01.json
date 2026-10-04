@@ -1,0 +1,30 @@
+{
+  "status": "FAIL",
+  "observed": {
+    "get_commandes_cross_attempt": {
+      "status": 403,
+      "body": {
+        "error": "Accès refusé : vous n'êtes pas propriétaire de cette boutique"
+      }
+    },
+    "post_produit_cross_attempt": {
+      "status": 403,
+      "body": {
+        "error": "Accès refusé"
+      }
+    },
+    "vault_events_count": 1,
+    "vault_records": [
+      {
+        "id": "f4a2e9f0-37c9-456b-b3da-e3eda58d8b86",
+        "event_type": "UNAUTHORIZED_ORDERS_ACCESS",
+        "user_id": "89f29233-9237-4f4f-b4d5-dd6b494e677c",
+        "tenant_type": "boutique",
+        "target_id": "3459c9f7-6f0c-46b4-a42a-765fb7451c56",
+        "endpoint": "/api/comptabilite/3459c9f7-6f0c-46b4-a42a-765fb7451c56/commandes",
+        "method": "GET",
+        "created_at": "2026-10-04T12:09:46.015Z"
+      }
+    ]
+  }
+}

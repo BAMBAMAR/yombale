@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "observed": {
+    "http_status": 201,
+    "response_data": {
+      "user": {
+        "id": "53297e52-8da0-4600-a63c-413b4d01c223",
+        "nom": "Ndiaye",
+        "email": "aminata.ndiaye@example.com",
+        "telephone": "+221771234567",
+        "code_apporteur": "8QWU4W",
+        "jwt_version": 1
+      },
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1MzI5N2U1Mi04ZGEwLTQ2MDAtYTYzYy00MTNiNGQwMWMyMjMiLCJqd3RWZXJzaW9uIjoxLCJpYXQiOjE3OTExMTU4MDAsImV4cCI6MTc5MTcyMDYwMH0.jJeziwelrx_KzSD9MbFg5rtTIzDrUQyya3tAOovPAkQ"
+    },
+    "db_record": {
+      "id": "53297e52-8da0-4600-a63c-413b4d01c223",
+      "email": "aminata.ndiaye@example.com",
+      "telephone": "+221771234567",
+      "mot_de_passe_hash": "$2a$12$ijSJDj6zMr8Dq/3Ttyl56uXUHCE3bpHg2ewRYI9Hrrye6RwVPP556",
+      "jwt_version": 1
+    }
+  }
+}

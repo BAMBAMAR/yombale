@@ -1,0 +1,112 @@
+{
+  "status": "PASS",
+  "adaptation_note": "Le payload strict original { articles, nom_client, telephone_client } a échoué en 400 car l'API exige client_nom et client_telephone. Avec le mapping exact des champs, la commande est créée en 201 sans aucun crash ReferenceError et avec calcul exact du total.",
+  "observed": {
+    "strict_call": {
+      "status": 400,
+      "body": {
+        "error": "Invalid value"
+      }
+    },
+    "adapted_call": {
+      "status": 201,
+      "body": {
+        "commande": {
+          "id": "5494e1f5-525e-4237-9b36-0bcc3f4c609f",
+          "reference": "C-MUTS3QSA4946",
+          "boutique_id": "4159203f-898d-49b0-9664-57e612d7b0f8",
+          "produit_id": "f07736b3-18a7-4538-bb37-9757f5301049",
+          "nom_produit": "2x Savon Naturel Karité",
+          "quantite": 2,
+          "prix_unitaire": "2500.00",
+          "montant_total": "5000.00",
+          "client_nom": "Moussa Diop",
+          "client_telephone": "771234567",
+          "client_adresse": "Médina Rue 6",
+          "note": null,
+          "statut": "en_attente",
+          "source": "web",
+          "created_at": "2026-10-04T12:10:03.223Z",
+          "updated_at": "2026-10-04T12:10:03.223Z",
+          "methode_paiement": "cash",
+          "zone_livraison_id": null,
+          "frais_livraison": "0.00",
+          "groupe_commande": null,
+          "paiement_recu": false,
+          "utm_source": null,
+          "utm_medium": null,
+          "utm_campaign": null,
+          "montant_commission": "0.00",
+          "payout_ref": null,
+          "payout_date": null,
+          "social_post_id": null,
+          "statut_sequestre": "aucun",
+          "sequestre_pin_hash": null,
+          "sequestre_pin_sel": null,
+          "sequestre_essais_restants": 3,
+          "sequestre_date_deblocage": null,
+          "relance_panier_envoyee": false,
+          "date_relance_panier": null,
+          "remise_club_vip": "0.00",
+          "idempotency_key": null
+        },
+        "message": "Commande envoyée avec succès"
+      }
+    },
+    "db_commande": {
+      "id": "5494e1f5-525e-4237-9b36-0bcc3f4c609f",
+      "reference": "C-MUTS3QSA4946",
+      "boutique_id": "4159203f-898d-49b0-9664-57e612d7b0f8",
+      "produit_id": "f07736b3-18a7-4538-bb37-9757f5301049",
+      "nom_produit": "2x Savon Naturel Karité",
+      "quantite": 2,
+      "prix_unitaire": "2500.00",
+      "montant_total": "5000.00",
+      "client_nom": "Moussa Diop",
+      "client_telephone": "771234567",
+      "client_adresse": "Médina Rue 6",
+      "note": null,
+      "statut": "en_attente",
+      "source": "web",
+      "created_at": "2026-10-04T12:10:03.223Z",
+      "updated_at": "2026-10-04T12:10:03.223Z",
+      "methode_paiement": "cash",
+      "zone_livraison_id": null,
+      "frais_livraison": "0.00",
+      "groupe_commande": null,
+      "paiement_recu": false,
+      "utm_source": null,
+      "utm_medium": null,
+      "utm_campaign": null,
+      "montant_commission": "0.00",
+      "payout_ref": null,
+      "payout_date": null,
+      "social_post_id": null,
+      "statut_sequestre": "aucun",
+      "sequestre_pin_hash": null,
+      "sequestre_pin_sel": null,
+      "sequestre_essais_restants": 3,
+      "sequestre_date_deblocage": null,
+      "relance_panier_envoyee": false,
+      "date_relance_panier": null,
+      "remise_club_vip": "0.00",
+      "idempotency_key": null
+    },
+    "db_items": [
+      {
+        "id": "9acd0611-13e2-4010-a655-d727ee6bdc60",
+        "commande_id": "5494e1f5-525e-4237-9b36-0bcc3f4c609f",
+        "boutique_id": "4159203f-898d-49b0-9664-57e612d7b0f8",
+        "produit_id": "f07736b3-18a7-4538-bb37-9757f5301049",
+        "variante_id": null,
+        "nom_produit": "Savon Naturel Karité",
+        "details_variante": null,
+        "prix_unitaire": "2500.00",
+        "prix_achat": null,
+        "quantite": 2,
+        "montant_total": "5000.00",
+        "created_at": "2026-10-04T12:10:03.223Z"
+      }
+    ]
+  }
+}

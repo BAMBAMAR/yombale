@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "observed": {
+    "get_baux_by_uuid": {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "Accès refusé : vous ne disposez pas des droits d'accès à cette agence.",
+        "code": "ACCESS_DENIED_AGENCE_TENANT"
+      }
+    },
+    "get_baux_by_slug": {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "Accès refusé : vous ne disposez pas des droits d'accès à cette agence.",
+        "code": "ACCESS_DENIED_AGENCE_TENANT"
+      }
+    },
+    "vault_events_count": 2,
+    "vault_records": [
+      {
+        "id": "f8f8a106-9b63-49f3-81bb-59c3ebe57536",
+        "event_type": "IDOR_AGENCE_ACCESS_DENIED",
+        "user_id": "2c06d2b8-2649-4372-8579-06d01ee19066",
+        "tenant_type": "agence",
+        "target_id": "03809943-23b8-40bf-a7f3-ebf74c251664",
+        "endpoint": "/api/locatif-immo/agence/03809943-23b8-40bf-a7f3-ebf74c251664/baux",
+        "method": "GET",
+        "created_at": "2026-10-04T12:10:02.721Z"
+      },
+      {
+        "id": "0a3bfb7c-36db-4f2a-88e1-a56739934a89",
+        "event_type": "IDOR_AGENCE_ACCESS_DENIED",
+        "user_id": "2c06d2b8-2649-4372-8579-06d01ee19066",
+        "tenant_type": "agence",
+        "target_id": "agence-y-audit",
+        "endpoint": "/api/locatif-immo/agence/agence-y-audit/baux",
+        "method": "GET",
+        "created_at": "2026-10-04T12:10:02.736Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,276 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-001",
+  "label": "before",
+  "base_url": "http://localhost:4101",
+  "date": "2026-10-04T11:59:22.172Z",
+  "resume": {
+    "total": 10,
+    "pass": 5,
+    "fail": 5,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V1-01",
+      "titre": "TEST-001 original : inscription avec telephone local formaté => 201 + persisté en DB (E.164)",
+      "status": "FAIL",
+      "expected": {
+        "http": 201,
+        "db_telephone": "+221771560761"
+      },
+      "observed": {
+        "http": 201,
+        "api_user": {
+          "id": "4d7ee099-bc30-4b95-be26-604150c5e042",
+          "nom": "Audit8 t001",
+          "email": "t001.mutrpvfw@audit8.test",
+          "code_apporteur": "XPMEEN",
+          "jwt_version": 1
+        },
+        "db": {
+          "id": "4d7ee099-bc30-4b95-be26-604150c5e042",
+          "telephone": null,
+          "jwt_version": 1
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-02",
+      "titre": "Persistance : reconnexion puis GET /api/auth/profil retourne le téléphone saisi",
+      "status": "FAIL",
+      "expected": {
+        "telephone_contient": "771560761"
+      },
+      "observed": {
+        "login_status": 200,
+        "profil_status": 200,
+        "profil": {
+          "user": {
+            "id": "4d7ee099-bc30-4b95-be26-604150c5e042",
+            "nom": "Audit8 t001",
+            "email": "t001.mutrpvfw@audit8.test",
+            "telephone": null,
+            "email_verifie": false,
+            "created_at": "2026-10-04T11:59:16.365Z"
+          }
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-03",
+      "titre": "Formats d'entrée (+221 espacé, 00221, 221, parenthèses) normalisés en +221XXXXXXXXX",
+      "status": "FAIL",
+      "expected": "tous normalisés",
+      "observed": [
+        {
+          "format": "+221 77 %s",
+          "http": 201,
+          "db": null,
+          "attendu": "+221771560762"
+        },
+        {
+          "format": "00221…",
+          "http": 201,
+          "db": null,
+          "attendu": "+221771560763"
+        },
+        {
+          "format": "221…",
+          "http": 201,
+          "db": null,
+          "attendu": "+221771560764"
+        },
+        {
+          "format": "(+221) 77-xxx-xx-xx",
+          "http": 201,
+          "db": null,
+          "attendu": "+221771560765"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "V1-04",
+      "titre": "Cas limites : téléphone absent/vide/null/espaces => 201 sans erreur SQL, NULL stocké",
+      "status": "PASS",
+      "expected": "tous 201 + NULL",
+      "observed": [
+        {
+          "cas": "absent",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "vide",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "null",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "espaces",
+          "http": 201,
+          "db_telephone": null
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "V1-05",
+      "titre": "Valeurs invalides (lettres, trop court/long, injection, types non-string) : ni 500, ni numéro invalide persisté",
+      "status": "PASS",
+      "expected": "rejet 4xx ou NULL, jamais de 500 / valeur invalide stockée",
+      "observed": [
+        {
+          "cas": "lettres",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "trop_court",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "trop_long_25_chiffres",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "injection",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "nombre_json",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "objet",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "tableau",
+          "http": 201,
+          "db_telephone": null
+        }
+      ],
+      "note": "La table utilisateurs existe toujours: true"
+    },
+    {
+      "id": "V1-06",
+      "titre": "Doublon : second compte e-mail avec le MÊME numéro doit être refusé (409 explicite), comme PUT /profil",
+      "status": "FAIL",
+      "expected": {
+        "second_signup": "409 « numéro déjà associé »",
+        "comptes_avec_ce_numero": 1
+      },
+      "observed": {
+        "first": 201,
+        "second": 201,
+        "second_body": {
+          "user": {
+            "id": "a965b5ea-8751-4e6a-88ac-466f70e39d6a",
+            "nom": "Audit8 t001dupB",
+            "email": "t001dupb.mutrpvfw@audit8.test",
+            "code_apporteur": "T9PVZS",
+            "jwt_version": 1
+          },
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhOTY1YjVlYS04NzUxLTRlNmEtODhhYy00NjZmNzBlMzlkNmEiLCJqd3RWZXJzaW9uIjoxLCJpYXQiOjE3OTExMTUxNjAsImV4cCI6MTc5MTcxOTk2MH0.h4fC8iYN6AQf-Giy8C3CYOjynMp8HYEBZwSvcO1qCeY"
+        },
+        "comptes_avec_ce_numero": 0,
+        "rows": []
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-07",
+      "titre": "Hidden regression : l'inscription e-mail d'un tiers avec le numéro de la victime ne doit pas bloquer la connexion OTP du titulaire",
+      "status": "PASS",
+      "expected": {
+        "otp_login_victime": 200
+      },
+      "observed": {
+        "attaquant_signup": 201,
+        "attaquant_db": {
+          "id": "755ab32e-5948-4611-a5ac-df4968ff84a8",
+          "telephone": null,
+          "jwt_version": 1
+        },
+        "otp_login_status": 200,
+        "otp_login_body": {
+          "success": true,
+          "user": {
+            "id": "b82ff510-1579-4a52-b7e8-f9f5bc84675b",
+            "nom": "Victime OTP",
+            "email": "victime.mutrpvfw@audit8.test",
+            "email_verifie": true,
+            "suspendu": false,
+            "supprime_le": null,
+            "anonymise_le": null,
+            "jwt_version": 1,
+            "telephone": "221771560768",
+            "en_cours_de_suppression": false
+          },
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJiODJmZjUxMC0xNTc5LTRhNTItYjdlOC1mOWY1YmM4NDY3NWIiLCJqd3RWZXJzaW9uIjoxLCJpYXQiOjE3OTExMTUxNjEsImV4cCI6MTc5MTcxOTk2MX0.sjUSWfsxBfj1-ErETBE8e628BLSHY9fv9SuBbV_SAQ4"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-08",
+      "titre": "Cohérence de format : le même numéro saisi doit être stocké identiquement par PUT /profil et par /inscription",
+      "status": "FAIL",
+      "expected": "même chaîne en DB",
+      "observed": {
+        "put_status": 200,
+        "db_via_PUT_profil": "771560769",
+        "db_via_inscription": null
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-09",
+      "titre": "E2E auth : inscription -> accès compte -> déconnexion (token révoqué 401) -> reconnexion 200",
+      "status": "PASS",
+      "expected": {
+        "logout": 200,
+        "ancien_token": 401,
+        "reconnexion": 200
+      },
+      "observed": {
+        "logout": 200,
+        "ancien_token": 401,
+        "reconnexion": 200
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-10",
+      "titre": "Non-régression normalisation e-mail (minuscules, domaine)",
+      "status": "PASS",
+      "expected": "mixed.case.mutrpvfw@audit8.test",
+      "observed": {
+        "http": 201,
+        "db_email": "mixed.case.mutrpvfw@audit8.test"
+      },
+      "note": ""
+    }
+  ],
+  "extra": {
+    "index_telephone_utilisateurs": [],
+    "colonne_telephone": {
+      "data_type": "character varying",
+      "character_maximum_length": 20
+    },
+    "ui_formulaire_inscription_email_a_champ_telephone": false
+  }
+}

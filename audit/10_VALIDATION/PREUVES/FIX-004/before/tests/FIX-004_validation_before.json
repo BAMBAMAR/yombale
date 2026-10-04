@@ -1,0 +1,155 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-004",
+  "label": "before",
+  "base_url": "http://localhost:4101",
+  "date": "2026-10-04T12:03:47.483Z",
+  "resume": {
+    "total": 9,
+    "pass": 3,
+    "fail": 6,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V4-01",
+      "titre": "TEST-009 original : Wave indisponible => 201 + fallback_manuel + numero_depot 777202086 + commande en_attente + stock 10->9",
+      "status": "FAIL",
+      "expected": {
+        "http": 201,
+        "fallback_manuel": true,
+        "numero_depot": "777202086",
+        "db_statut": "en_attente",
+        "stock": 9
+      },
+      "observed": {
+        "http": 502,
+        "body": {
+          "error": "Le paiement Wave n’a pas pu être initialisé. Votre commande n’a pas été enregistrée, réessayez ou choisissez un autre mode de paiement."
+        },
+        "db_commande": null,
+        "stock_apres": 10
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-02",
+      "titre": "Quantité 2 : montant 5000, stock décrémenté de 2 (9->7), commande conservée",
+      "status": "FAIL",
+      "expected": {
+        "http": 201,
+        "montant": 5000,
+        "stock": 7
+      },
+      "observed": {
+        "http": 502,
+        "db": null,
+        "stock": 10
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-03",
+      "titre": "Alias méthode pay_wave : même comportement de repli",
+      "status": "FAIL",
+      "expected": "201 fallback",
+      "observed": {
+        "http": 502
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-04",
+      "titre": "Non-régression Orange Money : 201 + (om_url OU repli manuel), commande en_attente, comportement inchangé avant/après",
+      "status": "PASS",
+      "expected": "201 + om_url|fallback",
+      "observed": {
+        "http": 201,
+        "om_url": "http://localhost:3001/paiement/succes?ref=C-MUTRVORHC8BE&type=commande-boutique",
+        "message": "Commande créée. Redirection vers Orange Money…"
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-05",
+      "titre": "Non-régression paiement espèces : 201, sans champs de repli Wave, stock -1",
+      "status": "PASS",
+      "expected": "201 simple",
+      "observed": {
+        "http": 201,
+        "message": "Commande envoyée avec succès",
+        "statut": "en_attente",
+        "stock": [
+          9,
+          8
+        ]
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-06",
+      "titre": "Double soumission (même idempotency_key) : 2e réponse 200 doublon, 1 seule commande, stock -1 uniquement",
+      "status": "FAIL",
+      "expected": {
+        "first": 201,
+        "second": "200 doublon",
+        "stock": 4
+      },
+      "observed": {
+        "first": 502,
+        "second": 200,
+        "doublon": true,
+        "stock": 5,
+        "commandes_en_base": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-07",
+      "titre": "Quantité > stock : refus 4xx, aucune commande créée, stock inchangé",
+      "status": "PASS",
+      "expected": "4xx + 0 commande",
+      "observed": {
+        "http": 409,
+        "body": {
+          "error": "Stock insuffisant pour \"Rupture Wave 004\" (disponible : 1, demandé : 2)."
+        },
+        "commandes": 0,
+        "stock": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-08",
+      "titre": "Concurrence (2 commandes simultanées sur le dernier article) : une seule acceptée, stock jamais négatif",
+      "status": "FAIL",
+      "expected": {
+        "acceptees": 1,
+        "stock": 0
+      },
+      "observed": {
+        "statuts": [
+          409,
+          502
+        ],
+        "stock": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-09",
+      "titre": "Le corps de repli contient message, numero_depot, operateur et AUCUNE wave_url trompeuse",
+      "status": "FAIL",
+      "expected": "message+numero+operateur",
+      "observed": {
+        "keys": [
+          "error"
+        ]
+      },
+      "note": ""
+    }
+  ],
+  "extra": {
+    "boutique": "26c91c61-0450-46fc-adab-3610fb7c6b5c"
+  }
+}

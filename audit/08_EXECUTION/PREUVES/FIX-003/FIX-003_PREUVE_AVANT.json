@@ -1,0 +1,11 @@
+{
+  "anomalie_id": "ANOM-003",
+  "test_id": "TEST-005",
+  "status": "FAIL",
+  "observed": {
+    "endpoint_called": "POST /api/boutiques/:boutiqueA_id/produits",
+    "http_status": 403,
+    "vault_records_count": 0,
+    "constat": "Accès refusé HTTP 403 mais 0 journalisation dans security_audit_vault sur la tentative IDOR de création de produit."
+  }
+}

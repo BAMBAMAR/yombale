@@ -1,0 +1,202 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-002",
+  "label": "after",
+  "base_url": "http://localhost:4100",
+  "date": "2026-10-04T12:00:28.867Z",
+  "resume": {
+    "total": 11,
+    "pass": 11,
+    "fail": 0,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V2-01",
+      "titre": "TEST-002 original (strict) : GET /api/auth/moi avec session valide => 200 + objet user",
+      "status": "PASS",
+      "expected": {
+        "http": 200
+      },
+      "observed": {
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "a1e0f9f8-bb87-4f94-8db7-37f32d444b46",
+            "nom": "Audit8 t002",
+            "email": "t002.mutrre99@audit8.test",
+            "telephone": null,
+            "email_verifie": false,
+            "created_at": "2026-10-04T12:00:27.402Z"
+          }
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-02",
+      "titre": "/profil reste 200 et renvoie le MÊME corps que /moi (alias strict)",
+      "status": "PASS",
+      "expected": "corps identiques",
+      "observed": {
+        "profil": {
+          "user": {
+            "id": "a1e0f9f8-bb87-4f94-8db7-37f32d444b46",
+            "nom": "Audit8 t002",
+            "email": "t002.mutrre99@audit8.test",
+            "telephone": null,
+            "email_verifie": false,
+            "created_at": "2026-10-04T12:00:27.402Z"
+          }
+        },
+        "moi": {
+          "user": {
+            "id": "a1e0f9f8-bb87-4f94-8db7-37f32d444b46",
+            "nom": "Audit8 t002",
+            "email": "t002.mutrre99@audit8.test",
+            "telephone": null,
+            "email_verifie": false,
+            "created_at": "2026-10-04T12:00:27.402Z"
+          }
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-03",
+      "titre": "Non connecté : /moi et /profil => 401 (aucune fuite de données)",
+      "status": "PASS",
+      "expected": {
+        "moi": 401,
+        "profil": 401
+      },
+      "observed": {
+        "moi": 401,
+        "profil": 401,
+        "body": {
+          "error": "Token manquant"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-04",
+      "titre": "Jeton invalide / signé avec un mauvais secret / expiré => 401 sur /moi",
+      "status": "PASS",
+      "expected": "trois 401",
+      "observed": {
+        "garbage": 401,
+        "forge": 401,
+        "expire": 401
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-05",
+      "titre": "TEST-003 sur l'alias : jeton reset/verify refusé comme session (401) sur /moi",
+      "status": "PASS",
+      "expected": {
+        "401": 2
+      },
+      "observed": {
+        "type_reset": 401,
+        "secret_reset": 401,
+        "msg": {
+          "error": "Ce jeton ne peut pas être utilisé comme session"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-06",
+      "titre": "L'alias ne doit exposer que GET (POST/PUT /moi => 404/405, pas d'écriture parasite)",
+      "status": "PASS",
+      "expected": "pas de 2xx",
+      "observed": {
+        "post": 404,
+        "put": 404
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-07",
+      "titre": "Déconnexion : jwt_version +1 en DB, ancien token => 401 sur /moi ET /profil (persistance de la révocation)",
+      "status": "PASS",
+      "expected": {
+        "logout": 200,
+        "jwt_version": 2,
+        "moi": 401,
+        "profil": 401
+      },
+      "observed": {
+        "logout": 200,
+        "jwt_version_avant": 1,
+        "jwt_version_apres": 2,
+        "moi": 401,
+        "profil": 401,
+        "msg": {
+          "error": "Session révoquée, veuillez vous reconnecter"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-08",
+      "titre": "Reconnexion : nouveau token 200 sur /moi ; ancien token reste 401",
+      "status": "PASS",
+      "expected": {
+        "nouveau": 200,
+        "ancien": 401
+      },
+      "observed": {
+        "login": 200,
+        "nouveau": 200,
+        "ancien": 401
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-09",
+      "titre": "Après demande de suppression de compte, l'ancien token est révoqué sur /moi (401)",
+      "status": "PASS",
+      "expected": {
+        "sup": 200,
+        "moi": 401
+      },
+      "observed": {
+        "sup": 200,
+        "moi": 401
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-10",
+      "titre": "Isolation : /moi renvoie uniquement le profil du porteur du jeton (pas d'IDOR)",
+      "status": "PASS",
+      "expected": "id = porteur",
+      "observed": {
+        "id": "88a80334-f85d-4910-a494-7268f5817a14",
+        "attendu": "88a80334-f85d-4910-a494-7268f5817a14"
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-11",
+      "titre": "La réponse /moi n'expose ni hash de mot de passe ni jwt_version",
+      "status": "PASS",
+      "expected": "aucun champ sensible",
+      "observed": {
+        "champs": [
+          "id",
+          "nom",
+          "email",
+          "telephone",
+          "email_verifie",
+          "created_at"
+        ]
+      },
+      "note": ""
+    }
+  ],
+  "extra": {}
+}

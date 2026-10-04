@@ -25,6 +25,7 @@ const {
 const { cacheGet, cacheSet, cacheInvalidatePattern } = require('../../services/redis-cache');
 const plansCache = require('../../lib/plansCache');
 const { versProduitPublic } = require('../../lib/produitPublic'); // AUD-142
+const { logSecurityViolation } = require('../../middlewares/tenantSecurity');
 
 // ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand (Cache < 10ms)
 router.get('/:id/produits', tokenOptional, async (req, res) => {
@@ -126,7 +127,17 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     const { id } = req.params;
     // Vérifier la propriété
     const own = await checkBoutiqueAccess(id, req.user.userId);
-    if (!own) return res.status(403).json({ error: 'Accès refusé' });
+    if (!own) {
+      await logSecurityViolation({
+        eventType: 'IDOR_BOUTIQUE_ACCESS_DENIED',
+        userId: req.user.userId,
+        tenantType: 'boutique',
+        targetId: id,
+        req,
+        details: { action: 'creer_produit', reason: 'Accès boutique non autorisé' }
+      });
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
 
     // Quota dynamique depuis plansCache avec fallback sur QUOTA_PRODUITS
     const plan = req.abonnement.plan;
@@ -258,7 +269,17 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
   try {
     const { id, prodId } = req.params;
     const own = await checkBoutiqueAccess(id, req.user.userId);
-    if (!own) return res.status(403).json({ error: 'Accès refusé' });
+    if (!own) {
+      await logSecurityViolation({
+        eventType: 'IDOR_BOUTIQUE_ACCESS_DENIED',
+        userId: req.user.userId,
+        tenantType: 'boutique',
+        targetId: id,
+        req,
+        details: { action: 'modifier_produit', targetId: id }
+      });
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
 
     const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
@@ -387,7 +408,17 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
   try {
     const { id, prodId } = req.params;
     const own = await checkBoutiqueAccess(id, req.user.userId);
-    if (!own) return res.status(403).json({ error: 'Accès refusé' });
+    if (!own) {
+      await logSecurityViolation({
+        eventType: 'IDOR_BOUTIQUE_ACCESS_DENIED',
+        userId: req.user.userId,
+        tenantType: 'boutique',
+        targetId: id,
+        req,
+        details: { action: 'supprimer_produit', targetId: id }
+      });
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
 
     const r = await pool.query('DELETE FROM boutique_produits WHERE id=$1 AND boutique_id=$2 RETURNING id, nom', [prodId, id]);
     if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
@@ -411,7 +442,17 @@ router.post('/:id/produits/:prodId/dupliquer', verifierToken, param('id').isUUID
     const { id, prodId } = req.params;
     const { nom, prix, stock_quantite } = req.body;
     const own = await checkBoutiqueAccess(id, req.user.userId);
-    if (!own) return res.status(403).json({ error: 'Accès refusé' });
+    if (!own) {
+      await logSecurityViolation({
+        eventType: 'IDOR_BOUTIQUE_ACCESS_DENIED',
+        userId: req.user.userId,
+        tenantType: 'boutique',
+        targetId: id,
+        req,
+        details: { action: 'dupliquer_produit', targetId: id }
+      });
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
 
     const orig = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!orig.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });

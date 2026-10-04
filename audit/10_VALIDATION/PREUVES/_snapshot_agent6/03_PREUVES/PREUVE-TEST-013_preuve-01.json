@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "observed": {
+    "first_call": {
+      "status": 200,
+      "duration_ms": 59,
+      "processed_in_db": {
+        "message_id": "wamid.HBgLMjIxNzcxMjM0NTY3FQIAERgS1791113790654TEST13",
+        "processed_at": "2026-10-04T11:36:33.310Z"
+      }
+    },
+    "second_call_replay": {
+      "status": 200,
+      "duration_ms": 5,
+      "total_rows_in_db": 1
+    }
+  }
+}

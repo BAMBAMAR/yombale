@@ -514,10 +514,23 @@ router.post('/commandes/express', limiterCommandeExpress, async (req, res) => {
         });
       } catch (waveErr) {
         const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
-        console.error('[EXPRESS WAVE INIT ERR]:', waveMsg);
-        await compenserEchecPaiement('initialisation Wave impossible');
-        return res.status(400).json({
-          error: `Erreur Wave API: ${waveMsg}. (Si IP non autorisée, ajoutez l'IP de votre serveur Render à la liste blanche Wave). Votre commande n'a pas été enregistrée.`
+        console.warn('[EXPRESS WAVE INIT FALLBACK]: API Wave indisponible, bascule en paiement manuel.', waveMsg);
+        try {
+          await pool.query(
+            "UPDATE commandes_boutique SET methode_paiement = 'wave_manuel', note = COALESCE(note, '') || ' [Fallback manuel Wave]' WHERE reference = $1",
+            [ref]
+          );
+        } catch (eUpd) {}
+        await apresCreation();
+        return res.status(201).json({
+          succes: true,
+          reference: ref,
+          montant_total: totalGeneral,
+          statut: 'en_attente',
+          fallback_manuel: true,
+          numero_depot: '777202086',
+          operateur: 'wave',
+          message: 'Commande enregistrée. L\'API Wave étant momentanément indisponible, effectuez votre paiement par transfert Wave au 77 720 20 86.'
         });
       }
     }

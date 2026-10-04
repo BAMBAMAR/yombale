@@ -1,0 +1,35 @@
+{
+  "test_id": "TEST-016",
+  "date": "2026-10-04T12:11:12.841Z",
+  "status": "PASS",
+  "verifications": {
+    "external_cdn_scan": {
+      "scanned_dir": "frontend-next/src",
+      "forbidden_patterns_checked": [
+        "fonts.googleapis.com",
+        "fonts.gstatic.com",
+        "cdn.jsdelivr.net"
+      ],
+      "violations_count": 0,
+      "violations": []
+    },
+    "linter_slop": {
+      "success": true,
+      "output_summary": "\n🔍 =======================================================\n   NOPALOU ANTI-AI-SLOP QUALITY GATE REPORT\n=======================================================\n\n📁 Files Scanned: 1270\n⚠️  Silent Catches: 91\n🧩 Component Monoliths (>800 lines): 2\n🎭 Emoji UI Crutches Found: 872\n\n--- 🛑 MONOLITHS REQU"
+    },
+    "root_opengraph": {
+      "url": "http://localhost:3001/opengraph-image",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 165686,
+      "isPng": true
+    },
+    "produit_opengraph": {
+      "url": "http://localhost:3001/produit/bb4c8825-f4f8-4c12-bd00-9bd39b230634/opengraph-image",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 83127,
+      "isPng": true
+    }
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "event_type": "UNAUTHORIZED_ORDERS_ACCESS",
+    "user_id": "f810ef53-5f52-40d4-91bd-7bc485b16faa",
+    "target_id": "65b7a22e-aebc-4941-bdfd-668a6b93d4f3",
+    "endpoint": "/api/comptabilite/65b7a22e-aebc-4941-bdfd-668a6b93d4f3/commandes",
+    "method": "GET",
+    "created_at": "2026-10-04T12:00:14.014Z"
+  },
+  {
+    "event_type": "IDOR_AGENCE_ACCESS_DENIED",
+    "user_id": "104c960e-cb27-4542-b215-39fe7c6ae84d",
+    "target_id": "bf991db0-07c3-45b0-8456-5ecf31ea1fcb",
+    "endpoint": "/api/locatif-immo/agence/bf991db0-07c3-45b0-8456-5ecf31ea1fcb/baux",
+    "method": "GET",
+    "created_at": "2026-10-04T12:00:14.748Z"
+  },
+  {
+    "event_type": "IDOR_AGENCE_ACCESS_DENIED",
+    "user_id": "104c960e-cb27-4542-b215-39fe7c6ae84d",
+    "target_id": "agence-y-003-mutrr372",
+    "endpoint": "/api/locatif-immo/agence/agence-y-003-mutrr372/baux",
+    "method": "GET",
+    "created_at": "2026-10-04T12:00:14.761Z"
+  }
+]

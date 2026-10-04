@@ -1,0 +1,190 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-002",
+  "label": "before",
+  "base_url": "http://localhost:4101",
+  "date": "2026-10-04T12:00:27.016Z",
+  "resume": {
+    "total": 11,
+    "pass": 2,
+    "fail": 9,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V2-01",
+      "titre": "TEST-002 original (strict) : GET /api/auth/moi avec session valide => 200 + objet user",
+      "status": "FAIL",
+      "expected": {
+        "http": 200
+      },
+      "observed": {
+        "status": 404,
+        "body": {
+          "success": false,
+          "error": "Endpoint API introuvable : GET /api/auth/moi",
+          "code": "NOT_FOUND"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-02",
+      "titre": "/profil reste 200 et renvoie le MÊME corps que /moi (alias strict)",
+      "status": "FAIL",
+      "expected": "corps identiques",
+      "observed": {
+        "profil": {
+          "user": {
+            "id": "b39e143a-aa02-48a5-993b-3070730e4132",
+            "nom": "Audit8 t002",
+            "email": "t002.mutrrd24@audit8.test",
+            "telephone": null,
+            "email_verifie": false,
+            "created_at": "2026-10-04T12:00:25.811Z"
+          }
+        },
+        "moi": {
+          "success": false,
+          "error": "Endpoint API introuvable : GET /api/auth/moi",
+          "code": "NOT_FOUND"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-03",
+      "titre": "Non connecté : /moi et /profil => 401 (aucune fuite de données)",
+      "status": "FAIL",
+      "expected": {
+        "moi": 401,
+        "profil": 401
+      },
+      "observed": {
+        "moi": 404,
+        "profil": 401,
+        "body": {
+          "success": false,
+          "error": "Endpoint API introuvable : GET /api/auth/moi",
+          "code": "NOT_FOUND"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-04",
+      "titre": "Jeton invalide / signé avec un mauvais secret / expiré => 401 sur /moi",
+      "status": "FAIL",
+      "expected": "trois 401",
+      "observed": {
+        "garbage": 404,
+        "forge": 404,
+        "expire": 404
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-05",
+      "titre": "TEST-003 sur l'alias : jeton reset/verify refusé comme session (401) sur /moi",
+      "status": "FAIL",
+      "expected": {
+        "401": 2
+      },
+      "observed": {
+        "type_reset": 404,
+        "secret_reset": 404,
+        "msg": {
+          "success": false,
+          "error": "Endpoint API introuvable : GET /api/auth/moi",
+          "code": "NOT_FOUND"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-06",
+      "titre": "L'alias ne doit exposer que GET (POST/PUT /moi => 404/405, pas d'écriture parasite)",
+      "status": "PASS",
+      "expected": "pas de 2xx",
+      "observed": {
+        "post": 404,
+        "put": 404
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-07",
+      "titre": "Déconnexion : jwt_version +1 en DB, ancien token => 401 sur /moi ET /profil (persistance de la révocation)",
+      "status": "FAIL",
+      "expected": {
+        "logout": 200,
+        "jwt_version": 2,
+        "moi": 401,
+        "profil": 401
+      },
+      "observed": {
+        "logout": 200,
+        "jwt_version_avant": 1,
+        "jwt_version_apres": 2,
+        "moi": 404,
+        "profil": 401,
+        "msg": {
+          "success": false,
+          "error": "Endpoint API introuvable : GET /api/auth/moi",
+          "code": "NOT_FOUND"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-08",
+      "titre": "Reconnexion : nouveau token 200 sur /moi ; ancien token reste 401",
+      "status": "FAIL",
+      "expected": {
+        "nouveau": 200,
+        "ancien": 401
+      },
+      "observed": {
+        "login": 200,
+        "nouveau": 404,
+        "ancien": 404
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-09",
+      "titre": "Après demande de suppression de compte, l'ancien token est révoqué sur /moi (401)",
+      "status": "FAIL",
+      "expected": {
+        "sup": 200,
+        "moi": 401
+      },
+      "observed": {
+        "sup": 200,
+        "moi": 404
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-10",
+      "titre": "Isolation : /moi renvoie uniquement le profil du porteur du jeton (pas d'IDOR)",
+      "status": "FAIL",
+      "expected": "id = porteur",
+      "observed": {
+        "attendu": "a4122594-4695-462e-b2d6-31a3890a206c"
+      },
+      "note": ""
+    },
+    {
+      "id": "V2-11",
+      "titre": "La réponse /moi n'expose ni hash de mot de passe ni jwt_version",
+      "status": "PASS",
+      "expected": "aucun champ sensible",
+      "observed": {
+        "champs": []
+      },
+      "note": ""
+    }
+  ],
+  "extra": {}
+}

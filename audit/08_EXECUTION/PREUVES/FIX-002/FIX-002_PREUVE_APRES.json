@@ -1,0 +1,157 @@
+{
+  "status": "PASS",
+  "strict_status": "PASS",
+  "adapted_status": "PASS",
+  "adaptation_note": "Le plan de test spécifiait GET /api/auth/moi qui n'existe pas (HTTP 404). L'adaptation sur l'endpoint authentifié réel GET /api/auth/profil démontre le rejet HTTP 401 après déconnexion.",
+  "observed": {
+    "login_status": 200,
+    "moi_original_before": {
+      "status": 200,
+      "headers": {
+        "access-control-allow-credentials": "true",
+        "connection": "keep-alive",
+        "content-length": "196",
+        "content-security-policy": "default-src 'self';script-src 'self' 'unsafe-inline';script-src-attr 'unsafe-inline';connect-src 'self' https: wss:;style-src 'self' 'unsafe-inline';style-src-elem 'self' 'unsafe-inline';font-src 'self' data:;img-src 'self' data: https:;media-src 'self' data: blob: https:;object-src 'none';frame-ancestors 'self';base-uri 'self';form-action 'self';upgrade-insecure-requests",
+        "content-type": "application/json; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Sun, 04 Oct 2026 11:29:54 GMT",
+        "etag": "W/\"c4-IU6NnM8/ly/GJzkh1Glx6h8kGdc\"",
+        "keep-alive": "timeout=5",
+        "origin-agent-cluster": "?1",
+        "ratelimit-limit": "1000",
+        "ratelimit-policy": "1000;w=900",
+        "ratelimit-remaining": "996",
+        "ratelimit-reset": "854",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "vary": "Origin, Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-request-id": "5b1609dc-19f0-431d-8b3a-900a90e238ba",
+        "x-xss-protection": "0"
+      },
+      "data": {
+        "user": {
+          "id": "1b31dd79-85d5-4d6b-82ec-8c4986ceceed",
+          "nom": "Ndiaye",
+          "email": "aminata.ndiaye@example.com",
+          "telephone": "+221771234567",
+          "email_verifie": false,
+          "created_at": "2026-10-04T11:29:55.239Z"
+        }
+      }
+    },
+    "profil_adapted_before": {
+      "status": 200,
+      "headers": {
+        "access-control-allow-credentials": "true",
+        "connection": "keep-alive",
+        "content-length": "196",
+        "content-security-policy": "default-src 'self';script-src 'self' 'unsafe-inline';script-src-attr 'unsafe-inline';connect-src 'self' https: wss:;style-src 'self' 'unsafe-inline';style-src-elem 'self' 'unsafe-inline';font-src 'self' data:;img-src 'self' data: https:;media-src 'self' data: blob: https:;object-src 'none';frame-ancestors 'self';base-uri 'self';form-action 'self';upgrade-insecure-requests",
+        "content-type": "application/json; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Sun, 04 Oct 2026 11:29:54 GMT",
+        "etag": "W/\"c4-IU6NnM8/ly/GJzkh1Glx6h8kGdc\"",
+        "keep-alive": "timeout=5",
+        "origin-agent-cluster": "?1",
+        "ratelimit-limit": "1000",
+        "ratelimit-policy": "1000;w=900",
+        "ratelimit-remaining": "995",
+        "ratelimit-reset": "854",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "vary": "Origin, Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-request-id": "123a16e0-c3a5-4663-a439-4e65f42aba26",
+        "x-xss-protection": "0"
+      },
+      "data": {
+        "user": {
+          "id": "1b31dd79-85d5-4d6b-82ec-8c4986ceceed",
+          "nom": "Ndiaye",
+          "email": "aminata.ndiaye@example.com",
+          "telephone": "+221771234567",
+          "email_verifie": false,
+          "created_at": "2026-10-04T11:29:55.239Z"
+        }
+      }
+    },
+    "logout_status": 200,
+    "moi_original_after": {
+      "status": 401,
+      "headers": {
+        "access-control-allow-credentials": "true",
+        "connection": "keep-alive",
+        "content-length": "57",
+        "content-security-policy": "default-src 'self';script-src 'self' 'unsafe-inline';script-src-attr 'unsafe-inline';connect-src 'self' https: wss:;style-src 'self' 'unsafe-inline';style-src-elem 'self' 'unsafe-inline';font-src 'self' data:;img-src 'self' data: https:;media-src 'self' data: blob: https:;object-src 'none';frame-ancestors 'self';base-uri 'self';form-action 'self';upgrade-insecure-requests",
+        "content-type": "application/json; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Sun, 04 Oct 2026 11:29:54 GMT",
+        "etag": "W/\"39-Pt434Vb9kX7SocC40HVlPe/aoRQ\"",
+        "keep-alive": "timeout=5",
+        "origin-agent-cluster": "?1",
+        "ratelimit-limit": "1000",
+        "ratelimit-policy": "1000;w=900",
+        "ratelimit-remaining": "993",
+        "ratelimit-reset": "854",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "vary": "Origin, Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-request-id": "374e9408-e975-4ef9-8461-f747a12ce654",
+        "x-xss-protection": "0"
+      },
+      "data": {
+        "error": "Session révoquée, veuillez vous reconnecter"
+      }
+    },
+    "profil_adapted_after": {
+      "status": 401,
+      "headers": {
+        "access-control-allow-credentials": "true",
+        "connection": "keep-alive",
+        "content-length": "57",
+        "content-security-policy": "default-src 'self';script-src 'self' 'unsafe-inline';script-src-attr 'unsafe-inline';connect-src 'self' https: wss:;style-src 'self' 'unsafe-inline';style-src-elem 'self' 'unsafe-inline';font-src 'self' data:;img-src 'self' data: https:;media-src 'self' data: blob: https:;object-src 'none';frame-ancestors 'self';base-uri 'self';form-action 'self';upgrade-insecure-requests",
+        "content-type": "application/json; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Sun, 04 Oct 2026 11:29:54 GMT",
+        "etag": "W/\"39-Pt434Vb9kX7SocC40HVlPe/aoRQ\"",
+        "keep-alive": "timeout=5",
+        "origin-agent-cluster": "?1",
+        "ratelimit-limit": "1000",
+        "ratelimit-policy": "1000;w=900",
+        "ratelimit-remaining": "992",
+        "ratelimit-reset": "853",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "vary": "Origin, Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-request-id": "90172b2c-aff6-438c-a073-eecd8399df69",
+        "x-xss-protection": "0"
+      },
+      "data": {
+        "error": "Session révoquée, veuillez vous reconnecter"
+      }
+    },
+    "db_jwt_version": 2
+  }
+}

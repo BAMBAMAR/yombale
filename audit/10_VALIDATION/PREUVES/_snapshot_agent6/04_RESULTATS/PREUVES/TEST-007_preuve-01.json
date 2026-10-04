@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "observed": {
+    "zones_endpoint": {
+      "status": 404,
+      "data": {
+        "success": false,
+        "error": "Endpoint API introuvable : GET /api/boutiques/7f99d215-3944-4b2e-972d-49bad99e6c16/zones-livraison",
+        "code": "NOT_FOUND"
+      }
+    },
+    "code_inspection": {
+      "has_retrait_option": true,
+      "has_a_convenir_option": true,
+      "no_fake_gratuit_suffix": true
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "status": "PASS",
+  "observed": {
+    "sync_first_attempt": {
+      "status": 201,
+      "body": {
+        "success": true,
+        "message": "Stock, Comptabilité et Facture POS sauvegardés",
+        "reference": "audit-offline-1791115803569",
+        "fidelite": null,
+        "conflits": []
+      }
+    },
+    "sync_second_attempt_idempotency": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "duplicate": true,
+        "reference": "audit-offline-1791115803569"
+      }
+    },
+    "db_vente_count": 1,
+    "db_vente_record": {
+      "id": "0f22e647-c6e6-41b3-886d-ab1283582e61",
+      "reference": "audit-offline-1791115803569",
+      "boutique_id": "17449819-fa4c-438d-8493-8d77e210ad82",
+      "produit_id": "efb4e2d7-a2a0-459f-8a8b-3dfc65269771",
+      "nom_produit": "Article Test Offline POS",
+      "quantite": 1,
+      "prix_unitaire": "3000.00",
+      "zone_livraison_id": null,
+      "frais_livraison": "0.00",
+      "montant_total": "3000.00",
+      "client_nom": "Caisse POS (Caissier Principal)",
+      "client_telephone": null,
+      "methode_paiement": "especes",
+      "created_at": "2026-10-04T12:10:03.593Z",
+      "archivee": false,
+      "justificatif_url": null,
+      "caissier_id": null,
+      "caissier_nom": "Caissier Principal",
+      "session_id": "4046fca6-b905-4929-8940-bff84bd8d927",
+      "prix_achat": null
+    },
+    "db_stock_apres_vente": {
+      "stock_quantite": 9,
+      "en_stock": true
+    }
+  }
+}

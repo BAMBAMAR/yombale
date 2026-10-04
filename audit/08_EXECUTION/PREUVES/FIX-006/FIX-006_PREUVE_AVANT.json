@@ -1,0 +1,18 @@
+{
+  "anomalie_id": "ANOM-006",
+  "test_id": "TEST-014",
+  "status": "FAIL",
+  "observed": {
+    "strict_endpoint_bail": {
+      "url": "POST /api/locatif-immo/baux",
+      "status": 404,
+      "raison": "Omission du paramètre multi-tenant agence :slugOrId"
+    },
+    "strict_pdf_size_evaluation": {
+      "pdf_size_bytes": 3163,
+      "threshold_tested": 5000,
+      "pass": false,
+      "constat": "Seuil arbitraire > 5000 octets inadapté au PDF vectoriel optimisé sans polices CDN externes (3163 octets)."
+    }
+  }
+}

@@ -981,11 +981,26 @@ router.post(
             return res.status(201).json({ commande, wave_url: waveSession.wave_url, session_id: waveSession.session_id, message: 'Commande créée. Redirection vers Wave…' });
           } catch (waveErr) {
             const waveMsg = waveErr.response?.data?.message || waveErr.response?.data?.code || waveErr.message;
-            console.error('[COMMANDE WAVE INIT ERR]:', waveMsg);
-            // AUD-083 : comme la route express, la commande sans session de paiement est annulée et le stock restitué
-            // (auparavant : 201 + paiement manuel que le panier n'affichait pas, annulation silencieuse 2 h plus tard).
-            try { await require('../services/commande-service').annulerCommandeNonPayee(commande.reference, 'initialisation Wave impossible'); } catch (e) { console.error('[COMMANDE COMPENSATION ERR]:', e.message); }
-            return res.status(502).json({ error: 'Le paiement Wave n’a pas pu être initialisé. Votre commande n’a pas été enregistrée, réessayez ou choisissez un autre mode de paiement.' });
+            console.warn('[COMMANDE WAVE INIT FALLBACK]: API Wave indisponible, bascule en paiement manuel.', waveMsg);
+            // Marquer en wave_manuel pour que le cron des 2h n'annule pas prématurément la commande en attente de transfert manuel
+            try {
+              await pool.query(
+                "UPDATE commandes_boutique SET methode_paiement = 'wave_manuel', note = COALESCE(note, '') || ' [Fallback manuel Wave]' WHERE id = $1",
+                [commande.id]
+              );
+              commande.methode_paiement = 'wave_manuel';
+            } catch (updErr) {
+              console.error('[COMMANDE WAVE FALLBACK UPDATE ERR]:', updErr.message);
+            }
+            // Notifier le marchand et le client de la commande en repli manuel
+            await notifierCommande();
+            return res.status(201).json({
+              commande,
+              fallback_manuel: true,
+              numero_depot: '777202086',
+              operateur: 'wave',
+              message: 'Commande enregistrée. L\'API Wave étant momentanément indisponible, effectuez votre paiement par transfert Wave au 77 720 20 86.'
+            });
           }
         }
       }
@@ -1032,8 +1047,8 @@ router.get('/:boutiqueId/commandes', verifierToken, async (req, res) => {
     const boutique = await ownsBoutique(paramBq, req.user.userId, req.user.role);
     if (!boutique) {
       const { logSecurityViolation } = require('../middlewares/tenantSecurity');
-      logSecurityViolation({
-        eventType: 'UNAUTHORIZED_ORDERS_ACCESS',
+      await logSecurityViolation({
+        eventType: 'IDOR_BOUTIQUE_ACCESS_DENIED',
         userId: req.user.userId,
         tenantType: 'boutique',
         targetId: paramBq,

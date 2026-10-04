@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "observed": {
+    "phrase1_2_junni": {
+      "phrase": "Vente 2 junni",
+      "normalise": "vente 2 junni",
+      "montant_extrait": 10000,
+      "intent": {
+        "mode": "vente",
+        "montant": 10000,
+        "categorieRevenuKalpe": "Vente & Commerce"
+      },
+      "separateur": {
+        "quantite": 1,
+        "montant": 10000,
+        "reste": "vente"
+      },
+      "conforme": true,
+      "attendu": "Montant: 10 000 FCFA (2 junni = 2 x 5 000)"
+    },
+    "phrase2_depense_teemeer": {
+      "phrase": "Dépense transport benn téemeer",
+      "normalise": "depense transport benn teemeer",
+      "montant_extrait": 500,
+      "intent": {
+        "mode": "depense",
+        "montant": 500,
+        "categorie": "transport",
+        "categorieKalpe": "Transport & Déplacement",
+        "description": "Transport"
+      },
+      "conforme": true,
+      "attendu": "Type: depense, Montant: 500 FCFA (benn teemeer = 500)"
+    },
+    "phrase3_bor_moussa": {
+      "phrase": "Bor Moussa 15 000",
+      "normalise": "bor moussa 15000",
+      "montant_extrait": 15000,
+      "intent": {
+        "type": "vente_credit",
+        "nomClient": "Moussa",
+        "montant": 15000
+      },
+      "conforme": true,
+      "attendu": "Type: credit/dette, Client: Moussa, Montant: 15 000 FCFA"
+    },
+    "phrase4_3_savon_deux_mille_cinq_cents": {
+      "phrase": "3 savon à deux mille cinq cents",
+      "normalise": "3 savon a deux mille cinq cents",
+      "quantite_extraite": 3,
+      "montant_extrait": 2500,
+      "separateur": {
+        "quantite": 3,
+        "montant": 2500,
+        "reste": "3 savon a"
+      },
+      "conforme": true,
+      "attendu": "Quantité: 3, Montant: 2 500 FCFA"
+    }
+  }
+}

@@ -1,0 +1,314 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-001",
+  "label": "after",
+  "base_url": "http://localhost:4100",
+  "date": "2026-10-04T11:59:56.458Z",
+  "resume": {
+    "total": 10,
+    "pass": 6,
+    "fail": 4,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V1-01",
+      "titre": "TEST-001 original : inscription avec telephone local formaté => 201 + persisté en DB (E.164)",
+      "status": "PASS",
+      "expected": {
+        "http": 201,
+        "db_telephone": "+221771912401"
+      },
+      "observed": {
+        "http": 201,
+        "api_user": {
+          "id": "e0f7106a-df42-40ea-8246-a06a7d33600a",
+          "nom": "Audit8 t001",
+          "email": "t001.mutrqmko@audit8.test",
+          "telephone": "+221771912401",
+          "code_apporteur": "RUBDDH",
+          "jwt_version": 1
+        },
+        "db": {
+          "id": "e0f7106a-df42-40ea-8246-a06a7d33600a",
+          "telephone": "+221771912401",
+          "jwt_version": 1
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-02",
+      "titre": "Persistance : reconnexion puis GET /api/auth/profil retourne le téléphone saisi",
+      "status": "PASS",
+      "expected": {
+        "telephone_contient": "771912401"
+      },
+      "observed": {
+        "login_status": 200,
+        "profil_status": 200,
+        "profil": {
+          "user": {
+            "id": "e0f7106a-df42-40ea-8246-a06a7d33600a",
+            "nom": "Audit8 t001",
+            "email": "t001.mutrqmko@audit8.test",
+            "telephone": "+221771912401",
+            "email_verifie": false,
+            "created_at": "2026-10-04T11:59:51.509Z"
+          }
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-03",
+      "titre": "Formats d'entrée (+221 espacé, 00221, 221, parenthèses) normalisés en +221XXXXXXXXX",
+      "status": "PASS",
+      "expected": "tous normalisés",
+      "observed": [
+        {
+          "format": "+221 77 %s",
+          "http": 201,
+          "db": "+221771912402",
+          "attendu": "+221771912402"
+        },
+        {
+          "format": "00221…",
+          "http": 201,
+          "db": "+221771912403",
+          "attendu": "+221771912403"
+        },
+        {
+          "format": "221…",
+          "http": 201,
+          "db": "+221771912404",
+          "attendu": "+221771912404"
+        },
+        {
+          "format": "(+221) 77-xxx-xx-xx",
+          "http": 201,
+          "db": "+221771912405",
+          "attendu": "+221771912405"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "V1-04",
+      "titre": "Cas limites : téléphone absent/vide/null/espaces => 201 sans erreur SQL, NULL stocké",
+      "status": "PASS",
+      "expected": "tous 201 + NULL",
+      "observed": [
+        {
+          "cas": "absent",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "vide",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "null",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "espaces",
+          "http": 201,
+          "db_telephone": null
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "V1-05",
+      "titre": "Valeurs invalides (lettres, trop court/long, injection, types non-string) : ni 500, ni numéro invalide persisté",
+      "status": "FAIL",
+      "expected": "rejet 4xx ou NULL, jamais de 500 / valeur invalide stockée",
+      "observed": [
+        {
+          "cas": "lettres",
+          "http": 201,
+          "db_telephone": null
+        },
+        {
+          "cas": "trop_court",
+          "http": 201,
+          "db_telephone": "+123"
+        },
+        {
+          "cas": "trop_long_25_chiffres",
+          "http": 500,
+          "db_telephone": null,
+          "reponse": {
+            "error": "Erreur serveur lors de l'inscription"
+          }
+        },
+        {
+          "cas": "injection",
+          "http": 201,
+          "db_telephone": "+77"
+        },
+        {
+          "cas": "nombre_json",
+          "http": 400,
+          "db_telephone": null,
+          "reponse": {
+            "errors": [
+              {
+                "type": "field",
+                "value": 771234567,
+                "msg": "Invalid value",
+                "path": "telephone",
+                "location": "body"
+              }
+            ]
+          }
+        },
+        {
+          "cas": "objet",
+          "http": 400,
+          "db_telephone": null,
+          "reponse": {
+            "errors": [
+              {
+                "type": "field",
+                "value": {
+                  "a": 1
+                },
+                "msg": "Invalid value",
+                "path": "telephone",
+                "location": "body"
+              }
+            ]
+          }
+        },
+        {
+          "cas": "tableau",
+          "http": 400,
+          "db_telephone": null,
+          "reponse": {
+            "errors": [
+              {
+                "type": "field",
+                "value": [
+                  "771234567"
+                ],
+                "msg": "Invalid value",
+                "path": "telephone",
+                "location": "body"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "La table utilisateurs existe toujours: true"
+    },
+    {
+      "id": "V1-06",
+      "titre": "Doublon : second compte e-mail avec le MÊME numéro doit être refusé (409 explicite), comme PUT /profil",
+      "status": "FAIL",
+      "expected": {
+        "second_signup": "409 « numéro déjà associé »",
+        "comptes_avec_ce_numero": 1
+      },
+      "observed": {
+        "first": 201,
+        "second": 201,
+        "second_body": {
+          "user": {
+            "id": "27fb54a3-f5d1-411e-a107-aedf35e67762",
+            "nom": "Audit8 t001dupB",
+            "email": "t001dupb.mutrqmko@audit8.test",
+            "telephone": "+221771912407",
+            "code_apporteur": "2K3B9V",
+            "jwt_version": 1
+          },
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyN2ZiNTRhMy1mNWQxLTQxMWUtYTEwNy1hZWRmMzVlNjc3NjIiLCJqd3RWZXJzaW9uIjoxLCJpYXQiOjE3OTExMTUxOTUsImV4cCI6MTc5MTcxOTk5NX0._lEzXCVToxaKrBpOmC7sUMNrmaquhTzbmmb-p1t1T1Y"
+        },
+        "comptes_avec_ce_numero": 2,
+        "rows": [
+          {
+            "email": "t001dupa.mutrqmko@audit8.test",
+            "telephone": "+221771912407"
+          },
+          {
+            "email": "t001dupb.mutrqmko@audit8.test",
+            "telephone": "+221771912407"
+          }
+        ]
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-07",
+      "titre": "Hidden regression : l'inscription e-mail d'un tiers avec le numéro de la victime ne doit pas bloquer la connexion OTP du titulaire",
+      "status": "FAIL",
+      "expected": {
+        "otp_login_victime": 200
+      },
+      "observed": {
+        "attaquant_signup": 201,
+        "attaquant_db": {
+          "id": "fe67abe6-a64b-485a-a00f-0c7a5ffa5174",
+          "telephone": "+221771912408",
+          "jwt_version": 1
+        },
+        "otp_login_status": 409,
+        "otp_login_body": {
+          "error": "Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou."
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-08",
+      "titre": "Cohérence de format : le même numéro saisi doit être stocké identiquement par PUT /profil et par /inscription",
+      "status": "FAIL",
+      "expected": "même chaîne en DB",
+      "observed": {
+        "put_status": 200,
+        "db_via_PUT_profil": "771912409",
+        "db_via_inscription": "+221771912409"
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-09",
+      "titre": "E2E auth : inscription -> accès compte -> déconnexion (token révoqué 401) -> reconnexion 200",
+      "status": "PASS",
+      "expected": {
+        "logout": 200,
+        "ancien_token": 401,
+        "reconnexion": 200
+      },
+      "observed": {
+        "logout": 200,
+        "ancien_token": 401,
+        "reconnexion": 200
+      },
+      "note": ""
+    },
+    {
+      "id": "V1-10",
+      "titre": "Non-régression normalisation e-mail (minuscules, domaine)",
+      "status": "PASS",
+      "expected": "mixed.case.mutrqmko@audit8.test",
+      "observed": {
+        "http": 201,
+        "db_email": "mixed.case.mutrqmko@audit8.test"
+      },
+      "note": ""
+    }
+  ],
+  "extra": {
+    "index_telephone_utilisateurs": [],
+    "colonne_telephone": {
+      "data_type": "character varying",
+      "character_maximum_length": 20
+    },
+    "ui_formulaire_inscription_email_a_champ_telephone": false
+  }
+}

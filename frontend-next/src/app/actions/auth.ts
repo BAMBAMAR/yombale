@@ -43,6 +43,7 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
   const nom = formData.get('nom')?.toString().trim() ?? ''
   const email = formData.get('email')?.toString().trim() ?? ''
   const password = formData.get('password')?.toString() ?? ''
+  const telephone = formData.get('telephone')?.toString().trim() ?? ''
 
   if (!nom || !email || !password) return { error: 'Tous les champs sont requis' }
   const checkPwd = validerForceMotDePasse(password)
@@ -52,7 +53,7 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
     const res = await fetch(`${API}/api/auth/inscription`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nom, email, mot_de_passe: password }),
+      body: JSON.stringify({ nom, email, mot_de_passe: password, telephone: telephone || undefined }),
     })
     const data = await res.json()
     if (!res.ok) return { error: data.error ?? 'Erreur lors de l\'inscription' }

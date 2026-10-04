@@ -1,0 +1,58 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-004",
+  "label": "after",
+  "base_url": "http://localhost:4100",
+  "date": "2026-10-04T12:04:29.263Z",
+  "resume": {
+    "total": 3,
+    "pass": 1,
+    "fail": 2,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V4N-01",
+      "titre": "Témoin : la commande espèces déclenche la notification marchand ET la confirmation client",
+      "status": "PASS",
+      "expected": "notifs présentes",
+      "observed": {
+        "http": 201,
+        "ref": "C-MUTRWJ5SBE94",
+        "vendeur": [
+          "[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande C-MUTRWJ5SBE94 acceptÃ©e pour 771421054"
+        ],
+        "client": [
+          "[NOPALOU:SMS FALLBACK SIMULATION] Vers +221779866713 | De: Nopalou | Msg: \"â *Commande enregistrÃ©e avec succÃ¨s â Boutique Notif 004 mutrwiuo*",
+          "[WHATSAPP -> SMS FALLBACK OK] (221779866713): DÃ©livrÃ© via SMS (simulation)",
+          "[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation commande envoyÃ©e au 779866713"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "id": "V4N-02",
+      "titre": "Commande Wave en repli manuel : le marchand est notifié de la commande en attente de paiement manuel",
+      "status": "FAIL",
+      "expected": "notification marchand présente",
+      "observed": {
+        "http": 201,
+        "ref": "C-MUTRWJ5FC170",
+        "vendeur": [],
+        "client": []
+      },
+      "note": "Dans comptabilite.js le repli retourne 201 sans appeler notifierCommande() (la notification est différée à la réussite de la session Wave, AUD-102)."
+    },
+    {
+      "id": "V4N-03",
+      "titre": "Commande Wave en repli manuel : le client reçoit la confirmation (message de commande enregistrée)",
+      "status": "FAIL",
+      "expected": "confirmation client présente",
+      "observed": {
+        "client": []
+      },
+      "note": ""
+    }
+  ],
+  "extra": {}
+}

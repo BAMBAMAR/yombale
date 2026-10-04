@@ -7,6 +7,7 @@ const PDFDocument = require('pdfkit');
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
+const { logSecurityViolation } = require('../middlewares/tenantSecurity');
 const { enregistrerAgenceAuditLog } = require('../lib/auditLoggerImmo');
 const {
   notifierConfirmationPaiementLoyerWhatsApp,
@@ -103,6 +104,71 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
       return res.status(400).json({ success: false, error: 'Bien, locataire, date de début et loyer requis.' });
     }
 
+    // VAL8-009 : Vérification stricte anti-IDOR de l'appartenance du bien à l'agence
+    const { rows: bienRows } = await pool.query(
+      'SELECT id, proprietaire_id FROM biens_immo WHERE id = $1 AND agence_id = $2',
+      [bien_id, agenceId]
+    );
+    if (bienRows.length === 0) {
+      await logSecurityViolation({
+        eventType: 'IDOR_CROSS_AGENCE_BIEN',
+        userId: req.user?.userId || req.user?.id,
+        tenantType: 'agence_immo',
+        targetId: bien_id,
+        req,
+        details: { agenceId, bien_id, action: 'creer_bail' }
+      });
+      return res.status(403).json({
+        success: false,
+        code: 'ACCESS_DENIED_AGENCE_TENANT',
+        error: "Ce bien n'appartient pas à votre agence immobilière."
+      });
+    }
+
+    // VAL8-009 : Vérification stricte anti-IDOR de l'appartenance du locataire (contact) à l'agence
+    const { rows: locataireRows } = await pool.query(
+      'SELECT id FROM contacts_immo WHERE id = $1 AND agence_id = $2',
+      [locataire_id, agenceId]
+    );
+    if (locataireRows.length === 0) {
+      await logSecurityViolation({
+        eventType: 'IDOR_CROSS_AGENCE_CONTACT',
+        userId: req.user?.userId || req.user?.id,
+        tenantType: 'agence_immo',
+        targetId: locataire_id,
+        req,
+        details: { agenceId, locataire_id, action: 'creer_bail' }
+      });
+      return res.status(403).json({
+        success: false,
+        code: 'ACCESS_DENIED_AGENCE_TENANT',
+        error: "Ce locataire n'appartient pas à votre agence immobilière."
+      });
+    }
+
+    // VAL8-009 : Vérification du propriétaire si explicitement fourni
+    if (proprietaire_id) {
+      const { rows: proprioRows } = await pool.query(
+        'SELECT id FROM proprietaires_immo WHERE id = $1 AND agence_id = $2',
+        [proprietaire_id, agenceId]
+      );
+      if (proprioRows.length === 0) {
+        await logSecurityViolation({
+          eventType: 'IDOR_CROSS_AGENCE_PROPRIETAIRE',
+          userId: req.user?.userId || req.user?.id,
+          tenantType: 'agence_immo',
+          targetId: proprietaire_id,
+          req,
+          details: { agenceId, proprietaire_id, action: 'creer_bail' }
+        });
+        return res.status(403).json({
+          success: false,
+          code: 'ACCESS_DENIED_AGENCE_TENANT',
+          error: "Ce propriétaire n'appartient pas à votre agence immobilière."
+        });
+      }
+    }
+
     const loyer = parseFloat(loyer_mensuel);
     const chargeVal = parseFloat(charges) || 0;
     const montantTotalMensuel = loyer + chargeVal;
@@ -126,14 +192,7 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
     }
 
     // Résoudre automatiquement le proprietaire_id depuis biens_immo si non transmis
-    let resolvedProprioId = proprietaire_id || null;
-    if (!resolvedProprioId) {
-      const { rows: bRows } = await pool.query(
-        'SELECT proprietaire_id FROM biens_immo WHERE id = $1 AND agence_id = $2',
-        [bien_id, agenceId]
-      );
-      resolvedProprioId = bRows[0]?.proprietaire_id || null;
-    }
+    const resolvedProprioId = proprietaire_id || bienRows[0]?.proprietaire_id || null;
 
     const cpData = clauses_personnalisees && typeof clauses_personnalisees === 'object' ? clauses_personnalisees : {};
     const finalConditions = conditions || cpData.article6_conditions || null;
@@ -2212,6 +2271,11 @@ router.get('/public/locataire-lookup', (req, res) => res.status(410).json(REPONS
 router.get('/public/quittance/:loyerId.pdf', async (req, res) => {
   try {
     const { loyerId } = req.params;
+
+    // VAL8-008 : Validation du format UUID pour éviter une erreur 500 PostgreSQL
+    if (!loyerId || !/^[0-9a-f-]{36}$/i.test(loyerId)) {
+      return res.status(404).json({ success: false, error: 'Identifiant de quittance invalide ou introuvable' });
+    }
 
     const { rows } = await pool.query(
       `SELECT le.*,

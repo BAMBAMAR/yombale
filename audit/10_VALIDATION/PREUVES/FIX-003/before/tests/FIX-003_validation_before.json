@@ -1,0 +1,223 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-003",
+  "label": "before",
+  "base_url": "http://localhost:4101",
+  "date": "2026-10-04T12:00:14.783Z",
+  "resume": {
+    "total": 14,
+    "pass": 7,
+    "fail": 7,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V3-01",
+      "titre": "TEST-005 original : B POST /boutiques/A/produits => 403 ET 1 ligne IDOR_BOUTIQUE_ACCESS_DENIED dans security_audit_vault",
+      "status": "FAIL",
+      "expected": {
+        "http": 403,
+        "vault": 1
+      },
+      "observed": {
+        "http": 403,
+        "ms": 20,
+        "vault_rows": []
+      },
+      "note": ""
+    },
+    {
+      "id": "V3-02",
+      "titre": "Intégrité : aucun produit infiltré n'a été créé chez A",
+      "status": "PASS",
+      "expected": 0,
+      "observed": 0,
+      "note": ""
+    },
+    {
+      "id": "V3-03",
+      "titre": "PUT/DELETE/dupliquer cross-tenant => 403 ×3 et produit de A intact",
+      "status": "PASS",
+      "expected": "403 ×3, produit inchangé",
+      "observed": {
+        "put": 403,
+        "dupliquer": 403,
+        "delete": 403,
+        "produit_apres": {
+          "nom": "Produit A 003",
+          "prix": "1000.00"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "V3-04",
+      "titre": "Chaque mutation refusée est tracée (4 lignes au total : POST+PUT+dupliquer+DELETE) avec action et endpoint",
+      "status": "FAIL",
+      "expected": 4,
+      "observed": {
+        "rows": []
+      },
+      "note": ""
+    },
+    {
+      "id": "V3-05",
+      "titre": "GET /comptabilite/A/commandes cross-tenant => 403 + trace",
+      "status": "FAIL",
+      "expected": {
+        "http": 403,
+        "vault": ">=1"
+      },
+      "observed": {
+        "http": 403,
+        "trace": []
+      },
+      "note": "Type d'événement attendu après FIX : IDOR_BOUTIQUE_ACCESS_DENIED (harmonisé, DEV-001)"
+    },
+    {
+      "id": "V3-05b",
+      "titre": "Événement harmonisé : le rejet commandes est consigné sous IDOR_BOUTIQUE_ACCESS_DENIED",
+      "status": "FAIL",
+      "expected": "IDOR_BOUTIQUE_ACCESS_DENIED",
+      "observed": [],
+      "note": ""
+    },
+    {
+      "id": "V3-06",
+      "titre": "Couverture de la cause : PATCH /partage, POST /batch, POST /composants cross-tenant => 403 ET tracés",
+      "status": "FAIL",
+      "expected": {
+        "http": "403 ×3",
+        "lignes_vault_ajoutees": 3
+      },
+      "observed": {
+        "http": {
+          "partage": 403,
+          "batch": 403,
+          "composants": 403
+        },
+        "lignes_vault_ajoutees": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "V3-07",
+      "titre": "Non connecté => 401 sans pollution du vault",
+      "status": "PASS",
+      "expected": {
+        "http": 401,
+        "vault_delta": 0
+      },
+      "observed": {
+        "http": 401,
+        "vault_delta": 0
+      },
+      "note": ""
+    },
+    {
+      "id": "V3-08",
+      "titre": "Attaquant SANS abonnement : refusé (403/402) ; observation de la trace IDOR",
+      "status": "PASS",
+      "expected": "refus",
+      "observed": {
+        "http": 403,
+        "body": {
+          "error": "Abonnement requis pour cette fonctionnalité",
+          "code": "ABONNEMENT_REQUIS"
+        },
+        "vault_delta": 0
+      },
+      "note": "Informatif : si la trace est absente ici, la tentative est stoppée par checkAbonnement avant le contrôle de propriété."
+    },
+    {
+      "id": "V3-09",
+      "titre": "Propriétaire : POST + PUT produit autorisés, aucune trace IDOR (pas de faux positif)",
+      "status": "PASS",
+      "expected": {
+        "post": "201",
+        "put": "200",
+        "vault_delta": 0
+      },
+      "observed": {
+        "post": 201,
+        "put": 200,
+        "vault_delta": 0
+      },
+      "note": ""
+    },
+    {
+      "id": "V3-10",
+      "titre": "Collaborateur (gérant) : accès conservé (pas 403), aucune trace IDOR",
+      "status": "PASS",
+      "expected": {
+        "post": "201",
+        "put": "200",
+        "vault_delta": 0
+      },
+      "observed": {
+        "post": 201,
+        "put": 200,
+        "vault_delta": 0,
+        "colonnes": [
+          "id",
+          "boutique_id",
+          "utilisateur_id",
+          "role",
+          "created_at"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "id": "V3-11",
+      "titre": "Rafale de 5 requêtes identiques : 5 rejets 403, traces insérées (observation du volume)",
+      "status": "FAIL",
+      "expected": "5 traces",
+      "observed": {
+        "traces_ajoutees": 0
+      },
+      "note": "Observation : aucune limite/déduplication de journalisation (risque d'inondation de security_audit_vault par un attaquant authentifié)."
+    },
+    {
+      "id": "V3-13",
+      "titre": "Grappe E / TEST-006 : accès cross-agence (UUID et slug) => 403 + 2 traces IDOR_AGENCE_ACCESS_DENIED",
+      "status": "FAIL",
+      "expected": "403 ×2 + 2 traces",
+      "observed": {
+        "http": [
+          403,
+          403
+        ],
+        "vault": [
+          "IDOR_AGENCE_ACCESS_DENIED"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "id": "V3-14",
+      "titre": "Propriétaire de l'agence : accès aux baux conservé (200)",
+      "status": "PASS",
+      "expected": 200,
+      "observed": 200,
+      "note": ""
+    }
+  ],
+  "extra": {
+    "acteurs": {
+      "A": "efe011c6-2cfa-4810-8acf-557a4643d7e2",
+      "B": "f810ef53-5f52-40d4-91bd-7bc485b16faa",
+      "C": "ae1299c3-9f80-4c3d-ae3a-cae985318d79",
+      "G": "861413ae-1813-4ee3-b33c-45ade13d307d",
+      "boutiqueA": "65b7a22e-aebc-4941-bdfd-668a6b93d4f3",
+      "boutiqueB": "2fae8c35-6f7b-46c8-ae70-062a52cddc0d",
+      "creation_boutique_status": 201
+    },
+    "latence_refus_ms": {
+      "premier_post": 20,
+      "put": 14,
+      "dupliquer": 15,
+      "delete": 12
+    }
+  }
+}

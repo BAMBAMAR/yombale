@@ -1,0 +1,16 @@
+{
+  "anomalie_id": "ANOM-004",
+  "test_id": "TEST-009",
+  "status": "FAIL",
+  "observed": {
+    "endpoint_called": "POST /api/comptabilite/:id/commandes",
+    "methode_paiement": "wave",
+    "wave_api_status": "unavailable",
+    "http_status": 502,
+    "body": {
+      "error": "Le paiement Wave n’a pas pu être initialisé. Votre commande n’a pas été enregistrée, réessayez ou choisissez un autre mode de paiement."
+    },
+    "commande_db_status": "annulee",
+    "constat": "Crash 502 destructeur : annulation de la commande et remise en vente du stock sans repli manuel guidé."
+  }
+}

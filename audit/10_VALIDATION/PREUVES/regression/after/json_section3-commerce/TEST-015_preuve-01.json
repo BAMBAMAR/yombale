@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "observed": {
+    "algorithmic_evaluation": {
+      "smartphone1_vs_smartphone2": {
+        "match": true,
+        "methode": "modele",
+        "modele": "galaxy s23",
+        "confiance": 0.92
+      },
+      "smartphone1_vs_coque": {
+        "match": false,
+        "raison": "accessoire_vs_appareil"
+      },
+      "smartphone2_vs_coque": {
+        "match": false,
+        "raison": "accessoire_vs_appareil"
+      }
+    },
+    "db_attachments": {
+      "offre1_produit_id": "c033dba7-4611-4365-b684-74729022c462",
+      "offre2_produit_id": "c033dba7-4611-4365-b684-74729022c462",
+      "offre3_coque_produit_id": "0450c8c2-35d3-45da-a93f-c6b5dfa81f09",
+      "same_product_for_smartphones": true,
+      "distinct_product_for_coque": true,
+      "total_master_products_created": 2
+    },
+    "db_records": [
+      {
+        "id": "c033dba7-4611-4365-b684-74729022c462",
+        "nom": "Samsung Galaxy S23 128Go",
+        "marque": "Samsung",
+        "nom_normalise": "samsung galaxy s23 128go",
+        "offres": [
+          {
+            "id": "90229816-81ed-4c7b-b686-ee1ca520fe5b",
+            "titre": "Samsung Galaxy S23 128Go",
+            "prix": 450000
+          }
+        ]
+      },
+      {
+        "id": "0450c8c2-35d3-45da-a93f-c6b5dfa81f09",
+        "nom": "Coque silicone Samsung Galaxy S23",
+        "marque": "Samsung",
+        "nom_normalise": "coque silicone samsung galaxy s23",
+        "offres": [
+          {
+            "id": "f3290b3b-230f-4143-8135-bf8bb4df83c7",
+            "titre": "Coque silicone Samsung Galaxy S23",
+            "prix": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

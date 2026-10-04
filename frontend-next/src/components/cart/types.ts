@@ -21,4 +21,7 @@ export interface OrderSuccessData {
   clientTel: string
   clientAdresse?: string
   items: Array<{ nom: string; quantite: number; prix: number; detailsVariante?: string | null }>
+  fallbackManuel?: boolean
+  numeroDepot?: string
+  operateurManuel?: string
 }

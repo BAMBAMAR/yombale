@@ -1,0 +1,233 @@
+{
+  "session": "AUDIT-08-20261004-1150",
+  "fix": "FIX-004",
+  "label": "after",
+  "base_url": "http://localhost:4100",
+  "date": "2026-10-04T12:03:48.360Z",
+  "resume": {
+    "total": 9,
+    "pass": 9,
+    "fail": 0,
+    "na": 0
+  },
+  "tests": [
+    {
+      "id": "V4-01",
+      "titre": "TEST-009 original : Wave indisponible => 201 + fallback_manuel + numero_depot 777202086 + commande en_attente + stock 10->9",
+      "status": "PASS",
+      "expected": {
+        "http": 201,
+        "fallback_manuel": true,
+        "numero_depot": "777202086",
+        "db_statut": "en_attente",
+        "stock": 9
+      },
+      "observed": {
+        "http": 201,
+        "body": {
+          "commande": {
+            "id": "44e119c5-9eb9-445b-92a4-e22edb89e6fb",
+            "reference": "C-MUTRVPAH051B",
+            "boutique_id": "0e9ab2a4-12e3-4cf6-9c0e-37b275288e7b",
+            "produit_id": "10325b12-0072-4ca4-9528-11f8ef7eb03b",
+            "nom_produit": "1x Savon Wave 004",
+            "quantite": 1,
+            "prix_unitaire": "2500.00",
+            "montant_total": "2500.00",
+            "client_nom": "Client Audit8",
+            "client_telephone": "772380350",
+            "client_adresse": "Almadies",
+            "note": null,
+            "statut": "en_attente",
+            "source": "web",
+            "created_at": "2026-10-04T12:03:48.039Z",
+            "updated_at": "2026-10-04T12:03:48.039Z",
+            "methode_paiement": "wave",
+            "zone_livraison_id": null,
+            "frais_livraison": "0.00",
+            "groupe_commande": null,
+            "paiement_recu": false,
+            "utm_source": null,
+            "utm_medium": null,
+            "utm_campaign": null,
+            "montant_commission": "0.00",
+            "payout_ref": null,
+            "payout_date": null,
+            "social_post_id": null,
+            "statut_sequestre": "aucun",
+            "sequestre_pin_hash": null,
+            "sequestre_pin_sel": null,
+            "sequestre_essais_restants": 3,
+            "sequestre_date_deblocage": null,
+            "relance_panier_envoyee": false,
+            "date_relance_panier": null,
+            "remise_club_vip": "0.00",
+            "idempotency_key": null
+          },
+          "fallback_manuel": true,
+          "numero_depot": "777202086",
+          "operateur": "wave",
+          "message": "Commande enregistrée. L'API Wave étant momentanément indisponible, effectuez votre paiement par transfert Wave au 77 720 20 86."
+        },
+        "db_commande": {
+          "id": "44e119c5-9eb9-445b-92a4-e22edb89e6fb",
+          "reference": "C-MUTRVPAH051B",
+          "statut": "en_attente",
+          "montant_total": "2500.00",
+          "methode_paiement": "wave",
+          "paiement_recu": false,
+          "quantite": 1
+        },
+        "stock_apres": 9
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-02",
+      "titre": "Quantité 2 : montant 5000, stock décrémenté de 2 (9->7), commande conservée",
+      "status": "PASS",
+      "expected": {
+        "http": 201,
+        "montant": 5000,
+        "stock": 7
+      },
+      "observed": {
+        "http": 201,
+        "db": {
+          "id": "d6361095-815c-4776-be8d-da14b4390972",
+          "reference": "C-MUTRVPB9EF9A",
+          "statut": "en_attente",
+          "montant_total": "5000.00",
+          "methode_paiement": "wave",
+          "paiement_recu": false,
+          "quantite": 2
+        },
+        "stock": 7
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-03",
+      "titre": "Alias méthode pay_wave : même comportement de repli",
+      "status": "PASS",
+      "expected": "201 fallback",
+      "observed": {
+        "http": 201,
+        "fb": true
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-04",
+      "titre": "Non-régression Orange Money : 201 + (om_url OU repli manuel), commande en_attente, comportement inchangé avant/après",
+      "status": "PASS",
+      "expected": "201 + om_url|fallback",
+      "observed": {
+        "http": 201,
+        "om_url": "http://localhost:3001/paiement/succes?ref=C-MUTRVPCN43A1&type=commande-boutique",
+        "message": "Commande créée. Redirection vers Orange Money…"
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-05",
+      "titre": "Non-régression paiement espèces : 201, sans champs de repli Wave, stock -1",
+      "status": "PASS",
+      "expected": "201 simple",
+      "observed": {
+        "http": 201,
+        "message": "Commande envoyée avec succès",
+        "statut": "en_attente",
+        "stock": [
+          5,
+          4
+        ]
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-06",
+      "titre": "Double soumission (même idempotency_key) : 2e réponse 200 doublon, 1 seule commande, stock -1 uniquement",
+      "status": "PASS",
+      "expected": {
+        "first": 201,
+        "second": "200 doublon",
+        "stock": 4
+      },
+      "observed": {
+        "first": 201,
+        "second": 200,
+        "doublon": true,
+        "stock": 4,
+        "commandes_en_base": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-07",
+      "titre": "Quantité > stock : refus 4xx, aucune commande créée, stock inchangé",
+      "status": "PASS",
+      "expected": "4xx + 0 commande",
+      "observed": {
+        "http": 409,
+        "body": {
+          "error": "Stock insuffisant pour \"Rupture Wave 004\" (disponible : 1, demandé : 2)."
+        },
+        "commandes": 0,
+        "stock": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-08",
+      "titre": "Concurrence (2 commandes simultanées sur le dernier article) : une seule acceptée, stock jamais négatif",
+      "status": "PASS",
+      "expected": {
+        "acceptees": 1,
+        "stock": 0
+      },
+      "observed": {
+        "statuts": [
+          201,
+          409
+        ],
+        "stock": 0
+      },
+      "note": ""
+    },
+    {
+      "id": "V4-09",
+      "titre": "Le corps de repli contient message, numero_depot, operateur et AUCUNE wave_url trompeuse",
+      "status": "PASS",
+      "expected": "message+numero+operateur",
+      "observed": {
+        "keys": [
+          "commande",
+          "fallback_manuel",
+          "numero_depot",
+          "operateur",
+          "message"
+        ]
+      },
+      "note": ""
+    }
+  ],
+  "extra": {
+    "cron_expiration_2h": {
+      "commandes_annulees_par_cron": 1,
+      "commande_repli_apres_cron": {
+        "id": "44e119c5-9eb9-445b-92a4-e22edb89e6fb",
+        "reference": "C-MUTRVPAH051B",
+        "statut": "annulee",
+        "montant_total": "2500.00",
+        "methode_paiement": "wave",
+        "paiement_recu": false,
+        "quantite": 1
+      },
+      "stock_p1_apres_cron": 5,
+      "lecture": "La commande en repli manuel est annulée automatiquement après 2 h sans paiement confirmé (comportement existant, non modifié par FIX-004)."
+    },
+    "reference_commande_repli": "C-MUTRVPAH051B",
+    "boutique": "0e9ab2a4-12e3-4cf6-9c0e-37b275288e7b"
+  }
+}
