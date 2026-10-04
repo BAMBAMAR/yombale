@@ -45,4 +45,24 @@
    - **Alignement Monoligne Prioritaire** : Verrouiller les contrôles d'en-tête (vocal, scan, onglets) sur une seule et même ligne tant que l'espace le permet via `flexWrap: 'nowrap'` et `flexShrink: 0`.
    - **Lisibilité Produit sans Troncature Sauvage** : Pour les listes d'articles, découper en 2 sous-lignes calibrées (Ligne 1 : Nom complet lisible sans troncature agressive ; Ligne 2 : Prix FCFA et badge stock en `whiteSpace: 'nowrap'`), avec le bouton d'action calé à droite sans tronquer le texte ni déborder de la carte.
 
+## 🏷️ Règle Fondamentale de Démarcation : NOPALOU vs SURGA
+
+Le projet héberge **deux produits distincts et étanches** qui partagent la même infrastructure mais possèdent des identités, URLs et interfaces 100% séparées :
+
+### 1. 🤖 SURGA (Assistant Personnel de Poche & Services Locaux)
+- **URL & Périmètre** : `surga.nopalou.com` ou route `/surga` (PWA dédiée) et administration `/admin/surga`.
+- **Fonctionnalités** : Briefing matinal sourcé, notes & dépenses perso FCFA, calculatrice déterministe, agenda & rappels, commandes WhatsApp structurées, reconnaissance vocale, revue de presse & kiosque des Unes, audio podcast privé, radios FM directes, trafic TomTom Live Dakar, pôle immobilier certifié, concours nationaux (J-30/J-7/J-1), bonnes adresses dakaroises, abonnement Surga Premium.
+- **Répertoires Code** : `frontend-next/src/app/surga/`, `frontend-next/src/styles/surga.css`, `frontend-next/src/app/admin/(protected)/surga/`, `backend/services/surga/`, `backend/routes/surga/`, `backend/routes/admin-surga.js`, tables SQL `surga_*`.
+- **Règle d'Or UI** : **Détachement Total et Zéro Élément Marketplace**. Aucun composant Nopalou (navbar, footer, tiroir panier, chatbot, barre d'onglets e-commerce) ne doit apparaître dans Surga (omission SSR dans `layout.tsx` et isolation CSS `:has(.surga-root)`).
+
+### 2. 🏪 NOPALOU (Plateforme E-Commerce, Comparateur & Caisse POS)
+- **URL & Périmètre** : `nopalou.com` (accueil `/`, `/boutiques`, `/annonces`, `/immo`, `/caisse`, `/marchands`, `/compte`).
+- **Fonctionnalités** : Comparateur de prix multi-vendeurs, boutiques en ligne marchandes, logiciel de caisse tactile POS offline-first, gestion de stock, carnet de dettes & crédits clients, baux & agences immo, vente WhatsApp marketplace.
+- **Répertoires Code** : `frontend-next/src/app/(vitrine)/`, `app/boutiques/`, `app/caisse/`, `backend/routes/boutiques.js`, `produits.js`, `commandes.js`, etc.
+
+### 🛑 Interdiction Transverse
+- Ne JAMAIS modifier ni impacter la caisse POS ni le comparateur de prix lors des travaux sur Surga.
+- Inversement, les évolutions du design ou des composants de Nopalou ne doivent JAMAIS réinjecter d'éléments visuels e-commerce dans Surga.
+
+
 
