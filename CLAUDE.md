@@ -27,6 +27,15 @@
 - **Exécution** : branche dédiée, commits locaux `fix(zone): AUD-NNN …`, pas de `git push` sans ordre. Chaque correctif est prouvé par un test qui échoue sans lui (contrôle par mutation). Migrations idempotentes validées sur base vide (`MIGRATE_STRICT=true node scripts/audit/freshmig.js 2 nobase`) puis sur base existante. Journal dans `docs/JOURNAL-LIVRAISONS.md`.
 - **Entretien de l'environnement** : conserver `nopalou_audit`, `nopalou_audit_data` (copie de production = données personnelles, jamais commitée, à rafraîchir avant un audit) et mettre à jour `scripts/audit/` et la méthodologie quand une sonde ou une règle est ajoutée.
 
+## 4. Module Surga — Règles Spécifiques
+Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_SURGA.md` ; état du dépôt et décisions : `docs/surga/AUDIT.md`, `docs/surga/DECISIONS.md`.
+- **Canaux** : la PWA Surga (`/surga`, scope et service worker dédiés) est le produit principal. WhatsApp sert uniquement aux tâches précises (briefing, rappels, alertes, commandes structurées), via le même numéro routé vers `backend/services/surga/`. Jamais d'assistant conversationnel libre sur WhatsApp.
+- **Fiabilité IA** : aucun calcul par le modèle d'IA (moteur déterministe) ; confirmation avant toute écriture déclenchée par la voix ; actualités toujours sourcées ; quotas mesurés.
+- **Données personnelles** : consentement, export et suppression complète ; jamais de note ni de transcription en clair dans les logs.
+- **Low-data** : texte par défaut, audio en option désactivée, hors ligne minimal (notes, dépenses, calculatrice, dernier briefing).
+- **Intégration** : stack, auth (OTP WhatsApp), paiement (Wave / Orange Money) et design system Nopalou réutilisés ; base 16px limitée aux écrans Surga. Tables `surga_*` liées à `utilisateurs.id`, anti-IDOR sur chaque ressource.
+- **Périmètre** : ne jamais toucher au comparateur d'achats ni à la Caisse PRO. Branche `feature/surga`. Journal des livraisons dans `docs/surga/JOURNAL-LIVRAISONS.md`.
+
 ---
 
 
@@ -859,4 +868,10 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
 - **Résultats Clés du Benchmark** :
   - Score global normalisé sur 100 points : **Nopalou 80.5/100**, Jumia Sénégal 68.2/100, Shopify Sénégal 57.7/100, Social Commerce informel 53.5/100, TafTaf 52.2/100.
   - Positionnement confirmé : « Commerce OS » des marchands d'Afrique de l'Ouest (Caisse POS tactile offline + Carnet de dettes WhatsApp + Paiement Wave direct à 0% commission + Comparateur de prix omnisource).
+
+## Session 2026-10-04 : Surga, Phase 0 (audit d'intégration en lecture seule, aucun code modifié)
+- **Audit** : protocole `docs/surga/INTEGRATION_NOPALOU.md` section 1 exécuté sur `main` @ `31c91b12`, résultat dans `docs/surga/AUDIT.md` (stack Express + `pg` + Next 14 + CSS vanilla, table `utilisateurs`, OTP WhatsApp, Wave / OM Pay directs, PWA Serwist sans push web, bulle `ChatbotWidget.tsx`, aucun pre-commit).
+- **Décisions D11 à D18** (`docs/surga/DECISIONS.md`) : stack existante, `surga_preferences` liée à `utilisateurs`, paiement Wave / OM réutilisé (`surga_premium`), design system Nopalou en base 16px pour Surga (choix sur aperçus), même numéro WhatsApp avec routage par intention, PWA Surga séparée (`/surga`), point d'entrée Surga visible distinct de la bulle, fusion légère de `CLAUDE.md`.
+- **Gouvernance** : section « 4. Module Surga — Règles Spécifiques » ajoutée aux directives. `docs/surga/PLAN.md` : audit, questions, enregistrement et fusion passés à `DONE`.
+- **Aucune migration SQL**, aucun commit, aucun push.
 

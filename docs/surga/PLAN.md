@@ -11,14 +11,14 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 
 ## Phase 0 — Audit du dépôt existant et validations préalables
 **Surga s'intègre dans le dépôt Nopalou existant. Cette phase commence toujours par l'audit.**
-- [ ] `PROPOSED` Exécuter l'audit de `docs/surga/INTEGRATION_NOPALOU.md` (section 1) et en rendre un
+- [x] `DONE` Exécuter l'audit de `docs/surga/INTEGRATION_NOPALOU.md` (section 1) et en rendre un
   résumé court.
-- [ ] `PROPOSED` Poser les questions de clarification nécessaires (section 3 du protocole).
-- [ ] `PROPOSED` Fusionner le `CLAUDE.md` existant avec `CLAUDE_SURGA.md` si applicable, validation
-  de l'utilisateur requise.
-- [ ] `PROPOSED` Créer la branche `feature/surga`.
-- [ ] `PROPOSED` Enregistrer le résultat de l'audit dans `docs/surga/AUDIT.md` et chaque
-  décision tranchée dans `docs/surga/DECISIONS.md`.
+- [x] `DONE` Poser les questions de clarification nécessaires (section 3 du protocole).
+- [x] `DONE` Fusionner le `CLAUDE.md` existant avec `CLAUDE_SURGA.md` si applicable, validation
+  de l'utilisateur requise (fusion légère D18, section 4 de `CLAUDE.md`, validée le 2026-10-04).
+- [x] `DONE` Créer la branche `feature/surga`.
+- [x] `DONE` Enregistrer le résultat de l'audit dans `docs/surga/AUDIT.md` et chaque
+  décision tranchée dans `docs/surga/DECISIONS.md` (D11 à D18).
 - [ ] `PROPOSED` Valider le cadre WhatsApp autorisé pour Surga (Meta / fournisseur d'accès).
 - [ ] `PROPOSED` Spike de validation : source de données du trafic à Dakar (faisabilité, coût).
 - [ ] `PROPOSED` Spike de validation : qualité de la transcription vocale en français avec
