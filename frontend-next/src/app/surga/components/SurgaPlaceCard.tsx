@@ -90,7 +90,7 @@ export default function SurgaPlaceCard({
     if (!place.contact_whatsapp) return
     const numeroClean = place.contact_whatsapp.replace(/[^0-9]/g, '')
     const msg = encodeURIComponent(
-      `Bonjour, je vous contacte suite à une recommandation sur Surga Nopalou concernant : ${place.nom}.`
+      `Bonjour, je vous contacte suite à une recommandation sur Surga concernant : ${place.nom}.`
     )
     window.open(`https://wa.me/${numeroClean}?text=${msg}`, '_blank', 'noopener,noreferrer')
   }

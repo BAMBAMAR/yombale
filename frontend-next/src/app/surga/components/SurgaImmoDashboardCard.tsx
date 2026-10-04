@@ -113,7 +113,7 @@ export default function SurgaImmoDashboardCard({ onOuvrirModal }: SurgaImmoDashb
 
       {/* Synthèse textuelle D19 */}
       <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0, lineHeight: 1.45 }}>
-        {synthese || 'Le pôle immobilier de Nopalou centralise les annonces certifiées et alerte votre WhatsApp dès qu un bien correspond à vos critères.'}
+        {synthese || 'Le pôle immobilier Surga centralise les annonces certifiées et alerte votre WhatsApp dès qu un bien correspond à vos critères.'}
       </p>
 
       {/* Mini-liste des 2 dernières parutions */}

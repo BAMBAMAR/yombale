@@ -218,7 +218,7 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
                 Immobilier &amp; Alertes Dakar
               </h2>
               <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-                Catalogue certifié Nopalou • Veille &lt; 2 minutes
+                Catalogue certifié Surga • Veille &lt; 2 minutes
               </div>
             </div>
           </div>

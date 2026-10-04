@@ -108,13 +108,26 @@ export async function middleware(req: NextRequest) {
   const isScoped = isI18nScopedRoute(pathname)
   const effectiveLocale = isScoped ? locale : 'fr'
 
+  const host = req.headers.get('host') || req.nextUrl.host || ''
+  const isSurgaHost = host.startsWith('surga.')
+  const isSurga = isSurgaHost || pathname === '/surga' || pathname.startsWith('/surga/')
+  const effectivePathname = (isSurgaHost && pathname === '/') ? '/surga' : pathname
+
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
-  requestHeaders.set('x-pathname', pathname)
+  requestHeaders.set('x-pathname', effectivePathname)
   requestHeaders.set('x-locale', effectiveLocale)
   requestHeaders.set('Content-Security-Policy', csp)
+  if (isSurga) {
+    requestHeaders.set('x-is-surga', 'true')
+  }
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } })
+  let response: NextResponse
+  if (isSurgaHost && pathname === '/') {
+    response = NextResponse.rewrite(new URL('/surga', req.url), { request: { headers: requestHeaders } })
+  } else {
+    response = NextResponse.next({ request: { headers: requestHeaders } })
+  }
   response.headers.set('Content-Security-Policy', csp)
   // AUD-149 : politique stricte (nonce + strict-dynamic, sans unsafe-inline ni unsafe-eval) évaluée en RAPPORT SEUL.
   // Elle ne bloque rien ; les violations arrivent sur /api/csp-report. Passage en application réelle quand le flux est propre.

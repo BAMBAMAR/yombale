@@ -43,7 +43,7 @@ export default function SurgaPlaceDetailModal({
     if (!place.contact_whatsapp) return
     const numeroClean = place.contact_whatsapp.replace(/[^0-9]/g, '')
     const msg = encodeURIComponent(
-      `Bonjour, je vous contacte suite à une recommandation sur Surga Nopalou concernant votre établissement : ${place.nom}.`
+      `Bonjour, je vous contacte suite à une recommandation sur Surga concernant votre établissement : ${place.nom}.`
     )
     window.open(`https://wa.me/${numeroClean}?text=${msg}`, '_blank', 'noopener,noreferrer')
   }
@@ -59,7 +59,7 @@ export default function SurgaPlaceDetailModal({
   }
 
   const handlePartager = async () => {
-    const texte = `Découvrez "${place.nom}" à ${place.quartier} sur Surga Nopalou : ${place.specialite} (~${budgetFormate} FCFA). ${place.resume_honnete}`
+    const texte = `Découvrez "${place.nom}" à ${place.quartier} sur Surga : ${place.specialite} (~${budgetFormate} FCFA). ${place.resume_honnete}`
     if (navigator.share) {
       try {
         await navigator.share({

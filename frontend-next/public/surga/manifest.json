@@ -1,7 +1,7 @@
 {
-  "name": "Surga — Assistant Nopalou",
+  "name": "Surga — Assistant Personnel de Poche",
   "short_name": "Surga",
-  "description": "Votre assistant de poche personnalisé, sobre et fiable au quotidien par Nopalou.",
+  "description": "Votre assistant personnel au quotidien au Sénégal : briefing, notes, dépenses et actualités.",
   "start_url": "/surga",
   "scope": "/surga/",
   "display": "standalone",

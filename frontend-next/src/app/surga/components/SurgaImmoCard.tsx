@@ -41,7 +41,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
   const handleWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation()
     const num = (bien.contact_whatsapp || bien.contact_tel || '221771234567').replace(/[^0-9]/g, '')
-    const texte = encodeURIComponent(`Bonjour, je vous contacte via Nopalou concernant l'annonce : ${bien.titre}`)
+    const texte = encodeURIComponent(`Bonjour, je vous contacte via Surga concernant l'annonce : ${bien.titre}`)
     window.open(`https://wa.me/${num}?text=${texte}`, '_blank')
   }
 

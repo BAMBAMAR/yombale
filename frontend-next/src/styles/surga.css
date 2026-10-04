@@ -1,6 +1,32 @@
 /* frontend-next/src/styles/surga.css */
 /* Styles dédiés au module Surga — Design System Nopalou & Base 16px */
 
+/* ==========================================================================
+   ISOLATION TOTALE DE L'INTERFACE SURGA (Autonome vis-à-vis de Nopalou)
+   ========================================================================== */
+body:has(.surga-root) header[role="banner"],
+body:has(.surga-root) .site-footer,
+body:has(.surga-root) .mobile-bottom-nav,
+body:has(.surga-root) .drawer-cart,
+body:has(.surga-root) .bottom-bars,
+body:has(.surga-root) #chat-widget-root,
+body:has(.surga-root) .pwa-install-prompt,
+body:has(.surga-root) .fav-toast {
+  display: none !important;
+}
+
+body:has(.surga-root) {
+  background-color: var(--bg, #F8F5F0) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body:has(.surga-root) #app-main {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+}
+
 .surga-root {
   font-family: var(--font-inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: 16px;
@@ -299,64 +325,3 @@
   background-color: rgba(199, 91, 0, 0.04);
 }
 
-/* Bannière d'accès Nopalou Accueil */
-.surga-home-banner {
-  background: linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #293B61 100%);
-  border-radius: 14px;
-  padding: 18px 20px;
-  margin: 16px 0 24px 0;
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 4px 16px rgba(28, 43, 74, 0.12);
-  gap: 16px;
-}
-
-.surga-home-banner-text h3 {
-  font-size: 18px;
-  font-weight: 800;
-  margin: 0 0 4px 0;
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.surga-home-banner-text p {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.surga-home-banner-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: var(--accent, #C75B00);
-  color: #FFFFFF;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background-color 0.15s ease;
-}
-
-.surga-home-banner-cta:hover {
-  background-color: #A64800;
-}
-
-@media (max-width: 640px) {
-  .surga-home-banner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .surga-home-banner-cta {
-    width: 100%;
-    justify-content: center;
-  }
-}

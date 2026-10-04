@@ -191,8 +191,8 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
                 <SurgaShareButton
                   payload={{
                     titre: `Une de ${selectedUne.nom_journal}`,
-                    texte: `*Surga — Kiosque de la Presse Sénégalaise*\n• Journal : ${selectedUne.nom_journal}\n• Date : ${selectedUne.date_parution || 'Aujourd’hui'}\nConsulter la revue de presse sur Surga : https://nopalou.com/surga`,
-                    url: 'https://nopalou.com/surga',
+                    texte: `*Surga — Kiosque de la Presse Sénégalaise*\n• Journal : ${selectedUne.nom_journal}\n• Date : ${selectedUne.date_parution || 'Aujourd’hui'}\nConsulter la revue de presse sur Surga : https://surga.nopalou.com`,
+                    url: 'https://surga.nopalou.com',
                   }}
                   libelle="Partager"
                   taille="sm"

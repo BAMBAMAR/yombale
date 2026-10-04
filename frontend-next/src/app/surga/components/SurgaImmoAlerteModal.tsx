@@ -312,7 +312,7 @@ export default function SurgaImmoAlerteModal({
           </div>
 
           <p style={{ fontSize: 11, color: 'var(--text3, #73675E)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
-            Surga veille en continu sur le pôle immobilier de Nopalou et vous alerte dès la détection d un bien conforme.
+            Surga veille en continu sur le catalogue immobilier certifié et vous alerte dès la détection d un bien conforme.
           </p>
 
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
