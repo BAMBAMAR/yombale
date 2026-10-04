@@ -155,15 +155,29 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - **Démonstration** : l'utilisateur explore les concours ouverts de la fonction publique et des grandes écoles, active le suivi en 1 clic pour recevoir les alertes J-30/J-7/J-1 dans son agenda et utilise la checklist pour préparer ses pièces justificatives.
 
 ### Tranche 14 — Bons plans & Adresses à Dakar
-- [ ] `PROPOSED` Table `Place`, ingestion des avis Google Maps, résumé honnête, tags d'ambiance,
-  budget estimé en FCFA, recherche par quartier.
-- **Démonstration** : l'utilisateur envoie un quartier et reçoit 3 recommandations résumées.
+- [x] `DONE` Tables SQL idempotentes `surga_places` et `surga_favoris_places` avec index de performance dans `backend/migrate-inline.js`.
+- [x] `DONE` Service `backend/services/surga/places-service.js` avec :
+  - Catalogue riche de 10 adresses dakaroises de référence (Chez Loutcha, Dibiterie Chez Haïssam, L'Échappée Coworking, La Cabane du Pêcheur, Le Phare des Mamelles, Chez Katia, Noflaye Beach, Le Jardin Gourmand, Dibiterie Dakaroise, La Fourchette).
+  - Résumés honnêtes des avis clients en 3 lignes (< 260 caractères) avec points forts, spécialités et bémols constructifs sans complaisance.
+  - Parser de recherche en langage naturel (`parserRecherchePlacesNaturelle`) extrayant envie (dibi, thieb, café, burger), quartier, ambiance (calme, wifi rapide, vue mer, terrasse) et budget maximal.
+  - Recherche multi-critères pondérée avec tri par note et nombre d'avis.
+  - Gestion des coups de cœur (favoris) persistés par utilisateur.
+  - Synthèse vocale et briefing au vouvoiement strict D19 (`genererSynthesePlacesBriefing`).
+- [x] `DONE` Routes REST dans `backend/routes/surga/places.js` (`GET /`, `GET /categories`, `GET /favoris`, `GET /synthese`, `GET /:id`, `POST /recherche-vocale`, `POST /:id/favori`).
+- [x] `DONE` Composants React modulaires (< 450 lignes) :
+  - `SurgaPlaceCard.tsx` (353 l.) : affichage de la fiche avec note, résumé honnête 3 lignes, spécialité, contact direct WhatsApp et bouton favori.
+  - `SurgaPlaceDetailModal.tsx` (412 l.) : modale avec détails complets, horaires, adresse, avis honnête, itinéraire Google Maps et partage.
+  - `SurgaPlacesModal.tsx` (373 l.) : vue complète avec recherche en langage naturel, filtres par catégorie, quartier et onglets *Toutes les adresses* et *Coups de cœur*.
+  - `SurgaPlacesDashboardCard.tsx` (145 l.) : carte de recommandation du jour sur le tableau de bord Surga.
+  - `SurgaParametresTab.tsx` (217 l.) : raccourci de paramétrage vers les bonnes adresses.
+- [x] `DONE` Tests unitaires Jest : **81/81 passés (100%)**.
+- **Démonstration** : l'utilisateur tape ou dicte son envie ("un bon dibi aux Almadies", "café calme coworking Point E"), explore les recommandations avec résumés honnêtes sans complaisance, contacte directement par WhatsApp en un clic et ajoute ses adresses favorites à ses coups de cœur.
 
 ---
 
 ## MONÉTISATION ET SORTIE
 
-### Tranche 14 — Premium et espaces professionnels
+### Tranche 15 — Premium et espaces professionnels
 - [ ] `PROPOSED` Premium B2C (quotas vocaux étendus, audio, personnalisation avancée) payé par
   Mobile Money (réutiliser l'intégration existante).
 - [ ] `PROPOSED` Espaces pro : agences, centres de formation, restaurateurs (Gratuit,

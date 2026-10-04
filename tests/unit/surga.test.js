@@ -1081,6 +1081,107 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(regexEmoji.test(synthese)).toBe(false);
     });
   });
+
+  describe('Tranche 14 : Bons Plans & Bonnes Adresses à Dakar (Résumés honnêtes & Envies)', () => {
+    const {
+      CATEGORIES_PLACES,
+      TAGS_AMBIANCE,
+      PLACES_DAKAR_DEMO,
+      parserRecherchePlacesNaturelle,
+      rechercherPlaces,
+      recupererPlaceParId,
+      genererSynthesePlacesBriefing,
+    } = require('../../backend/services/surga/places-service');
+
+    const regexEmoji = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+
+    test('Catalogue dakaroise riche et diversifié (>= 10 adresses de référence)', () => {
+      expect(PLACES_DAKAR_DEMO.length).toBeGreaterThanOrEqual(10);
+      const noms = PLACES_DAKAR_DEMO.map((p) => p.nom);
+      expect(noms).toContain('Chez Loutcha');
+      expect(noms).toContain('Dibiterie Chez Haïssam');
+      expect(noms).toContain('L Échappée Coworking & Café');
+      expect(noms).toContain('La Cabane du Pêcheur');
+      expect(noms).toContain('Le Phare des Mamelles Restaurant');
+      expect(noms).toContain('Chez Katia Almadies');
+    });
+
+    test('Résumés honnêtes des avis clients : points forts, spécialités et bémols sans complaisance', () => {
+      for (const place of PLACES_DAKAR_DEMO) {
+        expect(place.resume_honnete).toBeDefined();
+        expect(place.resume_honnete.length).toBeGreaterThan(40);
+        expect(place.resume_honnete.length).toBeLessThanOrEqual(280);
+        // Note et budget bien calibrés
+        expect(place.note_moyenne).toBeGreaterThanOrEqual(4.0);
+        expect(place.budget_moyen_xof).toBeGreaterThanOrEqual(1500);
+        expect(place.specialite).toBeDefined();
+        // Zéro émoji
+        expect(regexEmoji.test(place.resume_honnete)).toBe(false);
+        expect(regexEmoji.test(place.specialite)).toBe(false);
+      }
+    });
+
+    test('Parser de recherche en langage naturel - Dibi aux Almadies', () => {
+      const res = parserRecherchePlacesNaturelle('Trouve moi un bon dibi ce soir aux Almadies');
+      expect(res.categorie).toBe('dibiterie');
+      expect(res.quartier).toBe('Almadies');
+    });
+
+    test('Parser de recherche en langage naturel - Thiéboudienne pas cher au Plateau', () => {
+      const res = parserRecherchePlacesNaturelle('Où manger un bon thieboudienne pas cher au Plateau');
+      expect(res.categorie).toBe('restaurant');
+      expect(res.quartier).toBe('Plateau');
+      expect(res.budgetMax).toBeLessThanOrEqual(4500);
+    });
+
+    test('Parser de recherche en langage naturel - Café calme coworking Point E', () => {
+      const res = parserRecherchePlacesNaturelle('Un cafe calme avec wifi pour bosser au Point E');
+      expect(res.categorie).toBe('cafe_coworking');
+      expect(res.quartier).toBe('Point E');
+      expect(res.ambiance).toBe('calme');
+    });
+
+    test('Recherche multi-critères avec filtrage quartier et budget', async () => {
+      const { places } = await rechercherPlaces({
+        quartier: 'Plateau',
+        categorie: 'restaurant',
+      });
+      expect(places.length).toBeGreaterThanOrEqual(1);
+      const premier = places[0];
+      expect(premier.quartier).toBe('Plateau');
+      expect(premier.note_moyenne).toBeGreaterThanOrEqual(4.0);
+    });
+
+    test('Fiche détaillée d une adresse avec coordonnées et WhatsApp', async () => {
+      const place = await recupererPlaceParId('place-chez-loutcha');
+      expect(place).toBeDefined();
+      expect(place.nom).toBe('Chez Loutcha');
+      expect(place.contact_tel).toBeDefined();
+      expect(place.contact_whatsapp).toBeDefined();
+      expect(place.horaires).toBeDefined();
+    });
+
+    test('Génération de la synthèse pour le briefing matinal (D19 & Zéro émoji)', () => {
+      const placeMock = [
+        {
+          nom: 'Chez Loutcha',
+          quartier: 'Plateau',
+          specialite: 'Thiéboudienne rouge au mérou',
+          budget_moyen_xof: 4500,
+        },
+      ];
+
+      const synthese = genererSynthesePlacesBriefing(placeMock);
+      expect(synthese).toContain('Bon plan du jour :');
+      expect(synthese).toContain('Chez Loutcha');
+      expect(synthese).toContain('Plateau');
+      expect(synthese.replace(/\s+/g, ' ')).toContain('4 500 FCFA');
+      // Vouvoiement strict D19
+      expect(synthese).not.toMatch(/\b(tu|te|toi|ton|ta|tes)\b/i);
+      // Zéro émoji
+      expect(regexEmoji.test(synthese)).toBe(false);
+    });
+  });
 });
 
 

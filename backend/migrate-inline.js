@@ -3237,6 +3237,39 @@ module.exports = async function migrateInline(customConnStr = null) {
      )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_suivi_user_concours ON surga_suivi_concours(user_id, concours_id)`,
     `CREATE INDEX IF NOT EXISTS idx_surga_suivi_user ON surga_suivi_concours(user_id, rappels_actifs)`,
+    `CREATE TABLE IF NOT EXISTS surga_places (
+       id VARCHAR(64) PRIMARY KEY,
+       slug VARCHAR(128) UNIQUE NOT NULL,
+       nom VARCHAR(150) NOT NULL,
+       categorie VARCHAR(50) NOT NULL DEFAULT 'restaurant',
+       quartier VARCHAR(100) NOT NULL,
+       ville VARCHAR(50) DEFAULT 'Dakar',
+       adresse VARCHAR(255),
+       budget_moyen_xof INT DEFAULT 5000,
+       fourchette_prix VARCHAR(10) DEFAULT '€€',
+       tags_ambiance JSONB DEFAULT '[]'::jsonb,
+       resume_honnete TEXT,
+       specialite VARCHAR(150),
+       note_moyenne NUMERIC(2,1) DEFAULT 4.5,
+       nb_avis INT DEFAULT 0,
+       photos JSONB DEFAULT '[]'::jsonb,
+       contact_tel VARCHAR(30),
+       contact_whatsapp VARCHAR(30),
+       horaires VARCHAR(100),
+       actif BOOLEAN NOT NULL DEFAULT TRUE,
+       verifie BOOLEAN NOT NULL DEFAULT TRUE,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_places_cat_quartier ON surga_places(categorie, quartier, actif)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_places_budget ON surga_places(budget_moyen_xof)`,
+    `CREATE TABLE IF NOT EXISTS surga_favoris_places (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
+       place_id VARCHAR(64) REFERENCES surga_places(id) ON DELETE CASCADE,
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_favoris_places ON surga_favoris_places(user_id, place_id)`,
   ];
   for (const sql of schemaCollecte) {
     try { await pool.query(sql); }

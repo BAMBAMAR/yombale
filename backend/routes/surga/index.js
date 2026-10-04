@@ -17,6 +17,7 @@ router.use('/', require('./radio'));
 router.use('/', require('./trafic'));
 router.use('/', require('./immo'));
 router.use('/', require('./concours'));
+router.use('/', require('./places'));
 
 module.exports = router;
 

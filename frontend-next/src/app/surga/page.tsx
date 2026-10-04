@@ -23,6 +23,8 @@ import SurgaImmoDashboardCard from './components/SurgaImmoDashboardCard'
 import SurgaImmoModal from './components/SurgaImmoModal'
 import SurgaConcoursDashboardCard from './components/SurgaConcoursDashboardCard'
 import SurgaConcoursModal from './components/SurgaConcoursModal'
+import SurgaPlacesDashboardCard from './components/SurgaPlacesDashboardCard'
+import SurgaPlacesModal from './components/SurgaPlacesModal'
 import SurgaParametresTab from './components/SurgaParametresTab'
 import {
   getLocalNotes,
@@ -70,6 +72,7 @@ export default function SurgaPage() {
   const [isTraficOpen, setIsTraficOpen] = useState<boolean>(false)
   const [isImmoOpen, setIsImmoOpen] = useState<boolean>(false)
   const [isConcoursOpen, setIsConcoursOpen] = useState<boolean>(false)
+  const [isPlacesOpen, setIsPlacesOpen] = useState<boolean>(false)
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
   const [nbNotes, setNbNotes] = useState<number>(0)
@@ -343,6 +346,11 @@ export default function SurgaPage() {
               <SurgaConcoursDashboardCard onOuvrirModal={() => setIsConcoursOpen(true)} />
             )}
 
+            {/* Section Briques : Bons Plans & Bonnes Adresses à Dakar */}
+            {(preferences?.modules_actifs?.includes('places') || !preferences?.modules_actifs) && (
+              <SurgaPlacesDashboardCard onOuvrirModal={() => setIsPlacesOpen(true)} />
+            )}
+
             {/* Section Noyau : Raccourcis Dépenses, Notes, Calculs & Micro */}
             <SurgaDashboardTools
               statsApercu={statsApercu}
@@ -370,6 +378,7 @@ export default function SurgaPage() {
             onOpenTrafic={() => setIsTraficOpen(true)}
             onOpenImmo={() => setIsImmoOpen(true)}
             onOpenConcours={() => setIsConcoursOpen(true)}
+            onOpenPlaces={() => setIsPlacesOpen(true)}
             onReinitialiser={handleReinitialiser}
           />
         )}
@@ -395,6 +404,7 @@ export default function SurgaPage() {
       <SurgaTraficModal isOpen={isTraficOpen} onClose={() => setIsTraficOpen(false)} />
       <SurgaImmoModal isOpen={isImmoOpen} onClose={() => setIsImmoOpen(false)} />
       <SurgaConcoursModal isOpen={isConcoursOpen} onClose={() => setIsConcoursOpen(false)} />
+      <SurgaPlacesModal isOpen={isPlacesOpen} onClose={() => setIsPlacesOpen(false)} />
 
       {/* Navigation basse */}
       <SurgaBottomNav activeTab={activeTab} onTabChange={setActiveTab} />

@@ -10,6 +10,7 @@ interface SurgaParametresTabProps {
   onOpenTrafic: () => void
   onOpenImmo: () => void
   onOpenConcours: () => void
+  onOpenPlaces?: () => void
   onReinitialiser: () => void
 }
 
@@ -20,6 +21,7 @@ export default function SurgaParametresTab({
   onOpenTrafic,
   onOpenImmo,
   onOpenConcours,
+  onOpenPlaces,
   onReinitialiser,
 }: SurgaParametresTabProps) {
   return (
@@ -169,6 +171,34 @@ export default function SurgaParametresTab({
           style={{ fontSize: 11, padding: '5px 12px' }}
         >
           Consulter
+        </button>
+      </div>
+
+      {/* Bons Plans & Bonnes Adresses Dakar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: 10,
+          borderTop: '1px solid var(--border, #E8DDD2)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            Bons Plans &amp; Bonnes Adresses
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            Restaurants, dibiteries, cafés coworking &amp; avis vérifiés
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenPlaces}
+          className="surga-btn-secondary"
+          style={{ fontSize: 11, padding: '5px 12px' }}
+        >
+          Explorer
         </button>
       </div>
 

@@ -3,6 +3,46 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-04] — Tranche 14 / Bons Plans & Bonnes Adresses à Dakar (Résumés honnêtes & Envies)
+- **Tâches complétées :**
+  - Migration SQL idempotente des tables `surga_places` et `surga_favoris_places` avec index de performance (`idx_surga_places_cat`, `idx_surga_places_quartier`, `idx_surga_places_actif`, `idx_surga_favoris_places_user`) dans `backend/migrate-inline.js`.
+  - Service métier `backend/services/surga/places-service.js` :
+    - Catalogue initial de 10 adresses dakaroises de référence (Chez Loutcha, Dibiterie Chez Haïssam, L'Échappée Coworking, La Cabane du Pêcheur, Le Phare des Mamelles, Chez Katia, Noflaye Beach, Le Jardin Gourmand, Dibiterie Dakaroise, La Fourchette).
+    - Synthèses et résumés honnêtes des avis clients en 3 lignes (< 260 caractères) avec points forts, spécialités et bémols constructifs sans complaisance (ex: portions généreuses mais attente le midi, rustique mais découpe minute).
+    - Parser de recherche en langage naturel (`parserRecherchePlacesNaturelle`) capable d'extraire envie (dibi, thieb, café, burger), quartier, ambiance (calme, wifi rapide, vue mer, terrasse) et budget maximal.
+    - Recherche multi-critères pondérée avec tri par note et nombre d'avis vérifiés.
+    - Gestion des coups de cœur (favoris) avec persistance utilisateur.
+    - Synthèse textuelle pour le briefing matinal au vouvoiement strict D19 et zéro émoji.
+  - Routes REST montées sur `/api/surga/places` (`GET /`, `GET /categories`, `GET /favoris`, `GET /synthese`, `GET /:id`, `POST /recherche-vocale`, `POST /:id/favori`).
+  - Composants React frontend modulaires (< 450 lignes) :
+    - `SurgaPlaceCard.tsx` (353 lignes) : carte synthétique avec note, avis honnête 3 lignes, spécialité, contact direct WhatsApp et bouton favori.
+    - `SurgaPlaceDetailModal.tsx` (412 lignes) : fiche complète avec détails, horaires, adresse, avis honnête, itinéraire Google Maps et partage.
+    - `SurgaPlacesModal.tsx` (373 lignes) : vue principale avec recherche d'envie en langage naturel, filtres par catégorie, quartier et onglets (Toutes les adresses / Coups de cœur).
+    - `SurgaPlacesDashboardCard.tsx` (145 lignes) : carte de recommandation du jour pour le tableau de bord Surga.
+    - `SurgaParametresTab.tsx` (217 lignes) : raccourci de paramétrage vers les bonnes adresses.
+  - Intégration sur le tableau de bord Surga (`page.tsx` à 414 lignes, strictement < 450).
+  - Suite de tests unitaires Jest enrichie dans `tests/unit/surga.test.js` : **81/81 passés (100%)**.
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/places-service.js`
+  - `backend/routes/surga/places.js`
+  - `backend/routes/surga/index.js`
+  - `backend/migrate-inline.js`
+  - `frontend-next/src/app/surga/components/SurgaPlaceCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPlaceDetailModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPlacesModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPlacesDashboardCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaParametresTab.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 81/81 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Plafond de taille des composants : tous strictement < 450 lignes (`page.tsx` à 414 lignes).
+  - [x] Critère de démonstration validé : l'utilisateur tape ou dicte son envie ("un bon dibi aux Almadies", "café calme coworking Point E"), explore les recommandations avec résumés honnêtes sans complaisance, contacte directement par WhatsApp en un clic et ajoute ses adresses favorites à ses coups de cœur.
+
 ### [2026-10-04] — Tranche 13 / Concours et Examens du Sénégal (Suivi & Rappels J-30/J-7/J-1)
 - **Tâches complétées :**
   - Migration SQL idempotente des tables `surga_concours` et `surga_suivi_concours` avec index de performance dans `backend/migrate-inline.js`.
