@@ -3,6 +3,45 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-04] — Tranche 13 / Concours et Examens du Sénégal (Suivi & Rappels J-30/J-7/J-1)
+- **Tâches complétées :**
+  - Migration SQL idempotente des tables `surga_concours` et `surga_suivi_concours` avec index de performance dans `backend/migrate-inline.js`.
+  - Service métier `backend/services/surga/concours-service.js` :
+    - Catalogue complet des concours majeurs de la Fonction Publique, des Grandes Écoles et des examens nationaux (ENA, Douanes, Police, FASTEF, CREM, Baccalauréat, BFEM, CESTI, ESP, ENSA).
+    - Moteur de calcul déterministe des échéances et phases d'urgence (`calculerEcheances` : J-30, J-7, J-1, Clôture).
+    - Inscription au suivi en 1 clic (`suivreConcours`) avec injection automatique des rappels d'échéance dans l'Agenda Surga (`surga_agenda`).
+    - Fiches détaillées avec constitution du dossier (checklist des pièces administratives requises : casier judiciaire, certificat de nationalité, extrait de naissance, diplômes), frais d'inscription en FCFA, et centres de formation préparatoire.
+    - Synthèse textuelle pour le briefing matinal au vouvoiement strict D19 et zéro émoji.
+  - Routes REST montées sur `/api/surga/concours` (`GET /`, `GET /categories`, `GET /suivis`, `GET /synthese`, `GET /:id`, `POST /:id/suivre`, `DELETE /:id/suivre`).
+  - Composants React frontend modulaires (< 450 lignes) :
+    - `SurgaConcoursCard.tsx` (175 lignes) : carte synthétique d'un concours avec statut, décompte J-X et bouton d'action Suivre.
+    - `SurgaConcoursDetailModal.tsx` (340 lignes) : fiche détaillée avec calendrier officiel, checklist interactive des pièces et centres de prépa.
+    - `SurgaConcoursModal.tsx` (395 lignes) : vue principale avec filtres par catégorie, onglets (Tous / Suivis) et recherche instantanée.
+    - `SurgaConcoursDashboardCard.tsx` (170 lignes) : carte d'aperçu pour le tableau de bord Surga.
+    - `SurgaParametresTab.tsx` (190 lignes) : raccourci de configuration vers les concours nationaux.
+  - Intégration sur le tableau de bord Surga (`page.tsx` maintenu à 405 lignes, strictement < 450).
+  - Suite de tests unitaires Jest enrichie dans `tests/unit/surga.test.js` : **73/73 passés (100%)**.
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/concours-service.js`
+  - `backend/routes/surga/concours.js`
+  - `backend/routes/surga/index.js`
+  - `backend/migrate-inline.js`
+  - `frontend-next/src/app/surga/components/SurgaConcoursCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaConcoursDetailModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaConcoursModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaConcoursDashboardCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaParametresTab.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 73/73 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Plafond de taille des composants : tous strictement < 450 lignes (`page.tsx` à 405 lignes).
+  - [x] Critère de démonstration validé : l'utilisateur explore les concours ouverts de la fonction publique et des grandes écoles, active le suivi en 1 clic pour recevoir les alertes J-30/J-7/J-1 dans son agenda et utilise la checklist pour préparer ses pièces justificatives.
+
 ### [2026-10-04] — Tranche 12 / Immobilier & Moteur d'Alertes Immobilières
 - **Tâches complétées :**
   - Réutilisation stricte et sans doublon du catalogue immobilier existant de Nopalou (`annonces_immo`, `agences_immo`, `backend/lib/immo-publiable.js`).

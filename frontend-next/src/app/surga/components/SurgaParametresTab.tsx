@@ -9,6 +9,7 @@ interface SurgaParametresTabProps {
   onOpenRadio: () => void
   onOpenTrafic: () => void
   onOpenImmo: () => void
+  onOpenConcours: () => void
   onReinitialiser: () => void
 }
 
@@ -18,6 +19,7 @@ export default function SurgaParametresTab({
   onOpenRadio,
   onOpenTrafic,
   onOpenImmo,
+  onOpenConcours,
   onReinitialiser,
 }: SurgaParametresTabProps) {
   return (
@@ -139,6 +141,34 @@ export default function SurgaParametresTab({
           style={{ fontSize: 11, padding: '5px 12px' }}
         >
           Ouvrir
+        </button>
+      </div>
+
+      {/* Concours & Examens du Sénégal */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: 10,
+          borderTop: '1px solid var(--border, #E8DDD2)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            Concours &amp; Examens Nationaux
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            Suivi des dossiers et rappels J-30 / J-7 / J-1
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenConcours}
+          className="surga-btn-secondary"
+          style={{ fontSize: 11, padding: '5px 12px' }}
+        >
+          Consulter
         </button>
       </div>
 

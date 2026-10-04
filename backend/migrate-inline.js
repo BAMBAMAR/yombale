@@ -3202,6 +3202,41 @@ module.exports = async function migrateInline(customConnStr = null) {
      )`,
     `CREATE INDEX IF NOT EXISTS idx_surga_alertes_user ON surga_alertes_immo(user_id, actif)`,
     `CREATE INDEX IF NOT EXISTS idx_surga_alertes_critere ON surga_alertes_immo(actif, transaction, type_bien)`,
+    `CREATE TABLE IF NOT EXISTS surga_concours (
+       id VARCHAR(64) PRIMARY KEY,
+       slug VARCHAR(128) UNIQUE NOT NULL,
+       titre VARCHAR(200) NOT NULL,
+       sigle VARCHAR(30),
+       organisme VARCHAR(200),
+       categorie VARCHAR(50) NOT NULL DEFAULT 'fonction_publique',
+       niveau_requis VARCHAR(100),
+       age_max INT,
+       frais_dossier_xof INT DEFAULT 0,
+       statut VARCHAR(30) NOT NULL DEFAULT 'ouvert',
+       date_ouverture TIMESTAMPTZ,
+       date_cloture TIMESTAMPTZ NOT NULL,
+       date_epreuves TIMESTAMPTZ,
+       date_resultats TIMESTAMPTZ,
+       pieces_a_fournir JSONB DEFAULT '[]'::jsonb,
+       description TEXT,
+       lien_officiel VARCHAR(500),
+       centres_prepa JSONB DEFAULT '[]'::jsonb,
+       actif BOOLEAN NOT NULL DEFAULT TRUE,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_concours_cat ON surga_concours(categorie, statut, actif)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_concours_cloture ON surga_concours(date_cloture ASC)`,
+    `CREATE TABLE IF NOT EXISTS surga_suivi_concours (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
+       concours_id VARCHAR(64) REFERENCES surga_concours(id) ON DELETE CASCADE,
+       phone VARCHAR(30),
+       rappels_actifs BOOLEAN NOT NULL DEFAULT TRUE,
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_suivi_user_concours ON surga_suivi_concours(user_id, concours_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_suivi_user ON surga_suivi_concours(user_id, rappels_actifs)`,
   ];
   for (const sql of schemaCollecte) {
     try { await pool.query(sql); }

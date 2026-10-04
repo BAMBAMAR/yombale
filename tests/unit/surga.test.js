@@ -948,6 +948,139 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(regexEmoji.test(synthese)).toBe(false);
     });
   });
+
+  describe('Tranche 13 : Concours et Examens du Sénégal (Suivi & Rappels J-30/J-7/J-1)', () => {
+    const {
+      CATEGORIES_CONCOURS,
+      CONCOURS_NATIONAUX_SENEGAL,
+      calculerEcheances,
+      listerConcours,
+      recupererConcoursParId,
+      suivreConcours,
+      genererSyntheseConcoursBriefing,
+    } = require('../../backend/services/surga/concours-service');
+
+    const regexEmoji = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+
+    test('Catalogue officiel riche et représentatif des concours nationaux (>= 8)', () => {
+      expect(CONCOURS_NATIONAUX_SENEGAL.length).toBeGreaterThanOrEqual(8);
+      const sigles = CONCOURS_NATIONAUX_SENEGAL.map((c) => c.sigle);
+      expect(sigles).toContain('ENA');
+      expect(sigles).toContain('DOUANES');
+      expect(sigles).toContain('POLICE');
+      expect(sigles).toContain('FASTEF');
+      expect(sigles).toContain('CREM');
+      expect(sigles).toContain('BAC');
+      expect(sigles).toContain('BFEM');
+    });
+
+    test('Dossier de candidature complet : présence des pièces administratives sénégalaises', () => {
+      const ena = CONCOURS_NATIONAUX_SENEGAL.find((c) => c.sigle === 'ENA');
+      expect(ena).toBeDefined();
+      expect(ena.pieces_a_fournir.length).toBeGreaterThanOrEqual(5);
+      const piecesTexte = ena.pieces_a_fournir.join(' ');
+      expect(piecesTexte).toContain('naissance');
+      expect(piecesTexte).toContain('nationalité');
+      expect(piecesTexte).toContain('Casier judiciaire');
+      expect(ena.frais_dossier_xof).toBe(10000);
+      expect(ena.lien_officiel).toBeDefined();
+    });
+
+    test('Calcul déterministe des échéances et alertes stratégiques (J-30, J-7, J-1)', () => {
+      const dateRef = new Date('2026-10-01T12:00:00Z');
+
+      // Clôture dans 20 jours -> phase J-30
+      const concoursJ20 = {
+        date_cloture: '2026-10-21T17:00:00Z',
+      };
+      const ech20 = calculerEcheances(concoursJ20, dateRef);
+      expect(ech20.joursRestantsCloture).toBe(21);
+      expect(ech20.phaseAlerte).toBe('j-30');
+      expect(ech20.estCloture).toBe(false);
+
+      // Clôture dans 5 jours -> phase J-7
+      const concoursJ5 = {
+        date_cloture: '2026-10-06T17:00:00Z',
+      };
+      const ech5 = calculerEcheances(concoursJ5, dateRef);
+      expect(ech5.joursRestantsCloture).toBe(6);
+      expect(ech5.phaseAlerte).toBe('j-7');
+      expect(ech5.estCloture).toBe(false);
+
+      // Clôture demain -> phase J-1
+      const concoursJ1 = {
+        date_cloture: '2026-10-02T17:00:00Z',
+      };
+      const ech1 = calculerEcheances(concoursJ1, dateRef);
+      expect(ech1.joursRestantsCloture).toBe(2);
+
+      const concoursJ0 = {
+        date_cloture: '2026-10-01T17:00:00Z',
+      };
+      const ech0 = calculerEcheances(concoursJ0, dateRef);
+      expect(ech0.joursRestantsCloture).toBe(1);
+      expect(ech0.phaseAlerte).toBe('j-1');
+
+      // Clôture passée
+      const concoursPasse = {
+        date_cloture: '2026-09-15T17:00:00Z',
+      };
+      const echPasse = calculerEcheances(concoursPasse, dateRef);
+      expect(echPasse.estCloture).toBe(true);
+      expect(echPasse.phaseAlerte).toBe('cloture');
+    });
+
+    test('Filtrage des concours par catégorie et statut', async () => {
+      const { concours: fpConcours } = await listerConcours({ categorie: 'forces_defense' });
+      expect(fpConcours.length).toBeGreaterThanOrEqual(2);
+      for (const c of fpConcours) {
+        expect(c.categorie).toBe('forces_defense');
+      }
+
+      const { concours: ouverts } = await listerConcours({ statut: 'ouvert' });
+      expect(ouverts.length).toBeGreaterThanOrEqual(1);
+      for (const c of ouverts) {
+        expect(c.statut).toBe('ouvert');
+      }
+    });
+
+    test('Suivi d un concours avec programmation de rappels', async () => {
+      const resultat = await suivreConcours({
+        userId: 'test-user-concours',
+        concoursId: 'concours-ena-2026',
+        phone: '221771234567',
+      });
+
+      expect(resultat).toBeDefined();
+      expect(resultat.concours.sigle).toBe('ENA');
+      expect(resultat.message).toContain('ENA');
+      expect(resultat.message).toContain('J-30, J-7 et J-1');
+    });
+
+    test('Génération de la synthèse pour le briefing matinal (D19 & Zéro émoji)', () => {
+      const concoursSuivis = [
+        {
+          sigle: 'DOUANES',
+          titre: 'Concours des Douanes Sénégalaises',
+          echeances: {
+            joursRestantsCloture: 4,
+            estCloture: false,
+            phaseAlerte: 'j-7',
+          },
+        },
+      ];
+
+      const synthese = genererSyntheseConcoursBriefing(concoursSuivis);
+      expect(synthese).toContain('Concours :');
+      expect(synthese).toContain('DOUANES');
+      expect(synthese).toContain('4 jour(s)');
+      // Vouvoiement strict D19
+      expect(synthese).toContain('votre');
+      expect(synthese).not.toMatch(/\b(tu|te|toi|ton|ta|tes)\b/i);
+      // Zéro émoji
+      expect(regexEmoji.test(synthese)).toBe(false);
+    });
+  });
 });
 
 

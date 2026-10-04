@@ -21,6 +21,8 @@ import SurgaTraficCard from './components/SurgaTraficCard'
 import SurgaTraficModal from './components/SurgaTraficModal'
 import SurgaImmoDashboardCard from './components/SurgaImmoDashboardCard'
 import SurgaImmoModal from './components/SurgaImmoModal'
+import SurgaConcoursDashboardCard from './components/SurgaConcoursDashboardCard'
+import SurgaConcoursModal from './components/SurgaConcoursModal'
 import SurgaParametresTab from './components/SurgaParametresTab'
 import {
   getLocalNotes,
@@ -67,6 +69,7 @@ export default function SurgaPage() {
   const [isRadioOpen, setIsRadioOpen] = useState<boolean>(false)
   const [isTraficOpen, setIsTraficOpen] = useState<boolean>(false)
   const [isImmoOpen, setIsImmoOpen] = useState<boolean>(false)
+  const [isConcoursOpen, setIsConcoursOpen] = useState<boolean>(false)
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
   const [nbNotes, setNbNotes] = useState<number>(0)
@@ -335,6 +338,11 @@ export default function SurgaPage() {
               <SurgaImmoDashboardCard onOuvrirModal={() => setIsImmoOpen(true)} />
             )}
 
+            {/* Section Briques : Concours & Examens du Sénégal */}
+            {(preferences?.modules_actifs?.includes('concours') || !preferences?.modules_actifs) && (
+              <SurgaConcoursDashboardCard onOuvrirModal={() => setIsConcoursOpen(true)} />
+            )}
+
             {/* Section Noyau : Raccourcis Dépenses, Notes, Calculs & Micro */}
             <SurgaDashboardTools
               statsApercu={statsApercu}
@@ -361,6 +369,7 @@ export default function SurgaPage() {
             onOpenRadio={() => setIsRadioOpen(true)}
             onOpenTrafic={() => setIsTraficOpen(true)}
             onOpenImmo={() => setIsImmoOpen(true)}
+            onOpenConcours={() => setIsConcoursOpen(true)}
             onReinitialiser={handleReinitialiser}
           />
         )}
@@ -385,6 +394,7 @@ export default function SurgaPage() {
       <SurgaRadioModal isOpen={isRadioOpen} onClose={() => setIsRadioOpen(false)} />
       <SurgaTraficModal isOpen={isTraficOpen} onClose={() => setIsTraficOpen(false)} />
       <SurgaImmoModal isOpen={isImmoOpen} onClose={() => setIsImmoOpen(false)} />
+      <SurgaConcoursModal isOpen={isConcoursOpen} onClose={() => setIsConcoursOpen(false)} />
 
       {/* Navigation basse */}
       <SurgaBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
