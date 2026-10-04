@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/telecom', label: 'Télécoms' },
   { href: '/annonces', label: 'Annonces' },
   { href: '/marchands', label: 'Vendre' },
+  { href: '/surga', label: 'Surga', badge: 'NOUVEAU' },
 ]
 
 export default function NavbarLinksNav() {

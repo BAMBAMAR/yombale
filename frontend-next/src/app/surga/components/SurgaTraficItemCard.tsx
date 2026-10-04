@@ -1,0 +1,121 @@
+'use client'
+
+import React from 'react'
+import { MapPin, Activity } from 'lucide-react'
+import type { AxeTraficDetail } from './SurgaTraficModal'
+
+interface SurgaTraficItemCardProps {
+  axe: AxeTraficDetail
+}
+
+export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
+  const getCouleurNiveau = (niveau: string) => {
+    switch (niveau) {
+      case 'bouche':
+        return '#B91C1C'
+      case 'dense':
+        return 'var(--accent, #C75B00)'
+      default:
+        return 'var(--price, #0A5C36)'
+    }
+  }
+
+  const couleur = getCouleurNiveau(axe.niveau)
+  const estEnDirect = axe.source === 'tomtom_live'
+
+  return (
+    <div
+      style={{
+        padding: '10px 12px',
+        borderRadius: 10,
+        backgroundColor: '#FFFFFF',
+        border: '1px solid var(--border, #E8DDD2)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              backgroundColor: couleur,
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            {axe.nom}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {estEnDirect && (
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 700,
+                color: 'var(--price, #0A5C36)',
+                backgroundColor: 'rgba(10, 92, 54, 0.1)',
+                padding: '2px 5px',
+                borderRadius: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 3,
+              }}
+            >
+              <Activity size={10} />
+              DIRECT
+            </span>
+          )}
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: couleur,
+              backgroundColor: 'var(--bg, #F8F5F0)',
+              padding: '2px 6px',
+              borderRadius: 4,
+              textTransform: 'uppercase',
+            }}
+          >
+            {axe.niveau}
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            {axe.tempsEstimeMin} min
+          </span>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
+        {axe.cause}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: 10,
+          color: 'var(--text3, #73675E)',
+          marginTop: 2,
+          paddingTop: 6,
+          borderTop: '1px solid #F5EFE8',
+        }}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+          <MapPin size={10} />
+          {axe.pointsChauds.slice(0, 2).join(' • ')}
+        </span>
+        <span>
+          {axe.vitesseReelleKmH ? (
+            <strong>{axe.vitesseReelleKmH} km/h • </strong>
+          ) : null}
+          Habituel : {axe.tempsHabituelMin} min • {axe.distanceKm} km
+        </span>
+      </div>
+    </div>
+  )
+}

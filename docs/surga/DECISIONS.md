@@ -26,8 +26,10 @@ consulte ce fichier avant de remettre en question un point.
 | D14 | Design system Nopalou (`design-tokens.css`, `lucide-react`, police système). Base 16px limitée aux écrans Surga via une classe de portée. Palette de `DESIGN.md` non retenue. | Une seule identité visuelle ; lisibilité du persona (choix fait sur aperçus) |
 | D15 | WhatsApp : même numéro et même webhook, routage par intention vers un module isolé `backend/services/surga/`. Chatbot existant inchangé. | Réutiliser le numéro connu sans casser le comparateur |
 | D16 | PWA Surga séparée : manifest et scope `/surga`, service worker dédié. | Choix du porteur du projet : app Surga identifiable et installable à part |
-| D17 | La bulle « Assistant Nopalou » garde son rôle. Surga a son propre point d'entrée visible (emplacement à choisir en Tranche 1). | Visibilité de Surga sans cannibaliser l'assistant Nopalou |
+| D17 | La bulle « Assistant Nopalou » garde son rôle. Surga a son propre point d'entrée visible. | Visibilité de Surga sans cannibaliser l'assistant Nopalou |
 | D18 | Fusion légère : courte section `## Module Surga — Règles Spécifiques` dans les règles de `CLAUDE.md`, qui renvoie à `CLAUDE_SURGA.md`. Journal Surga dans `docs/surga/JOURNAL-LIVRAISONS.md`. | `CLAUDE.md` est chargé à chaque session : le garder court |
+| D19 | Ton de Surga : vouvoiement (« Bonjour, voici votre briefing »). | Respectueux, universel et rassurant pour un assistant personnel et financier |
+| D20 | Visibilité maximale de Surga dès l'entrée sur le site : bandeau/carte d'appel sur la page d'accueil (`/`) au-dessus de la ligne de flottaison + onglet permanent dans la navigation mobile / desktop. | Immédiatement visible par tout visiteur sans dépendre de la bulle |
 
 ## Points ouverts (à trancher en Phase 0, puis à déplacer ci-dessus)
 | # | Point | Comment le trancher |
@@ -38,6 +40,5 @@ consulte ce fichier avant de remettre en question un point.
 | O4 | Comportement de la PWA sur iPhone (push, audio en arrière-plan) | Test sur appareils réels ; part d'iPhone parmi les utilisateurs |
 | O5 | Budget de poids de l'app connectée | À fixer en Tranche 1 (point de départ proposé : JS initial < 120 Ko) |
 | O6 | Droits d'usage des sources de presse | Lecture des conditions de chaque site, flux RSS retenus |
-| O7 | Tutoiement ou vouvoiement de Surga | Décision du porteur du projet |
 | O8 | Calendrier réel | Estimation indicative : noyau en environ 3 mois, puis briques par 3 à 4 semaines ; à recalibrer après l'audit |
 | O9 | Forfaits data "réseaux sociaux" des opérateurs | Vérification auprès des opérateurs ; impact sur le coût d'usage de la PWA |

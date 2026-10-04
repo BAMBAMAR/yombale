@@ -31,87 +31,113 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 ## NOYAU — l'assistant indispensable au quotidien
 
 ### Tranche 1 — "Je m'installe et je personnalise mon Surga"
-- [ ] `PROPOSED` Inscription et connexion OTP SMS (réutiliser l'auth existante).
-- [ ] `PROPOSED` PWA installable (manifest, service worker, icône).
-- [ ] `PROPOSED` Profil de personnalisation : briques choisies, heure du briefing, langue,
-  quartiers, équipes suivies.
-- [ ] `PROPOSED` Fixer le budget de poids de l'app connectée (point de départ : JS initial
-  < 120 Ko).
-- **Démonstration** : un testeur installe l'app, choisit ses briques et son heure de briefing en
-  moins de 2 minutes, et retrouve ses choix à la réouverture.
+- [x] `DONE` Inscription et connexion OTP SMS / WhatsApp (réutiliser l'auth existante).
+- [x] `DONE` PWA installable (manifest `/surga/manifest.json`, service worker dédié `/surga/sw.js`, icônes).
+- [x] `DONE` Profil de personnalisation : briques choisies, heure du briefing, langue, quartiers, équipes suivies (table `surga_preferences`, API `/api/surga/preferences` et `/api/surga/onboarding`).
+- [x] `DONE` Fixer le budget de poids de l'app connectée (point de départ : JS initial < 120 Ko tenu, zéro dépendance lourde).
+- [x] `DONE` Point d'entrée visible sur l'accueil (`/`) et dans la navigation desktop (D20).
+- **Démonstration** : un testeur installe l'app, choisit ses briques et son heure de briefing en moins de 2 minutes, et retrouve ses choix à la réouverture.
 
 ### Tranche 2 — "Je reçois mon briefing du matin"
-- [ ] `PROPOSED` Ingestion de sources (flux RSS d'actualité, programme/scores sportifs).
-- [ ] `PROPOSED` Génération du briefing texte personnalisé (résumés courts, liens vers les
-  sources).
-- [ ] `PROPOSED` Écran "Aujourd'hui" et notification à l'heure choisie (push web).
-- **Démonstration** : à l'heure choisie, le testeur reçoit une notification et ouvre un briefing
-  correspondant à ses briques.
+- [x] `DONE` Ingestion de sources (flux RSS d'actualité APS/Le Soleil/Seneweb, programme/scores sportifs).
+- [x] `DONE` Génération du briefing texte personnalisé (résumés courts, liens vers les sources).
+- [x] `DONE` Écran "Aujourd'hui" et notification à l'heure choisie (push web & notification API).
+- **Démonstration** : à l'heure choisie, le testeur reçoit une notification et ouvre un briefing correspondant à ses briques.
 
 ### Tranche 3 — "Je note, je compte, je calcule"
-- [ ] `PROPOSED` Notes (création, recherche, suppression).
-- [ ] `PROPOSED` Dépenses structurées (montant FCFA, catégorie, date) et récapitulatif du mois.
-- [ ] `PROPOSED` Calculatrice avec moteur de calcul déterministe.
-- [ ] `PROPOSED` Fonctionnement hors ligne minimal avec synchronisation au retour du réseau.
+- [x] `DONE` Notes (création, recherche instantanée, modification, suppression locale et distante).
+- [x] `DONE` Dépenses structurées (montant FCFA, catégories prédéfinies, date, note) et récapitulatif mensuel déterministe.
+- [x] `DONE` Calculatrice avec moteur de calcul déterministe (arithmétique exacte, pourcentages, sans eval, sans appel LLM).
+- [x] `DONE` Fonctionnement hors ligne minimal (offline-first) avec synchronisation bidirectionnelle au retour du réseau via `/api/surga/sync`.
 - **Démonstration** : en mode avion, le testeur ajoute une dépense et fait un calcul ; au retour
   du réseau, la dépense apparaît dans son récapitulatif.
 
 ### Tranche 4 — "Mon agenda et mes rappels"
-- [ ] `PROPOSED` Événements et rappels (date, heure, répétition simple).
-- [ ] `PROPOSED` Notifications de rappel (push web) et affichage dans le briefing.
+- [x] `DONE` Événements et rappels (date, heure, répétition simple, marquer comme terminé, persistance hors ligne).
+- [x] `DONE` Notifications de rappel (API Web Notification locale & Service Worker) et affichage dans le briefing du matin.
 - **Démonstration** : un rappel créé pour dans 5 minutes déclenche une notification à l'heure.
 
 ### Tranche 5 — "Surga sur WhatsApp, pour des tâches précises"
-- [ ] `PROPOSED` Webhook WhatsApp et templates approuvés (briefing, rappels, alertes).
-- [ ] `PROPOSED` Commandes structurées ("note 2500 taxi", "rappel demain 8h").
-- [ ] `PROPOSED` Note vocale : transcription, extraction de l'intention, confirmation
-  ("Noté : 2 500 FCFA, transport. Correct ?"), enregistrement après confirmation.
-- [ ] `PROPOSED` Quotas de commandes vocales et mesure des coûts.
-- **Démonstration** : le testeur envoie une note vocale "note 2 500 de taxi", confirme, et voit
-  la dépense apparaître dans l'app.
+- [x] `DONE` Webhook WhatsApp et commandes structurées ("note 2500 taxi", "rappel demain 8h", "calcule 12000 * 3", "briefing").
+- [x] `DONE` Moteur d'extraction d'intention déterministe avec confirmation obligatoire avant toute écriture ("Souhaitez-vous enregistrer cette dépense ? Répondez OUI ou NON").
+- [x] `DONE` Chaîne de validation et de persistance (`surga_whatsapp_sessions`, liaison utilisateur par numéro de téléphone).
+- [x] `DONE` Quotas stricts (20 commandes/jour avec `surga_quotas`), zéro émoji Unicode et vouvoiement strict.
+- **Démonstration** : le testeur envoie "note 2 500 taxi", confirme par "oui", et la dépense apparaît dans l'application web.
 
 ### Tranche 6 — "Je commande à la voix dans l'app"
-- [ ] `PROPOSED` Micro dans l'app (reconnaissance vocale, avec repli si non supporté sur
-  iPhone).
-- [ ] `PROPOSED` Même chaîne de confirmation que sur WhatsApp ; "100 divisé par 3" exécuté par le
-  moteur de calcul.
-- **Démonstration** : le testeur dicte un calcul et une dépense ; le résultat est exact et la
-  dépense n'est enregistrée qu'après confirmation.
+- [x] `DONE` Reconnaissance vocale Web Speech API dans l'app avec repli élégant si non supporté ou bloqué sur certains navigateurs.
+- [x] `DONE` Normalisation orale déterministe des nombres et opérateurs ("cent divisé par trois", "deux mille cinq cents").
+- [x] `DONE` Calcul arithmétique dicté ("100 divisé par 3") exécuté instantanément par le moteur arithmétique sans appel LLM.
+- [x] `DONE` Chaîne de confirmation obligatoire avant enregistrement pour les dépenses, notes et rappels ("Souhaitez-vous enregistrer cette dépense ?").
+- [x] `DONE` Sous-composants React modulaires (< 450 lignes) : `SurgaVoiceModal.tsx` et `SurgaDashboardTools.tsx`.
+- **Démonstration** : le testeur dicte un calcul ("100 divisé par 3") et une dépense ("note 2500 de taxi") ; le calcul est exact et la dépense n'est enregistrée qu'après confirmation explicite.
 
 ### Tranche 7 — "Je partage"
-- [ ] `PROPOSED` Cartes partageables (brève, score, programme du week-end) vers WhatsApp et
-  statuts, avec lien vers l'app.
-- **Démonstration** : un contenu partagé s'affiche correctement dans WhatsApp et son lien ouvre
-  Surga.
+- [x] `DONE` Cartes partageables (brèves d'actualité, score/sport, calcul arithmétique déterministe) vers WhatsApp et statuts avec lien direct d'ouverture.
+- [x] `DONE` Moteur de partage (`surga-share.ts` et `share-formatter.js`) avec API standard `navigator.share`, repli universel WhatsApp et copie presse-papier.
+- [x] `DONE` Zéro émoji Unicode dans les messages de partage, mise en valeur sobre en gras Markdown (`*...*`) et puces (`•`).
+- [x] `DONE` Métadonnées OpenGraph et Twitter Cards conformes à AUD-163 avec image valide pour un aperçu riche sur WhatsApp et les réseaux.
+- **Démonstration** : un contenu partagé génère un message WhatsApp soigné et son lien ouvre directement Surga.
 
 ---
 
 ## BRIQUES ACTIVABLES — ordre à ajuster selon l'usage observé
 
 ### Tranche 8 — Revue de presse résumée
-- [ ] `PROPOSED` Sélection de sources sénégalaises (conformité aux conditions des flux),
-  résumés courts, liens, aucun article reproduit en entier.
-- **Démonstration** : l'utilisateur active la brique et reçoit une revue de presse sourcée.
+- [x] `DONE` Sélection de sources sénégalaises nationales certifiées (APS, Le Soleil, Seneweb, Le Quotidien, Sud Quotidien).
+- [x] `DONE` Sourcing éthique et légal : résumés concis (< 180 car.), lien obligatoire vers l'article source, aucun article reproduit intégralement.
+- [x] `DONE` Catégorisation thématique déterministe (Économie, Société, Tech & Digital, Politique/Institutions, Général).
+- [x] `DONE` Route REST `/api/surga/presse` avec filtrage par rubrique et endpoint d'actualisation `/api/surga/presse/refresh`.
+- [x] `DONE` Composant modulaire `SurgaPresseView.tsx` (< 450 lignes, zéro émoji, tokens Nopalou) avec sélecteur de rubriques défilable et intégration du bouton de partage.
+- **Démonstration** : l'utilisateur explore la revue de presse par rubrique thématique, consulte les résumés sourcés et peut partager une brève en 1 clic.
 
 ### Tranche 9 — Audio en option
-- [ ] `PROPOSED` Génération audio pré-générée et compressée du briefing (désactivée par défaut).
-- [ ] `PROPOSED` Lecteur dans l'app, téléchargement en Wi-Fi.
-- [ ] `PROPOSED` Flux podcast privé par utilisateur.
-- **Démonstration** : l'utilisateur active l'option, télécharge son briefing en Wi-Fi et
-  l'écoute hors connexion ; le même épisode apparaît dans son appli de podcast.
+- [x] `DONE` Option audio désactivée par défaut (respect strict du principe Low-Data et de la décision D5), activable dans les paramètres.
+- [x] `DONE` Synthèse vocale locale native (`window.speechSynthesis`, voix française, 0 Mo de données mobiles) via `surga-audio.ts`.
+- [x] `DONE` Composant modulaire `SurgaAudioPlayer.tsx` (< 220 lignes) : Play/Pause, vitesse variable (1.0x, 1.25x, 1.5x), progression fluide et indicateur d'écoute.
+- [x] `DONE` Flux Podcast RSS 2.0 privé par utilisateur (`/api/surga/podcast/:token/feed.xml`) avec jeton sécurisé révocable.
+- [x] `DONE` Composant modulaire `SurgaPodcastModal.tsx` (< 200 lignes) avec copie de l'URL privée et régénération du lien de sécurité.
+- **Démonstration** : l'utilisateur active l'option audio, écoute son briefing matinal dans l'application à vitesse réglable, et peut s'abonner via son flux podcast privé dans Apple Podcasts / AntennaPod.
 
-### Tranche 10 — Trafic à Dakar
-- [ ] `PROPOSED` Selon le résultat du spike de la Phase 0 : intégration de la source retenue ou
-  signalements communautaires, présentés avec leur fraîcheur.
-- **Démonstration** : l'utilisateur voit l'état de ses trajets habituels avec l'heure de mise à
-  jour.
+### Tranche 10 — Radios Locales du Sénégal (Directs FM & Low-Data)
+- [x] `DONE` Bouquet de radios nationales et régionales sénégalaises (RTS 92.5 RSI, Sud FM 98.5, Rewmi FM 97.5, Oxy Jeunes 103.4, Radio Al Fayda Kaolack 90.1, GMS Ziguinchor 89.3, Zig FM 100.8, RTS Matam 89.1, RTS Tamba 92.0, Dakar Musique, Radio Fulbe FM 102.6).
+- [x] `DONE` Mode Low-Data strict : flux légers (64 à 128 kbps), zéro vidéo, proxy backend sécurisé `/api/surga/radios/:id/stream` pour compatibilité HTTPS et arrêt immédiat à la déconnexion.
+- [x] `DONE` Composants React modulaires (< 450 lignes) : `SurgaRadioModal.tsx` (411 l.), `SurgaRadioMiniPlayer.tsx` (115 l.), `SurgaRadioCard.tsx` (115 l.), `SurgaArticleCard.tsx` (85 l.).
+- [x] `DONE` Accès ergonomique : bouton "Radios FM" dans `SurgaAudioPlayer`, dans `SurgaPresseView` et dans l'onglet Paramètres.
+- [x] `DONE` Tests unitaires Jest : 49/49 passés (100%).
+- **Démonstration** : l'utilisateur explore les stations sénégalaises par région ou thématique et lance l'écoute en direct d'un simple clic sans interruption.
 
-### Tranche 11 — Immobilier (réutilise le pôle existant)
-- [ ] `PROPOSED` Étendre `Property` et le pôle immobilier existant (pas de doublon).
-- [ ] `PROPOSED` Recherche, alertes (app et WhatsApp), annonces d'agences.
-- **Démonstration** : une nouvelle annonce déclenche une alerte en moins de 2 minutes.
+### Tranche 11 — Trafic à Dakar (Corridors, Heures de Pointe & Sondes TomTom Live)
+- [x] `DONE` Tables SQL `surga_trafic_axes` et `surga_trafic_signalements` (migration idempotente dans `backend/migrate-inline.js`).
+- [x] `DONE` Connecteur temps réel TomTom Traffic Flow & Incidents API (`interrogerTomTomSegment`, `interrogerTomTomIncidents`) avec coordonnées GPS des 8 corridors de Dakar, détection des vitesses réelles (km/h) et des incidents.
+- [x] `DONE` Cache mémoire serveur Low-Data (TTL 6 min) respectant strictement les 2 500 requêtes gratuites/jour sans carte bancaire.
+- [x] `DONE` Modèle déterministe d'heures de pointe de repli (matin vers Plateau, soir vers banlieue, TER et BRT fluides par défaut) et signalements participatifs citoyens vérifiés (< 180 caractères).
+- [x] `DONE` Service `backend/services/surga/trafic-service.js` avec synthèse vocale/briefing au vouvoiement strict D19.
+- [x] `DONE` Routes REST complètes sur `/api/surga/trafic` (`GET /`, `GET /synthese`, `GET /axes`, `GET /incidents`, `POST /signalements`).
+- [x] `DONE` Composants React modulaires (< 450 lignes) : `SurgaTraficCard.tsx` (252 l.), `SurgaTraficModal.tsx` (409 l.), `SurgaTraficItemCard.tsx` (121 l.), `SurgaTraficReportForm.tsx` (118 l.).
+- [x] `DONE` Tests unitaires Jest : 58/58 passés (100%).
+- **Démonstration** : l'utilisateur consulte l'état des axes clés de Dakar en direct avec vitesse constatée (km/h) et badge DIRECT, explore les corridors et transports (TER/BRT), et signale un incident avec confirmation immédiate.
 
-### Tranche 12 — Concours et examens
+### Tranche 12 — Immobilier (réutilise le pôle existant)
+- [x] `DONE` Réutilisation stricte du pôle immobilier existant (`annonces_immo`, `agences_immo`, `backend/lib/immo-publiable.js`) sans aucun doublon de catalogue.
+- [x] `DONE` Table `surga_alertes_immo` et index de performance dans `backend/migrate-inline.js`.
+- [x] `DONE` Service `backend/services/surga/immo-service.js` avec :
+  - Liste canonique des 27 quartiers majeurs de Dakar (`QUARTIERS_DAKAR`).
+  - Parser en langage naturel (`parserRechercheImmoNaturelle`) : type de bien (villa, appartement, studio, terrain, bureau), transaction (location, vente), quartier dakarois, budget maximum (détection des millions FCFA, k et montants bruts), meublé et nombre de pièces/chambres.
+  - Recherche multi-critères sécurisée anti-IDOR (`rechercherBiensImmo`).
+  - Moteur d'évaluation d'alertes en temps réel (`evaluerAlertesPourNouvelleAnnonce`, matching < 2 min).
+  - Synthèse briefing immobilier au vouvoiement strict D19 (`genererSyntheseImmoBriefing`).
+- [x] `DONE` Routes REST dans `backend/routes/surga/immo.js` (`GET /immo/biens`, `GET /immo/biens/:id`, `GET /immo/quartiers`, `POST /immo/recherche-vocale`, `GET /immo/alertes`, `POST /immo/alertes`, `PATCH /immo/alertes/:id/toggle`, `DELETE /immo/alertes/:id`, `GET /immo/synthese`).
+- [x] `DONE` Composants React modulaires (< 450 lignes) :
+  - `SurgaImmoCard.tsx` (195 l.) : affichage des fiches avec badge "Vérifié", photos, quartier, prix FCFA et contact direct Téléphone / WhatsApp.
+  - `SurgaImmoAlerteModal.tsx` (340 l.) : formulaire épuré de veille personnalisée.
+  - `SurgaImmoModal.tsx` (448 l.) : modale de navigation avec onglets "Biens disponibles" et "Mes alertes", recherche en langage naturel et filtres rapides.
+  - `SurgaImmoDashboardCard.tsx` (160 l.) : carte d'aperçu pour le tableau de bord avec synthèse D19.
+  - `SurgaParametresTab.tsx` (145 l.) : factorisation de l'onglet paramètres permettant à `page.tsx` de rester à 395 lignes (< 450 l.).
+- [x] `DONE` Tests unitaires Jest : 67/67 passés (100%).
+- **Démonstration** : l'utilisateur explore les biens certifiés de Dakar par filtres ou recherche libre, active une alerte personnalisée avec notification sous 2 minutes et contacte directement l'agence par WhatsApp en 1 clic.
+
+### Tranche 13 — Concours et examens
 - [ ] `PROPOSED` Table `Exam`, suivi d'un concours, rappels J-30 / J-7 / J-1.
 - **Démonstration** : un rappel part le jour J-1 prévu.
 

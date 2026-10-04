@@ -1,0 +1,362 @@
+/* frontend-next/src/styles/surga.css */
+/* Styles dédiés au module Surga — Design System Nopalou & Base 16px */
+
+.surga-root {
+  font-family: var(--font-inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text1, #1A1612);
+  background-color: var(--bg, #F8F5F0);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-bottom: 84px; /* Espace pour la bottom navigation */
+}
+
+/* En-tête Surga */
+.surga-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--border, #E8DDD2);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.surga-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.surga-header-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy, #1C2B4A);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.surga-header-date {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2, #5A4E42);
+}
+
+.surga-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background-color: rgba(199, 91, 0, 0.1);
+  color: var(--accent, #C75B00);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Conteneur principal */
+.surga-container {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+/* Cartes Surga */
+.surga-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border, #E8DDD2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(28, 43, 74, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.surga-card:active {
+  transform: scale(0.99);
+}
+
+.surga-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.surga-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy, #1C2B4A);
+  margin: 0;
+}
+
+.surga-card-subtitle {
+  font-size: 14px;
+  color: var(--text2, #5A4E42);
+  margin: 0;
+}
+
+/* Cartes en 2 sous-lignes calibrées (Règle d'or Nopalou) */
+.surga-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--border, #E8DDD2);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.surga-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.surga-item-line1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text1, #1A1612);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.surga-item-line2 {
+  font-size: 13px;
+  color: var(--text2, #5A4E42);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.surga-price-tag {
+  font-weight: 700;
+  color: var(--price, #0A5C36);
+  white-space: nowrap;
+}
+
+/* Boutons Surga */
+.surga-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--accent, #C75B00);
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.surga-btn-primary:hover {
+  background-color: #A64800;
+}
+
+.surga-btn-primary:active {
+  opacity: 0.9;
+}
+
+.surga-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: transparent;
+  color: var(--navy, #1C2B4A);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #E8DDD2);
+  cursor: pointer;
+  width: 100%;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.surga-btn-secondary:hover {
+  background-color: rgba(28, 43, 74, 0.04);
+}
+
+/* Micro flottant (FAB) */
+.surga-fab-mic {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--accent, #C75B00);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(199, 91, 0, 0.4);
+  border: none;
+  cursor: pointer;
+  z-index: 50;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.surga-fab-mic:hover {
+  background-color: #A64800;
+  transform: scale(1.05);
+}
+
+.surga-fab-mic:active {
+  transform: scale(0.95);
+}
+
+/* Navigation basse à 5 entrées Surga */
+.surga-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background-color: #FFFFFF;
+  border-top: 1px solid var(--border, #E8DDD2);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 50;
+  padding: 0 4px;
+}
+
+.surga-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  height: 100%;
+  color: var(--text2, #5A4E42);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.surga-nav-item.active {
+  color: var(--accent, #C75B00);
+  font-weight: 700;
+}
+
+/* Wizard Onboarding */
+.surga-onboarding-progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.surga-progress-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--border, #E8DDD2);
+  transition: background-color 0.2s ease;
+}
+
+.surga-progress-bar.active {
+  background-color: var(--accent, #C75B00);
+}
+
+.surga-brick-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid var(--border, #E8DDD2);
+  border-radius: 12px;
+  background-color: #FFFFFF;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.surga-brick-option.selected {
+  border-color: var(--accent, #C75B00);
+  background-color: rgba(199, 91, 0, 0.04);
+}
+
+/* Bannière d'accès Nopalou Accueil */
+.surga-home-banner {
+  background: linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #293B61 100%);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin: 16px 0 24px 0;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(28, 43, 74, 0.12);
+  gap: 16px;
+}
+
+.surga-home-banner-text h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.surga-home-banner-text p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.surga-home-banner-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--accent, #C75B00);
+  color: #FFFFFF;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.surga-home-banner-cta:hover {
+  background-color: #A64800;
+}
+
+@media (max-width: 640px) {
+  .surga-home-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .surga-home-banner-cta {
+    width: 100%;
+    justify-content: center;
+  }
+}

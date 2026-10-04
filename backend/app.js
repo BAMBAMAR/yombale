@@ -333,6 +333,7 @@ app.use('/api/paiements',       require('./routes/boutiques'));
 app.use('/api/public-credit',   require('./routes/public-credit'));
 app.use('/api/facebook-posts',  require('./routes/facebook-posts'));
 app.use('/api/abonnements',     require('./routes/abonnements'));
+app.use('/api/surga',           require('./routes/surga'));
 app.use('/api/admin/auth',         require('./routes/admin-auth'));
 app.use('/api/admin/equipe',       require('./routes/admin-equipe'));
 app.use('/api/admin/pos',          require('./routes/admin-pos'));

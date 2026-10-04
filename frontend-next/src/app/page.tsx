@@ -19,6 +19,7 @@ import HomeDualTrackContainer from './HomeDualTrackContainer'
 import FacettesDynamiques from '@/components/FacettesDynamiques'
 import HomeImmoShowcase from './components/HomeImmoShowcase'
 import WorkflowsShowcaseSection from './components/WorkflowsShowcaseSection'
+import SurgaHeroBanner from '@/components/SurgaHeroBanner'
 import {
   Search, X, Building2, Tag, Store, ShoppingBag, MessageCircle,
   Smartphone, Laptop, Tv, Shirt, Home, Car, Gamepad2, Sparkles,
@@ -318,6 +319,9 @@ export default async function HomePage({
       }
       buyerContentSlot={
         <>
+          {/* BANNIÈRE DE DÉCOUVERTE SURGA */}
+          <SurgaHeroBanner />
+
           {/* BANDEAU FEEDBACK RECHERCHE & CONFIRMATION DES RÉSULTATS */}
           {hasFiltre && (
             <div style={{

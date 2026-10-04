@@ -2656,6 +2656,21 @@ async function handleIncomingInternal(msg) {
     return;
   }
 
+  // ── SURGA : Assistant personnel de poche (Tranche 5) ──────────────────────
+  try {
+    const { traiterMessageWhatsAppSurga, parserIntentionWhatsApp } = require('./surga/whatsapp-handler');
+    const parseSurga = parserIntentionWhatsApp(text);
+    const estInvocationExplicite = text.toLowerCase().trim().startsWith('surga');
+    const estEtatLibre = !state || state === 'IDLE' || state === 'MENU' || state === 'ACCUEIL';
+
+    if (estInvocationExplicite || (estEtatLibre && parseSurga.intention !== 'INCONNU')) {
+      const traite = await traiterMessageWhatsAppSurga(phone, text, false);
+      if (traite) return;
+    }
+  } catch (errSurga) {
+    console.warn('[SURGA ROUTER WARN]:', errSurga.message);
+  }
+
   // ── 3. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─
 
   // ── INTERCEPTION DES REPONSES DE PROSPECTION (OUI, BILAN, QUESTIONS) ─────────

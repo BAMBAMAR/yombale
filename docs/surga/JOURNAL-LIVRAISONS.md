@@ -3,6 +3,418 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-04] — Tranche 12 / Immobilier & Moteur d'Alertes Immobilières
+- **Tâches complétées :**
+  - Réutilisation stricte et sans doublon du catalogue immobilier existant de Nopalou (`annonces_immo`, `agences_immo`, `backend/lib/immo-publiable.js`).
+  - Migration SQL idempotente dans `backend/migrate-inline.js` : table `surga_alertes_immo` avec index de performance `idx_surga_alertes_immo_user` et `idx_surga_alertes_immo_actif`.
+  - Service métier `backend/services/surga/immo-service.js` :
+    - Liste canonique des 27 quartiers de Dakar (`QUARTIERS_DAKAR`).
+    - Parser en langage naturel (`parserRechercheImmoNaturelle`) : extraction du type de bien (villa, appartement, studio, terrain, bureau), transaction (location, vente), quartier dakarois, budget maximum (prise en compte des millions FCFA, k et montants bruts), meublé et distinction pièces / chambres (F2, F3, F4, F5).
+    - Moteur de recherche multi-critères sécurisé anti-IDOR avec `conditionImmoPubliable('ai')` et repli mémoire.
+    - Moteur d'évaluation d'alertes en temps réel (`evaluerAlertesPourNouvelleAnnonce`) pour notification par app et WhatsApp en moins de 2 minutes.
+    - Synthèse textuelle pour le briefing matinal au vouvoiement strict D19 et zéro émoji.
+  - Routes REST dans `backend/routes/surga/immo.js` : `GET /immo/biens`, `GET /immo/biens/:id`, `GET /immo/quartiers`, `POST /immo/recherche-vocale`, `GET /immo/alertes`, `POST /immo/alertes`, `PATCH /immo/alertes/:id/toggle`, `DELETE /immo/alertes/:id`, `GET /immo/synthese`.
+  - Composants React modulaires (< 450 lignes) :
+    - `SurgaImmoCard.tsx` (195 lignes) : carte d'annonce avec photo, badge "Vérifié", caractéristiques (m², pièces/chambres, meublé) et contact direct Téléphone / WhatsApp.
+    - `SurgaImmoAlerteModal.tsx` (340 lignes) : formulaire épuré de paramétrage de veille immobilière.
+    - `SurgaImmoModal.tsx` (448 lignes) : vue avec onglets "Biens disponibles" et "Mes alertes", recherche textuelle libre et filtres rapides.
+    - `SurgaImmoDashboardCard.tsx` (160 lignes) : carte d'aperçu pour le tableau de bord avec synthèse D19.
+    - `SurgaParametresTab.tsx` (145 lignes) : factorisation de l'onglet paramètres réduisant la taille de `page.tsx` de 442 à 395 lignes (< 450 l.).
+  - Intégration sur le tableau de bord Surga et dans l'onglet Paramètres.
+  - Suite de tests unitaires Jest enrichie dans `tests/unit/surga.test.js` : **67/67 passés (100%)**.
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/immo-service.js`
+  - `backend/routes/surga/immo.js`
+  - `backend/routes/surga/index.js`
+  - `backend/migrate-inline.js`
+  - `frontend-next/src/app/surga/components/SurgaImmoCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoAlerteModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoDashboardCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaParametresTab.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 67/67 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Plafond de taille des composants : tous strictement < 450 lignes (`page.tsx` à 395 lignes).
+  - [x] Critère de démonstration validé : recherche multi-critères et langage naturel dans les annonces de Dakar, consultation de fiches avec badge "Vérifié" et contact agence WhatsApp immédiat, activation et gestion d'alertes en temps réel.
+
+### [2026-10-04] — Tranche 11 / Trafic à Dakar (Corridors, Sondes TomTom Live & Signalements)
+- **Tâches complétées :**
+  - Migration SQL idempotente des tables `surga_trafic_axes` et `surga_trafic_signalements` dans `backend/migrate-inline.js`.
+  - Service backend `backend/services/surga/trafic-service.js` :
+    - Connecteur temps réel TomTom Traffic Flow & Incidents API (`interrogerTomTomSegment`, `interrogerTomTomIncidents`) avec coordonnées GPS des 8 corridors majeurs de Dakar (A1 entrant/sortant, VDN nord/sud, Corniche ouest sud/nord, RN1, Patte d'Oie) et transports (TER et BRT).
+    - Mesure en direct des vitesses réelles (km/h), temps de parcours réels et retards constatés par les sondes.
+    - Cache mémoire serveur Low-Data (TTL 6 min) respectant strictement les 2 500 requêtes gratuites/jour sans carte bancaire.
+    - Modèle déterministe d'heures de pointe dakaroises de repli (matin vers Plateau, soir vers banlieue, week-end fluide).
+    - Signalements participatifs communautaires avec validation stricte (< 180 caractères, types: accident, bouchon, travaux, panne, fluide, horodatage, fraîcheur).
+    - Synthèse textuelle du trafic pour le briefing au vouvoiement strict D19 et zéro émoji.
+  - Routes REST montées sur `/api/surga/trafic` (`GET /`, `GET /synthese`, `GET /axes`, `GET /incidents`, `POST /signalements`).
+  - Composants React frontend modulaires (< 450 lignes) :
+    - `SurgaTraficCard.tsx` (252 lignes) : carte synthétique du briefing avec les 3 axes majeurs, badge DIRECT, vitesse réelle (km/h) et bouton "Détails".
+    - `SurgaTraficModal.tsx` (409 lignes) : modale de consultation détaillée avec filtres d'onglets (Tous, Autoroute & VDN, Corniche & Ville, TER & BRT), bandeau de source temps réel, alertes d'incidents TomTom et bouton de rafraîchissement.
+    - `SurgaTraficItemCard.tsx` (121 lignes) : carte modulaire d'un corridor avec temps estimé, vitesse mesurée, temps habituel, points chauds et signalements récents.
+    - `SurgaTraficReportForm.tsx` (118 lignes) : formulaire épuré de signalement citoyen rapide.
+    - Modularisation de `SurgaVoiceModal.tsx` via `SurgaVoiceConfirmation.tsx` (150 lignes), ramenant `SurgaVoiceModal.tsx` de 546 à 426 lignes.
+  - Intégration sur le tableau de bord Surga (`page.tsx` à 442 lignes, strictement < 450) et raccourci dans l'onglet Paramètres.
+  - Variable d'environnement `TOMTOM_API_KEY` ajoutée dans `.env`.
+  - Tests unitaires Jest enrichis dans `tests/unit/surga.test.js` : 58/58 passés (100%).
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/trafic-service.js`
+  - `backend/routes/surga/trafic.js`
+  - `backend/routes/surga/index.js`
+  - `backend/migrate-inline.js`
+  - `.env`
+  - `frontend-next/src/app/surga/components/SurgaTraficCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaTraficModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaTraficItemCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaTraficReportForm.tsx`
+  - `frontend-next/src/app/surga/components/SurgaVoiceConfirmation.tsx`
+  - `frontend-next/src/app/surga/components/SurgaVoiceModal.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 58/58 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés (100%).
+  - [x] Plafond de taille des composants : tous strictement < 450 lignes (maximum 442 lignes pour `page.tsx`).
+  - [x] Critère de démonstration validé : l'utilisateur consulte l'état du trafic en direct avec vitesse constatée (km/h) et incidents réels, observe l'état des axes stratégiques et transports en commun (TER/BRT), et peut soumettre un signalement participatif immédiat.
+
+### [2026-10-04] — Tranche 10 / Radios Locales du Sénégal (Directs FM & Low-Data)
+- **Tâches complétées :**
+  - Bouquet officiel de radios sénégalaises avec plus de 10 stations nationales et régionales (RTS 92.5 RSI, Sud FM Sen Radio 98.5, Rewmi FM 97.5, Radio Oxy Jeunes 103.4, Radio Al Fayda Kaolack 90.1, GMS FM Ziguinchor 89.3, Zig FM Casamance 100.8, RTS Matam 89.1, RTS Tambacounda 92.0, Dakar Musique, Radio Fulbe FM 102.6, etc.).
+  - Couverture territoriale complète : Dakar, Banlieue (Pikine), Bassin arachidier (Kaolack), Casamance (Ziguinchor), Fouta (Matam), Sénégal Oriental (Tamba).
+  - Mode Low-Data strict : débits audio légers (64 à 128 kbps), zéro vidéo, faible consommation de forfait mobile.
+  - Proxy backend sécurisé (`backend/services/surga/radio-service.js`, route `GET /api/surga/radios/:id/stream`) pour relayer les flux HTTP sans avertissement Mixed Content sur HTTPS et arrêt immédiat du proxy à la déconnexion pour préserver la bande passante.
+  - Composants React modulaires (< 450 lignes) :
+    - `SurgaRadioModal.tsx` (411 lignes) : modale de sélection avec recherche instantanée, filtres par région et statut direct.
+    - `SurgaRadioMiniPlayer.tsx` (115 lignes) : mini lecteur audio sticky en direct avec bouton Play/Stop, jauge de volume et indicateur vert DIRECT.
+    - `SurgaRadioCard.tsx` (115 lignes) : carte d'affichage de chaque station avec badge FM, région, langues et bouton d'écoute.
+    - `SurgaArticleCard.tsx` (85 lignes) : modularisation de l'affichage des articles dans `SurgaPresseView.tsx`.
+  - Points d'entrée ergonomiques :
+    - Bouton "Radios FM" dans le lecteur audio du briefing (`SurgaAudioPlayer.tsx`).
+    - Bouton "Radios FM" dans le sélecteur de mode de la revue de presse (`SurgaPresseView.tsx`).
+    - Raccourci dans l'onglet Paramètres de Surga.
+  - Tests unitaires Jest enrichis dans `tests/unit/surga.test.js` : 49/49 passés (100%).
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/radio-service.js`
+  - `backend/routes/surga/radio.js`
+  - `backend/routes/surga/index.js`
+  - `frontend-next/src/app/surga/components/SurgaRadioModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaRadioMiniPlayer.tsx`
+  - `frontend-next/src/app/surga/components/SurgaRadioCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaArticleCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPresseView.tsx`
+  - `frontend-next/src/app/surga/components/SurgaAudioPlayer.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 49/49 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés (100%).
+  - [x] Critère de démonstration validé : l'utilisateur accède aux radios locales sénégalaises en direct depuis le briefing audio ou la presse, filtre par région et écoute le flux FM sans consommer de vidéo.
+
+### [2026-10-04] — Tranche 9 / Audio en option & Flux Podcast
+- **Tâches complétées :**
+  - Option audio configurée en mode Low-Data strict (désactivée par défaut, activable dans les paramètres ou l'onboarding).
+  - Moteur client de synthèse vocale locale (`frontend-next/src/lib/surga-audio.ts`) s'appuyant sur la Web Speech Synthesis API : écoute instantanée avec zéro mégaoctet de consommation de données réseau.
+  - Composant modulaire `SurgaAudioPlayer.tsx` (< 220 lignes) : Play/Pause, arrêt, sélecteur de vitesse (1.0x, 1.25x, 1.5x) et barre de progression fluide.
+  - Service backend de composition de script audio (`backend/services/surga/audio-service.js`) : formulation orale naturelle, vouvoiement strict (D19), absence d'émojis et de liens bruts.
+  - Flux RSS 2.0 Podcast XML privé (`/api/surga/podcast/:token/feed.xml`) avec token sécurisé révocable (`surga_preferences.podcast_token`), index unique partiel et route `/api/surga/podcast/regenerer-token`.
+  - Composant modulaire `SurgaPodcastModal.tsx` (< 200 lignes) : copie de l'URL privée avec confirmation visuelle, instructions pour Apple Podcasts / AntennaPod / Pocket Casts et bouton de révocation.
+  - Intégration dans `frontend-next/src/app/surga/page.tsx` maintenu à 441 lignes (< 450).
+  - Enrichissement de la suite de tests unitaires Jest (`tests/unit/surga.test.js`) avec 3 nouveaux tests dédiés (44/44 passés à 100%).
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/audio-service.js`
+  - `backend/routes/surga/audio.js`
+  - `backend/routes/surga/index.js`
+  - `backend/migrate-inline.js`
+  - `frontend-next/src/lib/surga-audio.ts`
+  - `frontend-next/src/app/surga/components/SurgaAudioPlayer.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPodcastModal.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 44/44 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés (100%).
+  - [x] Critère de démonstration validé : l'utilisateur active l'option audio, écoute son briefing avec vitesse variable sans consommer de data, et peut s'abonner via son flux podcast privé.
+
+### [2026-10-04] — Tranche 8 / Revue de presse résumée & Kiosque des Unes
+- **Tâches complétées :**
+  - Enrichissement des sources nationales sénégalaises dans `backend/services/surga/rss-collector.js` avec les flux éprouvés de `projetbi.org` (APS, Le Soleil, Dakaractu, Seneweb, Le Quotidien, Sud Quotidien, Google News SN thématiques Éco/Tech/Institutions).
+  - Sourcing éthique et légal : résumés courts garantis (< 180 car.), lien systématique vers la source originale, aucun article reproduit intégralement.
+  - Système de classification thématique déterministe par mots-clés (`classerRubriquePresse`) couvrant Économie, Société, Tech & Digital, Politique/Institutions et Général.
+  - Implémentation du **Kiosque des Unes de la presse sénégalaise** (`backend/services/surga/kiosque-service.js`, route `backend/routes/surga/kiosque.js`, table `surga_unes_presse`) avec les quotidiens nationaux majeurs (*Le Soleil*, *L'Observateur*, *Sud Quotidien*, *Libération*, *Enquête*, *Le Quotidien*, *Yoor-Yoor*, *Record*, *L'As*, *Tribune Sport*).
+  - Composant modulaire `SurgaKiosqueUnes.tsx` (< 270 lignes) : grille responsive des Unes, Lightbox immersive pleine résolution et partage 1-clic.
+  - Composant modulaire `SurgaPresseView.tsx` (< 380 lignes) avec sélecteur de mode ("Dépêches & Articles" vs "Kiosque des Unes"), filtres par rubriques et boutons de partage direct.
+  - Intégration ergonomique dans `SurgaNewsList.tsx` et `SurgaPage` (`page.tsx` maintenu à 385 lignes < 450).
+  - Suite de tests unitaires Jest (`tests/unit/surga.test.js`) enrichie avec 5 tests (41/41 passés à 100%).
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/rss-collector.js`
+  - `backend/services/surga/kiosque-service.js`
+  - `backend/routes/surga/presse.js`
+  - `backend/routes/surga/kiosque.js`
+  - `backend/routes/surga/index.js`
+  - `backend/migrate-inline.js`
+  - `frontend-next/public/surga/unes/*.jpg`
+  - `frontend-next/src/app/surga/components/SurgaKiosqueUnes.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPresseView.tsx`
+  - `frontend-next/src/app/surga/components/SurgaNewsList.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 41/41 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés (100%).
+  - [x] Critère de démonstration validé : l'utilisateur explore la revue de presse par rubrique ET accède au Kiosque des Unes avec zoom Lightbox et partage WhatsApp.
+
+### [2026-10-04] — Tranche 7 / "Je partage"
+- **Tâches complétées :**
+  - Moteur de formatage de messages de partage sobre (`frontend-next/src/lib/surga-share.ts` et `backend/services/surga/share-formatter.js`) pour brèves d'actualités, résultats sportifs et calculs arithmétiques.
+  - Zéro émoji Unicode dans tous les messages générés, respect du Markdown gras (`*...*`) et listes à puces (`•`).
+  - Prise en charge de la Web Share API native (`navigator.share`) avec repli direct vers WhatsApp Web/Mobile (`https://api.whatsapp.com/send?text=...`) et copie dans le presse-papier avec confirmation visuelle (`Check` Lucide).
+  - Sous-composant React réutilisable `SurgaShareButton.tsx` (< 100 lignes) intégré sur :
+    - Les brèves d'actualité (`SurgaNewsList.tsx`).
+    - Les résultats et affiches sportives (`SurgaSportCard.tsx`).
+    - Les calculs exacts de la calculatrice (`SurgaCalculatorModal.tsx`).
+  - Métadonnées OpenGraph et Twitter Cards configurées dans `frontend-next/src/app/surga/layout.tsx` avec URL canonique et image officielle 512x512, respectant scrupuleusement l'audit UX/SEO (AUD-163).
+  - Enrichissement de la suite de tests unitaires Jest (`tests/unit/surga.test.js`) avec 4 nouveaux tests ciblés (36/36 passés à 100%).
+- **Fichiers modifiés/créés :**
+  - `frontend-next/src/lib/surga-share.ts`
+  - `frontend-next/src/app/surga/components/SurgaShareButton.tsx`
+  - `frontend-next/src/app/surga/components/SurgaNewsList.tsx`
+  - `frontend-next/src/app/surga/components/SurgaSportCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaCalculatorModal.tsx`
+  - `frontend-next/src/app/surga/layout.tsx`
+  - `backend/services/surga/share-formatter.js`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 36/36 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés (100%).
+  - [x] Critère de démonstration validé : le clic sur Partager génère un message WhatsApp soigné et son lien ouvre directement l'application Surga.
+
+### [2026-10-04] — Tranche 6 / "Je commande à la voix dans l'app"
+- **Tâches complétées :**
+  - Moteur de reconnaissance vocale Web Speech API (`frontend-next/src/lib/surga-voice.ts`) avec conversion orale déterministe des opérateurs et mots-nombres français usuels.
+  - Module métier partagé (`backend/services/surga/voice-interpreter.js`) pour l'interprétation des calculs exacts et des commandes vocales (dépenses, notes, rappels).
+  - Sous-composant React modulaire `SurgaVoiceModal.tsx` (< 380 lignes) :
+    - Écoute interactive avec retour visuel épuré (icônes Lucide, zéro émoji, tokens CSS officiels).
+    - Exécution instantanée des calculs arithmétiques ("100 divisé par 3" -> 33.33) sans appel LLM.
+    - Chaîne de confirmation préalable obligatoire pour les dépenses, notes et rappels ("Souhaitez-vous enregistrer cette dépense ?").
+    - Repli bienveillant sur champ de saisie manuelle si le micro n'est pas supporté ou refusé par le navigateur.
+  - Sous-composant React modulaire `SurgaDashboardTools.tsx` (< 180 lignes) extrayant les cartes du tableau de bord pour garder `page.tsx` compact et sous la limite stricte de 450 lignes (actuellement 362 lignes).
+  - Bouton d'action flottant (FAB micro) et déclencheur d'en-tête raccordés à l'ouverture de la modale vocale.
+  - Enrichissement de la suite de tests unitaires Jest (`tests/unit/surga.test.js`) avec 7 nouveaux tests ciblés (32/32 passés à 100%).
+- **Fichiers modifiés/créés :**
+  - `frontend-next/src/lib/surga-voice.ts`
+  - `frontend-next/src/app/surga/components/SurgaVoiceModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaDashboardTools.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `backend/services/surga/voice-interpreter.js`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (0 émoji, tous composants < 450 lignes).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 32/32 passés (100%).
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés (100%).
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés (100%).
+  - [x] Critère de démonstration validé : "100 divisé par 3" affiche le résultat exact immédiatement ; "note deux mille cinq cents de taxi" demande confirmation explicite avant tout enregistrement.
+
+### [2026-10-04] — Tranche 5 / "Surga sur WhatsApp, pour des tâches précises"
+- **Tâches complétées :**
+  - Migration SQL idempotente des tables `surga_whatsapp_sessions` et `surga_quotas` dans `backend/migrate-inline.js`.
+  - Service métier `backend/services/surga/whatsapp-handler.js` avec :
+    - Parser d'intentions déterministe (`parserIntentionWhatsApp`) gérant les dépenses (`ADD_EXPENSE`), notes rapides (`ADD_NOTE`), rappels d'agenda (`ADD_REMINDER`), calculs arithmétiques (`CALCULATE`), briefing matinal (`BRIEFING`) et confirmations (`CONFIRMATION_OUI`, `CONFIRMATION_NON`).
+    - Catégorisation intelligente par mots-clés (`devinerCategorie` pour Transport, Alimentation, Logement, Santé, Factures, Loisirs, Autre).
+    - Chaîne de confirmation obligatoire avant toute écriture en base ("Souhaitez-vous enregistrer cette dépense/note/rappel ? Répondez OUI ou NON").
+    - Quotas stricts (20 commandes/jour max gratuites), stockage et suivi par date/jour.
+    - Zéro émoji Unicode partout dans les réponses WhatsApp, mise en valeur sobre en gras Markdown (`*...*`) et listes à puces (`•`).
+    - Vouvoiement strict conformément à la Décision D19.
+  - Branchement du routeur Surga dans le chatbot WhatsApp Nopalou (`backend/services/whatsapp-chatbot.js`) :
+    - Priorité aux sessions Surga en attente de confirmation (gestion exclusive de "oui/non" sans impacter le e-commerce).
+    - Déclenchement transparent pour les commandes en état libre ou préfixées par "surga".
+    - Préservation totale du fonctionnement des marchands, catalogues et paniers natifs Nopalou.
+  - Enrichissement de la suite de tests unitaires Jest (`tests/unit/surga.test.js`) avec 10 nouveaux cas de test (25/25 passés au total).
+- **Fichiers modifiés/créés :**
+  - `backend/migrate-inline.js`
+  - `backend/services/surga/whatsapp-handler.js`
+  - `backend/services/whatsapp-chatbot.js`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (zéro émoji, vouvoiement respecté, modularité préservée).
+  - [x] Tests unitaires Jest Surga (`tests/unit/surga.test.js`) : 25/25 passés.
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés.
+  - [x] Critère de démonstration validé : l'utilisateur envoie "note 2500 taxi", Surga demande confirmation, l'utilisateur répond "oui", et la dépense est enregistrée et liée à son compte.
+- **Tâches complétées :**
+  - Migration SQL idempotente de la table `surga_agenda` dans `backend/migrate-inline.js` (titre, date, heure, répétition, statut terminé, notification).
+  - API Express REST sous `backend/routes/surga/agenda.js` (`GET /agenda`, `POST /agenda`, `PATCH /agenda/:id/toggle`, `DELETE /agenda/:id`) avec contrôle anti-IDOR.
+  - Montage de la route `agenda` dans `backend/routes/surga/index.js`.
+  - Intégration dans le briefing quotidien (`backend/routes/surga/briefing.js`) : injection des rendez-vous et rappels du jour dans la synthèse texte et le payload.
+  - Synchronisation hors ligne : prise en compte de l'agenda dans `backend/routes/surga/sync.js`.
+  - Moteur d'ordonnancement et d'émission de notifications web `frontend-next/src/lib/surga-reminders.ts` avec gestion des délais précis (dont le critère de test 5 minutes) et surveillance de fond.
+  - Composants React modulaires (< 450 lignes) :
+    - `SurgaAgendaForm.tsx` : formulaire épuré avec sélecteur de date/heure, répétition (Une fois, Tous les jours, Chaque semaine) et case à cocher pour l'alerte.
+    - `SurgaAgendaView.tsx` : vue complète avec filtres (Aujourd'hui, À venir, Tous), coche rapide de complétion, badge d'heure et bandeau d'activation des notifications.
+  - Intégration sur la page Surga (`page.tsx`) : widget d'aperçu de l'agenda du jour sur le tableau de bord et onglet dédié 100% interactif.
+- **Fichiers modifiés/créés :**
+  - `backend/migrate-inline.js`
+  - `backend/routes/surga/agenda.js`
+  - `backend/routes/surga/briefing.js`
+  - `backend/routes/surga/sync.js`
+  - `backend/routes/surga/index.js`
+  - `frontend-next/src/lib/surga-offline-sync.ts`
+  - `frontend-next/src/lib/surga-reminders.ts`
+  - `frontend-next/src/app/surga/components/SurgaAgendaForm.tsx`
+  - `frontend-next/src/app/surga/components/SurgaAgendaView.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (zéro émoji, modularité < 450 lignes).
+  - [x] Tests unitaires Jest ciblés (`tests/unit/surga.test.js`) : 15/15 passés.
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés.
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés.
+  - [x] Plafond de taille des composants : tous < 440 lignes (plafond : 450 lignes).
+  - [x] Critère de démonstration validé : un rappel programmé (ex : dans 5 minutes) déclenche une notification web exacte à l'heure prévue et s'affiche dans le briefing du jour.
+
+### [2026-10-04] — Tranche 3 / "Je note, je compte, je calcule"
+- **Tâches complétées :**
+  - Migration SQL idempotente des tables `surga_notes` et `surga_depenses` dans `backend/migrate-inline.js`.
+  - Moteur de calcul arithmétique déterministe (`backend/services/surga/calculator.js` et `frontend-next/src/lib/surga-calculator.ts`) : opérations de base, pourcentages (TVA, remises), formatage strict en FCFA, sans eval, sans appel LLM.
+  - API Express REST sous `backend/routes/surga/` :
+    - `notes.js` : `GET /notes` (recherche `q`), `POST /notes`, `PUT /notes/:id`, `DELETE /notes/:id`.
+    - `depenses.js` : `GET /depenses`, `GET /depenses/stats` (totaux mensuels calculés en SQL déterministe), `POST /depenses`, `DELETE /depenses/:id`.
+    - `sync.js` : `POST /sync` pour réconcilier les créations accumulées en mode avion.
+  - Gestionnaire offline-first côté client `frontend-next/src/lib/surga-offline-sync.ts` avec stockage local (`localStorage`/`IndexedDB`) et synchronisation automatique lors du retour du réseau.
+  - Composants React modulaires (< 450 lignes) :
+    - `SurgaNotesView.tsx` : carnet de notes avec recherche instantanée, création/édition et suppression.
+    - `SurgaDepensesView.tsx` : récapitulatif mensuel, jauge par catégorie en FCFA et navigation mensuelle.
+    - `SurgaDepenseForm.tsx` : formulaire sous-composant d'ajout rapide avec catégories et date.
+    - `SurgaCalculatorModal.tsx` : calculatrice tactile épurée Nopalou avec bouton d'injection du montant dans une dépense.
+  - Intégration dans `frontend-next/src/app/surga/page.tsx` avec affichage dynamique des dépenses et notes sur le tableau de bord Aujourd'hui et bascule fluide entre onglets.
+- **Fichiers modifiés/créés :**
+  - `backend/migrate-inline.js`
+  - `backend/services/surga/calculator.js`
+  - `backend/routes/surga/notes.js`
+  - `backend/routes/surga/depenses.js`
+  - `backend/routes/surga/sync.js`
+  - `backend/routes/surga/index.js`
+  - `frontend-next/src/lib/surga-calculator.ts`
+  - `frontend-next/src/lib/surga-offline-sync.ts`
+  - `frontend-next/src/app/surga/components/SurgaCalculatorModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaDepenseForm.tsx`
+  - `frontend-next/src/app/surga/components/SurgaDepensesView.tsx`
+  - `frontend-next/src/app/surga/components/SurgaNotesView.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (zéro émoji, modularité respectée).
+  - [x] Tests unitaires Jest ciblés (`tests/unit/surga.test.js`) : 12/12 passés.
+  - [x] Tests d'intégrité UX/SEO (`tests/unit/ux-seo-audit.test.js`) : 78/78 passés.
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés.
+  - [x] Calculs et totaux vérifiés : moteur arithmétique déterministe sans LLM.
+  - [x] Plafond de taille des composants : tous < 415 lignes (plafond : 450 lignes).
+  - [x] Critère de démonstration validé : en mode avion, l'utilisateur note, calcule et ajoute une dépense avec persistance locale instantanée, et retrouve ses données synchronisées avec le récapitulatif mensuel au retour du réseau.
+
+### [2026-10-04] — Tranche 2 / "Je reçois mon briefing du matin"
+- **Tâches complétées :**
+  - Migration SQL idempotente des tables `surga_sources`, `surga_briefing_items` et `surga_sport_events` dans `backend/migrate-inline.js`.
+  - Service d'ingestion RSS résilient `backend/services/surga/rss-collector.js` (APS, Le Soleil, Seneweb) avec parsing XML Cheerio, nettoyage HTML, troncature stricte (< 180 car) et déduplication par URL.
+  - Routeur Express `backend/routes/surga/briefing.js` (`GET /api/surga/briefing`, `POST /api/surga/briefing/refresh`) monté dans `routes/surga/index.js` avec synthèse vocalisable au vouvoiement (D19) et filtrage des briques actives.
+  - Composants frontend d'actualités et sports dans `frontend-next/src/app/surga/components/` :
+    - `SurgaNewsList.tsx` : liste en 2 sous-lignes (titre complet, source, fraîcheur, lien sortant et partage WhatsApp direct).
+    - `SurgaSportCard.tsx` : rencontres sportives de l'équipe nationale et de la ligue avec scores et badges de statut.
+    - `SurgaBriefingActions.tsx` : gestion des permissions Notification API et déclenchement d'un test immédiat.
+  - Mise à jour de `page.tsx` (`/surga`) avec chargement automatique du briefing dynamique.
+- **Fichiers modifiés/créés :**
+  - `backend/migrate-inline.js`
+  - `backend/services/surga/rss-collector.js`
+  - `backend/routes/surga/briefing.js`
+  - `backend/routes/surga/index.js`
+  - `frontend-next/src/app/surga/components/SurgaBriefingActions.tsx`
+  - `frontend-next/src/app/surga/components/SurgaNewsList.tsx`
+  - `frontend-next/src/app/surga/components/SurgaSportCard.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé (zéro émoji, code modulaire).
+  - [x] Tests unitaires Jest ciblés : 84/84 tests passés.
+  - [x] Sourcing respecté : aucun article reproduit en intégralité, résumés courts et liens vers les sources d'origine.
+  - [x] Plafond de taille des composants : tous < 320 lignes (plafond : 450 lignes).
+  - [x] Critère de démonstration validé : l'utilisateur reçoit une notification à son heure et consulte son briefing personnalisé avec brèves réelles et scores sportifs.
+
+### [2026-10-04] — Tranche 1 / "Je m'installe et je personnalise mon Surga"
+- **Tâches complétées :**
+  - Migration SQL idempotente `surga_preferences` (FK `utilisateurs.id`) ajoutée à `backend/migrate-inline.js`.
+  - API Express dédiée sous `backend/routes/surga/preferences.js` (`GET/PUT /api/surga/preferences`, `POST /api/surga/onboarding`).
+  - Montage de la route maître `/api/surga` dans `backend/app.js`.
+  - PWA Surga dédiée créée : `/surga/manifest.json` (scope `/surga/`), Service Worker dédié `/surga/sw.js` (mise en cache Low-Data).
+  - Écrans & Composants frontend (`frontend-next/src/app/surga/`) :
+    - `SurgaHeader.tsx` (en-tête sobre, date, statut en ligne/hors-ligne).
+    - `SurgaBottomNav.tsx` (navigation basse à 5 onglets).
+    - `SurgaOnboarding.tsx` (wizard en 3 étapes : briques, heure briefing & quartier, confirmation).
+    - `page.tsx` (tableau de bord Aujourd'hui + réinitialisation pour tests).
+    - `styles/surga.css` (design system Nopalou, base 16px via `.surga-root`).
+  - Visibilité & Points d'entrée (D17 & D20) :
+    - `SurgaHeroBanner.tsx` intégré sur la page d'accueil Nopalou (`/`) au-dessus de la ligne de flottaison.
+    - Ajout du lien Surga avec badge `NOUVEAU` dans la navigation desktop `NavbarLinksNav.tsx`.
+    - Masquage automatique de la `MobileBottomNav` Nopalou standard sur `/surga` au profit de `SurgaBottomNav`.
+- **Fichiers modifiés/créés :**
+  - `backend/migrate-inline.js`
+  - `backend/app.js`
+  - `backend/routes/surga/index.js`
+  - `backend/routes/surga/preferences.js`
+  - `frontend-next/public/surga/manifest.json`
+  - `frontend-next/public/surga/sw.js`
+  - `frontend-next/src/styles/surga.css`
+  - `frontend-next/src/app/surga/layout.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `frontend-next/src/app/surga/components/SurgaHeader.tsx`
+  - `frontend-next/src/app/surga/components/SurgaBottomNav.tsx`
+  - `frontend-next/src/app/surga/components/SurgaOnboarding.tsx`
+  - `frontend-next/src/app/surga/components/SurgaSwRegister.tsx`
+  - `frontend-next/src/components/SurgaHeroBanner.tsx`
+  - `frontend-next/src/components/MobileBottomNav.tsx`
+  - `frontend-next/src/app/components/NavbarLinksNav.tsx`
+  - `frontend-next/src/app/page.tsx`
+  - `tests/unit/surga.test.js`
+- **Tests exécutés :**
+  - [x] Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+  - [x] Linter Anti-AI-Slop (`npm run lint:slop`) : validé.
+  - [x] Tests unitaires backend Jest (`npm run test:unit`) : 86 suites passées.
+  - [x] Tests unitaires frontend (`npm run test`) : 97/97 passés.
+  - [x] Budget de poids vérifié (JS initial < 120 Ko, zéro dépendance externe lourde).
+  - [x] Règle de taille respectée : tous les composants < 450 lignes (max 378 lignes).
+  - [x] Critère de démonstration de la Tranche 1 validé : installation PWA, personnalisation en 3 étapes, persistance locale et distante, tableau de bord fonctionnel.
+
 ## Modèle d'Entrée (à copier pour chaque livraison)
 
 ### [Date : AAAA-MM-JJ] — Tranche [X] / [Nom de la fonctionnalité]
