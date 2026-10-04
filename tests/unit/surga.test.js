@@ -1205,6 +1205,67 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(paths).toContain('/concours');
       expect(paths).toContain('/unes');
       expect(paths).toContain('/signalements');
+      expect(paths).toContain('/abonnements');
+    });
+  });
+
+  describe('Tranche 15 : Premium, Espaces Professionnels & Monétisation', () => {
+    const {
+      CATALOGUE_PLANS,
+      getCataloguePlans,
+    } = require('../../backend/services/surga/abonnement-service');
+
+    test('Catalogue officiel des formules B2C et B2B complet', () => {
+      const plans = getCataloguePlans();
+      expect(plans.length).toBeGreaterThanOrEqual(4);
+
+      const ids = plans.map((p) => p.id);
+      expect(ids).toContain('b2c_premium');
+      expect(ids).toContain('b2b_visibilite_resto');
+      expect(ids).toContain('b2b_immo_pro');
+      expect(ids).toContain('b2b_education_pro');
+    });
+
+    test('Surga Premium B2C : Tarifs conformes et avantage annuel (2 mois offerts)', () => {
+      const planB2c = CATALOGUE_PLANS.b2c_premium;
+      expect(planB2c).toBeDefined();
+      expect(planB2c.tarifs.mensuel).toBe(1500); // 1 500 FCFA / mois
+      expect(planB2c.tarifs.annuel).toBe(15000); // 15 000 FCFA / an
+
+      // Vérification des privilèges
+      expect(planB2c.avantages.some((a) => a.toLowerCase().includes('vocales'))).toBe(true);
+      expect(planB2c.avantages.some((a) => a.toLowerCase().includes('immobili'))).toBe(true);
+      expect(planB2c.avantages.some((a) => a.toLowerCase().includes('concours'))).toBe(true);
+    });
+
+    test('Espaces Professionnels B2B : Tarifs adaptés au marché dakarisé', () => {
+      const resto = CATALOGUE_PLANS.b2b_visibilite_resto;
+      expect(resto.tarifs.mensuel).toBe(5000); // 5 000 FCFA / mois
+      expect(resto.avantages.some((a) => a.toLowerCase().includes('whatsapp'))).toBe(true);
+
+      const immo = CATALOGUE_PLANS.b2b_immo_pro;
+      expect(immo.tarifs.mensuel).toBe(5000);
+
+      const education = CATALOGUE_PLANS.b2b_education_pro;
+      expect(education.tarifs.mensuel).toBe(10000);
+    });
+
+    test('Le routeur client des abonnements charge les routes REST sans erreur', () => {
+      const abonnementsRouter = require('../../backend/routes/surga/abonnements');
+      expect(abonnementsRouter).toBeDefined();
+
+      const routes = abonnementsRouter.stack
+        .filter((l) => l.route)
+        .map((l) => ({
+          path: l.route.path,
+          methods: Object.keys(l.route.methods),
+        }));
+
+      const paths = routes.map((r) => r.path);
+      expect(paths).toContain('/abonnements/plans');
+      expect(paths).toContain('/abonnements/mon-statut');
+      expect(paths).toContain('/abonnements/initier');
+      expect(paths).toContain('/abonnements/verifier');
     });
   });
 });

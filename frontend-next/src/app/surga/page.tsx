@@ -9,23 +9,15 @@ import SurgaNewsList, { type BriefingNewsItem } from './components/SurgaNewsList
 import SurgaSportCard, { type SportEventItem } from './components/SurgaSportCard'
 import SurgaNotesView from './components/SurgaNotesView'
 import SurgaDepensesView from './components/SurgaDepensesView'
-import SurgaCalculatorModal from './components/SurgaCalculatorModal'
 import SurgaAgendaView from './components/SurgaAgendaView'
 import SurgaDashboardTools from './components/SurgaDashboardTools'
-import SurgaVoiceModal from './components/SurgaVoiceModal'
-import SurgaPresseView from './components/SurgaPresseView'
 import SurgaAudioPlayer from './components/SurgaAudioPlayer'
-import SurgaPodcastModal from './components/SurgaPodcastModal'
-import SurgaRadioModal from './components/SurgaRadioModal'
 import SurgaTraficCard from './components/SurgaTraficCard'
-import SurgaTraficModal from './components/SurgaTraficModal'
 import SurgaImmoDashboardCard from './components/SurgaImmoDashboardCard'
-import SurgaImmoModal from './components/SurgaImmoModal'
 import SurgaConcoursDashboardCard from './components/SurgaConcoursDashboardCard'
-import SurgaConcoursModal from './components/SurgaConcoursModal'
 import SurgaPlacesDashboardCard from './components/SurgaPlacesDashboardCard'
-import SurgaPlacesModal from './components/SurgaPlacesModal'
 import SurgaParametresTab from './components/SurgaParametresTab'
+import SurgaModalsContainer from './components/SurgaModalsContainer'
 import {
   getLocalNotes,
   getLocalAgenda,
@@ -36,15 +28,7 @@ import {
   type SurgaDepensesStats,
 } from '@/lib/surga-offline-sync'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
-import {
-  Mic,
-  Sun,
-  Sparkles,
-  RotateCcw,
-  Newspaper,
-  Volume2,
-  Radio,
-} from 'lucide-react'
+import { Mic, Newspaper, Sparkles, Sun } from 'lucide-react'
 
 interface BriefingApiResponse {
   success: boolean
@@ -73,6 +57,9 @@ export default function SurgaPage() {
   const [isImmoOpen, setIsImmoOpen] = useState<boolean>(false)
   const [isConcoursOpen, setIsConcoursOpen] = useState<boolean>(false)
   const [isPlacesOpen, setIsPlacesOpen] = useState<boolean>(false)
+  const [isPremiumOpen, setIsPremiumOpen] = useState<boolean>(false)
+  const [isProOpen, setIsProOpen] = useState<boolean>(false)
+  const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; plan?: string | null; joursRestants?: number }>({ estPremium: false })
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
   const [nbNotes, setNbNotes] = useState<number>(0)
@@ -128,6 +115,20 @@ export default function SurgaPage() {
       .catch(() => {
         setIsOnboarded(false)
       })
+
+    // Vérification du statut Premium
+    fetch('/api/surga/abonnements/mon-statut')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          setStatutPremium({
+            estPremium: data.estPremium,
+            plan: data.plan,
+            joursRestants: data.joursRestants,
+          })
+        }
+      })
+      .catch(() => {})
   }, [])
 
   // Chargement du briefing dynamique
@@ -373,12 +374,15 @@ export default function SurgaPage() {
         {activeTab === 'plus' && (
           <SurgaParametresTab
             preferences={preferences}
+            statutPremium={statutPremium}
             onToggleAudio={handleToggleAudio}
             onOpenRadio={() => setIsRadioOpen(true)}
             onOpenTrafic={() => setIsTraficOpen(true)}
             onOpenImmo={() => setIsImmoOpen(true)}
             onOpenConcours={() => setIsConcoursOpen(true)}
             onOpenPlaces={() => setIsPlacesOpen(true)}
+            onOpenPremium={() => setIsPremiumOpen(true)}
+            onOpenPro={() => setIsProOpen(true)}
             onReinitialiser={handleReinitialiser}
           />
         )}
@@ -396,15 +400,24 @@ export default function SurgaPage() {
       </button>
 
       {/* Modales globales de Surga */}
-      <SurgaCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} onInjectMontant={() => setActiveTab('depenses')} />
-      <SurgaVoiceModal isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} onConfirmerDepense={handleVoiceDepense} onConfirmerNote={handleVoiceNote} onConfirmerRappel={handleVoiceRappel} />
-      <SurgaPresseView isOpen={isPresseOpen} onClose={() => setIsPresseOpen(false)} onOpenRadios={() => { setIsPresseOpen(false); setIsRadioOpen(true) }} />
-      <SurgaPodcastModal isOpen={isPodcastOpen} onClose={() => setIsPodcastOpen(false)} />
-      <SurgaRadioModal isOpen={isRadioOpen} onClose={() => setIsRadioOpen(false)} />
-      <SurgaTraficModal isOpen={isTraficOpen} onClose={() => setIsTraficOpen(false)} />
-      <SurgaImmoModal isOpen={isImmoOpen} onClose={() => setIsImmoOpen(false)} />
-      <SurgaConcoursModal isOpen={isConcoursOpen} onClose={() => setIsConcoursOpen(false)} />
-      <SurgaPlacesModal isOpen={isPlacesOpen} onClose={() => setIsPlacesOpen(false)} />
+      <SurgaModalsContainer
+        isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
+        isPodcastOpen={isPodcastOpen} isRadioOpen={isRadioOpen} isTraficOpen={isTraficOpen}
+        isImmoOpen={isImmoOpen} isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen}
+        isPremiumOpen={isPremiumOpen} isProOpen={isProOpen}
+        onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)}
+        onClosePresse={() => setIsPresseOpen(false)} onClosePodcast={() => setIsPodcastOpen(false)}
+        onCloseRadio={() => setIsRadioOpen(false)} onCloseTrafic={() => setIsTraficOpen(false)}
+        onCloseImmo={() => setIsImmoOpen(false)} onCloseConcours={() => setIsConcoursOpen(false)}
+        onClosePlaces={() => setIsPlacesOpen(false)} onClosePremium={() => setIsPremiumOpen(false)}
+        onClosePro={() => setIsProOpen(false)}
+        onInjectMontantCalc={() => setActiveTab('depenses')}
+        onOpenRadioFromPresse={() => { setIsPresseOpen(false); setIsRadioOpen(true) }}
+        onConfirmerVoiceDepense={handleVoiceDepense}
+        onConfirmerVoiceNote={handleVoiceNote}
+        onConfirmerVoiceRappel={handleVoiceRappel}
+        onAbonnementActive={() => setStatutPremium({ estPremium: true, joursRestants: 30 })}
+      />
 
       {/* Navigation basse */}
       <SurgaBottomNav activeTab={activeTab} onTabChange={setActiveTab} />

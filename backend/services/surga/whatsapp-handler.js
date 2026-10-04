@@ -146,6 +146,19 @@ function parserIntentionWhatsApp(texteBrut) {
 async function verifierQuota(phone, isVocal = false) {
   const normPh = normalisePhone(phone);
   try {
+    // Vérification préalable du statut Premium
+    const suffixe = normPh.slice(-9);
+    const aboCheck = await pool.query(
+      `SELECT id FROM surga_abonnements
+       WHERE (phone = $1 OR phone LIKE '%' || $2)
+         AND statut = 'actif'
+         AND fin > NOW()
+       LIMIT 1`,
+      [normPh, suffixe]
+    );
+
+    const estPremium = aboCheck.rows.length > 0;
+
     const res = await pool.query(
       `INSERT INTO surga_quotas (phone, date_jour, nb_commandes, nb_vocaux, quota_max_gratuit)
        VALUES ($1, CURRENT_DATE, 1, $2, $3)
@@ -154,11 +167,11 @@ async function verifierQuota(phone, isVocal = false) {
          nb_vocaux = surga_quotas.nb_vocaux + $2,
          updated_at = NOW()
        RETURNING nb_commandes, quota_max_gratuit`,
-      [normPh, isVocal ? 1 : 0, QUOTA_JOURNALIER_GRATUIT]
+      [normPh, isVocal ? 1 : 0, estPremium ? 99999 : QUOTA_JOURNALIER_GRATUIT]
     );
 
     const { nb_commandes, quota_max_gratuit } = res.rows[0];
-    return nb_commandes <= quota_max_gratuit;
+    return estPremium || nb_commandes <= quota_max_gratuit;
   } catch (err) {
     console.warn('[SURGA QUOTA CHECK ERR]:', err.message);
     return true; // En cas d'erreur de base, on ne bloque pas l'utilisateur

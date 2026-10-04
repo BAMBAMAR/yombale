@@ -3270,6 +3270,26 @@ module.exports = async function migrateInline(customConnStr = null) {
        created_at TIMESTAMPTZ DEFAULT NOW()
      )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_favoris_places ON surga_favoris_places(user_id, place_id)`,
+    `CREATE TABLE IF NOT EXISTS surga_abonnements (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+       phone VARCHAR(30),
+       plan VARCHAR(50) NOT NULL,
+       cycle VARCHAR(20) NOT NULL DEFAULT 'mensuel',
+       montant_xof INT NOT NULL,
+       provider VARCHAR(30) NOT NULL DEFAULT 'wave',
+       statut VARCHAR(30) NOT NULL DEFAULT 'en_attente',
+       reference_paiement VARCHAR(100) UNIQUE NOT NULL,
+       session_id VARCHAR(255),
+       client_metadata JSONB DEFAULT '{}'::jsonb,
+       debut TIMESTAMPTZ DEFAULT NOW(),
+       fin TIMESTAMPTZ NOT NULL,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_user ON surga_abonnements(user_id, statut, fin)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_phone ON surga_abonnements(phone, statut, fin)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_statut_plan ON surga_abonnements(statut, plan)`,
   ];
   for (const sql of schemaCollecte) {
     try { await pool.query(sql); }

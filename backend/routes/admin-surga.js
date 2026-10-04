@@ -664,4 +664,78 @@ router.delete('/signalements/:id', async (req, res) => {
   }
 });
 
+// ==========================================
+// ABONNEMENTS & GESTION FINANCIÈRE (Tranche 15)
+// ==========================================
+const {
+  getStatistiquesFinancieresAdmin,
+  listerAbonnementsAdmin,
+} = require('../services/surga/abonnement-service');
+
+router.get('/abonnements', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, statut, plan } = req.query;
+
+    if (!pool) {
+      return res.json({
+        success: true,
+        stats: {
+          abonnementsActifs: 0,
+          enAttente: 0,
+          mrrEstimeXof: 0,
+          volumeEncaisseXof: 0,
+        },
+        repartition: [],
+        abonnements: [],
+        total: 0,
+      });
+    }
+
+    const statsFin = await getStatistiquesFinancieresAdmin();
+    const liste = await listerAbonnementsAdmin({
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      statut,
+      plan,
+    });
+
+    res.json({
+      success: true,
+      stats: statsFin.kpis,
+      repartition: statsFin.repartition,
+      ...liste,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/abonnements/:id/statut', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { statut } = req.body;
+
+    if (!['actif', 'en_attente', 'expire', 'resilie'].includes(statut)) {
+      return res.status(400).json({ success: false, error: 'Statut invalide' });
+    }
+
+    if (!pool) {
+      return res.json({ success: true, abonnement: { id, statut } });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE surga_abonnements SET statut = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [statut, id]
+    );
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Abonnement introuvable' });
+    }
+
+    res.json({ success: true, abonnement: updateRes.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

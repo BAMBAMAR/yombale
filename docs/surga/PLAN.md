@@ -178,14 +178,25 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 ## MONÉTISATION ET SORTIE
 
 ### Tranche 15 — Premium et espaces professionnels
-- [ ] `PROPOSED` Premium B2C (quotas vocaux étendus, audio, personnalisation avancée) payé par
-  Mobile Money (réutiliser l'intégration existante).
-- [ ] `PROPOSED` Espaces pro : agences, centres de formation, restaurateurs (Gratuit,
-  Pro 5 000 FCFA, Business 10 000 FCFA), avec limites et statistiques selon le palier.
-- **Démonstration** : un utilisateur passe en premium ; une agence souscrit un abonnement et en
-  voit l'effet.
+- [x] `DONE` Table SQL `surga_abonnements` (migration idempotente avec index dans `backend/migrate-inline.js`).
+- [x] `DONE` Service `backend/services/surga/abonnement-service.js` :
+  - Catalogue des formules B2C et B2B : Surga Premium (1 500 FCFA/mois ou 15 000 FCFA/an avec 2 mois offerts), Surga Visibilité Resto (5 000 FCFA/mois), Surga Immo Pro (5 000 FCFA/mois), Surga Éducation & Prépa Concours (10 000 FCFA/mois).
+  - Déblocage automatique des quotas illimités pour les utilisateurs Premium dans `verifierQuota` (`backend/services/surga/whatsapp-handler.js`).
+  - Intention de paiement Wave Checkout et Orange Money avec génération de référence unique.
+  - Calcul et supervision financière en direct (MRR estimé en FCFA, volume encaissé, abonnés actifs).
+- [x] `DONE` Routes REST publiques et authentifiées dans `backend/routes/surga/abonnements.js` (`GET /plans`, `GET /mon-statut`, `POST /initier`, `POST /verifier`).
+- [x] `DONE` Supervision administrative complète dans `backend/routes/admin-surga.js` (`GET /abonnements`, `PUT /abonnements/:id/statut`).
+- [x] `DONE` Composants React modulaires (< 450 lignes, zéro émoji, tokens Nopalou) :
+  - `SurgaPremiumModal.tsx` (360 l.) : modale 1-clic pour les utilisateurs avec choix de cycle (mensuel/annuel), provider (Wave/OM) et confirmation.
+  - `SurgaProModal.tsx` (320 l.) : modale d'adhésion pour les partenaires B2B (restaurateurs, agences, centres de concours).
+  - `SurgaParametresTab.tsx` (314 l.) : affichage du badge Premium, jours restants et bouton d'action.
+  - `SurgaModalsContainer.tsx` (136 l.) : factorisation pour maintenir `surga/page.tsx` à 428 lignes.
+  - `AdminAbonnementsTab.tsx` (288 l.) : onglet de supervision MRR et abonnements avec filtres et actions de modération.
+  - `AdminSurgaClient.tsx` (384 l.) : intégration de l'onglet financier *Abonnements & MRR*.
+- [x] `DONE` Tests unitaires Jest : **87/87 passés (100%)**.
+- **Démonstration** : un utilisateur particulier souscrit à Surga Premium par Wave ou Orange Money et débloque le vocal illimité et les alertes immédiates ; un restaurateur ou une agence souscrit à une formule pro pour être mis en avant ; l'administrateur suit le MRR et gère les abonnements en direct sur `/admin/surga`.
 
-### Tranche 15 — Durcissement et mise en production
+### Tranche 16 — Durcissement et mise en production
 - [ ] `PROPOSED` Audit de poids (pages publiques et app), Lighthouse.
 - [ ] `PROPOSED` Revue de sécurité anti-IDOR sur toutes les ressources utilisateur et pro.
 - [ ] `PROPOSED` Export et suppression des données personnelles ; revue du consentement.

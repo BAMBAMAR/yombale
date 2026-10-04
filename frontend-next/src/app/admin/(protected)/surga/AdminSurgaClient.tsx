@@ -10,11 +10,13 @@ import {
   ArrowUpRight,
   RefreshCw,
   Building,
+  CreditCard,
 } from 'lucide-react'
 import AdminPlacesTab from './components/AdminPlacesTab'
 import AdminConcoursTab from './components/AdminConcoursTab'
 import AdminUnesTab from './components/AdminUnesTab'
 import AdminTraficTab from './components/AdminTraficTab'
+import AdminAbonnementsTab from './components/AdminAbonnementsTab'
 
 interface AdminSurgaStats {
   nb_places: number
@@ -27,7 +29,7 @@ interface AdminSurgaClientProps {
   initialStats?: AdminSurgaStats | null
 }
 
-type TabType = 'places' | 'concours' | 'unes' | 'trafic'
+type TabType = 'places' | 'concours' | 'unes' | 'trafic' | 'abonnements'
 
 export default function AdminSurgaClient({ initialStats }: AdminSurgaClientProps) {
   const [activeTab, setActiveTab] = useState<TabType>('places')
@@ -344,6 +346,28 @@ export default function AdminSurgaClient({ initialStats }: AdminSurgaClientProps
             </span>
           )}
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('abonnements')}
+          style={{
+            padding: '10px 16px',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            borderBottom: activeTab === 'abonnements' ? '3px solid var(--price, #0A5C36)' : '3px solid transparent',
+            backgroundColor: activeTab === 'abonnements' ? '#FFFFFF' : 'transparent',
+            color: activeTab === 'abonnements' ? 'var(--navy, #1C2B4A)' : 'var(--text3, #73675E)',
+            fontSize: 13,
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <CreditCard size={15} color={activeTab === 'abonnements' ? 'var(--price, #0A5C36)' : undefined} />
+          <span>Abonnements &amp; MRR</span>
+        </button>
       </div>
 
       {/* Contenu dynamique de l'onglet actif */}
@@ -352,6 +376,7 @@ export default function AdminSurgaClient({ initialStats }: AdminSurgaClientProps
         {activeTab === 'concours' && <AdminConcoursTab />}
         {activeTab === 'unes' && <AdminUnesTab />}
         {activeTab === 'trafic' && <AdminTraficTab />}
+        {activeTab === 'abonnements' && <AdminAbonnementsTab />}
       </div>
     </div>
   )

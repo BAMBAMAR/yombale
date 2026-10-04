@@ -3,6 +3,55 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-04] — Tranche 15 / Premium, Espaces Professionnels & Monétisation
+- **Tâches complétées :**
+  - **Migration SQL Idempotente (`backend/migrate-inline.js`)** :
+    - Table `surga_abonnements` avec `user_id`, `phone`, `plan`, `cycle`, `montant_xof`, `provider`, `statut`, `reference_paiement`, `session_id`, `client_metadata`, `debut`, `fin`.
+    - Index de performance : `idx_surga_abonnements_user`, `idx_surga_abonnements_phone`, `idx_surga_abonnements_statut_plan`.
+  - **Service Métier & Facturation (`backend/services/surga/abonnement-service.js`)** :
+    - Catalogue complet des formules :
+      - *Surga Premium B2C* : 1 500 FCFA / mois ou 15 000 FCFA / an (2 mois offerts / -17%).
+      - *Surga Visibilité Resto (B2B)* : 5 000 FCFA / mois (tête de liste, badge officiel, bouton réservation direct).
+      - *Surga Immo Pro (B2B)* : 5 000 FCFA / mois (alertes transmises sous 60s, badge vérifié).
+      - *Surga Prépa & Éducation (B2B)* : 10 000 FCFA / mois (visibilité sur les fiches concours officiels).
+    - Moteur de génération de référence unique `SURGA-SUB-*` et session de paiement Wave / Orange Money.
+    - Activation instantanée des abonnements (`activerAbonnementParReference`).
+    - Supervision financière et calcul en direct du MRR estimé et volume total encaissé en FCFA.
+  - **Quotas Illimités (`backend/services/surga/whatsapp-handler.js`)** :
+    - Détection automatique du statut Premium dans `verifierQuota` accordant un accès illimité sans plafond journalier aux abonnés.
+  - **Routes API REST Client & Admin** :
+    - `/api/surga/abonnements` (`GET /plans`, `GET /mon-statut`, `POST /initier`, `POST /verifier`).
+    - `/api/admin/surga/abonnements` (`GET /`, `PUT /:id/statut`).
+  - **Composants React Frontend Modulaires (< 450 lignes, zéro émoji, tokens Nopalou)** :
+    - `SurgaPremiumModal.tsx` (360 l.) : modale d'adhésion 1-clic pour particuliers avec sélection du cycle (mensuel/annuel), choix Wave/OM, confirmation et validation immédiate.
+    - `SurgaProModal.tsx` (320 l.) : modale dédiée aux partenaires B2B (restaurateurs, promoteurs, centres de concours).
+    - `SurgaParametresTab.tsx` (314 l.) : carte de statut d'abonnement (Gratuit vs Premium, jours restants) et raccourcis d'adhésion.
+    - `SurgaModalsContainer.tsx` (136 l.) : factorisation permettant à `surga/page.tsx` de rester à 428 lignes (< 450 l.).
+    - `AdminAbonnementsTab.tsx` (288 l.) : console d'administration avec 4 mini-KPI financiers, filtres dynamiques par statut/formule, tableau avec dates d'échéances et boutons d'action (Valider / Résilier).
+    - `AdminSurgaClient.tsx` (384 l.) : intégration de l'onglet financier *Abonnements & MRR*.
+  - **Tests & Conformité Stricte** :
+    - Compilation TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Tests unitaires Jest Surga : **87/87 passés (100%)**.
+    - Tests unitaires frontend : **97/97 passés (100%)**.
+    - Tous les composants strictement < 450 lignes.
+    - Zéro émoji Unicode dans l'UI.
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/abonnement-service.js`
+  - `backend/services/surga/whatsapp-handler.js`
+  - `backend/routes/surga/abonnements.js`
+  - `backend/routes/surga/index.js`
+  - `backend/routes/admin-surga.js`
+  - `backend/migrate-inline.js`
+  - `frontend-next/src/app/surga/components/SurgaPremiumModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaProModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaModalsContainer.tsx`
+  - `frontend-next/src/app/surga/components/SurgaParametresTab.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/components/AdminAbonnementsTab.tsx`
+  - `frontend-next/src/app/admin/(protected)/surga/AdminSurgaClient.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+
 ### [2026-10-04] — Console d'Administration Surga (`/admin/surga`) — Tout Dynamique & Modifiable
 - **Tâches complétées :**
   - **Routeur d'Administration Backend (`backend/routes/admin-surga.js`)** :

@@ -18,6 +18,7 @@ router.use('/', require('./trafic'));
 router.use('/', require('./immo'));
 router.use('/', require('./concours'));
 router.use('/', require('./places'));
+router.use('/', require('./abonnements'));
 
 module.exports = router;
 
