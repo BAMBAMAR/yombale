@@ -30,6 +30,8 @@ consulte ce fichier avant de remettre en question un point.
 | D18 | Fusion légère : courte section `## Module Surga — Règles Spécifiques` dans les règles de `CLAUDE.md`, qui renvoie à `CLAUDE_SURGA.md`. Journal Surga dans `docs/surga/JOURNAL-LIVRAISONS.md`. | `CLAUDE.md` est chargé à chaque session : le garder court |
 | D19 | Ton de Surga : vouvoiement (« Bonjour, voici votre briefing »). | Respectueux, universel et rassurant pour un assistant personnel et financier |
 | D20 | Visibilité maximale de Surga dès l'entrée sur le site : bandeau/carte d'appel sur la page d'accueil (`/`) au-dessus de la ligne de flottaison + onglet permanent dans la navigation mobile / desktop. | Immédiatement visible par tout visiteur sans dépendre de la bulle |
+| D21 | Console d'administration dynamique `/admin/surga` : tout le contenu Surga (bonnes adresses, concours, unes de presse, trafic, abonnements) est administrable dynamiquement avec audit trail et RBAC admin. | Évite tout codage en dur et donne le plein contrôle opérationnel aux administrateurs |
+| D22 | Détachement total de l'interface Surga vis-à-vis de Nopalou et support sous-domaine `surga.nopalou.com` : Surga fonctionne comme une application autonome à part entière, sans header, footer, panier ou chat marketplace Nopalou (isolation SSR et CSS). | Expérience utilisateur pure, épurée, dédiée à l'assistant de poche sans distraction e-commerce |
 
 ## Points ouverts (à trancher en Phase 0, puis à déplacer ci-dessus)
 | # | Point | Comment le trancher |
