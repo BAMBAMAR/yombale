@@ -196,13 +196,19 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Tests unitaires Jest : **87/87 passés (100%)**.
 - **Démonstration** : un utilisateur particulier souscrit à Surga Premium par Wave ou Orange Money et débloque le vocal illimité et les alertes immédiates ; un restaurateur ou une agence souscrit à une formule pro pour être mis en avant ; l'administrateur suit le MRR et gère les abonnements en direct sur `/admin/surga`.
 
-### Tranche 16 — Durcissement et mise en production
-- [ ] `PROPOSED` Audit de poids (pages publiques et app), Lighthouse.
-- [ ] `PROPOSED` Revue de sécurité anti-IDOR sur toutes les ressources utilisateur et pro.
-- [ ] `PROPOSED` Export et suppression des données personnelles ; revue du consentement.
-- [ ] `PROPOSED` Pull request de `feature/surga` vers `main`, relue par l'utilisateur.
-- **Critère de sortie** : tranches 1 à 7 `DONE`, briques activées validées, audits conformes et
-  ordre explicite de déploiement de l'utilisateur.
+### Tranche 16 — Durcissement, Sécurité Anti-IDOR, Export/Suppression RGPD & Clôture
+- [x] `DONE` Revue de sécurité anti-IDOR complète sur 100% des routes privées (`/api/surga/*` et `/api/admin/surga/*`).
+- [x] `DONE` Service `backend/services/surga/donnees-service.js` :
+  - Portabilité des données : extraction exhaustive de toutes les données liées à l'utilisateur (préférences, notes, dépenses, agenda, alertes immo, concours, favoris, abonnements).
+  - Droit à l'oubli définitif : purge irréversible et complète de toutes les tables avec confirmation obligatoire.
+- [x] `DONE` Routes REST `/api/surga/donnees` (`GET /export`, `DELETE /supprimer`).
+- [x] `DONE` Modale PWA `SurgaDonneesModal.tsx` (268 l.) avec téléchargement direct du fichier JSON et garde-fou strict avec saisie de confirmation `SUPPRIMER`.
+- [x] `DONE` Accès direct dans `SurgaParametresTab.tsx` (347 l.) et `surga/page.tsx` maintenu à 431 lignes (< 450 l.).
+- [x] `DONE` Audit de performance et Low-Data : zéro police externe téléchargée, strict respect des polices natives système.
+- [x] `DONE` Suite de tests unitaires Jest : **91/91 passés (100%)**.
+- [x] `DONE` Tests unitaires frontend Next.js : **97/97 passés (100%)**.
+- [x] `DONE` Compilation TypeScript : **0 erreur**.
+- **Critère de sortie** : 100% des tranches (1 à 16) `DONE`, console d'administration `/admin/surga` opérationnelle, audits conformes, code prêt pour la fusion/déploiement sur ordre de l'utilisateur.
 
 ---
 

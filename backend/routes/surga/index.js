@@ -19,6 +19,7 @@ router.use('/', require('./immo'));
 router.use('/', require('./concours'));
 router.use('/', require('./places'));
 router.use('/', require('./abonnements'));
+router.use('/', require('./donnees'));
 
 module.exports = router;
 

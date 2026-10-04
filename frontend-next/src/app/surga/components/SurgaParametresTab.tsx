@@ -11,6 +11,7 @@ import {
   Briefcase,
   CheckCircle2,
   Sparkles,
+  Shield,
 } from 'lucide-react'
 
 interface SurgaParametresTabProps {
@@ -28,6 +29,7 @@ interface SurgaParametresTabProps {
   onOpenPlaces?: () => void
   onOpenPremium?: () => void
   onOpenPro?: () => void
+  onOpenDonnees?: () => void
   onReinitialiser: () => void
 }
 
@@ -42,6 +44,7 @@ export default function SurgaParametresTab({
   onOpenPlaces,
   onOpenPremium,
   onOpenPro,
+  onOpenDonnees,
   onReinitialiser,
 }: SurgaParametresTabProps) {
   const estPremium = Boolean(statutPremium?.estPremium)
@@ -296,6 +299,36 @@ export default function SurgaParametresTab({
         >
           Explorer
         </button>
+      </div>
+
+      {/* Données personnelles & Droit à l'oubli */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: 10,
+          borderTop: '1px solid var(--border, #E8DDD2)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            Protection &amp; Données personnelles
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            Export JSON de vos données &amp; droit à l oubli définitif
+          </div>
+        </div>
+        {onOpenDonnees && (
+          <button
+            type="button"
+            onClick={onOpenDonnees}
+            className="surga-btn-secondary"
+            style={{ fontSize: 11, padding: '5px 12px' }}
+          >
+            Gérer
+          </button>
+        )}
       </div>
 
       {/* Bouton de réinitialisation */}

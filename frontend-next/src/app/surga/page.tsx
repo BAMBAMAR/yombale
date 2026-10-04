@@ -59,6 +59,7 @@ export default function SurgaPage() {
   const [isPlacesOpen, setIsPlacesOpen] = useState<boolean>(false)
   const [isPremiumOpen, setIsPremiumOpen] = useState<boolean>(false)
   const [isProOpen, setIsProOpen] = useState<boolean>(false)
+  const [isDonneesOpen, setIsDonneesOpen] = useState<boolean>(false)
   const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; plan?: string | null; joursRestants?: number }>({ estPremium: false })
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
@@ -383,6 +384,7 @@ export default function SurgaPage() {
             onOpenPlaces={() => setIsPlacesOpen(true)}
             onOpenPremium={() => setIsPremiumOpen(true)}
             onOpenPro={() => setIsProOpen(true)}
+            onOpenDonnees={() => setIsDonneesOpen(true)}
             onReinitialiser={handleReinitialiser}
           />
         )}
@@ -404,18 +406,19 @@ export default function SurgaPage() {
         isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
         isPodcastOpen={isPodcastOpen} isRadioOpen={isRadioOpen} isTraficOpen={isTraficOpen}
         isImmoOpen={isImmoOpen} isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen}
-        isPremiumOpen={isPremiumOpen} isProOpen={isProOpen}
+        isPremiumOpen={isPremiumOpen} isProOpen={isProOpen} isDonneesOpen={isDonneesOpen}
         onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)}
         onClosePresse={() => setIsPresseOpen(false)} onClosePodcast={() => setIsPodcastOpen(false)}
         onCloseRadio={() => setIsRadioOpen(false)} onCloseTrafic={() => setIsTraficOpen(false)}
         onCloseImmo={() => setIsImmoOpen(false)} onCloseConcours={() => setIsConcoursOpen(false)}
         onClosePlaces={() => setIsPlacesOpen(false)} onClosePremium={() => setIsPremiumOpen(false)}
-        onClosePro={() => setIsProOpen(false)}
+        onClosePro={() => setIsProOpen(false)} onCloseDonnees={() => setIsDonneesOpen(false)}
         onInjectMontantCalc={() => setActiveTab('depenses')}
         onOpenRadioFromPresse={() => { setIsPresseOpen(false); setIsRadioOpen(true) }}
         onConfirmerVoiceDepense={handleVoiceDepense}
         onConfirmerVoiceNote={handleVoiceNote}
         onConfirmerVoiceRappel={handleVoiceRappel}
+        onDonneesSupprimees={handleReinitialiser}
         onAbonnementActive={() => setStatutPremium({ estPremium: true, joursRestants: 30 })}
       />
 

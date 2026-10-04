@@ -12,6 +12,7 @@ import SurgaConcoursModal from './SurgaConcoursModal'
 import SurgaPlacesModal from './SurgaPlacesModal'
 import SurgaPremiumModal from './SurgaPremiumModal'
 import SurgaProModal from './SurgaProModal'
+import SurgaDonneesModal from './SurgaDonneesModal'
 
 interface SurgaModalsContainerProps {
   isCalcOpen: boolean
@@ -25,6 +26,7 @@ interface SurgaModalsContainerProps {
   isPlacesOpen: boolean
   isPremiumOpen: boolean
   isProOpen: boolean
+  isDonneesOpen?: boolean
 
   onCloseCalc: () => void
   onCloseVoice: () => void
@@ -37,6 +39,8 @@ interface SurgaModalsContainerProps {
   onClosePlaces: () => void
   onClosePremium: () => void
   onClosePro: () => void
+  onCloseDonnees?: () => void
+  onDonneesSupprimees?: () => void
 
   onInjectMontantCalc: () => void
   onOpenRadioFromPresse: () => void
@@ -58,6 +62,7 @@ export default function SurgaModalsContainer({
   isPlacesOpen,
   isPremiumOpen,
   isProOpen,
+  isDonneesOpen = false,
 
   onCloseCalc,
   onCloseVoice,
@@ -70,6 +75,8 @@ export default function SurgaModalsContainer({
   onClosePlaces,
   onClosePremium,
   onClosePro,
+  onCloseDonnees = () => {},
+  onDonneesSupprimees,
 
   onInjectMontantCalc,
   onOpenRadioFromPresse,
@@ -129,6 +136,11 @@ export default function SurgaModalsContainer({
       <SurgaProModal
         isOpen={isProOpen}
         onClose={onClosePro}
+      />
+      <SurgaDonneesModal
+        isOpen={isDonneesOpen}
+        onClose={onCloseDonnees}
+        onDonneesSupprimees={onDonneesSupprimees}
       />
     </>
   )

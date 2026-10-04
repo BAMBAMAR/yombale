@@ -1268,6 +1268,50 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(paths).toContain('/abonnements/verifier');
     });
   });
+
+  describe('Tranche 16 : Durcissement, Sécurité Anti-IDOR, Export & Droit à l oubli', () => {
+    const {
+      exporterDonneesUtilisateur,
+      supprimerDonneesUtilisateur,
+    } = require('../../backend/services/surga/donnees-service');
+
+    test('L export de données requiert une identification (userId ou phone)', async () => {
+      await expect(exporterDonneesUtilisateur({})).rejects.toThrow();
+    });
+
+    test('L export de données génère une structure complète et conforme', async () => {
+      const exportTest = await exporterDonneesUtilisateur({ userId: '00000000-0000-0000-0000-000000000000' });
+      expect(exportTest).toBeDefined();
+      expect(exportTest.date_export).toBeDefined();
+      expect(Array.isArray(exportTest.notes)).toBe(true);
+      expect(Array.isArray(exportTest.depenses)).toBe(true);
+      expect(Array.isArray(exportTest.agenda)).toBe(true);
+      expect(Array.isArray(exportTest.alertes_immo)).toBe(true);
+      expect(Array.isArray(exportTest.concours_suivis)).toBe(true);
+      expect(Array.isArray(exportTest.favoris_places)).toBe(true);
+      expect(Array.isArray(exportTest.abonnements)).toBe(true);
+    });
+
+    test('La suppression de données requiert une identification (userId ou phone)', async () => {
+      await expect(supprimerDonneesUtilisateur({})).rejects.toThrow();
+    });
+
+    test('Le routeur REST des données personnelles expose les endpoints requis', () => {
+      const donneesRouter = require('../../backend/routes/surga/donnees');
+      expect(donneesRouter).toBeDefined();
+
+      const routes = donneesRouter.stack
+        .filter((l) => l.route)
+        .map((l) => ({
+          path: l.route.path,
+          methods: Object.keys(l.route.methods),
+        }));
+
+      const paths = routes.map((r) => r.path);
+      expect(paths).toContain('/donnees/export');
+      expect(paths).toContain('/donnees/supprimer');
+    });
+  });
 });
 
 

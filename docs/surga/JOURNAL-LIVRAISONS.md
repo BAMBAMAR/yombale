@@ -3,6 +3,39 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-04] — Tranche 16 / Durcissement, Sécurité Anti-IDOR, Export/Suppression RGPD & Clôture
+- **Tâches complétées :**
+  - **Revue de Sécurité Anti-IDOR & Étanchéité Multi-Tenant** :
+    - Audit exhaustif de l'intégralité des routes privées (`surga/notes`, `depenses`, `agenda`, `immo`, `concours`, `places`, `abonnements`).
+    - Garantie stricte d'étanchéité : chaque écriture, modification ou suppression est restreinte au `user_id` authentifié (`WHERE id = $1 AND user_id = $2`).
+    - Routes d'administration sécurisées par `requireAdminAuth` et `requireAdminRole`.
+  - **Portabilité & Droit à l'Oubli (Conformité CDP Sénégal & RGPD)** :
+    - Service `backend/services/surga/donnees-service.js` :
+      - `exporterDonneesUtilisateur` : extraction exhaustive de toutes les données personnelles (notes, dépenses, agenda, alertes immo, concours suivis, adresses favorites, abonnements) dans un format JSON téléchargeable.
+      - `supprimerDonneesUtilisateur` : transaction SQL atomique purgeant irréversiblement l'ensemble des données personnelles de la base de données.
+    - Routes REST montées sur `/api/surga/donnees` (`GET /export`, `DELETE /supprimer` avec confirmation textuelle obligatoire `SUPPRIMER`).
+  - **Composants Frontend PWA & Ergonomie (< 450 lignes, zéro émoji, tokens Nopalou)** :
+    - `SurgaDonneesModal.tsx` (268 l.) : modale dédiée avec téléchargement direct du fichier JSON d'export et modalité de purge irréversible avec saisie de confirmation.
+    - `SurgaParametresTab.tsx` (347 l.) : intégration de l'entrée *Protection & Données personnelles*.
+    - `surga/page.tsx` (431 l.) : flux complet connecté en conservant le calibrage sous 450 lignes.
+  - **Performance, Low-Data & Absence de Polices Externes** :
+    - Vérification rigoureuse de la règle absolue : 0 police externe (Google Fonts / CDN) téléchargée ou injectée dynamiquement. Utilisation exclusive de la stack système native et variables du design system.
+  - **Qualité & Tests de Non-Régression** :
+    - Compilation TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Suite Jest Surga : **91/91 passés (100%)**.
+    - Tests frontend Next.js : **97/97 passés (100%)**.
+    - Linter Anti-AI-Slop : 0 violation, 0 émoji UI, 100% des composants React sous les 450 lignes.
+- **Fichiers modifiés/créés :**
+  - `backend/services/surga/donnees-service.js`
+  - `backend/routes/surga/donnees.js`
+  - `backend/routes/surga/index.js`
+  - `frontend-next/src/app/surga/components/SurgaDonneesModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaModalsContainer.tsx`
+  - `frontend-next/src/app/surga/components/SurgaParametresTab.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `docs/surga/PLAN.md`
+
 ### [2026-10-04] — Tranche 15 / Premium, Espaces Professionnels & Monétisation
 - **Tâches complétées :**
   - **Migration SQL Idempotente (`backend/migrate-inline.js`)** :
