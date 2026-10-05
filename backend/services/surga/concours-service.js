@@ -415,12 +415,13 @@ async function listerConcours(filtres = {}) {
       `;
 
       const res = await pool.query(sql, params);
-      const items = res.rows.map((row) => ({
-        ...row,
-        echeances: calculerEcheances(row),
-      }));
-
-      return { concours: items, total: items.length };
+      if (res.rows.length > 0 || q || (categorie && categorie !== 'tous')) {
+        const items = res.rows.map((row) => ({
+          ...row,
+          echeances: calculerEcheances(row),
+        }));
+        return { concours: items, total: items.length };
+      }
     } catch (err) {
       console.warn('[SurgaConcours] Erreur DB surga_concours, fallback mémoire:', err.message);
     }

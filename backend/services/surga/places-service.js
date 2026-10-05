@@ -403,7 +403,9 @@ async function rechercherPlaces(criteres = {}) {
       `;
 
       const res = await pool.query(sql, params);
-      return { places: res.rows, total: res.rows.length };
+      if (res.rows.length > 0 || q || (categorie && categorie !== 'tous') || quartier) {
+        return { places: res.rows, total: res.rows.length };
+      }
     } catch (err) {
       console.warn('[SurgaPlaces] Erreur DB surga_places, fallback mémoire:', err.message);
     }

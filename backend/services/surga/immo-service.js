@@ -326,7 +326,9 @@ async function rechercherBiensImmo(filtres = {}) {
       const sql = `
         SELECT ai.id, ai.titre, ai.description, ai.prix, ai.surface_m2, ai.nb_pieces, ai.nb_chambres,
                ai.type_bien, ai.transaction, ai.ville, ai.quartier, ai.meuble, ai.photos,
-               ai.contact_tel, ai.contact_whatsapp, ai.created_at,
+               COALESCE(ai.contact_tel, ag.telephone) AS contact_tel,
+               COALESCE(ag.whatsapp, ai.contact_tel) AS contact_whatsapp,
+               ai.created_at,
                ag.nom AS agence_nom, ag.slug AS agence_slug,
                (ai.photos IS NOT NULL AND jsonb_array_length(CASE WHEN jsonb_typeof(ai.photos) = 'array' THEN ai.photos ELSE '[]'::jsonb END) > 0) AS verifie
         FROM annonces_immo ai
@@ -402,7 +404,10 @@ async function recupererBienParId(id) {
   if (pool) {
     try {
       const res = await pool.query(
-        `SELECT ai.*, ag.nom AS agence_nom, ag.slug AS agence_slug, ag.contact_tel AS agence_tel
+        `SELECT ai.*, ag.nom AS agence_nom, ag.slug AS agence_slug,
+                COALESCE(ai.contact_tel, ag.telephone) AS contact_tel,
+                COALESCE(ag.whatsapp, ai.contact_tel) AS contact_whatsapp,
+                ag.telephone AS agence_tel
          FROM annonces_immo ai
          LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
          WHERE ai.id = $1 AND ${conditionImmoPubliable('ai')}`,
