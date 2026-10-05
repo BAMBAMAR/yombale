@@ -28,7 +28,7 @@ export interface PlaceItem {
   fourchette_prix: string
   tags_ambiance: string[]
   specialite: string
-  note_moyenne: number
+  note_moyenne: number | string
   nb_avis: number
   resume_honnete: string
   contact_tel?: string
@@ -168,7 +168,7 @@ export default function SurgaPlaceCard({
           >
             <Star size={12} fill="var(--accent, #C75B00)" color="var(--accent, #C75B00)" />
             <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>
-              {place.note_moyenne.toFixed(1)}
+              {Number(place.note_moyenne || 4.5).toFixed(1)}
             </span>
             <span style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>
               ({place.nb_avis})

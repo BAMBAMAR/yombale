@@ -48,6 +48,15 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Surga — Résolution du Crash d'Ouverture des Bons Plans & Normalisation Numérique PostgreSQL (Session 2026-10-05, branche `feature/surga`)** :
+  - *Cause Racine (`TypeError: place.note_moyenne.toFixed is not a function`)* : La colonne PostgreSQL `note_moyenne` est de type `NUMERIC(2,1)` dans la table `surga_places`. Par convention et pour éviter les pertes de précision, le pilote Node.js `pg` renvoie les colonnes `NUMERIC` sous forme de chaînes de caractères (`"4.8"`). L'appel direct de `.toFixed(1)` dans les composants React provoquait une exception non gérée, faisant crasher l'arborescence React via les Error Boundaries et empêchant l'ouverture de la modale des Bons plans (`SurgaPlacesModal`).
+  - *Normalisation Backend (`backend/services/surga/places-service.js`)* : Implémentation du normalisateur `normaliserPlaceRow(row)` avec conversion explicite `parseFloat(row.note_moyenne) || 4.5`, `parseInt(row.nb_avis, 10) || 0` et `parseInt(row.budget_moyen_xof, 10) || 0`. Appliqué systématiquement à `rechercherPlaces`, `recupererPlaceParId` et `listerFavorisPlaces`.
+  - *Défense en Profondeur Frontend* :
+    - `SurgaPlaceCard.tsx` : Typage assoupli `note_moyenne: number | string` et appel sécurisé `{Number(place.note_moyenne || 4.5).toFixed(1)}`.
+    - `SurgaPlacesDashboardCard.tsx` : Rendu sécurisé `{Number(placeDuJour.note_moyenne || 4.5).toFixed(1)}`.
+    - `SurgaPlaceDetailModal.tsx` : Rendu sécurisé `{Number(place.note_moyenne || 4.5).toFixed(1)} / 5`.
+  - *Validation* : API `GET /api/surga/places` validée (type `number`, valeur `4.8`), `npx tsc --noEmit` 0 erreur, linter Anti-AI-Slop 0 violation, composants < 450 lignes.
+
 - **Correctif Ergonomie, Anti-Troncature des Filtres & Réactivité Tactile de la Modale Météo (Session 2026-10-05, branche `feature/surga`)** :
   - *Éradication de l'Écrasement Vertical des Filtres (`SurgaMeteoLocaliteModal.tsx`)* : Ajout de `flexShrink: 0` sur l'ensemble des conteneurs fixes (GPS, barre de recherche, rangée des filtres par zone) et application de `minHeight: 0` sur le conteneur scrollable de la liste. Auparavant, le moteur Flexbox comprimait la barre de filtres à moins de 12px de hauteur dès que la liste dépassait la hauteur d'écran, tranchant les boutons en deux et les rendant impossibles à cliquer.
   - *Calibrage des Boutons de Filtres* : Hauteur fixe garantie (28px), `inline-flex` centré, padding calibré et isolation tactile `touchAction: 'manipulation'` sur chaque pilule de zone.

@@ -110,7 +110,7 @@ export default function SurgaPlacesDashboardCard({
             <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Star size={12} fill="var(--accent, #C75B00)" color="var(--accent, #C75B00)" />
               <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>
-                {placeDuJour.note_moyenne.toFixed(1)}
+                {Number(placeDuJour.note_moyenne || 4.5).toFixed(1)}
               </span>
             </div>
           </div>

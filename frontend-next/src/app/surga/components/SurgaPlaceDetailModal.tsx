@@ -206,7 +206,7 @@ export default function SurgaPlaceDetailModal({
               >
                 <Star size={14} fill="var(--accent, #C75B00)" color="var(--accent, #C75B00)" />
                 <strong style={{ fontSize: 13, color: 'var(--accent, #C75B00)' }}>
-                  {place.note_moyenne.toFixed(1)} / 5
+                  {Number(place.note_moyenne || 4.5).toFixed(1)} / 5
                 </strong>
                 <span style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
                   ({place.nb_avis} avis certifiés)

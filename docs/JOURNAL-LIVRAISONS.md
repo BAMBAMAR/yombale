@@ -1,5 +1,14 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Résolution du Crash d'Ouverture des Bons Plans & Normalisation Numérique PostgreSQL (05 octobre 2026, branche `feature/surga`)** :
+  * **Cause Racine (`TypeError: place.note_moyenne.toFixed is not a function`)** : Le champ `note_moyenne` est stocké sous forme de type SQL `NUMERIC(2,1)` dans PostgreSQL (`surga_places`). Le driver Node `pg` retourne les types `NUMERIC` sous forme de `string` (ex: `"4.8"`). L'appel direct `.toFixed(1)` dans les cartes React provoquait un crash d'exécution bloquant l'affichage et l'ouverture de la modale des Bons plans (`SurgaPlacesModal`).
+  * **Normalisation Backend (`backend/services/surga/places-service.js`)** : Ajout du helper de normalisation `normaliserPlaceRow` avec `parseFloat(row.note_moyenne) || 4.5`, `parseInt(row.nb_avis, 10) || 0`, `parseInt(row.budget_moyen_xof, 10) || 0`, appliqué à l'ensemble des routes (`rechercherPlaces`, `recupererPlaceParId`, `listerFavorisPlaces`).
+  * **Sécurisation Frontend Multi-Composants** :
+    - `SurgaPlaceCard.tsx` : Assouplissement du typage `note_moyenne: number | string` et rendu défensif `{Number(place.note_moyenne || 4.5).toFixed(1)}`.
+    - `SurgaPlacesDashboardCard.tsx` : Rendu défensif `{Number(placeDuJour.note_moyenne || 4.5).toFixed(1)}`.
+    - `SurgaPlaceDetailModal.tsx` : Rendu défensif `{Number(place.note_moyenne || 4.5).toFixed(1)} / 5`.
+  * **Validation & Conformité** : Test de réponse API `GET /api/surga/places` validé (type `number`, note `4.8`), `npx tsc --noEmit` 0 erreur, linter Anti-AI-Slop 0 violation, composants < 450 lignes.
+
 - **Surga — Correctif Ergonomie, Anti-Troncature des Filtres & Réactivité Tactile de la Modale Météo (05 octobre 2026, branche `feature/surga`)** :
   * **Éradication de l'Écrasement Vertical des Filtres (`SurgaMeteoLocaliteModal.tsx`)** : Ajout de `flexShrink: 0` sur l'ensemble des conteneurs fixes (GPS, barre de recherche, rangée des filtres par zone) et application de `minHeight: 0` sur le conteneur scrollable de la liste. Auparavant, le moteur Flexbox comprimait la barre de filtres à moins de 12px de hauteur dès que la liste dépassait la hauteur d'écran, tranchant les boutons en deux et les rendant impossibles à cliquer.
   * **Calibrage des Boutons de Filtres** : Hauteur fixe garantie (28px), `inline-flex` centré, padding calibré et isolation tactile `touchAction: 'manipulation'` sur chaque pilule de zone.

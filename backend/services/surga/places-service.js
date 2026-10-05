@@ -353,6 +353,21 @@ function parserRecherchePlacesNaturelle(texte = '') {
 }
 
 /**
+ * Normalise les types numériques d'une ligne SQL de surga_places
+ * @param {Object} row
+ * @returns {Object|null}
+ */
+function normaliserPlaceRow(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    note_moyenne: parseFloat(row.note_moyenne) || 4.5,
+    nb_avis: parseInt(row.nb_avis, 10) || 0,
+    budget_moyen_xof: parseInt(row.budget_moyen_xof, 10) || 0,
+  };
+}
+
+/**
  * Rechercher des adresses avec filtres et score de pertinence
  * @param {Object} criteres
  * @returns {Promise<{ places: Array, total: number }>}
@@ -404,7 +419,7 @@ async function rechercherPlaces(criteres = {}) {
 
       const res = await pool.query(sql, params);
       if (res.rows.length > 0 || q || (categorie && categorie !== 'tous') || quartier) {
-        return { places: res.rows, total: res.rows.length };
+        return { places: res.rows.map(normaliserPlaceRow), total: res.rows.length };
       }
     } catch (err) {
       console.warn('[SurgaPlaces] Erreur DB surga_places, fallback mémoire:', err.message);
@@ -456,7 +471,7 @@ async function recupererPlaceParId(id) {
   if (pool) {
     try {
       const res = await pool.query(`SELECT * FROM surga_places WHERE id = $1`, [id]);
-      if (res.rows.length > 0) return res.rows[0];
+      if (res.rows.length > 0) return normaliserPlaceRow(res.rows[0]);
     } catch (e) {}
   }
 
@@ -513,7 +528,7 @@ async function listerFavorisPlaces(userId) {
          ORDER BY f.created_at DESC`,
         [userId]
       );
-      return res.rows;
+      return res.rows.map(normaliserPlaceRow);
     } catch (e) {}
   }
 

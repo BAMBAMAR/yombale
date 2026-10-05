@@ -2,7 +2,7 @@
 
 > **Dernière mise à jour** : 05 Octobre 2026  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 16 + Sama Xaalis + Météo GPS Multi-Quartiers + Kiosque + Console Admin)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 16 + Sama Xaalis + Météo GPS Multi-Quartiers + Kiosque + Bons Plans Fiabilisés + Console Admin)**  
 > **Auteur** : Antigravity (Assistant AI Senior)
 
 ---
@@ -23,7 +23,7 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
      - Algorithme de résolution strict à deux passes dans `meteo-service.js` (priorité absolue aux quartiers spécifiques comme "Dakar Plateau", "Grand Dakar" ou "Ouakam" avant la ville générique "Dakar").
      - Détection GPS automatique du quartier le plus proche via `navigator.geolocation` et calcul déterministe des marées océaniques pour le littoral.
    - **Commandes WhatsApp & Vocal Web Speech** : Commandes précises (quotas 20/jour, confirmation stricte OUI/NON), reconnaissance vocale bilingue avec normalisation orale déterministe.
-   - **Services Quotidiens Locaux** : Trafic Dakar en direct (TomTom Live + corridors clés), pôle immobilier certifié Dakar (< 2 min), concours & examens nationaux (J-30/J-7/J-1) et bonnes adresses dakaroises avec avis honnêtes.
+   - **Services Quotidiens Locaux** : Trafic Dakar en direct (TomTom Live + corridors clés), pôle immobilier certifié Dakar (< 2 min), concours & examens nationaux (J-30/J-7/J-1) et bonnes adresses dakaroises avec avis honnêtes fiabilisées (normalisation numérique PostgreSQL et protection anti-crash `.toFixed`).
    - **Audio Low-Data & Radios FM** : Synthèse locale gratuite (0 Mo de data) et radios locales en direct (RTS, Sud FM, etc.).
 
 2. **Console d'Administration Dynamique (`/admin/surga` — 100% DONE)** :
@@ -56,6 +56,7 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
 | Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (445 l.), `SurgaMeteoLocaliteModal.tsx` (338 l.) |
 | Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx`, `SurgaSportCustomModal.tsx` |
 | Revue de Presse & Kiosque | `src/app/surga/components/SurgaPresseCard.tsx` (carrousel horizontal) |
+| Bons plans & Adresses | `src/app/surga/components/SurgaPlaceCard.tsx` (335 l.), `SurgaPlaceDetailModal.tsx` (393 l.), `SurgaPlacesModal.tsx` (373 l.) |
 | Briques & Vues Surga | `src/app/surga/components/Surga*.tsx` (tous < 450 l.) |
 | Console d'Administration | `src/app/admin/(protected)/surga/page.tsx`, `AdminSurgaClient.tsx`, sous-composants `Admin*Tab.tsx` |
 | Synchronisation & Hors-ligne | `src/lib/surga-offline-sync.ts`, `src/lib/surga-reminders.ts`, `src/lib/surga-voice.ts` |

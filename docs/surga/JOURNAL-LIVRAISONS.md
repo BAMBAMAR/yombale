@@ -3,6 +3,28 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 3] — Résolution du Crash d'Ouverture des Bons Plans & Normalisation Numérique PostgreSQL
+- **Tâches complétées :**
+  - **Diagnostic & Cause Racine (`TypeError: place.note_moyenne.toFixed is not a function`)** :
+    - Le driver Node `pg` retourne les colonnes PostgreSQL `NUMERIC` (`surga_places.note_moyenne NUMERIC(2,1)`) sous forme de `string` ("4.8").
+    - L'exécution de `place.note_moyenne.toFixed(1)` dans `SurgaPlaceCard.tsx` provoquait une exception TypeScript/JS au rendu, déclenchant le crash de l'Error Boundary et empêchant l'ouverture de la modale des Bons plans (`SurgaPlacesModal`).
+  - **Normalisation Backend (`backend/services/surga/places-service.js`)** :
+    - Ajout du helper `normaliserPlaceRow(row)` convertissant explicitement `parseFloat(row.note_moyenne) || 4.5`, `parseInt(row.nb_avis, 10) || 0`, `parseInt(row.budget_moyen_xof, 10) || 0`.
+    - Normalisation appliquée aux retours de `rechercherPlaces`, `recupererPlaceParId` et `listerFavorisPlaces`.
+  - **Sécurisation Multi-Composants Frontend** :
+    - `SurgaPlaceCard.tsx` : Typage assoupli `note_moyenne: number | string` et rendu défensif `{Number(place.note_moyenne || 4.5).toFixed(1)}`.
+    - `SurgaPlacesDashboardCard.tsx` : Rendu sécurisé `{Number(placeDuJour.note_moyenne || 4.5).toFixed(1)}`.
+    - `SurgaPlaceDetailModal.tsx` : Rendu sécurisé `{Number(place.note_moyenne || 4.5).toFixed(1)} / 5`.
+- **Fichiers modifiés :**
+  - `backend/services/surga/places-service.js`
+  - `frontend-next/src/app/surga/components/SurgaPlaceCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPlaceDetailModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPlacesDashboardCard.tsx`
+- **Validation :**
+  - Appel API `GET /api/surga/places` : `note_moyenne` confirmée de type `number` (`4.8`).
+  - `npx tsc --noEmit` 0 erreur.
+  - Linter anti-slop 0 violation, composants < 450 lignes.
+
 ### [2026-10-05 — Soir 2] — Correctif Ergonomie, Anti-Troncature des Filtres & Réactivité Tactile de la Modale Météo
 - **Tâches complétées :**
   - **Éradication de l'Écrasement Vertical des Filtres (`SurgaMeteoLocaliteModal.tsx`)** :
