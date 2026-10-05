@@ -43,6 +43,23 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Sélection de Localité & Géolocalisation GPS dans la Carte Météo & Marées Surga (Session 2026-10-05, branche `feature/surga`)** :
+  - **Sélecteur de Localité Multi-Quartiers & Régions du Sénégal** :
+    - *Catalogue exhaustif de 23 localités* : 8 quartiers stratégiques de Dakar (Plateau, Almadies / Ngor, Ouakam / Mamelles, Yoff / Ouest-Foire, Mermoz / Sacré-Cœur, Parcelles Assainies, Grand Dakar / Colobane), 4 communes de la banlieue dakaroise (Pikine, Guédiawaye, Rufisque, Diamniadio) et 11 villes régionales (Thiès, Mbour / Saly, Saint-Louis, Ziguinchor, Cap Skirring, Touba, Kaolack, Fatick, Tambacounda, Kolda, Matam).
+    - *Modale Modulaire Autonome (`SurgaMeteoLocaliteModal.tsx`, 321 l. < 450 l.)* : Sélecteur épuré avec champ de recherche textuel instantané, filtres par zone en pilules rapides (Dakar, Banlieue, Régions, Petite-Côte, Casamance, Fouta, Bassin Arachidier) et liste des localités avec indicateur visuel de la sélection active (`Check`).
+  - **Géolocalisation GPS Directe & Détection Intelligente du Plus Proche Quartier** :
+    - *Bouton 1-clic « Utiliser ma position GPS actuelle »* : Déclenchement via `navigator.geolocation.getCurrentPosition` directement depuis l'en-tête de la carte météo ou depuis la modale, avec animation de chargement discrète (`Loader2`).
+    - *Algorithme de Plus Proche Voisin (`trouverLocalitePlusProche`)* : Détermine instantanément le quartier ou la commune correspondante aux coordonnées GPS de l'utilisateur pour afficher un libellé humain et pertinent (ex: « Almadies / Ngor » ou « Dakar Plateau ») avec le badge visuel `GPS direct`.
+    - *Interrogation Météo Précise (`Open-Meteo GPS Live`)* : Appel de haute précision aux coordonnées GPS exactes avec mise en cache mémoire 20 minutes et calcul déterministe des marées dakariliennes si la zone est maritime.
+    - *Persistance LocalStorage* : Sauvegarde automatique de la préférence utilisateur (`surga_meteo_gps` et `surga_meteo_ville`) pour que la météo reste personnalisée à chaque visite.
+  - **Modularisation & Règle des 450 Lignes** :
+    - Découpage strict entre la carte météo (`SurgaMeteoCard.tsx`, 442 l.) et la modale de sélection (`SurgaMeteoLocaliteModal.tsx`, 321 l.).
+    - Zéro émoji UI (icônes vectorielles SVG `lucide-react` : `MapPin`, `LocateFixed`, `ChevronDown`, `Search`, `Compass`, `Waves`, `Check`, etc.).
+  - **Validation & Qualité** :
+    - 98/98 tests unitaires Jest passés avec succès (`tests/unit/surga.test.js`).
+    - `npx tsc --noEmit` avec 0 erreur TypeScript.
+    - Linter anti-slop validé (`npm run lint:slop`).
+
 - **Refonte Complète des Modules Notes & Agenda dans Surga (Session 2026-10-05, branche `feature/surga`)** :
   - **Module Notes Réinventé (Productivité & Organisation Quotidienne)** :
     - *Support Intégral des Checklists / To-Do Lists* : Bascule en un clic entre note de texte libre et checklist interactive. Les éléments peuvent être cochés/décochés directement depuis la liste des notes, avec calcul en temps réel du pourcentage d'avancement et barre de progression visuelle.
