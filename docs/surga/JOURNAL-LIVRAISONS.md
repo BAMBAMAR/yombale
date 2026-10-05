@@ -3,6 +3,25 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 16] — En-tête Cliquable & Navigation Retour sur les Vues Internes
+- **Demande Utilisateur :** « non cliquable » avec capture d'écran sur l'en-tête de `Sama Xaalis`.
+- **Tâches complétées :**
+  - **Diagnostic d'Interactivité de l'En-tête** :
+    - Mise en évidence de l'absence totale de gestionnaire d'événement de clic et de curseur interactif sur `.surga-header-brand` dans `SurgaHeader.tsx`.
+    - Impossibilité pour l'utilisateur de retourner vers l'accueil en cliquant sur la marque/titre ou via un bouton dédié depuis les vues internes (`Sama Xaalis`, `Notes`, `Agenda`, `Paramètres`).
+  - **Restauration de la Cliquabilité & Bouton Retour Dédié** :
+    - `frontend-next/src/app/surga/components/SurgaHeader.tsx` : Ajout des props `onRetour?: () => void` et `afficherRetour?: boolean`.
+    - Bouton squircle discret `<ChevronLeft size={18} strokeWidth={2.5} />` inséré automatiquement en tête de marque lorsque `afficherRetour` est actif.
+    - Cliquabilité globale (`cursor: pointer`, `role="button"`, accessibilité clavier `Enter` / `Space`) sur l'ensemble du bloc de marque (Logo S + Titre + Date) déclenchant le retour immédiat à l'accueil `Aujourd'hui` (ou scroll fluide en haut de page si déjà sur l'accueil).
+    - `frontend-next/src/app/surga/page.tsx` : Raccordement automatique `afficherRetour={activeTab !== 'aujourdhui'}` et `onRetour={() => setActiveTab('aujourdhui')}`. Modularité < 450 lignes rigoureusement préservée (449 l.).
+  - **Validation Playwright Mobile** :
+    - Vérification du curseur `pointer` et de la bascule d'état vers `SURGA` au clic.
+    - `tsc --noEmit` : 0 erreur, `lint:slop` 100% conforme.
+- **Fichiers modifiés :**
+  - `frontend-next/src/app/surga/components/SurgaHeader.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `CLAUDE.md`, `docs/JOURNAL-LIVRAISONS.md`, `docs/surga/JOURNAL-LIVRAISONS.md`, `docs/surga/HANDOVER.md`, `docs/surga/PLAN.md`
+
 ### [2026-10-05 — Soir 15] — Résolution de l'Incohérence Sama Xaalis (Tableau de Bord vs Vue Portefeuille)
 - **Demande Utilisateur :** « incoherence » avec captures d'écran montrant la tuile du tableau de bord à `0 FCFA • Suivi entrées & dépenses` contre un solde réel de `102 778 FCFA` dans la vue Sama Xaalis.
 - **Tâches complétées :**

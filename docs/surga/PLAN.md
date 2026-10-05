@@ -334,6 +334,13 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Prise en compte des clés `surga_kalpe_*` dans l'export et la purge locale de `SurgaDonneesModal.tsx`.
 - [x] `DONE` Validation automatisée Playwright confirmant le rendu mobile exact `102 778 FCFA • Suivi entrées & dépenses`, `tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 
+### Tranche 27 — En-tête Cliquable & Navigation Retour sur les Vues Internes (05 Octobre 2026 - Soir 16)
+- [x] `DONE` Ajout des props `onRetour` et `afficherRetour` dans `SurgaHeader.tsx`.
+- [x] `DONE` Bouton retour `<ChevronLeft />` squircle intégré élégamment à gauche du logo lors de la navigation dans les vues secondaires (`Sama Xaalis`, `Notes`, `Agenda`, `Paramètres`).
+- [x] `DONE` Raccordement de la cliquabilité (`cursor: pointer`, `role="button"`) sur tout le bloc de marque pour retour immédiat à l'accueil `Aujourd'hui`.
+- [x] `DONE` Raccordement dans `page.tsx` avec `afficherRetour={activeTab !== 'aujourdhui'}` et `onRetour={() => setActiveTab('aujourdhui')}` (449 lignes, < 450 l.).
+- [x] `DONE` Validation par test automatisé Playwright mobile vérifiant le curseur et la bascule d'état au clic.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

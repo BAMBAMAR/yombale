@@ -49,6 +49,14 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — En-tête Cliquable & Bouton Retour sur les Vues Internes (`Sama Xaalis`, `Notes`, `Agenda`, etc.) (Session 2026-10-05 - Suite 7)** :
+  - *Demande Utilisateur* : Signalement d'inactivité de l'en-tête (« non cliquable ») avec capture d'écran sur `Sama Xaalis`.
+  - *Cause Racine* : `SurgaHeader.tsx` était un conteneur statique dépourvu d'interactivité : aucun `onClick`, aucun curseur pointer, aucune prop de retour ni bouton de retour (`←`) pour revenir au tableau de bord d'accueil depuis les vues secondaires.
+  - *Correctifs Appliqués* :
+    - `frontend-next/src/app/surga/components/SurgaHeader.tsx` : Ajout des props `onRetour?: () => void` et `afficherRetour?: boolean`. Intégration d'un bouton de retour élégant `<ChevronLeft />` au design épuré en tête de marque, gestion de l'accessibilité clavier (`Enter`, `Space`) et `cursor: pointer` sur l'ensemble de la zone de marque (Logo S + Titre + Date) pour déclencher le retour à l'accueil ou le scroll en haut de page.
+    - `frontend-next/src/app/surga/page.tsx` : Transmission de `afficherRetour={activeTab !== 'aujourdhui'}` et `onRetour={() => setActiveTab('aujourdhui')}`. Maintien strict de la modularité à 449 lignes (< 450 l.).
+  - *Validation par Test Playwright Mobile* : Détection du curseur `pointer`, clic sur l'en-tête `Sama Xaalis` validé avec bascule instantanée vers l'écran d'accueil `SURGA`. Tests `tsc --noEmit` et `lint:slop` 100% au vert.
+
 - **Surga — Résolution de l'Incohérence Sama Xaalis (Tableau de Bord vs Vue Portefeuille) (Session 2026-10-05 - Suite 6)** :
   - *Demande Utilisateur* : Signalement d'incohérence (« incoherence ») avec captures d'écran : la tuile du tableau de bord affichait `0 FCFA • Suivi entrées & dépenses` alors que la vue portefeuille Sama Xaalis affichait un solde disponible de `102 778 FCFA` (entrées du mois : `+150 000 F`, dépenses du mois : `-47 222 F`).
   - *Cause Racine* :

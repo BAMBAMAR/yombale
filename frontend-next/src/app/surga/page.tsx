@@ -259,10 +259,10 @@ export default function SurgaPage() {
   return (
     <>
       <SurgaHeader
-        titre={
-          activeTab === 'notes' ? 'Mes Notes' : activeTab === 'depenses' ? 'Sama Xaalis' : activeTab === 'agenda' ? 'Mon Agenda' : activeTab === 'plus' ? 'Paramètres' : 'Surga'
-        }
+        titre={activeTab === 'notes' ? 'Mes Notes' : activeTab === 'depenses' ? 'Sama Xaalis' : activeTab === 'agenda' ? 'Mon Agenda' : activeTab === 'plus' ? 'Paramètres' : 'Surga'}
         sousTitre={activeTab === 'aujourdhui' ? briefingData?.date : undefined}
+        afficherRetour={activeTab !== 'aujourdhui'}
+        onRetour={() => setActiveTab('aujourdhui')}
       />
 
       <div className="surga-container">
