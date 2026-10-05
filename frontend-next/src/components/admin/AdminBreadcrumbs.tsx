@@ -7,6 +7,7 @@ import { ChevronRight, Home } from 'lucide-react'
 // Mappage des segments d'URL vers des libellés conviviaux
 const SEGMENT_LABELS: Record<string, string> = {
   admin: 'Administration',
+  surga: 'Surga Control Center',
   boutiques: 'Boutiques',
   produits: 'Produits Marchands',
   commandes: 'Commandes Web',

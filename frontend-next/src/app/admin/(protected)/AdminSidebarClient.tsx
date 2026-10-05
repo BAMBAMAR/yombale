@@ -76,6 +76,7 @@ const DOMAINS: DomainSection[] = [
     title: 'Pilotage & Direction',
     items: [
       { href: '/admin', label: 'Dashboard Métier', icon: <LayoutDashboard size={15} /> },
+      { href: '/admin/surga', label: 'Surga Control Center', icon: <Sparkles size={15} />, highlight: '#C75B00', badge: 'IA' },
       { href: '/admin/system', label: 'Santé Système & Exports', icon: <Server size={15} /> },
     ],
   },

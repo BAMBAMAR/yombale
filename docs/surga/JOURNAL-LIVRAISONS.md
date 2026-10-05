@@ -3,6 +3,19 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 10] — Ergonomie & Visibilité Directe de Surga Control Center dans l'Admin
+- **Tâches complétées :**
+  - **Constat Utilisateur** : Après connexion sur `/admin/login`, l'administrateur atterrissait sur le dashboard général Nopalou (`/admin`) sans apercevoir immédiatement le module Surga, celui-ci étant masqué dans l'accordéon fermé « Contenu & Modération ».
+  - **Mise en Avant dans la Navigation & Dashboard** :
+    - Déplacement et mise en avant de **Surga Control Center** (`/admin/surga`) dans le groupe prioritaire « Pilotage & Direction » de la barre latérale gauche ([AdminSidebarClient.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/admin/%28protected%29/AdminSidebarClient.tsx)), ouvert en permanence.
+    - Création d'une bannière raccourci dédiée sur le Dashboard Métier principal ([AdminDashboardClient.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/admin/%28protected%29/AdminDashboardClient.tsx)) avec icône `Sparkles` et bouton direct « Ouvrir Surga Admin ».
+    - Ajout du label « Surga Control Center » dans le fil d'Ariane de navigation ([AdminBreadcrumbs.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/components/admin/AdminBreadcrumbs.tsx)).
+  - **Fichiers modifiés :**
+    - `frontend-next/src/app/admin/(protected)/AdminSidebarClient.tsx`
+    - `frontend-next/src/app/admin/(protected)/AdminDashboardClient.tsx`
+    - `frontend-next/src/components/admin/AdminBreadcrumbs.tsx`
+  - **Validation :** `npx tsc --noEmit` zéro erreur, `http://localhost:3001/admin/surga` validé en HTTP 200.
+
 ### [2026-10-05 — Soir 9] — Passerelles Transversales Dynamiques, États Actifs/Inactifs Persistants & Bascule Bidirectionnelle
 - **Tâches complétées :**
   - **Exigence & Volonté Utilisateur** :

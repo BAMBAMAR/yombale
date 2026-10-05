@@ -49,6 +49,14 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga Console d'Administration — Visibilité Immédiate & Accès 1-Clic (Session 2026-10-05 - Suite)** :
+  - *Demande Utilisateur* : L'utilisateur demandait comment accéder à la page admin de Surga et atterrissait sur le dashboard général `/admin` sans lien direct évident.
+  - *Réalisations* :
+    - Intégration de **Surga Control Center** directement dans le domaine « Pilotage & Direction » de la barre latérale gauche ([AdminSidebarClient.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/admin/%28protected%29/AdminSidebarClient.tsx)), section ouverte par défaut.
+    - Ajout d'une carte bannière d'accès rapide direct sur le Dashboard Métier principal ([AdminDashboardClient.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/admin/%28protected%29/AdminDashboardClient.tsx)) avec bouton « Ouvrir Surga Admin ».
+    - Fil d'Ariane enrichi avec libellé dédié « Surga Control Center » ([AdminBreadcrumbs.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/components/admin/AdminBreadcrumbs.tsx)).
+    - Vérification et validation de la route `http://localhost:3001/admin/surga` servant le code HTTP 200.
+
 - **Surga Passerelles Transversales Dynamiques, États Actifs/Inactifs Persistants & Bascule Bidirectionnelle (Session 2026-10-05 - Suite)** :
   - *Demande Utilisateur* : L'utilisateur ne voulait pas de simples boutons d'action statiques (« one-shot »), mais de véritables relations vivantes et dynamiques : les boutons doivent refléter l'état actif/inactif (ex: le bouton "Rappel match" passe à "Rappelé ✓" avec style actif et reste actif lors de la navigation), et un nouveau clic doit basculer et désactiver la relation (supprimer de l'Agenda, Sama Xaalis ou Notes).
   - *Architecture & Réalisations Livrées* :

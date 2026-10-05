@@ -46,6 +46,7 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
 2. **Console d'Administration Dynamique (`/admin/surga` — 100% DONE)** :
    - Routeur backend `backend/routes/admin-surga.js` avec RBAC (`requireAdminAuth`, `requireAdminRole`) et journalisation d'audit.
    - Interface d'administration `frontend-next/src/app/admin/(protected)/surga/` avec 4 cartes KPI et 5 onglets de gestion dynamique (Adresses, Concours, Unes de presse, Modération trafic, Abonnements & MRR).
+   - **Accès Direct & Ergonomie Renforcée** : Intégration de Surga dans le groupe « Pilotage & Direction » de la barre latérale gauche (toujours déplié), et bannière d'accès direct sur le Dashboard Métier `/admin`.
 
 3. **Monétisation & RGPD (100% DONE)** :
    - Table `surga_abonnements`, facturation Wave & Orange Money (Surga Premium 1 500 FCFA/mois ou 15 000 FCFA/an ; formules B2B).

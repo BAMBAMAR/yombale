@@ -256,6 +256,7 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Événement personnalisé réactif `surga-data-change` intégré nativement dans `frontend-next/src/lib/surga-offline-sync.ts` déclenché à chaque écriture/suppression locale.
 - [x] `DONE` Synchronisation cross-composants instantanée sans rafraîchissement ni prop drilling : la suppression d'un match ou d'une note dans l'Agenda/Notes/Sama Xaalis remet automatiquement le bouton de la carte ou modale à l'état inactif.
 - [x] `DONE` Persistance locale `localStorage` : l'état actif des boutons persiste lors de la navigation dans les onglets, la fermeture des modales ou le rechargement de page.
+- [x] `DONE` Visibilité directe de Surga Control Center (`/admin/surga`) dans la console d'administration : groupe « Pilotage & Direction » de la sidebar et bannière d'accès direct sur `/admin`.
 - [x] `DONE` Respect strict des contraintes qualité : 100% des composants React sous 450 lignes, 0 régression, 99/99 tests Jest backend validés, 97/97 tests `frontend-next` validés, `npx tsc --noEmit` 0 erreur.
 
 ---

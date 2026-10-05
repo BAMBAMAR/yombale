@@ -1,5 +1,14 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga Console d'Administration — Visibilité Immédiate & Accès 1-Clic (Session 2026-10-05 - Suite, branche `feature/surga`)** :
+  * **Demande Utilisateur & Constat** :
+    - L'utilisateur s'est connecté à l'administration mais est arrivé sur le dashboard général Nopalou (`/admin`) sans repérer facilement la section Surga, celle-ci étant logée dans l'accordéon « Contenu & Modération » fermé par défaut.
+  * **Améliorations d'Ergonomie & Accessibilité Apportées** :
+    - **Barre Latérale Gauche (`AdminSidebarClient.tsx`)** : Ajout de **Surga Control Center** (`/admin/surga`) directement dans le groupe prioritaire « Pilotage & Direction », ouvert en permanence dès la connexion.
+    - **Dashboard Métier Principal (`AdminDashboardClient.tsx`)** : Insertion d'un bandeau d'accès rapide dédié aux couleurs de Surga (fond crème/orange, icône Sparkles, descriptif des modules et bouton d'action direct « Ouvrir Surga Admin »).
+    - **Fil d'Ariane (`AdminBreadcrumbs.tsx`)** : Mapping du segment `/surga` vers `Surga Control Center`.
+    - **Disponibilité & Santé** : Route `http://localhost:3001/admin/surga` vérifiée et active en HTTP 200.
+
 - **Surga Passerelles Transversales Dynamiques, États Actifs/Inactifs Persistants & Bascule Bidirectionnelle (Session 2026-10-05 - Suite, branche `feature/surga`)** :
   * **Demande Utilisateur & Objectif** :
     - L'utilisateur a précisé son exigence d'une vraie dynamique relationnelle : « je ne veux pas seulement de bouton, il faut de vraies relations et que ce soit réellement dynamique. Les boutons doivent changer d'état actif/désactivé : quand je clique dans rappel match, ça doit rester actif ».
