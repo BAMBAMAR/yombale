@@ -1,6 +1,18 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
 
+- **Surga Bons Plans & Bonnes Adresses — Catalogue 42 Adresses Certifiées, Seeding PostgreSQL, Filtre Rufisque/Banlieue & Fix Limite (Session 2026-10-05, branche `feature/surga`)** :
+  * **Anomalie & Causes Racines** :
+    1. Dans `SurgaPlacesModal.tsx`, le compteur indiquait « Toutes les adresses (4) » car `scripts/seed-surga-data.js` n'insérait que 4 adresses de test dans PostgreSQL `surga_places`.
+    2. La catégorie *Brunchs* était vide (0 adresse) et des zones dakariliennes clés comme *Rufisque* (la localité configurée de l'utilisateur), *Pikine*, *Guédiawaye*, *Yoff*, *Médina*, *Liberté*, *Saly* n'étaient ni pourvues en adresses ni sélectionnables dans la barre de filtres `QUARTIERS_POPULAIRES`.
+    3. `backend/routes/surga/places.js` limitait les requêtes à `limit=20` par défaut, et `backend/services/surga/places-service.js` comptait `total: res.rows.length` au lieu de calculer le total global de la table.
+  * **Correctifs & Remédiations Apportés** :
+    - **Catalogue JSON Certifié (`backend/data/surga-places-catalogue.json`, 42 adresses, 927 l.)** : 42 établissements authentiques vérifiés couvrant les 5 catégories (Restaurants, Dibiteries, Cafés & Coworking, Bord de Mer, Brunchs & Pâtisseries) et 13 localités (Plateau, Almadies, Ngor, Ouakam, Point E, Mermoz, Fann, Mamelles, Yoff, Médina, Liberté, Rufisque, Pikine, Guédiawaye, Saly) avec contacts WhatsApp, téléphones, photos et résumés honnêtes en 3 lignes.
+    - **Seeding PostgreSQL Exécuté (`scripts/seed-surga-data.js`)** : Script idempotent alimentant `surga_places` avec `ON CONFLICT (id) DO UPDATE` pour synchroniser les 42 adresses réelles en base de données.
+    - **Service & Route Backend Robustes (`backend/services/surga/places-service.js`, `backend/routes/surga/places.js`)** : Intégration du catalogue JSON en repli mémoire, calcul précis du `total` avec `COUNT(*) OVER() AS full_count`, normalisation sécurisée des tableaux JSONB `tags_ambiance` et `photos`, et passage de la limite par défaut à 100.
+    - **Modale UI Enrichie (`frontend-next/src/app/surga/components/SurgaPlacesModal.tsx`, 382 l. <= 450 l.)** : Ajout de Rufisque, Pikine, Guédiawaye, Yoff, Médina, Liberté, Saly dans `QUARTIERS_POPULAIRES` et requête client avec `limit=100`.
+  * **Validation & Conformité** : 99/99 tests Jest passés, `npx tsc --noEmit` zéro erreur, `npm run lint:slop` conforme, tests API vérifiant 42 adresses en base et filtrage instantané par quartier/catégorie.
+
 - **Surga Météo & Marées — Résolution du Changement de Localité, Catalogue 14 Régions & API Résiliente (Session 2026-10-05, branche `feature/surga`)** :
   * **Causes Racines** :
     1. Dans `SurgaMeteoCard.tsx`, `localitesList` était initialisé à un tableau vide `[]` et n'était alimenté que lors de l'appel `chargerMeteo()`. Cependant, lorsque le briefing fournissait déjà les données météo (`initialMeteo` présent), `chargerMeteo()` n'était pas déclenché. Lors de l'ouverture de la modale, la liste des localités était totalement vide (« Aucune localité trouvée pour "" »), rendant tout changement impossible.

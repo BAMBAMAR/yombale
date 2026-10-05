@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 4)  
+> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 5)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions & API Résiliente + Kiosque + Bons Plans + Console Admin)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses & Seeding PostgreSQL + Kiosque + Console Admin)**  
 > **Auteur** : Antigravity (Assistant AI Senior)
 
 ---
@@ -24,8 +24,13 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
      - Modale dédiée (`SurgaMeteoLocaliteModal.tsx`, 382 l.) avec fallback catalogue automatique immédiat, recherche insensible aux accents et détection de sélection fiabilisée.
      - Carte Météo modulaire (`SurgaMeteoCard.tsx`, 412 l. et `SurgaMeteoPrevisions.tsx`, 101 l.), bouton d'accès rapide « Changer », synchronisation `onVilleChange` avec les préférences du briefing et fallback hors-ligne gracieux.
      - Algorithme de résolution strict à deux passes dans `meteo-service.js` et détection GPS automatique du quartier le plus proche via `navigator.geolocation`.
+   - **Bons Plans & Bonnes Adresses à Dakar (Catalogue 42 Adresses & Seeding PostgreSQL)** :
+     - Catalogue certifié complet (`backend/data/surga-places-catalogue.json`, 42 établissements authentiques, 927 l.) couvrant les 5 catégories (Restaurants, Dibiteries, Cafés & Coworking, Bord de Mer, Brunchs & Pâtisseries) et 13 quartiers/villes (Plateau, Almadies, Ngor, Ouakam, Point E, Mermoz, Fann, Mamelles, Yoff, Médina, Liberté, Rufisque, Pikine, Guédiawaye, Saly).
+     - Seeding PostgreSQL exécuté (`scripts/seed-surga-data.js`) : 42 adresses synchronisées en base `surga_places` avec téléphones, WhatsApp, budgets FCFA réalistes et résumés honnêtes d'avis clients en 3 lignes.
+     - Service backend enrichi avec repli JSON mémoire, calcul exact `COUNT(*) OVER() AS full_count`, normalisation sécurisée des JSONB et `limit=100` par défaut.
+     - Modale UI (`SurgaPlacesModal.tsx`, 382 l. <= 450 l.) avec filtres complets par quartier (Rufisque, Pikine, Guédiawaye...) et affichage exhaustif sans troncature.
    - **Commandes WhatsApp & Vocal Web Speech** : Commandes précises (quotas 20/jour, confirmation stricte OUI/NON), reconnaissance vocale bilingue avec normalisation orale déterministe.
-   - **Services Quotidiens Locaux** : Trafic Dakar en direct (TomTom Live + corridors clés), pôle immobilier certifié Dakar (< 2 min), concours & examens nationaux (J-30/J-7/J-1) et bonnes adresses dakaroises avec avis honnêtes fiabilisées (normalisation numérique PostgreSQL et protection anti-crash `.toFixed`).
+   - **Services Quotidiens Locaux** : Trafic Dakar en direct (TomTom Live + corridors clés), pôle immobilier certifié Dakar (< 2 min), concours & examens nationaux (J-30/J-7/J-1).
    - **Audio Low-Data & Radios FM** : Synthèse locale gratuite (0 Mo de data) et radios locales en direct (RTS, Sud FM, etc.).
 
 2. **Console d'Administration Dynamique (`/admin/surga` — 100% DONE)** :
@@ -58,7 +63,7 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
 | Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (412 l.), `SurgaMeteoLocaliteModal.tsx` (382 l.), `SurgaMeteoPrevisions.tsx` (101 l.), `src/lib/surga-meteo.ts` (198 l.), `src/app/api/surga/meteo/route.ts` (166 l.) |
 | Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx`, `SurgaSportCustomModal.tsx` |
 | Revue de Presse & Kiosque | `src/app/surga/components/SurgaPresseCard.tsx` (carrousel horizontal) |
-| Bons plans & Adresses | `src/app/surga/components/SurgaPlaceCard.tsx` (335 l.), `SurgaPlaceDetailModal.tsx` (393 l.), `SurgaPlacesModal.tsx` (373 l.) |
+| Bons plans & Adresses | `src/app/surga/components/SurgaPlaceCard.tsx` (354 l.), `SurgaPlaceDetailModal.tsx` (393 l.), `SurgaPlacesModal.tsx` (382 l.), `backend/data/surga-places-catalogue.json` (927 l., 42 adresses) |
 | Briques & Vues Surga | `src/app/surga/components/Surga*.tsx` (tous < 450 l.) |
 | Console d'Administration | `src/app/admin/(protected)/surga/page.tsx`, `AdminSurgaClient.tsx`, sous-composants `Admin*Tab.tsx` |
 | Synchronisation & Hors-ligne | `src/lib/surga-offline-sync.ts`, `src/lib/surga-reminders.ts`, `src/lib/surga-voice.ts` |
@@ -97,6 +102,7 @@ npm run dev
 - **Console d'Administration Surga** : [http://localhost:3001/admin/surga](http://localhost:3001/admin/surga)
 - **API Briefing Backend** : [http://localhost:3000/api/surga/briefing](http://localhost:3000/api/surga/briefing)
 - **API Météo & Localités** : [http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau](http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau)
+- **API Bonnes Adresses & Bons Plans** : [http://localhost:3000/api/surga/places](http://localhost:3000/api/surga/places)
 - **Simulation Sous-Domaine (`surga.localhost`)** : [http://surga.localhost:3001/](http://surga.localhost:3001/) *(si `127.0.0.1 surga.localhost` est renseigné dans `hosts`)*
 
 ---
@@ -105,7 +111,7 @@ npm run dev
 
 Toutes les suites de tests sont actuellement au vert à 100% :
 ```powershell
-# 1. Tests Jest Surga (Backend) : 98/98 passés (100%)
+# 1. Tests Jest Surga (Backend) : 99/99 passés (100%)
 npx jest tests/unit/surga.test.js
 
 # 2. Tests Unitaires Frontend / Vitest CSP : 100% passés

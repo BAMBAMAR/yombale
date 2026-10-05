@@ -3,6 +3,41 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 5] — Expansion Bons Plans & Bonnes Adresses, Catalogue 42 Établissements, Seeding PostgreSQL & Filtres Banlieue
+- **Tâches complétées :**
+  - **Diagnostic & Causes Racines** :
+    1. Dans `SurgaPlacesModal.tsx`, seulement 4 adresses apparaissaient (« Toutes les adresses (4) ») car `scripts/seed-surga-data.js` n'insérait que 4 adresses d'exemple dans PostgreSQL `surga_places`.
+    2. La catégorie *Brunchs* était vide (0 adresse) et des quartiers majeurs comme *Rufisque* (la commune configurée par l'utilisateur), *Pikine*, *Guédiawaye*, *Yoff*, *Médina*, *Liberté*, *Saly* étaient absents de la liste des adresses et de la barre de filtrage rapide.
+    3. `backend/routes/surga/places.js` imposait une limite par défaut de 20 adresses et `backend/services/surga/places-service.js` renvoyait `total: res.rows.length` au lieu du décompte global de la table.
+  - **Catalogue JSON Référentiel Certifié (`backend/data/surga-places-catalogue.json`)** :
+    - 42 adresses authentiques et diversifiées couvrant les 5 catégories (Restaurants sénégalais & du monde, Dibiteries & viandes braisées, Cafés calmes & coworking, Bord de mer & terrasses, Brunchs & petits déjeuners) et 13 quartiers/villes (Plateau, Almadies, Ngor, Ouakam, Point E, Mermoz, Fann, Mamelles, Yoff, Médina, Liberté, Rufisque, Pikine, Guédiawaye, Saly).
+    - Données complètes : contacts téléphoniques, liens WhatsApp, fourchettes de prix, notes réalistes de 4.4 à 4.8, et résumés honnêtes d'avis clients en 3 lignes avec points forts, spécialités et bémols constructifs.
+  - **Seeding PostgreSQL Automatisé (`scripts/seed-surga-data.js`)** :
+    - Importation directe du catalogue JSON avec `ON CONFLICT (id) DO UPDATE` pour synchroniser les 42 adresses en base.
+    - Exécution confirmée : 42 adresses insérées avec succès dans la table `surga_places`.
+  - **Service & Route Backend Robustes (`backend/services/surga/places-service.js` & `backend/routes/surga/places.js`)** :
+    - Chargement du catalogue JSON en repli mémoire si la base est inaccessible.
+    - Sécurisation du parsing JSON pour `tags_ambiance` et `photos` dans `normaliserPlaceRow`.
+    - Calcul exact du nombre total d'adresses via `COUNT(*) OVER() AS full_count`.
+    - Paramètre `limit` par défaut fixé à 100 dans la route `/api/surga/places`.
+    - Payload bivalent `{ success: true, favoris, places: favoris }` sur `/api/surga/places/favoris`.
+  - **Interface Utilisateur Enrichie (`SurgaPlacesModal.tsx`, 382 l. <= 450 l.)** :
+    - Intégration de Rufisque, Pikine, Guédiawaye, Yoff, Médina, Liberté, Saly dans `QUARTIERS_POPULAIRES`.
+    - Requête client avec `limit=100` assurant l'affichage fluide et complet de l'ensemble du catalogue.
+- **Fichiers modifiés & créés :**
+  - `backend/data/surga-places-catalogue.json` (nouveau, 927 l., 42 adresses)
+  - `backend/services/surga/places-service.js`
+  - `backend/routes/surga/places.js`
+  - `scripts/seed-surga-data.js`
+  - `frontend-next/src/app/surga/components/SurgaPlacesModal.tsx` (382 l.)
+- **Validation :**
+  - Requête `GET /api/surga/places` validée : 42 adresses retournées, 5 catégories, 13 quartiers.
+  - Filtrage Rufisque vérifié : 4 établissements réels (Chez Marie Dangou, Tech & Cowork Hub, Relais, Dibiterie Gare).
+  - Filtrage Brunch vérifié : 7 établissements réels.
+  - `npx tsc --noEmit` : 0 erreur.
+  - `npm run lint:slop` : 100% conforme.
+  - `tests/unit/surga.test.js` : 99/99 tests passés.
+
 ### [2026-10-05 — Soir 4] — Résolution du Changement de Localité Météo, Catalogue 14 Régions & API Résiliente
 - **Tâches complétées :**
   - **Diagnostic & Causes Racines** :

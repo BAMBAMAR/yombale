@@ -38,6 +38,13 @@ const QUARTIERS_POPULAIRES = [
   'Mermoz',
   'Fann',
   'Mamelles',
+  'Yoff',
+  'Médina',
+  'Liberté',
+  'Rufisque',
+  'Pikine',
+  'Guédiawaye',
+  'Saly',
 ]
 
 export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalProps) {
@@ -67,6 +74,7 @@ export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalPr
     try {
       let url = '/api/surga/places'
       const params = new URLSearchParams()
+      params.append('limit', '100')
       if (categorieChoisie !== 'tous') params.append('categorie', categorieChoisie)
       if (quartierChoisi !== 'Tous les quartiers') params.append('quartier', quartierChoisi)
       if (rechercheTexte.trim()) params.append('q', rechercheTexte.trim())

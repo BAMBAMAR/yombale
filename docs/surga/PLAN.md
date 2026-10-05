@@ -156,22 +156,24 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 
 ### Tranche 14 — Bons plans & Adresses à Dakar
 - [x] `DONE` Tables SQL idempotentes `surga_places` et `surga_favoris_places` avec index de performance dans `backend/migrate-inline.js`.
+- [x] `DONE` Catalogue référentiel complet de 42 adresses certifiées (`backend/data/surga-places-catalogue.json`, 927 l.) couvrant les 5 catégories (Restaurants, Dibiteries, Cafés & Coworking, Bord de Mer, Brunchs & Pâtisseries) et 13 quartiers/villes (Plateau, Almadies, Ngor, Ouakam, Point E, Mermoz, Fann, Mamelles, Yoff, Médina, Liberté, Rufisque, Pikine, Guédiawaye, Saly).
+- [x] `DONE` Seeding PostgreSQL automatisé (`scripts/seed-surga-data.js`) avec `ON CONFLICT (id) DO UPDATE` pour synchroniser les 42 adresses en base `surga_places`.
 - [x] `DONE` Service `backend/services/surga/places-service.js` avec :
-  - Catalogue riche de 10 adresses dakaroises de référence (Chez Loutcha, Dibiterie Chez Haïssam, L'Échappée Coworking, La Cabane du Pêcheur, Le Phare des Mamelles, Chez Katia, Noflaye Beach, Le Jardin Gourmand, Dibiterie Dakaroise, La Fourchette).
+  - Repli mémoire instantané sur le catalogue JSON `surga-places-catalogue.json`.
   - Résumés honnêtes des avis clients en 3 lignes (< 260 caractères) avec points forts, spécialités et bémols constructifs sans complaisance.
-  - Parser de recherche en langage naturel (`parserRecherchePlacesNaturelle`) extrayant envie (dibi, thieb, café, burger), quartier, ambiance (calme, wifi rapide, vue mer, terrasse) et budget maximal.
-  - Recherche multi-critères pondérée avec tri par note et nombre d'avis.
+  - Parser de recherche en langage naturel (`parserRecherchePlacesNaturelle`) extrayant envie (dibi, thieb, café, burger, brunch), quartier, ambiance (calme, wifi rapide, vue mer, terrasse, climatisé) et budget maximal.
+  - Recherche multi-critères pondérée avec tri par note et nombre d'avis, et calcul exact du total via `COUNT(*) OVER() AS full_count`.
   - Gestion des coups de cœur (favoris) persistés par utilisateur.
   - Synthèse vocale et briefing au vouvoiement strict D19 (`genererSynthesePlacesBriefing`).
-- [x] `DONE` Routes REST dans `backend/routes/surga/places.js` (`GET /`, `GET /categories`, `GET /favoris`, `GET /synthese`, `GET /:id`, `POST /recherche-vocale`, `POST /:id/favori`) avec normalisation numérique systématique (`normaliserPlaceRow` pour `NUMERIC(2,1)` de PostgreSQL).
+- [x] `DONE` Routes REST dans `backend/routes/surga/places.js` (`GET /`, `GET /categories`, `GET /favoris`, `GET /synthese`, `GET /:id`, `POST /recherche-vocale`, `POST /:id/favori`) avec `limit=100` par défaut et normalisation numérique systématique (`normaliserPlaceRow` pour `NUMERIC(2,1)` de PostgreSQL).
 - [x] `DONE` Composants React modulaires (< 450 lignes) & Rendu défensif :
-  - `SurgaPlaceCard.tsx` (335 l.) : affichage de la fiche avec note numérique défensive, résumé honnête 3 lignes, spécialité, contact direct WhatsApp et bouton favori.
+  - `SurgaPlaceCard.tsx` (354 l.) : affichage de la fiche avec note numérique défensive, résumé honnête 3 lignes, spécialité, contact direct WhatsApp et bouton favori.
   - `SurgaPlaceDetailModal.tsx` (393 l.) : modale avec détails complets, horaires, adresse, avis honnête, itinéraire Google Maps et partage.
-  - `SurgaPlacesModal.tsx` (373 l.) : vue complète avec recherche en langage naturel, filtres par catégorie, quartier et onglets *Toutes les adresses* et *Coups de cœur*.
+  - `SurgaPlacesModal.tsx` (382 l.) : vue complète avec recherche en langage naturel, filtres par catégorie, filtres par quartier enrichis (Rufisque, Pikine, Guédiawaye, Yoff, Médina, Liberté, Saly) et onglets *Toutes les adresses (42)* et *Coups de cœur*.
   - `SurgaPlacesDashboardCard.tsx` (135 l.) : carte de recommandation du jour sur le tableau de bord Surga avec protection anti-crash `.toFixed`.
   - `SurgaParametresTab.tsx` (217 l.) : raccourci de paramétrage vers les bonnes adresses.
-- [x] `DONE` Tests unitaires Jest : **81/81 passés (100%)**.
-- **Démonstration** : l'utilisateur tape ou dicte son envie ("un bon dibi aux Almadies", "café calme coworking Point E"), explore les recommandations avec résumés honnêtes sans complaisance, contacte directement par WhatsApp en un clic et ajoute ses adresses favorites à ses coups de cœur.
+- [x] `DONE` Tests unitaires Jest : **99/99 passés (100%)**.
+- **Démonstration** : l'utilisateur tape ou dicte son envie ("un bon dibi aux Almadies", "café calme coworking Point E", "restaurant à Rufisque"), explore les 42 recommandations authentiques avec résumés honnêtes sans complaisance, contacte directement par WhatsApp en un clic et ajoute ses adresses favorites à ses coups de cœur.
 
 ---
 

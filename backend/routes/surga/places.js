@@ -41,7 +41,7 @@ router.get('/places', async (req, res) => {
       ambiance,
       q,
       page = 1,
-      limit = 20,
+      limit = 100,
     } = req.query;
 
     const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
@@ -51,7 +51,7 @@ router.get('/places', async (req, res) => {
       budgetMax: budget_max ? parseInt(budget_max, 10) : null,
       ambiance,
       q,
-      limit: parseInt(limit, 10) || 20,
+      limit: parseInt(limit, 10) || 100,
       offset,
     });
 
@@ -130,6 +130,7 @@ router.get('/places/favoris', tokenOptional, async (req, res) => {
     const favoris = await listerFavorisPlaces(userId);
     return res.json({
       success: true,
+      favoris,
       places: favoris,
     });
   } catch (error) {

@@ -237,88 +237,13 @@ async function seedSurgaData() {
 
     // ── 3. BONNES ADRESSES DAKAROISES ──────────────────────────────────────────
     console.log('[SEED SURGA] 📍 Insertion des bonnes adresses dakaroises...');
-    const places = [
-      {
-        id: 'place-chez-loutcha',
-        slug: 'chez-loutcha-plateau',
-        nom: 'Chez Loutcha',
-        categorie: 'restaurant',
-        quartier: 'Plateau',
-        ville: 'Dakar',
-        adresse: '101 Rue Moussé Diop, Dakar Plateau',
-        budget_moyen_xof: 4500,
-        fourchette_prix: '€€',
-        tags_ambiance: JSON.stringify(['authentique', 'climatisé', 'familial']),
-        specialite: 'Thiéboudienne rouge au mérou et plats capverdiens',
-        note_moyenne: 4.6,
-        nb_avis: 1420,
-        resume_honnete: 'Institution dakaroise réputée pour ses portions très généreuses et son thiéboudienne savoureux. Salle climatisée agréable mais souvent comble entre 13h et 14h30 : prévoyez quelques minutes d attente le midi.',
-        contact_tel: '+221338210302',
-        contact_whatsapp: '221338210302',
-        horaires: 'Du lundi au samedi : 12h00 - 23h00',
-        photos: JSON.stringify(['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80']),
-      },
-      {
-        id: 'place-dibiterie-haissam',
-        slug: 'dibiterie-chez-haissam-ouakam',
-        nom: 'Dibiterie Chez Haïssam',
-        categorie: 'dibiterie',
-        quartier: 'Ouakam',
-        ville: 'Dakar',
-        adresse: 'Route du Monument de la Renaissance, Ouakam',
-        budget_moyen_xof: 3500,
-        fourchette_prix: '€',
-        tags_ambiance: JSON.stringify(['authentique', 'terrasse']),
-        specialite: 'Dibi d agneau braisé au feu de bois avec oignons moutardés',
-        note_moyenne: 4.7,
-        nb_avis: 890,
-        resume_honnete: 'L une des meilleures viandes d agneau de Dakar, assaisonnée à la perfection et découpée à la minute sur papier kraft. Cadre populaire et rustique sans chichis, le service est rapide même en soirée de pointe.',
-        contact_tel: '+221775123456',
-        contact_whatsapp: '221775123456',
-        horaires: 'Tous les jours : 18h00 - 02h00',
-        photos: JSON.stringify(['https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80']),
-      },
-      {
-        id: 'place-echappee-coworking',
-        slug: 'lechappee-cafe-coworking-point-e',
-        nom: 'L Échappée Coworking & Café',
-        categorie: 'cafe_coworking',
-        quartier: 'Point E',
-        ville: 'Dakar',
-        adresse: 'Avenue Cheikh Anta Diop, face Piscine Olympique, Point E',
-        budget_moyen_xof: 3000,
-        fourchette_prix: '€€',
-        tags_ambiance: JSON.stringify(['calme', 'wifi_rapide', 'climatisé']),
-        specialite: 'Café de spécialité éthiopien, jus locaux bissap-gingembre, bowls salés',
-        note_moyenne: 4.8,
-        nb_avis: 410,
-        resume_honnete: 'Espace de travail calme et lumineux avec fibre optique haut débit et prises à chaque table. Prix des consommations légèrement au-dessus de la moyenne mais justifiés par le confort et le silence.',
-        contact_tel: '+221338241234',
-        contact_whatsapp: '221338241234',
-        horaires: 'Du lundi au samedi : 08h00 - 20h00',
-        photos: JSON.stringify(['https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&auto=format&fit=crop&q=80']),
-      },
-      {
-        id: 'place-cabane-pecheur',
-        slug: 'la-cabane-du-pecheur-ngor',
-        nom: 'La Cabane du Pêcheur',
-        categorie: 'bord_de_mer',
-        quartier: 'Ngor',
-        ville: 'Dakar',
-        adresse: 'Plage de Ngor, face à l île, Dakar',
-        budget_moyen_xof: 8500,
-        fourchette_prix: '€€€',
-        tags_ambiance: JSON.stringify(['vue_mer', 'terrasse', 'romantique']),
-        specialite: 'Carpaccio d espadon frais, thiof grillé et langoustes selon arrivage',
-        note_moyenne: 4.5,
-        nb_avis: 1120,
-        resume_honnete: 'Cadre idyllique les pieds dans l eau avec une vue imprenable sur l île de Ngor. Excellente fraîcheur des poissons pêchés le matin même. Addition plus élevée que la moyenne dakaroise.',
-        contact_tel: '+221338207675',
-        contact_whatsapp: '221338207675',
-        horaires: 'Tous les jours : 11h30 - 23h30',
-        photos: JSON.stringify(['https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80']),
-      },
-    ];
+    let places = [];
+    try {
+      places = require('../backend/data/surga-places-catalogue.json');
+    } catch (e) {
+      console.warn('[SEED SURGA] Impossible de charger surga-places-catalogue.json, repli vide');
+      places = [];
+    }
 
     for (const p of places) {
       await client.query(
@@ -330,16 +255,45 @@ async function seedSurgaData() {
          )
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, TRUE, TRUE, NOW())
          ON CONFLICT (id) DO UPDATE SET
+           slug = EXCLUDED.slug,
            nom = EXCLUDED.nom,
+           categorie = EXCLUDED.categorie,
            quartier = EXCLUDED.quartier,
+           ville = EXCLUDED.ville,
+           adresse = EXCLUDED.adresse,
            budget_moyen_xof = EXCLUDED.budget_moyen_xof,
+           fourchette_prix = EXCLUDED.fourchette_prix,
+           tags_ambiance = EXCLUDED.tags_ambiance,
+           specialite = EXCLUDED.specialite,
+           note_moyenne = EXCLUDED.note_moyenne,
+           nb_avis = EXCLUDED.nb_avis,
            resume_honnete = EXCLUDED.resume_honnete,
+           contact_tel = EXCLUDED.contact_tel,
+           contact_whatsapp = EXCLUDED.contact_whatsapp,
+           horaires = EXCLUDED.horaires,
+           photos = EXCLUDED.photos,
+           verifie = TRUE,
+           actif = TRUE,
            updated_at = NOW()`,
         [
-          p.id, p.slug, p.nom, p.categorie, p.quartier, p.ville, p.adresse,
-          p.budget_moyen_xof, p.fourchette_prix, p.tags_ambiance, p.specialite,
-          p.note_moyenne, p.nb_avis, p.resume_honnete, p.contact_tel,
-          p.contact_whatsapp, p.horaires, p.photos
+          p.id,
+          p.slug,
+          p.nom,
+          p.categorie,
+          p.quartier,
+          p.ville || 'Dakar',
+          p.adresse,
+          p.budget_moyen_xof || 3000,
+          p.fourchette_prix || '€€',
+          Array.isArray(p.tags_ambiance) ? JSON.stringify(p.tags_ambiance) : (p.tags_ambiance || '[]'),
+          p.specialite,
+          p.note_moyenne || 4.5,
+          p.nb_avis || 100,
+          p.resume_honnete,
+          p.contact_tel,
+          p.contact_whatsapp,
+          p.horaires,
+          Array.isArray(p.photos) ? JSON.stringify(p.photos) : (p.photos || '[]')
         ]
       );
     }
