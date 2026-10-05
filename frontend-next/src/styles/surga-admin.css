@@ -1,0 +1,254 @@
+/* frontend-next/src/styles/surga-admin.css */
+/* Styles dédiés à l'administration autonome Surga — Zéro éléments Marketplace */
+/* Conforme aux tokens Nopalou / Surga : --navy: #1C2B4A, --accent: #C75B00, --price: #0A5C36, --bg: #F8F5F0, --border: #E8DDD2 */
+
+:root {
+  --surga-navy: #1C2B4A;
+  --surga-navy-dark: #121D33;
+  --surga-accent: #C75B00;
+  --surga-price: #0A5C36;
+  --surga-bg: #F8F5F0;
+  --surga-card: #FFFFFF;
+  --surga-border: #E8DDD2;
+  --surga-text1: #1C2B4A;
+  --surga-text2: #5A4E42;
+  --surga-text3: #73675E;
+}
+
+.surga-admin-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--surga-bg);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--surga-text1);
+}
+
+/* Sidebar autonome Surga */
+.surga-admin-sidebar {
+  width: 270px;
+  background-color: var(--surga-navy-dark);
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.surga-admin-brand {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justifyContent: space-between;
+}
+
+.surga-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.surga-logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--surga-accent) 0%, #E67A1E 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(199, 91, 0, 0.3);
+}
+
+.surga-brand-title {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #FFFFFF;
+}
+
+.surga-brand-sub {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--surga-accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.surga-status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background-color: rgba(10, 92, 54, 0.25);
+  color: #34D399;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.surga-nav-section {
+  padding: 16px 14px 6px;
+}
+
+.surga-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #8E9BAE;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0 10px 8px;
+}
+
+.surga-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justifyContent: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: #D1D5DB;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.surga-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #FFFFFF;
+}
+
+.surga-nav-item.active {
+  background: linear-gradient(90deg, rgba(199, 91, 0, 0.25) 0%, rgba(199, 91, 0, 0.1) 100%);
+  color: #FFFFFF;
+  font-weight: 800;
+  border-left: 3px solid var(--surga-accent);
+}
+
+.surga-nav-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.surga-nav-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background-color: var(--surga-accent);
+  color: #FFFFFF;
+}
+
+.surga-nav-badge.danger {
+  background-color: #DC2626;
+}
+
+.surga-nav-badge.success {
+  background-color: var(--surga-price);
+}
+
+.surga-sidebar-footer {
+  margin-top: auto;
+  padding: 16px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.surga-footer-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: #9CA3AF;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.surga-footer-link:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #FFFFFF;
+}
+
+/* Zone principale de contenu */
+.surga-admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--surga-bg);
+}
+
+.surga-admin-topbar {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--surga-border);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justifyContent: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.surga-topbar-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--surga-navy);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.surga-topbar-subtitle {
+  font-size: 12px;
+  color: var(--surga-text3);
+  margin: 2px 0 0;
+}
+
+.surga-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.surga-admin-content {
+  padding: 24px 28px;
+  max-width: 1350px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .surga-admin-container {
+    flex-direction: column;
+  }
+  .surga-admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  .surga-admin-topbar {
+    padding: 12px 16px;
+  }
+  .surga-admin-content {
+    padding: 16px;
+  }
+}

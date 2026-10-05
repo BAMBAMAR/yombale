@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 9)  
+> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 11)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses + Trafic Réel Dakar + Radio Écoute Continue + Passerelles Transversales Multi-Fonctionnalités Dynamiques avec États Actifs Persistants & Bascule Bidirectionnelle + Console Admin)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses + Trafic Réel Dakar + Radio Écoute Continue + Passerelles Transversales Multi-Fonctionnalités Dynamiques + Console Admin Autonome Complète 8 Modules Décloisonnée de Nopalou)**  
 > **Auteur** : Antigravity (Assistant AI Senior)
 
 ---
@@ -43,10 +43,19 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
    - **Services Quotidiens Locaux** : Trafic Dakar en direct (TomTom Live + corridors clés), pôle immobilier certifié Dakar (< 2 min), concours & examens nationaux (J-30/J-7/J-1).
    - **Audio Low-Data & Radios FM** : Synthèse locale gratuite (0 Mo de data) et radios locales en direct (RTS, Sud FM, etc.).
 
-2. **Console d'Administration Dynamique (`/admin/surga` — 100% DONE)** :
-   - Routeur backend `backend/routes/admin-surga.js` avec RBAC (`requireAdminAuth`, `requireAdminRole`) et journalisation d'audit.
-   - Interface d'administration `frontend-next/src/app/admin/(protected)/surga/` avec 4 cartes KPI et 5 onglets de gestion dynamique (Adresses, Concours, Unes de presse, Modération trafic, Abonnements & MRR).
-   - **Accès Direct & Ergonomie Renforcée** : Intégration de Surga dans le groupe « Pilotage & Direction » de la barre latérale gauche (toujours déplié), et bannière d'accès direct sur le Dashboard Métier `/admin`.
+2. **Console d'Administration Autonome Complète (`/admin/surga` & `/surga/admin` — 100% DONE & DÉCLOISONNÉE)** :
+   - **Décloisonnement Structurel Strict** : Logée sous `frontend-next/src/app/admin/surga/` avec son propre `layout.tsx` (garde RBAC `getAdminSession()`) et sa feuille de styles `surga-admin.css`. Zéro présence de la barre latérale e-commerce Nopalou (Boutiques, Commandes, POS masqués), zéro barre omnisearch marketplace.
+   - **Barre Latérale Autonome (`AdminSurgaSidebar.tsx`)** : Branding "SURGA Console Admin", pastille "Live Dakar", navigation exclusive en 8 volets, liens vers Surga App (`/surga`), retour Nopalou (`/admin`) et déconnexion sécurisée.
+   - **8 Volets d'Administration Exhaustifs** :
+     1. *Tableau de Bord & Supervision* (`AdminOverviewTab.tsx`) : 4 KPIs métiers, état des services (PostgreSQL, Wave, TomTom, IA) et actions rapides.
+     2. *Abonnements & MRR* (`AdminAbonnementsTab.tsx`) : Suivi des souscriptions B2C/B2B, calcul déterministe MRR FCFA, validation & résiliation manuelle 1-clic.
+     3. *Bonnes Adresses* (`AdminPlacesTab.tsx` + `AdminPlaceModal.tsx`) : CRUD complet des 42 adresses dakaroises, quartiers, résumés d'avis honnêtes.
+     4. *Concours Nationaux* (`AdminConcoursTab.tsx` + `AdminConcoursModal.tsx`) : Calendrier officiel (ENA, Douanes...), quittances Trésor, pièces requises, alertes J-30/J-7/J-1.
+     5. *Kiosque des Unes* (`AdminUnesTab.tsx`) : Gestion quotidienne des Unes des 10 quotidiens du Sénégal.
+     6. *Modération Trafic* (`AdminTraficTab.tsx`) : Modération temps réel des incidents VDN, Autoroute, Corniche, BRT.
+     7. *Radios Locales & Podcasts* (`AdminRadiosTab.tsx`) : Lecteur de test audio des flux en direct et flux RSS privé.
+     8. *Configuration Système & IA* (`AdminConfigTab.tsx`) : Persona D19, vouvoiement strict, quotas vocaux et état des clés API.
+   - **Redirection Automatique** : Route `frontend-next/src/app/surga/admin/page.tsx` redirigeant immédiatement vers `/admin/surga`.
 
 3. **Monétisation & RGPD (100% DONE)** :
    - Table `surga_abonnements`, facturation Wave & Orange Money (Surga Premium 1 500 FCFA/mois ou 15 000 FCFA/an ; formules B2B).

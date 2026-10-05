@@ -1,5 +1,29 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga Console d'Administration Autonome & Décloisonnement Total Nopalou (Session 2026-10-05 - Suite 2, branche `feature/surga`)** :
+  * **Demande Utilisateur & Constat** :
+    - L'utilisateur a explicitement demandé : « je veux une admin complete de surga different de nopalou ».
+    - La console `/admin/surga` était auparavant imbriquée dans le layout protégé Nopalou (`AdminProtectedLayout`), affichant la barre latérale e-commerce (Boutiques, Produits, Commandes, POS, Marchands...) et la barre de recherche marketplace (`AdminOmnisearch`), ce qui violait la règle d'or d'étanchéité totale Nopalou vs Surga.
+  * **Architecture & Isolation Réalisées** :
+    - **Extraction Hors du Groupe Protégé Nopalou** : Déplacement de la console d'administration vers un dossier autonome `frontend-next/src/app/admin/surga/` disposant de son propre `layout.tsx` avec garde de session (`getAdminSession()`). Zéro wrapping par la barre d'onglets ou l'omnisearch de la marketplace.
+    - **Feuille de Styles Dédiée (`frontend-next/src/styles/surga-admin.css`)** : Mise en place d'une charte graphique premium sur mesure respectant les tokens officiels Surga (`--surga-navy: #1C2B4A`, `--surga-accent: #C75B00`, `--surga-price: #0A5C36`, `--surga-bg: #F8F5F0`).
+    - **Barre Latérale Autonome Surga (`AdminSurgaSidebar.tsx`, 239 l.)** : Marque "SURGA Console Admin", pastille "Live Dakar", navigation exclusive en 8 volets, profil administrateur, liens vers l'application Surga (`/surga`), retour vers Nopalou (`/admin`) et déconnexion sécurisée.
+    - **Console Modulaire en 8 Onglets Exhaustifs** :
+      1. *Tableau de Bord & Supervision* (`AdminOverviewTab.tsx`, 379 l.) : 4 indicateurs territoriaux en direct, raccourcis d'actions rapides et santé temps réel des services (Base PostgreSQL, Passerelle Wave, TomTom Live Trafic, Moteur IA).
+      2. *Abonnements & MRR* (`AdminAbonnementsTab.tsx`, 366 l.) : Visualisation du revenu récurrent estimé, suivi des souscriptions B2C et B2B, filtres statut/plan et validation/résiliation manuelle en 1 clic.
+      3. *Bonnes Adresses* (`AdminPlacesTab.tsx`, 373 l. + `AdminPlaceModal.tsx`, 312 l.) : Modération et gestion du carnet des 42 adresses dakaroises, quartiers, résumés d'avis honnêtes.
+      4. *Concours Nationaux* (`AdminConcoursTab.tsx`, 345 l. + `AdminConcoursModal.tsx`, 315 l.) : Calendrier officiel (ENA, FASTEF, Douanes...), quittances Trésor, pièces requises et alertes J-30/J-7/J-1.
+      5. *Kiosque des Unes* (`AdminUnesTab.tsx`, 420 l.) : Publication et gestion des Unes des 10 quotidiens sénégalais pour le briefing matinal.
+      6. *Modération Trafic* (`AdminTraficTab.tsx`, 325 l.) : Validation citoyenne en temps réel des incidents VDN, Autoroute de l'Avenir, Corniche et BRT.
+      7. *Radios Locales & Podcasts* (`AdminRadiosTab.tsx`, 252 l.) : Lecteur audio de test intégré des stations sénégalaises (RFM, Zik FM, Walf, Lamp Fall, Sud FM) et gestion du flux RSS privé.
+      8. *Configuration Système & IA* (`AdminConfigTab.tsx`, 198 l.) : Persona D19, vouvoiement strict, seuil gratuit des commandes vocales WhatsApp (20 req/j) et état des clés API.
+    - **Redirection `/surga/admin`** : Création de `frontend-next/src/app/surga/admin/page.tsx` pour une redirection automatique et transparente.
+  * **Conformité & Tests** :
+    - 99/99 tests Jest unitaires passés (`tests/unit/surga.test.js`).
+    - 97/97 tests passés dans `frontend-next`.
+    - `npx tsc --noEmit` zéro erreur.
+    - 100% des fichiers sous le plafond strict de 450 lignes. Zéro émoji dans l'UI.
+
 - **Surga Console d'Administration — Visibilité Immédiate & Accès 1-Clic (Session 2026-10-05 - Suite, branche `feature/surga`)** :
   * **Demande Utilisateur & Constat** :
     - L'utilisateur s'est connecté à l'administration mais est arrivé sur le dashboard général Nopalou (`/admin`) sans repérer facilement la section Surga, celle-ci étant logée dans l'accordéon « Contenu & Modération » fermé par défaut.

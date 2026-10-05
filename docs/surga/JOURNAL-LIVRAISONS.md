@@ -3,6 +3,42 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 11] — Console d'Administration Autonome Surga & Décloisonnement Total Nopalou
+- **Tâches complétées :**
+  - **Exigence Explicite Utilisateur** : « je veux une admin complete de surga different de nopalou ».
+  - **Décloisonnement Structurel & Sécurité** :
+    - Sortie de la console d'administration Surga du route group `(protected)` de Nopalou vers un répertoire dédié autonome : `frontend-next/src/app/admin/surga/`.
+    - Création d'un layout dédié `frontend-next/src/app/admin/surga/layout.tsx` avec garde RBAC (`getAdminSession()`) et élimination totale de la barre latérale e-commerce Nopalou (Boutiques, Commandes, Caisse POS...) et de la barre omnisearch marketplace.
+    - Création de la feuille de styles sur-mesure `frontend-next/src/styles/surga-admin.css` aux couleurs officielles de Surga (`#1C2B4A`, `#C75B00`, `#0A5C36`, `#F8F5F0`).
+    - Création de la route de redirection `frontend-next/src/app/surga/admin/page.tsx` permettant un accès direct et unifié via `/surga/admin` ou `/admin/surga`.
+  - **Barre Latérale Autonome Surga (`AdminSurgaSidebar.tsx`, 239 l.)** :
+    - Identité "SURGA Console Admin", pastille "Live Dakar", navigation exclusive en 8 volets, raccourcis d'accès direct vers Surga App (`/surga`), bascule vers Nopalou (`/admin`) et déconnexion sécurisée.
+  - **Console Modulaire en 8 Volets Dédiés** :
+    1. *Tableau de Bord & Supervision* (`AdminOverviewTab.tsx`, 379 l.) : 4 indicateurs territoriaux en direct, raccourcis d'actions rapides et santé temps réel des services (Base PostgreSQL, Passerelle Wave, TomTom Live Trafic, Moteur IA).
+    2. *Abonnements & MRR* (`AdminAbonnementsTab.tsx`, 366 l.) : Visualisation du revenu récurrent estimé, suivi des souscriptions B2C et B2B, filtres statut/plan et validation/résiliation manuelle en 1 clic.
+    3. *Bonnes Adresses* (`AdminPlacesTab.tsx`, 373 l. + `AdminPlaceModal.tsx`, 312 l.) : Modération et gestion du carnet des 42 adresses dakaroises, quartiers, résumés d'avis honnêtes.
+    4. *Concours Nationaux* (`AdminConcoursTab.tsx`, 345 l. + `AdminConcoursModal.tsx`, 315 l.) : Calendrier officiel (ENA, FASTEF, Douanes...), quittances Trésor, pièces requises et alertes J-30/J-7/J-1.
+    5. *Kiosque des Unes* (`AdminUnesTab.tsx`, 420 l.) : Publication et gestion des Unes des 10 quotidiens sénégalais pour le briefing matinal.
+    6. *Modération Trafic* (`AdminTraficTab.tsx`, 325 l.) : Validation citoyenne en temps réel des incidents VDN, Autoroute de l'Avenir, Corniche et BRT.
+    7. *Radios Locales & Podcasts* (`AdminRadiosTab.tsx`, 252 l.) : Lecteur audio de test intégré des stations sénégalaises (RFM, Zik FM, Walf, Lamp Fall, Sud FM) et gestion du flux RSS privé.
+    8. *Configuration Système & IA* (`AdminConfigTab.tsx`, 198 l.) : Persona D19, vouvoiement strict, seuil gratuit des commandes vocales WhatsApp (20 req/j) et état des clés API.
+- **Fichiers créés / modifiés :**
+  - `frontend-next/src/styles/surga-admin.css` (créé)
+  - `frontend-next/src/app/admin/surga/layout.tsx` (créé)
+  - `frontend-next/src/app/admin/surga/page.tsx` (créé)
+  - `frontend-next/src/app/admin/surga/AdminSurgaClient.tsx` (mis à jour)
+  - `frontend-next/src/app/admin/surga/components/AdminSurgaSidebar.tsx` (créé)
+  - `frontend-next/src/app/admin/surga/components/AdminOverviewTab.tsx` (créé)
+  - `frontend-next/src/app/admin/surga/components/AdminRadiosTab.tsx` (créé)
+  - `frontend-next/src/app/admin/surga/components/AdminConfigTab.tsx` (créé)
+  - `frontend-next/src/app/surga/admin/page.tsx` (créé)
+- **Validation :**
+  - `npx tsc --noEmit` zéro erreur.
+  - 99/99 tests Jest unitaires passés (`tests/unit/surga.test.js`).
+  - 97/97 tests frontend passés (`npm test`).
+  - 100% des fichiers sous le plafond strict de 450 lignes. Zéro émoji dans l'UI.
+  - Codes HTTP 200 confirmés sur `http://localhost:3001/admin/surga` et `http://localhost:3001/surga/admin`.
+
 ### [2026-10-05 — Soir 10] — Ergonomie & Visibilité Directe de Surga Control Center dans l'Admin
 - **Tâches complétées :**
   - **Constat Utilisateur** : Après connexion sur `/admin/login`, l'administrateur atterrissait sur le dashboard général Nopalou (`/admin`) sans apercevoir immédiatement le module Surga, celui-ci étant masqué dans l'accordéon fermé « Contenu & Modération ».

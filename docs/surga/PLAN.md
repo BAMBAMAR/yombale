@@ -259,6 +259,15 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Visibilité directe de Surga Control Center (`/admin/surga`) dans la console d'administration : groupe « Pilotage & Direction » de la sidebar et bannière d'accès direct sur `/admin`.
 - [x] `DONE` Respect strict des contraintes qualité : 100% des composants React sous 450 lignes, 0 régression, 99/99 tests Jest backend validés, 97/97 tests `frontend-next` validés, `npx tsc --noEmit` 0 erreur.
 
+### Tranche 22 — Console d'Administration Autonome & Décloisonnement Total Nopalou (05 Octobre 2026 - Soir 11)
+- [x] `DONE` Exigence utilisateur : console d'administration Surga complète, autonome et 100% découplée de Nopalou.
+- [x] `DONE` Décloisonnement structurel : sortie du groupe `(protected)` vers `frontend-next/src/app/admin/surga/` avec `layout.tsx` dédié et suppression absolue de la sidebar e-commerce Nopalou et de l'omnisearch.
+- [x] `DONE` Charte graphique dédiée `frontend-next/src/styles/surga-admin.css` aux couleurs officielles Surga (`--surga-navy: #1C2B4A`, `--surga-accent: #C75B00`, `--surga-price: #0A5C36`, `--surga-bg: #F8F5F0`).
+- [x] `DONE` Barre latérale autonome (`AdminSurgaSidebar.tsx`) avec identité Surga, statut Live Dakar, 8 sections de navigation et raccourcis d'accès direct (Surga App, Nopalou Admin, Logout).
+- [x] `DONE` Console 8 modules : Tableau de bord & KPIs (`AdminOverviewTab.tsx`), Abonnements & MRR (`AdminAbonnementsTab.tsx`), Bonnes Adresses (`AdminPlacesTab.tsx`), Concours Nationaux (`AdminConcoursTab.tsx`), Kiosque des Unes (`AdminUnesTab.tsx`), Modération Trafic (`AdminTraficTab.tsx`), Radios & Podcasts (`AdminRadiosTab.tsx`), Configuration & IA (`AdminConfigTab.tsx`).
+- [x] `DONE` Redirection unifiée `frontend-next/src/app/surga/admin/page.tsx` vers `/admin/surga`.
+- [x] `DONE` Validation rigoureuse : 99/99 tests Jest backend validés, 97/97 tests `frontend-next` validés, `npx tsc --noEmit` 0 erreur, composants React <= 450 lignes.
+
 ---
 
 ## Évolutions futures (hors plan actuel)
