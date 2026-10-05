@@ -214,7 +214,17 @@ export default function SurgaMeteoLocaliteModal({
         </div>
 
         {/* Filtres par zone géographique */}
-        <div style={{ padding: '4px 14px 10px', display: 'flex', gap: 6, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div
+          style={{
+            padding: '4px 14px 10px',
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
           {zonesDisponibles.map((z) => {
             const estActif = zoneFiltre === z
             const label = z === 'tous' ? 'Toutes' : z
@@ -224,7 +234,7 @@ export default function SurgaMeteoLocaliteModal({
                 type="button"
                 onClick={() => setZoneFiltre(z)}
                 style={{
-                  padding: '3px 10px',
+                  padding: '4px 12px',
                   borderRadius: 20,
                   fontSize: 11,
                   fontWeight: estActif ? 700 : 500,
@@ -233,6 +243,7 @@ export default function SurgaMeteoLocaliteModal({
                   color: estActif ? '#FFFFFF' : 'var(--text2, #5A4E42)',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {label}
@@ -260,36 +271,40 @@ export default function SurgaMeteoLocaliteModal({
             localitesFiltrees.map((loc) => {
               const estSelectionnee =
                 !estGpsActif &&
-                (localiteActuelle.toLowerCase().includes(loc.nom.toLowerCase()) ||
-                  loc.nom.toLowerCase().includes(localiteActuelle.toLowerCase()))
+                (loc.nom.toLowerCase().trim() === localiteActuelle.toLowerCase().trim() ||
+                  loc.id === localiteActuelle.toLowerCase().trim())
 
               return (
-                <div
+                <button
                   key={loc.id}
+                  type="button"
                   onClick={() => {
                     onSelectLocalite(loc.nom)
                     onClose()
                   }}
+                  aria-pressed={estSelectionnee}
                   style={{
+                    width: '100%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '9px 12px',
+                    padding: '10px 12px',
                     borderRadius: 8,
                     backgroundColor: estSelectionnee ? 'rgba(199, 91, 0, 0.08)' : '#FFFFFF',
                     border: estSelectionnee ? '1.5px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
                     cursor: 'pointer',
+                    textAlign: 'left',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <MapPin size={14} color={estSelectionnee ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)'} />
-                    <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                    <MapPin size={15} color={estSelectionnee ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)'} style={{ flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: estSelectionnee ? 800 : 600, color: 'var(--navy, #1C2B4A)' }}>
                         {loc.nom}
                       </div>
-                      <div style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>
-                        {loc.zone} {loc.maritime ? '&bull; Littoral océanique (Marées)' : ''}
+                      <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 1 }}>
+                        {loc.zone} {loc.maritime ? '• Littoral océanique (Marées)' : ''}
                       </div>
                     </div>
                   </div>
@@ -305,12 +320,14 @@ export default function SurgaMeteoLocaliteModal({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        flexShrink: 0,
+                        marginLeft: 8,
                       }}
                     >
                       <Check size={13} />
                     </div>
                   )}
-                </div>
+                </button>
               )
             })
           )}

@@ -141,14 +141,31 @@ async function getMeteo(options = 'Dakar') {
       .replace(/[éèê]/g, 'e')
       .replace(/[\/\-_]/g, ' ');
 
-    // Recherche de correspondance dans le catalogue
-    let matched = LOCALITES_SENEGAL.dakar;
+    // Recherche de correspondance dans le catalogue (deux passes : exacte puis spécifique)
+    let matched = null;
+    // Passe 1 : correspondance exacte stricte
     for (const [key, item] of Object.entries(LOCALITES_SENEGAL)) {
-      const itemNorm = item.nom.toLowerCase().replace(/[éèê]/g, 'e');
-      if (key === cleNormalisee || itemNorm.includes(cleNormalisee) || cleNormalisee.includes(itemNorm)) {
+      const itemNorm = item.nom.toLowerCase().replace(/[éèê]/g, 'e').replace(/[\/\-_]/g, ' ').trim();
+      if (key === cleNormalisee || itemNorm === cleNormalisee || item.nom.toLowerCase().trim() === rawVille.toLowerCase().trim()) {
         matched = item;
         break;
       }
+    }
+
+    // Passe 2 : correspondance partielle avec priorité au nom le plus long / le plus spécifique
+    if (!matched) {
+      const entries = Object.entries(LOCALITES_SENEGAL).sort((a, b) => b[1].nom.length - a[1].nom.length);
+      for (const [key, item] of entries) {
+        const itemNorm = item.nom.toLowerCase().replace(/[éèê]/g, 'e').replace(/[\/\-_]/g, ' ').trim();
+        if (itemNorm.includes(cleNormalisee) || cleNormalisee.includes(itemNorm) || key.includes(cleNormalisee)) {
+          matched = item;
+          break;
+        }
+      }
+    }
+
+    if (!matched) {
+      matched = LOCALITES_SENEGAL.dakar;
     }
 
     lat = matched.lat;

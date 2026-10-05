@@ -43,6 +43,16 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Correctif d'Interactivité & Matching Strict des Localités Météo (Session 2026-10-05, branche `feature/surga`)** :
+  - *Algorithme de Résolution Météo à Deux Passes (`backend/services/surga/meteo-service.js`)* : Remplacement du matching naïf par `includes()` qui ramenait systématiquement vers "Dakar" tout quartier contenant ce mot (ex: "Dakar Plateau", "Grand Dakar / Colobane"). Implémentation d'une passe 1 stricte (égalité exacte normalisée) puis d'une passe 2 triée par longueur décroissante de nom (priorité absolue aux quartiers spécifiques avant la ville générique).
+  - *Éradication de la Double Coche & Détection Exacte (`SurgaMeteoLocaliteModal.tsx`)* : Remplacement du test de sélection `includes()` par une égalité stricte (`loc.nom.toLowerCase().trim() === localiteActuelle.toLowerCase().trim()`), éliminant l'anomalie visuelle où plusieurs localités apparaissaient cochées simultanément.
+  - *Boutons Natifs & Optimistic UI Instantané (`SurgaMeteoCard.tsx` + Modal)* :
+    - Remplacement des conteneurs `div onClick` par de véritables `<button type="button" aria-pressed={...}>` pleine largeur, garantissant un clic/tap tactile robuste sur tous les navigateurs et appareils tactiles.
+    - Application d'une mise à jour optimiste immédiate (`setMeteo`) dès le clic avec fermeture instantanée de la modale pour un retour utilisateur instantané sans latence réseau.
+    - Remplacement de l'entité brute `&bull;` par le caractère typographique propre `•` et masquage de la scrollbar native Windows sur les onglets de filtres.
+  - *Modularisation & Règle des 450 Lignes* : Respect strict du plafond de taille (`SurgaMeteoCard.tsx` : 445 l., `SurgaMeteoLocaliteModal.tsx` : 338 l.).
+  - *Validation* : `npx tsc --noEmit` 0 erreur, test unitaire Node de résolution sur l'ensemble des quartiers/villes 100% OK.
+
 - **Assainissement Console Dev & Autorisation Geolocation Permissions-Policy (Session 2026-10-05, branche `feature/surga`)** :
   - *Éradication du Flood de Logs CSP Report-Only en Dev* : Conditionnement de l'en-tête `Content-Security-Policy-Report-Only` (AUD-149) à `!isDev` dans `src/middleware.ts`. En développement local, Next.js utilise intensivement `eval()` pour le Fast Refresh et les sourcemaps, ce qui spammait des centaines d'avertissements de rapport en console sans aucun impact fonctionnel.
   - *Déblocage de l'API Geolocation dans Permissions-Policy* : Remplacement de `geolocation=()` par `geolocation=(self)` dans les en-têtes HTTP de sécurité, autorisant les navigateurs modernes (Chrome, Safari, Edge) à exécuter `navigator.geolocation.getCurrentPosition` pour la météo GPS.

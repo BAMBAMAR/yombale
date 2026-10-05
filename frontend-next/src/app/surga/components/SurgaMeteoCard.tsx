@@ -150,9 +150,10 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar' }: SurgaM
           localStorage.setItem('surga_meteo_gps', JSON.stringify({ lat, lon }))
           localStorage.removeItem('surga_meteo_ville')
         } catch {}
+        setEstGpsActif(true)
+        setIsLocaliteModalOpen(false)
         await chargerMeteo({ lat, lon })
         setGpsEnCours(false)
-        setIsLocaliteModalOpen(false)
       },
       (err) => {
         console.warn('[SURGA GPS ERR]:', err.message)
@@ -169,8 +170,10 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar' }: SurgaM
       localStorage.removeItem('surga_meteo_gps')
     } catch {}
     setEstGpsActif(false)
-    await chargerMeteo({ ville: nomVille })
     setIsLocaliteModalOpen(false)
+    // Mise à jour optimiste immédiate pour un feedback visuel instantané
+    setMeteo((prev) => (prev ? { ...prev, ville: nomVille, est_gps: false } : prev))
+    await chargerMeteo({ ville: nomVille })
   }
 
   useEffect(() => {
