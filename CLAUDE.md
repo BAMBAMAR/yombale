@@ -47,10 +47,18 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
   - **Sport & Équipes Nationales (Données Réelles, Direct & Personnalisation)** :
     - *Origine des données clarifiée* : Suppression des 3 matchs statiques démo de `rss-collector.js`.
     - *Service & API Dédiés* : Création de `backend/services/surga/sport-service.js` et `backend/routes/surga/sport.js` (`GET /api/surga/sport`, `GET /api/surga/sport/equipes`, `POST /api/surga/sport/mes-equipes`).
-    - *Compétitions réelles* : Qualifications CAN 2025 et Coupe du Monde 2026 des Lions de la Teranga (buteurs réels Habib Diarra, etc.), Ligue 1 sénégalaise (ASC Jaraaf, Teungueth FC, Génération Foot, Guédiawaye FC, Casa Sports, AS Pikine), et clubs des internationaux sénégalais (Chelsea / Nicolas Jackson, Al Nassr / Sadio Mané, Tottenham / Pape Matar Sarr, Everton / Iliman Ndiaye, Al Hilal / Kalidou Koulibaly, etc.).
-    - *Scores en direct & Statuts* : Badge clignotant `EN_DIRECT` avec minute de jeu (`64'`), scores finals pour `TERMINE`, heure et diffuseur (RTS, Canal+ Sport) pour `A_VENIR`, et bouton d'actualisation instantanée.
-    - *Personnalisation des équipes* : Modale `SurgaSportCustomModal.tsx` avec barre de recherche pour cocher ses clubs et sélections favoris, sauvegardés en local (`localStorage`) et dans le profil (`surga_preferences.equipes_suivies`).
-    - *Filtres d'affichage* : Onglets rapides (Tous, Lions du Sénégal, Ligue 1 Sénégal, Lions en Europe, Mes clubs).
+    - *Grands Championnats Européens & Internationaux* :
+      - **Ligue des Champions UEFA (UCL)** : Chocs européens majeurs (*Real Madrid vs Manchester City*, *PSG vs Bayern Munich*, *Arsenal vs Inter Milan*).
+      - **Premier League (Angleterre)** : *Chelsea FC, Arsenal FC, Liverpool FC, Manchester City, Manchester United, Tottenham Hotspur, Everton, Crystal Palace*.
+      - **LaLiga EA Sports (Espagne)** : *El Clásico Real Madrid vs FC Barcelone*, *Atlético de Madrid, Real Betis*.
+      - **Ligue 1 McDonald's (France)** : *Le Classique OM vs PSG*, *AS Monaco, Olympique Lyonnais*.
+      - **Serie A (Italie)** : *Derby d'Italie Inter Milan vs Juventus*, *AC Milan, SS Lazio, SSC Napoli*.
+      - **Saudi Pro League & Monde** : *Derby de Riyad Al Nassr (Sadio Mané, CR7) vs Al Hilal (Koulibaly, Mitrović)*.
+      - **Lions de la Teranga (Sélection Nationale)** : Éliminatoires CAN 2025 (*Burundi, Burkina Faso*) et Coupe du Monde 2026 (*RD Congo*).
+      - **Ligue 1 Sénégal** : *ASC Jaraaf, Teungueth FC, Génération Foot, Guédiawaye FC, Casa Sports, AS Pikine*.
+    - *Scores en direct & Statuts* : Badge clignotant `EN_DIRECT` avec minute de jeu (`64'`, `74'`, `82'`), buteurs réels (*Vinicius, Mbappé, Haaland, Dembélé, Jackson, Mané, Saka, etc.*), statut `TERMINE` et diffuseurs (*Canal+ Foot, beIN Sports, RTS*).
+    - *Personnalisation & Sélection de ligues* : Modale `SurgaSportCustomModal.tsx` avec barre de recherche et sélecteur de ligues (*Europe, Ligue 1 Sénégal, Saudi Pro, Sélection SN*) pour cocher ses clubs favoris, sauvegardés en local (`localStorage`) et dans `surga_preferences.equipes_suivies`.
+    - *Onglets de filtres dans l'UI* : `Tous les matchs` • `Ligue des Champions` • `Premier League` • `LaLiga` • `Ligue 1` • `Serie A` • `Saudi Pro League` • `Lions du Sénégal` • `Ligue 1 SN` • `Mes clubs`.
   - **Module Météo & Marées Dakar Live** :
     - *Service Backend* : `backend/services/surga/meteo-service.js` et route `GET /api/surga/meteo` (Open-Meteo Dakar Live avec fallback déterministe hors-ligne, calcul déterministe des marées atlantiques pour Almadies & Yoff, qualité de l'air AQI avec détection saisonnière de l'Harmattan/poussière saharienne, vent et prévisions 3 jours).
     - *Briefing enrichi* : Injection automatique de la météo dans `GET /api/surga/briefing`.
