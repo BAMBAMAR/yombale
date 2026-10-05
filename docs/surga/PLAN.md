@@ -223,6 +223,7 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Algorithme de résolution strict à deux passes (priorité absolue aux quartiers spécifiques comme "Dakar Plateau" ou "Ouakam" avant la ville générique "Dakar").
 - [x] `DONE` Défilement horizontal tactile fluide pour le Kiosque des Unes de la presse sénégalaise (`SurgaPresseCard.tsx`).
 - [x] `DONE` Durcissement des en-têtes HTTP de sécurité : `Permissions-Policy: geolocation=(self)` et conditionnement de `CSP-Report-Only` en production.
+- [x] `DONE` Ergonomie & anti-troncature de la modale météo : `flexShrink: 0` sur l'en-tête, `minHeight: 0` sur la liste scrollable et `touchAction: 'manipulation'` sur chaque bouton.
 - [x] `DONE` Suite de tests Jest portée à **98/98 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 0 violation.
 
 ---

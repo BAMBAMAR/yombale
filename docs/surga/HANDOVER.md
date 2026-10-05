@@ -19,7 +19,7 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
    - **Sport Temps Réel & Personnalisation Multi-Ligues** : Scores et statuts en direct (badge clignotant `EN_DIRECT`, minute de jeu), sélecteur de ligues (`SurgaSportCustomModal.tsx`) couvrant UEFA Champions League, Premier League, LaLiga, Ligue 1, Serie A, Saudi Pro League, Ligue 1 sénégalaise et les Lions de la Teranga.
    - **Météo & Marées Live avec Sélecteur Multi-Localités & GPS 1-Clic** :
      - Catalogue national de 23 localités (8 quartiers de Dakar, banlieue dakaroise, capitales régionales).
-     - Modale dédiée (`SurgaMeteoLocaliteModal.tsx`) avec recherche textuelle instantanée et filtres régionaux.
+     - Modale dédiée (`SurgaMeteoLocaliteModal.tsx`, 368 l.) avec recherche instantanée, filtres régionaux sans écrasement flexbox (`flexShrink: 0`, `minHeight: 0`) et réactivité tactile (`touchAction: 'manipulation'`).
      - Algorithme de résolution strict à deux passes dans `meteo-service.js` (priorité absolue aux quartiers spécifiques comme "Dakar Plateau", "Grand Dakar" ou "Ouakam" avant la ville générique "Dakar").
      - Détection GPS automatique du quartier le plus proche via `navigator.geolocation` et calcul déterministe des marées océaniques pour le littoral.
    - **Commandes WhatsApp & Vocal Web Speech** : Commandes précises (quotas 20/jour, confirmation stricte OUI/NON), reconnaissance vocale bilingue avec normalisation orale déterministe.

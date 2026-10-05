@@ -3,6 +3,22 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 2] — Correctif Ergonomie, Anti-Troncature des Filtres & Réactivité Tactile de la Modale Météo
+- **Tâches complétées :**
+  - **Éradication de l'Écrasement Vertical des Filtres (`SurgaMeteoLocaliteModal.tsx`)** :
+    - Application de `flexShrink: 0` sur les conteneurs d'en-tête (GPS, barre de recherche et filtres de zones) pour empêcher le rétrécissement causé par Flexbox lorsque la hauteur de l'écran est contrainte.
+    - Ajout de `minHeight: 0` sur le conteneur scrollable de la liste des localités, évitant le débordement de hauteur intrinsèque qui écrasait la barre des filtres.
+  - **Calibrage des Boutons de Filtres** :
+    - Fixation d'une hauteur garantie (28px), d'un affichage `inline-flex` centré et d'un padding stable pour chaque pilule de filtre géographique.
+    - Ajout de `touchAction: 'manipulation'` éliminant tout délai de tap sur les écrans tactiles.
+  - **Réactivité & Synchronisation Immédiate** :
+    - État interne `selectionActive` synchronisé immédiatement au clic pour un retour visuel instantané de la coche orange.
+    - Application de `pointerEvents: 'none'` sur les éléments enfants internes des boutons pour garantir une capture 100% fiable des clics par l'élément `<button>`.
+  - **Permissions Geolocation (`next.config.js`)** :
+    - Remplacement de `geolocation=()` par `geolocation=(self)` dans les en-têtes HTTP globaux de sécurité.
+- **Validation** :
+  - `npx tsc --noEmit` 0 erreur, tests vitest et jest 100% passés, composant à 368 lignes (< 450 l.).
+
 ### [2026-10-05 — Soir] — Correctif d'Interactivité & Matching Strict des Localités Météo
 - **Tâches complétées :**
   - **Résolution Backend Strict à Deux Passes (`backend/services/surga/meteo-service.js`)** :

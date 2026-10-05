@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { X, Search, MapPin, LocateFixed, Check, Compass } from 'lucide-react'
 
 export interface LocaliteItem {
@@ -34,6 +34,12 @@ export default function SurgaMeteoLocaliteModal({
   const [recherche, setRecherche] = useState('')
   const [zoneFiltre, setZoneFiltre] = useState<string>('tous')
 
+  const [selectionActive, setSelectionActive] = useState<string>(localiteActuelle)
+
+  useEffect(() => {
+    setSelectionActive(localiteActuelle)
+  }, [localiteActuelle])
+
   const zonesDisponibles = useMemo(() => {
     const set = new Set<string>()
     localites.forEach((l) => set.add(l.zone))
@@ -63,11 +69,11 @@ export default function SurgaMeteoLocaliteModal({
         inset: 0,
         backgroundColor: 'rgba(20, 25, 38, 0.75)',
         backdropFilter: 'blur(4px)',
-        zIndex: 1100,
+        zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 14,
+        padding: 12,
         animation: 'fadeIn 0.2s ease-out',
       }}
       onClick={onClose}
@@ -76,13 +82,13 @@ export default function SurgaMeteoLocaliteModal({
         style={{
           width: '100%',
           maxWidth: 480,
-          maxHeight: '85vh',
+          maxHeight: '88vh',
           backgroundColor: '#FFFFFF',
           borderRadius: 14,
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 16px 40px rgba(0, 0, 0, 0.35)',
+          boxShadow: '0 20px 48px rgba(0, 0, 0, 0.35)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -108,6 +114,7 @@ export default function SurgaMeteoLocaliteModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
               <Compass size={18} color="#FFFFFF" />
@@ -133,6 +140,7 @@ export default function SurgaMeteoLocaliteModal({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             <X size={20} />
@@ -140,7 +148,14 @@ export default function SurgaMeteoLocaliteModal({
         </div>
 
         {/* Bouton de Géolocalisation GPS direct */}
-        <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)' }}>
+        <div
+          style={{
+            padding: '12px 14px',
+            borderBottom: '1px solid var(--border, #E8DDD2)',
+            backgroundColor: 'var(--bg, #F8F5F0)',
+            flexShrink: 0,
+          }}
+        >
           <button
             type="button"
             onClick={onDetecterGps}
@@ -160,6 +175,7 @@ export default function SurgaMeteoLocaliteModal({
               fontWeight: 700,
               cursor: gpsEnCours ? 'wait' : 'pointer',
               transition: 'all 0.15s ease',
+              touchAction: 'manipulation',
             }}
           >
             <LocateFixed size={16} color={estGpsActif ? 'var(--price, #0A5C36)' : 'var(--accent, #C75B00)'} className={gpsEnCours ? 'animate-spin' : ''} />
@@ -174,7 +190,7 @@ export default function SurgaMeteoLocaliteModal({
         </div>
 
         {/* Barre de recherche */}
-        <div style={{ padding: '10px 14px 6px' }}>
+        <div style={{ padding: '10px 14px 6px', flexShrink: 0 }}>
           <div
             style={{
               display: 'flex',
@@ -213,14 +229,15 @@ export default function SurgaMeteoLocaliteModal({
           </div>
         </div>
 
-        {/* Filtres par zone géographique */}
+        {/* Filtres par zone géographique (flexShrink: 0 pour empêcher tout écrasement/troncature) */}
         <div
           style={{
-            padding: '4px 14px 10px',
+            padding: '8px 14px 10px',
             display: 'flex',
             gap: 6,
             overflowX: 'auto',
             WebkitOverflowScrolling: 'touch',
+            flexShrink: 0,
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
           }}
@@ -234,16 +251,22 @@ export default function SurgaMeteoLocaliteModal({
                 type="button"
                 onClick={() => setZoneFiltre(z)}
                 style={{
-                  padding: '4px 12px',
+                  padding: '5px 12px',
                   borderRadius: 20,
                   fontSize: 11,
                   fontWeight: estActif ? 700 : 500,
-                  border: estActif ? '1px solid var(--navy, #1C2B4A)' : '1px solid var(--border, #E8DDD2)',
-                  backgroundColor: estActif ? 'var(--navy, #1C2B4A)' : 'transparent',
+                  border: estActif ? '1.5px solid var(--navy, #1C2B4A)' : '1px solid var(--border, #E8DDD2)',
+                  backgroundColor: estActif ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
                   color: estActif ? '#FFFFFF' : 'var(--text2, #5A4E42)',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
+                  height: 28,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  touchAction: 'manipulation',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 {label}
@@ -252,15 +275,17 @@ export default function SurgaMeteoLocaliteModal({
           })}
         </div>
 
-        {/* Liste des localités */}
+        {/* Liste des localités (minHeight: 0 pour permettre le scroll flex sans pousser les parents) */}
         <div
           style={{
             flex: 1,
+            minHeight: 0,
             overflowY: 'auto',
             padding: '4px 14px 14px',
             display: 'flex',
             flexDirection: 'column',
             gap: 6,
+            WebkitOverflowScrolling: 'touch',
           }}
         >
           {localitesFiltrees.length === 0 ? (
@@ -269,16 +294,18 @@ export default function SurgaMeteoLocaliteModal({
             </div>
           ) : (
             localitesFiltrees.map((loc) => {
+              const cible = selectionActive || localiteActuelle
               const estSelectionnee =
                 !estGpsActif &&
-                (loc.nom.toLowerCase().trim() === localiteActuelle.toLowerCase().trim() ||
-                  loc.id === localiteActuelle.toLowerCase().trim())
+                (loc.nom.toLowerCase().trim() === cible.toLowerCase().trim() ||
+                  loc.id === cible.toLowerCase().trim())
 
               return (
                 <button
                   key={loc.id}
                   type="button"
                   onClick={() => {
+                    setSelectionActive(loc.nom)
                     onSelectLocalite(loc.nom)
                     onClose()
                   }}
@@ -294,10 +321,12 @@ export default function SurgaMeteoLocaliteModal({
                     border: estSelectionnee ? '1.5px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
                     cursor: 'pointer',
                     textAlign: 'left',
+                    flexShrink: 0,
+                    touchAction: 'manipulation',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1, pointerEvents: 'none' }}>
                     <MapPin size={15} color={estSelectionnee ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)'} style={{ flexShrink: 0 }} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: estSelectionnee ? 800 : 600, color: 'var(--navy, #1C2B4A)' }}>
@@ -322,6 +351,7 @@ export default function SurgaMeteoLocaliteModal({
                         justifyContent: 'center',
                         flexShrink: 0,
                         marginLeft: 8,
+                        pointerEvents: 'none',
                       }}
                     >
                       <Check size={13} />

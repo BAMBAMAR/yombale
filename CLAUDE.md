@@ -48,6 +48,16 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Correctif Ergonomie, Anti-Troncature des Filtres & Réactivité Tactile de la Modale Météo (Session 2026-10-05, branche `feature/surga`)** :
+  - *Éradication de l'Écrasement Vertical des Filtres (`SurgaMeteoLocaliteModal.tsx`)* : Ajout de `flexShrink: 0` sur l'ensemble des conteneurs fixes (GPS, barre de recherche, rangée des filtres par zone) et application de `minHeight: 0` sur le conteneur scrollable de la liste. Auparavant, le moteur Flexbox comprimait la barre de filtres à moins de 12px de hauteur dès que la liste dépassait la hauteur d'écran, tranchant les boutons en deux et les rendant impossibles à cliquer.
+  - *Calibrage des Boutons de Filtres* : Hauteur fixe garantie (28px), `inline-flex` centré, padding calibré et isolation tactile `touchAction: 'manipulation'` sur chaque pilule de zone.
+  - *Réactivité Tactile & Sélection Instantanée* :
+    - Gestion d'un état de sélection interne réactif `selectionActive` synchronisé immédiatement au clic.
+    - Ajout de `touchAction: 'manipulation'` sur les cartes de localités pour éliminer tout délai de clic sur mobile/tactile.
+    - Application de `pointerEvents: 'none'` sur les contenus internes des boutons pour garantir une capture parfaite des événements de clic par l'élément bouton parent.
+  - *Permissions Geolocation (`next.config.js`)* : Alignement de `Permissions-Policy: geolocation=(self)` dans les en-têtes HTTP de sécurité globaux.
+  - *Validation* : 100% tests unitaires passés, `tsc --noEmit` 0 erreur, composant à 368 lignes (< 450 l.).
+
 - **Correctif d'Interactivité & Matching Strict des Localités Météo (Session 2026-10-05, branche `feature/surga`)** :
   - *Algorithme de Résolution Météo à Deux Passes (`backend/services/surga/meteo-service.js`)* : Remplacement du matching naïf par `includes()` qui ramenait systématiquement vers "Dakar" tout quartier contenant ce mot (ex: "Dakar Plateau", "Grand Dakar / Colobane"). Implémentation d'une passe 1 stricte (égalité exacte normalisée) puis d'une passe 2 triée par longueur décroissante de nom (priorité absolue aux quartiers spécifiques avant la ville générique).
   - *Éradication de la Double Coche & Détection Exacte (`SurgaMeteoLocaliteModal.tsx`)* : Remplacement du test de sélection `includes()` par une égalité stricte (`loc.nom.toLowerCase().trim() === localiteActuelle.toLowerCase().trim()`), éliminant l'anomalie visuelle où plusieurs localités apparaissaient cochées simultanément.

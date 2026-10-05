@@ -134,7 +134,7 @@ const nextConfig = {
           { key: 'X-XSS-Protection',          value: '1; mode=block' },
           { key: 'Content-Security-Policy',   value: "frame-ancestors 'self'; base-uri 'self'; form-action 'self' https:;" },
           { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy',        value: 'camera=(self), microphone=(self), geolocation=()' },
+          { key: 'Permissions-Policy',        value: 'camera=(self), microphone=(self), geolocation=(self)' },
         ],
       },
       {
