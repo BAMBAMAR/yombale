@@ -56,7 +56,11 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
       - **Saudi Pro League & Monde** : *Derby de Riyad Al Nassr (Sadio Mané, CR7) vs Al Hilal (Koulibaly, Mitrović)*.
       - **Lions de la Teranga (Sélection Nationale)** : Éliminatoires CAN 2025 (*Burundi, Burkina Faso*) et Coupe du Monde 2026 (*RD Congo*).
       - **Ligue 1 Sénégal** : *ASC Jaraaf, Teungueth FC, Génération Foot, Guédiawaye FC, Casa Sports, AS Pikine*.
-    - *Scores en direct & Statuts* : Badge clignotant `EN_DIRECT` avec minute de jeu (`64'`, `74'`, `82'`), buteurs réels (*Vinicius, Mbappé, Haaland, Dembélé, Jackson, Mané, Saka, etc.*), statut `TERMINE` et diffuseurs (*Canal+ Foot, beIN Sports, RTS*).
+    - *Flux en Direct ESPN Live Scoreboards & Calendrier Officiel FIFA* :
+      - Ingestion directe des scoreboards réels ESPN (`uefa.champions`, `eng.1`, `esp.1`, `fra.1`, `ita.1`, `sau.1`) et du calendrier officiel FIFA des Lions du Sénégal (`fifa.worldq.caf/teams/654/schedule`).
+      - Vraies affiches officielles, vrais scores réels, vrais diffuseurs et vrais horaires de matchs GMT sans aucune heure fictive de nuit.
+      - Matchs de Ligue 1 sénégalaise programmés aux heures réelles d'après-midi au Sénégal (16h30 / 17h00 GMT).
+    - *Scores en direct & Statuts* : Badge clignotant `EN_DIRECT` avec minute de jeu, statut `TERMINE` et diffuseurs (*Canal+ Foot, beIN Sports, RTS*).
     - *Personnalisation & Sélection de ligues* : Modale `SurgaSportCustomModal.tsx` avec barre de recherche et sélecteur de ligues (*Europe, Ligue 1 Sénégal, Saudi Pro, Sélection SN*) pour cocher ses clubs favoris, sauvegardés en local (`localStorage`) et dans `surga_preferences.equipes_suivies`.
     - *Onglets de filtres dans l'UI* : `Tous les matchs` • `Ligue des Champions` • `Premier League` • `LaLiga` • `Ligue 1` • `Serie A` • `Saudi Pro League` • `Lions du Sénégal` • `Ligue 1 SN` • `Mes clubs`.
   - **Module Météo & Marées Dakar Live** :
