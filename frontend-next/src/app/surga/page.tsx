@@ -97,7 +97,12 @@ export default function SurgaPage() {
       const storedDone = localStorage.getItem('surga_onboarding_done')
       const storedPrefs = localStorage.getItem('surga_preferences')
       if (storedDone === 'true' && storedPrefs) {
-        setPreferences(JSON.parse(storedPrefs))
+        const parsed = JSON.parse(storedPrefs)
+        if (Array.isArray(parsed.modules_actifs) && !parsed.modules_actifs.includes('meteo')) {
+          parsed.modules_actifs.push('meteo')
+          try { localStorage.setItem('surga_preferences', JSON.stringify(parsed)) } catch {}
+        }
+        setPreferences(parsed)
         setIsOnboarded(true)
         return
       }
@@ -107,19 +112,21 @@ export default function SurgaPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.success && data.preferences?.onboarding_termine) {
-          setPreferences(data.preferences)
+          const pref = data.preferences
+          if (Array.isArray(pref.modules_actifs) && !pref.modules_actifs.includes('meteo')) {
+            pref.modules_actifs.push('meteo')
+          }
+          setPreferences(pref)
           setIsOnboarded(true)
           try {
             localStorage.setItem('surga_onboarding_done', 'true')
-            localStorage.setItem('surga_preferences', JSON.stringify(data.preferences))
+            localStorage.setItem('surga_preferences', JSON.stringify(pref))
           } catch {}
         } else {
           setIsOnboarded(false)
         }
       })
-      .catch(() => {
-        setIsOnboarded(false)
-      })
+      .catch(() => setIsOnboarded(false))
 
     // Vérification du statut Premium
     fetch('/api/surga/abonnements/mon-statut')
@@ -222,11 +229,7 @@ export default function SurgaPage() {
 
   // Écran de chargement et pré-rendu SEO accessible initial
   if (isOnboarded === null) {
-    return (
-      <SurgaLandingHero
-        onDemarrerOnboarding={() => setAfficherFormulaireOnboarding(true)}
-      />
-    )
+    return <SurgaLandingHero onDemarrerOnboarding={() => setAfficherFormulaireOnboarding(true)} />
   }
 
   // Écran d'accueil public ou formulaire Onboarding
@@ -237,12 +240,11 @@ export default function SurgaPage() {
           onDemarrerOnboarding={() => setAfficherFormulaireOnboarding(true)}
           onIgnorerVersApp={() => handleOnboardingComplete({
             heure_briefing: '07:30', langue: 'fr', quartiers: ['Plateau'], equipes_suivies: [],
-            audio_actif: false, modules_actifs: ['actualites', 'trafic', 'meteo', 'depenses'], onboarding_termine: true,
+            audio_actif: false, modules_actifs: ['actualites', 'meteo', 'trafic', 'depenses'], onboarding_termine: true,
           })}
         />
       )
     }
-
     return (
       <>
         <SurgaHeader titre="Surga" sousTitre="Configuration initiale" />
@@ -251,20 +253,11 @@ export default function SurgaPage() {
     )
   }
 
-  // Écran principal configuré
   return (
     <>
       <SurgaHeader
         titre={
-          activeTab === 'notes'
-            ? 'Mes Notes'
-            : activeTab === 'depenses'
-            ? 'Sama Xaalis'
-            : activeTab === 'agenda'
-            ? 'Mon Agenda'
-            : activeTab === 'plus'
-            ? 'Paramètres'
-            : 'Surga'
+          activeTab === 'notes' ? 'Mes Notes' : activeTab === 'depenses' ? 'Sama Xaalis' : activeTab === 'agenda' ? 'Mon Agenda' : activeTab === 'plus' ? 'Paramètres' : 'Surga'
         }
         sousTitre={activeTab === 'aujourdhui' ? briefingData?.date : undefined}
       />
@@ -287,9 +280,7 @@ export default function SurgaPage() {
 
               <p style={{ fontSize: 14, color: 'var(--text1, #1A1612)', margin: '0 0 10px 0', lineHeight: 1.45 }}>
                 {briefingData?.message_synthese || (
-                  <>
-                    Bonjour. Votre Surga est configuré pour <strong>{preferences?.quartiers?.[0] || 'Dakar'}</strong>. Vos briques actives préparent votre premier briefing complet.
-                  </>
+                  <>Bonjour. Votre Surga est configuré pour <strong>{preferences?.quartiers?.[0] || 'Dakar'}</strong>. Vos briques actives préparent votre premier briefing complet.</>
                 )}
               </p>
 
@@ -299,7 +290,6 @@ export default function SurgaPage() {
                 onRefresh={chargerBriefing}
               />
 
-              {/* Lecteur Audio Optionnel (Low-Data) */}
               {preferences?.audio_actif && audioScript && (
                 <SurgaAudioPlayer
                   script={audioScript}
@@ -309,8 +299,8 @@ export default function SurgaPage() {
               )}
             </div>
 
-            {/* Section Briques : Météo & Marées Dakar */}
-            {(preferences?.modules_actifs?.includes('meteo') || !preferences?.modules_actifs) && (
+            {/* Section Briques : Météo & Marées Dakar (Active par défaut dans le Briefing) */}
+            {(!preferences?.modules_actifs || preferences.modules_actifs.includes('meteo') || !preferences.modules_actifs.includes('sans_meteo')) && (
               <SurgaMeteoCard
                 initialMeteo={briefingData?.meteo}
                 ville={preferences?.quartiers?.[0] || 'Dakar'}

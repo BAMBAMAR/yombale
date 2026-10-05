@@ -13,6 +13,7 @@ import {
   MapPin,
   Clock,
   Sparkles,
+  CloudSun,
 } from 'lucide-react'
 
 export interface SurgaPreferencesData {
@@ -32,6 +33,7 @@ interface SurgaOnboardingProps {
 
 const BRIQUES_DISPONIBLES = [
   { id: 'actualites', nom: 'Actualités & Presse', desc: 'Revue de presse sénégalaise sourcée', icon: Newspaper },
+  { id: 'meteo', nom: 'Météo & Marées', desc: 'Température, vent et horaires des marées à Dakar', icon: CloudSun },
   { id: 'sport', nom: 'Sport & Résultats', desc: 'Équipe nationale et scores du week-end', icon: Trophy },
   { id: 'trafic', nom: 'Trafic à Dakar', desc: 'État de la circulation et alertes trajets', icon: Navigation },
   { id: 'immobilier', nom: 'Immobilier & Loyers', desc: 'Alertes annonces vérifiées et démarches', icon: Building },
@@ -54,7 +56,7 @@ const QUARTIERS_POPULAIRES = [
 export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboardingProps) {
   const [step, setStep] = useState<number>(1)
   const [selectedBriques, setSelectedBriques] = useState<string[]>(
-    initialData?.modules_actifs || ['actualites', 'sport', 'trafic']
+    initialData?.modules_actifs || ['actualites', 'meteo', 'sport', 'trafic']
   )
   const [heureBriefing, setHeureBriefing] = useState<string>(
     initialData?.heure_briefing || '07:30'

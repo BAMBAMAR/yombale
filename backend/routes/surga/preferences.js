@@ -8,7 +8,7 @@ const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional } = require('../../middlewares/auth');
 
 const DEFAUTS_PREFERENCES = {
-  modules_actifs: ['briefing', 'notes', 'depenses', 'calculatrice', 'agenda'],
+  modules_actifs: ['briefing', 'meteo', 'actualites', 'trafic', 'notes', 'depenses', 'calculatrice', 'agenda'],
   heure_briefing: '07:30',
   langue: 'fr',
   quartiers: ['Dakar Plateau', 'Almadies'],
