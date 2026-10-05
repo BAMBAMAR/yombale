@@ -326,6 +326,14 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Formatage soigné des dates de parution dans `SurgaKiosqueUnes.tsx` (`formatDateParution`), affichage de la mention « Aujourd'hui » et validation visuelle Playwright mobile.
 - [x] `DONE` Règle d'exclusion `.gitignore` pour `frontend-next/public/surga/unes/*.webp` et tests unitaires 99/99 validés (100%).
 
+### Tranche 26 — Synchronisation & Résolution de l'Incohérence Sama Xaalis (05 Octobre 2026 - Soir 15)
+- [x] `DONE` Diagnostic de l'incohérence entre la tuile du tableau de bord (`0 FCFA`) et le solde réel de Sama Xaalis (`102 778 FCFA`).
+- [x] `DONE` Déclencheur réactif `notifierKalpe()` dispatchant `surga-kalpe-change` et `surga-data-change` sur toutes les mutations dans `surga-kalpe.ts`.
+- [x] `DONE` Passerelle bidirectionnelle automatique dans `surga-offline-sync.ts` (`saveLocalDepense`, `deleteLocalDepense`) vers `surga_kalpe_operations`.
+- [x] `DONE` Intégration de `soldeKalpeFormate` dans `SurgaDashboardTools.tsx` et gestion d'état réactive dans `page.tsx` (maintenu à 449 lignes, < 450 l.).
+- [x] `DONE` Prise en compte des clés `surga_kalpe_*` dans l'export et la purge locale de `SurgaDonneesModal.tsx`.
+- [x] `DONE` Validation automatisée Playwright confirmant le rendu mobile exact `102 778 FCFA • Suivi entrées & dépenses`, `tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

@@ -21,14 +21,10 @@ import SurgaParametresTab from './components/SurgaParametresTab'
 import SurgaModalsContainer from './components/SurgaModalsContainer'
 import SurgaLandingHero from './components/SurgaLandingHero'
 import { useSurgaRadio } from '@/lib/surga-radio-context'
+import { getSoldeKalpeFormate } from '@/lib/surga-kalpe'
 import {
-  getLocalNotes,
-  getLocalAgenda,
-  calculerStatsLocales,
-  saveLocalDepense,
-  saveLocalNote,
-  saveLocalEvenement,
-  type SurgaDepensesStats,
+  getLocalNotes, getLocalAgenda, calculerStatsLocales,
+  saveLocalDepense, saveLocalNote, saveLocalEvenement, type SurgaDepensesStats,
 } from '@/lib/surga-offline-sync'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
 import { Mic, Newspaper, Sparkles, Sun } from 'lucide-react'
@@ -54,20 +50,16 @@ export default function SurgaPage() {
   const [preferences, setPreferences] = useState<SurgaPreferencesData | null>(null)
   const [briefingData, setBriefingData] = useState<BriefingApiResponse | null>(null)
   const [loadingBriefing, setLoadingBriefing] = useState<boolean>(false)
-  const [isCalcOpen, setIsCalcOpen] = useState<boolean>(false)
-  const [isVoiceOpen, setIsVoiceOpen] = useState<boolean>(false)
-  const [isPresseOpen, setIsPresseOpen] = useState<boolean>(false)
-  const [isPodcastOpen, setIsPodcastOpen] = useState<boolean>(false)
-  const [isTraficOpen, setIsTraficOpen] = useState<boolean>(false)
-  const [isImmoOpen, setIsImmoOpen] = useState<boolean>(false)
-  const [isConcoursOpen, setIsConcoursOpen] = useState<boolean>(false)
-  const [isPlacesOpen, setIsPlacesOpen] = useState<boolean>(false)
-  const [isPremiumOpen, setIsPremiumOpen] = useState<boolean>(false)
-  const [isProOpen, setIsProOpen] = useState<boolean>(false)
+  const [isCalcOpen, setIsCalcOpen] = useState<boolean>(false), [isVoiceOpen, setIsVoiceOpen] = useState<boolean>(false)
+  const [isPresseOpen, setIsPresseOpen] = useState<boolean>(false), [isPodcastOpen, setIsPodcastOpen] = useState<boolean>(false)
+  const [isTraficOpen, setIsTraficOpen] = useState<boolean>(false), [isImmoOpen, setIsImmoOpen] = useState<boolean>(false)
+  const [isConcoursOpen, setIsConcoursOpen] = useState<boolean>(false), [isPlacesOpen, setIsPlacesOpen] = useState<boolean>(false)
+  const [isPremiumOpen, setIsPremiumOpen] = useState<boolean>(false), [isProOpen, setIsProOpen] = useState<boolean>(false)
   const [isDonneesOpen, setIsDonneesOpen] = useState<boolean>(false)
   const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; plan?: string | null; joursRestants?: number }>({ estPremium: false })
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
+  const [soldeKalpeFormate, setSoldeKalpeFormate] = useState<string>('0 FCFA')
   const [nbNotes, setNbNotes] = useState<number>(0)
   const [nbAgenda, setNbAgenda] = useState<number>(0)
 
@@ -77,9 +69,10 @@ export default function SurgaPage() {
     return () => stopper()
   }, [])
 
-  // Chargement des aperçus locaux (dépenses, notes, agenda)
+  // Chargement des aperçus locaux (dépenses, notes, agenda, Kalpé)
   const rafraichirApercus = useCallback(() => {
     try {
+      setSoldeKalpeFormate(getSoldeKalpeFormate())
       setStatsApercu(calculerStatsLocales())
       setNbNotes(getLocalNotes().length)
       const todayStr = new Date().toISOString().slice(0, 10)
@@ -90,6 +83,15 @@ export default function SurgaPage() {
 
   useEffect(() => {
     rafraichirApercus()
+    const onEvt = () => rafraichirApercus()
+    window.addEventListener('surga-kalpe-change', onEvt)
+    window.addEventListener('surga-data-change', onEvt)
+    window.addEventListener('storage', onEvt)
+    return () => {
+      window.removeEventListener('surga-kalpe-change', onEvt)
+      window.removeEventListener('surga-data-change', onEvt)
+      window.removeEventListener('storage', onEvt)
+    }
   }, [activeTab, rafraichirApercus])
 
   // Chargement des préférences utilisateur
@@ -374,6 +376,7 @@ export default function SurgaPage() {
 
             {/* Section Noyau : Raccourcis Dépenses, Notes, Calculs & Micro */}
             <SurgaDashboardTools
+              soldeKalpeFormate={soldeKalpeFormate}
               statsApercu={statsApercu}
               nbNotes={nbNotes}
               nbAgenda={nbAgenda}

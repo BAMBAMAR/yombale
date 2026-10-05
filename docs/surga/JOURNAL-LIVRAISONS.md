@@ -3,6 +3,31 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 15] — Résolution de l'Incohérence Sama Xaalis (Tableau de Bord vs Vue Portefeuille)
+- **Demande Utilisateur :** « incoherence » avec captures d'écran montrant la tuile du tableau de bord à `0 FCFA • Suivi entrées & dépenses` contre un solde réel de `102 778 FCFA` dans la vue Sama Xaalis.
+- **Tâches complétées :**
+  - **Diagnostic & Traçage de la Désynchronisation** :
+    - Mise en évidence du déphasage : `SurgaDashboardTools.tsx` consommait `statsApercu?.total_formate` issu du gestionnaire minimal `surga-offline-sync.ts` (`surga_offline_depenses`), alors que l'ensemble des flux financiers de l'utilisateur était consigné dans `surga-kalpe.ts` (`surga_kalpe_operations`).
+    - Absence d'écoute réactive d'événements pour mettre à jour la tuile de l'écran d'accueil lors d'ajouts ou de modifications financières.
+  - **Moteur Réactif & Synchronisation Sama Xaalis** :
+    - `frontend-next/src/lib/surga-kalpe.ts` : Ajout du déclencheur d'événements `notifierKalpe()` dispatchant `surga-kalpe-change` et `surga-data-change` sur toutes les opérations d'écriture/suppression/remboursement. Export du helper `getSoldeKalpeFormate()`.
+    - `frontend-next/src/lib/surga-offline-sync.ts` : Raccordement automatique bidirectionnel des fonctions `saveLocalDepense` et `deleteLocalDepense` vers le portefeuille Sama Xaalis (`surga_kalpe_operations`).
+    - `frontend-next/src/app/surga/components/SurgaDashboardTools.tsx` : Ajout de la prop `soldeKalpeFormate` et affichage du solde disponible réel (`102 778 FCFA`) avec le tag de prix stylisé.
+    - `frontend-next/src/app/surga/page.tsx` : Intégration de l'état `soldeKalpeFormate`, recalcul dynamique dans `rafraichirApercus`, et écouteurs réactifs (`surga-kalpe-change`, `surga-data-change`, `storage`). Respect strict du plafond de modularité (< 450 lignes).
+    - `frontend-next/src/app/surga/components/SurgaDonneesModal.tsx` : Intégration des données Sama Xaalis (`surga_kalpe_*`) dans l'export local JSON et dans la purge totale.
+  - **Validation Visuelle Automatisée** :
+    - Test Playwright validé sur simulateur mobile avec le jeu d'essai exact de l'utilisateur (+150 000 F / -47 222 F).
+    - Confirmation visuelle de l'affichage exact `102 778 FCFA • Suivi entrées & dépenses`.
+    - `tsc --noEmit` : 0 erreur de typage.
+    - `npm run lint:slop` : 100% conforme.
+- **Fichiers modifiés :**
+  - `frontend-next/src/lib/surga-kalpe.ts`
+  - `frontend-next/src/lib/surga-offline-sync.ts`
+  - `frontend-next/src/app/surga/components/SurgaDashboardTools.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `frontend-next/src/app/surga/components/SurgaDonneesModal.tsx`
+  - `CLAUDE.md`, `docs/JOURNAL-LIVRAISONS.md`, `docs/surga/JOURNAL-LIVRAISONS.md`, `docs/surga/HANDOVER.md`, `docs/surga/PLAN.md`
+
 ### [2026-10-05 — Soir 14] — Raccordement du Kiosque des Unes au ProjetBI (`LE-PROJET` / `projetbi.org`)
 - **Demande Utilisateur :** « dans le plan de surga javai indique dans le meme depot ya un autre dossier le projet pour le site projetbi.org ou on peut retrouver la revue de presse ».
 - **Tâches complétées :**

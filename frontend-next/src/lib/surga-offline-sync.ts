@@ -2,6 +2,7 @@
 // Gestionnaire offline-first et synchronisation pour Surga (Tranche 3)
 
 import { formaterFCFA } from './surga-calculator'
+import { saveKalpeOperation, getKalpeOperations, deleteKalpeOperation } from './surga-kalpe'
 
 export interface SurgaChecklistItem {
   id: string
@@ -185,12 +186,42 @@ export function saveLocalDepense(depense: Partial<SurgaDepense> & { montant_xof:
 
   existing.unshift(created)
   setLocalDepenses(existing)
+
+  // Synchronisation avec Sama Xaalis (Kalpé)
+  try {
+    saveKalpeOperation({
+      direction: 'sortie',
+      type: 'depense',
+      montant: created.montant_xof,
+      categorie: created.categorie || 'Dépenses',
+      libelle: created.note || 'Dépense enregistrée',
+      mode_paiement: 'cash',
+      date_operation: created.date_depense,
+    })
+  } catch {}
+
   return created
 }
 
 export function deleteLocalDepense(id: string): void {
+  const existing = getLocalDepenses().find((d) => d.id === id)
   const depenses = getLocalDepenses().filter((d) => d.id !== id)
   setLocalDepenses(depenses)
+
+  if (existing) {
+    try {
+      const ops = getKalpeOperations()
+      const match = ops.find(
+        (o) =>
+          o.direction === 'sortie' &&
+          o.montant === existing.montant_xof &&
+          (o.libelle === existing.note || (existing.note && o.libelle?.includes(existing.note)))
+      )
+      if (match) {
+        deleteKalpeOperation(match.id)
+      }
+    } catch {}
+  }
 }
 
 export function calculerStatsLocales(mois?: string): SurgaDepensesStats {

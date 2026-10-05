@@ -155,6 +155,15 @@ export function getKalpeOperations(): KalpeOperationLocal[] {
   }
 }
 
+function notifierKalpe(): void {
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('surga-kalpe-change'))
+      window.dispatchEvent(new CustomEvent('surga-data-change'))
+    } catch {}
+  }
+}
+
 export function saveKalpeOperation(op: Omit<KalpeOperationLocal, 'id' | 'created_at'>): KalpeOperationLocal {
   const ops = getKalpeOperations()
   const nouvelle: KalpeOperationLocal = {
@@ -165,6 +174,7 @@ export function saveKalpeOperation(op: Omit<KalpeOperationLocal, 'id' | 'created
   const updated = [nouvelle, ...ops]
   try {
     localStorage.setItem(STORAGE_KEYS.OPERATIONS, JSON.stringify(updated))
+    notifierKalpe()
   } catch {}
   return nouvelle
 }
@@ -174,6 +184,7 @@ export function deleteKalpeOperation(id: string): void {
   const filtered = ops.filter((o) => o.id !== id)
   try {
     localStorage.setItem(STORAGE_KEYS.OPERATIONS, JSON.stringify(filtered))
+    notifierKalpe()
   } catch {}
 }
 
@@ -203,6 +214,7 @@ export function saveKalpeDette(dette: Omit<KalpeDetteLocal, 'id' | 'montant_paye
   const updated = [nouvelle, ...dettes]
   try {
     localStorage.setItem(STORAGE_KEYS.DETTES, JSON.stringify(updated))
+    notifierKalpe()
   } catch {}
   return nouvelle
 }
@@ -222,6 +234,7 @@ export function rembourserKalpeDette(detteId: string, montantRembourse: number):
   })
   try {
     localStorage.setItem(STORAGE_KEYS.DETTES, JSON.stringify(updated))
+    notifierKalpe()
   } catch {}
 }
 
@@ -230,6 +243,7 @@ export function deleteKalpeDette(id: string): void {
   const filtered = dettes.filter((d) => d.id !== id)
   try {
     localStorage.setItem(STORAGE_KEYS.DETTES, JSON.stringify(filtered))
+    notifierKalpe()
   } catch {}
 }
 
@@ -258,6 +272,7 @@ export function saveKalpeObjectif(obj: Omit<KalpeObjectifLocal, 'id' | 'montant_
   const updated = [...objectifs, nouveau]
   try {
     localStorage.setItem(STORAGE_KEYS.OBJECTIFS, JSON.stringify(updated))
+    notifierKalpe()
   } catch {}
   return nouveau
 }
@@ -275,6 +290,7 @@ export function verserKalpeObjectif(objectifId: string, montant: number): void {
   })
   try {
     localStorage.setItem(STORAGE_KEYS.OBJECTIFS, JSON.stringify(updated))
+    notifierKalpe()
   } catch {}
 }
 
@@ -283,6 +299,7 @@ export function deleteKalpeObjectif(id: string): void {
   const filtered = objectifs.filter((o) => o.id !== id)
   try {
     localStorage.setItem(STORAGE_KEYS.OBJECTIFS, JSON.stringify(filtered))
+    notifierKalpe()
   } catch {}
 }
 
@@ -332,3 +349,9 @@ export function calculerSyntheseKalpe(moisStr = new Date().toISOString().slice(0
     total_epargne: epargneTotale,
   }
 }
+
+export function getSoldeKalpeFormate(): string {
+  const synthese = calculerSyntheseKalpe()
+  return `${(synthese?.solde_disponible || 0).toLocaleString('fr-FR')} FCFA`
+}
+

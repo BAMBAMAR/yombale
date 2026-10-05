@@ -19,7 +19,8 @@ import type { SurgaTab } from './SurgaBottomNav';
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync';
 
 interface SurgaDashboardToolsProps {
-  statsApercu: SurgaDepensesStats | null;
+  soldeKalpeFormate?: string;
+  statsApercu?: SurgaDepensesStats | null;
   nbNotes: number;
   nbAgenda: number;
   onNavigateTab: (tab: SurgaTab) => void;
@@ -29,6 +30,7 @@ interface SurgaDashboardToolsProps {
 }
 
 export default function SurgaDashboardTools({
+  soldeKalpeFormate,
   statsApercu,
   nbNotes,
   nbAgenda,
@@ -89,7 +91,7 @@ export default function SurgaDashboardTools({
         <div className="surga-item-content">
           <div className="surga-item-line1">Sama Xaalis (Portefeuille)</div>
           <div className="surga-item-line2">
-            <span className="surga-price-tag">{statsApercu?.total_formate || '0 FCFA'}</span>
+            <span className="surga-price-tag">{soldeKalpeFormate || statsApercu?.total_formate || '0 FCFA'}</span>
             <span>• Suivi entrées &amp; dépenses</span>
           </div>
         </div>

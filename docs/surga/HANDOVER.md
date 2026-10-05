@@ -1,15 +1,23 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 14)  
+> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 15)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 25 : Identité de Marque Dépositaire Complète, Raccordement Kiosque des Unes au ProjetBI `LE-PROJET` / `projetbi.org`, Sama Xaalis, Météo 14 Régions, Passerelles Transversales, Console Pro 11 Modules)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 26 : Résolution Incohérence Sama Xaalis, Identité de Marque Dépositaire Complète, Raccordement Kiosque des Unes au ProjetBI `LE-PROJET` / `projetbi.org`, Météo 14 Régions, Passerelles Transversales, Console Pro 11 Modules)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Direction Artistique)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** a été intégralement doté de sa propre **identité de marque souveraine** et autonome au sein de l'écosystème Nopalou, et son Kiosque des Unes est désormais raccordé en direct au moteur de revue de presse quotidienne de **projetbi.org** (`LE-PROJET`).
+L'assistant personnel de poche **Surga** a été doté d'une cohérence financière absolue : le tableau de bord est désormais parfaitement synchronisé avec le portefeuille personnel **Sama Xaalis**, affichant en temps réel le solde net disponible exact.
+
+0. **Synchronisation & Résolution de l'Incohérence Sama Xaalis (Tranche 26 — 100% DONE)** :
+   - Éradication de la divergence d'affichage : la tuile du tableau de bord affichait `0 FCFA • Suivi entrées & dépenses` au lieu du solde réel calculé par `surga-kalpe.ts` (ex. `102 778 FCFA` pour l'utilisateur avec +150 000 F d'entrées et -47 222 F de dépenses).
+   - Raccordement réactif dans `frontend-next/src/lib/surga-kalpe.ts` : émission de `surga-kalpe-change` et `surga-data-change` (`notifierKalpe()`) lors de tout ajout/modification/suppression dans Sama Xaalis (opérations, dettes, objectifs).
+   - Passerelle bidirectionnelle dans `frontend-next/src/lib/surga-offline-sync.ts` répercutant automatiquement les dépenses vocales et transversales dans `surga_kalpe_operations`.
+   - Prop `soldeKalpeFormate` dans `SurgaDashboardTools.tsx` et gestion d'état réactive dans `page.tsx` (< 450 lignes respecté).
+   - Export et purge locale dans `SurgaDonneesModal.tsx` couvrant désormais l'ensemble des clés Sama Xaalis.
+   - Validation automatisée Playwright confirmant le rendu visuel au pixel près (`102 778 FCFA • Suivi entrées & dépenses`).
 
 0. **Raccordement Kiosque des Unes & ProjetBI (`LE-PROJET` / `projetbi.org`) (Tranche 25 — 100% DONE)** :
    - Détection du dossier racine `../LE-PROJET/` et de son flux live `press.json` avec 41 Unes de quotidiens du jour (05/10/2026).

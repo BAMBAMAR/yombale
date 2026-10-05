@@ -61,6 +61,9 @@ export default function SurgaDonneesModal({
           notes: JSON.parse(localStorage.getItem('surga_offline_notes') || '[]'),
           depenses: JSON.parse(localStorage.getItem('surga_offline_depenses') || '[]'),
           agenda: JSON.parse(localStorage.getItem('surga_offline_agenda') || '[]'),
+          kalpe_operations: JSON.parse(localStorage.getItem('surga_kalpe_operations') || '[]'),
+          kalpe_dettes: JSON.parse(localStorage.getItem('surga_kalpe_dettes') || '[]'),
+          kalpe_objectifs: JSON.parse(localStorage.getItem('surga_kalpe_objectifs') || '[]'),
         }
       }
 
@@ -119,6 +122,11 @@ export default function SurgaDonneesModal({
         localStorage.removeItem('surga_offline_notes')
         localStorage.removeItem('surga_offline_depenses')
         localStorage.removeItem('surga_offline_agenda')
+        localStorage.removeItem('surga_kalpe_operations')
+        localStorage.removeItem('surga_kalpe_dettes')
+        localStorage.removeItem('surga_kalpe_objectifs')
+        window.dispatchEvent(new CustomEvent('surga-kalpe-change'))
+        window.dispatchEvent(new CustomEvent('surga-data-change'))
       } catch {}
 
       setMessageSucces('Toutes vos données Surga ont été définitivement purgées.')

@@ -49,6 +49,19 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Résolution de l'Incohérence Sama Xaalis (Tableau de Bord vs Vue Portefeuille) (Session 2026-10-05 - Suite 6)** :
+  - *Demande Utilisateur* : Signalement d'incohérence (« incoherence ») avec captures d'écran : la tuile du tableau de bord affichait `0 FCFA • Suivi entrées & dépenses` alors que la vue portefeuille Sama Xaalis affichait un solde disponible de `102 778 FCFA` (entrées du mois : `+150 000 F`, dépenses du mois : `-47 222 F`).
+  - *Cause Racine* :
+    - `SurgaDashboardTools.tsx` lisait `statsApercu?.total_formate` issu du module legacy `surga-offline-sync.ts` (`surga_offline_depenses`), non synchronisé avec le gestionnaire financier `surga-kalpe.ts` (`surga_kalpe_operations`).
+    - Aucune écoute réactive d'événements (`surga-kalpe-change`, `surga-data-change`) sur l'écran d'accueil lors de l'enregistrement de mouvements financiers.
+  - *Correctifs & Synchronisation Intégrale* :
+    - `frontend-next/src/lib/surga-kalpe.ts` : Ajout de la notification d'événements réactifs `notifierKalpe()` (`surga-kalpe-change` et `surga-data-change`) sur toutes les mutations (opérations, dettes, remboursements, objectifs d'épargne) et export du helper `getSoldeKalpeFormate()`.
+    - `frontend-next/src/lib/surga-offline-sync.ts` : Synchronisation bidirectionnelle automatique des dépenses locales (`saveLocalDepense`, `deleteLocalDepense`) vers `surga_kalpe_operations`.
+    - `frontend-next/src/app/surga/components/SurgaDashboardTools.tsx` : Intégration de la prop `soldeKalpeFormate` dans la vignette « Sama Xaalis (Portefeuille) », affichant le solde disponible réel (`102 778 FCFA` au lieu de `0 FCFA`).
+    - `frontend-next/src/app/surga/page.tsx` : Ajout de l'état `soldeKalpeFormate`, recalcul dynamique dans `rafraichirApercus`, et écouteurs d'événements `surga-kalpe-change`, `surga-data-change` et `storage`. Resserrement du composant pour maintenir strictement la taille < 450 lignes (449 lignes).
+    - `frontend-next/src/app/surga/components/SurgaDonneesModal.tsx` : Prise en compte des clés `surga_kalpe_*` dans l'export JSON local et la purge totale des données.
+  - *Validation Visuelle & Tests* : Test automatisé Playwright validé avec le jeu de données exact de l'utilisateur (4 opérations, +150 000 F / -47 222 F), rendu parfait `102 778 FCFA • Suivi entrées & dépenses` vérifié par capture visuelle. Tests `tsc --noEmit` et `lint:slop` 100% au vert.
+
 - **Surga — Raccordement du Kiosque des Unes au ProjetBI (`LE-PROJET` / `projetbi.org`) (Session 2026-10-05 - Suite 5)** :
   - *Demande Utilisateur* : Indication de la présence du dossier `LE-PROJET` pour le site `projetbi.org` dans le même dépôt/espace contenant la revue de presse quotidienne.
   - *Découverte & Connexion* :
