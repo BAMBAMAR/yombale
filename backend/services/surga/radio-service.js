@@ -11,6 +11,97 @@ const https = require('https');
  */
 const RADIOS_SENEGAL = [
   {
+    id: 'rfm',
+    nom: 'RFM 94.0 Dakar',
+    slogan: 'Radio Futurs Médias • Première radio d’information du Sénégal',
+    frequence: '94.0 FM',
+    region: 'Dakar & National',
+    categorie: 'information',
+    langues: ['Wolof', 'Français'],
+    url: 'https://stream.zenolive.com/kuk0syz5puquv',
+    directMp3: true,
+    bitrateKbps: 128,
+    description: 'Actualités nationales, revues de presse matinales, grands débats politiques et journal parlé de référence.',
+  },
+  {
+    id: 'zik-fm',
+    nom: 'Zik FM 89.7',
+    slogan: 'Groupe D-Média • La radio populaire et citoyenne',
+    frequence: '89.7 FM',
+    region: 'Dakar & National',
+    categorie: 'information',
+    langues: ['Wolof', 'Français'],
+    url: 'https://stream.zeno.fm/z97k8ry9sxquv',
+    directMp3: true,
+    bitrateKbps: 128,
+    description: 'Débats de société, revues des titres populaires, libre antenne citoyenne et actualités.',
+  },
+  {
+    id: 'walf-fm',
+    nom: 'Walf FM 99.0',
+    slogan: 'Groupe Walfadjri • La voix des sans-voix',
+    frequence: '99.0 FM',
+    region: 'Dakar & National',
+    categorie: 'information',
+    langues: ['Wolof', 'Français'],
+    url: 'https://10gb1.acangroup.org:8000/walffm',
+    directMp3: true,
+    bitrateKbps: 128,
+    description: 'Pionnière de l’information indépendante au Sénégal, débats démocratiques et actualité en direct.',
+  },
+  {
+    id: 'lamp-fall',
+    nom: 'Lamp Fall FM',
+    slogan: 'La voix du Mouridisme et des Khassaïdes',
+    frequence: '101.7 FM',
+    region: 'Touba & National',
+    categorie: 'religieux',
+    langues: ['Wolof', 'Arabe'],
+    url: 'https://stream.zeno.fm/bgy95ndrbxquv',
+    directMp3: true,
+    bitrateKbps: 128,
+    description: 'Enseignements de Cheikh Ahmadou Bamba, récitation continue de Khassaïdes et spiritualité mouride.',
+  },
+  {
+    id: 'touba-fm',
+    nom: 'Touba FM Live',
+    slogan: 'Spiritualité mouride, culture et Magal de Touba',
+    frequence: '89.3 FM',
+    region: 'Touba & Sénégal',
+    categorie: 'religieux',
+    langues: ['Wolof', 'Arabe'],
+    url: 'https://stream.zeno.fm/b5ve4dw7u0hvv',
+    directMp3: true,
+    bitrateKbps: 128,
+    description: 'Émissions religieuses, causeries islamiques, histoire de Touba et chants de dévotion.',
+  },
+  {
+    id: 'fayda-tidiane',
+    nom: 'Radio Fayda Tidianiya',
+    slogan: 'Spiritualité tidjane, Hadra et chants soufis',
+    frequence: 'Kaolack & Web',
+    region: 'Kaolack & Sénégal',
+    categorie: 'religieux',
+    langues: ['Wolof', 'Arabe', 'Français'],
+    url: 'http://listen.senemultimedia.net:5526/;',
+    directMp3: true,
+    bitrateKbps: 128,
+    description: 'Enseignements de Cheikh Ibrahima Niasse (Baye), zikr, Hadratoul Joumou’a et spiritualité soufie.',
+  },
+  {
+    id: 'rfi-afrique',
+    nom: 'RFI Afrique 92.0',
+    slogan: 'Radio France Internationale • Actualités mondiales et panafricaines',
+    frequence: '92.0 FM',
+    region: 'Afrique & International',
+    categorie: 'information',
+    langues: ['Français'],
+    url: 'http://live02.rfi.fr/rfiafrique-64.mp3',
+    directMp3: true,
+    bitrateKbps: 64,
+    description: 'Journaux Afrique et monde, correspondances internationales, grands reportages et débats géopolitiques.',
+  },
+  {
     id: 'rts-rsi',
     nom: 'RTS 92.5 RSI',
     slogan: 'Radio Sénégal Internationale • Chaîne Nationale',
@@ -193,7 +284,9 @@ function listerRadios(options = {}) {
   let radios = [...RADIOS_SENEGAL];
 
   if (options.categorie && options.categorie !== 'toutes') {
-    radios = radios.filter((r) => r.categorie === options.categorie);
+    radios = radios.filter(
+      (r) => r.categorie === options.categorie || (options.categorie === 'religieux' && (r.id === 'al-fayda' || r.categorie === 'religieux'))
+    );
   }
 
   if (options.region && options.region !== 'toutes') {
@@ -248,7 +341,9 @@ function proxifierFlux(radioId, req, res) {
     targetUrl,
     {
       headers: {
-        'User-Agent': 'Nopalou-Surga/1.0 (Low-Data Audio Player)',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Icy-MetaData': '1',
         Accept: '*/*',
       },
       timeout: 10000,

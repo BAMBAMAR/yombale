@@ -574,8 +574,15 @@ describe('Module Surga — Tranches 1 & 2', () => {
     const regexEmoji = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
 
     test('Bouquet des radios sénégalaises complet et diversifié (> 10 stations)', () => {
-      expect(RADIOS_SENEGAL.length).toBeGreaterThanOrEqual(10);
+      expect(RADIOS_SENEGAL.length).toBeGreaterThanOrEqual(15);
       const noms = RADIOS_SENEGAL.map((r) => r.nom);
+      expect(noms).toContain('RFM 94.0 Dakar');
+      expect(noms).toContain('Zik FM 89.7');
+      expect(noms).toContain('Walf FM 99.0');
+      expect(noms).toContain('Lamp Fall FM');
+      expect(noms).toContain('Touba FM Live');
+      expect(noms).toContain('Radio Fayda Tidianiya');
+      expect(noms).toContain('RFI Afrique 92.0');
       expect(noms).toContain('RTS 92.5 RSI');
       expect(noms).toContain('Sud FM Sen Radio');
       expect(noms).toContain('Rewmi FM');
@@ -590,6 +597,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(regions.some((reg) => reg.includes('Dakar'))).toBe(true);
       expect(regions.some((reg) => reg.includes('Pikine'))).toBe(true);
       expect(regions.some((reg) => reg.includes('Kaolack'))).toBe(true);
+      expect(regions.some((reg) => reg.includes('Touba'))).toBe(true);
       expect(regions.some((reg) => reg.includes('Ziguinchor') || reg.includes('Casamance'))).toBe(true);
       expect(regions.some((reg) => reg.includes('Matam') || reg.includes('Fouta'))).toBe(true);
     });
@@ -612,6 +620,12 @@ describe('Module Surga — Tranches 1 & 2', () => {
       const radiosInfo = listerRadios({ categorie: 'information' });
       expect(radiosInfo.length).toBeGreaterThan(0);
       expect(radiosInfo.every((r) => r.categorie === 'information')).toBe(true);
+
+      const radiosReligieuses = listerRadios({ categorie: 'religieux' });
+      expect(radiosReligieuses.length).toBeGreaterThanOrEqual(3);
+      const nomsReligieux = radiosReligieuses.map((r) => r.nom);
+      expect(nomsReligieux).toContain('Lamp Fall FM');
+      expect(nomsReligieux).toContain('Touba FM Live');
 
       const radiosTerroir = listerRadios({ categorie: 'terroir' });
       expect(radiosTerroir.length).toBeGreaterThan(0);

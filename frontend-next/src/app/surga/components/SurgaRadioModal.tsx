@@ -27,9 +27,10 @@ interface SurgaRadioModalProps {
 
 const ONGLETS_FILTRE = [
   { key: 'toutes', label: 'Toutes' },
+  { key: 'information', label: 'Information' },
+  { key: 'religieux', label: 'Religieux' },
   { key: 'dakar', label: 'Dakar & Banlieue' },
   { key: 'terroir', label: 'Régions & Terroirs' },
-  { key: 'information', label: 'Information' },
 ]
 
 export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProps) {
@@ -146,6 +147,8 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
         if (st.categorie !== 'terroir') return false
       } else if (filtreActif === 'information') {
         if (st.categorie !== 'information') return false
+      } else if (filtreActif === 'religieux') {
+        if (st.categorie !== 'religieux' && st.id !== 'al-fayda') return false
       }
 
       if (recherche.trim()) {
