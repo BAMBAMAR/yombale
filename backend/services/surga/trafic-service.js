@@ -271,9 +271,13 @@ async function actualiserDonneesTomTomSiNecessaire(apiKey) {
 
 /**
  * Calcul déterministe de l'état du trafic selon l'heure à Dakar (UTC/GMT)
+ * Calibré sur la réalité urbaine dakaroise :
+ * - Pointe du matin (06h45 - 10h15) : Sens Entrant saturé vers le Plateau.
+ * - Activité continue de milieu de journée (11h30 - 15h00) : RN1 et Patte d'Oie denses.
+ * - Grandes sorties d'après-midi & pointe du soir (15h00 - 20h45) : RN1 (Rouge foncé), A1 sortant et Patte d'Oie bouchés.
  * @param {Object} axe
  * @param {Date} [dateRef]
- * @returns {{ niveau: 'fluide'|'dense'|'bouche', tempsEstimeMin: number, cause: string }}
+ * @returns {{ niveau: 'fluide'|'dense'|'bouche', tempsEstimeMin: number, vitesseReelleKmH: number, cause: string }}
  */
 function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
   const heures = dateRef.getUTCHours();
@@ -286,73 +290,192 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
     return {
       niveau: 'fluide',
       tempsEstimeMin: axe.tempsHabituelMin,
+      vitesseReelleKmH: axe.type === 'ferroviaire' ? 100 : 25,
       cause: 'Voie dédiée indépendante du trafic routier',
     };
   }
 
-  // Le dimanche à Dakar : circulation généralement fluide
+  // Le dimanche à Dakar : circulation généralement fluide, sauf la Corniche Ouest en fin d'après-midi
   if (jourSemaine === 0) {
+    if ((axe.id === 'corniche-ouest-sud' || axe.id === 'corniche-ouest-nord') && heureDecimale >= 16.5 && heureDecimale <= 20.5) {
+      return {
+        niveau: 'dense',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.5),
+        vitesseReelleKmH: 30,
+        cause: 'Afflux dominical vers les plages et la Corniche Ouest',
+      };
+    }
     return {
       niveau: 'fluide',
       tempsEstimeMin: axe.tempsHabituelMin,
+      vitesseReelleKmH: Math.round(axe.distanceKm / (axe.tempsHabituelMin / 60)),
       cause: 'Circulation dominicale fluide',
     };
   }
 
   // Du lundi au samedi : heures de pointe à Dakar
-  const estPointeMatin = heureDecimale >= 7.0 && heureDecimale <= 9.5;
-  const estPointeSoir = heureDecimale >= 17.0 && heureDecimale <= 20.0;
-  const estMidi = heureDecimale >= 13.0 && heureDecimale <= 14.5;
+  const estPointeMatin = heureDecimale >= 6.75 && heureDecimale <= 10.25;
+  const estMidi = heureDecimale >= 11.5 && heureDecimale < 15.0;
+  const estPointeSoir = heureDecimale >= 15.0 && heureDecimale <= 20.75;
+  const estSoiree = heureDecimale > 20.75 && heureDecimale <= 22.5;
 
+  // 1. Pointe du Matin (06h45 - 10h15) : afflux massif de la banlieue vers le Plateau
   if (estPointeMatin) {
-    if (axe.sens === 'entrant') {
-      const tempsEstime = Math.round(axe.tempsHabituelMin * 2.3);
+    if (axe.id === 'a1-entrant') {
       return {
         niveau: 'bouche',
-        tempsEstimeMin: tempsEstime,
-        cause: 'Heure de pointe matinale vers le Plateau',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.1), // ~59 min
+        vitesseReelleKmH: 34,
+        cause: 'Heure de pointe matinale vers le Plateau : péage Thiaroye et Maristes saturés',
       };
     }
-    if (axe.sens === 'carrefour') {
+    if (axe.id === 'rn1-rufisque') {
+      return {
+        niveau: 'bouche',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 3.3), // ~73 min
+        vitesseReelleKmH: 15,
+        cause: 'Saturation matinale majeure : camions du Port et transit vers Colobane',
+      };
+    }
+    if (axe.id === 'patte-doie-echangeur') {
+      return {
+        niveau: 'bouche',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.2), // ~33 min
+        vitesseReelleKmH: 14,
+        cause: 'Ralentissement au carrefour stratégique et Pont Sénégal 92 vers le centre',
+      };
+    }
+    if (axe.id === 'vdn-sud') {
       return {
         niveau: 'dense',
-        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.8),
-        cause: 'Ralentissement au carrefour stratégique',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.2), // ~18 min
+        vitesseReelleKmH: 22,
+        cause: 'Ralentissement matinal soutenu : Mermoz et Sacré-Cœur',
       };
     }
+    if (axe.id === 'corniche-ouest-sud') {
+      return {
+        niveau: 'dense',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.6), // ~29 min
+        vitesseReelleKmH: 28,
+        cause: 'Afflux matinal vers Fann et le tunnel de Soumbédioune',
+      };
+    }
+    return {
+      niveau: 'fluide',
+      tempsEstimeMin: axe.tempsHabituelMin,
+      vitesseReelleKmH: Math.round(axe.distanceKm / (axe.tempsHabituelMin / 60)),
+      cause: 'Circulation fluide dans le sens sortant',
+    };
   }
 
+  // 2. Grandes Sorties d'après-midi & Pointe du Soir (15h00 - 20h45) : sortie de Dakar vers banlieue
   if (estPointeSoir) {
-    if (axe.sens === 'sortant') {
-      const tempsEstime = Math.round(axe.tempsHabituelMin * 2.2);
+    if (axe.id === 'rn1-rufisque') {
       return {
         niveau: 'bouche',
-        tempsEstimeMin: tempsEstime,
-        cause: 'Heure de pointe du soir vers la banlieue',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 3.5), // ~77 min
+        vitesseReelleKmH: 14,
+        cause: 'Bouchon très dense du soir : saturation majeure Colobane ➔ Dalifort ➔ Thiaroye',
       };
     }
-    if (axe.sens === 'carrefour') {
+    if (axe.id === 'a1-sortant') {
+      return {
+        niveau: 'bouche',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.2), // ~57 min
+        vitesseReelleKmH: 33,
+        cause: 'Heure de pointe du soir vers la banlieue : goulots Dalifort, Pikine et péage Thiaroye',
+      };
+    }
+    if (axe.id === 'patte-doie-echangeur') {
+      return {
+        niveau: 'bouche',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.3), // ~35 min
+        vitesseReelleKmH: 14,
+        cause: 'Sortie de ville encombrée : Échangeur et Pont Sénégal 92 saturés vers Grand Yoff',
+      };
+    }
+    if (axe.id === 'vdn-nord') {
       return {
         niveau: 'dense',
-        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.7),
-        cause: 'Sortie de ville encombrée',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.9), // ~21 min
+        vitesseReelleKmH: 26,
+        cause: 'Ralentissement soutenu du soir vers l’Échangeur Foire, CICES et Golf',
       };
     }
+    if (axe.id === 'corniche-ouest-nord') {
+      return {
+        niveau: 'dense',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.5), // ~27 min
+        vitesseReelleKmH: 30,
+        cause: 'Flux dense du soir en direction de Ouakam et des Almadies',
+      };
+    }
+    if (axe.id === 'a1-entrant') {
+      return {
+        niveau: 'fluide',
+        tempsEstimeMin: axe.tempsHabituelMin,
+        vitesseReelleKmH: 72,
+        cause: 'Circulation fluide dans le sens entrant vers le centre',
+      };
+    }
+    return {
+      niveau: 'fluide',
+      tempsEstimeMin: axe.tempsHabituelMin,
+      vitesseReelleKmH: Math.round(axe.distanceKm / (axe.tempsHabituelMin / 60)),
+      cause: 'Circulation normale sur cet axe',
+    };
   }
 
+  // 3. Milieu de journée (11h30 - 15h00) : activité économique, marchés et transit portuaire
   if (estMidi) {
-    if (axe.id === 'patte-doie-echangeur' || axe.id === 'rn1-rufisque') {
+    if (axe.id === 'rn1-rufisque') {
       return {
         niveau: 'dense',
-        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.4),
-        cause: 'Trafic soutenu en milieu de journée',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.2), // ~48 min
+        vitesseReelleKmH: 24,
+        cause: 'Trafic soutenu en milieu de journée : transit portuaire et marché Colobane',
       };
     }
+    if (axe.id === 'patte-doie-echangeur') {
+      return {
+        niveau: 'dense',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.5), // ~22 min
+        vitesseReelleKmH: 22,
+        cause: 'Ralentissements réguliers aux abords du Rond-point 26 et du Stade LSS',
+      };
+    }
+    return {
+      niveau: 'fluide',
+      tempsEstimeMin: axe.tempsHabituelMin,
+      vitesseReelleKmH: Math.round(axe.distanceKm / (axe.tempsHabituelMin / 60)),
+      cause: 'Circulation normale en milieu de journée',
+    };
   }
 
+  // 4. Soirée de décrue (20h45 - 22h30)
+  if (estSoiree) {
+    if (axe.id === 'rn1-rufisque') {
+      return {
+        niveau: 'dense',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.6), // ~35 min
+        vitesseReelleKmH: 30,
+        cause: 'Trafic résiduel en cours de résorption vers Rufisque',
+      };
+    }
+    return {
+      niveau: 'fluide',
+      tempsEstimeMin: axe.tempsHabituelMin,
+      vitesseReelleKmH: Math.round(axe.distanceKm / (axe.tempsHabituelMin / 60)),
+      cause: 'Circulation fluide en soirée',
+    };
+  }
+
+  // 5. Nuit (22h30 - 06h45) : fluide partout
   return {
     niveau: 'fluide',
     tempsEstimeMin: axe.tempsHabituelMin,
+    vitesseReelleKmH: Math.round(axe.distanceKm / (axe.tempsHabituelMin / 60)),
     cause: 'Conditions de circulation fluides',
   };
 }
@@ -410,12 +533,15 @@ async function getEtatTraficComplet(options = {}) {
     let causeFinale = theorique.cause;
     let incident = null;
     let source = 'previsionnel';
-    let vitesseReelleKmH = null;
-    let vitesseNormaleKmH = null;
+    let vitesseReelleKmH = theorique.vitesseReelleKmH || Math.round(axe.distanceKm / (tempsFinal / 60));
+    let vitesseNormaleKmH = Math.round(axe.distanceKm / (axe.tempsHabituelMin / 60));
     let distanceFinale = axe.distanceKm;
 
-    // Prise en compte prioritaire du flux TomTom Live
-    if (liveCorridor) {
+    // Prise en compte du flux TomTom Live UNIQUEMENT si TomTom possède de réelles sondes FCD (retard mesuré > 2 min ou longueur de bouchon)
+    // En effet, au Sénégal, TomTom n'a pas de capteurs FCD sur la majorité des axes et renvoie par défaut 0 retard et la vitesse limite théorique.
+    const tomtomADesDonneesReelles = liveCorridor && (liveCorridor.retardMin >= 3 || liveCorridor.trafficLengthMeters > 400);
+
+    if (tomtomADesDonneesReelles) {
       nbAxesLive++;
       source = 'tomtom_live';
       tempsFinal = liveCorridor.tempsEstimeMin;
@@ -425,13 +551,13 @@ async function getEtatTraficComplet(options = {}) {
 
       if (liveCorridor.retardMin >= 15 || (vitesseNormaleKmH > 0 && vitesseReelleKmH / vitesseNormaleKmH <= 0.45)) {
         niveauFinal = 'bouche';
-        causeFinale = `Bouchon mesuré en direct : +${liveCorridor.retardMin} min de retard (${vitesseReelleKmH} km/h)`;
+        causeFinale = `Bouchon mesuré par capteurs : +${liveCorridor.retardMin} min de retard (${vitesseReelleKmH} km/h)`;
       } else if (liveCorridor.retardMin >= 5 || (vitesseNormaleKmH > 0 && vitesseReelleKmH / vitesseNormaleKmH <= 0.75)) {
         niveauFinal = 'dense';
         causeFinale = `Ralentissement direct : +${liveCorridor.retardMin} min (${vitesseReelleKmH} km/h)`;
       } else {
         niveauFinal = 'fluide';
-        causeFinale = `Circulation fluide en direct (${vitesseReelleKmH} km/h mesurés)`;
+        causeFinale = `Circulation fluide (${vitesseReelleKmH} km/h mesurés)`;
       }
     }
 
@@ -439,18 +565,18 @@ async function getEtatTraficComplet(options = {}) {
     if (signalement) {
       if (signalement.type_signalement === 'accident' || signalement.type_signalement === 'bloque') {
         niveauFinal = 'bouche';
-        tempsFinal = Math.max(tempsFinal, Math.round(axe.tempsHabituelMin * 2.5));
+        tempsFinal = Math.max(tempsFinal, Math.round(axe.tempsHabituelMin * 2.8));
         causeFinale = signalement.commentaire || 'Accident ou blocage signalé';
         incident = 'accident';
       } else if (signalement.type_signalement === 'dense') {
         if (niveauFinal === 'fluide') niveauFinal = 'dense';
-        tempsFinal = Math.max(tempsFinal, Math.round(axe.tempsHabituelMin * 1.5));
+        tempsFinal = Math.max(tempsFinal, Math.round(axe.tempsHabituelMin * 1.6));
         causeFinale = signalement.commentaire || 'Ralentissement signalé par les usagers';
         incident = 'ralentissement';
-      } else if (signalement.type_signalement === 'fluide' && !liveCorridor) {
+      } else if (signalement.type_signalement === 'fluide' && !tomtomADesDonneesReelles) {
         niveauFinal = 'fluide';
         tempsFinal = axe.tempsHabituelMin;
-        causeFinale = 'Axe signalé fluide récemment';
+        causeFinale = 'Axe signalé fluide récemment par les usagers';
       }
     }
 

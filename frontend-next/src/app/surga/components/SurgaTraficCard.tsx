@@ -131,7 +131,7 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
             <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
               {source === 'tomtom_live'
                 ? 'Sondes TomTom en temps réel • TER & BRT'
-                : 'Corridors A1, VDN, Corniche, TER & BRT'}
+                : 'Modèle calibré Dakar • TER & BRT'}
             </div>
           </div>
         </div>

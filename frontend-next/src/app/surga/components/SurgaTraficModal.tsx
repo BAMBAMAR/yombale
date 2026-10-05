@@ -205,7 +205,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
               <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.75)' }}>
                 {source === 'tomtom_live'
                   ? 'Sondes TomTom Traffic en direct • TER & BRT'
-                  : 'Modèle déterministe & signalements usagers'}
+                  : 'Modèle trafic calibré Dakar • TER & BRT'}
               </div>
             </div>
           </div>
@@ -261,7 +261,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
             <span>
               {source === 'tomtom_live'
                 ? 'Sondes TomTom en direct (vitesse et retards réels)'
-                : 'Estimation basée sur les heures de pointe & signalements'}
+                : 'Modèle calibré Dakar (pointes, sorties de bureaux & TER/BRT)'}
             </span>
           </div>
           {derniereMaj && (
