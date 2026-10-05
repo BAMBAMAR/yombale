@@ -10,6 +10,8 @@ import {
   MapPin,
   CreditCard,
   Package,
+  AlertTriangle,
+  Store,
 } from 'lucide-react'
 import { updateStatutCommande } from '../actions'
 import { fmtDateHeure, fcfa } from '@/lib/format'
@@ -210,45 +212,51 @@ export default function CommandeCard({
                     <Package size={13} />
                     <span>Articles &amp; Règlement</span>
                   </span>
-                  <span style={{ fontSize: 11.5, color: '#64748b' }}>
+                  <span style={{ fontSize: 11.5, color: '#64748b', wordBreak: 'break-all', minWidth: 0, textAlign: 'right' }}>
                     Réf : <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{commande.reference}</strong>
                   </span>
                 </div>
 
                 <div className="npl-commande-item-row">
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy, #1C2B4A)' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy, #1C2B4A)', flex: 1, minWidth: 0, wordBreak: 'break-word' }}>
                     {displayNomProduit}
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {fcfa(commande.quantite * (commande.prix_unitaire || 0))}
                   </span>
                 </div>
 
                 {commande.frais_livraison > 0 ? (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, color: '#64748b' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontSize: 12.5, color: '#64748b', width: '100%', minWidth: 0 }}>
                     <span>Frais de livraison :</span>
-                    <span>{fcfa(commande.frais_livraison)}</span>
+                    <span style={{ fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{fcfa(commande.frais_livraison)}</span>
                   </div>
                 ) : (commande.note?.includes('À convenir') || commande.note?.includes('a convenir')) ? (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#b45309', background: '#fffbeb', padding: '4px 8px', borderRadius: 6, border: '1px solid #fde68a' }}>
-                    <span style={{ fontWeight: 700 }}>⚠️ Livraison :</span>
-                    <span style={{ fontWeight: 700 }}>Frais à convenir</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontSize: 12, color: '#b45309', background: '#fffbeb', padding: '5px 8px', borderRadius: 6, border: '1px solid #fde68a', width: '100%', minWidth: 0 }}>
+                    <span style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                      <AlertTriangle size={13} color="#b45309" />
+                      <span>Livraison :</span>
+                    </span>
+                    <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>Frais à convenir</span>
                   </div>
                 ) : (commande.client_adresse?.toLowerCase().includes('retrait') || commande.note?.toLowerCase().includes('retrait')) ? (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#047857', background: '#ecfdf5', padding: '4px 8px', borderRadius: 6, border: '1px solid #a7f3d0' }}>
-                    <span style={{ fontWeight: 700 }}>🏬 Mode :</span>
-                    <span>Retrait en boutique (Gratuit)</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontSize: 12, color: '#047857', background: '#ecfdf5', padding: '5px 8px', borderRadius: 6, border: '1px solid #a7f3d0', width: '100%', minWidth: 0 }}>
+                    <span style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                      <Store size={13} color="#047857" />
+                      <span>Mode :</span>
+                    </span>
+                    <span style={{ whiteSpace: 'nowrap' }}>Retrait en boutique (Gratuit)</span>
                   </div>
                 ) : null}
 
                 <div className="npl-commande-item-total">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CreditCard size={14} color="#64748b" />
-                    <span style={{ fontSize: 12, color: '#475569' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
+                    <CreditCard size={14} color="#64748b" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: '#475569', wordBreak: 'break-word' }}>
                       {formatModePaiement(commande.methode_paiement)}
                     </span>
                   </div>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--price, #0A5C36)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                     {fcfa(commande.montant_total)}
                   </span>
                 </div>
@@ -273,21 +281,21 @@ export default function CommandeCard({
                   <span className="npl-commande-box-label">
                     Client &amp; Contact
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', wordBreak: 'break-word', minWidth: 0, textAlign: 'right' }}>
                     {commande.client_nom}
                   </span>
                 </div>
 
                 {commande.client_telephone && (
-                  <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 500 }}>
+                  <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 500, wordBreak: 'break-all' }}>
                     {commande.client_telephone}
                   </p>
                 )}
 
                 {commande.client_adresse && (
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#475569' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#475569', width: '100%', minWidth: 0 }}>
                     <MapPin size={14} color="#64748b" style={{ flexShrink: 0, marginTop: 2 }} />
-                    <span>{commande.client_adresse}</span>
+                    <span style={{ wordBreak: 'break-word', minWidth: 0 }}>{commande.client_adresse}</span>
                   </div>
                 )}
 

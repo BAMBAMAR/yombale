@@ -48,6 +48,20 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+
+- **Boutique Commandes — Éradication de la Troncature des Commandes & Responsivité Mobile Étanche (Session 2026-10-05)** :
+  - *Cause Racine* : Dans CommandeCard.tsx et commandes.css, la grille responsive .npl-commande-grid utilisait grid-template-columns: 1fr et les colonnes .npl-commande-col-left / .npl-commande-col-right n'avaient pas de min-width: 0 ni max-width: 100%. Comme .npl-commande-card a overflow: hidden;, tout contenu interne ayant une largeur minimale incompressible (barre d'actions secondaires avec flexWrap: nowrap, référence commande sans break-all, libellés longs) forçait la grille à s'étendre au-delà de la carte, provoquant un découpage brutal sur le bord droit (ex: "474 FCF" au lieu de "474 FCFA", "Client WhatsAp" au lieu de "Client WhatsApp", bouton "Annuler" tronqué).
+  - *Correctif CSS & Responsivité Mobile (commandes.css)* :
+    - Déclaration de grid-template-columns: minmax(0, 1fr) et minmax(0, 1.15fr) minmax(0, 0.85fr) avec width: 100%; min-width: 0;.
+    - Application de min-width: 0; max-width: 100%; box-sizing: border-box; sur .npl-commande-col-left, .npl-commande-col-right et l'ensemble de leurs enfants directs (.npl-commande-col-left > *).
+    - Sécurisation de .npl-commande-box, .npl-commande-box-header, .npl-commande-item-row, .npl-commande-item-total avec min-width: 0; width: 100%; flex-wrap: wrap; gap: 8px;.
+    - Optimisation des paddings mobiles (@media (max-width: 640px)) de 16px à 12px/10px libérant 20px d'espace utile supplémentaire sur petit écran.
+  - *Sécurisation Frontend Multi-Composants* :
+    - CommandeCard.tsx : Remplacement des émojis Unicode par les icônes vectorielles SVG AlertTriangle et Store de lucide-react (Règle d'or #1 Anti-AI-Slop). Ajout de wordBreak: 'break-all' sur la référence commande, flex: 1, minWidth: 0, wordBreak: 'break-word' sur le nom du produit, et flexShrink: 0, whiteSpace: 'nowrap' sur les montants FCFA.
+    - CommandeActionsBar.tsx : Passage de flexWrap: 'nowrap' à flexWrap: 'wrap' avec width: '100%', minWidth: 0, boxSizing: 'border-box', permettant aux boutons de raccourcis de passer proprement à la ligne sans déborder.
+    - CommandeGroupeCard.tsx & Commandes.tsx : Ajout de width: '100%', minWidth: 0, boxSizing: 'border-box' sur tous les conteneurs parents.
+  - *Validation* : Build Next.js complet exécuté et réussi avec succès ([postbuild] ✅ Build standard complété avec succès), 0 erreur TypeScript, linter Anti-AI-Slop validé.
+
 - **Surga — Résolution du Crash d'Ouverture des Bons Plans & Normalisation Numérique PostgreSQL (Session 2026-10-05, branche `feature/surga`)** :
   - *Cause Racine (`TypeError: place.note_moyenne.toFixed is not a function`)* : La colonne PostgreSQL `note_moyenne` est de type `NUMERIC(2,1)` dans la table `surga_places`. Par convention et pour éviter les pertes de précision, le pilote Node.js `pg` renvoie les colonnes `NUMERIC` sous forme de chaînes de caractères (`"4.8"`). L'appel direct de `.toFixed(1)` dans les composants React provoquait une exception non gérée, faisant crasher l'arborescence React via les Error Boundaries et empêchant l'ouverture de la modale des Bons plans (`SurgaPlacesModal`).
   - *Normalisation Backend (`backend/services/surga/places-service.js`)* : Implémentation du normalisateur `normaliserPlaceRow(row)` avec conversion explicite `parseFloat(row.note_moyenne) || 4.5`, `parseInt(row.nb_avis, 10) || 0` et `parseInt(row.budget_moyen_xof, 10) || 0`. Appliqué systématiquement à `rechercherPlaces`, `recupererPlaceParId` et `listerFavorisPlaces`.
