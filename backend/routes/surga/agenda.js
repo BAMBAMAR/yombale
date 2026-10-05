@@ -65,6 +65,9 @@ router.post('/agenda', tokenOptional, async (req, res) => {
       description,
       date_evenement,
       heure_evenement,
+      priorite = 'normale',
+      categorie = 'rdv',
+      lieu = null,
       est_rappel = true,
       repetition = 'AUCUNE',
       termine = false,
@@ -94,6 +97,9 @@ router.post('/agenda', tokenOptional, async (req, res) => {
           description: description || null,
           date_evenement: dateEvt,
           heure_evenement: heureEvt,
+          priorite,
+          categorie,
+          lieu: lieu || null,
           est_rappel: Boolean(est_rappel),
           repetition: rep,
           termine: Boolean(termine),
@@ -110,13 +116,16 @@ router.post('/agenda', tokenOptional, async (req, res) => {
       query = `
         INSERT INTO surga_agenda (
           id, user_id, titre, description, date_evenement, heure_evenement,
-          est_rappel, repetition, termine, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+          priorite, categorie, lieu, est_rappel, repetition, termine, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
         ON CONFLICT (id) DO UPDATE SET
           titre = EXCLUDED.titre,
           description = EXCLUDED.description,
           date_evenement = EXCLUDED.date_evenement,
           heure_evenement = EXCLUDED.heure_evenement,
+          priorite = EXCLUDED.priorite,
+          categorie = EXCLUDED.categorie,
+          lieu = EXCLUDED.lieu,
           est_rappel = EXCLUDED.est_rappel,
           repetition = EXCLUDED.repetition,
           termine = EXCLUDED.termine,
@@ -124,15 +133,41 @@ router.post('/agenda', tokenOptional, async (req, res) => {
         WHERE surga_agenda.user_id = $2
         RETURNING *
       `;
-      params = [id, userId, titre.trim(), description || null, dateEvt, heureEvt, Boolean(est_rappel), rep, Boolean(termine)];
+      params = [
+        id,
+        userId,
+        titre.trim(),
+        description || null,
+        dateEvt,
+        heureEvt,
+        priorite,
+        categorie,
+        lieu || null,
+        Boolean(est_rappel),
+        rep,
+        Boolean(termine),
+      ];
     } else {
       query = `
         INSERT INTO surga_agenda (
-          user_id, titre, description, date_evenement, heure_evenement, est_rappel, repetition, termine
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          user_id, titre, description, date_evenement, heure_evenement,
+          priorite, categorie, lieu, est_rappel, repetition, termine
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
       `;
-      params = [userId, titre.trim(), description || null, dateEvt, heureEvt, Boolean(est_rappel), rep, Boolean(termine)];
+      params = [
+        userId,
+        titre.trim(),
+        description || null,
+        dateEvt,
+        heureEvt,
+        priorite,
+        categorie,
+        lieu || null,
+        Boolean(est_rappel),
+        rep,
+        Boolean(termine),
+      ];
     }
 
     const { rows } = await pool.query(query, params);

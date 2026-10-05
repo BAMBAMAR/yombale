@@ -5,28 +5,44 @@ import {
   FileText,
   Plus,
   Search,
-  Trash2,
-  Save,
   X,
-  Clock,
+  Pin,
+  CheckSquare,
   Sparkles,
   CheckCircle2,
+  SlidersHorizontal,
 } from 'lucide-react'
 import {
   type SurgaNote,
+  type SurgaNoteCategorie,
+  type SurgaNoteCouleur,
+  type SurgaChecklistItem,
   getLocalNotes,
   saveLocalNote,
   deleteLocalNote,
   synchroniserSurga,
 } from '@/lib/surga-offline-sync'
+import SurgaNoteCard from './SurgaNoteCard'
+import SurgaNoteEditor from './SurgaNoteEditor'
+
+type FiltreCategorie = 'toutes' | 'epingles' | SurgaNoteCategorie
+
+const ONGLETS_FILTRES: Array<{ key: FiltreCategorie; label: string }> = [
+  { key: 'toutes', label: 'Toutes' },
+  { key: 'epingles', label: 'Épinglées' },
+  { key: 'courses', label: 'Courses' },
+  { key: 'travail', label: 'Travail' },
+  { key: 'personnel', label: 'Personnel' },
+  { key: 'general', label: 'Mémos' },
+  { key: 'urgent', label: 'Urgentes' },
+]
 
 export default function SurgaNotesView() {
   const [notes, setNotes] = useState<SurgaNote[]>([])
   const [recherche, setRecherche] = useState<string>('')
+  const [filtreActif, setFiltreActif] = useState<FiltreCategorie>('toutes')
   const [isEditing, setIsEditing] = useState<boolean>(false)
-  const [currentId, setCurrentId] = useState<string | null>(null)
-  const [titre, setTitre] = useState<string>('')
-  const [contenu, setContenu] = useState<string>('')
+  const [noteEnEdition, setNoteEnEdition] = useState<SurgaNote | null>(null)
   const [notification, setNotification] = useState<string | null>(null)
 
   const chargerNotes = () => {
@@ -36,64 +52,92 @@ export default function SurgaNotesView() {
 
   useEffect(() => {
     chargerNotes()
-    // Tentative de synchronisation en arrière-plan
     synchroniserSurga().then((synced) => {
       if (synced) chargerNotes()
     })
   }, [])
 
   const notesFiltrees = useMemo(() => {
-    if (!recherche.trim()) return notes
-    const q = recherche.toLowerCase()
-    return notes.filter(
-      (n) => n.titre.toLowerCase().includes(q) || n.contenu.toLowerCase().includes(q)
-    )
-  }, [notes, recherche])
+    return notes
+      .filter((n) => {
+        // Filtre catégorie
+        if (filtreActif === 'epingles' && !n.epingle) return false
+        if (
+          filtreActif !== 'toutes' &&
+          filtreActif !== 'epingles' &&
+          (n.categorie || 'general') !== filtreActif
+        ) {
+          return false
+        }
+
+        // Filtre recherche
+        if (recherche.trim()) {
+          const q = recherche.toLowerCase()
+          const matchTitre = n.titre.toLowerCase().includes(q)
+          const matchContenu = (n.contenu || '').toLowerCase().includes(q)
+          const matchChecklist = (n.checklist || []).some((i) =>
+            i.texte.toLowerCase().includes(q)
+          )
+          if (!matchTitre && !matchContenu && !matchChecklist) return false
+        }
+
+        return true
+      })
+      .sort((a, b) => {
+        // Priorité aux épinglées
+        if (Boolean(a.epingle) !== Boolean(b.epingle)) {
+          return a.epingle ? -1 : 1
+        }
+        const dateA = a.updated_at || a.created_at
+        const dateB = b.updated_at || b.created_at
+        return dateB.localeCompare(dateA)
+      })
+  }, [notes, filtreActif, recherche])
+
+  // Statistiques rapides
+  const stats = useMemo(() => {
+    const total = notes.length
+    const epingles = notes.filter((n) => n.epingle).length
+    const checklists = notes.filter((n) => n.is_checklist).length
+    return { total, epingles, checklists }
+  }, [notes])
 
   const handleOuvrirNouveau = () => {
-    setCurrentId(null)
-    setTitre('')
-    setContenu('')
+    setNoteEnEdition(null)
     setIsEditing(true)
   }
 
   const handleOuvrirEdition = (note: SurgaNote) => {
-    setCurrentId(note.id)
-    setTitre(note.titre)
-    setContenu(note.contenu)
+    setNoteEnEdition(note)
     setIsEditing(true)
   }
 
-  const handleEnregistrer = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!titre.trim()) return
-
-    saveLocalNote({
-      id: currentId || undefined,
-      titre: titre.trim(),
-      contenu,
-    })
-
+  const handleEnregistrer = async (data: {
+    id?: string
+    titre: string
+    contenu: string
+    categorie: SurgaNoteCategorie
+    couleur: SurgaNoteCouleur
+    epingle: boolean
+    is_checklist: boolean
+    checklist: SurgaChecklistItem[]
+  }) => {
+    saveLocalNote(data)
     setIsEditing(false)
-    setTitre('')
-    setContenu('')
-    setCurrentId(null)
+    setNoteEnEdition(null)
     chargerNotes()
 
-    setNotification('Note enregistrée avec succès')
+    setNotification(data.id ? 'Note mise à jour avec succès' : 'Note enregistrée avec succès')
     setTimeout(() => setNotification(null), 3000)
 
-    // Synchronisation vers backend si connecté
     await synchroniserSurga()
     chargerNotes()
   }
 
-  const handleSupprimer = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleSupprimer = async (id: string) => {
     if (confirm('Voulez-vous supprimer cette note ?')) {
       deleteLocalNote(id)
       chargerNotes()
-      // Appel API en arrière-plan si en ligne
       if (navigator.onLine) {
         try {
           await fetch(`/api/surga/notes/${id}`, { method: 'DELETE' })
@@ -102,22 +146,35 @@ export default function SurgaNotesView() {
     }
   }
 
-  const formaterDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    } catch {
-      return dateStr
-    }
+  const handleTogglePin = async (id: string) => {
+    const target = notes.find((n) => n.id === id)
+    if (!target) return
+
+    saveLocalNote({
+      ...target,
+      epingle: !target.epingle,
+    })
+    chargerNotes()
+    await synchroniserSurga()
+  }
+
+  const handleToggleCheckItem = (noteId: string, itemId: string) => {
+    const target = notes.find((n) => n.id === noteId)
+    if (!target || !target.checklist) return
+
+    const updatedChecklist = target.checklist.map((item) =>
+      item.id === itemId ? { ...item, fait: !item.fait } : item
+    )
+
+    saveLocalNote({
+      ...target,
+      checklist: updatedChecklist,
+    })
+    chargerNotes()
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Barre d'action et recherche */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div
@@ -135,14 +192,14 @@ export default function SurgaNotesView() {
           <Search size={16} color="var(--text3, #73675E)" />
           <input
             type="text"
-            placeholder="Rechercher une note..."
+            placeholder="Rechercher dans vos notes et listes..."
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             style={{
               border: 'none',
               outline: 'none',
               width: '100%',
-              fontSize: 14,
+              fontSize: 13,
               backgroundColor: 'transparent',
               color: 'var(--navy, #1C2B4A)',
             }}
@@ -151,7 +208,8 @@ export default function SurgaNotesView() {
             <button
               type="button"
               onClick={() => setRecherche('')}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              aria-label="Effacer la recherche"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               <X size={14} color="var(--text3, #73675E)" />
             </button>
@@ -161,20 +219,20 @@ export default function SurgaNotesView() {
         <button
           type="button"
           onClick={handleOuvrirNouveau}
-          className="btn-npl"
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
             backgroundColor: 'var(--navy, #1C2B4A)',
             color: '#FFFFFF',
             border: 'none',
             borderRadius: 10,
-            padding: '10px 14px',
-            fontSize: 14,
+            padding: '9px 14px',
+            fontSize: 13,
             fontWeight: 700,
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
             flexShrink: 0,
+            boxShadow: '0 2px 6px rgba(28, 43, 74, 0.15)',
           }}
         >
           <Plus size={16} />
@@ -182,207 +240,162 @@ export default function SurgaNotesView() {
         </button>
       </div>
 
-      {/* Message de confirmation */}
+      {/* Bandeau de synthèse visuelle */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 8,
+          padding: '10px 12px',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 10,
+          border: '1px solid var(--border, #E8DDD2)',
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{stats.total}</div>
+          <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Notes au total</div>
+        </div>
+        <div style={{ textAlign: 'center', borderLeft: '1px solid var(--border, #E8DDD2)', borderRight: '1px solid var(--border, #E8DDD2)' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>{stats.epingles}</div>
+          <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Épinglées</div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>{stats.checklists}</div>
+          <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Checklists</div>
+        </div>
+      </div>
+
+      {/* Onglets de filtrage rapide */}
+      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+        {ONGLETS_FILTRES.map((tab) => {
+          const estActif = filtreActif === tab.key
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setFiltreActif(tab.key)}
+              style={{
+                padding: '5px 12px',
+                borderRadius: 20,
+                border: '1px solid',
+                borderColor: estActif ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
+                backgroundColor: estActif ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+                color: estActif ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+                fontSize: 11,
+                fontWeight: estActif ? 700 : 500,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Notification Toast */}
       {notification && (
         <div
           style={{
+            padding: '8px 12px',
+            backgroundColor: '#DCFCE7',
+            color: 'var(--price, #0A5C36)',
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            backgroundColor: 'rgba(10,92,54,0.1)',
-            color: 'var(--price, #0A5C36)',
-            padding: '8px 12px',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
+            gap: 6,
           }}
         >
-          <CheckCircle2 size={16} />
+          <CheckCircle2 size={15} />
           <span>{notification}</span>
         </div>
       )}
 
-      {/* Modale d'édition / création de note */}
+      {/* Éditeur de Note (création ou modification) */}
       {isEditing && (
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: 14,
-            padding: 16,
-            border: '1px solid var(--border, #E8DDD2)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
+        <SurgaNoteEditor
+          noteInitiale={noteEnEdition}
+          onEnregistrer={handleEnregistrer}
+          onFermer={() => {
+            setIsEditing(false)
+            setNoteEnEdition(null)
           }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-              {currentId ? 'Modifier la note' : 'Nouvelle note'}
-            </span>
-            <button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-            >
-              <X size={18} color="var(--text2, #5A4E42)" />
-            </button>
-          </div>
-
-          <form onSubmit={handleEnregistrer} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input
-              type="text"
-              placeholder="Titre de la note *"
-              value={titre}
-              onChange={(e) => setTitre(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--border, #E8DDD2)',
-                fontSize: 15,
-                fontWeight: 600,
-                outline: 'none',
-              }}
-            />
-
-            <textarea
-              placeholder="Contenu de votre note (idées, listes, courses, mémos)..."
-              value={contenu}
-              onChange={(e) => setContenu(e.target.value)}
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--border, #E8DDD2)',
-                fontSize: 14,
-                outline: 'none',
-                resize: 'vertical',
-                fontFamily: 'inherit',
-              }}
-            />
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-              <button
-                type="button"
-                onClick={() => setIsEditing(false)}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border, #E8DDD2)',
-                  backgroundColor: '#FFFFFF',
-                  color: 'var(--text2, #5A4E42)',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                className="btn-npl"
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  border: 'none',
-                  backgroundColor: 'var(--accent, #C75B00)',
-                  color: '#FFFFFF',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <Save size={14} />
-                <span>Enregistrer</span>
-              </button>
-            </div>
-          </form>
-        </div>
+        />
       )}
 
-      {/* Liste des notes */}
+      {/* Grille / Liste des Notes */}
       {notesFiltrees.length === 0 ? (
         <div
           style={{
             backgroundColor: '#FFFFFF',
             borderRadius: 12,
-            padding: 30,
+            padding: 32,
             textAlign: 'center',
-            border: '1px solid var(--border, #E8DDD2)',
+            border: '1px dashed var(--border, #E8DDD2)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
           }}
         >
-          <FileText size={32} color="var(--text3, #73675E)" style={{ margin: '0 auto 10px auto' }} />
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Aucune note enregistrée
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              backgroundColor: '#F8F5F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text3, #73675E)',
+            }}
+          >
+            <FileText size={20} />
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text2, #5A4E42)', marginTop: 4 }}>
-            Appuyez sur "Nouvelle" pour rédiger votre premier mémo.
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+              {recherche ? 'Aucune note ne correspond à votre recherche' : 'Votre carnet de notes est vide'}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 4 }}>
+              {recherche
+                ? 'Essayez avec un autre mot-clé ou réinitialisez la recherche.'
+                : 'Créez votre première note, liste de courses ou mémo dès maintenant.'}
+            </div>
           </div>
+          {!recherche && (
+            <button
+              type="button"
+              onClick={handleOuvrirNouveau}
+              style={{
+                marginTop: 6,
+                padding: '7px 14px',
+                borderRadius: 8,
+                border: '1px solid var(--navy, #1C2B4A)',
+                backgroundColor: 'transparent',
+                color: 'var(--navy, #1C2B4A)',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              + Rédiger une note
+            </button>
+          )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {notesFiltrees.map((n) => (
-            <div
-              key={n.id}
-              onClick={() => handleOuvrirEdition(n)}
-              className="surga-item-row"
-              style={{ cursor: 'pointer', width: '100%' }}
-            >
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 8,
-                  backgroundColor: 'rgba(28,43,74,0.08)',
-                  color: 'var(--navy, #1C2B4A)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <FileText size={18} />
-              </div>
-
-              <div className="surga-item-content">
-                <div className="surga-item-line1" style={{ fontWeight: 700 }}>
-                  {n.titre}
-                </div>
-                <div className="surga-item-line2">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Clock size={11} />
-                    <span>{formaterDate(n.updated_at || n.created_at)}</span>
-                  </span>
-                  {n.contenu && (
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      • {n.contenu.slice(0, 45)}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={(e) => handleSupprimer(n.id, e)}
-                aria-label="Supprimer la note"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 8,
-                  cursor: 'pointer',
-                  color: 'var(--text3, #73675E)',
-                  flexShrink: 0,
-                }}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {notesFiltrees.map((note) => (
+            <SurgaNoteCard
+              key={note.id}
+              note={note}
+              onEditer={handleOuvrirEdition}
+              onSupprimer={handleSupprimer}
+              onTogglePin={handleTogglePin}
+              onToggleCheckItem={handleToggleCheckItem}
+            />
           ))}
         </div>
       )}

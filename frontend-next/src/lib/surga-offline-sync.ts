@@ -3,10 +3,24 @@
 
 import { formaterFCFA } from './surga-calculator'
 
+export interface SurgaChecklistItem {
+  id: string
+  texte: string
+  fait: boolean
+}
+
+export type SurgaNoteCategorie = 'general' | 'courses' | 'travail' | 'personnel' | 'urgent'
+export type SurgaNoteCouleur = 'creme' | 'ambre' | 'vert' | 'bleu' | 'violet'
+
 export interface SurgaNote {
   id: string
   titre: string
   contenu: string
+  categorie?: SurgaNoteCategorie
+  epingle?: boolean
+  couleur?: SurgaNoteCouleur
+  checklist?: SurgaChecklistItem[]
+  is_checklist?: boolean
   created_at: string
   updated_at: string
   synced?: boolean
@@ -37,6 +51,9 @@ export interface SurgaDepensesStats {
   }>
 }
 
+export type SurgaEvenementPriorite = 'normale' | 'importante' | 'urgente'
+export type SurgaEvenementCategorie = 'rdv' | 'perso' | 'travail' | 'sante' | 'demarche' | 'famille'
+
 export interface SurgaEvenement {
   id: string
   titre: string
@@ -45,6 +62,9 @@ export interface SurgaEvenement {
   heure_evenement?: string
   est_rappel: boolean
   repetition: 'AUCUNE' | 'QUOTIDIEN' | 'HEBDOMADAIRE' | 'MENSUEL'
+  priorite?: SurgaEvenementPriorite
+  categorie?: SurgaEvenementCategorie
+  lieu?: string
   termine: boolean
   notification_envoyee?: boolean
   created_at: string
@@ -126,6 +146,11 @@ export function saveLocalNote(note: Partial<SurgaNote> & { titre: string }): Sur
     id: note.id || genererId(),
     titre: note.titre.trim(),
     contenu: note.contenu || '',
+    categorie: note.categorie || 'general',
+    epingle: Boolean(note.epingle),
+    couleur: note.couleur || 'creme',
+    checklist: note.checklist || [],
+    is_checklist: Boolean(note.is_checklist),
     created_at: note.created_at || now,
     updated_at: now,
     synced: false,
@@ -245,6 +270,9 @@ export function saveLocalEvenement(evt: Partial<SurgaEvenement> & { titre: strin
     heure_evenement: evt.heure_evenement || undefined,
     est_rappel: evt.est_rappel ?? true,
     repetition: evt.repetition || 'AUCUNE',
+    priorite: evt.priorite || 'normale',
+    categorie: evt.categorie || 'rdv',
+    lieu: evt.lieu || undefined,
     termine: Boolean(evt.termine),
     notification_envoyee: false,
     created_at: evt.created_at || now,

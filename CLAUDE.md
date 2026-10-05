@@ -43,6 +43,30 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Refonte Complète des Modules Notes & Agenda dans Surga (Session 2026-10-05, branche `feature/surga`)** :
+  - **Module Notes Réinventé (Productivité & Organisation Quotidienne)** :
+    - *Support Intégral des Checklists / To-Do Lists* : Bascule en un clic entre note de texte libre et checklist interactive. Les éléments peuvent être cochés/décochés directement depuis la liste des notes, avec calcul en temps réel du pourcentage d'avancement et barre de progression visuelle.
+    - *Sous-Composant d'Édition Dédié* : Création de `SurgaChecklistEditor.tsx` (133 l.) avec ajout rapide au clavier (touche Entrée) et suppression fluide des items.
+    - *5 Catégories Thématiques & Badges Vectoriels* : Mémo général (`FileText`), Courses (`ShoppingCart`), Travail (`Briefcase`), Personnel (`User`), Urgent (`AlertTriangle`). Filtres par pilules en haut de page.
+    - *Palette de 5 Teintes Douces Pastel* : Crème (`#FFFFFF`), Ambre (`#FFFDF5`), Sauge (`#F6FDF8`), Ciel (`#F4FAFF`), Lavande (`#FAF7FF`) pour organiser visuellement les cartes sans saturer l'écran.
+    - *Épinglage Prioritaire (Pin)* : Bouton d'épinglage pour verrouiller les notes capitales en tête de liste, quel que soit l'ordre de modification.
+    - *Actions Rapides 1-Tap* : Copie intégrale du texte/checklist dans le presse-papier et partage direct WhatsApp pré-formaté (tirets et cases à cocher lisibles).
+    - *Bandeau Statistique d'En-tête* : Comptabilisation dynamique (Total des notes, Notes épinglées, Checklists actives).
+    - *Modularisation & Règle d'Or 450 l.* : `SurgaNoteCard.tsx` (358 l.), `SurgaNoteEditor.tsx` (344 l.), `SurgaNotesView.tsx` (405 l.), `SurgaChecklistEditor.tsx` (133 l.).
+  - **Module Agenda & Rappels Évolué (Gestion du Temps & Ponctualité)** :
+    - *Mini-Frise Hebdomadaire Visuelle (`SurgaAgendaWeekStrip.tsx`, 142 l.)* : Bandeau défilant des 7 jours de la semaine (Lundi à Dimanche) avec indicateur du jour sélectionné, pastilles signalant la présence d'événements prévus sous chaque date, et bouton rapide « Aujourd'hui » pour se repositionner instantanément.
+    - *Raccourcis de Programmation Express (`SurgaAgendaPresets.tsx`, 61 l.)* : 5 boutons 1-tap (*« Dans 15 min »*, *« Dans 1h »*, *« Ce soir 18h »*, *« Demain 9h »*, *« Après-demain »*) pré-remplissant automatiquement la date et l'heure dans le formulaire d'ajout.
+    - *Hiérarchie des Priorités & Catégories* : 3 priorités visuelles (*Normale* en vert, *Importante* en ambre, *Urgente* en rouge) et 6 catégories d'événements (*Rendez-vous*, *Travail*, *Santé*, *Démarche*, *Famille*, *Perso*).
+    - *Localisation & Lieu* : Champ de lieu optionnel avec icône `MapPin` affiché sur la carte d'événement.
+    - *Détection Intelligente & Alerte de Retard* : Calcul déterministe en temps réel des rendez-vous dépassés non complétés, avec badge rouge `En retard` et filtre dédié dans les onglets.
+    - *Action Rapide « Reporter »* : Menu contextuel pour décaler en 1 clic un rappel échu (+1 heure, ou Demain 09h00).
+    - *Partage d'Événement WhatsApp* : Pré-remplissage automatique d'un message structuré avec date, heure, lieu et priorité pour informer un tiers.
+    - *Modularisation Stricte & Anti-Slop* : `SurgaAgendaCard.tsx` (417 l.), `SurgaAgendaForm.tsx` (407 l.), `SurgaAgendaStats.tsx` (60 l.), `SurgaAgendaView.tsx` (436 l.). Zéro émoji UI, 100% SVG `lucide-react`.
+  - **Persistance Hors Ligne & Synchronisation PostgreSQL Multi-Tenant** :
+    - Schéma local mis à niveau dans `surga-offline-sync.ts`.
+    - Endpoints backend mis à jour dans `backend/routes/surga/notes.js` et `backend/routes/surga/agenda.js`.
+    - 97/97 tests Jest validés, compilation TypeScript 0 erreur.
+
 - **Ajout des Radios Leaders, Religieuses et Internationales dans Surga (Session 2026-10-05, branche `feature/surga`)** :
   - **Stations Leaders de l'Information & Débats** :
     - *RFM 94.0 Dakar* (Radio Futurs Médias - GFM) : Stream direct validé `https://stream.zenolive.com/kuk0syz5puquv`.

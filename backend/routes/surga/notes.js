@@ -49,11 +49,22 @@ router.get('/notes', tokenOptional, async (req, res) => {
 router.post('/notes', tokenOptional, async (req, res) => {
   try {
     const userId = req.user?.userId || req.user?.id;
-    const { id, titre, contenu } = req.body;
+    const {
+      id,
+      titre,
+      contenu,
+      categorie = 'general',
+      couleur = 'creme',
+      epingle = false,
+      is_checklist = false,
+      checklist = [],
+    } = req.body;
 
     if (!titre || typeof titre !== 'string' || !titre.trim()) {
       return res.status(400).json({ success: false, error: 'Le titre de la note est obligatoire' });
     }
+
+    const jsonChecklist = Array.isArray(checklist) ? JSON.stringify(checklist) : '[]';
 
     if (!userId) {
       return res.json({
@@ -63,6 +74,11 @@ router.post('/notes', tokenOptional, async (req, res) => {
           id: id || `local_${Date.now()}`,
           titre: titre.trim(),
           contenu: contenu || '',
+          categorie,
+          couleur,
+          epingle: Boolean(epingle),
+          is_checklist: Boolean(is_checklist),
+          checklist: Array.isArray(checklist) ? checklist : [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -75,23 +91,49 @@ router.post('/notes', tokenOptional, async (req, res) => {
     if (id) {
       // Upsert si un ID UUID a été généré hors ligne
       query = `
-        INSERT INTO surga_notes (id, user_id, titre, contenu, updated_at)
-        VALUES ($1, $2, $3, $4, NOW())
+        INSERT INTO surga_notes (
+          id, user_id, titre, contenu, categorie, couleur, epingle, is_checklist, checklist, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         ON CONFLICT (id) DO UPDATE SET
           titre = EXCLUDED.titre,
           contenu = EXCLUDED.contenu,
+          categorie = EXCLUDED.categorie,
+          couleur = EXCLUDED.couleur,
+          epingle = EXCLUDED.epingle,
+          is_checklist = EXCLUDED.is_checklist,
+          checklist = EXCLUDED.checklist,
           updated_at = NOW()
         WHERE surga_notes.user_id = $2
         RETURNING *
       `;
-      params = [id, userId, titre.trim(), contenu || ''];
+      params = [
+        id,
+        userId,
+        titre.trim(),
+        contenu || '',
+        categorie,
+        couleur,
+        Boolean(epingle),
+        Boolean(is_checklist),
+        jsonChecklist,
+      ];
     } else {
       query = `
-        INSERT INTO surga_notes (user_id, titre, contenu)
-        VALUES ($1, $2, $3)
+        INSERT INTO surga_notes (
+          user_id, titre, contenu, categorie, couleur, epingle, is_checklist, checklist
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
       `;
-      params = [userId, titre.trim(), contenu || ''];
+      params = [
+        userId,
+        titre.trim(),
+        contenu || '',
+        categorie,
+        couleur,
+        Boolean(epingle),
+        Boolean(is_checklist),
+        jsonChecklist,
+      ];
     }
 
     const { rows } = await pool.query(query, params);
@@ -111,26 +153,63 @@ router.put('/notes/:id', tokenOptional, async (req, res) => {
   try {
     const userId = req.user?.userId || req.user?.id;
     const { id } = req.params;
-    const { titre, contenu } = req.body;
+    const {
+      titre,
+      contenu,
+      categorie = 'general',
+      couleur = 'creme',
+      epingle = false,
+      is_checklist = false,
+      checklist = [],
+    } = req.body;
 
     if (!titre || typeof titre !== 'string' || !titre.trim()) {
       return res.status(400).json({ success: false, error: 'Le titre de la note est obligatoire' });
     }
 
+    const jsonChecklist = Array.isArray(checklist) ? JSON.stringify(checklist) : '[]';
+
     if (!userId) {
       return res.json({
         success: true,
         guest: true,
-        note: { id, titre: titre.trim(), contenu: contenu || '', updated_at: new Date().toISOString() },
+        note: {
+          id,
+          titre: titre.trim(),
+          contenu: contenu || '',
+          categorie,
+          couleur,
+          epingle: Boolean(epingle),
+          is_checklist: Boolean(is_checklist),
+          checklist: Array.isArray(checklist) ? checklist : [],
+          updated_at: new Date().toISOString(),
+        },
       });
     }
 
     const { rows } = await pool.query(
       `UPDATE surga_notes
-       SET titre = $1, contenu = $2, updated_at = NOW()
-       WHERE id = $3 AND user_id = $4
+       SET titre = $1,
+           contenu = $2,
+           categorie = $3,
+           couleur = $4,
+           epingle = $5,
+           is_checklist = $6,
+           checklist = $7,
+           updated_at = NOW()
+       WHERE id = $8 AND user_id = $9
        RETURNING *`,
-      [titre.trim(), contenu || '', id, userId]
+      [
+        titre.trim(),
+        contenu || '',
+        categorie,
+        couleur,
+        Boolean(epingle),
+        Boolean(is_checklist),
+        jsonChecklist,
+        id,
+        userId,
+      ]
     );
 
     if (rows.length === 0) {
