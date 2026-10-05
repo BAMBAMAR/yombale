@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://nopalou.com/icons/icon-512.png',
+        url: 'https://surga.nopalou.com/surga/icons/icon-512.png',
         width: 512,
         height: 512,
         alt: 'Surga — Assistant Personnel de Poche',
@@ -31,17 +31,22 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'Surga — Assistant Personnel de Poche',
     description: 'Votre assistant quotidien au Sénégal : briefing, dépenses FCFA, notes et agenda.',
-    images: ['https://nopalou.com/icons/icon-512.png'],
+    images: ['https://surga.nopalou.com/surga/icons/icon-512.png'],
+  },
+  icons: {
+    icon: '/surga/icons/favicon.svg',
+    shortcut: '/surga/icons/favicon.svg',
+    apple: '/surga/icons/icon-192.png',
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'Surga',
   },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#1C2B4A',
+  themeColor: '#0F172A',
   width: 'device-width',
   initialScale: 1,
 }

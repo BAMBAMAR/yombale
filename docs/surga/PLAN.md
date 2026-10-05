@@ -289,7 +289,34 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
   - Endpoints `/plans` (GET, POST, PUT, DELETE) pour les tarifs dynamiques.
   - Endpoints `/utilisateurs` (GET, PUT premium, PATCH statut, POST reset-quota).
   - Endpoints `/canaux` (GET, PUT, POST test-whatsapp).
-- [x] `DONE` Conformité Absolue aux Standards Seniors : 100% des 15 composants sous le plafond des 450 lignes, zéro émoji (icônes Lucide SVG exclusives), 99/99 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur.
+### Tranche 24 — Identité de Marque Officielle, Symbole Vectoriel Dépositaire & Design System Décloisonné (05 Octobre 2026 - Soir 13)
+- [x] `DONE` Audit d'identité sans complaisance (`docs/surga/AUDIT_IDENTITE_SURGA.md`) identifiant la dépendance antérieure aux assets Nopalou et aux béquilles visuelles IA.
+- [x] `DONE` Document fondateur de marque (`docs/surga/IDENTITE_SURGA.md`) :
+  - Définition du rôle : assistant de poche qui exécute au quotidien au Sénégal, et non simple chatbot conversationnel.
+  - Exploration comparative de 3 concepts créatifs (Le Geste d'Appui Loxo, Le Sceau de Clarté Bët, Le Ruban d'Action Continue S).
+  - Sélection argumentée de la Direction 3 : Le Ruban d'Action Continue S (Alliance Écoute Ambre & Exécution Indigo avec étincelle centrale Émeraude).
+  - 4 piliers de personnalité immuables (*Exécutant & Utile*, *Direct & Clair*, *Fidèle & Discret*, *Ancré & Local*).
+  - Ligne éditoriale et ton de voix au vouvoiement respectueux sans jargon ni bavardage d'IA.
+  - Démarcation écosystémique totale Nopalou vs Surga : "Même famille, identité distincte".
+- [x] `DONE` Design System technique formel (`docs/surga/DESIGN_SYSTEM_SURGA.md`) :
+  - Dictionnaire complet des tokens CSS (`--surga-primary: #0F172A`, `--surga-accent: #D97706`, `--surga-accent-glow: #F59E0B`, `--surga-emerald: #059669`, `--surga-bg: #F8FAFC`, `--surga-border: #E2E8F0`, etc.).
+  - Règles d'or : Zero-CDN, zéro police externe, zéro émoji (100% `lucide-react`), cartes en 2 sous-lignes calibrées, composants React <= 450 lignes.
+- [x] `DONE` Guide officiel d'utilisation de la marque (`docs/surga/BRAND_GUIDELINES_SURGA.md`) :
+  - Spécifications géométriques sur grille vectorielle 512×512, clearspace (0.5X), tailles minimales, déclinaisons autorisées et interdits stricts.
+  - Normes pour WhatsApp Business, PWA, formats vidéo verticaux (TikTok / Reels) et photographies réelles dakaroises.
+- [x] `DONE` Création des actifs vectoriels SVG et PNG haute fidélité (`frontend-next/public/surga/icons/`) :
+  - `surga-symbol.svg`, `surga-symbol-dark.svg`, `surga-symbol-mono.svg`, `surga-symbol-white.svg`.
+  - `surga-logo-compact.svg`, `surga-logo-horizontal.svg`.
+  - `icon-192.svg`, `icon-512.svg`, `icon-maskable-192.svg`, `icon-maskable-512.svg`, `favicon.svg`.
+  - Rastérisation PNG Playwright Chromium : `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`, `surga-whatsapp-avatar.png`, `surga-symbol.png`.
+- [x] `DONE` Intégration dans le code de l'application :
+  - Manifest PWA (`public/surga/manifest.json`) mis à jour avec `theme_color: #0F172A`, `background_color: #F8FAFC` et icônes officielles Surga.
+  - `layout.tsx` mis à jour avec métadonnées OpenGraph/Twitter (`surga/icons/icon-512.png`), `icons.icon` (`favicon.svg`) et `themeColor: #0F172A`.
+  - `SurgaHeader.tsx` débarrassé de l'icône IA Sparkles au profit du symbole officiel SVG Surga et typographie du wordmark SURGA.
+  - `surga.css` enrichi des tokens `--surga-*` officiels, du dégradé ambre sur le FAB micro et les boutons primaires, et du fond `#F8FAFC`.
+  - `SurgaLandingHero.tsx` nettoyé des étoiles d'IA avec intégration des tokens de marque.
+- [x] `DONE` Document de passation et handover (`docs/surga/HANDOVER_IDENTITE_SURGA.md`).
+- [x] `DONE` Validation & Zéro Régression : 99/99 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 
 ---
 

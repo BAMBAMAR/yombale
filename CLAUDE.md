@@ -49,6 +49,24 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Identité de Marque Dépositaire Complète, Symbole Vectoriel S, Pack PWA & Design System Décloisonné (Session 2026-10-05 - Suite 4)** :
+  - *Demande Utilisateur* : Création de l'identité de marque complète de Surga à partir du produit existant (directeur artistique, designer de marque, UI/UX, logo, design system, branding mobile PWA).
+  - *Livrables Stratégiques Clés* :
+    - `docs/surga/AUDIT_IDENTITE_SURGA.md` : Audit sans complaisance (rupture avec l'emprunt des logos/couleurs Nopalou et des béquilles IA génériques).
+    - `docs/surga/IDENTITE_SURGA.md` : Document fondateur (rôle d'assistant qui exécute au quotidien au Sénégal, sélection argumentée du concept « Ruban d'Action Continue S », 4 piliers de personnalité, ton de voix au vouvoiement respectueux sans bavardage).
+    - `docs/surga/DESIGN_SYSTEM_SURGA.md` : Dictionnaire complet des tokens CSS (`--surga-*`), Zero-CDN, zéro police externe, zéro émoji, cartes en 2 sous-lignes calibrées.
+    - `docs/surga/BRAND_GUIDELINES_SURGA.md` : Grille 512×512, clearspace 0.5X, tailles 16 px à 512 px, règles WhatsApp et vidéos verticales.
+    - `docs/surga/HANDOVER_IDENTITE_SURGA.md` : Document de passation et bilan des décisions.
+  - *Actifs Graphiques & Intégration Code* :
+    - 11 SVG vectoriels purs dans `frontend-next/public/surga/icons/` (`surga-symbol.svg`, `surga-logo-compact.svg`, `icon-192.svg`, `icon-512.svg`, `favicon.svg`).
+    - 6 PNGs haute définition rastérisés via Playwright Chromium (`icon-192.png`, `icon-512.png`, `surga-whatsapp-avatar.png`).
+    - `manifest.json` (`theme_color: #0F172A`, `background_color: #F8FAFC`, icônes officielles Surga).
+    - `layout.tsx` (OpenGraph, favicon SVG, themeColor `#0F172A`).
+    - `SurgaHeader.tsx` (symbole SVG officiel au lieu de Sparkles, logotype SURGA).
+    - `surga.css` (tokens officiels, fond blanc brume `#F8FAFC`, dégradé ambre sur le FAB micro et boutons primaires).
+    - `SurgaLandingHero.tsx` nettoyé des étoiles IA.
+  - *Validation* : `npx tsc --noEmit` 0 erreur, `npm run lint:slop` 100% conforme, 99/99 tests Jest backend validés, 97/97 tests frontend validés.
+
 - **Surga Console Pro — Gestionnaire de Prix Dynamique, Comptes Utilisateurs VIP & Canaux Réseaux Sociaux (Session 2026-10-05 - Suite 3)** :
   - *Demande Utilisateur* : L'utilisateur a signalé des manques fondamentaux : « ça reste inspiré de Nopalou, je ne peux pas fixer le montant de l'abonnement, il y a énormément de choses qui manquent : les réseaux sociaux, les comptes, il y a trop de manquements ».
   - *Réalisations Majeures* :

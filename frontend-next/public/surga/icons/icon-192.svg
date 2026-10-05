@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 512 512">
+  <defs>
+    <!-- Dégradé Fond Squircle : Nuit Minérale Profonde -->
+    <linearGradient id="pwaBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="60%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#070D18"/>
+    </linearGradient>
+
+    <!-- Dégradé Ambre Solaire -->
+    <linearGradient id="pwaAmberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="40%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <!-- Dégradé Aile Inférieure Blanche Bleutée (pour contraste saisissant) -->
+    <linearGradient id="pwaSlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+
+    <filter id="pwaShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle continu de marque (rx = 120px soit 23.4%) -->
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#pwaBgGrad)" filter="url(#pwaShadow)"/>
+
+  <!-- Bordure intérieure subtile de verre -->
+  <rect x="17" y="17" width="478" height="478" rx="119" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-width="2"/>
+
+  <!-- Symbole S centré avec contrastes calibrés pour icône mobile -->
+  <g transform="translate(64, 64) scale(0.75)">
+    <!-- Base Inférieure (Blanc Pur / Platine pour émerger du fond sombre) -->
+    <path fill="url(#pwaSlateGrad)" d="
+      M 240 268 C 278 248, 332 258, 364 290 C 402 328, 400 388, 360 426
+      C 320 464, 252 468, 192 444 C 150 426, 122 396, 110 368 L 168 326
+      C 178 342, 194 360, 218 372 C 252 388, 290 384, 314 360 C 334 340, 332 316, 312 296
+      C 296 280, 268 274, 244 282 L 182 302 C 150 312, 122 300, 108 274 L 176 224 Z
+    "/>
+
+    <!-- Aile Supérieure (Ambre Solaire Rayonnant) -->
+    <path fill="url(#pwaAmberGrad)" d="
+      M 272 244 C 234 264, 180 254, 148 222 C 110 184, 112 124, 152 86
+      C 192 48, 260 44, 320 68 C 362 86, 390 116, 402 144 L 344 186
+      C 334 170, 318 152, 294 140 C 260 124, 222 128, 198 152 C 178 172, 180 196, 200 216
+      C 216 232, 244 238, 268 230 L 330 210 C 362 200, 390 212, 404 238 L 336 288 Z
+    "/>
+
+    <!-- Point d'Émeraude Central -->
+    <circle cx="256" cy="256" r="16" fill="#10B981"/>
+    <circle cx="256" cy="256" r="8" fill="#6EE7B7"/>
+  </g>
+</svg>

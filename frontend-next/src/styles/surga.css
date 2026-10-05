@@ -16,7 +16,7 @@ body:has(.surga-root) .fav-toast {
 }
 
 body:has(.surga-root) {
-  background-color: var(--bg, #F8F5F0) !important;
+  background-color: #F8FAFC !important;
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -28,11 +28,41 @@ body:has(.surga-root) #app-main {
 }
 
 .surga-root {
+  /* ==========================================================================
+     TOKENS OFFICIELS DU DESIGN SYSTEM SURGA (Version 1.0.0)
+     ========================================================================== */
+  --surga-primary: #0F172A;        /* Indigo Nuit Minérale (fond sombre, titres h1-h2) */
+  --surga-primary-light: #1E293B;  /* Indigo Nuit secondaire (cartes sombres, survols) */
+  --surga-accent: #D97706;         /* Ambre Sahélien (bouton micro FAB, CTA, focus) */
+  --surga-accent-hover: #B45309;   /* Ambre Sahélien assombri au survol */
+  --surga-accent-glow: #F59E0B;    /* Or Solaire (reflets, badges actifs, lueur) */
+  --surga-accent-soft: rgba(217, 119, 6, 0.08); /* Fond pastille ambre */
+  --surga-emerald: #059669;        /* Émeraude Teranga (dépenses en FCFA, validations) */
+  --surga-emerald-soft: rgba(5, 150, 105, 0.09);
+  --surga-danger: #DC2626;         /* Rouge Kolda (dettes en retard, alertes bouchons) */
+  --surga-danger-soft: rgba(220, 38, 38, 0.09);
+  --surga-info: #0284C7;           /* Bleu Gorée (veilles concours, météo, liens) */
+  --surga-bg: #F8FAFC;             /* Blanc Brume Minimal (fond d'écran principal) */
+  --surga-surface: #FFFFFF;        /* Blanc Pur (cartes, formulaires, tiroirs) */
+  --surga-border: #E2E8F0;         /* Gris Épure (lignes 1px de cartes et séparateurs) */
+  --surga-text1: #0F172A;          /* Encre Anthracite (texte principal, contraste 16.5:1) */
+  --surga-text2: #475569;          /* Ardoise Tempérée (métadonnées, labels secondaires) */
+  --surga-text3: #94A3B8;          /* Gris Neutre placeholders */
+
+  /* Rétrocompatibilité transparente pour tous les composants existants */
+  --navy: var(--surga-primary);
+  --accent: var(--surga-accent);
+  --bg: var(--surga-bg);
+  --border: var(--surga-border);
+  --text1: var(--surga-text1);
+  --text2: var(--surga-text2);
+  --price: var(--surga-emerald);
+
   font-family: var(--font-inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: 16px;
   line-height: 1.5;
-  color: var(--text1, #1A1612);
-  background-color: var(--bg, #F8F5F0);
+  color: var(--surga-text1);
+  background-color: var(--surga-bg);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -45,9 +75,11 @@ body:has(.surga-root) #app-main {
   position: sticky;
   top: 0;
   z-index: 40;
-  background-color: #FFFFFF;
-  border-bottom: 1px solid var(--border, #E8DDD2);
-  padding: 12px 16px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--surga-border);
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -56,7 +88,16 @@ body:has(.surga-root) #app-main {
 .surga-header-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.surga-header-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 
 .surga-header-title {
@@ -77,10 +118,10 @@ body:has(.surga-root) #app-main {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 9999px;
-  background-color: rgba(199, 91, 0, 0.1);
-  color: var(--accent, #C75B00);
+  background-color: var(--surga-accent-soft, rgba(217, 119, 6, 0.08));
+  color: var(--surga-accent, #D97706);
   font-size: 12px;
   font-weight: 700;
 }
@@ -97,12 +138,12 @@ body:has(.surga-root) #app-main {
 
 /* Cartes Surga */
 .surga-card {
-  background-color: #FFFFFF;
-  border: 1px solid var(--border, #E8DDD2);
-  border-radius: 12px;
+  background-color: var(--surga-surface, #FFFFFF);
+  border: 1px solid var(--surga-border, #E2E8F0);
+  border-radius: 14px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(28, 43, 74, 0.04);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -120,13 +161,13 @@ body:has(.surga-root) #app-main {
 .surga-card-title {
   font-size: 16px;
   font-weight: 700;
-  color: var(--navy, #1C2B4A);
+  color: var(--surga-primary, #0F172A);
   margin: 0;
 }
 
 .surga-card-subtitle {
   font-size: 14px;
-  color: var(--text2, #5A4E42);
+  color: var(--surga-text2, #475569);
   margin: 0;
 }
 
@@ -136,8 +177,8 @@ body:has(.surga-root) #app-main {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background: #FFFFFF;
-  border: 1px solid var(--border, #E8DDD2);
+  background: var(--surga-surface, #FFFFFF);
+  border: 1px solid var(--surga-border, #E2E8F0);
   border-radius: 10px;
   margin-bottom: 8px;
   gap: 12px;
@@ -151,7 +192,7 @@ body:has(.surga-root) #app-main {
 .surga-item-line1 {
   font-size: 15px;
   font-weight: 600;
-  color: var(--text1, #1A1612);
+  color: var(--surga-text1, #0F172A);
   margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -160,7 +201,7 @@ body:has(.surga-root) #app-main {
 
 .surga-item-line2 {
   font-size: 13px;
-  color: var(--text2, #5A4E42);
+  color: var(--surga-text2, #475569);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -169,7 +210,7 @@ body:has(.surga-root) #app-main {
 
 .surga-price-tag {
   font-weight: 700;
-  color: var(--price, #0A5C36);
+  color: var(--surga-emerald, #059669);
   white-space: nowrap;
 }
 
@@ -179,26 +220,29 @@ body:has(.surga-root) #app-main {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background-color: var(--accent, #C75B00);
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
   color: #FFFFFF;
   font-size: 16px;
   font-weight: 700;
   padding: 12px 20px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
   width: 100%;
-  transition: background-color 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
   text-decoration: none;
   box-sizing: border-box;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.28);
 }
 
 .surga-btn-primary:hover {
-  background-color: #A64800;
+  background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+  transform: translateY(-1px);
 }
 
 .surga-btn-primary:active {
-  opacity: 0.9;
+  transform: translateY(0);
+  opacity: 0.92;
 }
 
 .surga-btn-secondary {
@@ -206,21 +250,23 @@ body:has(.surga-root) #app-main {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background-color: transparent;
-  color: var(--navy, #1C2B4A);
+  background-color: #FFFFFF;
+  color: var(--surga-primary, #0F172A);
   font-size: 15px;
   font-weight: 600;
   padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--border, #E8DDD2);
+  border-radius: 12px;
+  border: 1px solid var(--surga-border, #E2E8F0);
   cursor: pointer;
   width: 100%;
   text-decoration: none;
   box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .surga-btn-secondary:hover {
-  background-color: rgba(28, 43, 74, 0.04);
+  background-color: var(--surga-bg, #F8FAFC);
+  border-color: #CBD5E1;
 }
 
 /* Micro flottant (FAB) */
@@ -231,21 +277,21 @@ body:has(.surga-root) #app-main {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: var(--accent, #C75B00);
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(199, 91, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.38);
   border: none;
   cursor: pointer;
   z-index: 50;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
 }
 
 .surga-fab-mic:hover {
-  background-color: #A64800;
-  transform: scale(1.05);
+  transform: scale(1.06);
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.46);
 }
 
 .surga-fab-mic:active {
@@ -259,8 +305,10 @@ body:has(.surga-root) #app-main {
   left: 0;
   right: 0;
   height: 64px;
-  background-color: #FFFFFF;
-  border-top: 1px solid var(--border, #E8DDD2);
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid var(--surga-border, #E2E8F0);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -276,7 +324,7 @@ body:has(.surga-root) #app-main {
   gap: 3px;
   flex: 1;
   height: 100%;
-  color: var(--text2, #5A4E42);
+  color: var(--surga-text2, #475569);
   text-decoration: none;
   font-size: 12px;
   font-weight: 600;
@@ -284,7 +332,7 @@ body:has(.surga-root) #app-main {
 }
 
 .surga-nav-item.active {
-  color: var(--accent, #C75B00);
+  color: var(--surga-accent, #D97706);
   font-weight: 700;
 }
 
@@ -299,12 +347,12 @@ body:has(.surga-root) #app-main {
   flex: 1;
   height: 4px;
   border-radius: 2px;
-  background-color: var(--border, #E8DDD2);
+  background-color: var(--surga-border, #E2E8F0);
   transition: background-color 0.2s ease;
 }
 
 .surga-progress-bar.active {
-  background-color: var(--accent, #C75B00);
+  background-color: var(--surga-accent, #D97706);
 }
 
 .surga-brick-option {
@@ -312,8 +360,8 @@ body:has(.surga-root) #app-main {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border: 1px solid var(--border, #E8DDD2);
-  border-radius: 12px;
+  border: 1px solid var(--surga-border, #E2E8F0);
+  border-radius: 14px;
   background-color: #FFFFFF;
   margin-bottom: 10px;
   cursor: pointer;
@@ -321,8 +369,8 @@ body:has(.surga-root) #app-main {
 }
 
 .surga-brick-option.selected {
-  border-color: var(--accent, #C75B00);
-  background-color: rgba(199, 91, 0, 0.04);
+  border-color: var(--surga-accent, #D97706);
+  background-color: var(--surga-accent-soft, rgba(217, 119, 6, 0.04));
 }
 
 /* Barre Radio Persistante & Égaliseur Audio Surga */
@@ -341,7 +389,7 @@ body:has(.surga-root) #app-main {
 
 .surga-eq-bar {
   width: 2.5px;
-  background-color: var(--accent, #C75B00);
+  background-color: var(--surga-accent, #D97706);
   border-radius: 1.5px;
 }
 

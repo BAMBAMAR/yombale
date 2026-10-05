@@ -3,6 +3,57 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 13] — Identité de Marque Complète de Surga, Symbole Vectoriel Dépositaire, Palette Ambre/Indigo & Assets PWA
+- **Tâches complétées :**
+  - **Audit de Marque Sans Complaisance (`docs/surga/AUDIT_IDENTITE_SURGA.md`)** :
+    - Mise en évidence de l'invisibilité antérieure de la marque Surga (absence de logo, emprunt des icônes Nopalou et béquilles visuelles IA).
+    - Formulation de la stratégie d'autonomie et de distinction : "Même famille, identité distincte".
+  - **Territoire de Marque Officiel (`docs/surga/IDENTITE_SURGA.md`)** :
+    - Définition du rôle et de la sémantique de Surga (l'assistant qui exécute concrètement, fidèle, loyal et sans bavardage).
+    - Exploration et benchmarking de 3 concepts (Loxo, Bët, et le Ruban d'Action S).
+    - Sélection et documentation du concept officiel : **Le Ruban d'Action Continue S** (alliance de l'Écoute Ambre et de l'Exécution Indigo avec étincelle Émeraude).
+    - 4 piliers de personnalité (*Exécutant & Utile*, *Direct & Clair*, *Fidèle & Discret*, *Ancré & Local*).
+    - Ligne éditoriale au vouvoiement respectueux, direct et utile sans jargon ni formules artificielles d'IA.
+  - **Spécifications Techniques Design System (`docs/surga/DESIGN_SYSTEM_SURGA.md`)** :
+    - Dictionnaire exhaustif des tokens CSS (`--surga-primary: #0F172A`, `--surga-accent: #D97706`, `--surga-accent-glow: #F59E0B`, `--surga-emerald: #059669`, `--surga-bg: #F8FAFC`, `--surga-border: #E2E8F0`, etc.).
+    - Règle Zero-CDN, cartes en 2 sous-lignes calibrées, plafonnement strict des composants à 450 lignes.
+  - **Guide Officiel d'Utilisation de la Marque (`docs/surga/BRAND_GUIDELINES_SURGA.md`)** :
+    - Grille vectorielle 512×512, clearspace 0.5X, tailles minimales d'affichage (de 16 px à 512 px).
+    - Variantes autorisées et interdits formels (pas de déformation, pas de fausses couleurs, zéro émoji).
+    - Directives pour WhatsApp Business, PWA et vidéos verticales (TikTok / Reels).
+  - **Création du Pack d'Actifs Graphiques SVG & PNG (`frontend-next/public/surga/icons/`)** :
+    - 11 fichiers SVG vectoriels purs (symbole seul, sombre, monochrome, blanc, compact, horizontal, icônes 192/512, maskable et favicon).
+    - Rastérisation haute fidélité via Chromium Playwright : PNG 192, 512, maskable 512, avatar WhatsApp Business et symbole transparent.
+  - **Intégration & Harmonisation Frontend** :
+    - Mise à jour du Web App Manifest (`public/surga/manifest.json`) avec `theme_color: #0F172A` et icônes officielles Surga.
+    - Mise à jour de `layout.tsx` (OpenGraph, Twitter, favicon SVG, themeColor).
+    - Remplacement de l'icône IA Sparkles dans `SurgaHeader.tsx` par le véritable symbole vectoriel Surga et typographie du wordmark.
+    - Mise à jour de `surga.css` (tokens officiels, dégradé ambre sur le FAB micro et boutons, fond blanc brume `#F8FAFC`).
+    - Nettoyage des étoiles IA dans `SurgaLandingHero.tsx`.
+  - **Document de Passation Dédié (`docs/surga/HANDOVER_IDENTITE_SURGA.md`)**.
+- **Fichiers modifiés / créés :**
+  - `docs/surga/AUDIT_IDENTITE_SURGA.md` (créé)
+  - `docs/surga/IDENTITE_SURGA.md` (créé)
+  - `docs/surga/DESIGN_SYSTEM_SURGA.md` (créé)
+  - `docs/surga/BRAND_GUIDELINES_SURGA.md` (créé)
+  - `docs/surga/HANDOVER_IDENTITE_SURGA.md` (créé)
+  - `frontend-next/public/surga/icons/*` (18 fichiers créés : 11 SVG, 6 PNG, favicon)
+  - `frontend-next/public/surga/manifest.json` (mis à jour)
+  - `frontend-next/src/app/surga/layout.tsx` (mis à jour)
+  - `frontend-next/src/app/surga/components/SurgaHeader.tsx` (mis à jour)
+  - `frontend-next/src/styles/surga.css` (mis à jour)
+  - `frontend-next/src/app/surga/components/SurgaLandingHero.tsx` (mis à jour)
+  - `frontend-next/src/styles/surga-admin.css` (mis à jour)
+  - `docs/surga/PLAN.md` (mis à jour)
+  - `docs/surga/HANDOVER.md` (mis à jour)
+- **Validation :**
+  - 11 SVG conformes et validés.
+  - 6 PNGs haute fidélité générés via Playwright Chromium.
+  - `npx tsc --noEmit` : 0 erreur de typage.
+  - `npm run lint:slop` : 100% conforme.
+  - 99/99 tests Jest backend validés (`tests/unit/surga.test.js`).
+  - 97/97 tests frontend validés.
+
 ### [2026-10-05 — Soir 12] — Console Pro : Fixation Dynamique des Prix, Comptes Utilisateurs VIP & Canaux Réseaux Sociaux
 - **Tâches complétées :**
   - **Exigences Explicites Utilisateur** : « ça reste inspiré de Nopalou, je ne peux pas fixer le montant de l'abonnement, il y a énormément de choses qui manquent : les réseaux sociaux, les comptes, il y a trop de manquements ».

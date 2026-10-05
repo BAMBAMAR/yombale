@@ -42,8 +42,8 @@ export default function SurgaLandingHero({
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            background: 'rgba(199, 91, 0, 0.08)',
-            color: 'var(--accent, #C75B00)',
+            background: 'var(--surga-accent-soft, rgba(217, 119, 6, 0.08))',
+            color: 'var(--surga-accent, #D97706)',
             padding: '6px 14px',
             borderRadius: 20,
             fontSize: 13,
@@ -51,7 +51,7 @@ export default function SurgaLandingHero({
             marginBottom: 16,
           }}
         >
-          <Sparkles size={14} />
+          <Sun size={14} strokeWidth={2.5} />
           <span>Votre assistant personnel à Dakar</span>
         </div>
 
@@ -60,7 +60,7 @@ export default function SurgaLandingHero({
             fontSize: 26,
             fontWeight: 800,
             lineHeight: 1.25,
-            color: 'var(--navy, #1C2B4A)',
+            color: 'var(--surga-primary, #0F172A)',
             margin: '0 0 14px',
           }}
         >
@@ -71,7 +71,7 @@ export default function SurgaLandingHero({
           style={{
             fontSize: 15,
             lineHeight: 1.55,
-            color: '#5A4E42',
+            color: 'var(--surga-text2, #475569)',
             maxWidth: 520,
             margin: '0 auto 24px',
           }}
@@ -86,7 +86,7 @@ export default function SurgaLandingHero({
           <button
             type="button"
             onClick={onDemarrerOnboarding}
-            className="btn-npl"
+            className="surga-btn-primary"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -96,11 +96,9 @@ export default function SurgaLandingHero({
               fontSize: 16,
               fontWeight: 700,
               borderRadius: 12,
-              background: 'var(--accent, #C75B00)',
               color: '#FFFFFF',
               border: 'none',
               cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(199, 91, 0, 0.28)',
               width: '100%',
               maxWidth: 340,
             }}
