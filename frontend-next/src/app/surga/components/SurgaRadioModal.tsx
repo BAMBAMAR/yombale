@@ -1,24 +1,12 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Radio as RadioIcon, X, Search } from 'lucide-react'
 import SurgaRadioCard from './SurgaRadioCard'
 import SurgaRadioMiniPlayer from './SurgaRadioMiniPlayer'
+import { useSurgaRadio, type StationRadio } from '@/lib/surga-radio-context'
 
-export interface StationRadio {
-  id: string
-  nom: string
-  slogan: string
-  frequence: string
-  region: string
-  categorie: string
-  langues: string[]
-  url: string
-  directMp3: boolean
-  bitrateKbps: number
-  description: string
-  streamUrlProxy: string
-}
+export type { StationRadio }
 
 interface SurgaRadioModalProps {
   isOpen: boolean
@@ -34,109 +22,21 @@ const ONGLETS_FILTRE = [
 ]
 
 export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProps) {
-  const [stations, setStations] = useState<StationRadio[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const {
+    stations,
+    loadingStations,
+    stationActive,
+    isPlaying,
+    isBuffering,
+    isMuted,
+    erreurLecture,
+    lancerStation,
+    toggleMute,
+    arreter,
+  } = useSurgaRadio()
+
   const [recherche, setRecherche] = useState<string>('')
   const [filtreActif, setFiltreActif] = useState<string>('toutes')
-
-  const [stationActive, setStationActive] = useState<StationRadio | null>(null)
-  const [isPlaying, setIsPlaying] = useState<boolean>(false)
-  const [isBuffering, setIsBuffering] = useState<boolean>(false)
-  const [isMuted, setIsMuted] = useState<boolean>(false)
-  const [erreurLecture, setErreurLecture] = useState<string | null>(null)
-
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  useEffect(() => {
-    if (!isOpen) return
-    let isMounted = true
-    async function chargerStations() {
-      setLoading(true)
-      try {
-        const res = await fetch('/api/surga/radios')
-        const data = await res.json()
-        if (isMounted && data.success && Array.isArray(data.stations)) {
-          setStations(data.stations)
-        }
-      } catch (err) {
-        console.error('Erreur chargement radios:', err)
-      } finally {
-        if (isMounted) setLoading(false)
-      }
-    }
-    chargerStations()
-    return () => {
-      isMounted = false
-    }
-  }, [isOpen])
-
-  const handleLancerStation = (station: StationRadio) => {
-    setErreurLecture(null)
-    if (stationActive?.id === station.id && isPlaying) {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ''
-      }
-      setIsPlaying(false)
-      setIsBuffering(false)
-      return
-    }
-
-    setStationActive(station)
-    setIsBuffering(true)
-    setIsPlaying(true)
-
-    if (audioRef.current) {
-      audioRef.current.pause()
-      const fluxAUtiliser = station.url.startsWith('https') ? station.url : station.streamUrlProxy
-      audioRef.current.src = fluxAUtiliser
-      audioRef.current
-        .play()
-        .then(() => {
-          setIsBuffering(false)
-          setIsPlaying(true)
-        })
-        .catch((err) => {
-          console.warn('Erreur direct, essai proxy:', err)
-          if (audioRef.current && fluxAUtiliser !== station.streamUrlProxy) {
-            audioRef.current.src = station.streamUrlProxy
-            audioRef.current
-              .play()
-              .then(() => {
-                setIsBuffering(false)
-                setIsPlaying(true)
-              })
-              .catch((errProxy) => {
-                console.error('Échec radio:', errProxy)
-                setIsBuffering(false)
-                setIsPlaying(false)
-                setErreurLecture(`Flux temporairement indisponible pour ${station.nom}`)
-              })
-          } else {
-            setIsBuffering(false)
-            setIsPlaying(false)
-            setErreurLecture(`Flux indisponible pour ${station.nom}`)
-          }
-        })
-    }
-  }
-
-  const handleArreter = () => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
-    }
-    setIsPlaying(false)
-    setIsBuffering(false)
-    setStationActive(null)
-  }
-
-  const toggleMute = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted
-      setIsMuted(!isMuted)
-    }
-  }
 
   const stationsFiltrees = useMemo(() => {
     return stations.filter((st) => {
@@ -198,16 +98,6 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <audio
-          ref={audioRef}
-          preload="none"
-          onEnded={() => setIsPlaying(false)}
-          onError={() => {
-            setIsBuffering(false)
-            setIsPlaying(false)
-          }}
-        />
-
         {/* En-tête */}
         <div
           style={{
@@ -238,7 +128,7 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
                 Radios Locales du Sénégal
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.75)' }}>
-                Directs FM & Low-Data (64-128 kbps)
+                Écoute en direct & Navigation libre dans Surga
               </div>
             </div>
           </div>
@@ -246,7 +136,8 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label="Fermer et continuer de naviguer"
+            title="Fermer la liste (la radio continue en arrière-plan)"
             style={{
               background: 'transparent',
               border: 'none',
@@ -259,16 +150,16 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
           </button>
         </div>
 
-        {/* Mini Lecteur en direct */}
+        {/* Mini Lecteur en direct s'il y a une station active */}
         {stationActive && (
           <SurgaRadioMiniPlayer
             station={stationActive}
             isPlaying={isPlaying}
             isBuffering={isBuffering}
             isMuted={isMuted}
-            onTogglePlay={handleLancerStation}
+            onTogglePlay={lancerStation}
             onToggleMute={toggleMute}
-            onArreter={handleArreter}
+            onArreter={arreter}
           />
         )}
 
@@ -356,9 +247,9 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
 
         {/* Liste des stations */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px' }}>
-          {loading ? (
+          {loadingStations ? (
             <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--text3, #73675E)' }}>
-              Chargement des stations...
+              Chargement des stations sénégalaises...
             </div>
           ) : stationsFiltrees.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--text3, #73675E)' }}>
@@ -371,14 +262,14 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
                   key={st.id}
                   station={st}
                   isEnLecture={stationActive?.id === st.id && isPlaying}
-                  onTogglePlay={handleLancerStation}
+                  onTogglePlay={lancerStation}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Pied de page Low-Data */}
+        {/* Pied de page Low-Data avec bouton Fermer & Continuer */}
         <div
           style={{
             padding: '8px 14px',
@@ -391,7 +282,7 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
             justifyContent: 'space-between',
           }}
         >
-          <span>Flux audio légers (0 vidéo • Faible consommation data)</span>
+          <span>Flux audio légers (Navigation continue active)</span>
           <button
             type="button"
             onClick={onClose}

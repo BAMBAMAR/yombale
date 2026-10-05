@@ -2,6 +2,7 @@
 
 import React from 'react'
 import dynamic from 'next/dynamic'
+import { useSurgaRadio } from '@/lib/surga-radio-context'
 
 // Optimisation Bundle Initial : Chargement à la demande (lazy-loading / code splitting)
 const SurgaCalculatorModal = dynamic(() => import('./SurgaCalculatorModal'), { ssr: false })
@@ -22,7 +23,7 @@ interface SurgaModalsContainerProps {
   isVoiceOpen: boolean
   isPresseOpen: boolean
   isPodcastOpen: boolean
-  isRadioOpen: boolean
+  isRadioOpen?: boolean
   isTraficOpen: boolean
   isImmoOpen: boolean
   isConcoursOpen: boolean
@@ -35,7 +36,7 @@ interface SurgaModalsContainerProps {
   onCloseVoice: () => void
   onClosePresse: () => void
   onClosePodcast: () => void
-  onCloseRadio: () => void
+  onCloseRadio?: () => void
   onCloseTrafic: () => void
   onCloseImmo: () => void
   onCloseConcours: () => void
@@ -46,7 +47,7 @@ interface SurgaModalsContainerProps {
   onDonneesSupprimees?: () => void
 
   onInjectMontantCalc: () => void
-  onOpenRadioFromPresse: () => void
+  onOpenRadioFromPresse?: () => void
   onConfirmerVoiceDepense: (depense: { montant: number; categorie: string; note: string }) => Promise<void>
   onConfirmerVoiceNote: (note: { titre: string; contenu: string }) => Promise<void>
   onConfirmerVoiceRappel: (rappel: { titre: string; date: string; heure: string }) => Promise<void>
@@ -58,7 +59,7 @@ export default function SurgaModalsContainer({
   isVoiceOpen,
   isPresseOpen,
   isPodcastOpen,
-  isRadioOpen,
+  isRadioOpen = false,
   isTraficOpen,
   isImmoOpen,
   isConcoursOpen,
@@ -88,6 +89,10 @@ export default function SurgaModalsContainer({
   onConfirmerVoiceRappel,
   onAbonnementActive,
 }: SurgaModalsContainerProps) {
+  const { isRadioModalOpen, closeRadioModal, openRadioModal } = useSurgaRadio()
+  const modalRadioOuvert = isRadioModalOpen || isRadioOpen
+  const fermerRadioModal = onCloseRadio || closeRadioModal
+
   return (
     <>
       {isCalcOpen && (
@@ -110,7 +115,13 @@ export default function SurgaModalsContainer({
         <SurgaPresseView
           isOpen={isPresseOpen}
           onClose={onClosePresse}
-          onOpenRadios={onOpenRadioFromPresse}
+          onOpenRadios={
+            onOpenRadioFromPresse ||
+            (() => {
+              onClosePresse()
+              openRadioModal()
+            })
+          }
         />
       )}
       {isPodcastOpen && (
@@ -119,10 +130,10 @@ export default function SurgaModalsContainer({
           onClose={onClosePodcast}
         />
       )}
-      {isRadioOpen && (
+      {modalRadioOuvert && (
         <SurgaRadioModal
-          isOpen={isRadioOpen}
-          onClose={onCloseRadio}
+          isOpen={modalRadioOuvert}
+          onClose={fermerRadioModal}
         />
       )}
       {isTraficOpen && (

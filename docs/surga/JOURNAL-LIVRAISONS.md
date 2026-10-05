@@ -3,6 +3,37 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 7] — Écoute Radio Continue & Arrière-Plan dans Tout Surga avec Barre Flottante Persistante
+- **Tâches complétées :**
+  - **Diagnostic & Causes Racines** :
+    - La balise `<audio>` et les hooks d'état audio étaient situés directement dans le composant `SurgaRadioModal.tsx`. Dès qu'un utilisateur fermait la modale pour changer d'onglet ou consulter ses dépenses/notes/trafic/météo, le composant était démonté du DOM, interrompant la lecture.
+  - **Contexte Radio Global (`frontend-next/src/lib/surga-radio-context.tsx`, 292 l.)** :
+    - Hébergement de l'élément `<audio>` unique, permanent et résilient avec bascule automatique direct / proxy.
+    - Synchronisation avec l'API Web `navigator.mediaSession` pour les contrôles sur l'écran de verrouillage et le centre de notifications sur smartphone.
+  - **Barre Flottante Persistante (`SurgaPersistentRadioBar.tsx`, 234 l.)** :
+    - Mini-lecteur ergonomique épousant les tokens Nopalou (`--navy: #1C2B4A`, `--accent: #C75B00`, `--price: #0A5C36`) calé à `bottom: 64px` au-dessus de la barre d'onglets.
+    - Micro-animation d'égaliseur 3 barres CSS pures en lecture active.
+    - Contrôles directs Play/Pause, Mute/Unmute, Fermeture/Arrêt définitif et clic d'expansion ouvrant la modale complète.
+  - **Fournisseur et Câblage Global (`SurgaRadioProvider.tsx`, `layout.tsx`, `page.tsx`, `SurgaModalsContainer.tsx`)** :
+    - Injection du provider au niveau de `SurgaLayout` couvrant l'ensemble des routes et modales de Surga.
+    - Allègement de `page.tsx` (446 l. <= 450 l.) et `SurgaRadioModal.tsx` (305 l. <= 450 l.).
+  - **CSS Responsive & Anti-Collision (`surga.css`)** :
+    - Règle `body:has(.surga-persistent-radio-bar) .surga-fab-mic { bottom: 124px; }` décalant automatiquement le bouton vocal flottant sans aucune collision.
+- **Fichiers modifiés & créés :**
+  - `frontend-next/src/lib/surga-radio-context.tsx` (nouveau, 292 l.)
+  - `frontend-next/src/app/surga/components/SurgaPersistentRadioBar.tsx` (nouveau, 234 l.)
+  - `frontend-next/src/app/surga/components/SurgaRadioProvider.tsx` (nouveau, 15 l.)
+  - `frontend-next/src/app/surga/components/SurgaRadioModal.tsx` (refactorisé, 305 l.)
+  - `frontend-next/src/app/surga/components/SurgaModalsContainer.tsx`
+  - `frontend-next/src/app/surga/layout.tsx`
+  - `frontend-next/src/app/surga/page.tsx` (446 l.)
+  - `frontend-next/src/styles/surga.css`
+- **Validation :**
+  - 99/99 tests Jest passés.
+  - `npx tsc --noEmit` : 0 erreur.
+  - `npm run lint:slop` : 100% conforme.
+  - Tous les composants React <= 450 lignes.
+
 ### [2026-10-05 — Soir 6] — Recalibrage Trafic Réel Dakar (Heures de Pointe & A1 Entrant / Front de Terre) & Passerelle Directe Google Maps Live
 - **Tâches complétées :**
   - **Diagnostic & Causes Racines de l'Écart Constaté** :

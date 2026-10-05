@@ -102,10 +102,12 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 ### Tranche 10 — Radios Locales du Sénégal (Directs FM & Low-Data)
 - [x] `DONE` Bouquet de radios nationales et régionales sénégalaises (RTS 92.5 RSI, Sud FM 98.5, Rewmi FM 97.5, Oxy Jeunes 103.4, Radio Al Fayda Kaolack 90.1, GMS Ziguinchor 89.3, Zig FM 100.8, RTS Matam 89.1, RTS Tamba 92.0, Dakar Musique, Radio Fulbe FM 102.6).
 - [x] `DONE` Mode Low-Data strict : flux légers (64 à 128 kbps), zéro vidéo, proxy backend sécurisé `/api/surga/radios/:id/stream` pour compatibilité HTTPS et arrêt immédiat à la déconnexion.
-- [x] `DONE` Composants React modulaires (< 450 lignes) : `SurgaRadioModal.tsx` (411 l.), `SurgaRadioMiniPlayer.tsx` (115 l.), `SurgaRadioCard.tsx` (115 l.), `SurgaArticleCard.tsx` (85 l.).
+- [x] `DONE` Contexte audio persistant `SurgaRadioContext` (`frontend-next/src/lib/surga-radio-context.tsx`) assurant l'écoute ininterrompue en arrière-plan pendant la navigation dans tout Surga.
+- [x] `DONE` Barre flottante persistante `SurgaPersistentRadioBar.tsx` au-dessus de la barre d'onglets avec égaliseur dynamique animé, contrôles Play/Pause, Mute, Stop et support de l'API standard `navigator.mediaSession`.
+- [x] `DONE` Composants React modulaires (< 450 lignes) : `SurgaRadioModal.tsx` (305 l.), `SurgaPersistentRadioBar.tsx` (234 l.), `SurgaRadioMiniPlayer.tsx` (130 l.), `SurgaRadioCard.tsx` (121 l.), `SurgaRadioProvider.tsx` (15 l.).
 - [x] `DONE` Accès ergonomique : bouton "Radios FM" dans `SurgaAudioPlayer`, dans `SurgaPresseView` et dans l'onglet Paramètres.
-- [x] `DONE` Tests unitaires Jest : 49/49 passés (100%).
-- **Démonstration** : l'utilisateur explore les stations sénégalaises par région ou thématique et lance l'écoute en direct d'un simple clic sans interruption.
+- [x] `DONE` Tests unitaires Jest : 99/99 passés (100%).
+- **Démonstration** : l'utilisateur explore les stations sénégalaises, lance l'écoute en direct et continue de naviguer librement dans Surga avec une barre flottante persistante et des contrôles sur l'écran de verrouillage.
 
 ### Tranche 11 — Trafic à Dakar (Corridors, Heures de Pointe & Sondes TomTom Live)
 - [x] `DONE` Tables SQL `surga_trafic_axes` et `surga_trafic_signalements` (migration idempotente dans `backend/migrate-inline.js`) et 11 corridors synchronisés par seeding idempotent (`scripts/seed-surga-data.js`).

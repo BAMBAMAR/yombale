@@ -325,3 +325,40 @@ body:has(.surga-root) #app-main {
   background-color: rgba(199, 91, 0, 0.04);
 }
 
+/* Barre Radio Persistante & Égaliseur Audio Surga */
+@keyframes surgaEqualizer1 {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+@keyframes surgaEqualizer2 {
+  0%, 100% { height: 12px; }
+  50% { height: 4px; }
+}
+@keyframes surgaEqualizer3 {
+  0%, 100% { height: 6px; }
+  50% { height: 14px; }
+}
+
+.surga-eq-bar {
+  width: 2.5px;
+  background-color: var(--accent, #C75B00);
+  border-radius: 1.5px;
+}
+
+.surga-eq-1 {
+  animation: surgaEqualizer1 0.8s ease-in-out infinite;
+}
+
+.surga-eq-2 {
+  animation: surgaEqualizer2 0.7s ease-in-out infinite 0.15s;
+}
+
+.surga-eq-3 {
+  animation: surgaEqualizer3 0.9s ease-in-out infinite 0.3s;
+}
+
+body:has(.surga-persistent-radio-bar) .surga-fab-mic {
+  bottom: 124px;
+}
+
+
