@@ -49,7 +49,7 @@ router.get('/briefing', tokenOptional, async (req, res) => {
     const [items, sports, meteoData] = await Promise.all([
       getBriefingItems({ categories, limit: 6 }),
       modulesActifs.includes('sport')
-        ? Promise.resolve(filtrerMatchsSport({ equipesSuivies, limit: 6 }))
+        ? filtrerMatchsSport({ equipesSuivies, limit: 6 })
         : Promise.resolve([]),
       modulesActifs.includes('meteo') || true ? getMeteo(quartierPrincipal) : Promise.resolve(null),
     ]);
