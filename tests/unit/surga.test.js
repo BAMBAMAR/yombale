@@ -1322,6 +1322,68 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(paths).toContain('/donnees/supprimer');
     });
   });
+
+  describe('Tranche 17 : Météo Dakar Live & Sport Personnalisé Temps Réel', () => {
+    const { getMeteo, interpreterCodeWMO, calculerMareeDakar, estimerQualiteAirDakar } = require('../../backend/services/surga/meteo-service');
+    const { LISTE_EQUIPES_DISPONIBLES, genererProgrammeSportActuel, filtrerMatchsSport } = require('../../backend/services/surga/sport-service');
+
+    test('Le service météo traduit les codes WMO et calcule les marées dakariliennes', () => {
+      expect(interpreterCodeWMO(0).code).toBe('soleil');
+      expect(interpreterCodeWMO(61).code).toBe('pluie');
+      expect(interpreterCodeWMO(95).code).toBe('orage');
+
+      const maree = calculerMareeDakar();
+      expect(['Marée basse', 'Marée haute']).toContain(maree.etat);
+      expect(maree.spot_reference).toBe('Almadies & Yoff');
+
+      const qualiteAir = estimerQualiteAirDakar();
+      expect(qualiteAir.aqi).toBeGreaterThan(0);
+      expect(qualiteAir.niveau).toBeDefined();
+    });
+
+    test('getMeteo retourne une structure météo complète pour Dakar', async () => {
+      const meteo = await getMeteo('Dakar');
+      expect(meteo).toBeDefined();
+      expect(meteo.ville).toBe('Dakar');
+      expect(meteo.temperature).toBeDefined();
+      expect(meteo.ressenti).toBeDefined();
+      expect(meteo.vent_vitesse_kmh).toBeDefined();
+      expect(meteo.maree).toBeDefined();
+      expect(Array.isArray(meteo.previsions_3j)).toBe(true);
+      expect(meteo.previsions_3j.length).toBeGreaterThanOrEqual(1);
+    });
+
+    test('Le service sport fournit les compétitions réelles et le catalogue d’équipes', () => {
+      expect(LISTE_EQUIPES_DISPONIBLES.length).toBeGreaterThanOrEqual(15);
+      const noms = LISTE_EQUIPES_DISPONIBLES.map((e) => e.nom);
+      expect(noms.some((n) => n.includes('Sénégal'))).toBe(true);
+      expect(noms.some((n) => n.includes('Jaraaf'))).toBe(true);
+      expect(noms.some((n) => n.includes('Chelsea'))).toBe(true);
+
+      const matchs = genererProgrammeSportActuel();
+      expect(matchs.length).toBeGreaterThanOrEqual(6);
+      expect(matchs.some((m) => m.statut === 'EN_DIRECT')).toBe(true);
+      expect(matchs.some((m) => m.statut === 'TERMINE')).toBe(true);
+      expect(matchs.some((m) => m.statut === 'A_VENIR')).toBe(true);
+    });
+
+    test('Le filtrage personnalisé par équipe et catégorie fonctionne rigoureusement', () => {
+      const matchsLigue1 = filtrerMatchsSport({ categorie: 'ligue1_sn' });
+      expect(matchsLigue1.length).toBeGreaterThan(0);
+      expect(matchsLigue1.every((m) => m.categorie === 'ligue1_sn')).toBe(true);
+
+      const matchsJaraaf = filtrerMatchsSport({ equipesSuivies: ['Jaraaf'] });
+      expect(matchsJaraaf.length).toBeGreaterThan(0);
+      expect(matchsJaraaf.some((m) => m.equipe_domicile.includes('Jaraaf') || m.equipe_exterieur.includes('Jaraaf'))).toBe(true);
+    });
+
+    test('Les routeurs meteo et sport se chargent sans erreur dans Express', () => {
+      const meteoRouter = require('../../backend/routes/surga/meteo');
+      const sportRouter = require('../../backend/routes/surga/sport');
+      expect(meteoRouter).toBeDefined();
+      expect(sportRouter).toBeDefined();
+    });
+  });
 });
 
 

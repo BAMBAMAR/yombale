@@ -8,8 +8,9 @@ const { tokenOptional, verifierToken } = require('../../middlewares/auth');
 const {
   collecterTousLesFlux,
   getBriefingItems,
-  getSportEvents,
 } = require('../../services/surga/rss-collector');
+const { getMeteo } = require('../../services/surga/meteo-service');
+const { filtrerMatchsSport } = require('../../services/surga/sport-service');
 
 // GET /api/surga/briefing
 // Génère et retourne le briefing structuré selon les préférences du profil
@@ -19,11 +20,12 @@ router.get('/briefing', tokenOptional, async (req, res) => {
     let modulesActifs = ['actualites', 'sport', 'trafic'];
     let heureBriefing = '07:30';
     let quartierPrincipal = 'Dakar Plateau';
+    let equipesSuivies = [];
 
     if (userId) {
       try {
         const { rows } = await pool.query(
-          'SELECT modules_actifs, heure_briefing, quartiers FROM surga_preferences WHERE user_id = $1',
+          'SELECT modules_actifs, heure_briefing, quartiers, equipes_suivies FROM surga_preferences WHERE user_id = $1',
           [userId]
         );
         if (rows.length > 0) {
@@ -31,6 +33,7 @@ router.get('/briefing', tokenOptional, async (req, res) => {
           if (Array.isArray(pref.modules_actifs)) modulesActifs = pref.modules_actifs;
           if (pref.heure_briefing) heureBriefing = pref.heure_briefing;
           if (Array.isArray(pref.quartiers) && pref.quartiers[0]) quartierPrincipal = pref.quartiers[0];
+          if (Array.isArray(pref.equipes_suivies)) equipesSuivies = pref.equipes_suivies;
         }
       } catch (err) {
         console.warn('[SURGA BRIEFING PREFS WARN]:', err.message);
@@ -43,9 +46,12 @@ router.get('/briefing', tokenOptional, async (req, res) => {
     if (modulesActifs.includes('trafic')) categories.push('trafic');
     if (categories.length === 0) categories.push('actualites');
 
-    const [items, sports] = await Promise.all([
+    const [items, sports, meteoData] = await Promise.all([
       getBriefingItems({ categories, limit: 6 }),
-      modulesActifs.includes('sport') ? getSportEvents({ limit: 4 }) : Promise.resolve([]),
+      modulesActifs.includes('sport')
+        ? Promise.resolve(filtrerMatchsSport({ equipesSuivies, limit: 6 }))
+        : Promise.resolve([]),
+      modulesActifs.includes('meteo') || true ? getMeteo(quartierPrincipal) : Promise.resolve(null),
     ]);
 
     // Agenda du jour de l'utilisateur
@@ -91,6 +97,7 @@ router.get('/briefing', tokenOptional, async (req, res) => {
       modules_actifs: modulesActifs,
       items,
       sports,
+      meteo: meteoData,
       agenda_du_jour: agendaDuJour,
     });
   } catch (err) {

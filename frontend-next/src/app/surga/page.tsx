@@ -7,8 +7,9 @@ import SurgaOnboarding, { type SurgaPreferencesData } from './components/SurgaOn
 import SurgaBriefingActions from './components/SurgaBriefingActions'
 import SurgaNewsList, { type BriefingNewsItem } from './components/SurgaNewsList'
 import SurgaSportCard, { type SportEventItem } from './components/SurgaSportCard'
+import SurgaMeteoCard, { type MeteoData } from './components/SurgaMeteoCard'
 import SurgaNotesView from './components/SurgaNotesView'
-import SurgaDepensesView from './components/SurgaDepensesView'
+import SurgaSamaXaalisView from './components/SurgaSamaXaalisView'
 import SurgaAgendaView from './components/SurgaAgendaView'
 import SurgaDashboardTools from './components/SurgaDashboardTools'
 import SurgaAudioPlayer from './components/SurgaAudioPlayer'
@@ -40,6 +41,7 @@ interface BriefingApiResponse {
   modules_actifs: string[]
   items: BriefingNewsItem[]
   sports: SportEventItem[]
+  meteo?: MeteoData
   agenda_du_jour?: Array<{ id: string; titre: string; heure_evenement?: string }>
 }
 
@@ -257,7 +259,7 @@ export default function SurgaPage() {
           activeTab === 'notes'
             ? 'Mes Notes'
             : activeTab === 'depenses'
-            ? 'Mes Dépenses'
+            ? 'Sama Xaalis'
             : activeTab === 'agenda'
             ? 'Mon Agenda'
             : activeTab === 'plus'
@@ -306,6 +308,14 @@ export default function SurgaPage() {
                 />
               )}
             </div>
+
+            {/* Section Briques : Météo & Marées Dakar */}
+            {(preferences?.modules_actifs?.includes('meteo') || !preferences?.modules_actifs) && (
+              <SurgaMeteoCard
+                initialMeteo={briefingData?.meteo}
+                ville={preferences?.quartiers?.[0] || 'Dakar'}
+              />
+            )}
 
             {/* Section Briques : Actualités & Presse */}
             {(preferences?.modules_actifs?.includes('actualites') || !preferences?.modules_actifs) && (
@@ -379,7 +389,7 @@ export default function SurgaPage() {
 
         {/* Onglets 2, 3, 4 : Vues dédiées */}
         {activeTab === 'notes' && <SurgaNotesView />}
-        {activeTab === 'depenses' && <SurgaDepensesView />}
+        {activeTab === 'depenses' && <SurgaSamaXaalisView />}
         {activeTab === 'agenda' && <SurgaAgendaView />}
 
         {/* Onglet 5 : Plus / Paramètres */}

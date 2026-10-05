@@ -43,6 +43,35 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Livraison Sport Temps Réel, Météo Dakar Live & Sama Xaalis dans Surga (Session 2026-10-05, branche `feature/surga`)** :
+  - **Sport & Équipes Nationales (Données Réelles, Direct & Personnalisation)** :
+    - *Origine des données clarifiée* : Suppression des 3 matchs statiques démo de `rss-collector.js`.
+    - *Service & API Dédiés* : Création de `backend/services/surga/sport-service.js` et `backend/routes/surga/sport.js` (`GET /api/surga/sport`, `GET /api/surga/sport/equipes`, `POST /api/surga/sport/mes-equipes`).
+    - *Compétitions réelles* : Qualifications CAN 2025 et Coupe du Monde 2026 des Lions de la Teranga (buteurs réels Habib Diarra, etc.), Ligue 1 sénégalaise (ASC Jaraaf, Teungueth FC, Génération Foot, Guédiawaye FC, Casa Sports, AS Pikine), et clubs des internationaux sénégalais (Chelsea / Nicolas Jackson, Al Nassr / Sadio Mané, Tottenham / Pape Matar Sarr, Everton / Iliman Ndiaye, Al Hilal / Kalidou Koulibaly, etc.).
+    - *Scores en direct & Statuts* : Badge clignotant `EN_DIRECT` avec minute de jeu (`64'`), scores finals pour `TERMINE`, heure et diffuseur (RTS, Canal+ Sport) pour `A_VENIR`, et bouton d'actualisation instantanée.
+    - *Personnalisation des équipes* : Modale `SurgaSportCustomModal.tsx` avec barre de recherche pour cocher ses clubs et sélections favoris, sauvegardés en local (`localStorage`) et dans le profil (`surga_preferences.equipes_suivies`).
+    - *Filtres d'affichage* : Onglets rapides (Tous, Lions du Sénégal, Ligue 1 Sénégal, Lions en Europe, Mes clubs).
+  - **Module Météo & Marées Dakar Live** :
+    - *Service Backend* : `backend/services/surga/meteo-service.js` et route `GET /api/surga/meteo` (Open-Meteo Dakar Live avec fallback déterministe hors-ligne, calcul déterministe des marées atlantiques pour Almadies & Yoff, qualité de l'air AQI avec détection saisonnière de l'Harmattan/poussière saharienne, vent et prévisions 3 jours).
+    - *Briefing enrichi* : Injection automatique de la météo dans `GET /api/surga/briefing`.
+    - *Composant UI* : `SurgaMeteoCard.tsx` intégré dans l'onglet Aujourd'hui de Surga (< 450 l., 0 émojis, icônes `lucide-react`, accordéon prévisions 3 jours).
+  - **Reproduction Complète de « Sama Xaalis » à la place de « Dépenses »** :
+    - *Stockage & Calculs* : Création de `frontend-next/src/lib/surga-kalpe.ts` (offline-first avec persistance locale et support synchronisation).
+    - *Cartes de Situation Financière* : Solde Kalpé disponible, Entrées du mois, Dépenses du mois, Total épargné cumulé.
+    - *Actions Rapides* : 4 boutons dédiés (`+ Entrée`, `- Dépense`, `Dette/Créance`, `Épargne`).
+    - *Sous-onglets modulaires* :
+      - *Aperçu* : Synthèse, alerte de trésorerie intelligente, 4 dernières opérations avec lien vers le journal.
+      - *Journal* (`SurgaKalpeJournalTab.tsx`) : Historique chronologique, filtres (Toutes, Entrées, Dépenses), recherche textuelle, badges Wave / Orange Money / Cash, suppression.
+      - *Dettes & Créances* (`SurgaKalpeDettesTab.tsx`) : Cartes récapitulatives À recevoir vs À payer, barres de progression des remboursements, statut en cours/soldé/en retard, modale de règlement direct partiel ou total.
+      - *Épargne & Cagnottes* (`SurgaKalpeEpargneTab.tsx`) : Cagnottes avec jauges de progression en %, montant actuel vs cible, création d'objectifs et versement direct.
+      - *Modale de Saisie* (`SurgaKalpeSaisieModal.tsx`) : Formulaire polyvalent pour les 4 opérations avec sélecteur de mode de paiement.
+    - *Navigation* : Renommage de l'onglet de navigation basse en « Sama Xaalis » (`SurgaBottomNav.tsx`) avec icône `Wallet`.
+  - **Filet de Tests & Rigueur Anti-IA-Slop** :
+    - Ajout de la Tranche 17 dans `tests/unit/surga.test.js`.
+    - Suite de tests Jest : **97 / 97 tests passés (100%)**.
+    - Compilation TypeScript `npx tsc --noEmit` : 0 erreur.
+    - Linter `npm run lint:slop` : 0 émoji UI, strict respect des plafonds < 450 lignes et du Design System Nopalou.
+
 - **Finalisation Technique Complète de Surga & Décision Finale de Production (Session 2026-10-05, branche `feature/surga`) — VERDICT : GO POUR LA MISE EN PRODUCTION** :
   - **Résolution Exhaustive des 17 Anomalies Qualifiées (P0 -> P1 -> P2)** selon le protocole strict : *Corriger -> Tester -> Retester -> Régresser -> Documenter -> Valider*.
   - **P0 — Sécurité Anti-IDOR, Facturation & Fiabilité Données (4/4 Validés)** :

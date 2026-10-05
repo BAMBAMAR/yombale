@@ -87,10 +87,10 @@ export default function SurgaDashboardTools({
           <Wallet size={18} />
         </div>
         <div className="surga-item-content">
-          <div className="surga-item-line1">Dépenses du mois</div>
+          <div className="surga-item-line1">Sama Xaalis (Portefeuille)</div>
           <div className="surga-item-line2">
             <span className="surga-price-tag">{statsApercu?.total_formate || '0 FCFA'}</span>
-            <span>• {statsApercu?.nb_depenses || 0} entrée{(statsApercu?.nb_depenses || 0) > 1 ? 's' : ''}</span>
+            <span>• Suivi entrées &amp; dépenses</span>
           </div>
         </div>
         <ArrowRight size={16} color="var(--text3, #73675E)" />
