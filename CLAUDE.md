@@ -43,6 +43,22 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Ajout des Radios Leaders, Religieuses et Internationales dans Surga (Session 2026-10-05, branche `feature/surga`)** :
+  - **Stations Leaders de l'Information & Débats** :
+    - *RFM 94.0 Dakar* (Radio Futurs Médias - GFM) : Stream direct validé `https://stream.zenolive.com/kuk0syz5puquv`.
+    - *Zik FM 89.7* (Groupe D-Média) : Stream direct validé `https://stream.zeno.fm/z97k8ry9sxquv`.
+    - *Walf FM 99.0* (Groupe Walfadjri) : Stream direct validé ACAN Group `https://10gb1.acangroup.org:8000/walffm`.
+    - *RFI Afrique 92.0* (Radio France Internationale) : Stream officiel direct `http://live02.rfi.fr/rfiafrique-64.mp3`.
+  - **Pôle Spiritualité & Radios Religieuses (Nouvel onglet « Religieux »)** :
+    - *Lamp Fall FM* (Touba / Mouridisme) : Récitation de Khassaïdes et spiritualité mouride via `https://stream.zeno.fm/bgy95ndrbxquv`.
+    - *Touba FM Live* (Touba) : Causeries islamiques et Magal de Touba via `https://stream.zeno.fm/b5ve4dw7u0hvv`.
+    - *Radio Fayda Tidianiya* (Kaolack / Tijaniyya) : Hadra et chants soufis via `http://listen.senemultimedia.net:5526/;`.
+    - *Radio Al Fayda 90.1* (Kaolack & Centre).
+  - **Évolutions UI & Proxy de Streaming Low-Data** :
+    - Mise à jour de [`backend/services/surga/radio-service.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/services/surga/radio-service.js) avec User-Agent navigateur et support `Icy-MetaData` pour les flux Zeno/Shoutcast.
+    - Ajout de l'onglet de filtrage rapide « Religieux » dans [`SurgaRadioModal.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/surga/components/SurgaRadioModal.tsx) (Toutes • Information • Religieux • Dakar & Banlieue • Régions & Terroirs).
+    - Tests Jest validés (`97/97 passed`), 0 erreur TypeScript, 0 émoji UI.
+
 - **Résolution Données Réelles Immobilier, Concours & Bonnes Adresses dans Surga (Session 2026-10-05, branche `feature/surga`)** :
   - **Pôle Immobilier Connecté à la Base Réelle (1 668 annonces PostgreSQL)** :
     - *Origine clarifiée* : Les données proviennent de la table PostgreSQL de production `annonces_immo` (1 668 biens, 563 publiables certifiés avec prix > 10 000 FCFA et contacts valides).
