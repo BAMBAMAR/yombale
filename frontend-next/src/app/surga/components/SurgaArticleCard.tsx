@@ -1,10 +1,10 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { ExternalLink, Bookmark } from 'lucide-react'
 import SurgaShareButton from './SurgaShareButton'
 import { formaterPartageBreve } from '@/lib/surga-share'
-import { epinglerArticleEnNote } from '@/lib/surga-cross-actions'
+import { estArticleEnNote, toggleArticleEnNote } from '@/lib/surga-cross-actions'
 import type { ArticlePresse } from './SurgaPresseView'
 
 interface SurgaArticleCardProps {
@@ -16,6 +16,19 @@ export default function SurgaArticleCard({
   item,
   formatRelativeTime,
 }: SurgaArticleCardProps) {
+  const [enNote, setEnNote] = useState<boolean>(false)
+
+  useEffect(() => {
+    const synchroniser = () => {
+      setEnNote(estArticleEnNote(item))
+    }
+    synchroniser()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('surga-data-change', synchroniser)
+      return () => window.removeEventListener('surga-data-change', synchroniser)
+    }
+  }, [item])
+
   return (
     <article
       className="surga-card"
@@ -56,24 +69,29 @@ export default function SurgaArticleCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
             type="button"
-            onClick={() => epinglerArticleEnNote(item)}
+            onClick={() => {
+              const actif = toggleArticleEnNote(item)
+              setEnNote(actif)
+            }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
               padding: '4px 8px',
               borderRadius: 6,
-              border: '1px solid var(--border, #E8DDD2)',
-              backgroundColor: '#FFFFFF',
+              border: '1px solid',
+              borderColor: enNote ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
+              backgroundColor: enNote ? 'rgba(28, 43, 74, 0.1)' : '#FFFFFF',
               color: 'var(--navy, #1C2B4A)',
               fontSize: 11,
-              fontWeight: 600,
+              fontWeight: enNote ? 700 : 600,
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
-            title="Épingler cet article dans mes Notes"
+            title={enNote ? "Article présent dans vos Notes — Cliquer pour retirer" : "Épingler cet article dans mes Notes"}
           >
             <Bookmark size={12} color="var(--navy, #1C2B4A)" />
-            <span>En Note</span>
+            <span>{enNote ? 'Épinglé ✓' : 'En Note'}</span>
           </button>
 
           <SurgaShareButton

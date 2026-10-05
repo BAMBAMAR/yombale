@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Pin, PinOff, Copy, Check, Share2, Trash2, CheckSquare, Square,
   ShoppingCart, Briefcase, User, AlertTriangle, FileText, Clock,
@@ -8,9 +8,15 @@ import {
 } from 'lucide-react'
 import {
   type SurgaNote, type SurgaNoteCategorie, type SurgaNoteCouleur,
-  saveLocalDepense, saveLocalEvenement,
 } from '@/lib/surga-offline-sync'
-import { detecterMontantTexte, afficherToast } from '@/lib/surga-cross-actions'
+import {
+  detecterMontantTexte,
+  afficherToast,
+  estRappelNoteActif,
+  toggleRappelNote,
+  estDepenseNoteEnregistree,
+  toggleDepenseNote,
+} from '@/lib/surga-cross-actions'
 
 interface SurgaNoteCardProps {
   note: SurgaNote
@@ -44,41 +50,34 @@ export default function SurgaNoteCard({
   onToggleCheckItem,
 }: SurgaNoteCardProps) {
   const [copie, setCopie] = useState<boolean>(false)
-  const [rappelCree, setRappelCree] = useState<boolean>(false)
+  const [rappelActif, setRappelActif] = useState<boolean>(false)
   const [depenseEnregistree, setDepenseEnregistree] = useState<boolean>(false)
 
   const montantDetecte = detecterMontantTexte(`${note.titre} ${note.contenu || ''}`)
 
-  const handleCreerRappel = (e: React.MouseEvent) => {
+  useEffect(() => {
+    const synchroniser = () => {
+      setRappelActif(estRappelNoteActif(note))
+      setDepenseEnregistree(estDepenseNoteEnregistree(note))
+    }
+    synchroniser()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('surga-data-change', synchroniser)
+      return () => window.removeEventListener('surga-data-change', synchroniser)
+    }
+  }, [note])
+
+  const handleToggleRappel = (e: React.MouseEvent) => {
     e.stopPropagation()
-    const auj = new Date()
-    const dateStr = auj.toISOString().split('T')[0]
-    saveLocalEvenement({
-      titre: `Note : ${note.titre}`,
-      description: note.contenu?.slice(0, 150) || 'Rappel créé depuis la note',
-      date_evenement: dateStr,
-      heure_evenement: '10:00',
-      est_rappel: true,
-      priorite: note.categorie === 'urgent' ? 'urgente' : 'normale',
-      repetition: 'AUCUNE',
-    })
-    setRappelCree(true)
-    afficherToast(`Rappel ajouté à l'agenda pour aujourd'hui à 10h`, 'succes')
-    setTimeout(() => setRappelCree(false), 2500)
+    const actif = toggleRappelNote(note)
+    setRappelActif(actif)
   }
 
   const handleEnregistrerDepense = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!montantDetecte) return
-    saveLocalDepense({
-      montant_xof: montantDetecte,
-      categorie: note.categorie === 'courses' ? 'alimentation' : 'autre',
-      date_depense: new Date().toISOString().split('T')[0],
-      note: `Créé depuis la note "${note.titre}"`,
-    })
-    setDepenseEnregistree(true)
-    afficherToast(`Dépense de ${montantDetecte.toLocaleString('fr-FR')} F ajoutée à Sama Xaalis`, 'succes')
-    setTimeout(() => setDepenseEnregistree(false), 3000)
+    const actif = toggleDepenseNote(note, montantDetecte)
+    setDepenseEnregistree(actif)
   }
 
   const couleur = note.couleur || 'creme'
@@ -301,7 +300,11 @@ export default function SurgaNoteCard({
         <button
           type="button"
           onClick={handleEnregistrerDepense}
-          title="Enregistrer automatiquement cette somme comme dépense dans Sama Xaalis"
+          title={
+            depenseEnregistree
+              ? 'Dépense enregistrée dans Sama Xaalis — Cliquer pour retirer'
+              : 'Enregistrer automatiquement cette somme comme dépense dans Sama Xaalis'
+          }
           style={{
             alignSelf: 'flex-start',
             display: 'inline-flex',
@@ -321,7 +324,7 @@ export default function SurgaNoteCard({
           <Wallet size={12} />
           <span>
             {depenseEnregistree
-              ? 'Dépense enregistrée !'
+              ? `Sama Xaalis : ${montantDetecte.toLocaleString('fr-FR')} FCFA ✓`
               : `+ Sama Xaalis : ${montantDetecte.toLocaleString('fr-FR')} FCFA`}
           </span>
         </button>
@@ -346,16 +349,20 @@ export default function SurgaNoteCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button
             type="button"
-            onClick={handleCreerRappel}
-            title="Ajouter en rappel dans l'Agenda"
-            aria-label="Ajouter en rappel dans l'Agenda"
+            onClick={handleToggleRappel}
+            title={
+              rappelActif
+                ? "Rappel actif dans l'Agenda (10h) — Cliquer pour désactiver"
+                : "Ajouter en rappel dans l'Agenda"
+            }
+            aria-label="Rappel note"
             style={{
-              background: rappelCree ? 'rgba(10, 92, 54, 0.1)' : 'transparent',
-              border: 'none',
+              background: rappelActif ? 'rgba(199, 91, 0, 0.12)' : 'transparent',
+              border: rappelActif ? '1px solid var(--accent, #C75B00)' : 'none',
               padding: '4px 6px',
               borderRadius: 6,
               cursor: 'pointer',
-              color: rappelCree ? 'var(--price, #0A5C36)' : 'var(--text3, #73675E)',
+              color: rappelActif ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)',
               fontSize: 11,
               fontWeight: 600,
               display: 'inline-flex',
@@ -364,7 +371,7 @@ export default function SurgaNoteCard({
             }}
           >
             <Calendar size={13} />
-            {rappelCree && <span>Rappelé</span>}
+            {rappelActif && <span>Rappelé</span>}
           </button>
 
           <button

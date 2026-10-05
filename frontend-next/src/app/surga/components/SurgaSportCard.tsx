@@ -5,7 +5,12 @@ import { Trophy, Calendar, SlidersHorizontal, RefreshCw, Radio, Bell, BellCheck,
 import SurgaShareButton from './SurgaShareButton'
 import SurgaSportCustomModal from './SurgaSportCustomModal'
 import { formaterPartageSport } from '@/lib/surga-share'
-import { ajouterRappelMatch, prevoirBudgetMatch } from '@/lib/surga-cross-actions'
+import {
+  estMatchRappele,
+  toggleRappelMatch,
+  estMatchBudgete,
+  toggleBudgetMatch,
+} from '@/lib/surga-cross-actions'
 
 export interface SportEventItem {
   id?: string
@@ -56,17 +61,44 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
     }
   })
   const [matchsRappeles, setMatchsRappeles] = useState<string[]>([])
+  const [matchsBudgetes, setMatchsBudgetes] = useState<string[]>([])
 
-  const handleAjouterRappel = (match: SportEventItem, e: React.MouseEvent) => {
+  useEffect(() => {
+    const synchroniserEtat = () => {
+      const rappeles = matchs
+        .filter((m) => estMatchRappele(m))
+        .map((m) => m.id || `${m.equipe_domicile}-${m.equipe_exterieur}`)
+      const budgetes = matchs
+        .filter((m) => estMatchBudgete(m))
+        .map((m) => m.id || `${m.equipe_domicile}-${m.equipe_exterieur}`)
+
+      setMatchsRappeles(rappeles)
+      setMatchsBudgetes(budgetes)
+    }
+
+    synchroniserEtat()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('surga-data-change', synchroniserEtat)
+      return () => window.removeEventListener('surga-data-change', synchroniserEtat)
+    }
+  }, [matchs])
+
+  const handleToggleRappel = (match: SportEventItem, e: React.MouseEvent) => {
     e.stopPropagation()
     const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
-    ajouterRappelMatch(match)
-    setMatchsRappeles((prev) => [...prev, matchKey])
+    const actif = toggleRappelMatch(match)
+    setMatchsRappeles((prev) =>
+      actif ? [...prev, matchKey] : prev.filter((k) => k !== matchKey)
+    )
   }
 
-  const handlePrevoirBudget = (match: SportEventItem, e: React.MouseEvent) => {
+  const handleToggleBudget = (match: SportEventItem, e: React.MouseEvent) => {
     e.stopPropagation()
-    prevoirBudgetMatch(match)
+    const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
+    const actif = toggleBudgetMatch(match)
+    setMatchsBudgetes((prev) =>
+      actif ? [...prev, matchKey] : prev.filter((k) => k !== matchKey)
+    )
   }
 
   const rechargerScores = async (categorie = filtreCategorie, equipes = equipesFavorites) => {
@@ -309,60 +341,73 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                     </span>
                   )}
 
-                  {!isTermine && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={(e) => handleAjouterRappel(match, e)}
-                        title="Ajouter un rappel de match dans mon Agenda"
-                        aria-label="Rappel match"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '5px 7px',
-                          borderRadius: 6,
-                          border: '1px solid',
-                          borderColor: matchsRappeles.includes(match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`)
-                            ? 'var(--price, #0A5C36)'
-                            : 'var(--border, #E8DDD2)',
-                          backgroundColor: matchsRappeles.includes(match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`)
-                            ? 'rgba(10, 92, 54, 0.08)'
-                            : '#FFFFFF',
-                          color: matchsRappeles.includes(match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`)
-                            ? 'var(--price, #0A5C36)'
-                            : 'var(--navy, #1C2B4A)',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {matchsRappeles.includes(match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`) ? (
-                          <BellCheck size={14} />
-                        ) : (
-                          <Bell size={14} />
-                        )}
-                      </button>
+                  {!isTermine && (() => {
+                    const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
+                    const estRappele = matchsRappeles.includes(matchKey)
+                    const estBudgete = matchsBudgetes.includes(matchKey)
 
-                      <button
-                        type="button"
-                        onClick={(e) => handlePrevoirBudget(match, e)}
-                        title="Prévoir budget sortie match dans Sama Xaalis"
-                        aria-label="Budget match"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '5px 7px',
-                          borderRadius: 6,
-                          border: '1px solid var(--border, #E8DDD2)',
-                          backgroundColor: '#FFFFFF',
-                          color: 'var(--accent, #C75B00)',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Wallet size={14} />
-                      </button>
-                    </>
-                  )}
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleRappel(match, e)}
+                          title={
+                            estRappele
+                              ? "Rappel actif à l'heure du match — Cliquer pour désactiver"
+                              : "Programmer un rappel à l'heure du match dans l'Agenda"
+                          }
+                          aria-label="Rappel match"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
+                            padding: '4px 7px',
+                            borderRadius: 6,
+                            border: '1px solid',
+                            borderColor: estRappele ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
+                            backgroundColor: estRappele ? 'rgba(199, 91, 0, 0.12)' : '#FFFFFF',
+                            color: estRappele ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                            cursor: 'pointer',
+                            fontSize: 11,
+                            fontWeight: estRappele ? 700 : 500,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {estRappele ? <BellCheck size={14} /> : <Bell size={14} />}
+                          {estRappele && <span>Rappelé</span>}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleBudget(match, e)}
+                          title={
+                            estBudgete
+                              ? "Budget sortie (3 000 FCFA) noté dans Sama Xaalis — Cliquer pour retirer"
+                              : "Prévoir un budget sortie match dans Sama Xaalis"
+                          }
+                          aria-label="Budget match"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
+                            padding: '4px 7px',
+                            borderRadius: 6,
+                            border: '1px solid',
+                            borderColor: estBudgete ? 'var(--price, #0A5C36)' : 'var(--border, #E8DDD2)',
+                            backgroundColor: estBudgete ? 'rgba(10, 92, 54, 0.12)' : '#FFFFFF',
+                            color: estBudgete ? 'var(--price, #0A5C36)' : 'var(--text2, #5A4E42)',
+                            cursor: 'pointer',
+                            fontSize: 11,
+                            fontWeight: estBudgete ? 700 : 500,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Wallet size={14} />
+                          {estBudgete && <span>Budgeté</span>}
+                        </button>
+                      </>
+                    )
+                  })()}
 
                   <SurgaShareButton
                     payload={{

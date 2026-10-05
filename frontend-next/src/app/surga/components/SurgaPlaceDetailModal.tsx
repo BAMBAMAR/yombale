@@ -1,33 +1,19 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
-  X,
-  MapPin,
-  Star,
-  Clock,
-  Phone,
-  MessageCircle,
-  Share2,
-  Heart,
-  Navigation,
-  UtensilsCrossed,
-  Sparkles,
-  Wifi,
-  Waves,
-  Coffee,
-  Flame,
-  CheckCircle2,
-  Info,
-  Calendar,
-  Wallet,
-  Bookmark,
+  X, MapPin, Star, Clock, Phone, MessageCircle, Share2, Heart,
+  Navigation, UtensilsCrossed, Sparkles, Wifi, Waves, Coffee, Flame,
+  CheckCircle2, Info, Calendar, Wallet, Bookmark,
 } from 'lucide-react'
 import { type PlaceItem } from './SurgaPlaceCard'
 import {
-  prevoirSortieAdresse,
-  enregistrerDepenseAdresse,
-  sauvegarderAdresseEnNote,
+  estSortieAdressePlanifiee,
+  toggleSortieAdresse,
+  estDepenseAdresseEnregistree,
+  toggleDepenseAdresse,
+  estAdresseEnNote,
+  toggleAdresseEnNote,
 } from '@/lib/surga-cross-actions'
 
 interface SurgaPlaceDetailModalProps {
@@ -43,29 +29,40 @@ export default function SurgaPlaceDetailModal({
   onClose,
   onToggleFavori,
 }: SurgaPlaceDetailModalProps) {
+  const [sortiePlanifiee, setSortiePlanifiee] = useState<boolean>(false)
+  const [depenseNotee, setDepenseNotee] = useState<boolean>(false)
+  const [adresseEnNote, setAdresseEnNote] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (!place) return
+    const synchroniser = () => {
+      setSortiePlanifiee(estSortieAdressePlanifiee(place))
+      setDepenseNotee(estDepenseAdresseEnregistree(place))
+      setAdresseEnNote(estAdresseEnNote(place))
+    }
+    synchroniser()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('surga-data-change', synchroniser)
+      return () => window.removeEventListener('surga-data-change', synchroniser)
+    }
+  }, [place])
+
   if (!isOpen || !place) return null
 
   const budgetFormate = new Intl.NumberFormat('fr-FR').format(place.budget_moyen_xof)
 
-  const handlePlanifierSortie = () => {
-    prevoirSortieAdresse({
-      nom: place.nom,
-      quartier: place.quartier,
-      contact_tel: place.contact_tel,
-      budget_moyen_xof: place.budget_moyen_xof,
-    })
+  const handleToggleSortie = () => {
+    const actif = toggleSortieAdresse(place)
+    setSortiePlanifiee(actif)
   }
 
-  const handleNoterDepense = () => {
-    enregistrerDepenseAdresse({
-      nom: place.nom,
-      quartier: place.quartier,
-      budget_moyen_xof: place.budget_moyen_xof,
-    })
+  const handleToggleDepense = () => {
+    const actif = toggleDepenseAdresse(place)
+    setDepenseNotee(actif)
   }
 
-  const handleGarderEnNote = () => {
-    sauvegarderAdresseEnNote({
+  const handleToggleNote = () => {
+    const actif = toggleAdresseEnNote({
       nom: place.nom,
       quartier: place.quartier,
       budget_moyen_xof: place.budget_moyen_xof,
@@ -74,6 +71,7 @@ export default function SurgaPlaceDetailModal({
       contact_whatsapp: place.contact_whatsapp,
       resume_honnete: place.resume_honnete,
     })
+    setAdresseEnNote(actif)
   }
 
   const handleWhatsApp = () => {
@@ -113,56 +111,17 @@ export default function SurgaPlaceDetailModal({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(28, 43, 74, 0.6)',
-        backdropFilter: 'blur(3px)',
-        zIndex: 1100,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        padding: 0,
-      }}
+      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(28, 43, 74, 0.6)', backdropFilter: 'blur(3px)', zIndex: 1100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: 580,
-          maxHeight: '90vh',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
-        }}
+        style={{ width: '100%', maxWidth: 580, maxHeight: '90vh', backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 20px rgba(0,0,0,0.15)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* En-tête de la modale */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '16px 20px',
-            borderBottom: '1px solid var(--border, #E8DDD2)',
-            backgroundColor: '#FFFFFF',
-          }}
-        >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--border, #E8DDD2)', backgroundColor: '#FFFFFF' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              style={{
-                backgroundColor: 'var(--navy, #1C2B4A)',
-                color: '#FFFFFF',
-                fontSize: 11,
-                fontWeight: 800,
-                padding: '3px 8px',
-                borderRadius: 6,
-              }}
-            >
+            <span style={{ backgroundColor: 'var(--navy, #1C2B4A)', color: '#FFFFFF', fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 6 }}>
               {place.categorie.toUpperCase()}
             </span>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>
@@ -170,47 +129,14 @@ export default function SurgaPlaceDetailModal({
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button
-              type="button"
-              onClick={() => onToggleFavori?.(place)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 6,
-                color: place.est_favori ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)',
-              }}
-              aria-label="Favori"
-            >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button type="button" onClick={() => onToggleFavori?.(place)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: place.est_favori ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)' }} aria-label="Favori">
               <Heart size={20} fill={place.est_favori ? 'var(--accent, #C75B00)' : 'none'} />
             </button>
-            <button
-              type="button"
-              onClick={handlePartager}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 6,
-                color: 'var(--navy, #1C2B4A)',
-              }}
-              aria-label="Partager"
-            >
+            <button type="button" onClick={handlePartager} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--navy, #1C2B4A)' }} aria-label="Partager">
               <Share2 size={19} />
             </button>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 6,
-                color: 'var(--text3, #73675E)',
-              }}
-              aria-label="Fermer"
-            >
+            <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--text3, #73675E)' }} aria-label="Fermer">
               <X size={20} />
             </button>
           </div>
@@ -365,30 +291,75 @@ export default function SurgaPlaceDetailModal({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, paddingTop: 10, borderTop: '1px solid var(--border, #E8DDD2)' }}>
             <button
               type="button"
-              onClick={handlePlanifierSortie}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-              title="Planifier une sortie dans mon Agenda"
+              onClick={handleToggleSortie}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3,
+                padding: '8px 4px',
+                borderRadius: 8,
+                border: '1px solid',
+                borderColor: sortiePlanifiee ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
+                backgroundColor: sortiePlanifiee ? 'rgba(199, 91, 0, 0.12)' : 'var(--bg, #F8F5F0)',
+                color: sortiePlanifiee ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                fontSize: 11,
+                fontWeight: sortiePlanifiee ? 800 : 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title={sortiePlanifiee ? "Sortie planifiée (20h) dans l'Agenda — Cliquer pour annuler" : "Planifier une sortie dans mon Agenda"}
             >
-              <Calendar size={14} color="var(--accent, #C75B00)" />
-              <span>Sortie Agenda</span>
+              <Calendar size={14} color={sortiePlanifiee ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)'} />
+              <span>{sortiePlanifiee ? 'Sortie fixée ✓' : 'Sortie Agenda'}</span>
             </button>
             <button
               type="button"
-              onClick={handleNoterDepense}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-              title={`Noter ${budgetFormate} FCFA dans Sama Xaalis`}
+              onClick={handleToggleDepense}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3,
+                padding: '8px 4px',
+                borderRadius: 8,
+                border: '1px solid',
+                borderColor: depenseNotee ? 'var(--price, #0A5C36)' : 'var(--border, #E8DDD2)',
+                backgroundColor: depenseNotee ? 'rgba(10, 92, 54, 0.12)' : 'var(--bg, #F8F5F0)',
+                color: depenseNotee ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
+                fontSize: 11,
+                fontWeight: depenseNotee ? 800 : 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title={depenseNotee ? "Dépense notée dans Sama Xaalis — Cliquer pour retirer" : `Noter ${budgetFormate} FCFA dans Sama Xaalis`}
             >
-              <Wallet size={14} color="var(--price, #0A5C36)" />
-              <span>Noter Dépense</span>
+              <Wallet size={14} color={depenseNotee ? 'var(--price, #0A5C36)' : 'var(--price, #0A5C36)'} />
+              <span>{depenseNotee ? 'Dépense notée ✓' : 'Noter Dépense'}</span>
             </button>
             <button
               type="button"
-              onClick={handleGarderEnNote}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-              title="Enregistrer cette adresse dans mes Notes"
+              onClick={handleToggleNote}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3,
+                padding: '8px 4px',
+                borderRadius: 8,
+                border: '1px solid',
+                borderColor: adresseEnNote ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
+                backgroundColor: adresseEnNote ? 'rgba(28, 43, 74, 0.1)' : 'var(--bg, #F8F5F0)',
+                color: 'var(--navy, #1C2B4A)',
+                fontSize: 11,
+                fontWeight: adresseEnNote ? 800 : 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title={adresseEnNote ? "Adresse enregistrée dans vos Notes — Cliquer pour retirer" : "Enregistrer cette adresse dans mes Notes"}
             >
               <Bookmark size={14} color="var(--navy, #1C2B4A)" />
-              <span>Garder en Note</span>
+              <span>{adresseEnNote ? 'En note ✓' : 'Garder en Note'}</span>
             </button>
           </div>
 

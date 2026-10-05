@@ -1,23 +1,17 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
-  X,
-  Calendar,
-  Clock,
-  FileCheck,
-  Building,
-  Bell,
-  CheckCircle2,
-  ExternalLink,
-  GraduationCap,
-  MapPin,
-  Phone,
-  CheckSquare,
-  Wallet,
+  X, Calendar, Clock, FileCheck, Building, Bell, CheckCircle2,
+  ExternalLink, GraduationCap, MapPin, Phone, CheckSquare, Wallet,
 } from 'lucide-react'
 import { ConcoursItem } from './SurgaConcoursCard'
-import { creerChecklistConcours, prevoirFraisConcours } from '@/lib/surga-cross-actions'
+import {
+  estChecklistConcoursEnNote,
+  toggleChecklistConcours,
+  estFraisConcoursEnregistre,
+  toggleFraisConcours,
+} from '@/lib/surga-cross-actions'
 
 interface SurgaConcoursDetailModalProps {
   concours: ConcoursItem | null
@@ -35,8 +29,33 @@ export default function SurgaConcoursDetailModal({
   onToggleSuivi,
 }: SurgaConcoursDetailModalProps) {
   const [piecesCochees, setPiecesCochees] = useState<Record<number, boolean>>({})
+  const [checklistEnNote, setChecklistEnNote] = useState<boolean>(false)
+  const [fraisEnregistres, setFraisEnregistres] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (!concours) return
+    const synchroniser = () => {
+      setChecklistEnNote(estChecklistConcoursEnNote(concours))
+      setFraisEnregistres(estFraisConcoursEnregistre(concours))
+    }
+    synchroniser()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('surga-data-change', synchroniser)
+      return () => window.removeEventListener('surga-data-change', synchroniser)
+    }
+  }, [concours])
 
   if (!isOpen || !concours) return null
+
+  const handleToggleChecklist = () => {
+    const actif = toggleChecklistConcours(concours)
+    setChecklistEnNote(actif)
+  }
+
+  const handleToggleFrais = () => {
+    const actif = toggleFraisConcours(concours)
+    setFraisEnregistres(actif)
+  }
 
   const togglePiece = (index: number) => {
     setPiecesCochees((prev) => ({
@@ -264,23 +283,53 @@ export default function SurgaConcoursDetailModal({
               <div style={{ display: 'grid', gridTemplateColumns: concours.frais_dossier_xof > 0 ? '1fr 1fr' : '1fr', gap: 8, marginTop: 10 }}>
                 <button
                   type="button"
-                  onClick={() => creerChecklistConcours(concours)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                  title="Créer une note avec les cases à cocher de chaque pièce"
+                  onClick={handleToggleChecklist}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    border: '1px solid',
+                    borderColor: checklistEnNote ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
+                    backgroundColor: checklistEnNote ? 'rgba(199, 91, 0, 0.12)' : 'var(--bg, #F8F5F0)',
+                    color: checklistEnNote ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title={checklistEnNote ? "Checklist présente dans vos Notes — Cliquer pour retirer" : "Créer une note avec les cases à cocher de chaque pièce"}
                 >
                   <CheckSquare size={14} color="var(--accent, #C75B00)" />
-                  <span>Checklist dans Notes</span>
+                  <span>{checklistEnNote ? 'Checklist en Note ✓' : 'Checklist dans Notes'}</span>
                 </button>
 
                 {concours.frais_dossier_xof > 0 && (
                   <button
                     type="button"
-                    onClick={() => prevoirFraisConcours(concours)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                    title={`Noter ${concours.frais_dossier_xof.toLocaleString()} FCFA dans Sama Xaalis`}
+                    onClick={handleToggleFrais}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      border: '1px solid',
+                      borderColor: fraisEnregistres ? 'var(--price, #0A5C36)' : 'var(--border, #E8DDD2)',
+                      backgroundColor: fraisEnregistres ? 'rgba(10, 92, 54, 0.12)' : 'var(--bg, #F8F5F0)',
+                      color: fraisEnregistres ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                    title={fraisEnregistres ? "Quittance inscrite dans Sama Xaalis — Cliquer pour retirer" : `Noter ${concours.frais_dossier_xof.toLocaleString()} FCFA dans Sama Xaalis`}
                   >
                     <Wallet size={14} color="var(--price, #0A5C36)" />
-                    <span>Quittance Trésor</span>
+                    <span>{fraisEnregistres ? 'Quittance notée ✓' : 'Quittance Trésor'}</span>
                   </button>
                 )}
               </div>

@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 8)  
+> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 9)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses + Trafic Réel Dakar + Radio Écoute Continue + Passerelles Transversales Multi-Fonctionnalités + Console Admin)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses + Trafic Réel Dakar + Radio Écoute Continue + Passerelles Transversales Multi-Fonctionnalités Dynamiques avec États Actifs Persistants & Bascule Bidirectionnelle + Console Admin)**  
 > **Auteur** : Antigravity (Assistant AI Senior)
 
 ---
@@ -16,14 +16,15 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
    - **Briefing Matinal & Revue de Presse** : Ingestion RSS Cheerio/Axios de la presse sénégalaise, Kiosque des Unes avec carrousel horizontal fluide et zoom Lightbox.
    - **Notes & Agenda v2** : Prise de notes catégorisée, rappels programmés et notifications locales par Service Worker.
    - **Sama Xaalis (Gestion Financière Personnelle)** : Portefeuille complet intégré dans la navigation principale (`surga-kalpe.ts`, `SurgaSamaXaalisView.tsx`), cartes de soldes/flux, suivi rigoureux des dettes et créances avec remboursement direct, épargne et cagnottes avec jauges de progression.
-   - **Passerelles Transversales & Cohérence Globale (`surga-cross-actions.ts`, `SurgaToastContainer.tsx`)** :
-     - Interconnexion intégrale entre toutes les briques de Surga avec persistance locale offline-first (`surga-offline-sync.ts`) :
-       * Sport ➔ Agenda (Rappel de match) & Sama Xaalis (Budget match).
-       * Bonnes Adresses ➔ Agenda (Sortie à 20h), Sama Xaalis (Budget moyen) & Notes (Sauvegarde fiche).
-       * Concours Nationaux ➔ Notes (Checklist pièces à fournir) & Sama Xaalis (Quittance Trésor).
-       * Immobilier ➔ Agenda (Visite à 15h) & Notes (Sauvegarde annonce).
-       * Revue de Presse ➔ Notes (Épingler article d'un clic).
-       * Notes ➔ Sama Xaalis (Détection automatique de montants FCFA) & Agenda (Rappel à 10h).
+   - **Passerelles Transversales Dynamiques & États Actifs Persistants (`surga-cross-actions.ts`, `SurgaToastContainer.tsx`)** :
+     - De véritables relations dynamiques bidirectionnelles (Toggle) entre toutes les briques de Surga avec persistance locale offline-first (`surga-offline-sync.ts`) :
+       * Sport ➔ Agenda (Rappel de match : bouton actif `Rappelé` orange persistant avec icône `BellCheck`, toggle au clic pour retirer) & Sama Xaalis (Budget match : bouton actif `Budgeté` vert, toggle au clic).
+       * Bonnes Adresses ➔ Agenda (`Sortie fixée ✓`), Sama Xaalis (`Dépense notée ✓`) & Notes (`En note ✓`), basculables au clic et synchronisés en temps réel.
+       * Concours Nationaux ➔ Notes (`Checklist en Note ✓` avec cases à cocher) & Sama Xaalis (`Quittance notée ✓`).
+       * Immobilier ➔ Agenda (`Visite ✓`) & Notes (`En note ✓`).
+       * Revue de Presse ➔ Notes (`Épinglé ✓` / `En Note`).
+       * Notes ➔ Sama Xaalis (Détection automatique de montants FCFA, inscription/retrait de dépense) & Agenda (Rappel à 10h `Rappelé` actif).
+     - Réactivité événementielle globale instantanée : un CustomEvent `surga-data-change` est émis à chaque écriture/suppression dans `surga-offline-sync.ts`, de sorte que la suppression d'un élément dans l'Agenda ou Sama Xaalis repasse instantanément les boutons sources à l'état inactif sans rafraîchir.
      - Toast global non-intrusif réactif avec surélévation automatique si la radio est active.
    - **Sport Temps Réel & Personnalisation Multi-Ligues** : Scores et statuts en direct (badge clignotant `EN_DIRECT`, minute de jeu), sélecteur de ligues (`SurgaSportCustomModal.tsx`) couvrant UEFA Champions League, Premier League, LaLiga, Ligue 1, Serie A, Saudi Pro League, Ligue 1 sénégalaise et les Lions de la Teranga.
    - **Météo & Marées Live avec Sélecteur Multi-Localités, 14 Régions & Résilience Hors-Ligne** :

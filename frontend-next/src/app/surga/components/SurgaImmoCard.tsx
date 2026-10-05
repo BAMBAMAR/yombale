@@ -1,8 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { MapPin, Phone, MessageCircle, CheckCircle2, BedDouble, Maximize2, Calendar, Bookmark } from 'lucide-react'
-import { planifierVisiteImmo, sauvegarderImmoEnNote } from '@/lib/surga-cross-actions'
+import {
+  estVisiteImmoPlanifiee,
+  toggleVisiteImmo,
+  estImmoEnNote,
+  toggleImmoEnNote,
+} from '@/lib/surga-cross-actions'
 
 export interface BienImmoItem {
   id: string
@@ -30,6 +35,21 @@ interface SurgaImmoCardProps {
 }
 
 export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardProps) {
+  const [visitePlanifiee, setVisitePlanifiee] = useState<boolean>(false)
+  const [immoEnNote, setImmoEnNote] = useState<boolean>(false)
+
+  useEffect(() => {
+    const synchroniser = () => {
+      setVisitePlanifiee(estVisiteImmoPlanifiee(bien))
+      setImmoEnNote(estImmoEnNote(bien))
+    }
+    synchroniser()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('surga-data-change', synchroniser)
+      return () => window.removeEventListener('surga-data-change', synchroniser)
+    }
+  }, [bien])
+
   const photoUrl = bien.photos && bien.photos.length > 0
     ? bien.photos[0]
     : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=500&auto=format&fit=crop&q=80'
@@ -222,48 +242,60 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              planifierVisiteImmo(bien)
+              const actif = toggleVisiteImmo(bien)
+              setVisitePlanifiee(actif)
             }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#FFFFFF',
-              color: 'var(--accent, #C75B00)',
-              border: '1px solid var(--border, #E8DDD2)',
+              gap: 3,
+              backgroundColor: visitePlanifiee ? 'rgba(199, 91, 0, 0.12)' : '#FFFFFF',
+              color: visitePlanifiee ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+              border: '1px solid',
+              borderColor: visitePlanifiee ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
               borderRadius: 6,
-              padding: '6px 9px',
+              padding: '6px 8px',
               fontSize: 11,
+              fontWeight: visitePlanifiee ? 700 : 500,
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
-            title="Planifier une visite dans mon Agenda"
+            title={visitePlanifiee ? "Visite programmée dans l'Agenda — Cliquer pour annuler" : "Planifier une visite dans mon Agenda"}
             aria-label="Planifier visite"
           >
-            <Calendar size={13} />
+            <Calendar size={13} color={visitePlanifiee ? 'var(--accent, #C75B00)' : 'currentColor'} />
+            {visitePlanifiee && <span>Visite ✓</span>}
           </button>
 
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              sauvegarderImmoEnNote(bien)
+              const actif = toggleImmoEnNote(bien)
+              setImmoEnNote(actif)
             }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#FFFFFF',
+              gap: 3,
+              backgroundColor: immoEnNote ? 'rgba(28, 43, 74, 0.1)' : '#FFFFFF',
               color: 'var(--navy, #1C2B4A)',
-              border: '1px solid var(--border, #E8DDD2)',
+              border: '1px solid',
+              borderColor: immoEnNote ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
               borderRadius: 6,
-              padding: '6px 9px',
+              padding: '6px 8px',
               fontSize: 11,
+              fontWeight: immoEnNote ? 700 : 500,
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
-            title="Enregistrer cette annonce dans mes Notes"
+            title={immoEnNote ? "Annonce sauvegardée dans vos Notes — Cliquer pour retirer" : "Enregistrer cette annonce dans mes Notes"}
             aria-label="Enregistrer en note"
           >
             <Bookmark size={13} />
+            {immoEnNote && <span>En note ✓</span>}
           </button>
         </div>
       </div>

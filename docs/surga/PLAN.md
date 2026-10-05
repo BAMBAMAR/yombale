@@ -250,6 +250,14 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Toast Container Global (`SurgaToastContainer.tsx`) écoutant `surga-toast` avec surélévation adaptative à `128px` au-dessus de la barre radio persistante.
 - [x] `DONE` Validation rigoureuse : 99/99 tests Jest backend validés, 97/97 tests `frontend-next` validés, `npx tsc --noEmit` 0 erreur, `npm run lint:slop` 100% conforme.
 
+### Tranche 21 — Passerelles Dynamiques, États Actifs/Inactifs Persistants & Bascule Bidirectionnelle (05 Octobre 2026 - Soir 9)
+- [x] `DONE` Vraie dynamique relationnelle bilatérale : les boutons reflètent l'état actif/inactif en direct (`Rappelé ✓`, `Budgeté ✓`, `Sortie fixée ✓`, `Dépense notée ✓`, `En note ✓`, `Checklist ✓`, `Quittance notée ✓`, `Visite fixée ✓`, `Épinglé ✓`).
+- [x] `DONE` Moteur de bascule réversible (Toggle) dans `frontend-next/src/lib/surga-cross-actions.ts` (653 l.) : un nouveau clic désactive la relation et retire l'élément de l'Agenda, Sama Xaalis ou Notes.
+- [x] `DONE` Événement personnalisé réactif `surga-data-change` intégré nativement dans `frontend-next/src/lib/surga-offline-sync.ts` déclenché à chaque écriture/suppression locale.
+- [x] `DONE` Synchronisation cross-composants instantanée sans rafraîchissement ni prop drilling : la suppression d'un match ou d'une note dans l'Agenda/Notes/Sama Xaalis remet automatiquement le bouton de la carte ou modale à l'état inactif.
+- [x] `DONE` Persistance locale `localStorage` : l'état actif des boutons persiste lors de la navigation dans les onglets, la fermeture des modales ou le rechargement de page.
+- [x] `DONE` Respect strict des contraintes qualité : 100% des composants React sous 450 lignes, 0 régression, 99/99 tests Jest backend validés, 97/97 tests `frontend-next` validés, `npx tsc --noEmit` 0 erreur.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

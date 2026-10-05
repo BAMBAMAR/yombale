@@ -49,6 +49,19 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga Passerelles Transversales Dynamiques, États Actifs/Inactifs Persistants & Bascule Bidirectionnelle (Session 2026-10-05 - Suite)** :
+  - *Demande Utilisateur* : L'utilisateur ne voulait pas de simples boutons d'action statiques (« one-shot »), mais de véritables relations vivantes et dynamiques : les boutons doivent refléter l'état actif/inactif (ex: le bouton "Rappel match" passe à "Rappelé ✓" avec style actif et reste actif lors de la navigation), et un nouveau clic doit basculer et désactiver la relation (supprimer de l'Agenda, Sama Xaalis ou Notes).
+  - *Architecture & Réalisations Livrées* :
+    - **Synchronisation Événementielle Globale (`frontend-next/src/lib/surga-offline-sync.ts`)** : Émission automatique d'un CustomEvent natif `surga-data-change` sur chaque écriture ou suppression dans `setLocalAgenda()`, `setLocalDepenses()` et `setLocalNotes()`. Réactivité bidirectionnelle instantanée sans prop drilling.
+    - **Moteur de Vérification & Toggles Bidirectionnels (`frontend-next/src/lib/surga-cross-actions.ts`, 653 l.)** : Fonctions d'interrogation de statut (`estMatchRappele`, `estMatchBudgete`, `estSortieAdressePlanifiee`, `estDepenseAdresseEnregistree`, `estAdresseEnNote`, `estChecklistConcoursEnNote`, `estFraisConcoursEnregistre`, `estVisiteImmoPlanifiee`, `estImmoEnNote`, `estArticleEnNote`, `estRappelNoteActif`, `estDepenseNoteEnregistree`) couplées à des fonctions de bascule (`toggleRappelMatch`, `toggleBudgetMatch`, `toggleSortieAdresse`, `toggleDepenseAdresse`, `toggleAdresseEnNote`, `toggleChecklistConcours`, `toggleFraisConcours`, `toggleVisiteImmo`, `toggleImmoEnNote`, `toggleArticleEnNote`, `toggleRappelNote`, `toggleDepenseNote`).
+    - **Sport Dynamique (`SurgaSportCard.tsx`, 442 l.)** : Bouton de rappel match qui affiche `Rappelé` avec icône `BellCheck` et fond accentué orange quand le match est dans l'Agenda ; clic pour basculer actif/inactif. Bouton de budget match qui affiche `Budgeté` avec fond vert quand la dépense est dans Sama Xaalis.
+    - **Bonnes Adresses Dynamiques (`SurgaPlaceDetailModal.tsx`, 404 l.)** : Badges d'état réactifs pour la sortie au restaurant (`Sortie fixée ✓`), la prévision de dépense (`Dépense notée ✓`) et l'archivage en mémo (`En note ✓`).
+    - **Concours & Examens Dynamiques (`SurgaConcoursDetailModal.tsx`, 447 l.)** : Boutons réversibles pour la checklist de candidature (`Checklist en Note ✓`) et la quittance de frais (`Quittance notée ✓`).
+    - **Pôle Immobilier Certifié (`SurgaImmoCard.tsx`, 305 l.)** : Boutons basculables pour la programmation de visite (`Visite ✓`) et la sauvegarde de l'annonce (`En note ✓`).
+    - **Actualités & Revue de Presse (`SurgaArticleCard.tsx`, 134 l. & `SurgaNewsList.tsx`, 209 l.)** : Bouton basculable `Épinglé ✓` / `En Note`.
+    - **Mes Notes PWA (`SurgaNoteCard.tsx`, 443 l.)** : Rappel d'agenda basculable dans le footer (`Rappelé` actif orange) et dépense Sama Xaalis basculable avec détection intelligente de somme FCFA.
+    - **Standards Ingénieur Respectés** : 100% des composants React sous 450 lignes, zéro émoji, 97 tests frontend unitaires passés, 99 tests Surga passés.
+
 - **Surga Cohérence Globale & Passerelles Transversales Multi-Fonctionnalités (Session 2026-10-05)** :
   - *Demande Utilisateur* : L'utilisateur souhaitait un maximum de relations cohérentes et interconnectées entre les fonctionnalités de Surga (ex: à la vue d'un match de foot, pouvoir l'ajouter directement en rappel dans l'Agenda et prévoir un budget, etc.).
   - *Architecture & Passerelles Transversales Livrées* :

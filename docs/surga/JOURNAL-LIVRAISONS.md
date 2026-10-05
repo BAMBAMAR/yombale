@@ -3,6 +3,41 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 9] — Passerelles Transversales Dynamiques, États Actifs/Inactifs Persistants & Bascule Bidirectionnelle
+- **Tâches complétées :**
+  - **Exigence & Volonté Utilisateur** :
+    - L'utilisateur a précisé son besoin : « je ne veux pas seulement de bouton, il faut de vraies relations et que ce soit réellement dynamique. Les boutons doivent changer d'état actif/désactivé : quand je clique dans rappel match, ça doit rester actif ».
+    - Les boutons ne doivent plus être de simples déclencheurs « one-shot » sans mémoire visuelle. Ils doivent refléter en temps réel l'existence de la relation dans la base locale (état actif avec badge, couleur et libellé explicite), persister lors de la navigation ou du rechargement de page, et basculer (toggle) pour retirer la relation lors d'un nouveau clic.
+  - **Synchronisation Événementielle Globale (`frontend-next/src/lib/surga-offline-sync.ts`)** :
+    - Émission automatique d'un CustomEvent `surga-data-change` sur chaque écriture ou suppression locale dans `setLocalAgenda()`, `setLocalDepenses()` et `setLocalNotes()`.
+    - Garantit une réactivité croisée immédiate : lorsqu'un élément est supprimé directement depuis l'Agenda, Sama Xaalis ou Notes, n'importe quel bouton de carte ou modale dans Surga bascule instantanément vers l'état inactif sans rafraîchissement.
+  - **Moteur de Vérification & Toggles Bidirectionnels (`frontend-next/src/lib/surga-cross-actions.ts`, 653 l.)** :
+    - Fonctions de contrôle d'état : `estMatchRappele()`, `estMatchBudgete()`, `estSortieAdressePlanifiee()`, `estDepenseAdresseEnregistree()`, `estAdresseEnNote()`, `estChecklistConcoursEnNote()`, `estFraisConcoursEnregistre()`, `estVisiteImmoPlanifiee()`, `estImmoEnNote()`, `estArticleEnNote()`, `estRappelNoteActif()`, `estDepenseNoteEnregistree()`.
+    - Fonctions de bascule réversibles : `toggleRappelMatch()`, `toggleBudgetMatch()`, `toggleSortieAdresse()`, `toggleDepenseAdresse()`, `toggleAdresseEnNote()`, `toggleChecklistConcours()`, `toggleFraisConcours()`, `toggleVisiteImmo()`, `toggleImmoEnNote()`, `toggleArticleEnNote()`, `toggleRappelNote()`, `toggleDepenseNote()`.
+  - **Composants Mis à Jour avec États Actifs et Toggles Réactifs** :
+    - `SurgaSportCard.tsx` (442 l. <= 450 l.) : Bouton Rappel match avec état persistant `Rappelé` et icône `BellCheck`, fond orange accentué, synchronisation au montage et sur `surga-data-change` ; bouton Budget match avec état persistant `Budgeté` et fond vert.
+    - `SurgaPlaceDetailModal.tsx` (404 l. <= 450 l.) : Badges d'état réactifs pour `Sortie fixée ✓`, `Dépense notée ✓` et `En note ✓`.
+    - `SurgaConcoursDetailModal.tsx` (447 l. <= 450 l.) : Boutons basculables pour `Checklist en Note ✓` et `Quittance notée ✓`.
+    - `SurgaImmoCard.tsx` (305 l. <= 450 l.) : Boutons d'état réactifs `Visite ✓` et `En note ✓`.
+    - `SurgaArticleCard.tsx` (134 l. <= 450 l.) & `SurgaNewsList.tsx` (209 l. <= 450 l.) : Bouton `Épinglé ✓` / `En Note`.
+    - `SurgaNoteCard.tsx` (443 l. <= 450 l.) : Bouton de rappel actif dans le footer et détection/bascule de dépense Sama Xaalis.
+- **Fichiers modifiés :**
+  - `frontend-next/src/lib/surga-offline-sync.ts`
+  - `frontend-next/src/lib/surga-cross-actions.ts`
+  - `frontend-next/src/app/surga/components/SurgaSportCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPlaceDetailModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaConcoursDetailModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaArticleCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaNewsList.tsx`
+  - `frontend-next/src/app/surga/components/SurgaNoteCard.tsx`
+- **Validation :**
+  - 99/99 tests Jest unitaires passés dans `tests/unit/surga.test.js`.
+  - 97/97 tests passés dans `frontend-next`.
+  - `npx tsc --noEmit` zéro erreur.
+  - `npm run lint:slop` zéro violation.
+  - 100% des composants React sous le plafond strict de 450 lignes.
+
 ### [2026-10-05 — Soir 8] — Cohérence Globale & Passerelles Transversales Multi-Fonctionnalités Surga
 - **Tâches complétées :**
   - **Diagnostic & Volonté Utilisateur** :

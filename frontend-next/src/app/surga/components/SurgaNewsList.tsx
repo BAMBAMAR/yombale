@@ -1,10 +1,10 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { ExternalLink, Newspaper, Bookmark } from 'lucide-react'
 import SurgaShareButton from './SurgaShareButton'
 import { formaterPartageBreve } from '@/lib/surga-share'
-import { epinglerArticleEnNote } from '@/lib/surga-cross-actions'
+import { estArticleEnNote, toggleArticleEnNote } from '@/lib/surga-cross-actions'
 
 export interface BriefingNewsItem {
   id?: string
@@ -36,6 +36,22 @@ function formatRelativeTime(dateStr?: string): string {
 }
 
 export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps) {
+  const [articlesEnNote, setArticlesEnNote] = useState<string[]>([])
+
+  useEffect(() => {
+    const synchroniser = () => {
+      const enNoteIds = items
+        .filter((it) => estArticleEnNote(it))
+        .map((it) => it.url || it.titre)
+      setArticlesEnNote(enNoteIds)
+    }
+    synchroniser()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('surga-data-change', synchroniser)
+      return () => window.removeEventListener('surga-data-change', synchroniser)
+    }
+  }, [items])
+
   if (!items || items.length === 0) {
     return (
       <div className="surga-card" style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text2, #5A4E42)' }}>
@@ -93,27 +109,40 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                onClick={() => epinglerArticleEnNote(item)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  padding: '4px 7px',
-                  borderRadius: 6,
-                  border: '1px solid var(--border, #E8DDD2)',
-                  backgroundColor: '#FFFFFF',
-                  color: 'var(--navy, #1C2B4A)',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-                title="Épingler cette brève dans mes Notes"
-              >
-                <Bookmark size={11} color="var(--navy, #1C2B4A)" />
-                <span>En Note</span>
-              </button>
+              {(() => {
+                const itemKey = item.url || item.titre
+                const estEnNote = articlesEnNote.includes(itemKey)
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const actif = toggleArticleEnNote(item)
+                      setArticlesEnNote((prev) =>
+                        actif ? [...prev, itemKey] : prev.filter((k) => k !== itemKey)
+                      )
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 3,
+                      padding: '4px 7px',
+                      borderRadius: 6,
+                      border: '1px solid',
+                      borderColor: estEnNote ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
+                      backgroundColor: estEnNote ? 'rgba(28, 43, 74, 0.1)' : '#FFFFFF',
+                      color: 'var(--navy, #1C2B4A)',
+                      fontSize: 11,
+                      fontWeight: estEnNote ? 700 : 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                    title={estEnNote ? "Brève présente dans vos Notes — Cliquer pour retirer" : "Épingler cette brève dans mes Notes"}
+                  >
+                    <Bookmark size={11} color="var(--navy, #1C2B4A)" />
+                    <span>{estEnNote ? 'Épinglé ✓' : 'En Note'}</span>
+                  </button>
+                )
+              })()}
 
               {/* Partage Web Share / WhatsApp */}
               <SurgaShareButton

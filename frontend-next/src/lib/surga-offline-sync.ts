@@ -103,6 +103,7 @@ export function setLocalNotes(notes: SurgaNote[]): void {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes))
+    window.dispatchEvent(new CustomEvent('surga-data-change'))
   } catch {}
 }
 
@@ -120,6 +121,7 @@ export function setLocalDepenses(depenses: SurgaDepense[]): void {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(STORAGE_KEY_DEPENSES, JSON.stringify(depenses))
+    window.dispatchEvent(new CustomEvent('surga-data-change'))
   } catch {}
 }
 
@@ -240,6 +242,7 @@ export function setLocalAgenda(agenda: SurgaEvenement[]): void {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(STORAGE_KEY_AGENDA, JSON.stringify(agenda))
+    window.dispatchEvent(new CustomEvent('surga-data-change'))
   } catch {}
 }
 
