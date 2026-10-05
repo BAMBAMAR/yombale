@@ -268,6 +268,29 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Redirection unifiée `frontend-next/src/app/surga/admin/page.tsx` vers `/admin/surga`.
 - [x] `DONE` Validation rigoureuse : 99/99 tests Jest backend validés, 97/97 tests `frontend-next` validés, `npx tsc --noEmit` 0 erreur, composants React <= 450 lignes.
 
+### Tranche 23 — Console Pro Décloisonnée : Tarifs Dynamiques, Comptes VIP & Hub Réseaux Sociaux (05 Octobre 2026 - Soir 12)
+- [x] `DONE` Refonte UI/UX « Obsidian Deep Space » (`surga-admin.css`) : identité visuelle SaaS IA d'élite entièrement affranchie de Nopalou (Obsidian `#0B132B`, Surface `#121D33`, Neon Emerald `#10B981`, Cyber Amber `#F59E0B`, Cyan `#06B6D4`).
+- [x] `DONE` Gestionnaire Dynamique des Tarifs & Abonnements (`AdminPlansTab.tsx`, 357 l.) :
+  - Modification et fixation en direct des montants mensuels et annuels en FCFA.
+  - Personnalisation des badges promotionnels (ex: « 2 MOIS OFFERTS ») et des avantages clés.
+  - Création de nouveaux plans (B2C, B2B, Famille) et activation/désactivation 1-clic.
+  - Synchronisation temps réel avec le service backend de facturation Wave & Orange Money (`backend/services/surga/abonnement-service.js`).
+- [x] `DONE` Gestionnaire des Comptes Utilisateurs & Statuts VIP (`AdminComptesTab.tsx`, 391 l.) :
+  - Annuaire complet avec recherche instantanée (Nom, Téléphone `+221...`, Email) et filtrage par statut (Tous, Actifs, VIP Premium, Freemium).
+  - Attribution directe d'accès VIP Premium (1 mois, 3 mois, 6 mois, 1 an) en 1 clic sans passer par la passerelle de paiement.
+  - Réinitialisation instantanée des quotas vocaux journaliers et bascule actif/suspendu.
+- [x] `DONE` Hub Réseaux Sociaux & Passerelle Canaux (`AdminReseauxTab.tsx`, 339 l.) :
+  - Passerelle Bot WhatsApp (+221 77 845 00 00) avec indicateur d'état en direct, test d'envoi de message et éditeur de messages automatiques (Bienvenue, Briefing matinal, Concours, Trafic).
+  - Intégration des canaux officiels : Telegram, Facebook, Instagram, Twitter / X, TikTok avec compteurs d'abonnés et statuts actifs.
+- [x] `DONE` Barre Latérale Autonome Enrichie (`AdminSurgaSidebar.tsx`, 286 l.) :
+  - Organisation en 4 domaines professionnels : *Pilotage & Monétisation*, *Utilisateurs & Diffusion*, *Contenus Territoriaux*, *Audio & Système*.
+  - Total de 11 onglets modulaires accessibles en 1 clic.
+- [x] `DONE` API REST Backend Étendue (`backend/routes/admin-surga.js`) :
+  - Endpoints `/plans` (GET, POST, PUT, DELETE) pour les tarifs dynamiques.
+  - Endpoints `/utilisateurs` (GET, PUT premium, PATCH statut, POST reset-quota).
+  - Endpoints `/canaux` (GET, PUT, POST test-whatsapp).
+- [x] `DONE` Conformité Absolue aux Standards Seniors : 100% des 15 composants sous le plafond des 450 lignes, zéro émoji (icônes Lucide SVG exclusives), 99/99 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

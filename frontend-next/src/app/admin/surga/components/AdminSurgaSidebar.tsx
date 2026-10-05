@@ -5,7 +5,10 @@ import Link from 'next/link'
 import {
   Sparkles,
   LayoutDashboard,
+  Tag,
   CreditCard,
+  Users,
+  Share2,
   UtensilsCrossed,
   GraduationCap,
   Newspaper,
@@ -16,12 +19,14 @@ import {
   ArrowLeftRight,
   LogOut,
   ShieldCheck,
-  CheckCircle2,
 } from 'lucide-react'
 
 export type SurgaAdminTab =
   | 'overview'
+  | 'plans'
   | 'abonnements'
+  | 'comptes'
+  | 'reseaux'
   | 'places'
   | 'concours'
   | 'unes'
@@ -62,7 +67,7 @@ export default function AdminSurgaSidebar({
           </div>
           <div>
             <div className="surga-brand-title">SURGA</div>
-            <div className="surga-brand-sub">Console Admin</div>
+            <div className="surga-brand-sub">Console Pro</div>
           </div>
         </div>
         <div className="surga-status-pill">
@@ -71,9 +76,9 @@ export default function AdminSurgaSidebar({
         </div>
       </div>
 
-      {/* Navigation Principale */}
+      {/* 1. Pilotage & Monétisation */}
       <div className="surga-nav-section">
-        <div className="surga-section-label">Pilotage &amp; Finances</div>
+        <div className="surga-section-label">Pilotage &amp; Monétisation</div>
 
         <button
           type="button"
@@ -88,17 +93,58 @@ export default function AdminSurgaSidebar({
 
         <button
           type="button"
+          onClick={() => onSelectTab('plans')}
+          className={`surga-nav-item ${activeTab === 'plans' ? 'active' : ''}`}
+        >
+          <div className="surga-nav-item-left">
+            <Tag size={16} />
+            <span>Tarifs &amp; Plans</span>
+          </div>
+          <span className="surga-nav-badge">Prix FCFA</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => onSelectTab('abonnements')}
           className={`surga-nav-item ${activeTab === 'abonnements' ? 'active' : ''}`}
         >
           <div className="surga-nav-item-left">
             <CreditCard size={16} />
-            <span>Abonnements &amp; MRR</span>
+            <span>Souscriptions &amp; MRR</span>
           </div>
           <span className="surga-nav-badge success">XOF</span>
         </button>
       </div>
 
+      {/* 2. Communauté & Canaux */}
+      <div className="surga-nav-section">
+        <div className="surga-section-label">Utilisateurs &amp; Diffusion</div>
+
+        <button
+          type="button"
+          onClick={() => onSelectTab('comptes')}
+          className={`surga-nav-item ${activeTab === 'comptes' ? 'active' : ''}`}
+        >
+          <div className="surga-nav-item-left">
+            <Users size={16} />
+            <span>Comptes Utilisateurs</span>
+          </div>
+          <span className="surga-nav-badge cyan">VIP / Quotas</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelectTab('reseaux')}
+          className={`surga-nav-item ${activeTab === 'reseaux' ? 'active' : ''}`}
+        >
+          <div className="surga-nav-item-left">
+            <Share2 size={16} />
+            <span>Réseaux &amp; WhatsApp</span>
+          </div>
+        </button>
+      </div>
+
+      {/* 3. Contenus Territoriaux */}
       <div className="surga-nav-section">
         <div className="surga-section-label">Contenus Territoriaux</div>
 
@@ -161,6 +207,7 @@ export default function AdminSurgaSidebar({
         </button>
       </div>
 
+      {/* 4. Audio & Système */}
       <div className="surga-nav-section">
         <div className="surga-section-label">Audio &amp; Système</div>
 
@@ -194,7 +241,7 @@ export default function AdminSurgaSidebar({
           target="_blank"
           rel="noopener noreferrer"
           className="surga-footer-link"
-          style={{ color: 'var(--surga-accent)' }}
+          style={{ color: '#F59E0B' }}
         >
           <ExternalLink size={14} />
           <span>Ouvrir Surga App</span>
@@ -209,13 +256,13 @@ export default function AdminSurgaSidebar({
         </Link>
 
         <div style={{ padding: '8px 10px', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 8, marginTop: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#D1D5DB' }}>
-            <ShieldCheck size={13} color="var(--surga-accent)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#CBD5E1' }}>
+            <ShieldCheck size={13} color="#F59E0B" />
             <span style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {adminEmail || 'Administrateur Surga'}
+              {adminEmail || 'Super Administrateur'}
             </span>
           </div>
-          <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2, textTransform: 'capitalize' }}>
+          <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2, textTransform: 'capitalize' }}>
             Rôle : {adminRole || 'Super Admin'}
           </div>
         </div>

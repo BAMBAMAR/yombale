@@ -5,11 +5,13 @@ import {
   Sparkles,
   RefreshCw,
   ExternalLink,
-  ShieldCheck,
 } from 'lucide-react'
 import AdminSurgaSidebar, { SurgaAdminTab } from './components/AdminSurgaSidebar'
 import AdminOverviewTab from './components/AdminOverviewTab'
+import AdminPlansTab from './components/AdminPlansTab'
 import AdminAbonnementsTab from './components/AdminAbonnementsTab'
+import AdminComptesTab from './components/AdminComptesTab'
+import AdminReseauxTab from './components/AdminReseauxTab'
 import AdminPlacesTab from './components/AdminPlacesTab'
 import AdminConcoursTab from './components/AdminConcoursTab'
 import AdminUnesTab from './components/AdminUnesTab'
@@ -33,16 +35,28 @@ interface AdminSurgaClientProps {
 
 const TAB_TITLES: Record<SurgaAdminTab, { title: string; subtitle: string }> = {
   overview: {
-    title: 'Tableau de Bord & Supervision',
-    subtitle: 'Vue d\'ensemble 360° des services, métriques territoriales et état des passerelles.',
+    title: 'Tableau de Bord 360° & Supervision',
+    subtitle: 'Centre de commandement unifié : métriques territoriales, santé des passerelles et activité temps réel.',
+  },
+  plans: {
+    title: 'Tarifs & Formules d\'Abonnement',
+    subtitle: 'Fixez librement les montants mensuels et annuels en FCFA, remises promotionnelles et avantages inclus.',
   },
   abonnements: {
-    title: 'Abonnements & Gestion du MRR',
-    subtitle: 'Suivi des formules Premium B2C, partenariats B2B et encaissements Wave / Orange Money.',
+    title: 'Souscriptions & Gestion du MRR',
+    subtitle: 'Suivi des paiements Wave / Orange Money, régularisations manuelles et volume financier encaissé.',
+  },
+  comptes: {
+    title: 'Gestion des Comptes & Droits VIP',
+    subtitle: 'Annuaire des utilisateurs Surga, attribution directe de Premium VIP et suivi des quotas vocaux.',
+  },
+  reseaux: {
+    title: 'Réseaux Sociaux & Canaux de Diffusion',
+    subtitle: 'Passerelle WhatsApp, bot de notification, canaux Telegram et modèles de messages automatiques.',
   },
   places: {
     title: 'Bonnes Adresses Dakaroises',
-    subtitle: 'Gestion du carnet des 42 adresses certifiées, restaurants, dibiteries et cafés.',
+    subtitle: 'Pilotage du carnet des 42 adresses certifiées, restaurants, dibiteries et cafés.',
   },
   concours: {
     title: 'Concours & Examens Nationaux',
@@ -62,7 +76,7 @@ const TAB_TITLES: Record<SurgaAdminTab, { title: string; subtitle: string }> = {
   },
   config: {
     title: 'Configuration Système & IA',
-    subtitle: 'Directives de persona, directives déterministes, quotas vocaux et état des clés API.',
+    subtitle: 'Directives de persona D19, vouvoiement strict, directives déterministes et clés API.',
   },
 }
 
@@ -106,7 +120,7 @@ export default function AdminSurgaClient({
 
   return (
     <div className="surga-admin-container">
-      {/* Sidebar 100% dédiée Surga */}
+      {/* Sidebar Dédiée Pro */}
       <AdminSurgaSidebar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -118,11 +132,11 @@ export default function AdminSurgaClient({
 
       {/* Zone de contenu principale */}
       <div className="surga-admin-main">
-        {/* Topbar supérieure autonome */}
+        {/* Topbar Pro */}
         <header className="surga-admin-topbar">
           <div>
             <h1 className="surga-topbar-title">
-              <Sparkles size={20} color="var(--surga-accent)" />
+              <Sparkles size={20} color="#F59E0B" />
               <span>{currentTabInfo.title}</span>
             </h1>
             <p className="surga-topbar-subtitle">{currentTabInfo.subtitle}</p>
@@ -136,9 +150,9 @@ export default function AdminSurgaClient({
               style={{
                 padding: '8px 14px',
                 borderRadius: 8,
-                border: '1px solid var(--surga-border)',
+                border: '1px solid #E2E8F0',
                 backgroundColor: '#FFFFFF',
-                color: 'var(--surga-navy)',
+                color: '#0F172A',
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -156,10 +170,10 @@ export default function AdminSurgaClient({
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                padding: '8px 14px',
+                padding: '8px 16px',
                 borderRadius: 8,
                 border: 'none',
-                backgroundColor: 'var(--surga-accent)',
+                backgroundColor: '#0B132B',
                 color: '#FFFFFF',
                 fontSize: 12,
                 fontWeight: 800,
@@ -169,8 +183,8 @@ export default function AdminSurgaClient({
                 gap: 6,
               }}
             >
-              <span>Surga App</span>
-              <ExternalLink size={13} />
+              <span style={{ color: '#F59E0B' }}>Surga App</span>
+              <ExternalLink size={13} color="#F59E0B" />
             </a>
           </div>
         </header>
@@ -180,7 +194,10 @@ export default function AdminSurgaClient({
           {activeTab === 'overview' && (
             <AdminOverviewTab stats={stats} onNavigateTab={setActiveTab} />
           )}
+          {activeTab === 'plans' && <AdminPlansTab />}
           {activeTab === 'abonnements' && <AdminAbonnementsTab />}
+          {activeTab === 'comptes' && <AdminComptesTab />}
+          {activeTab === 'reseaux' && <AdminReseauxTab />}
           {activeTab === 'places' && <AdminPlacesTab />}
           {activeTab === 'concours' && <AdminConcoursTab />}
           {activeTab === 'unes' && <AdminUnesTab />}

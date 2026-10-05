@@ -49,6 +49,26 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga Console Pro — Gestionnaire de Prix Dynamique, Comptes Utilisateurs VIP & Canaux Réseaux Sociaux (Session 2026-10-05 - Suite 3)** :
+  - *Demande Utilisateur* : L'utilisateur a signalé des manques fondamentaux : « ça reste inspiré de Nopalou, je ne peux pas fixer le montant de l'abonnement, il y a énormément de choses qui manquent : les réseaux sociaux, les comptes, il y a trop de manquements ».
+  - *Réalisations Majeures* :
+    - **Fixation & Gestion Dynamique des Tarifs d'Abonnement (`AdminPlansTab.tsx`, `abonnement-service.js`)** :
+      * Possibilité pour l'administrateur de **fixer et modifier en direct le montant mensuel et annuel en FCFA** de n'importe quel plan (B2C Premium, B2B Resto, B2B Immo, B2B Concours ou formule sur mesure).
+      * Toute modification de tarif est immédiatement prise en compte par le moteur de paiement Wave et Orange Money lors de la génération de session de checkout.
+      * Édition des avantages inclus, badges promotionnels ("2 MOIS OFFERTS", "-30% RENTRÉE") et création de nouvelles formules.
+    - **Gestion des Comptes Utilisateurs & Statuts VIP (`AdminComptesTab.tsx`)** :
+      * Annuaire complet des utilisateurs Surga avec recherche temps réel par nom, téléphone (+221...) et email.
+      * Attribution directe en 1 clic du statut **Premium VIP** (1 mois, 3 mois, 6 mois, 1 an offert) sans passer par la passerelle de paiement.
+      * Suivi en temps réel de la consommation vocale quotidienne (x / 20 requêtes) et bouton de réinitialisation du quota en direct.
+    - **Hub Réseaux Sociaux & Passerelle WhatsApp (`AdminReseauxTab.tsx`)** :
+      * Supervision de la passerelle WhatsApp (+221 77 845 00 00), test direct d'envoi de notification vers un mobile sénégalais.
+      * Édition des templates de messages automatiques : Bienvenue, Briefing matinal, Alerte concours et Alerte perturbation trafic.
+      * Paramétrage des canaux officiels : Chaîne WhatsApp, Canal Telegram, Facebook, Instagram, Twitter/X, TikTok.
+    - **Design System Pro Obsidian Deep Space (`surga-admin.css`)** :
+      * Abandon du look Nopalou au profit d'un design d'assistant IA de pointe : fond sombre Obsidian `#0B132B`, surfaces `#121D33`, néon émeraude `#10B981` et ambre `#F59E0B`.
+      * Barre latérale réorganisée en 4 domaines clairs (Pilotage & Monétisation, Utilisateurs & Diffusion, Contenus Territoriaux, Audio & Système).
+    - **Tests & Robustesse** : 99/99 tests Jest Surga passés, 97/97 tests frontend passés, `npx tsc --noEmit` zéro erreur, tous les composants <= 450 lignes.
+
 - **Surga Console d'Administration Autonome & Étanchéité Totale Nopalou (Session 2026-10-05 - Suite 2)** :
   - *Demande Utilisateur* : L'utilisateur a explicitement demandé une administration complète de Surga, entièrement différente et isolée de celle de Nopalou (« je veux une admin complete de surga different de nopalou »).
   - *Réalisations* :

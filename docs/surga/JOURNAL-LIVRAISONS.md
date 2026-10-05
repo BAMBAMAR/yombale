@@ -3,6 +3,40 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 12] — Console Pro : Fixation Dynamique des Prix, Comptes Utilisateurs VIP & Canaux Réseaux Sociaux
+- **Tâches complétées :**
+  - **Exigences Explicites Utilisateur** : « ça reste inspiré de Nopalou, je ne peux pas fixer le montant de l'abonnement, il y a énormément de choses qui manquent : les réseaux sociaux, les comptes, il y a trop de manquements ».
+  - **Gestionnaire Dynamique des Tarifs & Formules d'Abonnement (`AdminPlansTab.tsx`, 357 l. & `abonnement-service.js`)** :
+    - Possibilité pour l'administrateur de **fixer et modifier en direct les tarifs mensuels et annuels en FCFA** de toutes les formules (B2C Premium, B2B Restos, B2B Immo, B2B Prépas Concours ou nouvelle formule sur mesure).
+    - Synchronisation en direct avec le moteur de paiement Wave et Orange Money lors des initiations de paiement (`initierSouscription` utilise les montants dynamiques).
+    - Gestion des badges promotionnels ("2 MOIS OFFERTS", "-20% RENTRÉE"), de la liste des privilèges inclus et activation/désactivation.
+  - **Gestionnaire des Comptes & Utilisateurs Surga (`AdminComptesTab.tsx`, 391 l.)** :
+    - Annuaire complet des inscrits avec recherche instantanée par nom, téléphone sénégalais (+221...) ou email.
+    - Filtres : Tous les utilisateurs, Abonnés Premium uniquement, Utilisateurs Freemium.
+    - Attribution directe en 1 clic de statut **Premium VIP** (1 mois, 3 mois, 6 mois, 1 an offert) sans passer par la passerelle de paiement.
+    - Suivi en direct des quotas vocaux consommés aujourd'hui (x / 20 req.) et bouton de réinitialisation du quota en 1 clic.
+  - **Hub Réseaux Sociaux & Canaux de Diffusion (`AdminReseauxTab.tsx`, 339 l.)** :
+    - Passerelle WhatsApp connectée (+221 77 845 00 00) avec outil de test d'envoi en direct vers un mobile sénégalais.
+    - Éditeur de modèles de messages automatiques : Bienvenue, Briefing matinal quotidien, Alerte concours et Alerte trafic.
+    - Configuration des canaux officiels : Chaîne WhatsApp, Canal Telegram, Page Facebook, Instagram, X/Twitter, TikTok.
+  - **Design System Pro Obsidian Deep Space (`surga-admin.css`)** :
+    - Identité visuelle haut de gamme distincte de Nopalou : fond sombre Obsidian `#0B132B`, surfaces `#121D33`, néon émeraude `#10B981` et ambre `#F59E0B`.
+    - Barre latérale (`AdminSurgaSidebar.tsx`, 286 l.) réorganisée en 4 domaines (Pilotage & Monétisation, Utilisateurs & Diffusion, Contenus Territoriaux, Audio & Système).
+- **Fichiers modifiés / créés :**
+  - `backend/services/surga/abonnement-service.js` (tarification dynamique, persistance et mise à jour)
+  - `backend/routes/admin-surga.js` (endpoints /plans, /utilisateurs, /canaux)
+  - `frontend-next/src/app/admin/surga/components/AdminPlansTab.tsx` (créé)
+  - `frontend-next/src/app/admin/surga/components/AdminComptesTab.tsx` (créé)
+  - `frontend-next/src/app/admin/surga/components/AdminReseauxTab.tsx` (créé)
+  - `frontend-next/src/app/admin/surga/components/AdminSurgaSidebar.tsx` (mis à jour)
+  - `frontend-next/src/app/admin/surga/AdminSurgaClient.tsx` (mis à jour)
+  - `frontend-next/src/styles/surga-admin.css` (design Obsidian Deep Space)
+- **Validation :**
+  - 99/99 tests Jest Surga backend validés (`tests/unit/surga.test.js`).
+  - 97/97 tests passés dans `frontend-next`.
+  - `npx tsc --noEmit` zéro erreur.
+  - 100% des fichiers sous le plafond strict de 450 lignes.
+
 ### [2026-10-05 — Soir 11] — Console d'Administration Autonome Surga & Décloisonnement Total Nopalou
 - **Tâches complétées :**
   - **Exigence Explicite Utilisateur** : « je veux une admin complete de surga different de nopalou ».

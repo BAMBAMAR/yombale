@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 11)  
+> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 12)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses + Trafic Réel Dakar + Radio Écoute Continue + Passerelles Transversales Multi-Fonctionnalités Dynamiques + Console Admin Autonome Complète 8 Modules Décloisonnée de Nopalou)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses + Trafic Réel Dakar + Radio Écoute Continue + Passerelles Transversales Multi-Fonctionnalités Dynamiques + Console Pro Autonome 11 Modules : Tarifs Dynamiques FCFA, Comptes VIP & Hub Réseaux Sociaux Décloisonnée de Nopalou)**  
 > **Auteur** : Antigravity (Assistant AI Senior)
 
 ---
@@ -43,18 +43,26 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
    - **Services Quotidiens Locaux** : Trafic Dakar en direct (TomTom Live + corridors clés), pôle immobilier certifié Dakar (< 2 min), concours & examens nationaux (J-30/J-7/J-1).
    - **Audio Low-Data & Radios FM** : Synthèse locale gratuite (0 Mo de data) et radios locales en direct (RTS, Sud FM, etc.).
 
-2. **Console d'Administration Autonome Complète (`/admin/surga` & `/surga/admin` — 100% DONE & DÉCLOISONNÉE)** :
+2. **Console d'Administration Pro Décloisonnée (`/admin/surga` & `/surga/admin` — 100% DONE)** :
+   - **Thème « Obsidian Deep Space »** : Identité visuelle SaaS IA d'élite entièrement affranchie de Nopalou (Obsidian `#0B132B`, Surface `#121D33`, Neon Emerald `#10B981`, Cyber Amber `#F59E0B`, Cyan `#06B6D4`).
    - **Décloisonnement Structurel Strict** : Logée sous `frontend-next/src/app/admin/surga/` avec son propre `layout.tsx` (garde RBAC `getAdminSession()`) et sa feuille de styles `surga-admin.css`. Zéro présence de la barre latérale e-commerce Nopalou (Boutiques, Commandes, POS masqués), zéro barre omnisearch marketplace.
-   - **Barre Latérale Autonome (`AdminSurgaSidebar.tsx`)** : Branding "SURGA Console Admin", pastille "Live Dakar", navigation exclusive en 8 volets, liens vers Surga App (`/surga`), retour Nopalou (`/admin`) et déconnexion sécurisée.
-   - **8 Volets d'Administration Exhaustifs** :
+   - **Barre Latérale Autonome Organisée en 4 Domaines (`AdminSurgaSidebar.tsx`, 286 l.)** :
+     - *Pilotage & Monétisation* : Vue d'Ensemble, Abonnements & MRR, Tarifs & Formules.
+     - *Utilisateurs & Diffusion* : Comptes & Rôles, Réseaux & WhatsApp.
+     - *Contenus Territoriaux* : Bonnes Adresses, Concours Nationaux, Kiosque des Unes, Modération Trafic.
+     - *Audio & Système* : Radios & Podcasts, Configuration & IA.
+   - **11 Volets d'Administration Exhaustifs** :
      1. *Tableau de Bord & Supervision* (`AdminOverviewTab.tsx`) : 4 KPIs métiers, état des services (PostgreSQL, Wave, TomTom, IA) et actions rapides.
      2. *Abonnements & MRR* (`AdminAbonnementsTab.tsx`) : Suivi des souscriptions B2C/B2B, calcul déterministe MRR FCFA, validation & résiliation manuelle 1-clic.
-     3. *Bonnes Adresses* (`AdminPlacesTab.tsx` + `AdminPlaceModal.tsx`) : CRUD complet des 42 adresses dakaroises, quartiers, résumés d'avis honnêtes.
-     4. *Concours Nationaux* (`AdminConcoursTab.tsx` + `AdminConcoursModal.tsx`) : Calendrier officiel (ENA, Douanes...), quittances Trésor, pièces requises, alertes J-30/J-7/J-1.
-     5. *Kiosque des Unes* (`AdminUnesTab.tsx`) : Gestion quotidienne des Unes des 10 quotidiens du Sénégal.
-     6. *Modération Trafic* (`AdminTraficTab.tsx`) : Modération temps réel des incidents VDN, Autoroute, Corniche, BRT.
-     7. *Radios Locales & Podcasts* (`AdminRadiosTab.tsx`) : Lecteur de test audio des flux en direct et flux RSS privé.
-     8. *Configuration Système & IA* (`AdminConfigTab.tsx`) : Persona D19, vouvoiement strict, quotas vocaux et état des clés API.
+     3. *Tarifs & Formules Dynamiques* (`AdminPlansTab.tsx`, 357 l.) : Modification directe des montants FCFA mensuels et annuels, remises, badges et avantages avec répercussion immédiate sur la facturation Wave/Orange Money.
+     4. *Comptes & Rôles Utilisateurs* (`AdminComptesTab.tsx`, 391 l.) : Annuaire complet, recherche instantanée (Nom, Tél `+221...`, Email), attribution VIP 1-clic (1, 3, 6, 12 mois) et réinitialisation de quotas vocaux.
+     5. *Réseaux Sociaux & WhatsApp* (`AdminReseauxTab.tsx`, 339 l.) : Passerelle Bot WhatsApp (+221 77 845 00 00), test de ping direct, éditeur de modèles automatiques et liens des canaux officiels.
+     6. *Bonnes Adresses* (`AdminPlacesTab.tsx` + `AdminPlaceModal.tsx`) : CRUD complet des 42 adresses dakaroises, quartiers, résumés d'avis honnêtes.
+     7. *Concours Nationaux* (`AdminConcoursTab.tsx` + `AdminConcoursModal.tsx`) : Calendrier officiel (ENA, Douanes...), quittances Trésor, pièces requises, alertes J-30/J-7/J-1.
+     8. *Kiosque des Unes* (`AdminUnesTab.tsx`) : Gestion quotidienne des Unes des 10 quotidiens du Sénégal.
+     9. *Modération Trafic* (`AdminTraficTab.tsx`) : Modération temps réel des incidents VDN, Autoroute, Corniche, BRT.
+     10. *Radios Locales & Podcasts* (`AdminRadiosTab.tsx`) : Lecteur de test audio des flux en direct et flux RSS privé.
+     11. *Configuration Système & IA* (`AdminConfigTab.tsx`) : Persona D19, vouvoiement strict, quotas vocaux et état des clés API.
    - **Redirection Automatique** : Route `frontend-next/src/app/surga/admin/page.tsx` redirigeant immédiatement vers `/admin/surga`.
 
 3. **Monétisation & RGPD (100% DONE)** :
@@ -86,7 +94,7 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
 | Revue de Presse & Kiosque | `src/app/surga/components/SurgaPresseCard.tsx` (carrousel horizontal) |
 | Bons plans & Adresses | `src/app/surga/components/SurgaPlaceCard.tsx` (354 l.), `SurgaPlaceDetailModal.tsx` (393 l.), `SurgaPlacesModal.tsx` (382 l.), `backend/data/surga-places-catalogue.json` (927 l., 42 adresses) |
 | Briques & Vues Surga | `src/app/surga/components/Surga*.tsx` (tous < 450 l.) |
-| Console d'Administration | `src/app/admin/(protected)/surga/page.tsx`, `AdminSurgaClient.tsx`, sous-composants `Admin*Tab.tsx` |
+| Console d'Administration Pro | `src/app/admin/surga/page.tsx`, `AdminSurgaClient.tsx`, `AdminSurgaSidebar.tsx`, 11 sous-composants `Admin*Tab.tsx` (< 450 l.) |
 | Synchronisation & Hors-ligne | `src/lib/surga-offline-sync.ts`, `src/lib/surga-reminders.ts`, `src/lib/surga-voice.ts` |
 
 ### Backend Express (`backend/`)
@@ -94,8 +102,8 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
 |---|---|
 | Routeur maître Surga | `routes/surga/index.js` (monté sur `/api/surga`) |
 | Sous-routeurs REST | `routes/surga/` (`briefing.js`, `preferences.js`, `notes.js`, `depenses.js`, `agenda.js`, `presse.js`, `kiosque.js`, `audio.js`, `podcast.js`, `radios.js`, `trafic.js`, `immo.js`, `concours.js`, `places.js`, `abonnements.js`, `donnees.js`, `meteo.js`) |
-| Routeur Administration | `routes/admin-surga.js` (monté sur `/api/admin/surga`) |
-| Services Métier Surga | `services/surga/` (`meteo-service.js`, `calculator.js`, `whatsapp-handler.js`, `trafic-service.js`, `immo-service.js`, `concours-service.js`, `places-service.js`, `abonnement-service.js`, `donnees-service.js`) |
+| Routeur Administration Pro | `routes/admin-surga.js` (`/plans`, `/utilisateurs`, `/canaux`, `/abonnements`, etc.) |
+| Services Métier Surga | `services/surga/` (`abonnement-service.js`, `meteo-service.js`, `calculator.js`, `whatsapp-handler.js`, `trafic-service.js`, `immo-service.js`, `concours-service.js`, `places-service.js`, `donnees-service.js`) |
 | Migrations SQL Idempotentes | `migrate-inline.js` (tables `surga_*` créées automatiquement) |
 
 ---

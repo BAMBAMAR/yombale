@@ -1,18 +1,23 @@
 /* frontend-next/src/styles/surga-admin.css */
-/* Styles dédiés à l'administration autonome Surga — Zéro éléments Marketplace */
-/* Conforme aux tokens Nopalou / Surga : --navy: #1C2B4A, --accent: #C75B00, --price: #0A5C36, --bg: #F8F5F0, --border: #E8DDD2 */
+/* Design System Haut de Gamme Surga Admin — Identité SaaS Assistant Personnel */
+/* Palette Obsidian Deep Space : --surga-dark: #0B132B, --surga-surface: #1C2541, --surga-accent: #00F5D4, --surga-amber: #F59E0B */
 
 :root {
+  --surga-obsidian: #0B132B;
+  --surga-surface: #121D33;
+  --surga-surface-card: #FFFFFF;
   --surga-navy: #1C2B4A;
-  --surga-navy-dark: #121D33;
   --surga-accent: #C75B00;
-  --surga-price: #0A5C36;
-  --surga-bg: #F8F5F0;
-  --surga-card: #FFFFFF;
-  --surga-border: #E8DDD2;
-  --surga-text1: #1C2B4A;
-  --surga-text2: #5A4E42;
-  --surga-text3: #73675E;
+  --surga-accent-bright: #F59E0B;
+  --surga-emerald: #0A5C36;
+  --surga-emerald-bright: #10B981;
+  --surga-bg: #F4F6F9;
+  --surga-border: #E2E8F0;
+  --surga-border-dark: rgba(255, 255, 255, 0.08);
+  --surga-text1: #0F172A;
+  --surga-text2: #475569;
+  --surga-text3: #64748B;
+  --surga-cyan: #06B6D4;
 }
 
 .surga-admin-container {
@@ -25,13 +30,13 @@
 
 /* Sidebar autonome Surga */
 .surga-admin-sidebar {
-  width: 270px;
-  background-color: var(--surga-navy-dark);
+  width: 275px;
+  background: linear-gradient(180deg, #0B132B 0%, #121D33 100%);
   color: #FFFFFF;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid var(--surga-border-dark);
   position: sticky;
   top: 0;
   height: 100vh;
@@ -40,8 +45,8 @@
 }
 
 .surga-admin-brand {
-  padding: 20px 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--surga-border-dark);
   display: flex;
   align-items: center;
   justifyContent: space-between;
@@ -50,34 +55,34 @@
 .surga-brand-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .surga-logo-icon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--surga-accent) 0%, #E67A1E 100%);
+  background: linear-gradient(135deg, #F59E0B 0%, #C75B00 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #FFFFFF;
-  box-shadow: 0 4px 10px rgba(199, 91, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
 }
 
 .surga-brand-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   color: #FFFFFF;
 }
 
 .surga-brand-sub {
   font-size: 10px;
   font-weight: 700;
-  color: var(--surga-accent);
+  color: #F59E0B;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
 }
 
 .surga-status-pill {
@@ -85,22 +90,22 @@
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 20px;
-  background-color: rgba(10, 92, 54, 0.25);
+  background-color: rgba(16, 185, 129, 0.15);
   color: #34D399;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  gap: 6px;
+  border: 1px solid rgba(52, 211, 153, 0.25);
 }
 
 .surga-nav-section {
-  padding: 16px 14px 6px;
+  padding: 14px 12px 4px;
 }
 
 .surga-section-label {
   font-size: 10px;
   font-weight: 800;
-  color: #8E9BAE;
+  color: #64748B;
   text-transform: uppercase;
   letter-spacing: 1px;
   padding: 0 10px 8px;
@@ -111,11 +116,11 @@
   display: flex;
   align-items: center;
   justifyContent: space-between;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border-radius: 8px;
   background: transparent;
   border: none;
-  color: #D1D5DB;
+  color: #94A3B8;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -124,15 +129,15 @@
 }
 
 .surga-nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.05);
   color: #FFFFFF;
 }
 
 .surga-nav-item.active {
-  background: linear-gradient(90deg, rgba(199, 91, 0, 0.25) 0%, rgba(199, 91, 0, 0.1) 100%);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%);
   color: #FFFFFF;
-  font-weight: 800;
-  border-left: 3px solid var(--surga-accent);
+  font-weight: 700;
+  border-left: 3px solid #F59E0B;
 }
 
 .surga-nav-item-left {
@@ -146,25 +151,32 @@
   font-weight: 800;
   padding: 2px 6px;
   border-radius: 10px;
-  background-color: var(--surga-accent);
-  color: #FFFFFF;
+  background-color: #F59E0B;
+  color: #0B132B;
 }
 
 .surga-nav-badge.danger {
-  background-color: #DC2626;
+  background-color: #EF4444;
+  color: #FFFFFF;
 }
 
 .surga-nav-badge.success {
-  background-color: var(--surga-price);
+  background-color: #10B981;
+  color: #FFFFFF;
+}
+
+.surga-nav-badge.cyan {
+  background-color: #06B6D4;
+  color: #FFFFFF;
 }
 
 .surga-sidebar-footer {
   margin-top: auto;
   padding: 16px 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--surga-border-dark);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .surga-footer-link {
@@ -173,7 +185,7 @@
   gap: 8px;
   padding: 8px 10px;
   border-radius: 6px;
-  color: #9CA3AF;
+  color: #94A3B8;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
@@ -197,20 +209,20 @@
 .surga-admin-topbar {
   background-color: #FFFFFF;
   border-bottom: 1px solid var(--surga-border);
-  padding: 14px 28px;
+  padding: 16px 32px;
   display: flex;
   align-items: center;
   justifyContent: space-between;
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .surga-topbar-title {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
-  color: var(--surga-navy);
+  color: #0F172A;
   margin: 0;
   display: flex;
   align-items: center;
@@ -218,9 +230,9 @@
 }
 
 .surga-topbar-subtitle {
-  font-size: 12px;
-  color: var(--surga-text3);
-  margin: 2px 0 0;
+  font-size: 13px;
+  color: #64748B;
+  margin: 3px 0 0;
 }
 
 .surga-topbar-actions {
@@ -230,8 +242,8 @@
 }
 
 .surga-admin-content {
-  padding: 24px 28px;
-  max-width: 1350px;
+  padding: 24px 32px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }

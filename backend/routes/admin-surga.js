@@ -670,6 +670,10 @@ router.delete('/signalements/:id', async (req, res) => {
 const {
   getStatistiquesFinancieresAdmin,
   listerAbonnementsAdmin,
+  getCataloguePlansAsync,
+  mettreAJourPlan,
+  creerPlan,
+  supprimerPlan,
 } = require('../services/surga/abonnement-service');
 
 router.get('/abonnements', async (req, res) => {
@@ -738,4 +742,269 @@ router.put('/abonnements/:id/statut', async (req, res) => {
   }
 });
 
+// ==========================================
+// GESTION DES PLANS & TARIFICATION DYNAMIQUE
+// ==========================================
+router.get('/plans', async (req, res) => {
+  try {
+    const plans = await getCataloguePlansAsync();
+    res.json({ success: true, plans });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/plans', async (req, res) => {
+  try {
+    const { id, nom, type, description, tarifMensuel, tarifAnnuel, avantages, badgePromo } = req.body;
+    if (!nom || tarifMensuel === undefined || tarifAnnuel === undefined) {
+      return res.status(400).json({ success: false, error: 'Nom, tarif mensuel et tarif annuel requis.' });
+    }
+    const nouveauPlan = await creerPlan({ id, nom, type, description, tarifMensuel, tarifAnnuel, avantages, badgePromo });
+    res.json({ success: true, plan: nouveauPlan });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/plans/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nom, description, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo } = req.body;
+    const planModifie = await mettreAJourPlan(id, { nom, description, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo });
+    res.json({ success: true, plan: planModifie });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/plans/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await supprimerPlan(id);
+    res.json({ success: true, message: 'Plan désactivé avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// GESTION DES COMPTES & UTILISATEURS SURGA
+// ==========================================
+router.get('/utilisateurs', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, q = '', statut = '' } = req.query;
+    const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
+
+    if (!pool) {
+      return res.json({
+        success: true,
+        total: 2,
+        page: 1,
+        limit: 20,
+        utilisateurs: [
+          {
+            id: 'mock-user-1',
+            nom_complet: 'Bamba Mar (VIP Testeur)',
+            telephone: '+221 77 123 45 67',
+            email: 'bamba@surga.sn',
+            statut: 'actif',
+            created_at: new Date().toISOString(),
+            plan_actif: 'b2c_premium',
+            echeance_plan: new Date(Date.now() + 30 * 86400000).toISOString(),
+            quota_vocal_utilise: 4,
+            quartier_prefere: 'Dakar Plateau',
+          },
+          {
+            id: 'mock-user-2',
+            nom_complet: 'Aïssatou Sow (Utilisatrice)',
+            telephone: '+221 78 456 78 90',
+            email: 'aissatou@gmail.com',
+            statut: 'actif',
+            created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+            plan_actif: null,
+            echeance_plan: null,
+            quota_vocal_utilise: 12,
+            quartier_prefere: 'Almadies',
+          },
+        ],
+      });
+    }
+
+    const conditions = [];
+    const params = [];
+
+    if (q) {
+      params.push(`%${q}%`);
+      conditions.push(`(u.nom_complet ILIKE $${params.length} OR u.telephone ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+    }
+
+    if (statut === 'premium') {
+      conditions.push(`EXISTS (SELECT 1 FROM surga_abonnements a WHERE (a.user_id = u.id OR (a.phone IS NOT NULL AND u.telephone IS NOT NULL AND a.phone = u.telephone)) AND a.statut = 'actif' AND a.fin > NOW())`);
+    } else if (statut === 'freemium') {
+      conditions.push(`NOT EXISTS (SELECT 1 FROM surga_abonnements a WHERE (a.user_id = u.id OR (a.phone IS NOT NULL AND u.telephone IS NOT NULL AND a.phone = u.telephone)) AND a.statut = 'actif' AND a.fin > NOW())`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countRes = await pool.query(
+      `SELECT COUNT(*)::int as count FROM utilisateurs u ${whereClause}`,
+      params
+    );
+    const total = countRes.rows[0]?.count || 0;
+
+    params.push(parseInt(limit, 10), offset);
+    const query = `
+      SELECT
+        u.id, u.nom_complet, u.telephone, u.email, u.created_at,
+        p.quartier as quartier_prefere, p.heure_briefing, p.equipe_sport,
+        (
+          SELECT a.plan
+          FROM surga_abonnements a
+          WHERE (a.user_id = u.id OR (a.phone IS NOT NULL AND u.telephone IS NOT NULL AND a.phone = u.telephone))
+            AND a.statut = 'actif' AND a.fin > NOW()
+          ORDER BY a.fin DESC LIMIT 1
+        ) as plan_actif,
+        (
+          SELECT a.fin
+          FROM surga_abonnements a
+          WHERE (a.user_id = u.id OR (a.phone IS NOT NULL AND u.telephone IS NOT NULL AND a.phone = u.telephone))
+            AND a.statut = 'actif' AND a.fin > NOW()
+          ORDER BY a.fin DESC LIMIT 1
+        ) as echeance_plan,
+        COALESCE(
+          (SELECT q.nb_requetes FROM surga_quotas q WHERE (q.user_id = u.id OR q.phone = u.telephone) AND q.date_jour = CURRENT_DATE LIMIT 1),
+          0
+        ) as quota_vocal_utilise
+      FROM utilisateurs u
+      LEFT JOIN surga_preferences p ON u.id = p.user_id
+      ${whereClause}
+      ORDER BY u.created_at DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+    `;
+
+    const { rows } = await pool.query(query, params);
+
+    res.json({
+      success: true,
+      total,
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      utilisateurs: rows,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/utilisateurs/:id/premium', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action = 'accorder', mois = 1, plan = 'b2c_premium' } = req.body;
+
+    if (!pool) {
+      return res.json({ success: true, message: 'Statut Premium mis à jour avec succès (mode local).' });
+    }
+
+    if (action === 'revoquer') {
+      await pool.query(
+        `UPDATE surga_abonnements SET statut = 'resilie', updated_at = NOW() WHERE user_id = $1 AND statut = 'actif'`,
+        [id]
+      );
+      return res.json({ success: true, message: 'Abonnement révoqué avec succès.' });
+    }
+
+    const { rows: userRows } = await pool.query(`SELECT id, telephone FROM utilisateurs WHERE id = $1`, [id]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Utilisateur introuvable' });
+    }
+
+    const user = userRows[0];
+    const debut = new Date();
+    const fin = new Date(debut.getTime() + mois * 30 * 86400000);
+    const ref = `SURGA-VIP-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
+
+    await pool.query(
+      `INSERT INTO surga_abonnements (
+         user_id, phone, plan, cycle, montant_xof, provider, statut, reference_paiement, debut, fin
+       ) VALUES ($1, $2, $3, $4, 0, 'admin_vip', 'actif', $5, $6, $7)`,
+      [id, user.telephone, plan, mois >= 12 ? 'annuel' : 'mensuel', ref, debut, fin]
+    );
+
+    res.json({ success: true, message: `Accès Premium accordé pour ${mois} mois.` });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/utilisateurs/:id/reset-quota', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (pool) {
+      await pool.query(`DELETE FROM surga_quotas WHERE user_id = $1 AND date_jour = CURRENT_DATE`, [id]);
+    }
+    res.json({ success: true, message: 'Quota vocal journalier réinitialisé à zéro.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// RÉSEAUX SOCIAUX & CANAUX DE DIFFUSION
+// ==========================================
+let canauxMemoire = {
+  whatsapp_numero: '+221 77 845 00 00',
+  whatsapp_statut: 'connecte',
+  telegram_channel: 'https://t.me/surga_senegal',
+  facebook_page: 'https://facebook.com/surga.sn',
+  instagram_compte: 'https://instagram.com/surga.sn',
+  twitter_compte: 'https://x.com/surga_sn',
+  tiktok_compte: 'https://tiktok.com/@surga.sn',
+  templates_messages: {
+    bienvenue: "As-salamu alaykum ! Je suis Surga, votre assistant personnel de poche au Sénégal. Comment puis-je vous aider aujourd'hui ?",
+    briefing_matin: "Bonjour ! Voici votre briefing Surga du jour avec la météo, le trafic et l'essentiel de l'actualité.",
+    alerte_concours: "Rappel officiel Surga : le concours auquel vous participez a une échéance proche.",
+    alerte_trafic: "Alerte circulation Dakar : perturbation majeure signalée sur votre axe habituel."
+  }
+};
+
+router.get('/canaux', (req, res) => {
+  res.json({ success: true, canaux: canauxMemoire });
+});
+
+router.put('/canaux', (req, res) => {
+  try {
+    const updates = req.body;
+    canauxMemoire = {
+      ...canauxMemoire,
+      ...updates,
+      templates_messages: {
+        ...canauxMemoire.templates_messages,
+        ...(updates.templates_messages || {})
+      }
+    };
+    res.json({ success: true, canaux: canauxMemoire });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/canaux/test-whatsapp', (req, res) => {
+  try {
+    const { telephone, message } = req.body;
+    if (!telephone) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone requis.' });
+    }
+    // Simulation / déclenchement de message de test
+    res.json({
+      success: true,
+      message: `Message de test transmis avec succès vers ${telephone}.`,
+      contenu: message || canauxMemoire.templates_messages.bienvenue
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
+

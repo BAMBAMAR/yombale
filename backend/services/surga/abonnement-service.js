@@ -79,11 +79,219 @@ const CATALOGUE_PLANS = {
   },
 };
 
+// Cache dynamique en mémoire modifiable par l'administration en temps réel
+const plansMemoire = JSON.parse(JSON.stringify(CATALOGUE_PLANS));
+
 /**
- * Retourne la liste des formules disponibles
+ * Assure la création idempotente de la table surga_plans et son initialisation
+ */
+async function assurerTablePlans() {
+  if (!pool) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS surga_plans (
+        id VARCHAR(50) PRIMARY KEY,
+        nom VARCHAR(100) NOT NULL,
+        type VARCHAR(20) NOT NULL DEFAULT 'b2c',
+        description TEXT,
+        tarif_mensuel_xof INT NOT NULL,
+        tarif_annuel_xof INT NOT NULL,
+        avantages JSONB DEFAULT '[]'::jsonb,
+        actif BOOLEAN DEFAULT true,
+        badge_promo VARCHAR(50),
+        ordre INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    const { rows } = await pool.query('SELECT COUNT(*)::int as count FROM surga_plans');
+    if (rows[0]?.count === 0) {
+      let ordre = 0;
+      for (const p of Object.values(CATALOGUE_PLANS)) {
+        ordre++;
+        await pool.query(
+          `INSERT INTO surga_plans (id, nom, type, description, tarif_mensuel_xof, tarif_annuel_xof, avantages, actif, ordre)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8)
+           ON CONFLICT (id) DO NOTHING`,
+          [
+            p.id,
+            p.nom,
+            p.type,
+            p.description,
+            p.tarifs.mensuel,
+            p.tarifs.annuel,
+            JSON.stringify(p.avantages || []),
+            ordre,
+          ]
+        );
+      }
+    }
+  } catch (err) {
+    console.warn('[SURGA PLANS TABLE WARN]:', err.message);
+  }
+}
+
+/**
+ * Retourne la liste des formules disponibles (synchrone pour compatibilité immédiate)
  */
 function getCataloguePlans() {
-  return Object.values(CATALOGUE_PLANS);
+  return Object.values(plansMemoire);
+}
+
+/**
+ * Retourne la liste des formules disponibles avec rafraîchissement depuis la base
+ */
+async function getCataloguePlansAsync() {
+  if (pool) {
+    try {
+      await assurerTablePlans();
+      const { rows } = await pool.query('SELECT * FROM surga_plans WHERE actif = true ORDER BY ordre ASC, created_at ASC');
+      if (rows && rows.length > 0) {
+        // Synchroniser le cache mémoire
+        for (const r of rows) {
+          plansMemoire[r.id] = {
+            id: r.id,
+            nom: r.nom,
+            type: r.type,
+            description: r.description,
+            tarifs: {
+              mensuel: r.tarif_mensuel_xof,
+              annuel: r.tarif_annuel_xof,
+            },
+            avantages: Array.isArray(r.avantages) ? r.avantages : (typeof r.avantages === 'string' ? JSON.parse(r.avantages) : []),
+            actif: r.actif,
+            badge_promo: r.badge_promo,
+          };
+        }
+        return Object.values(plansMemoire);
+      }
+    } catch (e) {
+      console.warn('[SURGA PLANS DB READ WARN]:', e.message);
+    }
+  }
+  return Object.values(plansMemoire);
+}
+
+/**
+ * Met à jour les tarifs ou caractéristiques d'une formule par l'administrateur
+ */
+async function mettreAJourPlan(id, { nom, description, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo }) {
+  if (plansMemoire[id]) {
+    if (nom) plansMemoire[id].nom = nom;
+    if (description !== undefined) plansMemoire[id].description = description;
+    if (tarifMensuel !== undefined) plansMemoire[id].tarifs.mensuel = parseInt(tarifMensuel, 10);
+    if (tarifAnnuel !== undefined) plansMemoire[id].tarifs.annuel = parseInt(tarifAnnuel, 10);
+    if (avantages !== undefined) plansMemoire[id].avantages = Array.isArray(avantages) ? avantages : [];
+    if (actif !== undefined) plansMemoire[id].actif = !!actif;
+    if (badgePromo !== undefined) plansMemoire[id].badge_promo = badgePromo;
+  }
+
+  if (pool) {
+    try {
+      await assurerTablePlans();
+      const updateRes = await pool.query(
+        `UPDATE surga_plans
+         SET nom = COALESCE($1, nom),
+             description = COALESCE($2, description),
+             tarif_mensuel_xof = COALESCE($3, tarif_mensuel_xof),
+             tarif_annuel_xof = COALESCE($4, tarif_annuel_xof),
+             avantages = COALESCE($5, avantages),
+             actif = COALESCE($6, actif),
+             badge_promo = $7,
+             updated_at = NOW()
+         WHERE id = $8 RETURNING *`,
+        [
+          nom || null,
+          description !== undefined ? description : null,
+          tarifMensuel !== undefined ? parseInt(tarifMensuel, 10) : null,
+          tarifAnnuel !== undefined ? parseInt(tarifAnnuel, 10) : null,
+          avantages !== undefined ? JSON.stringify(avantages) : null,
+          actif !== undefined ? !!actif : null,
+          badgePromo !== undefined ? badgePromo : null,
+          id,
+        ]
+      );
+      if (updateRes.rows[0]) {
+        return plansMemoire[id] || updateRes.rows[0];
+      }
+    } catch (err) {
+      console.warn('[SURGA PLANS DB UPDATE WARN]:', err.message);
+    }
+  }
+
+  return plansMemoire[id];
+}
+
+/**
+ * Crée un nouveau plan d'abonnement personnalisé
+ */
+async function creerPlan({ id, nom, type = 'b2c', description = '', tarifMensuel, tarifAnnuel, avantages = [], badgePromo = '' }) {
+  const planId = (id || `plan_${Date.now().toString(36)}`).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  const nouveauPlan = {
+    id: planId,
+    nom,
+    type,
+    description,
+    tarifs: {
+      mensuel: parseInt(tarifMensuel, 10) || 0,
+      annuel: parseInt(tarifAnnuel, 10) || 0,
+    },
+    avantages: Array.isArray(avantages) ? avantages : [],
+    actif: true,
+    badge_promo: badgePromo || '',
+  };
+
+  plansMemoire[planId] = nouveauPlan;
+
+  if (pool) {
+    try {
+      await assurerTablePlans();
+      await pool.query(
+        `INSERT INTO surga_plans (id, nom, type, description, tarif_mensuel_xof, tarif_annuel_xof, avantages, actif, badge_promo)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8)
+         ON CONFLICT (id) DO UPDATE SET
+           nom = EXCLUDED.nom,
+           tarif_mensuel_xof = EXCLUDED.tarif_mensuel_xof,
+           tarif_annuel_xof = EXCLUDED.tarif_annuel_xof,
+           avantages = EXCLUDED.avantages,
+           badge_promo = EXCLUDED.badge_promo,
+           updated_at = NOW()`,
+        [
+          planId,
+          nom,
+          type,
+          description,
+          nouveauPlan.tarifs.mensuel,
+          nouveauPlan.tarifs.annuel,
+          JSON.stringify(nouveauPlan.avantages),
+          badgePromo || null,
+        ]
+      );
+    } catch (err) {
+      console.warn('[SURGA PLANS DB CREATE WARN]:', err.message);
+    }
+  }
+
+  return nouveauPlan;
+}
+
+/**
+ * Désactive ou supprime une formule
+ */
+async function supprimerPlan(id) {
+  if (plansMemoire[id]) {
+    plansMemoire[id].actif = false;
+  }
+  if (pool) {
+    try {
+      await assurerTablePlans();
+      await pool.query('UPDATE surga_plans SET actif = false, updated_at = NOW() WHERE id = $1', [id]);
+    } catch (err) {
+      console.warn('[SURGA PLANS DB DELETE WARN]:', err.message);
+    }
+  }
+  return { success: true };
 }
 
 /**
@@ -138,7 +346,7 @@ async function verifierStatutPremium({ userId, phone }) {
  * Initialise une intention de souscription et génère le lien de paiement
  */
 async function initierSouscription({ userId, phone, planKey, cycle = 'mensuel', provider = 'wave', metadata = {}, baseUrl }) {
-  const planInfo = CATALOGUE_PLANS[planKey];
+  const planInfo = plansMemoire[planKey] || CATALOGUE_PLANS[planKey];
   if (!planInfo) {
     throw new Error(`Le plan d'abonnement demandé '${planKey}' n'existe pas.`);
   }
@@ -437,6 +645,10 @@ async function listerAbonnementsAdmin({ page = 1, limit = 20, statut, plan } = {
 module.exports = {
   CATALOGUE_PLANS,
   getCataloguePlans,
+  getCataloguePlansAsync,
+  mettreAJourPlan,
+  creerPlan,
+  supprimerPlan,
   verifierStatutPremium,
   initierSouscription,
   activerAbonnementParReference,
