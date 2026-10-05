@@ -318,6 +318,12 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Document de passation et handover (`docs/surga/HANDOVER_IDENTITE_SURGA.md`).
 - [x] `DONE` Validation & Zéro Régression : 99/99 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 
+### Tranche 25 — Diagnostic Kiosque des Unes & Correctif Schéma Admin (05 Octobre 2026 - Soir 14)
+- [x] `DONE` Audit complet de la provenance des Unes de presse (`surga_unes_presse` dans PostgreSQL, service `kiosque-service.js`).
+- [x] `DONE` Explication de l'absence d'actualisation automatique (absence de robot scraper d'images pour les couvertures PDF/JPG, contrairement aux articles textuels du briefing matinal).
+- [x] `DONE` Correction du schéma dans `backend/routes/admin-surga.js` : normalisation des endpoints `/unes` (GET et POST), support de `image_url` et `url_image`, gestion stricte des UUID PostgreSQL et upsert sans conflit.
+- [x] `DONE` Alignement de `AdminUnesTab.tsx` : support de `une.url_image || une.image_url` pour un affichage et une administration opérationnelle sans erreur.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

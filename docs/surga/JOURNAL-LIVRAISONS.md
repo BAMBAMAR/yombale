@@ -3,6 +3,21 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 14] — Diagnostic Origine Kiosque des Unes & Correctif Schéma Admin
+- **Demande Utilisateur :** « D'où viennent les unes ? C'est pas à jour ».
+- **Tâches complétées :**
+  - **Diagnostic Complet du Kiosque des Unes (`surga_unes_presse`)** :
+    - Origine identifiée : table PostgreSQL `surga_unes_presse` peuplée via `kiosque-service.js` avec 10 quotidiens par défaut pointant vers des captures locales sous `public/surga/unes/` (`lesoleil.jpg`, `observateur.jpg`, etc.).
+    - Explication de l'absence de mise à jour automatique : contrairement aux flux RSS d'articles textuels (`rss-collector.js`), il n'existait aucun robot automatisé pour télécharger les photos de Unes quotidiennes chaque matin.
+    - Identification d'un blocage schéma dans l'admin : divergence de nommage `url_image` vs `image_url` et colonnes inexistantes faisant échouer l'ajout de nouvelles Unes.
+  - **Correctifs Appliqués** :
+    - `backend/routes/admin-surga.js` : Normalisation du GET et du POST `/api/admin/surga/unes` pour supporter à la fois `image_url` et `url_image`, gestion propre des UUID et upsert par date et titre de journal.
+    - `frontend-next/src/app/admin/surga/components/AdminUnesTab.tsx` : Fallback `une.url_image || une.image_url` et typage enrichi pour un affichage et une suppression fiables.
+- **Fichiers modifiés :**
+  - `backend/routes/admin-surga.js`
+  - `frontend-next/src/app/admin/surga/components/AdminUnesTab.tsx`
+  - `CLAUDE.md`, `docs/JOURNAL-LIVRAISONS.md`, `docs/surga/JOURNAL-LIVRAISONS.md`, `docs/surga/HANDOVER.md`
+
 ### [2026-10-05 — Soir 13] — Identité de Marque Complète de Surga, Symbole Vectoriel Dépositaire, Palette Ambre/Indigo & Assets PWA
 - **Tâches complétées :**
   - **Audit de Marque Sans Complaisance (`docs/surga/AUDIT_IDENTITE_SURGA.md`)** :

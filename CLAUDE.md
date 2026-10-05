@@ -49,6 +49,16 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Diagnostic Kiosque des Unes & Correctif Schéma Admin (Session 2026-10-05 - Suite 5)** :
+  - *Demande Utilisateur* : « D'où viennent les unes ? C'est pas à jour ».
+  - *Analyse d'Origine & Diagnostic* :
+    - Les Unes proviennent de la table PostgreSQL `surga_unes_presse` (`nom_journal`, `date_parution`, `image_url`, `description`), initialisée avec 10 quotidiens par défaut pointant vers des captures locales sous `public/surga/unes/` (`lesoleil.jpg`, `observateur.jpg`, etc.).
+    - Ce n'est pas à jour car il n'existait pas de scraper d'images automatique quotidien (contrairement aux dépêches du briefing matinal issues des flux RSS de `rss-collector.js`).
+    - L'interface d'administration `/admin/surga` présentait un décalage de schéma (`url_image` vs `image_url`, types d'ID UUID, colonnes superflues) empêchant la publication manuelle fluide.
+  - *Correctifs Appliqués* :
+    - `backend/routes/admin-surga.js` : Alignement strict avec la table `surga_unes_presse` (support bidirectionnel `image_url` et `url_image`, upsert sécurisé sans conflit de type).
+    - `frontend-next/src/app/admin/surga/components/AdminUnesTab.tsx` : Tolérance `url_image || image_url` pour l'affichage et la saisie.
+
 - **Surga — Identité de Marque Dépositaire Complète, Symbole Vectoriel S, Pack PWA & Design System Décloisonné (Session 2026-10-05 - Suite 4)** :
   - *Demande Utilisateur* : Création de l'identité de marque complète de Surga à partir du produit existant (directeur artistique, designer de marque, UI/UX, logo, design system, branding mobile PWA).
   - *Livrables Stratégiques Clés* :

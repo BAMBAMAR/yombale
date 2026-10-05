@@ -15,10 +15,12 @@ export interface AdminUneItem {
   id: string
   nom_journal: string
   date_parution: string
-  url_image: string
+  url_image?: string
+  image_url?: string
   titre_principal?: string
   description_courte?: string
-  actif: boolean
+  description?: string
+  actif?: boolean
 }
 
 const JOURNAUX_POPULAIRES = [
@@ -214,7 +216,7 @@ export default function AdminUnesTab() {
                 }}
               >
                 <img
-                  src={une.url_image}
+                  src={une.url_image || une.image_url || ''}
                   alt={une.nom_journal}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   onError={(e) => {

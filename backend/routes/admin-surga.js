@@ -492,7 +492,11 @@ router.get('/unes', async (req, res) => {
     const { date, journal } = req.query;
 
     if (!pool) {
-      const unesDemo = require('../services/surga/kiosque-service').UNES_DEFAUT || [];
+      const unesDemo = (require('../services/surga/kiosque-service').UNES_DEFAUT || []).map((u, i) => ({
+        id: `demo-${i}`,
+        ...u,
+        url_image: u.image_url,
+      }));
       return res.json({ success: true, unes: unesDemo, total: unesDemo.length });
     }
 
@@ -513,11 +517,19 @@ router.get('/unes', async (req, res) => {
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await pool.query(
-      `SELECT * FROM surga_unes_presse ${where} ORDER BY date_parution DESC, nom_journal ASC`,
+      `SELECT id, nom_journal, date_parution, image_url, description, created_at
+       FROM surga_unes_presse ${where}
+       ORDER BY date_parution DESC, nom_journal ASC`,
       vals
     );
 
-    res.json({ success: true, unes: rows, total: rows.length });
+    const unesNormalisees = rows.map((r) => ({
+      ...r,
+      url_image: r.image_url,
+      titre_principal: r.description || '',
+    }));
+
+    res.json({ success: true, unes: unesNormalisees, total: unesNormalisees.length });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -529,46 +541,68 @@ router.post('/unes', async (req, res) => {
       nom_journal,
       date_parution,
       url_image,
+      image_url,
       titre_principal = '',
       description_courte = '',
-      actif = true,
+      description = '',
     } = req.body;
 
-    if (!nom_journal || !url_image) {
+    const imageUrlFinale = (image_url || url_image || '').trim();
+    if (!nom_journal || !imageUrlFinale) {
       return res.status(400).json({ success: false, error: 'Nom du journal et URL de la photo obligatoires' });
     }
 
     const dateParutionCalculee = date_parution || new Date().toISOString().slice(0, 10);
-    const id = `une-${Date.now()}`;
+    const descFinale = (description || titre_principal || description_courte || '').trim();
 
     if (!pool) {
-      return res.json({ success: true, une: { id, date_parution: dateParutionCalculee, ...req.body } });
+      return res.json({
+        success: true,
+        une: {
+          id: `une-${Date.now()}`,
+          nom_journal,
+          date_parution: dateParutionCalculee,
+          image_url: imageUrlFinale,
+          url_image: imageUrlFinale,
+          description: descFinale,
+        },
+      });
     }
 
-    const insertRes = await pool.query(
-      `INSERT INTO surga_unes_presse (
-        id, nom_journal, date_parution, url_image, titre_principal, description_courte, actif
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7)
-      ON CONFLICT (nom_journal, date_parution)
-      DO UPDATE SET
-        url_image = EXCLUDED.url_image,
-        titre_principal = EXCLUDED.titre_principal,
-        description_courte = EXCLUDED.description_courte,
-        actif = EXCLUDED.actif,
-        updated_at = NOW()
-      RETURNING *`,
-      [
-        id,
-        nom_journal.trim(),
-        dateParutionCalculee,
-        url_image.trim(),
-        titre_principal.trim(),
-        description_courte.trim(),
-        Boolean(actif),
-      ]
+    // Vérifier si une entrée existe déjà pour ce journal à cette date
+    const checkExistant = await pool.query(
+      `SELECT id FROM surga_unes_presse WHERE nom_journal = $1 AND date_parution = $2 LIMIT 1`,
+      [nom_journal.trim(), dateParutionCalculee]
     );
 
-    res.json({ success: true, une: insertRes.rows[0] });
+    let row;
+    if (checkExistant.rows.length > 0) {
+      const updateRes = await pool.query(
+        `UPDATE surga_unes_presse
+         SET image_url = $1, description = $2, created_at = NOW()
+         WHERE id = $3
+         RETURNING id, nom_journal, date_parution, image_url, description, created_at`,
+        [imageUrlFinale, descFinale, checkExistant.rows[0].id]
+      );
+      row = updateRes.rows[0];
+    } else {
+      const insertRes = await pool.query(
+        `INSERT INTO surga_unes_presse (nom_journal, date_parution, image_url, description)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, nom_journal, date_parution, image_url, description, created_at`,
+        [nom_journal.trim(), dateParutionCalculee, imageUrlFinale, descFinale]
+      );
+      row = insertRes.rows[0];
+    }
+
+    res.json({
+      success: true,
+      une: {
+        ...row,
+        url_image: row.image_url,
+        titre_principal: row.description,
+      },
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

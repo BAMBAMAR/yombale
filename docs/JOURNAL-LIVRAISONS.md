@@ -1,5 +1,15 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Diagnostic Kiosque des Unes & Correctif Schéma Admin (Session 2026-10-05 - Suite 5, branche `feature/surga`)** :
+  * **Demande Utilisateur** : « D'où viennent les unes ? C'est pas à jour ».
+  * **Analyse d'Origine & Diagnostic** :
+    - Les Unes du Kiosque proviennent de la table PostgreSQL `surga_unes_presse` (`id`, `nom_journal`, `date_parution`, `image_url`, `description`), initialisée avec 10 quotidiens par défaut pointant vers des captures locales sous `public/surga/unes/` (`lesoleil.jpg`, `observateur.jpg`, etc.).
+    - Ce n'est pas à jour car il n'existait pas de robot scraper d'images quotidien automatique (contrairement aux dépêches du briefing matinal issues des flux RSS de `rss-collector.js`).
+    - L'interface d'administration `/admin/surga` présentait un décalage de schéma (`url_image` vs `image_url`, types d'ID UUID, colonnes superflues) empêchant la publication manuelle fluide.
+  * **Correctifs Appliqués** :
+    - `backend/routes/admin-surga.js` : Alignement strict avec la table `surga_unes_presse` (support bidirectionnel `image_url` et `url_image`, upsert sécurisé sans conflit de type).
+    - `frontend-next/src/app/admin/surga/components/AdminUnesTab.tsx` : Tolérance `url_image || image_url` pour l'affichage et la saisie.
+
 - **Surga Identité de Marque Dépositaire, Symbole Vectoriel S, Pack PWA & Design System Décloisonné (Session 2026-10-05 - Suite 4, branche `feature/surga`)** :
   * **Demande & Objectif Stratégique** :
     - Dotation complète de Surga de sa propre identité de marque souveraine : directeur artistique, designer UI/UX, designer de logo, expert branding et design system mobile-first PWA.
