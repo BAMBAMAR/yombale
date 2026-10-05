@@ -43,6 +43,12 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Assainissement Console Dev & Autorisation Geolocation Permissions-Policy (Session 2026-10-05, branche `feature/surga`)** :
+  - *Éradication du Flood de Logs CSP Report-Only en Dev* : Conditionnement de l'en-tête `Content-Security-Policy-Report-Only` (AUD-149) à `!isDev` dans `src/middleware.ts`. En développement local, Next.js utilise intensivement `eval()` pour le Fast Refresh et les sourcemaps, ce qui spammait des centaines d'avertissements de rapport en console sans aucun impact fonctionnel.
+  - *Déblocage de l'API Geolocation dans Permissions-Policy* : Remplacement de `geolocation=()` par `geolocation=(self)` dans les en-têtes HTTP de sécurité, autorisant les navigateurs modernes (Chrome, Safari, Edge) à exécuter `navigator.geolocation.getCurrentPosition` pour la météo GPS.
+  - *Correction du Scope Web App Manifest PWA (`surga/manifest.json`)* : Alignement de `"scope": "/surga"` sur `"start_url": "/surga"`, supprimant l'avertissement Chrome `Manifest: property 'scope' ignored. Start url should be within scope of scope URL`.
+  - *Validation* : 100% tests vitest CSP et 98/98 tests Jest unitaires passés.
+
 - **Sélection de Localité & Géolocalisation GPS dans la Carte Météo & Marées Surga (Session 2026-10-05, branche `feature/surga`)** :
   - **Sélecteur de Localité Multi-Quartiers & Régions du Sénégal** :
     - *Catalogue exhaustif de 23 localités* : 8 quartiers stratégiques de Dakar (Plateau, Almadies / Ngor, Ouakam / Mamelles, Yoff / Ouest-Foire, Mermoz / Sacré-Cœur, Parcelles Assainies, Grand Dakar / Colobane), 4 communes de la banlieue dakaroise (Pikine, Guédiawaye, Rufisque, Diamniadio) et 11 villes régionales (Thiès, Mbour / Saly, Saint-Louis, Ziguinchor, Cap Skirring, Touba, Kaolack, Fatick, Tambacounda, Kolda, Matam).
