@@ -33,6 +33,15 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   experimental: {
+    allowedDevOrigins: [
+      'localhost',
+      'localhost:3000',
+      'localhost:3001',
+      'surga.localhost',
+      'surga.localhost:3001',
+      '127.0.0.1:3000',
+      '127.0.0.1:3001',
+    ],
     serverActions: {
       allowedOrigins: [
         'nopalou.com',
@@ -40,6 +49,7 @@ const nextConfig = {
         'm.nopalou.com',
         'app.nopalou.com',
         'admin.nopalou.com',
+        'surga.nopalou.com',
         'nopalou-frontend.onrender.com',
         'nopalou-backend.onrender.com',
         'yombale-frontend.onrender.com',
@@ -47,6 +57,8 @@ const nextConfig = {
         'localhost',
         'localhost:3000',
         'localhost:3001',
+        'surga.localhost',
+        'surga.localhost:3001',
         '127.0.0.1:3000',
         '127.0.0.1:3001',
       ],
