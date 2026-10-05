@@ -27,7 +27,8 @@ ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant 
   - **Intégration & Harmonisation Frontend** :
     - Mise à jour du Web App Manifest (`public/surga/manifest.json`) avec `theme_color: #0F172A` et icônes officielles Surga.
     - Mise à jour de `layout.tsx` (OpenGraph, Twitter, favicon SVG, themeColor).
-    - Remplacement de l'icône IA Sparkles dans `SurgaHeader.tsx` par le véritable symbole vectoriel Surga et typographie du wordmark.
+    - Remplacement de l'icône IA Sparkles dans `SurgaHeader.tsx` par le véritable symbole vectoriel Surga et typographie du wordmark SURGA.
+    - **Correction critique d'isolation CSS (`surga.css`)** : la règle `body:has(.surga-root) header[role="banner"]` masquait par erreur le propre header de Surga. Exclusion de `.surga-header` (`:not(.surga-header)`) et application de `display: flex !important;` avec logo-wrap squircle 38×38 px pour un affichage éclatant en tête d'écran.
     - Mise à jour de `surga.css` (tokens officiels, dégradé ambre sur le FAB micro et boutons, fond blanc brume `#F8FAFC`).
     - Nettoyage des étoiles IA dans `SurgaLandingHero.tsx`.
   - **Document de Passation Dédié (`docs/surga/HANDOVER_IDENTITE_SURGA.md`)**.
