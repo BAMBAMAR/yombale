@@ -232,8 +232,8 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(parserIntentionWhatsApp('').intention).toBe('INCONNU');
     });
 
-    test('Quota gratuit fixé à 20 commandes par jour', () => {
-      expect(QUOTA_JOURNALIER_GRATUIT).toBe(20);
+    test('Quota gratuit fixé à 2 commandes par jour sur WhatsApp (protection coûts)', () => {
+      expect(QUOTA_JOURNALIER_GRATUIT).toBe(2);
     });
 
     test('Catégorisation intelligente par mots-clés', () => {
@@ -303,6 +303,14 @@ describe('Module Surga — Tranches 1 & 2', () => {
     test('Phrase hors périmètre marquée comme INCONNU', () => {
       const action = interpreterCommandeVocale('bonjour comment allez-vous aujourd’hui');
       expect(action.intention).toBe('INCONNU');
+    });
+
+    test('Le routeur audio expose l’endpoint POST /audio/interpret pour l’interprétation vocale', () => {
+      const audioRouter = require('../../backend/routes/surga/audio');
+      const routeInterpret = audioRouter.stack.find(
+        (s) => s.route && s.route.path === '/audio/interpret' && s.route.methods.post
+      );
+      expect(routeInterpret).toBeDefined();
     });
   });
 
@@ -1275,8 +1283,9 @@ describe('Module Surga — Tranches 1 & 2', () => {
       supprimerDonneesUtilisateur,
     } = require('../../backend/services/surga/donnees-service');
 
-    test('L export de données requiert une identification (userId ou phone)', async () => {
+    test('L export de données requiert une identification stricte par userId authentifié', async () => {
       await expect(exporterDonneesUtilisateur({})).rejects.toThrow();
+      await expect(exporterDonneesUtilisateur({ phone: '221770000000' })).rejects.toThrow();
     });
 
     test('L export de données génère une structure complète et conforme', async () => {
@@ -1292,11 +1301,12 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(Array.isArray(exportTest.abonnements)).toBe(true);
     });
 
-    test('La suppression de données requiert une identification (userId ou phone)', async () => {
+    test('La suppression de données requiert une identification stricte par userId authentifié', async () => {
       await expect(supprimerDonneesUtilisateur({})).rejects.toThrow();
+      await expect(supprimerDonneesUtilisateur({ phone: '221770000000' })).rejects.toThrow();
     });
 
-    test('Le routeur REST des données personnelles expose les endpoints requis', () => {
+    test('Le routeur REST des données personnelles expose les endpoints requis protégés', () => {
       const donneesRouter = require('../../backend/routes/surga/donnees');
       expect(donneesRouter).toBeDefined();
 

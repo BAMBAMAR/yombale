@@ -58,11 +58,16 @@ const STORAGE_KEY_AGENDA = 'surga_offline_agenda'
 
 
 export function genererId(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
   }
-  return 'srg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9)
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
+
 
 export function getLocalNotes(): SurgaNote[] {
   if (typeof window === 'undefined') return []
@@ -279,9 +284,15 @@ export async function synchroniserSurga(): Promise<boolean> {
   if (notesNonSync.length === 0 && depensesNonSync.length === 0 && agendaNonSync.length === 0) return true
 
   try {
+    const token = localStorage.getItem('nopalou_session') || localStorage.getItem('token')
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const res = await fetch('/api/surga/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         notes: notesNonSync,
         depenses: depensesNonSync,
@@ -293,11 +304,17 @@ export async function synchroniserSurga(): Promise<boolean> {
     const data = await res.json()
 
     if (data.success) {
+      const idMappings = data.id_mappings || {}
+
       if (Array.isArray(data.notes)) {
         const mergedNotes = data.notes.map((n: SurgaNote) => ({ ...n, synced: true }))
         setLocalNotes(mergedNotes)
       } else {
-        const notes = getLocalNotes().map((n) => ({ ...n, synced: true }))
+        const notes = getLocalNotes().map((n) => ({
+          ...n,
+          id: idMappings[n.id] || n.id,
+          synced: true,
+        }))
         setLocalNotes(notes)
       }
 
@@ -305,7 +322,11 @@ export async function synchroniserSurga(): Promise<boolean> {
         const mergedDepenses = data.depenses.map((d: SurgaDepense) => ({ ...d, synced: true }))
         setLocalDepenses(mergedDepenses)
       } else {
-        const depenses = getLocalDepenses().map((d) => ({ ...d, synced: true }))
+        const depenses = getLocalDepenses().map((d) => ({
+          ...d,
+          id: idMappings[d.id] || d.id,
+          synced: true,
+        }))
         setLocalDepenses(depenses)
       }
 
@@ -313,7 +334,11 @@ export async function synchroniserSurga(): Promise<boolean> {
         const mergedAgenda = data.agenda.map((a: SurgaEvenement) => ({ ...a, synced: true }))
         setLocalAgenda(mergedAgenda)
       } else {
-        const agenda = getLocalAgenda().map((a) => ({ ...a, synced: true }))
+        const agenda = getLocalAgenda().map((a) => ({
+          ...a,
+          id: idMappings[a.id] || a.id,
+          synced: true,
+        }))
         setLocalAgenda(agenda)
       }
       return true

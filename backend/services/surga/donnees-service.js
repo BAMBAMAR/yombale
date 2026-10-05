@@ -7,14 +7,26 @@ const { pool } = require('../../models/db');
 /**
  * Exporte l'intégralité des données personnelles liées à un utilisateur Surga
  */
-async function exporterDonneesUtilisateur({ userId, phone }) {
-  if (!userId && !phone) {
-    throw new Error('Identifiant utilisateur ou numéro de téléphone requis.');
+async function exporterDonneesUtilisateur({ userId }) {
+  if (!userId) {
+    throw new Error('Identifiant utilisateur requis.');
+  }
+
+  let phone = null;
+  if (pool) {
+    try {
+      const userRes = await pool.query('SELECT telephone FROM utilisateurs WHERE id = $1', [userId]);
+      if (userRes.rows.length > 0) {
+        phone = userRes.rows[0].telephone;
+      }
+    } catch (e) {
+      console.warn('[SURGA DONNEES SERVICE]: Impossible de récupérer le téléphone', e.message);
+    }
   }
 
   const exportGlobal = {
     date_export: new Date().toISOString(),
-    utilisateur_id: userId || null,
+    utilisateur_id: userId,
     telephone: phone || null,
     preferences: null,
     notes: [],
@@ -129,9 +141,21 @@ async function exporterDonneesUtilisateur({ userId, phone }) {
 /**
  * Supprime de façon irréversible et complète l'intégralité des données personnelles de l'utilisateur
  */
-async function supprimerDonneesUtilisateur({ userId, phone }) {
-  if (!userId && !phone) {
-    throw new Error('Identifiant utilisateur ou numéro de téléphone requis pour la suppression.');
+async function supprimerDonneesUtilisateur({ userId }) {
+  if (!userId) {
+    throw new Error('Identifiant utilisateur requis pour la suppression.');
+  }
+
+  let phone = null;
+  if (pool) {
+    try {
+      const userRes = await pool.query('SELECT telephone FROM utilisateurs WHERE id = $1', [userId]);
+      if (userRes.rows.length > 0) {
+        phone = userRes.rows[0].telephone;
+      }
+    } catch (e) {
+      console.warn('[SURGA PURGE SERVICE]: Impossible de récupérer le téléphone', e.message);
+    }
   }
 
   const resultats = {

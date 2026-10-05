@@ -5,7 +5,8 @@
 
 let pool = null;
 try {
-  pool = require('../../db');
+  const dbModule = require('../../models/db');
+  pool = dbModule.pool || dbModule;
 } catch {
   // Mode offline ou test unitaire
 }

@@ -5,7 +5,8 @@
 
 let pool = null;
 try {
-  pool = require('../../db');
+  const dbModule = require('../../models/db');
+  pool = dbModule.pool || dbModule;
 } catch {
   // Mode offline ou test unitaire
 }
@@ -472,26 +473,30 @@ async function creerAlerteImmo(donnees) {
   const prixMaxPropre = prixMax ? Math.max(0, parseInt(prixMax, 10)) : null;
 
   if (pool) {
-    const res = await pool.query(
-      `INSERT INTO surga_alertes_immo (
-         user_id, phone, titre, type_bien, transaction, ville, quartier,
-         prix_max_xof, prix_min_xof, meuble, actif
-       )
-       VALUES ($1, $2, $3, $4, $5, 'Dakar', $6, $7, $8, $9, TRUE)
-       RETURNING *`,
-      [
-        userId || null,
-        phone || null,
-        titrePropre,
-        typeBien,
-        transaction,
-        quartierPropre,
-        prixMaxPropre,
-        prixMin || 0,
-        meuble,
-      ]
-    );
-    return res.rows[0];
+    try {
+      const res = await pool.query(
+        `INSERT INTO surga_alertes_immo (
+           user_id, phone, titre, type_bien, transaction, ville, quartier,
+           prix_max_xof, prix_min_xof, meuble, actif
+         )
+         VALUES ($1, $2, $3, $4, $5, 'Dakar', $6, $7, $8, $9, TRUE)
+         RETURNING *`,
+        [
+          userId || null,
+          phone || null,
+          titrePropre,
+          typeBien,
+          transaction,
+          quartierPropre,
+          prixMaxPropre,
+          prixMin || 0,
+          meuble,
+        ]
+      );
+      if (res.rows.length > 0) return res.rows[0];
+    } catch (dbErr) {
+      console.warn('[SurgaImmo] Erreur DB alerte immo, fallback mémoire:', dbErr.message);
+    }
   }
 
   return {

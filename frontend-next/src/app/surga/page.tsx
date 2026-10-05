@@ -18,6 +18,7 @@ import SurgaConcoursDashboardCard from './components/SurgaConcoursDashboardCard'
 import SurgaPlacesDashboardCard from './components/SurgaPlacesDashboardCard'
 import SurgaParametresTab from './components/SurgaParametresTab'
 import SurgaModalsContainer from './components/SurgaModalsContainer'
+import SurgaLandingHero from './components/SurgaLandingHero'
 import {
   getLocalNotes,
   getLocalAgenda,
@@ -45,6 +46,7 @@ interface BriefingApiResponse {
 export default function SurgaPage() {
   const [activeTab, setActiveTab] = useState<SurgaTab>('aujourdhui')
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null)
+  const [afficherFormulaireOnboarding, setAfficherFormulaireOnboarding] = useState<boolean>(false)
   const [preferences, setPreferences] = useState<SurgaPreferencesData | null>(null)
   const [briefingData, setBriefingData] = useState<BriefingApiResponse | null>(null)
   const [loadingBriefing, setLoadingBriefing] = useState<boolean>(false)
@@ -216,20 +218,29 @@ export default function SurgaPage() {
     }
   }
 
-  // Écran de chargement minimal
+  // Écran de chargement et pré-rendu SEO accessible initial
   if (isOnboarded === null) {
     return (
-      <div className="surga-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text2, #5A4E42)' }}>
-          <Sparkles size={28} color="var(--accent, #C75B00)" style={{ animation: 'spin 2s linear infinite' }} />
-          <div style={{ marginTop: 12, fontSize: 15, fontWeight: 600 }}>Chargement de votre Surga...</div>
-        </div>
-      </div>
+      <SurgaLandingHero
+        onDemarrerOnboarding={() => setAfficherFormulaireOnboarding(true)}
+      />
     )
   }
 
-  // Écran Onboarding si non configuré
+  // Écran d'accueil public ou formulaire Onboarding
   if (!isOnboarded) {
+    if (!afficherFormulaireOnboarding) {
+      return (
+        <SurgaLandingHero
+          onDemarrerOnboarding={() => setAfficherFormulaireOnboarding(true)}
+          onIgnorerVersApp={() => handleOnboardingComplete({
+            heure_briefing: '07:30', langue: 'fr', quartiers: ['Plateau'], equipes_suivies: [],
+            audio_actif: false, modules_actifs: ['actualites', 'trafic', 'meteo', 'depenses'], onboarding_termine: true,
+          })}
+        />
+      )
+    }
+
     return (
       <>
         <SurgaHeader titre="Surga" sousTitre="Configuration initiale" />

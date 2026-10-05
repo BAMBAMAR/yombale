@@ -100,7 +100,8 @@ async function recupererUnesDuJour({ limit = 20 } = {}) {
   return UNES_DEFAUT.map((u, idx) => ({
     id: `default_${idx}`,
     ...u,
-    date_parution: new Date().toISOString().slice(0, 10),
+    date_parution: '2025-01-15',
+    est_archive_locale: true,
   }));
 }
 

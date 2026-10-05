@@ -10,6 +10,7 @@ const {
   verifierStatutPremium,
   initierSouscription,
   activerAbonnementParReference,
+  traiterWebhookWaveSurga,
 } = require('../../services/surga/abonnement-service');
 
 /**
@@ -85,7 +86,7 @@ router.post('/abonnements/initier', tokenOptional, async (req, res) => {
 
 /**
  * POST /api/surga/abonnements/verifier
- * Vérifie et active un abonnement suite à un retour de passerelle
+ * Vérifie et active un abonnement suite à un retour de passerelle (certification obligatoire)
  */
 router.post('/abonnements/verifier', async (req, res) => {
   try {
@@ -101,7 +102,7 @@ router.post('/abonnements/verifier', async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Votre souscription a bien été activée avec succès.',
+      message: 'Votre souscription a bien été certifiée et activée avec succès.',
       abonnement: abonnementActive,
     });
   } catch (err) {
@@ -109,4 +110,19 @@ router.post('/abonnements/verifier', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/surga/abonnements/webhook-wave
+ * Webhook officiel Wave pour la validation cryptographique instantanée des abonnements
+ */
+router.post('/abonnements/webhook-wave', async (req, res) => {
+  try {
+    const resultat = await traiterWebhookWaveSurga(req);
+    return res.json(resultat);
+  } catch (err) {
+    console.error('[SURGA ABO WAVE WEBHOOK ERR]:', err.message);
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
+

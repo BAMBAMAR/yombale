@@ -4,7 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { tokenOptional } = require('../../middlewares/auth');
+const { verifierToken } = require('../../middlewares/auth');
 const {
   exporterDonneesUtilisateur,
   supprimerDonneesUtilisateur,
@@ -12,21 +12,20 @@ const {
 
 /**
  * GET /api/surga/donnees/export
- * Téléchargement des données personnelles au format JSON
+ * Téléchargement des données personnelles au format JSON (authentification stricte JWT obligatoire)
  */
-router.get('/donnees/export', tokenOptional, async (req, res) => {
+router.get('/donnees/export', verifierToken, async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const phone = req.query.phone;
 
-    if (!userId && !phone) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
         error: 'Veuillez vous authentifier pour exporter vos données personnelles.',
       });
     }
 
-    const donnees = await exporterDonneesUtilisateur({ userId, phone });
+    const donnees = await exporterDonneesUtilisateur({ userId });
 
     // Envoi sous forme de fichier téléchargeable
     const filename = `surga-donnees-${Date.now()}.json`;
@@ -40,15 +39,14 @@ router.get('/donnees/export', tokenOptional, async (req, res) => {
 
 /**
  * DELETE /api/surga/donnees/supprimer
- * Purge irréversible et complète des données personnelles
+ * Purge irréversible et complète des données personnelles (authentification stricte JWT obligatoire)
  */
-router.delete('/donnees/supprimer', tokenOptional, async (req, res) => {
+router.delete('/donnees/supprimer', verifierToken, async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const phone = req.body?.phone || req.query.phone;
     const confirmation = req.body?.confirmation;
 
-    if (!userId && !phone) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
         error: 'Veuillez vous authentifier pour demander la suppression de vos données.',
@@ -62,7 +60,7 @@ router.delete('/donnees/supprimer', tokenOptional, async (req, res) => {
       });
     }
 
-    const bilan = await supprimerDonneesUtilisateur({ userId, phone });
+    const bilan = await supprimerDonneesUtilisateur({ userId });
 
     return res.json({
       success: true,
@@ -75,3 +73,4 @@ router.delete('/donnees/supprimer', tokenOptional, async (req, res) => {
 });
 
 module.exports = router;
+

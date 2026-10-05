@@ -1,14 +1,17 @@
 // frontend-next/public/surga/sw.js
-// Service Worker dédié à l'application Surga (scope: /surga/)
+// Service Worker dédié à l'application Surga (compatible scope / ou /surga/)
 // Cache Low-Data & Support Hors-Ligne
 
-const SURGA_CACHE_NAME = 'surga-pwa-v1';
+const SURGA_CACHE_NAME = 'surga-pwa-v2';
 const STATIC_ASSETS = [
+  '/',
   '/surga',
   '/surga/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];
+
+const isSubdomain = self.location.hostname.startsWith('surga.');
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -37,8 +40,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Ne gérer que les requêtes dans le scope /surga
-  if (!url.pathname.startsWith('/surga')) {
+  // Gérer si sous-domaine surga.* OU chemin /surga
+  const isSurgaScope = isSubdomain || url.pathname.startsWith('/surga');
+  if (!isSurgaScope) {
     return;
   }
 
@@ -62,8 +66,11 @@ self.addEventListener('fetch', (event) => {
       .catch(async () => {
         const cached = await caches.match(event.request);
         if (cached) return cached;
-        // Si document HTML, fallback sur la page racine de surga
+        // Si document HTML, fallback sur la page racine de surga ou racine sous-domaine
         if (event.request.mode === 'navigate') {
+          const fallbackUrl = isSubdomain ? '/' : '/surga';
+          const matchFallback = await caches.match(fallbackUrl);
+          if (matchFallback) return matchFallback;
           return caches.match('/surga');
         }
         return new Response('Contenu indisponible hors-ligne', {

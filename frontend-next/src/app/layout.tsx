@@ -318,6 +318,10 @@ export default async function RootLayout({
         <VoiceConsentHost />
         <WebVitals />
 
+        <Suspense fallback={null}>
+          <UtmTracker />
+        </Suspense>
+
         {!isSurga && (
           <>
             <DrawerCart />
@@ -328,9 +332,6 @@ export default async function RootLayout({
             <FavToast />
             <Suspense fallback={null}>
               <VerifyEmailToast />
-            </Suspense>
-            <Suspense fallback={null}>
-              <UtmTracker />
             </Suspense>
 
         <footer className="site-footer">

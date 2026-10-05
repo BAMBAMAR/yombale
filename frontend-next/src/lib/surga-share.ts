@@ -2,7 +2,7 @@
 // Moteur de partage et génération des liens WhatsApp pour Surga
 // Web Share API, liens WhatsApp directs, zéro émoji, vouvoiement strict
 
-export const SURGA_BASE_URL = 'https://nopalou.com/surga';
+export const SURGA_BASE_URL = process.env.NEXT_PUBLIC_SURGA_URL || 'https://surga.nopalou.com';
 
 export interface PartagePayload {
   titre: string;

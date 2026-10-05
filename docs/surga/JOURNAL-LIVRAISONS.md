@@ -3,6 +3,55 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05] — Finalisation Technique Surga, Clôture des 17 Remédiations (P0/P1/P2) & Verdict GO Production
+- **Tâches complétées :**
+  - **P0 — Sécurité Anti-IDOR & Robustesse Données** :
+    - Forçage strict de `verifierToken` sur l'export et la suppression de données personnelles (`/api/surga/donnees/*`) sans paramètre `?phone=`.
+    - Sécurisation cryptographique des abonnements Wave via session synchrone `getCheckoutSession` et webhook HMAC obligatoire (`/api/surga/abonnements/webhook-wave`).
+    - Polyfill RFC4122 v4 UUID en frontend et fonction de normalisation `assurerUUID` avec `id_mappings` pour éradiquer le crash 500 SQL 22P02.
+    - Provisioning automatique de compte utilisateur sur WhatsApp pour éviter la perte silencieuse de données.
+  - **P1 — Reconnexion Base, Seed & Découplage** :
+    - Reconnexion des 4 services métier (`immo`, `concours`, `places`, `trafic`) au pool PostgreSQL réel (`backend/models/db`).
+    - Création du script de seed idempotent `scripts/seed-surga-data.js` pour initialiser les axes de Dakar, concours et adresses.
+    - Ajout de l'URL Surga dans `frontend-next/src/app/sitemap.ts` (priorité 0.95).
+    - Activation universelle d'UtmTracker pour Surga et fixation de `SURGA_BASE_URL` sur `https://surga.nopalou.com`.
+    - Création du composant d'accueil public accessible `SurgaLandingHero.tsx` avec balise H1 sémantique.
+    - Routage des vocaux WhatsApp Surga découplé des boutons du catalogue e-commerce Nopalou.
+    - Plafonnement du quota gratuit WhatsApp à 2 commandes/jour avec incitation Surga Premium (Web/PWA illimitée).
+  - **P2 — Performance & Modularisation (< 450 lignes)** :
+    - Ajout du lien canonical et du schéma JSON-LD `SoftwareApplication` dans `frontend-next/src/app/surga/layout.tsx`.
+    - Découpage du bundle JS initial par conversion des 12 modales en chunks dynamiques `next/dynamic` (`ssr: false`).
+    - Modularisation de `SurgaImmoModal.tsx` (374 l.) via `SurgaImmoAlertesTab.tsx` et `SurgaImmoFilterBar.tsx`.
+    - Modularisation de `SurgaPremiumModal.tsx` (427 l.) via `SurgaPremiumAvantages.tsx`.
+    - Service Worker et `SurgaSwRegister.tsx` adaptés pour intercepter la racine `/` sur le sous-domaine `surga.nopalou.com` avec en-tête `Service-Worker-Allowed: /`.
+    - Automatisation de la collecte RSS toutes les 30 min via `backend/services/cron-surga-rss.js` et dates de secours figées en archives locales véridiques.
+    - Élimination des chiffres arbitraires dans les statistiques admin de Surga et correction des requêtes `COUNT(*)`.
+    - Exposition de la route REST `POST /api/surga/audio/interpret` pour l'analyse vocale déterministe.
+    - Suppression du blocage `userScalable: false` pour assurer l'accessibilité du zoom tactile.
+  - **Validation & Tests** :
+    - Tests Jest Surga : **92/92 passés (100%)**.
+    - Tests frontend Next.js : **97/97 passés (100%)**.
+    - Typage TypeScript : **0 erreur (`npx tsc --noEmit`)**.
+    - Respect strict des 5 règles d'or Anti-AI-Slop (0 émojis UI, tokens officiels, < 450 lignes).
+    - **Décision Finale** : **GO POUR LA MISE EN PRODUCTION**.
+- **Fichiers modifiés/créés :**
+  - `backend/routes/surga/donnees.js`, `backend/services/surga/donnees-service.js`
+  - `backend/routes/surga/abonnements.js`, `backend/services/surga/abonnement-service.js`, `backend/services/wave.js`
+  - `frontend-next/src/lib/surga-offline-sync.ts`, `backend/routes/surga/sync.js`
+  - `backend/services/surga/whatsapp-handler.js`, `backend/services/whatsapp-chatbot.js`
+  - `backend/services/surga/immo-service.js`, `concours-service.js`, `places-service.js`, `trafic-service.js`
+  - `backend/services/surga/rss-collector.js`, `kiosque-service.js`, `backend/services/cron-surga-rss.js`, `backend/app.js`
+  - `backend/routes/admin-surga.js`, `backend/routes/surga/audio.js`
+  - `frontend-next/src/app/sitemap.ts`, `frontend-next/src/app/layout.tsx`, `frontend-next/src/lib/surga-share.ts`
+  - `frontend-next/src/app/surga/layout.tsx`, `frontend-next/src/app/surga/page.tsx`
+  - `frontend-next/src/app/surga/components/SurgaLandingHero.tsx`
+  - `frontend-next/src/app/surga/components/SurgaModalsContainer.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoModal.tsx`, `SurgaImmoAlertesTab.tsx`, `SurgaImmoFilterBar.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPremiumModal.tsx`, `SurgaPremiumAvantages.tsx`
+  - `frontend-next/public/surga/sw.js`, `frontend-next/src/app/surga/components/SurgaSwRegister.tsx`, `frontend-next/next.config.js`
+  - `scripts/seed-surga-data.js`, `tests/unit/surga.test.js`
+  - `docs/surga/PLAN_EXECUTION_FINAL_SURGA.md`, `docs/surga/VALIDATION_FINALE_SURGA.md`
+
 ### [2026-10-04] — Détachement Total de l'Interface Web & Support Sous-Domaine (`surga.nopalou.com`)
 - **Tâches complétées :**
   - **Omission SSR Totale dans le Root Layout (`frontend-next/src/app/layout.tsx`)** :

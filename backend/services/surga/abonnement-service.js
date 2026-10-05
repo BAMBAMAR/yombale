@@ -230,9 +230,10 @@ async function initierSouscription({ userId, phone, planKey, cycle = 'mensuel', 
 }
 
 /**
- * Valide et active un abonnement à réception de confirmation Wave/OM
+ * Valide et active un abonnement suite à une vérification certifiée auprès de Wave/OM
+ * Interdiction absolue d'activer sans preuve cryptographique ou synchrone de paiement réussi.
  */
-async function activerAbonnementParReference(referencePaiement) {
+async function activerAbonnementParReference(referencePaiement, options = {}) {
   if (!referencePaiement) {
     throw new Error('Référence de paiement manquante.');
   }
@@ -247,6 +248,48 @@ async function activerAbonnementParReference(referencePaiement) {
   }
 
   const sub = rows[0];
+
+  // Si l'abonnement est déjà actif et non expiré
+  if (sub.statut === 'actif' && sub.fin && new Date(sub.fin) > new Date()) {
+    return sub;
+  }
+
+  // 1. Validation selon la provenance
+  if (options.provenance === 'webhook_wave') {
+    // Validé via webhook signé cryptographiquement HMAC
+    console.log(`[SURGA ABO WAVE WEBHOOK OK] Activation de la souscription ${referencePaiement}`);
+  } else {
+    // 2. Vérification synchrone auprès de la passerelle
+    if (sub.provider === 'wave') {
+      if (!sub.session_id) {
+        throw new Error('Identifiant de session Wave manquant pour vérifier le paiement.');
+      }
+
+      try {
+        const waveSession = await wave.getCheckoutSession(sub.session_id);
+        const estPaye =
+          waveSession.checkout_status === 'complete' ||
+          waveSession.payment_status === 'succeeded';
+
+        if (!estPaye) {
+          throw new Error(
+            `Le paiement Wave n'est pas encore finalisé (statut actuel: ${waveSession.checkout_status || waveSession.payment_status || 'en attente'}).`
+          );
+        }
+      } catch (err) {
+        console.error('[SURGA ABO WAVE VERIFY ERR]:', err.message);
+        throw new Error(
+          err.message.includes('statut actuel')
+            ? err.message
+            : 'Impossible de certifier le règlement auprès de Wave. Veuillez réessayer.'
+        );
+      }
+    } else {
+      // Pour tout autre provider sans webhook validé
+      throw new Error('Preuve de règlement manquante ou passerelle non confirmée.');
+    }
+  }
+
   const dateDebut = new Date();
   const jours = sub.cycle === 'annuel' ? 365 : 30;
   const dateFin = new Date(dateDebut.getTime() + jours * 24 * 60 * 60 * 1000);
@@ -263,6 +306,49 @@ async function activerAbonnementParReference(referencePaiement) {
   );
 
   return updateRes.rows[0];
+}
+
+/**
+ * Traite le webhook officiel Wave avec contrôle strict de la signature HMAC
+ */
+async function traiterWebhookWaveSurga(req) {
+  const signatureValide = wave.verifyWebhookSignature(req);
+  if (!signatureValide) {
+    throw new Error('Signature du webhook Wave invalide ou expirée.');
+  }
+
+  const event = req.body;
+  if (!event || event.type !== 'checkout.session.completed') {
+    return { ignore: true, reason: 'Événement non pertinent pour abonnement' };
+  }
+
+  const sessionData = event.data || {};
+  const clientRef = sessionData.client_reference;
+  const sessionId = sessionData.id;
+
+  if (!clientRef && !sessionId) {
+    throw new Error('Données de référence introuvables dans le webhook Wave.');
+  }
+
+  let ref = clientRef;
+  if (!ref && sessionId) {
+    const { rows } = await pool.query(
+      'SELECT reference_paiement FROM surga_abonnements WHERE session_id = $1 LIMIT 1',
+      [sessionId]
+    );
+    ref = rows[0]?.reference_paiement;
+  }
+
+  if (!ref) {
+    throw new Error(`Aucun abonnement Surga correspondant à la session ${sessionId}.`);
+  }
+
+  const abonnementActive = await activerAbonnementParReference(ref, {
+    provenance: 'webhook_wave',
+    waveSessionData: sessionData,
+  });
+
+  return { success: true, abonnement: abonnementActive };
 }
 
 /**
@@ -354,6 +440,8 @@ module.exports = {
   verifierStatutPremium,
   initierSouscription,
   activerAbonnementParReference,
+  traiterWebhookWaveSurga,
   getStatistiquesFinancieresAdmin,
   listerAbonnementsAdmin,
 };
+

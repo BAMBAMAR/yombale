@@ -1,18 +1,21 @@
 'use client'
 
 import React from 'react'
-import SurgaCalculatorModal from './SurgaCalculatorModal'
-import SurgaVoiceModal from './SurgaVoiceModal'
-import SurgaPresseView from './SurgaPresseView'
-import SurgaPodcastModal from './SurgaPodcastModal'
-import SurgaRadioModal from './SurgaRadioModal'
-import SurgaTraficModal from './SurgaTraficModal'
-import SurgaImmoModal from './SurgaImmoModal'
-import SurgaConcoursModal from './SurgaConcoursModal'
-import SurgaPlacesModal from './SurgaPlacesModal'
-import SurgaPremiumModal from './SurgaPremiumModal'
-import SurgaProModal from './SurgaProModal'
-import SurgaDonneesModal from './SurgaDonneesModal'
+import dynamic from 'next/dynamic'
+
+// Optimisation Bundle Initial : Chargement à la demande (lazy-loading / code splitting)
+const SurgaCalculatorModal = dynamic(() => import('./SurgaCalculatorModal'), { ssr: false })
+const SurgaVoiceModal = dynamic(() => import('./SurgaVoiceModal'), { ssr: false })
+const SurgaPresseView = dynamic(() => import('./SurgaPresseView'), { ssr: false })
+const SurgaPodcastModal = dynamic(() => import('./SurgaPodcastModal'), { ssr: false })
+const SurgaRadioModal = dynamic(() => import('./SurgaRadioModal'), { ssr: false })
+const SurgaTraficModal = dynamic(() => import('./SurgaTraficModal'), { ssr: false })
+const SurgaImmoModal = dynamic(() => import('./SurgaImmoModal'), { ssr: false })
+const SurgaConcoursModal = dynamic(() => import('./SurgaConcoursModal'), { ssr: false })
+const SurgaPlacesModal = dynamic(() => import('./SurgaPlacesModal'), { ssr: false })
+const SurgaPremiumModal = dynamic(() => import('./SurgaPremiumModal'), { ssr: false })
+const SurgaProModal = dynamic(() => import('./SurgaProModal'), { ssr: false })
+const SurgaDonneesModal = dynamic(() => import('./SurgaDonneesModal'), { ssr: false })
 
 interface SurgaModalsContainerProps {
   isCalcOpen: boolean
@@ -87,61 +90,85 @@ export default function SurgaModalsContainer({
 }: SurgaModalsContainerProps) {
   return (
     <>
-      <SurgaCalculatorModal
-        isOpen={isCalcOpen}
-        onClose={onCloseCalc}
-        onInjectMontant={onInjectMontantCalc}
-      />
-      <SurgaVoiceModal
-        isOpen={isVoiceOpen}
-        onClose={onCloseVoice}
-        onConfirmerDepense={onConfirmerVoiceDepense}
-        onConfirmerNote={onConfirmerVoiceNote}
-        onConfirmerRappel={onConfirmerVoiceRappel}
-      />
-      <SurgaPresseView
-        isOpen={isPresseOpen}
-        onClose={onClosePresse}
-        onOpenRadios={onOpenRadioFromPresse}
-      />
-      <SurgaPodcastModal
-        isOpen={isPodcastOpen}
-        onClose={onClosePodcast}
-      />
-      <SurgaRadioModal
-        isOpen={isRadioOpen}
-        onClose={onCloseRadio}
-      />
-      <SurgaTraficModal
-        isOpen={isTraficOpen}
-        onClose={onCloseTrafic}
-      />
-      <SurgaImmoModal
-        isOpen={isImmoOpen}
-        onClose={onCloseImmo}
-      />
-      <SurgaConcoursModal
-        isOpen={isConcoursOpen}
-        onClose={onCloseConcours}
-      />
-      <SurgaPlacesModal
-        isOpen={isPlacesOpen}
-        onClose={onClosePlaces}
-      />
-      <SurgaPremiumModal
-        isOpen={isPremiumOpen}
-        onClose={onClosePremium}
-        onAbonnementActive={onAbonnementActive}
-      />
-      <SurgaProModal
-        isOpen={isProOpen}
-        onClose={onClosePro}
-      />
-      <SurgaDonneesModal
-        isOpen={isDonneesOpen}
-        onClose={onCloseDonnees}
-        onDonneesSupprimees={onDonneesSupprimees}
-      />
+      {isCalcOpen && (
+        <SurgaCalculatorModal
+          isOpen={isCalcOpen}
+          onClose={onCloseCalc}
+          onInjectMontant={onInjectMontantCalc}
+        />
+      )}
+      {isVoiceOpen && (
+        <SurgaVoiceModal
+          isOpen={isVoiceOpen}
+          onClose={onCloseVoice}
+          onConfirmerDepense={onConfirmerVoiceDepense}
+          onConfirmerNote={onConfirmerVoiceNote}
+          onConfirmerRappel={onConfirmerVoiceRappel}
+        />
+      )}
+      {isPresseOpen && (
+        <SurgaPresseView
+          isOpen={isPresseOpen}
+          onClose={onClosePresse}
+          onOpenRadios={onOpenRadioFromPresse}
+        />
+      )}
+      {isPodcastOpen && (
+        <SurgaPodcastModal
+          isOpen={isPodcastOpen}
+          onClose={onClosePodcast}
+        />
+      )}
+      {isRadioOpen && (
+        <SurgaRadioModal
+          isOpen={isRadioOpen}
+          onClose={onCloseRadio}
+        />
+      )}
+      {isTraficOpen && (
+        <SurgaTraficModal
+          isOpen={isTraficOpen}
+          onClose={onCloseTrafic}
+        />
+      )}
+      {isImmoOpen && (
+        <SurgaImmoModal
+          isOpen={isImmoOpen}
+          onClose={onCloseImmo}
+        />
+      )}
+      {isConcoursOpen && (
+        <SurgaConcoursModal
+          isOpen={isConcoursOpen}
+          onClose={onCloseConcours}
+        />
+      )}
+      {isPlacesOpen && (
+        <SurgaPlacesModal
+          isOpen={isPlacesOpen}
+          onClose={onClosePlaces}
+        />
+      )}
+      {isPremiumOpen && (
+        <SurgaPremiumModal
+          isOpen={isPremiumOpen}
+          onClose={onClosePremium}
+          onAbonnementActive={onAbonnementActive}
+        />
+      )}
+      {isProOpen && (
+        <SurgaProModal
+          isOpen={isProOpen}
+          onClose={onClosePro}
+        />
+      )}
+      {isDonneesOpen && (
+        <SurgaDonneesModal
+          isOpen={isDonneesOpen}
+          onClose={onCloseDonnees}
+          onDonneesSupprimees={onDonneesSupprimees}
+        />
+      )}
     </>
   )
 }

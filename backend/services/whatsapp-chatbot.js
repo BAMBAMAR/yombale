@@ -2291,6 +2291,28 @@ async function handleIncomingInternal(msg) {
           : `Consigne vocale: ${audioUrl}`;
       }
       await setSession(phone, state || 'IDLE', updatedContext);
+    // 0. Détection prioritaire Surga (utilisateur en flux Surga ou avec session active)
+    if (!state?.startsWith('COMMANDE_') && !context?.boutique_id) {
+      let estSessionSurga = false;
+      try {
+        const poolDb = require('../models/db').pool;
+        if (poolDb) {
+          const sRes = await poolDb.query(
+            'SELECT phone FROM surga_whatsapp_sessions WHERE phone = $1',
+            [phone]
+          );
+          if (sRes.rows.length > 0) estSessionSurga = true;
+        }
+      } catch {}
+
+      if (estSessionSurga) {
+        await sendWhatsAppText(
+          phone,
+          `Surga : Votre note vocale a bien été reçue. Surga traite actuellement vos commandes par message écrit sur WhatsApp.\n\n` +
+          `Veuillez taper votre demande (ex: "Note 3500 repas", "Calcule 100 / 3", "Rappelle-moi demain à 8h") ou utiliser la reconnaissance vocale directement dans votre application : https://surga.nopalou.com`
+        );
+        return;
+      }
     }
 
     // 1. Détection Commerçant (Boutique Yombale / Nopalou)

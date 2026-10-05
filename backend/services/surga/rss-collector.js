@@ -82,7 +82,8 @@ const ITEMS_SECOURS = [
     url: 'https://aps.sn/transport-ter-dakar-diamniadio-horaires',
     categorie: 'actualites',
     rubrique_presse: 'societe',
-    published_at: new Date().toISOString(),
+    published_at: '2025-01-15T08:00:00.000Z',
+    est_archive_locale: true,
   },
   {
     source_nom: 'Le Soleil',
@@ -91,7 +92,8 @@ const ITEMS_SECOURS = [
     url: 'https://lesoleil.sn/commerce-digital-pme-senegal',
     categorie: 'actualites',
     rubrique_presse: 'economie',
-    published_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    published_at: '2025-01-15T07:30:00.000Z',
+    est_archive_locale: true,
   },
   {
     source_nom: 'Seneweb',
@@ -100,7 +102,8 @@ const ITEMS_SECOURS = [
     url: 'https://www.seneweb.com/news/Tech/startups-senegal-fintech',
     categorie: 'actualites',
     rubrique_presse: 'tech',
-    published_at: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    published_at: '2025-01-15T07:00:00.000Z',
+    est_archive_locale: true,
   },
   {
     source_nom: 'Sud Quotidien',
@@ -109,7 +112,8 @@ const ITEMS_SECOURS = [
     url: 'https://www.sudquotidien.sn/assemblee-orientations-budget',
     categorie: 'actualites',
     rubrique_presse: 'politique',
-    published_at: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
+    published_at: '2025-01-15T06:30:00.000Z',
+    est_archive_locale: true,
   },
   {
     source_nom: 'Le Quotidien',
@@ -118,7 +122,8 @@ const ITEMS_SECOURS = [
     url: 'https://lequotidien.sn/assainissement-banlieue-dakar',
     categorie: 'actualites',
     rubrique_presse: 'societe',
-    published_at: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+    published_at: '2025-01-15T06:00:00.000Z',
+    est_archive_locale: true,
   },
 ];
 

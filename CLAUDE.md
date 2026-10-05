@@ -43,6 +43,78 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Finalisation Technique Complète de Surga & Décision Finale de Production (Session 2026-10-05, branche `feature/surga`) — VERDICT : GO POUR LA MISE EN PRODUCTION** :
+  - **Résolution Exhaustive des 17 Anomalies Qualifiées (P0 -> P1 -> P2)** selon le protocole strict : *Corriger -> Tester -> Retester -> Régresser -> Documenter -> Valider*.
+  - **P0 — Sécurité Anti-IDOR, Facturation & Fiabilité Données (4/4 Validés)** :
+    - *CORR-P0-01* : Remplacement de `tokenOptional` par `verifierToken` obligatoire sur `/api/surga/donnees/*` et extraction stricte de `req.user.userId` (suppression de la faille `?phone=`). Téléchargement local sécurisé pour les invités hors-ligne dans `SurgaDonneesModal.tsx`.
+    - *CORR-P0-02* : Intégration de `getCheckoutSession(sessionId)` dans `wave.js`. Validation synchrone de l'état `succeeded` et vérification obligatoire de la signature HMAC du webhook Wave (`/api/surga/abonnements/webhook-wave`). Éradication de l'activation gratuite par références forgées.
+    - *CORR-P0-03* : Polyfill RFC4122 v4 UUID dans `surga-offline-sync.ts` et sanitisation `assurerUUID` avec dictionnaire `id_mappings` dans `sync.js`, éliminant définitivement l'erreur SQL 500 `invalid input syntax for type uuid`.
+    - *CORR-P0-04* : Auto-provisioning immédiat du compte utilisateur (`obtenirOuCreerUserId`) sur WhatsApp dans `whatsapp-handler.js` pour empêcher la perte silencieuse de données, et conditionnement de l'accusé de réception à l'écriture effective en base.
+  - **P1 — Pôles Métier, Visibilité & Découplage (6/6 Validés)** :
+    - *CORR-P1-01* : Reconnexion au pool PostgreSQL réel (`backend/models/db`) des 4 services métier (`immo`, `concours`, `places`, `trafic`). Création du script de seed idempotent `scripts/seed-surga-data.js` (9 axes Dakar, 5 concours, 4 adresses).
+    - *CORR-P1-02* : Ajout de l'URL Surga dans `frontend-next/src/app/sitemap.ts` (priorité 0.95, fréquence quotidienne).
+    - *CORR-P1-03* : Couverture universelle d'UtmTracker pour Surga dans `layout.tsx` et mise à jour de `SURGA_BASE_URL` sur `https://surga.nopalou.com`.
+    - *CORR-P1-04* : Création de `SurgaLandingHero.tsx` avec balise H1 sémantique accessible et présentation des 3 piliers aux nouveaux visiteurs.
+    - *CORR-P1-05* : Routage des messages audio Surga dans `whatsapp-chatbot.js` découplé des boutons de catalogue marchands Nopalou.
+    - *CORR-P1-06* : Quota journalier gratuit WhatsApp plafonné à 2 commandes/jour (`QUOTA_JOURNALIER_GRATUIT = 2`) avec invitation vers Surga Premium (1 500 FCFA/mois), l'application Web & PWA restant 100% gratuite et illimitée.
+  - **P2 — Performance, SEO Avancé & Finitions (7/7 Validés)** :
+    - *CORR-P2-01* : Ajout du canonical `https://surga.nopalou.com` et balisage Schema.org JSON-LD `SoftwareApplication` dans `frontend-next/src/app/surga/layout.tsx`.
+    - *CORR-P2-02* : Découpage du bundle JS initial via `next/dynamic` (`ssr: false`) sur l'ensemble des 12 modales secondaires dans `SurgaModalsContainer.tsx`.
+    - *CORR-P2-03* : Service Worker adapté pour intercepter la racine `/` sur le sous-domaine `surga.nopalou.com` avec en-tête `Service-Worker-Allowed: /` et gestion dynamique du scope.
+    - *CORR-P2-04* : Création de `backend/services/cron-surga-rss.js` (collecte toutes les 30 min avec traçabilité dans `cron_executions`) et fixation des dates d'articles de secours en archives locales véridiques.
+    - *CORR-P2-05* : Suppression des chiffres arbitraires dans les statistiques admin de Surga et correction des requêtes SQL `COUNT(*)`.
+    - *CORR-P2-06* : Exposition de la route `POST /api/surga/audio/interpret` dans `backend/routes/surga/audio.js` raccordant le moteur vocal déterministe.
+    - *CORR-P2-07* : Suppression des directives restrictives `userScalable: false` et `maximumScale: 1` pour restaurer le zoom tactile mobile (accessibilité WCAG).
+  - **Modularisation & Qualité Anti-AI-Slop** :
+    - Découpage de `SurgaImmoModal.tsx` (réduit à 374 l.) via `SurgaImmoAlertesTab.tsx` et `SurgaImmoFilterBar.tsx`.
+    - Découpage de `SurgaPremiumModal.tsx` (réduit à 427 l.) via `SurgaPremiumAvantages.tsx`.
+    - 100% des fichiers sous `src/app/surga` sont strictement `< 450` lignes. 0 émoji Unicode dans l'UI (icônes Lucide SVG exclusives).
+  - **Validation & Zéro Régression** :
+    - Tests Jest Surga : **92/92 passés (100%)**.
+    - Tests frontend Next.js : **97/97 passés (100%)**.
+    - Typecheck TypeScript : **0 erreur (`npx tsc --noEmit`)**.
+    - Sanctuarisation absolue : Comparateur Nopalou et Caisse tactile POS 100% intacts.
+  - **Livrables Clés Produits** :
+    - `docs/surga/PLAN_EXECUTION_FINAL_SURGA.md` (Matrice de clôture 17/17 validés).
+    - `docs/surga/VALIDATION_FINALE_SURGA.md` (Rapport technique final et décision GO).
+    - `docs/surga/HANDOVER_FINALISATION_SURGA.md` (Document de passation opérationnelle).
+    - `docs/surga/JOURNAL-LIVRAISONS.md` et `docs/surga/LECONS_APPRISES.md` (Capitalisation).
+
+- **Audit SEO, Marketing, Acquisition, Monétisation, Analytics & Benchmark Final — Agent 4 (Session 2026-10-05, branche `feature/surga`) — CLÔTURE DE LA SÉRIE D'AUDITS** :
+  - **Mission de Clôture Définitive (Agent -1 → 0 → 1 → 2 → 3 → 4)** : Synthèse consolidée et arbitrage de fin de campagne d'audits Surga. Zéro modification de code applicatif pendant l'audit. Analyse empirique par sondes isolées.
+  - **Audit SEO Technique & Indexation (SEO-A4-01 & SEO-A4-02, P1)** : Surga est totalement absent du fichier `sitemap.xml` (4,4 Mo, 0 mention). Le code HTML SSR initial de `/surga` est une coquille vide ne contenant aucune balise `<h1>`, aucun `<h2>` et aucun texte éditorial (« Chargement de votre Surga... »). Aucune balise `<link rel="canonical">` n'est émise. Données Schema.org sur `/surga` décrivant la marketplace Nopalou au lieu d'une `SoftwareApplication`.
+  - **Attribution Marketing Rompue (MKT-A4-05, P1)** : Le composant `<UtmTracker />` est exclu de Surga dans `layout.tsx` (`{!isSurga && <UtmTracker />}`). Tous les paramètres de campagne `?utm_source=` issus de TikTok, Facebook ou du partage WhatsApp sont perdus à l'arrivée.
+  - **Acquisition & Landing Page (UX-A4-06, P1)** : Absence de landing page de réassurance. Tout nouveau visiteur arrive brutalement sur l'onboarding en 3 étapes sans présentation de valeur ni démonstration préalable.
+  - **Monétisation & Risque Financier WhatsApp (FIN-A4-07 [P0] & FIN-A4-08 [P1])** : Confirmation de la validation gratuite d'abonnements 1 an sans appel Wave/OM (`SURGA-004`). Démonstration que le quota gratuit de 20 requêtes WhatsApp/jour génère un coût Meta Cloud API non maîtrisé (~660 FCFA/mois/utilisateur gratuit). Recommandation de brider WhatsApp gratuit à 2 requêtes de test/jour et de réserver l'illimité au forfait Premium (1 500 FCFA/mois).
+  - **Vérité des KPI & Mesure Stratégique (DATA-A4-09, P1)** : Absence complète d'instrumentation du KPI stratégique (« Nombre de jours utilisés par utilisateur / semaine »). L'admin `/admin/surga` renvoie des chiffres en dur (10, 8, 6) si la base est vide.
+  - **Benchmark Concurrentiel Validé** : Confrontation documentée face à ChatGPT/Gemini, Google Keep, Wave/OM, Seneweb/Dakaractu et Wizabot sur 16 critères. Avantages confirmés : calculatrice arithmétique déterministe exacte (91/91 Jest), PWA ultra-légère (HTML 7,8 Ko, TTFB 45 ms), convergence locale dakaroise (trafic TomTom, 12 radios FM, Unes de presse) et zéro publicité.
+  - **Verdict Final de la Série : ⚠️ GO SOUS CONDITIONS STRICTES (Score : 12,25 / 20)** : Lancement public conditionné à la résolution préalable des 4 bloquants P0 (Anti-IDOR, Paiement Wave vérifié, UUID offline-sync, Persistance WhatsApp) et des 6 critiques P1 (Reconnexion DB des 4 services, Sitemap XML + SSR H1/H2, UTMs rétablis, Landing page, Vocaux WhatsApp isolés, Quotas WhatsApp durcis).
+  - **4 Livrables Finaux Générés dans `docs/surga/`** :
+    1. `docs/surga/AUDIT_4_SEO_MARKETING_MONETISATION.md` (Rapport complet d'audit)
+    2. `docs/surga/BENCHMARK_FINAL_SURGA.md` (Benchmark concurrentiel et positionnement)
+    3. `docs/surga/MATRICE_FINALE_AUDITS_SURGA.md` (Synthèse consolidée des 21 domaines et 10 leçons Nopalou)
+    4. `docs/surga/PLAN_FINAL_CORRECTIONS_SURGA.md` (Feuille de route finale priorisée et dédupliquée P0-P3).
+
+- **Audit Données, Sources, IA, Voix et WhatsApp de Surga — Agent 3 (Session 2026-10-05, branche `feature/surga`)** :
+  - **Audit Empirique Basé sur la Preuve Matérielle** : Exécution de tests réels directs sur PostgreSQL 18.4, les flux RSS externes en direct, TomTom Live API, la chaîne Web Speech API et les webhooks WhatsApp. Zéro modification de code de production.
+  - **Découverte Faille Critique WhatsApp (ANOM-A3-01, P0 - Silent Data Loss)** : Si un numéro WhatsApp n'est pas pré-inscrit dans la table `utilisateurs`, le bot Surga lui confirme l'enregistrement de sa dépense/note/rappel par un message de succès explicite, mais n'insère rien en base de données et supprime la session. Fausse réassurance et perte silencieuse prouvées.
+  - **Confirmation Déconnexion DB & Rupture Immo (ANOM-A3-02, P0)** : `require('../../db')` toujours présent dans 4 services. Les 1 649 annonces réelles d'`annonces_immo` sont ignorées au profit de 3 faux biens démo (taux d'exploitation : 0,18%).
+  - **Rupture Vocale WhatsApp Confirmée (ANOM-A3-03, P1)** : Les notes vocales WhatsApp (`msg.type === 'audio'`) sont interceptées par le bot e-commerce Nopalou (boutiques marchandes) avant d'atteindre Surga. Aucun moteur STT (Whisper/Gemini) n'est connecté.
+  - **Absence de Cron Ingestion RSS & Horodatages Falsifiés (ANOM-A3-04, P1)** : 159 articles réels collectés avec succès lors du test direct, mais 4 flux sur 6 sont morts (Dakaractu 404, Seneweb 404, Le Quotidien 403, Sud Quotidien DNS). Sans cron dans `backend/app.js`, la table reste à 0 et le système sert `ITEMS_SECOURS` avec de fausses dates dynamiques `new Date()` (réplique AUD-096, violation D21).
+  - **Démythification Complète de l'IA** : Prouvé à 100% qu'aucun LLM n'est appelé dans Surga. Tous les résumés et parsers naturels reposent sur Cheerio et des dictionnaires regex déterministes. Zéro hallucination factuelle, mais zéro support du Wolof.
+  - **Moteur Déterministe Conforme** : Calculatrice arithmétique exacte (`100 divisé par 3` = `33.33`), priorité opératoire et pourcentages impeccables, zéro intervention d'IA.
+  - **Livrables d'Audit 3 Générés** : `docs/surga/AUDIT_3_DONNEES_IA_VOIX_WHATSAPP.md`, `docs/surga/MATRICE_DATA_QUALITY_AUDIT_3.md`, `docs/surga/MATRICE_E2E_IA_VOIX_WHATSAPP_AUDIT_3.md` et `docs/surga/HANDOVER_AGENT_3.md`.
+
+- **Audit Post-Implémentation Complet de Surga — Agent 0 (Session 2026-10-05, branche `feature/surga`)** :
+  - **Audit Empirique Basé sur la Preuve Matérielle** : Exécution de 17 sondes réelles (scripts de test isolés dans scratchpad, zéro code applicatif modifié). 91/91 tests Jest Surga PASS, 97/97 tests Vitest PASS, 0 erreur TypeScript, 0 émoji UI.
+  - **Découverte de Déconnexion Silencieuse de Base de Données (SURGA-001, P0)** : 4 services majeurs (`concours-service.js`, `places-service.js`, `trafic-service.js`, `immo-service.js`) importaient un chemin inexistant `require('../../db')`. Un catch silencieux maintenait `pool = null`, faisant tourner les services sur des mocks mémoire (les 1 649 annonces réelles d'`annonces_immo` étaient ignorées et `/admin/surga` était désynchronisé du client).
+  - **Détection de Risques de Clé Étrangère (SURGA-002, P0)** : Tables SQL `surga_trafic_axes`, `surga_concours`, `surga_places` vides (0 ligne), provoquant des violations de foreign key lors des écritures dès la reconnexion du pool.
+  - **Détection de Failles de Sécurité Critiques (SURGA-003, SURGA-004, P0)** : IDOR sur `GET /api/surga/donnees/export` et `DELETE /supprimer` sans token via `?phone=` ; activation gratuite d'abonnements Premium/Pro via `POST /api/surga/abonnements/verifier` sans validation de paiement Wave/OM.
+  - **Ruptures Fonctionnelles Identifiées (SURGA-005 à SURGA-008, P1)** : Absence de transcription des vocaux WhatsApp (rejet par le bot), absence de cron d'ingestion (briefing sur données de secours avec fausses dates `new Date()`), 3 flux RSS sénégalais brisés (Dakaractu, Seneweb, Sud Quotidien), route audio MP3 podcast 404.
+  - **Dépassement de Plafond Composants (SURGA-009, P2)** : `SurgaImmoModal.tsx` (584 l.) et `SurgaPremiumModal.tsx` (465 l.) dépassant le seuil de 450 lignes.
+  - **Vérification du Sanctuaire Nopalou** : Aucune régression sur le comparateur d'achats, la vitrine et la Caisse PRO (HTTP 200).
+  - **Livrables d'Audit Générés** : Rapport officiel complet `docs/surga/AUDIT_POST_IMPLEMENTATION_AGENT_0.md` et dossier de passation `docs/surga/HANDOVER_AGENT_0.md` avec feuille de route priorisée pour l'Agent 1.
+
 - **Intégration Complète du Noyau & Briques Surga — Tranches 1 à 16 (Session 2026-10-04, branche `feature/surga`)** :
   - **Tranche 1 (Installation & Personnalisation)** : Table `surga_preferences`, PWA dédiée (`/surga`), onboarding interactif (`SurgaOnboarding.tsx`), bannières d'accès et boutons de lancement.
   - **Tranche 2 (Briefing du Matin)** : Ingestion RSS Cheerio/Axios de la presse sénégalaise (`surga_briefing_items`), scores sportifs (`surga_sport_events`), API `/api/surga/briefing` et synthèse textuelle sourcée.

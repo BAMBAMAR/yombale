@@ -1,10 +1,21 @@
-// backend/routes/surga/sync.js
-// Endpoint de synchronisation hors ligne bidirectionnelle pour Surga (Tranche 3)
-
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const { pool } = require('../../models/db');
 const { tokenOptional } = require('../../middlewares/auth');
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function assurerUUID(id, idMappings) {
+  if (id && UUID_REGEX.test(id)) {
+    return id;
+  }
+  const cleanUuid = crypto.randomUUID();
+  if (id) {
+    idMappings[id] = cleanUuid;
+  }
+  return cleanUuid;
+}
 
 // POST /api/surga/sync
 // Réconcilie les créations/mises à jour accumulées en mode avion
@@ -22,6 +33,7 @@ router.post('/sync', tokenOptional, async (req, res) => {
       });
     }
 
+    const idMappings = {};
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -29,6 +41,7 @@ router.post('/sync', tokenOptional, async (req, res) => {
       // 1. Sync notes
       for (const n of notes) {
         if (!n.titre || !n.id) continue;
+        const validId = assurerUUID(n.id, idMappings);
         await client.query(
           `INSERT INTO surga_notes (id, user_id, titre, contenu, created_at, updated_at)
            VALUES ($1, $2, $3, $4, COALESCE($5, NOW()), NOW())
@@ -37,7 +50,7 @@ router.post('/sync', tokenOptional, async (req, res) => {
              contenu = EXCLUDED.contenu,
              updated_at = NOW()
            WHERE surga_notes.user_id = $2`,
-          [n.id, userId, n.titre.trim(), n.contenu || '', n.created_at || null]
+          [validId, userId, n.titre.trim(), n.contenu || '', n.created_at || null]
         );
       }
 
@@ -46,6 +59,7 @@ router.post('/sync', tokenOptional, async (req, res) => {
         if (!d.montant_xof || !d.id) continue;
         const montant = parseInt(d.montant_xof, 10);
         if (Number.isNaN(montant) || montant <= 0) continue;
+        const validId = assurerUUID(d.id, idMappings);
         await client.query(
           `INSERT INTO surga_depenses (id, user_id, montant_xof, categorie, date_depense, note, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, NOW()), NOW())
@@ -57,7 +71,7 @@ router.post('/sync', tokenOptional, async (req, res) => {
              updated_at = NOW()
            WHERE surga_depenses.user_id = $2`,
           [
-            d.id,
+            validId,
             userId,
             montant,
             d.categorie || 'Autre',
@@ -71,6 +85,7 @@ router.post('/sync', tokenOptional, async (req, res) => {
       // 3. Sync agenda & rappels
       for (const a of agenda) {
         if (!a.titre || !a.id) continue;
+        const validId = assurerUUID(a.id, idMappings);
         await client.query(
           `INSERT INTO surga_agenda (id, user_id, titre, description, date_evenement, heure_evenement, est_rappel, repetition, termine, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, NOW()), NOW())
@@ -85,7 +100,7 @@ router.post('/sync', tokenOptional, async (req, res) => {
              updated_at = NOW()
            WHERE surga_agenda.user_id = $2`,
           [
-            a.id,
+            validId,
             userId,
             a.titre.trim(),
             a.description || null,
@@ -120,6 +135,7 @@ router.post('/sync', tokenOptional, async (req, res) => {
       return res.json({
         success: true,
         synced_at: new Date().toISOString(),
+        id_mappings: idMappings,
         notes: freshNotes.rows,
         depenses: freshDepenses.rows,
         agenda: freshAgenda.rows,

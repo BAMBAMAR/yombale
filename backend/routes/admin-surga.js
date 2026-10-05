@@ -30,9 +30,9 @@ router.get('/stats', async (req, res) => {
       return res.json({
         success: true,
         stats: {
-          nb_places: 10,
-          nb_concours: 8,
-          nb_unes: 6,
+          nb_places: 0,
+          nb_concours: 0,
+          nb_unes: 0,
           nb_signalements_attente: 0,
         },
       });
@@ -40,8 +40,8 @@ router.get('/stats', async (req, res) => {
 
     const [placesRes, concoursRes, unesRes, signalementsRes] = await Promise.all([
       pool.query(`SELECT COUNT(*)::int AS count FROM surga_places WHERE actif = true`).catch(() => ({ rows: [{ count: 0 }] })),
-      pool.query(`SELECT COUNT(*)::int AS count FROM surga_concours WHERE statut = 'ouvert'`).catch(() => ({ rows: [{ count: 0 }] })),
-      pool.query(`SELECT COUNT(*)::int AS count FROM surga_unes_presse WHERE actif = true`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_concours WHERE actif = true`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_unes_presse`).catch(() => ({ rows: [{ count: 0 }] })),
       pool.query(`SELECT COUNT(*)::int AS count FROM surga_trafic_signalements WHERE statut = 'en_attente'`).catch(() => ({ rows: [{ count: 0 }] })),
     ]);
 

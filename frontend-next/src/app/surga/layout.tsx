@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: 'Surga — Assistant Personnel de Poche',
   description: 'Votre assistant personnel au quotidien au Sénégal : briefing du matin, gestion des dépenses en FCFA, notes, agenda et services locaux.',
   manifest: '/surga/manifest.json',
+  alternates: {
+    canonical: 'https://surga.nopalou.com',
+  },
   openGraph: {
     title: 'Surga — Assistant Personnel de Poche',
     description: 'Votre assistant quotidien au Sénégal : briefing du matin, gestion des dépenses en FCFA, notes, agenda et veille locale.',
@@ -40,13 +43,30 @@ export const viewport: Viewport = {
   themeColor: '#1C2B4A',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+}
+
+const surgaJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Surga',
+  operatingSystem: 'All',
+  applicationCategory: 'UtilitiesApplication',
+  description: 'Assistant personnel de poche au quotidien au Sénégal : briefing du matin, dépenses FCFA, notes, agenda et services locaux.',
+  url: 'https://surga.nopalou.com',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'XOF',
+  },
 }
 
 export default function SurgaLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="surga-root">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(surgaJsonLd) }}
+      />
       <SurgaSwRegister />
       {children}
     </div>

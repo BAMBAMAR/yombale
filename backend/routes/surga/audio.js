@@ -12,6 +12,33 @@ const {
   regenererPodcastToken,
 } = require('../../services/surga/audio-service');
 const { getBriefingItems, getSportEvents } = require('../../services/surga/rss-collector');
+const { interpreterCommandeVocale } = require('../../services/surga/voice-interpreter');
+
+// POST /api/surga/audio/interpret
+// Interprète une transcription vocale en action structurée (Calcul, Dépense, Note, Rappel)
+router.post('/audio/interpret', (req, res) => {
+  try {
+    const { texte } = req.body || {};
+    if (!texte || typeof texte !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Le champ texte est obligatoire pour l\'interprétation vocale.',
+      });
+    }
+
+    const interpretation = interpreterCommandeVocale(texte);
+    return res.json({
+      success: true,
+      data: interpretation,
+    });
+  } catch (err) {
+    console.error('[SURGA VOICE INTERPRET ERROR]:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Erreur lors de l\'interprétation de la commande vocale.',
+    });
+  }
+});
 
 // GET /api/surga/audio/script
 // Fournit le script formaté du briefing du jour pour la synthèse vocale locale

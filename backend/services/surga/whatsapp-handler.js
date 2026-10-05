@@ -6,7 +6,7 @@ const { pool } = require('../../models/db');
 const { evaluerCalcul, formaterFCFA } = require('./calculator');
 const { sendWhatsAppText, normalisePhone } = require('../whatsapp');
 
-const QUOTA_JOURNALIER_GRATUIT = 20;
+const QUOTA_JOURNALIER_GRATUIT = 2;
 
 /**
  * Normalise une chaîne de texte pour le parsing d'intention
@@ -198,6 +198,42 @@ async function trouverUserIdParTelephone(phone) {
 }
 
 /**
+ * Trouve ou auto-provisionne l'utilisateur lié au numéro de téléphone
+ * Éradication de la perte silencieuse d'écritures pour les nouveaux utilisateurs
+ */
+async function obtenirOuCreerUserId(phone) {
+  const normPh = normalisePhone(phone);
+  let userId = await trouverUserIdParTelephone(normPh);
+  if (userId) return userId;
+
+  if (!pool) return null;
+
+  try {
+    const nomDefaut = `Utilisateur Surga ${normPh.slice(-4)}`;
+    const emailDefaut = `surga_${normPh.replace(/\D/g, '')}@nopalou.local`;
+    const res = await pool.query(
+      `INSERT INTO utilisateurs (nom, telephone, email, role, actif)
+       VALUES ($1, $2, $3, 'client', TRUE)
+       ON CONFLICT (email) DO UPDATE SET telephone = EXCLUDED.telephone
+       RETURNING id`,
+      [nomDefaut, normPh, emailDefaut]
+    );
+    return res.rows[0]?.id || null;
+  } catch (err) {
+    console.error('[SURGA AUTO-PROVISION USER ERR]:', err.message);
+    try {
+      const retry = await pool.query(
+        'SELECT id FROM utilisateurs WHERE telephone = $1 OR telephone = $2 LIMIT 1',
+        [phone, normPh]
+      );
+      return retry.rows[0]?.id || null;
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
  * Traite un message entrant WhatsApp pour Surga
  * Retourne true si le message a été intercepté et traité par Surga, false sinon.
  */
@@ -230,58 +266,62 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
   const quotaValide = await verifierQuota(normPh, isVocal);
   if (!quotaValide) {
     const msgPlafond =
-      `Surga : Vous avez atteint votre quota journalier de ${QUOTA_JOURNALIER_GRATUIT} commandes gratuites pour aujourd'hui.\n\n` +
-      `Votre quota sera renouvelé demain à 00h00. Vous pouvez continuer sur votre application : https://nopalou.com/surga`;
+      `Surga : Vous avez atteint votre quota découverte de ${QUOTA_JOURNALIER_GRATUIT} commandes gratuites pour aujourd'hui sur WhatsApp.\n\n` +
+      `Pour profiter de commandes WhatsApp illimitées, activez Surga Premium (1 500 FCFA/mois) : https://surga.nopalou.com/premium.\n` +
+      `Votre application Web & PWA reste quant à elle 100% gratuite et sans limite : https://surga.nopalou.com`;
     await sendWhatsAppText(normPh, msgPlafond);
     return true;
   }
 
   // ── 1. Gestion des confirmations OUI / NON ──────────────────────────────────
   if (parseResult.intention === 'CONFIRMATION_OUI') {
-    const userId = await trouverUserIdParTelephone(normPh);
+    const userId = await obtenirOuCreerUserId(normPh);
+
+    if (!userId) {
+      console.error(`[SURGA PERSISTENCE BLOCKED] Aucun compte pour ${normPh}, écriture annulée.`);
+      await sendWhatsAppText(
+        normPh,
+        `Surga : Impossible de valider votre compte pour enregistrer l'action. Veuillez réessayer ou ouvrir l'application : https://surga.nopalou.com`
+      );
+      return true;
+    }
 
     try {
       if (actionEnAttente.intention === 'ADD_EXPENSE') {
         const { montant, categorie, note } = actionEnAttente.data;
-        if (userId) {
-          await pool.query(
-            `INSERT INTO surga_depenses (user_id, montant_xof, categorie, date_depense, note)
-             VALUES ($1, $2, $3, CURRENT_DATE, $4)`,
-            [userId, montant, categorie, note || null]
-          );
-        }
+        await pool.query(
+          `INSERT INTO surga_depenses (user_id, montant_xof, categorie, date_depense, note)
+           VALUES ($1, $2, $3, CURRENT_DATE, $4)`,
+          [userId, montant, categorie, note || null]
+        );
         await sendWhatsAppText(
           normPh,
           `Surga : C'est enregistré. Dépense de ${formaterFCFA(montant)} ajoutée dans la catégorie ${categorie}.\n\n` +
-          `Retrouvez votre récapitulatif dans votre application : https://nopalou.com/surga`
+          `Retrouvez votre récapitulatif dans votre application : https://surga.nopalou.com`
         );
       } else if (actionEnAttente.intention === 'ADD_NOTE') {
         const { titre, contenu } = actionEnAttente.data;
-        if (userId) {
-          await pool.query(
-            `INSERT INTO surga_notes (user_id, titre, contenu)
-             VALUES ($1, $2, $3)`,
-            [userId, titre, contenu]
-          );
-        }
+        await pool.query(
+          `INSERT INTO surga_notes (user_id, titre, contenu)
+           VALUES ($1, $2, $3)`,
+          [userId, titre, contenu]
+        );
         await sendWhatsAppText(
           normPh,
           `Surga : C'est noté. Votre note "${titre}" est bien conservée dans votre carnet.\n\n` +
-          `Consultez vos notes sur : https://nopalou.com/surga`
+          `Consultez vos notes sur : https://surga.nopalou.com`
         );
       } else if (actionEnAttente.intention === 'ADD_REMINDER') {
         const { titre, date, heure } = actionEnAttente.data;
-        if (userId) {
-          await pool.query(
-            `INSERT INTO surga_agenda (user_id, titre, date_evenement, heure_evenement, est_rappel)
-             VALUES ($1, $2, $3, $4, TRUE)`,
-            [userId, titre, date, heure]
-          );
-        }
+        await pool.query(
+          `INSERT INTO surga_agenda (user_id, titre, date_evenement, heure_evenement, est_rappel)
+           VALUES ($1, $2, $3, $4, TRUE)`,
+          [userId, titre, date, heure]
+        );
         await sendWhatsAppText(
           normPh,
           `Surga : C'est programmé. Votre rappel "${titre}" pour le ${date} à ${heure} est activé.\n\n` +
-          `Consultez votre agenda : https://nopalou.com/surga`
+          `Consultez votre agenda : https://surga.nopalou.com`
         );
       }
 

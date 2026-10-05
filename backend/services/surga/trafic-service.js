@@ -7,7 +7,8 @@ const axios = require('axios');
 
 let pool = null;
 try {
-  pool = require('../../db');
+  const dbModule = require('../../models/db');
+  pool = dbModule.pool || dbModule;
 } catch {
   // Mode offline ou test unitaire sans DB
 }
@@ -556,13 +557,17 @@ async function enregistrerSignalement({ axeId, typeSignalement, commentaire, use
   const comPropre = commentaire ? commentaire.replace(/<[^>]*>/g, '').slice(0, 180).trim() : '';
 
   if (pool) {
-    const res = await pool.query(
-      `INSERT INTO surga_trafic_signalements (axe_id, user_id, type_signalement, commentaire)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, axe_id, type_signalement, commentaire, created_at`,
-      [axeId, userId || null, typeSignalement, comPropre]
-    );
-    return res.rows[0];
+    try {
+      const res = await pool.query(
+        `INSERT INTO surga_trafic_signalements (axe_id, user_id, type_signalement, commentaire)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, axe_id, type_signalement, commentaire, created_at`,
+        [axeId, userId || null, typeSignalement, comPropre]
+      );
+      if (res.rows.length > 0) return res.rows[0];
+    } catch (dbErr) {
+      console.warn('[SurgaTrafic] Erreur DB signalement, fallback mémoire:', dbErr.message);
+    }
   }
 
   return {

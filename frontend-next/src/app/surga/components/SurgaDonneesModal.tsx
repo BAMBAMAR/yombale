@@ -36,12 +36,35 @@ export default function SurgaDonneesModal({
     setErreur(null)
 
     try {
-      const res = await fetch('/api/surga/donnees/export')
-      if (!res.ok) {
-        throw new Error('Impossible d exporter vos données.')
+      const token = typeof window !== 'undefined'
+        ? (localStorage.getItem('nopalou_session') || localStorage.getItem('token'))
+        : null
+
+      let donneesJson: any = null
+
+      if (token) {
+        const res = await fetch('/api/surga/donnees/export', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        if (!res.ok) {
+          throw new Error('Impossible d exporter vos données depuis le serveur.')
+        }
+        donneesJson = await res.json()
+      } else {
+        // Mode local / invité : export des données présentes dans le localStorage
+        donneesJson = {
+          date_export: new Date().toISOString(),
+          mode: 'local_hors_ligne',
+          preferences: JSON.parse(localStorage.getItem('surga_preferences') || 'null'),
+          notes: JSON.parse(localStorage.getItem('surga_offline_notes') || '[]'),
+          depenses: JSON.parse(localStorage.getItem('surga_offline_depenses') || '[]'),
+          agenda: JSON.parse(localStorage.getItem('surga_offline_agenda') || '[]'),
+        }
       }
 
-      const blob = await res.blob()
+      const blob = new Blob([JSON.stringify(donneesJson, null, 2)], { type: 'application/json' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -69,18 +92,27 @@ export default function SurgaDonneesModal({
     setErreur(null)
 
     try {
-      const res = await fetch('/api/surga/donnees/supprimer', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmation: 'SUPPRIMER' }),
-      })
+      const token = typeof window !== 'undefined'
+        ? (localStorage.getItem('nopalou_session') || localStorage.getItem('token'))
+        : null
 
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Erreur lors de la purge.')
+      if (token) {
+        const res = await fetch('/api/surga/donnees/supprimer', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ confirmation: 'SUPPRIMER' }),
+        })
+
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Erreur lors de la purge serveur.')
+        }
       }
 
-      // Nettoyage local
+      // Nettoyage local systématique
       try {
         localStorage.removeItem('surga_onboarding_done')
         localStorage.removeItem('surga_preferences')

@@ -4,7 +4,8 @@
 
 let pool = null;
 try {
-  pool = require('../../db');
+  const dbModule = require('../../models/db');
+  pool = dbModule.pool || dbModule;
 } catch {
   // Mode offline ou test unitaire
 }
@@ -512,19 +513,26 @@ async function suivreConcours(params) {
   let suivi = null;
 
   if (pool && userId) {
-    const res = await pool.query(
-      `INSERT INTO surga_suivi_concours (user_id, concours_id, phone, rappels_actifs)
-       VALUES ($1, $2, $3, TRUE)
-       ON CONFLICT (user_id, concours_id)
-       DO UPDATE SET rappels_actifs = TRUE
-       RETURNING *`,
-      [userId, concoursId, phone || null]
-    );
-    suivi = res.rows[0];
+    try {
+      const res = await pool.query(
+        `INSERT INTO surga_suivi_concours (user_id, concours_id, phone, rappels_actifs)
+         VALUES ($1, $2, $3, TRUE)
+         ON CONFLICT (user_id, concours_id)
+         DO UPDATE SET rappels_actifs = TRUE
+         RETURNING *`,
+        [userId, concoursId, phone || null]
+      );
+      suivi = res.rows[0];
 
-    // Injection automatique des rappels d'échéance dans surga_agenda
-    await programmerRappelsAgenda(userId, concours);
-  } else {
+      // Injection automatique des rappels d'échéance dans surga_agenda
+      await programmerRappelsAgenda(userId, concours);
+    } catch (dbErr) {
+      console.warn('[SurgaConcours] Erreur DB suivi concours, fallback mémoire:', dbErr.message);
+      suivi = null;
+    }
+  }
+
+  if (!suivi) {
     suivi = {
       id: 'suivi-demo-' + Date.now(),
       user_id: userId || 'guest',
