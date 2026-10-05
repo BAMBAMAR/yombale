@@ -2291,6 +2291,8 @@ async function handleIncomingInternal(msg) {
           : `Consigne vocale: ${audioUrl}`;
       }
       await setSession(phone, state || 'IDLE', updatedContext);
+    }
+
     // 0. Détection prioritaire Surga (utilisateur en flux Surga ou avec session active)
     if (!state?.startsWith('COMMANDE_') && !context?.boutique_id) {
       let estSessionSurga = false;
