@@ -1,16 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Eye, X, BookOpen } from 'lucide-react'
-import SurgaShareButton from './SurgaShareButton'
+import { Eye, BookOpen } from 'lucide-react'
+import SurgaKiosqueLightbox, { type UneItem } from './SurgaKiosqueLightbox'
 
-export interface UneItem {
-  id: string
-  nom_journal: string
-  image_url: string
-  description?: string
-  date_parution?: string
-}
+export type { UneItem }
 
 interface SurgaKiosqueUnesProps {
   unes: UneItem[]
@@ -18,7 +12,7 @@ interface SurgaKiosqueUnesProps {
 }
 
 export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosqueUnesProps) {
-  const [selectedUne, setSelectedUne] = useState<UneItem | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
   if (loading) {
     return (
@@ -53,7 +47,7 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
           gap: 12,
         }}
       >
-        {unes.map((une) => (
+        {unes.map((une, index) => (
           <div
             key={une.id}
             className="surga-card"
@@ -65,7 +59,7 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
               cursor: 'pointer',
               transition: 'transform 0.15s ease, box-shadow 0.15s ease',
             }}
-            onClick={() => setSelectedUne(une)}
+            onClick={() => setSelectedIndex(index)}
           >
             {/* Image de la Une */}
             <div
@@ -130,122 +124,13 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
         ))}
       </div>
 
-      {/* Lightbox / Zoom sur la Une sélectionnée */}
-      {selectedUne && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Une de ${selectedUne.nom_journal}`}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(20, 25, 38, 0.85)',
-            backdropFilter: 'blur(5px)',
-            zIndex: 1100,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-            animation: 'fadeIn 0.2s ease-out',
-          }}
-          onClick={() => setSelectedUne(null)}
-        >
-          {/* Carte modale */}
-          <div
-            style={{
-              position: 'relative',
-              maxWidth: 520,
-              width: '100%',
-              maxHeight: '90vh',
-              backgroundColor: '#FFFFFF',
-              borderRadius: 14,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.35)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header du visualiseur */}
-            <div
-              style={{
-                padding: '12px 16px',
-                borderBottom: '1px solid var(--border, #E8DDD2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: '#FFFFFF',
-              }}
-            >
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                  {selectedUne.nom_journal}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-                  {selectedUne.description || 'Quotidien national d information'}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <SurgaShareButton
-                  payload={{
-                    titre: `Une de ${selectedUne.nom_journal}`,
-                    texte: `*Surga — Kiosque de la Presse Sénégalaise*\n• Journal : ${selectedUne.nom_journal}\n• Date : ${selectedUne.date_parution || 'Aujourd’hui'}\nConsulter la revue de presse sur Surga : https://surga.nopalou.com`,
-                    url: 'https://surga.nopalou.com',
-                  }}
-                  libelle="Partager"
-                  taille="sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setSelectedUne(null)}
-                  aria-label="Fermer la vue"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    width: 32,
-                    height: 32,
-                    borderRadius: 6,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'var(--text2, #5A4E42)',
-                  }}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            {/* Image zoomée */}
-            <div
-              style={{
-                flex: 1,
-                overflowY: 'auto',
-                backgroundColor: '#0F172A',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 8,
-              }}
-            >
-              <img
-                src={selectedUne.image_url}
-                alt={`Une complète de ${selectedUne.nom_journal}`}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '72vh',
-                  objectFit: 'contain',
-                  borderRadius: 4,
-                  display: 'block',
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Lightbox modulaire avec défilement des Unes */}
+      <SurgaKiosqueLightbox
+        unes={unes}
+        selectedIndex={selectedIndex}
+        onClose={() => setSelectedIndex(null)}
+        onSelectIndex={(idx) => setSelectedIndex(idx)}
+      />
     </>
   )
 }
