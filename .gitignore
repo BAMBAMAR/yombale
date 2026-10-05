@@ -31,6 +31,7 @@ backups/
 *.png
 *.jpg
 *.jpeg
+frontend-next/public/surga/unes/*.webp
 # ...mais les assets d'app sont versionnés (icônes PWA, apple-touch-icon, screenshots manifest)
 !frontend-next/public/icons/*.png
 !frontend-next/public/screenshots/*.png

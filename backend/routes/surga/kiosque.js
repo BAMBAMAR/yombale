@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { recupererUnesDuJour } = require('../../services/surga/kiosque-service');
+const { recupererUnesDuJour, synchroniserUnesProjetBi } = require('../../services/surga/kiosque-service');
 
 // GET /api/surga/kiosque
 // Retourne la liste des Unes de la presse sénégalaise
@@ -11,7 +11,7 @@ router.get('/kiosque', async (req, res) => {
   try {
     const { limit } = req.query;
     const unes = await recupererUnesDuJour({
-      limit: limit ? parseInt(limit, 10) : 20,
+      limit: limit ? parseInt(limit, 10) : 50,
     });
 
     return res.json({
@@ -25,6 +25,28 @@ router.get('/kiosque', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Erreur lors de la récupération des Unes de presse.',
+    });
+  }
+});
+
+// POST /api/surga/kiosque/sync
+// Force la synchronisation des Unes depuis ProjetBI (LE-PROJET)
+router.post('/kiosque/sync', async (req, res) => {
+  try {
+    const result = await synchroniserUnesProjetBi();
+    const unes = await recupererUnesDuJour({ limit: 50 });
+
+    return res.json({
+      success: true,
+      message: `Synchronisation réussie : ${result.total || unes.length} Unes disponibles.`,
+      ...result,
+      unes,
+    });
+  } catch (err) {
+    console.error('[SURGA KIOSQUE SYNC ERROR]:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la synchronisation des Unes depuis ProjetBI.',
     });
   }
 });

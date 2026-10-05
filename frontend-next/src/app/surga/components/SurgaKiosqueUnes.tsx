@@ -11,6 +11,19 @@ interface SurgaKiosqueUnesProps {
   loading?: boolean
 }
 
+function formatDateParution(dateStr?: string): string {
+  if (!dateStr) return 'Aujourd’hui'
+  try {
+    const d = new Date(dateStr)
+    const today = new Date().toISOString().slice(0, 10)
+    const itemDate = d.toISOString().slice(0, 10)
+    if (itemDate === today) return 'Aujourd’hui'
+    return d.toLocaleDateString('fr-SN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  } catch {
+    return 'Aujourd’hui'
+  }
+}
+
 export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosqueUnesProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
@@ -117,7 +130,7 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
                 {une.nom_journal}
               </div>
               <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-                {une.date_parution || 'Aujourd’hui'}
+                {formatDateParution(une.date_parution)}
               </div>
             </div>
           </div>

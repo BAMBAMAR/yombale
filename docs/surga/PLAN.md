@@ -318,11 +318,13 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Document de passation et handover (`docs/surga/HANDOVER_IDENTITE_SURGA.md`).
 - [x] `DONE` Validation & Zéro Régression : 99/99 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 
-### Tranche 25 — Diagnostic Kiosque des Unes & Correctif Schéma Admin (05 Octobre 2026 - Soir 14)
-- [x] `DONE` Audit complet de la provenance des Unes de presse (`surga_unes_presse` dans PostgreSQL, service `kiosque-service.js`).
-- [x] `DONE` Explication de l'absence d'actualisation automatique (absence de robot scraper d'images pour les couvertures PDF/JPG, contrairement aux articles textuels du briefing matinal).
-- [x] `DONE` Correction du schéma dans `backend/routes/admin-surga.js` : normalisation des endpoints `/unes` (GET et POST), support de `image_url` et `url_image`, gestion stricte des UUID PostgreSQL et upsert sans conflit.
-- [x] `DONE` Alignement de `AdminUnesTab.tsx` : support de `une.url_image || une.image_url` pour un affichage et une administration opérationnelle sans erreur.
+### Tranche 25 — Raccordement du Kiosque des Unes au ProjetBI (`LE-PROJET` / `projetbi.org`) (05 Octobre 2026 - Soir 14)
+- [x] `DONE` Localisation et raccordement du dossier `../LE-PROJET/` (`projetbi.org`) avec son robot Playwright `download_revue.js` et son flux `press.json`.
+- [x] `DONE` Implémentation du moteur hybride `synchroniserUnesProjetBi()` dans `backend/services/surga/kiosque-service.js` (source locale prioritaire, fallback distant `https://projetbi.org/`).
+- [x] `DONE` Ingestion et synchronisation réussie des 41 Unes de presse du 5 octobre 2026 avec attribution des titres nationaux via `KNOWN_PAPERS`.
+- [x] `DONE` Déclenchement automatique proactif dans `recupererUnesDuJour` et endpoints dédiés `POST /api/surga/kiosque/sync` et `POST /api/surga/presse/refresh`.
+- [x] `DONE` Formatage soigné des dates de parution dans `SurgaKiosqueUnes.tsx` (`formatDateParution`), affichage de la mention « Aujourd'hui » et validation visuelle Playwright mobile.
+- [x] `DONE` Règle d'exclusion `.gitignore` pour `frontend-next/public/surga/unes/*.webp` et tests unitaires 99/99 validés (100%).
 
 ---
 

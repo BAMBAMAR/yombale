@@ -3,20 +3,29 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
-### [2026-10-05 — Soir 14] — Diagnostic Origine Kiosque des Unes & Correctif Schéma Admin
-- **Demande Utilisateur :** « D'où viennent les unes ? C'est pas à jour ».
+### [2026-10-05 — Soir 14] — Raccordement du Kiosque des Unes au ProjetBI (`LE-PROJET` / `projetbi.org`)
+- **Demande Utilisateur :** « dans le plan de surga javai indique dans le meme depot ya un autre dossier le projet pour le site projetbi.org ou on peut retrouver la revue de presse ».
 - **Tâches complétées :**
-  - **Diagnostic Complet du Kiosque des Unes (`surga_unes_presse`)** :
-    - Origine identifiée : table PostgreSQL `surga_unes_presse` peuplée via `kiosque-service.js` avec 10 quotidiens par défaut pointant vers des captures locales sous `public/surga/unes/` (`lesoleil.jpg`, `observateur.jpg`, etc.).
-    - Explication de l'absence de mise à jour automatique : contrairement aux flux RSS d'articles textuels (`rss-collector.js`), il n'existait aucun robot automatisé pour télécharger les photos de Unes quotidiennes chaque matin.
-    - Identification d'un blocage schéma dans l'admin : divergence de nommage `url_image` vs `image_url` et colonnes inexistantes faisant échouer l'ajout de nouvelles Unes.
-  - **Correctifs Appliqués** :
-    - `backend/routes/admin-surga.js` : Normalisation du GET et du POST `/api/admin/surga/unes` pour supporter à la fois `image_url` et `url_image`, gestion propre des UUID et upsert par date et titre de journal.
-    - `frontend-next/src/app/admin/surga/components/AdminUnesTab.tsx` : Fallback `une.url_image || une.image_url` et typage enrichi pour un affichage et une suppression fiables.
+  - **Détection & Raccordement du Référentiel ProjetBI** :
+    - Localisation du dossier racine `../LE-PROJET/` (`projetbi.org`) avec son robot Playwright `download_revue.js` et son flux d'Unes quotidiennes `press.json`.
+    - Constat : 41 Unes de quotidiens sénégalais pour la date du jour (05/10/2026) étaient déjà disponibles dans `LE-PROJET/revuedepresse/` et en ligne sur `https://projetbi.org/`.
+  - **Moteur de Synchronisation Automatique (`synchroniserUnesProjetBi`)** :
+    - Implémentation dans `backend/services/surga/kiosque-service.js` d'un module hybride (priorité locale `LE-PROJET/press.json`, repli distant `https://projetbi.org/press.json`).
+    - Synchronisation automatique proactive dans `recupererUnesDuJour` dès qu'aucune Une n'est enregistrée pour la date courante.
+    - Association des 41 Unes au catalogue de quotidiens nationaux `KNOWN_PAPERS`.
+    - Exposition de la route de synchronisation forcée `POST /api/surga/kiosque/sync` et raccordement au rafraîchissement global `POST /api/surga/presse/refresh`.
+  - **Affichage & Expérience Utilisateur** :
+    - Formatage soigné des dates de parution dans `SurgaKiosqueUnes.tsx` (`formatDateParution`), affichage de la mention « Aujourd'hui » au lieu de l'horodatage brut ISO.
+    - Affichage vérifié des 41 Unes du 5 octobre 2026 via Playwright mobile sans débordement ni régression.
+    - Ajout de la règle d'exclusion git `frontend-next/public/surga/unes/*.webp` dans `.gitignore`.
 - **Fichiers modifiés :**
-  - `backend/routes/admin-surga.js`
-  - `frontend-next/src/app/admin/surga/components/AdminUnesTab.tsx`
-  - `CLAUDE.md`, `docs/JOURNAL-LIVRAISONS.md`, `docs/surga/JOURNAL-LIVRAISONS.md`, `docs/surga/HANDOVER.md`
+  - `backend/services/surga/kiosque-service.js`
+  - `backend/routes/surga/kiosque.js`
+  - `backend/routes/surga/presse.js`
+  - `frontend-next/src/app/surga/components/SurgaKiosqueUnes.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPresseView.tsx`
+  - `.gitignore`
+  - `CLAUDE.md`, `docs/JOURNAL-LIVRAISONS.md`, `docs/surga/JOURNAL-LIVRAISONS.md`, `docs/surga/HANDOVER.md`, `docs/surga/PLAN.md`
 
 ### [2026-10-05 — Soir 13] — Identité de Marque Complète de Surga, Symbole Vectoriel Dépositaire, Palette Ambre/Indigo & Assets PWA
 - **Tâches complétées :**

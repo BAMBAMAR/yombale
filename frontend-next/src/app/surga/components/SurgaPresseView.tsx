@@ -82,7 +82,7 @@ export default function SurgaPresseView({
   const chargerUnes = useCallback(async () => {
     setLoadingUnes(true)
     try {
-      const res = await fetch('/api/surga/kiosque')
+      const res = await fetch('/api/surga/kiosque?limit=50')
       const data = await res.json()
       if (data.success && Array.isArray(data.unes)) {
         setUnes(data.unes)

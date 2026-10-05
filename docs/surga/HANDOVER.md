@@ -2,14 +2,20 @@
 
 > **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 14)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 25 : Identité de Marque Dépositaire Complète, Diagnostic Origine & Schéma Kiosque des Unes, Sama Xaalis, Météo 14 Régions, Passerelles Transversales, Console Pro 11 Modules)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 25 : Identité de Marque Dépositaire Complète, Raccordement Kiosque des Unes au ProjetBI `LE-PROJET` / `projetbi.org`, Sama Xaalis, Météo 14 Régions, Passerelles Transversales, Console Pro 11 Modules)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Direction Artistique)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** a été intégralement doté de sa propre **identité de marque souveraine** et autonome au sein de l'écosystème Nopalou, tout en conservant 100% de ses fonctionnalités applicatives et sans aucune régression.
+L'assistant personnel de poche **Surga** a été intégralement doté de sa propre **identité de marque souveraine** et autonome au sein de l'écosystème Nopalou, et son Kiosque des Unes est désormais raccordé en direct au moteur de revue de presse quotidienne de **projetbi.org** (`LE-PROJET`).
+
+0. **Raccordement Kiosque des Unes & ProjetBI (`LE-PROJET` / `projetbi.org`) (Tranche 25 — 100% DONE)** :
+   - Détection du dossier racine `../LE-PROJET/` et de son flux live `press.json` avec 41 Unes de quotidiens du jour (05/10/2026).
+   - Module `synchroniserUnesProjetBi()` dans `kiosque-service.js` gérant la synchronisation automatique en local et à distance via `https://projetbi.org/`.
+   - Normalisation du formatage des dates (« Aujourd'hui ») dans `SurgaKiosqueUnes.tsx` et affichage mobile validé des 41 quotidiens.
+   - Endpoint de synchronisation forcée `POST /api/surga/kiosque/sync` et raccordement au rafraîchissement global.
 
 0. **Identité de Marque & Territoire Visuel Dépositaire (Tranche 24 — 100% DONE)** :
    - **Audit sans complaisance (`docs/surga/AUDIT_IDENTITE_SURGA.md`)** : Éradication de l'emprunt des logos/couleurs Nopalou et des béquilles visuelles IA (Sparkles).

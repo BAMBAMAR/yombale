@@ -49,15 +49,18 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
-- **Surga — Diagnostic Kiosque des Unes & Correctif Schéma Admin (Session 2026-10-05 - Suite 5)** :
-  - *Demande Utilisateur* : « D'où viennent les unes ? C'est pas à jour ».
-  - *Analyse d'Origine & Diagnostic* :
-    - Les Unes proviennent de la table PostgreSQL `surga_unes_presse` (`nom_journal`, `date_parution`, `image_url`, `description`), initialisée avec 10 quotidiens par défaut pointant vers des captures locales sous `public/surga/unes/` (`lesoleil.jpg`, `observateur.jpg`, etc.).
-    - Ce n'est pas à jour car il n'existait pas de scraper d'images automatique quotidien (contrairement aux dépêches du briefing matinal issues des flux RSS de `rss-collector.js`).
-    - L'interface d'administration `/admin/surga` présentait un décalage de schéma (`url_image` vs `image_url`, types d'ID UUID, colonnes superflues) empêchant la publication manuelle fluide.
-  - *Correctifs Appliqués* :
-    - `backend/routes/admin-surga.js` : Alignement strict avec la table `surga_unes_presse` (support bidirectionnel `image_url` et `url_image`, upsert sécurisé sans conflit de type).
-    - `frontend-next/src/app/admin/surga/components/AdminUnesTab.tsx` : Tolérance `url_image || image_url` pour l'affichage et la saisie.
+- **Surga — Raccordement du Kiosque des Unes au ProjetBI (`LE-PROJET` / `projetbi.org`) (Session 2026-10-05 - Suite 5)** :
+  - *Demande Utilisateur* : Indication de la présence du dossier `LE-PROJET` pour le site `projetbi.org` dans le même dépôt/espace contenant la revue de presse quotidienne.
+  - *Découverte & Connexion* :
+    - Dossier local identifié : `../LE-PROJET/` (`projetbi.org`) avec son robot Playwright `download_revue.js` et son flux `press.json`.
+    - 41 Unes fraîches du jour (05/10/2026) déjà téléchargées au format WebP dans `LE-PROJET/revuedepresse/` et hébergées sur `https://projetbi.org/`.
+  - *Intégration & Synchronisation Réalisée* :
+    - `backend/services/surga/kiosque-service.js` : Implémentation de `synchroniserUnesProjetBi()` assurant la synchronisation automatique (source locale `LE-PROJET/press.json` ou distante `https://projetbi.org/press.json`), gestion des 41 Unes avec catalogue de titres `KNOWN_PAPERS`.
+    - Déclenchement automatique proactif : Si les Unes du jour ne sont pas présentes en base, `recupererUnesDuJour` déclenche la synchronisation en tâche de fond.
+    - `backend/routes/surga/kiosque.js` : Endpoint `POST /api/surga/kiosque/sync` et augmentation de la limite par défaut à 50 quotidiens.
+    - `backend/routes/surga/presse.js` : Raccordement du bouton `POST /api/surga/presse/refresh` pour actualiser simultanément les flux RSS et le Kiosque ProjetBI.
+    - `frontend-next/src/app/surga/components/SurgaKiosqueUnes.tsx` : Formatage lisible des dates (`formatDateParution`), affichage des 41 Unes du 5 octobre 2026 avec badge « Aujourd'hui ».
+    - `.gitignore` : Règle d'exclusion `frontend-next/public/surga/unes/*.webp` pour éviter de surcharger le dépôt git avec les médias quotidiens.
 
 - **Surga — Identité de Marque Dépositaire Complète, Symbole Vectoriel S, Pack PWA & Design System Décloisonné (Session 2026-10-05 - Suite 4)** :
   - *Demande Utilisateur* : Création de l'identité de marque complète de Surga à partir du produit existant (directeur artistique, designer de marque, UI/UX, logo, design system, branding mobile PWA).

@@ -10,6 +10,7 @@ const {
   collecterTousLesFlux,
   RUBRIQUES_VALIDES,
 } = require('../../services/surga/rss-collector');
+const { synchroniserUnesProjetBi } = require('../../services/surga/kiosque-service');
 
 // GET /api/surga/presse
 // Retourne la revue de presse résumée avec filtrage optionnel par rubrique
@@ -40,14 +41,19 @@ router.get('/presse', async (req, res) => {
 });
 
 // POST /api/surga/presse/refresh
-// Force l'ingestion des derniers flux RSS d'actualité
+// Force l'ingestion des derniers flux RSS d'actualité et la synchronisation du Kiosque ProjetBI
 router.post('/presse/refresh', async (req, res) => {
   try {
-    const result = await collecterTousLesFlux();
+    const [result, resultUnes] = await Promise.all([
+      collecterTousLesFlux(),
+      synchroniserUnesProjetBi().catch(() => ({ total: 0 })),
+    ]);
+
     return res.json({
       success: true,
       totalNouveaux: result.totalNouveaux,
-      message: `${result.totalNouveaux} nouveau(x) article(s) indexé(s).`,
+      totalUnes: resultUnes.total || 0,
+      message: `${result.totalNouveaux} article(s) et ${resultUnes.total || 0} Une(s) actualisée(s).`,
     });
   } catch (err) {
     console.error('[SURGA PRESSE REFRESH ERROR]:', err);
