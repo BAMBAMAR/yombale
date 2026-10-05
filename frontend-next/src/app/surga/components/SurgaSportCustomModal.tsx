@@ -7,6 +7,7 @@ export interface EquipeItem {
   id: string
   nom: string
   categorie: string
+  championnat?: string
   pays: string
 }
 
@@ -26,6 +27,7 @@ export default function SurgaSportCustomModal({
   const [catalogue, setCatalogue] = useState<EquipeItem[]>([])
   const [selection, setSelection] = useState<string[]>(equipesSelectionnees)
   const [recherche, setRecherche] = useState('')
+  const [filtreLigue, setFiltreLigue] = useState<string>('tous')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -70,10 +72,22 @@ export default function SurgaSportCustomModal({
     onClose()
   }
 
-  const catalogueFiltre = catalogue.filter((eq) =>
-    eq.nom.toLowerCase().includes(recherche.toLowerCase()) ||
-    eq.pays.toLowerCase().includes(recherche.toLowerCase())
-  )
+  const catalogueFiltre = catalogue.filter((eq) => {
+    if (filtreLigue === 'europe' && !['laliga', 'premier_league', 'ligue1_fr', 'serie_a', 'ucl'].includes(eq.categorie)) return false
+    if (filtreLigue === 'ligue1_sn' && eq.categorie !== 'ligue1_sn') return false
+    if (filtreLigue === 'nationale' && eq.categorie !== 'nationale') return false
+    if (filtreLigue === 'saudi_pro' && eq.categorie !== 'saudi_pro') return false
+
+    if (recherche) {
+      const q = recherche.toLowerCase()
+      return (
+        eq.nom.toLowerCase().includes(q) ||
+        eq.pays.toLowerCase().includes(q) ||
+        (eq.championnat && eq.championnat.toLowerCase().includes(q))
+      )
+    }
+    return true
+  })
 
   return (
     <div
@@ -139,8 +153,8 @@ export default function SurgaSportCustomModal({
           </button>
         </div>
 
-        {/* Barre de recherche */}
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
+        {/* Barre de recherche & filtres de ligues */}
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border, #E8DDD2)', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div
             style={{
               display: 'flex',
@@ -155,7 +169,7 @@ export default function SurgaSportCustomModal({
             <Search size={16} color="var(--text3, #73675E)" />
             <input
               type="text"
-              placeholder="Rechercher un club ou une sélection..."
+              placeholder="Rechercher Real, Chelsea, Jaraaf, Barça, PSG..."
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               style={{
@@ -167,6 +181,35 @@ export default function SurgaSportCustomModal({
                 color: 'var(--text1, #1A1612)',
               }}
             />
+          </div>
+
+          {/* Onglets de ligues */}
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', whiteSpace: 'nowrap' }}>
+            {[
+              { id: 'tous', label: 'Toutes' },
+              { id: 'europe', label: 'Europe (UCL, PL, LaLiga...)' },
+              { id: 'ligue1_sn', label: 'Ligue 1 Sénégal' },
+              { id: 'saudi_pro', label: 'Saudi Pro' },
+              { id: 'nationale', label: 'Sélection SN' },
+            ].map((lig) => (
+              <button
+                key={lig.id}
+                type="button"
+                onClick={() => setFiltreLigue(lig.id)}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  border: 'none',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  backgroundColor: filtreLigue === lig.id ? 'var(--navy, #1C2B4A)' : 'var(--bg, #F8F5F0)',
+                  color: filtreLigue === lig.id ? '#FFFFFF' : 'var(--text2, #5A4E42)',
+                }}
+              >
+                {lig.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -205,7 +248,7 @@ export default function SurgaSportCustomModal({
                       {eq.nom}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-                      {eq.pays} • {eq.categorie === 'nationale' ? 'Sélection nationale' : eq.categorie === 'ligue1_sn' ? 'Ligue 1 Sénégal' : 'International'}
+                      {eq.championnat || eq.pays} • {eq.pays}
                     </div>
                   </div>
 

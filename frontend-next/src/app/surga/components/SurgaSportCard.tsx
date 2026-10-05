@@ -156,10 +156,15 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
         }}
       >
         {[
-          { id: 'tous', label: 'Tous' },
+          { id: 'tous', label: 'Tous les matchs' },
+          { id: 'ucl', label: 'Ligue des Champions' },
+          { id: 'premier_league', label: 'Premier League' },
+          { id: 'laliga', label: 'LaLiga' },
+          { id: 'ligue1_fr', label: 'Ligue 1' },
+          { id: 'serie_a', label: 'Serie A' },
+          { id: 'saudi_pro', label: 'Saudi Pro League' },
           { id: 'nationale', label: 'Lions du Sénégal' },
-          { id: 'ligue1_sn', label: 'Ligue 1 Sénégal' },
-          { id: 'internationaux', label: 'Lions en Europe' },
+          { id: 'ligue1_sn', label: 'Ligue 1 SN' },
           { id: 'mes_equipes', label: `Mes clubs (${equipesFavorites.length})` },
         ].map((tab) => {
           const isActive = filtreCategorie === tab.id

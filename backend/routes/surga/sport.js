@@ -19,9 +19,14 @@ router.get('/sport/equipes', tokenOptional, (req, res) => {
     equipes: LISTE_EQUIPES_DISPONIBLES,
     categories: [
       { id: 'tous', label: 'Toutes les compétitions' },
+      { id: 'ucl', label: 'Ligue des Champions' },
+      { id: 'premier_league', label: 'Premier League' },
+      { id: 'laliga', label: 'LaLiga' },
+      { id: 'ligue1_fr', label: 'Ligue 1 France' },
+      { id: 'serie_a', label: 'Serie A' },
+      { id: 'saudi_pro', label: 'Saudi Pro League' },
       { id: 'nationale', label: 'Lions du Sénégal' },
       { id: 'ligue1_sn', label: 'Ligue 1 Sénégal' },
-      { id: 'internationaux', label: 'Lions en Club (Europe & Golfe)' },
     ],
   });
 });
