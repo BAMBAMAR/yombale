@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Sun,
   Cloud,
@@ -13,7 +13,10 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  MapPin,
+  LocateFixed,
 } from 'lucide-react'
+import SurgaMeteoLocaliteModal, { type LocaliteItem } from './SurgaMeteoLocaliteModal'
 
 export interface PrevisionItem {
   jour: string
@@ -26,6 +29,8 @@ export interface PrevisionItem {
 
 export interface MeteoData {
   ville: string
+  est_gps?: boolean
+  coordonnees?: { lat: number; lon: number }
   temperature: number
   ressenti: number
   temp_min: number
@@ -80,46 +85,195 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar' }: SurgaM
   const [meteo, setMeteo] = useState<MeteoData | null>(initialMeteo || null)
   const [loading, setLoading] = useState(false)
   const [showPrevisions, setShowPrevisions] = useState(false)
+  const [isLocaliteModalOpen, setIsLocaliteModalOpen] = useState(false)
+  const [localitesList, setLocalitesList] = useState<LocaliteItem[]>([])
+  const [gpsEnCours, setGpsEnCours] = useState(false)
+  const [estGpsActif, setEstGpsActif] = useState(Boolean(initialMeteo?.est_gps))
 
-  const chargerMeteo = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/surga/meteo?ville=${encodeURIComponent(ville)}`)
-      const data = await res.json()
-      if (data.success && data.meteo) {
-        setMeteo(data.meteo)
+  const chargerMeteo = useCallback(
+    async (params?: { ville?: string; lat?: number; lon?: number }) => {
+      setLoading(true)
+      try {
+        let url = '/api/surga/meteo'
+        if (params?.lat && params?.lon) {
+          url += `?lat=${params.lat}&lon=${params.lon}`
+        } else if (params?.ville) {
+          url += `?ville=${encodeURIComponent(params.ville)}`
+        } else {
+          // Vérification si un choix est sauvegardé localement
+          let storedGps: { lat: number; lon: number } | null = null
+          let storedVille: string | null = null
+          try {
+            const gpsStr = localStorage.getItem('surga_meteo_gps')
+            if (gpsStr) storedGps = JSON.parse(gpsStr)
+            storedVille = localStorage.getItem('surga_meteo_ville')
+          } catch {}
+
+          if (storedGps?.lat && storedGps?.lon) {
+            url += `?lat=${storedGps.lat}&lon=${storedGps.lon}`
+          } else if (storedVille) {
+            url += `?ville=${encodeURIComponent(storedVille)}`
+          } else {
+            url += `?ville=${encodeURIComponent(ville)}`
+          }
+        }
+
+        const res = await fetch(url)
+        const data = await res.json()
+        if (data.success && data.meteo) {
+          setMeteo(data.meteo)
+          setEstGpsActif(Boolean(data.meteo.est_gps))
+          if (Array.isArray(data.localites) && data.localites.length > 0) {
+            setLocalitesList(data.localites)
+          }
+        }
+      } catch (err) {
+        console.warn('[SURGA METEO FETCH ERR]:', err)
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      console.warn('[SURGA METEO FETCH ERR]:', err)
-    } finally {
-      setLoading(false)
+    },
+    [ville]
+  )
+
+  const detecterGps = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      alert('La géolocalisation n’est pas disponible sur votre navigateur.')
+      return
     }
+    setGpsEnCours(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude
+        const lon = pos.coords.longitude
+        try {
+          localStorage.setItem('surga_meteo_gps', JSON.stringify({ lat, lon }))
+          localStorage.removeItem('surga_meteo_ville')
+        } catch {}
+        await chargerMeteo({ lat, lon })
+        setGpsEnCours(false)
+        setIsLocaliteModalOpen(false)
+      },
+      (err) => {
+        console.warn('[SURGA GPS ERR]:', err.message)
+        alert('Impossible de récupérer la position GPS. Vérifiez les autorisations de localisation.')
+        setGpsEnCours(false)
+      },
+      { timeout: 9000, enableHighAccuracy: true }
+    )
+  }
+
+  const choisirLocalite = async (nomVille: string) => {
+    try {
+      localStorage.setItem('surga_meteo_ville', nomVille)
+      localStorage.removeItem('surga_meteo_gps')
+    } catch {}
+    setEstGpsActif(false)
+    await chargerMeteo({ ville: nomVille })
+    setIsLocaliteModalOpen(false)
   }
 
   useEffect(() => {
-    if (!initialMeteo) {
+    // Si l'utilisateur avait une préférence locale enregistrée (GPS ou ville), la charger en priorité
+    let hasLocalPref = false
+    try {
+      if (localStorage.getItem('surga_meteo_gps') || localStorage.getItem('surga_meteo_ville')) {
+        hasLocalPref = true
+      }
+    } catch {}
+
+    if (hasLocalPref || !initialMeteo) {
       chargerMeteo()
     }
-  }, [initialMeteo, ville])
+  }, [initialMeteo, chargerMeteo])
 
   if (!meteo && !loading) {
     return null
   }
 
+  const villeAffichee = meteo?.ville || ville
+
   return (
     <div className="surga-card" style={{ marginBottom: 16 }}>
-      {/* En-tête de carte */}
+      {/* En-tête de carte avec bouton sélecteur de localité & GPS */}
       <div className="surga-card-header" style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
           {renderMeteoIcon(meteo?.condition_code || 'soleil', 18)}
-          <span className="surga-card-title">Météo &amp; Marées ({meteo?.ville || ville})</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             type="button"
-            onClick={chargerMeteo}
+            onClick={() => setIsLocaliteModalOpen(true)}
+            title="Modifier la localité ou utiliser la position GPS"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              textAlign: 'left',
+              color: 'var(--navy, #1C2B4A)',
+            }}
+          >
+            <span className="surga-card-title" style={{ textDecoration: 'underline dotted', textUnderlineOffset: 3 }}>
+              Météo &amp; Marées ({villeAffichee})
+            </span>
+            <ChevronDown size={14} color="var(--accent, #C75B00)" />
+          </button>
+
+          {estGpsActif && (
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 700,
+                color: 'var(--price, #0A5C36)',
+                backgroundColor: 'rgba(10, 92, 54, 0.1)',
+                padding: '1px 5px',
+                borderRadius: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                flexShrink: 0,
+              }}
+            >
+              <LocateFixed size={10} />
+              GPS
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {/* Raccourci GPS 1 clic */}
+          <button
+            type="button"
+            onClick={detecterGps}
+            disabled={gpsEnCours}
+            title="Me géolocaliser par GPS"
+            aria-label="Me géolocaliser par GPS"
+            style={{
+              background: estGpsActif ? 'rgba(10, 92, 54, 0.1)' : 'var(--bg, #F8F5F0)',
+              border: '1px solid var(--border, #E8DDD2)',
+              padding: '4px 6px',
+              borderRadius: 6,
+              cursor: gpsEnCours ? 'wait' : 'pointer',
+              color: estGpsActif ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 3,
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            <LocateFixed size={12} className={gpsEnCours ? 'animate-spin' : ''} />
+            <span className="surga-hide-mobile">GPS</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => chargerMeteo()}
             disabled={loading}
             aria-label="Actualiser la météo"
+            title="Actualiser les données"
             style={{
               background: 'none',
               border: 'none',
@@ -252,14 +406,9 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar' }: SurgaM
                 <div
                   key={idx}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 10px',
-                    borderRadius: 6,
-                    backgroundColor: 'var(--bg, #F8F5F0)',
-                    border: '1px solid var(--border, #E8DDD2)',
-                    fontSize: 12,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '8px 10px', borderRadius: 6, backgroundColor: 'var(--bg, #F8F5F0)',
+                    border: '1px solid var(--border, #E8DDD2)', fontSize: 12,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -276,6 +425,18 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar' }: SurgaM
           )}
         </div>
       )}
+
+      {/* Modale de sélection de localité & Position GPS */}
+      <SurgaMeteoLocaliteModal
+        isOpen={isLocaliteModalOpen}
+        onClose={() => setIsLocaliteModalOpen(false)}
+        localiteActuelle={villeAffichee}
+        estGpsActif={estGpsActif}
+        localites={localitesList}
+        onSelectLocalite={choisirLocalite}
+        onDetecterGps={detecterGps}
+        gpsEnCours={gpsEnCours}
+      />
     </div>
   )
 }

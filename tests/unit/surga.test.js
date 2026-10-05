@@ -1394,6 +1394,28 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(meteoRouter).toBeDefined();
       expect(sportRouter).toBeDefined();
     });
+
+    test('Le service météo supporte le catalogue multi-localités et la géolocalisation GPS', async () => {
+      const { LOCALITES_SENEGAL, trouverLocalitePlusProche } = require('../../backend/services/surga/meteo-service');
+      expect(Object.keys(LOCALITES_SENEGAL).length).toBeGreaterThanOrEqual(20);
+
+      // Vérification du plus proche voisin GPS (ex: Almadies ~ 14.745, -17.515)
+      const plusProcheAlmadies = trouverLocalitePlusProche(14.745, -17.515);
+      expect(plusProcheAlmadies).toBeDefined();
+      expect(plusProcheAlmadies.nom).toContain('Almadies');
+
+      // Appel météo avec coordonnées GPS directes
+      const meteoGps = await getMeteo({ lat: 14.745, lon: -17.515 });
+      expect(meteoGps).toBeDefined();
+      expect(meteoGps.is_gps).toBe(true);
+      expect(meteoGps.coordonnees).toBeDefined();
+      expect(meteoGps.temperature).toBeDefined();
+
+      // Appel météo par nom de localité
+      const meteoThies = await getMeteo('Thiès');
+      expect(meteoThies.ville).toBe('Thiès');
+      expect(meteoThies.zone).toBe('Régions');
+    });
   });
 });
 

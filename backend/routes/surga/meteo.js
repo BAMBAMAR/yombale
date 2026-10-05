@@ -7,14 +7,28 @@ const { tokenOptional } = require('../../middlewares/auth');
 const { getMeteo, VILLES_SENEGAL } = require('../../services/surga/meteo-service');
 
 // GET /api/surga/meteo
-// Retourne la météo en direct, marées, indice UV et prévisions 3 jours
+// Retourne la météo en direct (par ville ou GPS), marées, indice UV et prévisions 3 jours
 router.get('/meteo', tokenOptional, async (req, res) => {
   try {
-    const ville = req.query.ville || 'Dakar';
-    const donnees = await getMeteo(ville);
+    const { ville, lat, lon } = req.query;
+    let options = 'Dakar';
+    if (lat && lon) {
+      options = { lat: parseFloat(lat), lon: parseFloat(lon) };
+    } else if (ville) {
+      options = ville;
+    }
+    const donnees = await getMeteo(options);
+    const localitesList = Object.entries(VILLES_SENEGAL).map(([id, l]) => ({
+      id,
+      nom: l.nom,
+      maritime: l.maritime,
+      zone: l.zone || 'Sénégal',
+    }));
+
     res.json({
       success: true,
       meteo: donnees,
+      localites: localitesList,
       villes_disponibles: Object.keys(VILLES_SENEGAL),
     });
   } catch (err) {
