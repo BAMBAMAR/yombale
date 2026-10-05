@@ -19,8 +19,16 @@ import {
   Flame,
   CheckCircle2,
   Info,
+  Calendar,
+  Wallet,
+  Bookmark,
 } from 'lucide-react'
 import { type PlaceItem } from './SurgaPlaceCard'
+import {
+  prevoirSortieAdresse,
+  enregistrerDepenseAdresse,
+  sauvegarderAdresseEnNote,
+} from '@/lib/surga-cross-actions'
 
 interface SurgaPlaceDetailModalProps {
   place: PlaceItem | null
@@ -38,6 +46,35 @@ export default function SurgaPlaceDetailModal({
   if (!isOpen || !place) return null
 
   const budgetFormate = new Intl.NumberFormat('fr-FR').format(place.budget_moyen_xof)
+
+  const handlePlanifierSortie = () => {
+    prevoirSortieAdresse({
+      nom: place.nom,
+      quartier: place.quartier,
+      contact_tel: place.contact_tel,
+      budget_moyen_xof: place.budget_moyen_xof,
+    })
+  }
+
+  const handleNoterDepense = () => {
+    enregistrerDepenseAdresse({
+      nom: place.nom,
+      quartier: place.quartier,
+      budget_moyen_xof: place.budget_moyen_xof,
+    })
+  }
+
+  const handleGarderEnNote = () => {
+    sauvegarderAdresseEnNote({
+      nom: place.nom,
+      quartier: place.quartier,
+      budget_moyen_xof: place.budget_moyen_xof,
+      specialite: place.specialite,
+      contact_tel: place.contact_tel,
+      contact_whatsapp: place.contact_whatsapp,
+      resume_honnete: place.resume_honnete,
+    })
+  }
 
   const handleWhatsApp = () => {
     if (!place.contact_whatsapp) return
@@ -324,58 +361,54 @@ export default function SurgaPlaceDetailModal({
             </div>
           )}
 
+          {/* Passerelles transversales Surga */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, paddingTop: 10, borderTop: '1px solid var(--border, #E8DDD2)' }}>
+            <button
+              type="button"
+              onClick={handlePlanifierSortie}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+              title="Planifier une sortie dans mon Agenda"
+            >
+              <Calendar size={14} color="var(--accent, #C75B00)" />
+              <span>Sortie Agenda</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleNoterDepense}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+              title={`Noter ${budgetFormate} FCFA dans Sama Xaalis`}
+            >
+              <Wallet size={14} color="var(--price, #0A5C36)" />
+              <span>Noter Dépense</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleGarderEnNote}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+              title="Enregistrer cette adresse dans mes Notes"
+            >
+              <Bookmark size={14} color="var(--navy, #1C2B4A)" />
+              <span>Garder en Note</span>
+            </button>
+          </div>
+
           {/* Boutons d'action directes */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: place.contact_whatsapp && place.contact_tel ? '1fr 1fr' : '1fr',
-              gap: 10,
-              paddingTop: 8,
-              borderTop: '1px solid var(--border, #E8DDD2)',
-            }}
-          >
+          <div style={{ display: 'grid', gridTemplateColumns: place.contact_whatsapp && place.contact_tel ? '1fr 1fr' : '1fr', gap: 10, paddingTop: 4 }}>
             {place.contact_whatsapp && (
               <button
                 type="button"
                 onClick={handleWhatsApp}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  backgroundColor: 'var(--price, #0A5C36)',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '12px',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'var(--price, #0A5C36)', color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 <MessageCircle size={16} />
                 <span>WhatsApp</span>
               </button>
             )}
-
             {place.contact_tel && (
               <button
                 type="button"
                 onClick={handleAppel}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  backgroundColor: 'var(--navy, #1C2B4A)',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '12px',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'var(--navy, #1C2B4A)', color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 <Phone size={16} />
                 <span>Appeler</span>
@@ -387,20 +420,7 @@ export default function SurgaPlaceDetailModal({
           <button
             type="button"
             onClick={handleItineraire}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              backgroundColor: '#FFFFFF',
-              color: 'var(--accent, #C75B00)',
-              border: '1px solid var(--accent, #C75B00)',
-              borderRadius: 10,
-              padding: '10px',
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFFFFF', color: 'var(--accent, #C75B00)', border: '1px solid var(--accent, #C75B00)', borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
           >
             <Navigation size={14} />
             <span>Ouvrir l itinéraire dans Google Maps</span>

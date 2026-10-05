@@ -49,6 +49,19 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga Cohérence Globale & Passerelles Transversales Multi-Fonctionnalités (Session 2026-10-05)** :
+  - *Demande Utilisateur* : L'utilisateur souhaitait un maximum de relations cohérentes et interconnectées entre les fonctionnalités de Surga (ex: à la vue d'un match de foot, pouvoir l'ajouter directement en rappel dans l'Agenda et prévoir un budget, etc.).
+  - *Architecture & Passerelles Transversales Livrées* :
+    - **Moteur Unifié de Passerelles (`frontend-next/src/lib/surga-cross-actions.ts`, 315 l.)** : Centralisation de toutes les interactions inter-modules et persistance offline-first locale (`surga-offline-sync.ts`) avec retour visuel immédiat.
+    - **Système de Toast Toast Global Non-Intrusif (`SurgaToastContainer.tsx`, `surga.css`, `SurgaRadioProvider.tsx`)** : Toast flottant écoutant les événements `surga-toast`, s'adaptant dynamiquement à la présence du mini-lecteur radio persistant (`bottom: 128px` au lieu de `80px`).
+    - **Sport ➔ Agenda & Sama Xaalis (`SurgaSportCard.tsx`, 398 l.)** : Ajout sur chaque match d'un bouton de rappel (`Bell`) qui injecte l'événement à l'heure du coup d'envoi dans l'Agenda avec surveillance de notification locale, et d'un bouton de budget (`Wallet`) qui enregistre la sortie dans Sama Xaalis.
+    - **Bonnes Adresses ➔ Agenda, Sama Xaalis & Notes (`SurgaPlaceDetailModal.tsx`, 433 l.)** : Trois actions directes : `[ 📅 Sortie Agenda ]` (planifie la sortie à 20h), `[ 💰 Noter Dépense ]` (inscrit le budget moyen dans Sama Xaalis) et `[ 📝 Garder en Note ]` (génère une note complète avec coordonnées et résumé honnête).
+    - **Concours Nationaux ➔ Notes & Sama Xaalis (`SurgaConcoursDetailModal.tsx`, 398 l.)** : `[ 📋 Checklist dans Notes ]` qui transforme instantanément la liste des pièces administratives requises en note interactive à cases à cocher `[x] / [ ]`, et `[ 💰 Quittance Trésor ]` qui inscrit les frais de dossier dans Sama Xaalis.
+    - **Immobilier Certifié ➔ Agenda & Notes (`SurgaImmoCard.tsx`, 273 l.)** : Bouton `[ 📅 Visite ]` (planifie la visite à 15h dans l'Agenda) et bouton `[ 📌 Note ]` (sauvegarde la fiche complète du bien avec loyer, quartier et contact dans les Notes).
+    - **Revue de Presse & Brèves ➔ Notes (`SurgaArticleCard.tsx`, 115 l. & `SurgaNewsList.tsx`, 180 l.)** : Bouton `[ 📌 En Note ]` permettant d'épingler n'importe quel article ou dépêche d'actualité dans ses notes d'un simple clic.
+    - **Notes ➔ Sama Xaalis & Agenda (`SurgaNoteCard.tsx`, 437 l.)** : Détection automatique des montants en Francs CFA dans le titre ou corps de la note (`detecterMontantTexte`) avec bouton d'inscription immédiate dans Sama Xaalis, et bouton `[ 📅 Rappeler ]` pour programmer un rappel de la note le jour même à 10h.
+  - *Validation & Conformité* : 99/99 tests Jest passés dans `tests/unit/surga.test.js`, 97/97 tests `frontend-next` passés, compilation `npx tsc --noEmit` 0 erreur, audit anti-slop validé, tous les composants React strictement <= 450 lignes.
+
 - **Surga Radios FM & Terroirs — Écoute en Arrière-Plan & Navigation Continue dans Tout Surga (Session 2026-10-05)** :
   - *Demande Utilisateur & Diagnostic* :
     - L'utilisateur souhaitait écouter la radio tout en continuant de naviguer librement dans Surga (changer d'onglet, consulter ses dépenses, ses notes, son agenda, le trafic ou la météo).

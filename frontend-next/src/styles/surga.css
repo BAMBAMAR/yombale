@@ -361,4 +361,8 @@ body:has(.surga-persistent-radio-bar) .surga-fab-mic {
   bottom: 124px;
 }
 
+body:has(.surga-persistent-radio-bar) .surga-global-toast {
+  bottom: 128px;
+}
+
 

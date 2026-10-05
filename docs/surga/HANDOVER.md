@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 7)  
+> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 8)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses + Trafic Réel Dakar + Radio Écoute Continue & Mini-Lecteur Flottant + Console Admin)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions + Bons Plans 42 Adresses + Trafic Réel Dakar + Radio Écoute Continue + Passerelles Transversales Multi-Fonctionnalités + Console Admin)**  
 > **Auteur** : Antigravity (Assistant AI Senior)
 
 ---
@@ -16,6 +16,15 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
    - **Briefing Matinal & Revue de Presse** : Ingestion RSS Cheerio/Axios de la presse sénégalaise, Kiosque des Unes avec carrousel horizontal fluide et zoom Lightbox.
    - **Notes & Agenda v2** : Prise de notes catégorisée, rappels programmés et notifications locales par Service Worker.
    - **Sama Xaalis (Gestion Financière Personnelle)** : Portefeuille complet intégré dans la navigation principale (`surga-kalpe.ts`, `SurgaSamaXaalisView.tsx`), cartes de soldes/flux, suivi rigoureux des dettes et créances avec remboursement direct, épargne et cagnottes avec jauges de progression.
+   - **Passerelles Transversales & Cohérence Globale (`surga-cross-actions.ts`, `SurgaToastContainer.tsx`)** :
+     - Interconnexion intégrale entre toutes les briques de Surga avec persistance locale offline-first (`surga-offline-sync.ts`) :
+       * Sport ➔ Agenda (Rappel de match) & Sama Xaalis (Budget match).
+       * Bonnes Adresses ➔ Agenda (Sortie à 20h), Sama Xaalis (Budget moyen) & Notes (Sauvegarde fiche).
+       * Concours Nationaux ➔ Notes (Checklist pièces à fournir) & Sama Xaalis (Quittance Trésor).
+       * Immobilier ➔ Agenda (Visite à 15h) & Notes (Sauvegarde annonce).
+       * Revue de Presse ➔ Notes (Épingler article d'un clic).
+       * Notes ➔ Sama Xaalis (Détection automatique de montants FCFA) & Agenda (Rappel à 10h).
+     - Toast global non-intrusif réactif avec surélévation automatique si la radio est active.
    - **Sport Temps Réel & Personnalisation Multi-Ligues** : Scores et statuts en direct (badge clignotant `EN_DIRECT`, minute de jeu), sélecteur de ligues (`SurgaSportCustomModal.tsx`) couvrant UEFA Champions League, Premier League, LaLiga, Ligue 1, Serie A, Saudi Pro League, Ligue 1 sénégalaise et les Lions de la Teranga.
    - **Météo & Marées Live avec Sélecteur Multi-Localités, 14 Régions & Résilience Hors-Ligne** :
      - Catalogue national exhaustif de 28 localités couvrant l'intégralité des 14 régions du Sénégal (Dakar, Thiès, Saint-Louis, Diourbel, Louga, Fatick, Kaolack, Kaffrine, Tambacounda, Kédougou, Kolda, Ziguinchor, Sédhiou, Matam).
@@ -58,6 +67,7 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
 | Layout & Manifest PWA | `src/app/surga/layout.tsx`, `public/surga/manifest.json` |
 | Styles & Isolation CSS | `src/styles/surga.css` |
 | Routage & Sous-domaine | `src/middleware.ts`, `src/app/[slug]/route.ts`, `src/app/layout.tsx` |
+| Passerelles Transversales & Toasts | `src/lib/surga-cross-actions.ts` (315 l.), `src/app/surga/components/SurgaToastContainer.tsx` (65 l.) |
 | Navigation & En-tête | `src/app/surga/components/SurgaHeader.tsx`, `SurgaBottomNav.tsx` |
 | Sama Xaalis (Finances) | `src/app/surga/components/SurgaSamaXaalisView.tsx`, `src/lib/surga-kalpe.ts` |
 | Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (412 l.), `SurgaMeteoLocaliteModal.tsx` (382 l.), `SurgaMeteoPrevisions.tsx` (101 l.), `src/lib/surga-meteo.ts` (198 l.), `src/app/api/surga/meteo/route.ts` (166 l.) |

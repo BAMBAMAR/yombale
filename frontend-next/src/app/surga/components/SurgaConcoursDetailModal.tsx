@@ -13,8 +13,11 @@ import {
   GraduationCap,
   MapPin,
   Phone,
+  CheckSquare,
+  Wallet,
 } from 'lucide-react'
 import { ConcoursItem } from './SurgaConcoursCard'
+import { creerChecklistConcours, prevoirFraisConcours } from '@/lib/surga-cross-actions'
 
 interface SurgaConcoursDetailModalProps {
   concours: ConcoursItem | null
@@ -255,6 +258,31 @@ export default function SurgaConcoursDetailModal({
                     </label>
                   )
                 })}
+              </div>
+
+              {/* Passerelles transversales Surga */}
+              <div style={{ display: 'grid', gridTemplateColumns: concours.frais_dossier_xof > 0 ? '1fr 1fr' : '1fr', gap: 8, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => creerChecklistConcours(concours)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                  title="Créer une note avec les cases à cocher de chaque pièce"
+                >
+                  <CheckSquare size={14} color="var(--accent, #C75B00)" />
+                  <span>Checklist dans Notes</span>
+                </button>
+
+                {concours.frais_dossier_xof > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => prevoirFraisConcours(concours)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: 'var(--bg, #F8F5F0)', color: 'var(--navy, #1C2B4A)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                    title={`Noter ${concours.frais_dossier_xof.toLocaleString()} FCFA dans Sama Xaalis`}
+                  >
+                    <Wallet size={14} color="var(--price, #0A5C36)" />
+                    <span>Quittance Trésor</span>
+                  </button>
+                )}
               </div>
             </div>
           )}

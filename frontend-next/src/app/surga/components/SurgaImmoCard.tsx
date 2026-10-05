@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { MapPin, Phone, MessageCircle, CheckCircle2, BedDouble, Maximize2 } from 'lucide-react'
+import { MapPin, Phone, MessageCircle, CheckCircle2, BedDouble, Maximize2, Calendar, Bookmark } from 'lucide-react'
+import { planifierVisiteImmo, sauvegarderImmoEnNote } from '@/lib/surga-cross-actions'
 
 export interface BienImmoItem {
   id: string
@@ -216,6 +217,54 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
               <Phone size={13} />
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              planifierVisiteImmo(bien)
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#FFFFFF',
+              color: 'var(--accent, #C75B00)',
+              border: '1px solid var(--border, #E8DDD2)',
+              borderRadius: 6,
+              padding: '6px 9px',
+              fontSize: 11,
+              cursor: 'pointer',
+            }}
+            title="Planifier une visite dans mon Agenda"
+            aria-label="Planifier visite"
+          >
+            <Calendar size={13} />
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              sauvegarderImmoEnNote(bien)
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#FFFFFF',
+              color: 'var(--navy, #1C2B4A)',
+              border: '1px solid var(--border, #E8DDD2)',
+              borderRadius: 6,
+              padding: '6px 9px',
+              fontSize: 11,
+              cursor: 'pointer',
+            }}
+            title="Enregistrer cette annonce dans mes Notes"
+            aria-label="Enregistrer en note"
+          >
+            <Bookmark size={13} />
+          </button>
         </div>
       </div>
     </article>

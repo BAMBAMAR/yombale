@@ -3,6 +3,56 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 8] — Cohérence Globale & Passerelles Transversales Multi-Fonctionnalités Surga
+- **Tâches complétées :**
+  - **Diagnostic & Volonté Utilisateur** :
+    - L'utilisateur a demandé d'interconnecter au maximum et de manière hautement cohérente toutes les briques de Surga (exemple donné : à la vue d'un match de sport, pouvoir programmer un rappel d'un clic, prévoir un budget, etc.).
+  - **Moteur Transversal Dédié (`frontend-next/src/lib/surga-cross-actions.ts`, 315 l.)** :
+    - Écriture directe dans le stockage local offline-first (`surga-offline-sync.ts`) sans aucune latence réseau.
+    - Émission d'événements personnalisés `surga-toast` confirmant chaque action à l'utilisateur.
+    - Implémentation de 12 passerelles de productivité transversale :
+      1. Sport ➔ Agenda (`ajouterRappelMatch`) : coup d'envoi programmé avec notifications actives.
+      2. Sport ➔ Sama Xaalis (`prevoirBudgetMatch`) : provision pour la soirée match.
+      3. Bonnes Adresses ➔ Agenda (`prevoirSortieAdresse`) : dîner planifié à 20h avec lieu et téléphone.
+      4. Bonnes Adresses ➔ Sama Xaalis (`enregistrerDepenseAdresse`) : dépense notée au budget moyen.
+      5. Bonnes Adresses ➔ Notes (`sauvegarderAdresseEnNote`) : fiche complète épinglée.
+      6. Concours Nationaux ➔ Notes (`creerChecklistConcours`) : extraction automatique de la liste des pièces à fournir en note interactive avec cases `[x] / [ ]`.
+      7. Concours Nationaux ➔ Sama Xaalis (`prevoirFraisConcours`) : quittance Trésor inscrite dans les dépenses.
+      8. Pôle Immobilier ➔ Agenda (`planifierVisiteImmo`) : visite de logement planifiée à 15h.
+      9. Pôle Immobilier ➔ Notes (`sauvegarderImmoEnNote`) : fiche du bien enregistrée en note.
+      10. Revue de Presse ➔ Notes (`epinglerArticleEnNote`) : article ou brève sauvegardé en un clic.
+      11. Notes ➔ Sama Xaalis (`detecterMontantTexte`) : regex financière extrayant automatiquement les montants en FCFA pour enregistrement en dépense.
+      12. Notes ➔ Agenda : bouton direct pour créer un rappel à 10h.
+  - **Composant Toast Global Réactif (`SurgaToastContainer.tsx`, `surga.css`, `SurgaRadioProvider.tsx`)** :
+    - Toast flottant animé à bordure dorée/navy avec icône CheckCircle2.
+    - Hauteur dynamique s'élevant automatiquement à `bottom: 128px` dès que la barre radio persistante est active.
+  - **Composants Enrichis & Modularité Preservée** :
+    - `SurgaSportCard.tsx` (398 l. <= 450 l.)
+    - `SurgaPlaceDetailModal.tsx` (433 l. <= 450 l.)
+    - `SurgaConcoursDetailModal.tsx` (398 l. <= 450 l.)
+    - `SurgaImmoCard.tsx` (273 l. <= 450 l.)
+    - `SurgaArticleCard.tsx` (115 l. <= 450 l.)
+    - `SurgaNewsList.tsx` (180 l. <= 450 l.)
+    - `SurgaNoteCard.tsx` (437 l. <= 450 l.)
+- **Fichiers modifiés & créés :**
+  - `frontend-next/src/lib/surga-cross-actions.ts` (nouveau, 315 l.)
+  - `frontend-next/src/app/surga/components/SurgaToastContainer.tsx` (nouveau, 65 l.)
+  - `frontend-next/src/app/surga/components/SurgaRadioProvider.tsx`
+  - `frontend-next/src/styles/surga.css`
+  - `frontend-next/src/app/surga/components/SurgaSportCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaPlaceDetailModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaConcoursDetailModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaImmoCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaArticleCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaNewsList.tsx`
+  - `frontend-next/src/app/surga/components/SurgaNoteCard.tsx`
+- **Validation :**
+  - 99/99 tests Jest validés dans `tests/unit/surga.test.js`.
+  - 97/97 tests `frontend-next` validés.
+  - `npx tsc --noEmit` : 0 erreur.
+  - `npm run lint:slop` : 100% conforme.
+  - Tous les composants React strictly <= 450 lignes.
+
 ### [2026-10-05 — Soir 7] — Écoute Radio Continue & Arrière-Plan dans Tout Surga avec Barre Flottante Persistante
 - **Tâches complétées :**
   - **Diagnostic & Causes Racines** :

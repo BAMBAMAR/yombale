@@ -1,9 +1,10 @@
 'use client'
 
 import React from 'react'
-import { ExternalLink, Newspaper } from 'lucide-react'
+import { ExternalLink, Newspaper, Bookmark } from 'lucide-react'
 import SurgaShareButton from './SurgaShareButton'
 import { formaterPartageBreve } from '@/lib/surga-share'
+import { epinglerArticleEnNote } from '@/lib/surga-cross-actions'
 
 export interface BriefingNewsItem {
   id?: string
@@ -91,7 +92,29 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
               <span>{formatRelativeTime(item.published_at)}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => epinglerArticleEnNote(item)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  padding: '4px 7px',
+                  borderRadius: 6,
+                  border: '1px solid var(--border, #E8DDD2)',
+                  backgroundColor: '#FFFFFF',
+                  color: 'var(--navy, #1C2B4A)',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+                title="Épingler cette brève dans mes Notes"
+              >
+                <Bookmark size={11} color="var(--navy, #1C2B4A)" />
+                <span>En Note</span>
+              </button>
+
               {/* Partage Web Share / WhatsApp */}
               <SurgaShareButton
                 payload={{

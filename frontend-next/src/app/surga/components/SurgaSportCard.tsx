@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Trophy, Calendar, SlidersHorizontal, RefreshCw, Radio } from 'lucide-react'
+import { Trophy, Calendar, SlidersHorizontal, RefreshCw, Radio, Bell, BellCheck, Wallet } from 'lucide-react'
 import SurgaShareButton from './SurgaShareButton'
 import SurgaSportCustomModal from './SurgaSportCustomModal'
 import { formaterPartageSport } from '@/lib/surga-share'
+import { ajouterRappelMatch, prevoirBudgetMatch } from '@/lib/surga-cross-actions'
 
 export interface SportEventItem {
   id?: string
@@ -54,6 +55,19 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
       return []
     }
   })
+  const [matchsRappeles, setMatchsRappeles] = useState<string[]>([])
+
+  const handleAjouterRappel = (match: SportEventItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
+    ajouterRappelMatch(match)
+    setMatchsRappeles((prev) => [...prev, matchKey])
+  }
+
+  const handlePrevoirBudget = (match: SportEventItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    prevoirBudgetMatch(match)
+  }
 
   const rechargerScores = async (categorie = filtreCategorie, equipes = equipesFavorites) => {
     setLoading(true)
@@ -293,6 +307,61 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                     >
                       À venir
                     </span>
+                  )}
+
+                  {!isTermine && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => handleAjouterRappel(match, e)}
+                        title="Ajouter un rappel de match dans mon Agenda"
+                        aria-label="Rappel match"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '5px 7px',
+                          borderRadius: 6,
+                          border: '1px solid',
+                          borderColor: matchsRappeles.includes(match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`)
+                            ? 'var(--price, #0A5C36)'
+                            : 'var(--border, #E8DDD2)',
+                          backgroundColor: matchsRappeles.includes(match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`)
+                            ? 'rgba(10, 92, 54, 0.08)'
+                            : '#FFFFFF',
+                          color: matchsRappeles.includes(match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`)
+                            ? 'var(--price, #0A5C36)'
+                            : 'var(--navy, #1C2B4A)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {matchsRappeles.includes(match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`) ? (
+                          <BellCheck size={14} />
+                        ) : (
+                          <Bell size={14} />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handlePrevoirBudget(match, e)}
+                        title="Prévoir budget sortie match dans Sama Xaalis"
+                        aria-label="Budget match"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '5px 7px',
+                          borderRadius: 6,
+                          border: '1px solid var(--border, #E8DDD2)',
+                          backgroundColor: '#FFFFFF',
+                          color: 'var(--accent, #C75B00)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Wallet size={14} />
+                      </button>
+                    </>
                   )}
 
                   <SurgaShareButton

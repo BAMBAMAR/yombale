@@ -239,6 +239,17 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Carte Météo (`SurgaMeteoCard.tsx`, 412 l.) avec extraction modulaire de `SurgaMeteoPrevisions.tsx` (101 l., règle des 450 lignes), bouton d'action explicite « Changer » (`MapPin`), callback `onVilleChange` liant la météo aux préférences du briefing et fallback local gracieux.
 - [x] `DONE` Alignement du backend (`meteo-service.js`, `briefing.js`) et enrichissement des tests Jest portés à **99/99 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 0 violation.
 
+### Tranche 20 — Passerelles Transversales, Synergies Inter-Modules & Toasts Globaux (05 Octobre 2026)
+- [x] `DONE` Moteur transversal unifié (`frontend-next/src/lib/surga-cross-actions.ts`, 315 l.) orchestrant les passerelles entre modules avec persistance locale (`surga-offline-sync.ts`).
+- [x] `DONE` Passerelle Sport ➔ Agenda (Rappels de match synchronisés avec notifications Web) & Sport ➔ Sama Xaalis (Budget match).
+- [x] `DONE` Passerelle Bonnes Adresses ➔ Agenda (Sortie à 20h), Sama Xaalis (Dépense budget moyen) & Notes (Fiche adresse enregistrée).
+- [x] `DONE` Passerelle Concours Nationaux ➔ Notes (Checklist interactive des pièces du dossier avec cases à cocher `[x] / [ ]`) & Sama Xaalis (Quittance Trésor).
+- [x] `DONE` Passerelle Pôle Immobilier ➔ Agenda (Planification de visite à 15h) & Notes (Fiche détaillée du bien épinglée).
+- [x] `DONE` Passerelle Revue de Presse & Brèves ➔ Notes (Bouton d'épinglage 1-clic sur chaque article).
+- [x] `DONE` Passerelle Notes ➔ Sama Xaalis (Détection regex intelligente des montants FCFA dans le texte pour enregistrement en dépense) & Agenda (Rappel de note à 10h).
+- [x] `DONE` Toast Container Global (`SurgaToastContainer.tsx`) écoutant `surga-toast` avec surélévation adaptative à `128px` au-dessus de la barre radio persistante.
+- [x] `DONE` Validation rigoureuse : 99/99 tests Jest backend validés, 97/97 tests `frontend-next` validés, `npx tsc --noEmit` 0 erreur, `npm run lint:slop` 100% conforme.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

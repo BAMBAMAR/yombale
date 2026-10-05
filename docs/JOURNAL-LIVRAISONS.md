@@ -1,5 +1,38 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga Cohérence Globale & Passerelles Transversales Multi-Fonctionnalités (Session 2026-10-05, branche `feature/surga`)** :
+  * **Demande Utilisateur & Objectif** :
+    - L'utilisateur a exprimé le besoin fort d'interconnexion fluide et cohérente entre toutes les fonctionnalités de Surga : « je veux plus de relation entre les différentes fonctionnalités de Surga... ex: je vois un match, je dois pouvoir l'ajouter comme rappel... je veux le plus de relation possible dans la cohérence ».
+  * **Architecture & Passerelles Transversales Livrées** :
+    - **Moteur Transversal Unifié (`frontend-next/src/lib/surga-cross-actions.ts`, 315 l.)** : Centralisation des logiques d'injection croisée directement dans le moteur offline-first (`surga-offline-sync.ts`) sans dépendance au réseau :
+      - `ajouterRappelMatch(match)` : calcule l'horaire de coup d'envoi et injecte un événement dans l'agenda avec rappel actif.
+      - `prevoirBudgetMatch(match)` : inscrit un budget loisir dans les dépenses Sama Xaalis.
+      - `prevoirSortieAdresse(place)` : planifie une sortie resto/dibiterie à 20h dans l'agenda avec quartier et téléphone.
+      - `enregistrerDepenseAdresse(place)` : enregistre le montant moyen du repas dans Sama Xaalis.
+      - `sauvegarderAdresseEnNote(place)` : crée une note récapitulative complète avec avis honnête et contact.
+      - `creerChecklistConcours(concours)` : convertit les pièces administratives du dossier en note avec cases à cocher `[x] / [ ]`.
+      - `prevoirFraisConcours(concours)` : enregistre les frais de dossier (quittance Trésor) dans Sama Xaalis.
+      - `planifierVisiteImmo(bien)` : planifie la visite du logement à 15h dans l'agenda avec contact bailleur/agent.
+      - `sauvegarderImmoEnNote(bien)` : sauvegarde la fiche de l'annonce dans les notes.
+      - `epinglerArticleEnNote(article)` : épingle une brève de la revue de presse dans les notes.
+      - `detecterMontantTexte(texte)` : détecteur d'expressions financières sénégalaises (`2500 F`, `15 000 FCFA`) pour conversion directe d'une note en dépense.
+    - **Composant Toast Global Réactif (`SurgaToastContainer.tsx`, `surga.css`, `SurgaRadioProvider.tsx`)** :
+      - Toast flottant animé confirmant instantanément chaque action transversale (`surga-toast`).
+      - Décalage intelligent adaptatif `body:has(.surga-persistent-radio-bar) .surga-global-toast { bottom: 128px; }` pour éviter tout conflit avec le lecteur radio.
+    - **Interconnexions UI Implémentées** :
+      - `SurgaSportCard.tsx` (398 l.) : Actions 1-tap `[Bell]` (Rappel match) et `[Wallet]` (Budget match).
+      - `SurgaPlaceDetailModal.tsx` (433 l.) : Boutons `[ 📅 Sortie Agenda ]`, `[ 💰 Noter Dépense ]` et `[ 📝 Garder en Note ]`.
+      - `SurgaConcoursDetailModal.tsx` (398 l.) : Boutons `[ 📋 Checklist dans Notes ]` et `[ 💰 Quittance Trésor ]`.
+      - `SurgaImmoCard.tsx` (273 l.) : Boutons `[ 📅 Visite ]` et `[ 📌 Note ]`.
+      - `SurgaArticleCard.tsx` (115 l.) & `SurgaNewsList.tsx` (180 l.) : Bouton `[ 📌 En Note ]`.
+      - `SurgaNoteCard.tsx` (437 l.) : Détection de montant pour Sama Xaalis et bouton `[ 📅 Rappeler ]`.
+  * **Validation & Conformité** :
+    - 99/99 tests Jest validés dans `tests/unit/surga.test.js`.
+    - 97/97 tests `frontend-next` validés.
+    - `npx tsc --noEmit` zéro erreur.
+    - `npm run lint:slop` zéro régression.
+    - 100% des composants React sous le seuil strict de 450 lignes.
+
 - **Surga Radios FM & Terroirs — Écoute en Arrière-Plan & Navigation Continue dans Tout Surga (Session 2026-10-05, branche `feature/surga`)** :
   * **Demande Utilisateur & Diagnostic** :
     - L'utilisateur souhaitait écouter la radio tout en continuant de naviguer librement dans Surga (changer d'onglet, consulter ses dépenses, ses notes, son agenda, le trafic ou la météo).
