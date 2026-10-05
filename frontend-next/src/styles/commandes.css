@@ -7,6 +7,9 @@
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .npl-commande-card:hover {
@@ -22,6 +25,9 @@
   background: #ffffff;
   transition: background 0.15s ease;
   user-select: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .npl-commande-header.is-open {
@@ -39,6 +45,7 @@
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-width: 0;
 }
 
 .npl-commande-badges {
@@ -46,6 +53,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .npl-commande-top-right {
@@ -76,6 +84,7 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
+  min-width: 0;
 }
 
 .npl-commande-titre-produit {
@@ -95,25 +104,31 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  word-break: break-word;
+  min-width: 0;
 }
 
 /* ── Vue Dépliée (Body) ── */
 .npl-commande-body {
   padding: 16px;
   background: #ffffff;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Grille Responsive 2 Colonnes Web / 1 Colonne Mobile */
 .npl-commande-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   width: 100%;
+  min-width: 0;
 }
 
 @media (min-width: 860px) {
   .npl-commande-grid {
-    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     gap: 16px;
     align-items: start;
   }
@@ -125,6 +140,17 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.npl-commande-col-left > *,
+.npl-commande-col-right > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Boîte de section unifiée */
@@ -136,6 +162,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .npl-commande-box-header {
@@ -143,6 +172,9 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .npl-commande-box-label {
@@ -154,13 +186,16 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  flex-shrink: 0;
 }
 
 /* Rangée de boutons contact direct */
 .npl-commande-contact-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
 .npl-commande-btn-tel {
@@ -177,6 +212,11 @@
   justify-content: center;
   gap: 6px;
   transition: background 0.15s ease, border-color 0.15s ease;
+  min-width: 0;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .npl-commande-btn-tel:hover {
@@ -199,6 +239,11 @@
   gap: 6px;
   box-shadow: 0 1px 2px rgba(37, 211, 102, 0.2);
   transition: background 0.15s ease, transform 0.1s ease;
+  min-width: 0;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .npl-commande-btn-wa:hover {
@@ -211,6 +256,8 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 
 .npl-commande-item-total {
@@ -220,6 +267,10 @@
   border-top: 1px dashed #cbd5e1;
   padding-top: 8px;
   margin-top: 2px;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* Note du client */
@@ -231,6 +282,11 @@
   font-size: 12.5px;
   color: #92400e;
   line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Barre d'actions compacte */
@@ -242,4 +298,21 @@
   gap: 8px;
   padding-top: 8px;
   border-top: 1px solid #f1f5f9;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .npl-commande-header {
+    padding: 12px 10px;
+  }
+  .npl-commande-body {
+    padding: 12px 10px;
+  }
+  .npl-commande-box {
+    padding: 10px 10px;
+  }
+  .npl-commande-grid {
+    gap: 10px;
+  }
 }

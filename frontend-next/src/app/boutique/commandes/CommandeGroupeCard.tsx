@@ -39,18 +39,24 @@ export default function CommandeGroupeCard({
         border: '1px solid var(--accent, #C75B00)',
         borderRadius: 12,
         overflow: 'hidden',
+        width: '100%',
+        minWidth: 0,
+        boxSizing: 'border-box',
       }}
     >
       <div
         onClick={() => setOpen(!open)}
         style={{
-          padding: '14px 18px',
+          padding: '12px 14px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           cursor: 'pointer',
           gap: 12,
           background: '#fff7f0',
+          width: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
@@ -113,11 +119,14 @@ export default function CommandeGroupeCard({
         <div
           style={{
             borderTop: '1px solid #f3f4f6',
-            padding: '14px 18px',
+            padding: '12px 10px',
             background: '#fafafa',
             display: 'flex',
             flexDirection: 'column',
             gap: 10,
+            width: '100%',
+            minWidth: 0,
+            boxSizing: 'border-box',
           }}
         >
           {commandes.map((c) => (

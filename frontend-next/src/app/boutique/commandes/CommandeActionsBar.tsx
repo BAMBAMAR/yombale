@@ -58,13 +58,16 @@ export default function CommandeActionsBar({
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
+        width: '100%',
+        minWidth: 0,
+        boxSizing: 'border-box',
       }}
     >
       <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
         {t('shop.quickActions') || 'Actions secondaires & Documents'}
       </span>
 
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', alignItems: 'center', overflowX: 'auto', scrollbarWidth: 'none' }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: '100%', minWidth: 0 }}>
         {/* Facture PDF */}
         <button
           type="button"

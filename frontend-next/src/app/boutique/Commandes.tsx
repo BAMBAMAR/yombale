@@ -118,7 +118,7 @@ export default function Commandes({
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', minWidth: 0 }}>
               {regrouperCommandes(commandesFiltrees).map((item, i) =>
                 Array.isArray(item) ? (
                   <CommandeGroupeCard
