@@ -43,6 +43,15 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Résolution Données Réelles Immobilier, Concours & Bonnes Adresses dans Surga (Session 2026-10-05, branche `feature/surga`)** :
+  - **Pôle Immobilier Connecté à la Base Réelle (1 668 annonces PostgreSQL)** :
+    - *Origine clarifiée* : Les données proviennent de la table PostgreSQL de production `annonces_immo` (1 668 biens, 563 publiables certifiés avec prix > 10 000 FCFA et contacts valides).
+    - *Correction du bug de requête* : Élimination de l'erreur SQL `column ai.contact_whatsapp does not exist` dans `backend/services/surga/immo-service.js` (remplacée par `COALESCE(ai.contact_tel, ag.telephone)` et `COALESCE(ag.whatsapp, ai.contact_tel)`).
+    - *Suppression du fallback démo involontaire* : L'API `/api/surga/immo/biens` sert désormais en direct les vraies annonces dakaroises et sénégalaises au lieu des 4 biens de démonstration en mémoire.
+  - **Concours Nationaux & Bonnes Adresses Dakaroises (Résolution des listes vides)** :
+    - *Seed de la base exécuté* : `scripts/seed-surga-data.js` a inséré les 5 concours nationaux de référence (ENA, Douanes, Police, FASTEF...) et les 4 adresses dakaroises certifiées dans PostgreSQL (`surga_concours` et `surga_places`).
+    - *Fallback automatique résilient* : Mise à jour de `concours-service.js` et `places-service.js` pour basculer automatiquement sur les catalogues de référence si la base est vide, garantissant qu'aucune modale ne s'affiche à 0 élément.
+
 - **Livraison Sport Temps Réel, Météo Dakar Live & Sama Xaalis dans Surga (Session 2026-10-05, branche `feature/surga`)** :
   - **Sport & Équipes Nationales (Données Réelles, Direct & Personnalisation)** :
     - *Origine des données clarifiée* : Suppression des 3 matchs statiques démo de `rss-collector.js`.
