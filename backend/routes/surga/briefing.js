@@ -9,7 +9,7 @@ const {
   collecterTousLesFlux,
   getBriefingItems,
 } = require('../../services/surga/rss-collector');
-const { getMeteo } = require('../../services/surga/meteo-service');
+const { getMeteo, VILLES_SENEGAL } = require('../../services/surga/meteo-service');
 const { filtrerMatchsSport } = require('../../services/surga/sport-service');
 
 // GET /api/surga/briefing
@@ -98,6 +98,12 @@ router.get('/briefing', tokenOptional, async (req, res) => {
       items,
       sports,
       meteo: meteoData,
+      localites: Object.entries(VILLES_SENEGAL).map(([id, l]) => ({
+        id,
+        nom: l.nom,
+        maritime: l.maritime,
+        zone: l.zone || 'Sénégal',
+      })),
       agenda_du_jour: agendaDuJour,
     });
   } catch (err) {

@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 05 Octobre 2026  
+> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 4)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 16 + Sama Xaalis + Météo GPS Multi-Quartiers + Kiosque + Bons Plans Fiabilisés + Console Admin)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 17 + Sama Xaalis + Météo 14 Régions & API Résiliente + Kiosque + Bons Plans + Console Admin)**  
 > **Auteur** : Antigravity (Assistant AI Senior)
 
 ---
@@ -17,11 +17,13 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
    - **Notes & Agenda v2** : Prise de notes catégorisée, rappels programmés et notifications locales par Service Worker.
    - **Sama Xaalis (Gestion Financière Personnelle)** : Portefeuille complet intégré dans la navigation principale (`surga-kalpe.ts`, `SurgaSamaXaalisView.tsx`), cartes de soldes/flux, suivi rigoureux des dettes et créances avec remboursement direct, épargne et cagnottes avec jauges de progression.
    - **Sport Temps Réel & Personnalisation Multi-Ligues** : Scores et statuts en direct (badge clignotant `EN_DIRECT`, minute de jeu), sélecteur de ligues (`SurgaSportCustomModal.tsx`) couvrant UEFA Champions League, Premier League, LaLiga, Ligue 1, Serie A, Saudi Pro League, Ligue 1 sénégalaise et les Lions de la Teranga.
-   - **Météo & Marées Live avec Sélecteur Multi-Localités & GPS 1-Clic** :
-     - Catalogue national de 23 localités (8 quartiers de Dakar, banlieue dakaroise, capitales régionales).
-     - Modale dédiée (`SurgaMeteoLocaliteModal.tsx`, 368 l.) avec recherche instantanée, filtres régionaux sans écrasement flexbox (`flexShrink: 0`, `minHeight: 0`) et réactivité tactile (`touchAction: 'manipulation'`).
-     - Algorithme de résolution strict à deux passes dans `meteo-service.js` (priorité absolue aux quartiers spécifiques comme "Dakar Plateau", "Grand Dakar" ou "Ouakam" avant la ville générique "Dakar").
-     - Détection GPS automatique du quartier le plus proche via `navigator.geolocation` et calcul déterministe des marées océaniques pour le littoral.
+   - **Météo & Marées Live avec Sélecteur Multi-Localités, 14 Régions & Résilience Hors-Ligne** :
+     - Catalogue national exhaustif de 28 localités couvrant l'intégralité des 14 régions du Sénégal (Dakar, Thiès, Saint-Louis, Diourbel, Louga, Fatick, Kaolack, Kaffrine, Tambacounda, Kédougou, Kolda, Ziguinchor, Sédhiou, Matam).
+     - Bibliothèque partagée (`src/lib/surga-meteo.ts`, 198 l.) avec normalisation NFD anti-diacritiques et remplacement des ligatures (`[œŒ]` -> `oe`).
+     - Route Handler Next.js autonome (`src/app/api/surga/meteo/route.ts`, 166 l.) assurant la résolution immédiate sans dépendre du déploiement séparé du backend Express.
+     - Modale dédiée (`SurgaMeteoLocaliteModal.tsx`, 382 l.) avec fallback catalogue automatique immédiat, recherche insensible aux accents et détection de sélection fiabilisée.
+     - Carte Météo modulaire (`SurgaMeteoCard.tsx`, 412 l. et `SurgaMeteoPrevisions.tsx`, 101 l.), bouton d'accès rapide « Changer », synchronisation `onVilleChange` avec les préférences du briefing et fallback hors-ligne gracieux.
+     - Algorithme de résolution strict à deux passes dans `meteo-service.js` et détection GPS automatique du quartier le plus proche via `navigator.geolocation`.
    - **Commandes WhatsApp & Vocal Web Speech** : Commandes précises (quotas 20/jour, confirmation stricte OUI/NON), reconnaissance vocale bilingue avec normalisation orale déterministe.
    - **Services Quotidiens Locaux** : Trafic Dakar en direct (TomTom Live + corridors clés), pôle immobilier certifié Dakar (< 2 min), concours & examens nationaux (J-30/J-7/J-1) et bonnes adresses dakaroises avec avis honnêtes fiabilisées (normalisation numérique PostgreSQL et protection anti-crash `.toFixed`).
    - **Audio Low-Data & Radios FM** : Synthèse locale gratuite (0 Mo de data) et radios locales en direct (RTS, Sud FM, etc.).
@@ -53,7 +55,7 @@ L'assistant personnel de poche **Surga** a été intégralement implémenté dan
 | Routage & Sous-domaine | `src/middleware.ts`, `src/app/[slug]/route.ts`, `src/app/layout.tsx` |
 | Navigation & En-tête | `src/app/surga/components/SurgaHeader.tsx`, `SurgaBottomNav.tsx` |
 | Sama Xaalis (Finances) | `src/app/surga/components/SurgaSamaXaalisView.tsx`, `src/lib/surga-kalpe.ts` |
-| Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (445 l.), `SurgaMeteoLocaliteModal.tsx` (338 l.) |
+| Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (412 l.), `SurgaMeteoLocaliteModal.tsx` (382 l.), `SurgaMeteoPrevisions.tsx` (101 l.), `src/lib/surga-meteo.ts` (198 l.), `src/app/api/surga/meteo/route.ts` (166 l.) |
 | Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx`, `SurgaSportCustomModal.tsx` |
 | Revue de Presse & Kiosque | `src/app/surga/components/SurgaPresseCard.tsx` (carrousel horizontal) |
 | Bons plans & Adresses | `src/app/surga/components/SurgaPlaceCard.tsx` (335 l.), `SurgaPlaceDetailModal.tsx` (393 l.), `SurgaPlacesModal.tsx` (373 l.) |

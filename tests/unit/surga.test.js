@@ -1416,6 +1416,31 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(meteoThies.ville).toBe('Thiès');
       expect(meteoThies.zone).toBe('Régions');
     });
+
+    test('Résolution robuste insensible aux accents et ligatures pour toutes les localités du Sénégal', async () => {
+      const { LOCALITES_SENEGAL } = require('../../backend/services/surga/meteo-service');
+      // Couverture complète des 14 régions du Sénégal
+      expect(Object.keys(LOCALITES_SENEGAL).length).toBeGreaterThanOrEqual(28);
+
+      // Résolution sans accent (ex: thies, guediawaye, sacre coeur)
+      const resThies = await getMeteo('thies');
+      expect(resThies.ville).toBe('Thiès');
+
+      const resGuediawaye = await getMeteo('guediawaye');
+      expect(resGuediawaye.ville).toBe('Guédiawaye');
+
+      const resSacreCoeur = await getMeteo('sacre coeur');
+      expect(resSacreCoeur.ville).toBe('Mermoz / Sacré-Cœur');
+
+      const resSaintLouis = await getMeteo('saint louis');
+      expect(resSaintLouis.ville).toBe('Saint-Louis');
+
+      const resLouga = await getMeteo('louga');
+      expect(resLouga.ville).toBe('Louga');
+
+      const resDiourbel = await getMeteo('diourbel');
+      expect(resDiourbel.ville).toBe('Diourbel');
+    });
   });
 });
 

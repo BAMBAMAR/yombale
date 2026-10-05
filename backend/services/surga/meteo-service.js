@@ -19,19 +19,36 @@ const LOCALITES_SENEGAL = {
   guediawaye: { nom: 'Guédiawaye', lat: 14.7700, lon: -17.3850, maritime: true, zone: 'Banlieue' },
   rufisque: { nom: 'Rufisque', lat: 14.7167, lon: -17.2667, maritime: true, zone: 'Banlieue' },
   diamniadio: { nom: 'Diamniadio', lat: 14.7300, lon: -17.1800, maritime: false, zone: 'Banlieue' },
-  // Régions et villes du Sénégal
+  // Régions et villes du Sénégal (14 régions couvertes)
   thies: { nom: 'Thiès', lat: 14.7910, lon: -16.9359, maritime: false, zone: 'Régions' },
   mbour: { nom: 'Mbour / Saly', lat: 14.4220, lon: -16.9639, maritime: true, zone: 'Petite-Côte' },
   'saint-louis': { nom: 'Saint-Louis', lat: 16.0179, lon: -16.4896, maritime: true, zone: 'Régions' },
-  ziguinchor: { nom: 'Ziguinchor', lat: 12.5833, lon: -16.2719, maritime: true, zone: 'Casamance' },
-  'cap-skirring': { nom: 'Cap Skirring', lat: 12.3667, lon: -16.7500, maritime: true, zone: 'Casamance' },
   touba: { nom: 'Touba / Mbacké', lat: 14.8647, lon: -15.8756, maritime: false, zone: 'Bassin Arachidier' },
+  diourbel: { nom: 'Diourbel', lat: 14.6500, lon: -16.2333, maritime: false, zone: 'Bassin Arachidier' },
   kaolack: { nom: 'Kaolack', lat: 14.1500, lon: -16.0833, maritime: false, zone: 'Bassin Arachidier' },
   fatick: { nom: 'Fatick', lat: 14.3333, lon: -16.4167, maritime: false, zone: 'Bassin Arachidier' },
-  tambacounda: { nom: 'Tambacounda', lat: 13.7667, lon: -13.6667, maritime: false, zone: 'Sénégal Oriental' },
+  kaffrine: { nom: 'Kaffrine', lat: 14.1059, lon: -15.5414, maritime: false, zone: 'Bassin Arachidier' },
+  louga: { nom: 'Louga', lat: 15.6186, lon: -16.2244, maritime: false, zone: 'Régions' },
+  ziguinchor: { nom: 'Ziguinchor', lat: 12.5833, lon: -16.2719, maritime: true, zone: 'Casamance' },
+  'cap-skirring': { nom: 'Cap Skirring', lat: 12.3667, lon: -16.7500, maritime: true, zone: 'Casamance' },
   kolda: { nom: 'Kolda', lat: 12.8833, lon: -14.9500, maritime: false, zone: 'Casamance' },
+  sedhiou: { nom: 'Sédhiou', lat: 12.7081, lon: -15.5569, maritime: false, zone: 'Casamance' },
+  tambacounda: { nom: 'Tambacounda', lat: 13.7667, lon: -13.6667, maritime: false, zone: 'Sénégal Oriental' },
+  kedougou: { nom: 'Kédougou', lat: 12.5564, lon: -12.1747, maritime: false, zone: 'Sénégal Oriental' },
   matam: { nom: 'Matam', lat: 15.6558, lon: -13.2553, maritime: false, zone: 'Fouta' },
 };
+
+function normaliserTexte(str) {
+  return (str || '')
+    .replace(/[œŒ]/g, 'oe')
+    .replace(/[æÆ]/g, 'ae')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[\/\-_,.]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 // Rétrocompatibilité
 const VILLES_SENEGAL = LOCALITES_SENEGAL;
@@ -135,28 +152,35 @@ async function getMeteo(options = 'Dakar') {
     zoneNom = plusProche.zone || 'Dakar';
   } else {
     const rawVille = typeof options === 'string' ? options : (options?.ville || 'Dakar');
-    const cleNormalisee = rawVille
-      .toLowerCase()
-      .trim()
-      .replace(/[éèê]/g, 'e')
-      .replace(/[\/\-_]/g, ' ');
+    const cleNormalisee = normaliserTexte(rawVille);
 
-    // Recherche de correspondance dans le catalogue (deux passes : exacte puis spécifique)
+    // Recherche de correspondance dans le catalogue
     let matched = null;
-    // Passe 1 : correspondance exacte stricte
+    // Passe 1 : correspondance exacte directe
     for (const [key, item] of Object.entries(LOCALITES_SENEGAL)) {
-      const itemNorm = item.nom.toLowerCase().replace(/[éèê]/g, 'e').replace(/[\/\-_]/g, ' ').trim();
+      const itemNorm = normaliserTexte(item.nom);
       if (key === cleNormalisee || itemNorm === cleNormalisee || item.nom.toLowerCase().trim() === rawVille.toLowerCase().trim()) {
         matched = item;
         break;
       }
     }
 
-    // Passe 2 : correspondance partielle avec priorité au nom le plus long / le plus spécifique
+    // Passe 2 : correspondance par sous-partie (ex: 'ngor', 'saly', 'mamelles')
+    if (!matched) {
+      for (const [key, item] of Object.entries(LOCALITES_SENEGAL)) {
+        const parts = item.nom.split('/').map((p) => normaliserTexte(p));
+        if (parts.some((p) => p === cleNormalisee)) {
+          matched = item;
+          break;
+        }
+      }
+    }
+
+    // Passe 3 : correspondance partielle avec priorité au nom le plus spécifique
     if (!matched) {
       const entries = Object.entries(LOCALITES_SENEGAL).sort((a, b) => b[1].nom.length - a[1].nom.length);
       for (const [key, item] of entries) {
-        const itemNorm = item.nom.toLowerCase().replace(/[éèê]/g, 'e').replace(/[\/\-_]/g, ' ').trim();
+        const itemNorm = normaliserTexte(item.nom);
         if (itemNorm.includes(cleNormalisee) || cleNormalisee.includes(itemNorm) || key.includes(cleNormalisee)) {
           matched = item;
           break;

@@ -1,21 +1,22 @@
+// frontend-next/src/app/surga/components/SurgaMeteoLocaliteModal.tsx
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
 import { X, Search, MapPin, LocateFixed, Check, Compass } from 'lucide-react'
+import {
+  LOCALITES_SENEGAL_LIST,
+  normaliserTexte,
+  type LocaliteItem,
+} from '@/lib/surga-meteo'
 
-export interface LocaliteItem {
-  id: string
-  nom: string
-  maritime: boolean
-  zone: string
-}
+export type { LocaliteItem }
 
 interface SurgaMeteoLocaliteModalProps {
   isOpen: boolean
   onClose: () => void
   localiteActuelle: string
   estGpsActif: boolean
-  localites: LocaliteItem[]
+  localites?: LocaliteItem[]
   onSelectLocalite: (nom: string) => void
   onDetecterGps: () => void
   gpsEnCours: boolean
@@ -33,31 +34,41 @@ export default function SurgaMeteoLocaliteModal({
 }: SurgaMeteoLocaliteModalProps) {
   const [recherche, setRecherche] = useState('')
   const [zoneFiltre, setZoneFiltre] = useState<string>('tous')
-
   const [selectionActive, setSelectionActive] = useState<string>(localiteActuelle)
 
   useEffect(() => {
     setSelectionActive(localiteActuelle)
   }, [localiteActuelle])
 
-  const zonesDisponibles = useMemo(() => {
-    const set = new Set<string>()
-    localites.forEach((l) => set.add(l.zone))
-    return ['tous', ...Array.from(set)]
+  // Fallback automatique sur le catalogue complet des 28 localités (14 régions) si la liste API est vide
+  const listeEffective = useMemo(() => {
+    return Array.isArray(localites) && localites.length > 0 ? localites : LOCALITES_SENEGAL_LIST
   }, [localites])
 
+  const zonesDisponibles = useMemo(() => {
+    const set = new Set<string>()
+    listeEffective.forEach((l) => set.add(l.zone))
+    return ['tous', ...Array.from(set)]
+  }, [listeEffective])
+
   const localitesFiltrees = useMemo(() => {
-    return localites.filter((l) => {
+    const normRecherche = normaliserTexte(recherche)
+    return listeEffective.filter((l) => {
+      const nomNorm = normaliserTexte(l.nom)
+      const zoneNorm = normaliserTexte(l.zone)
       const matchRecherche =
-        !recherche ||
-        l.nom.toLowerCase().includes(recherche.toLowerCase()) ||
-        l.zone.toLowerCase().includes(recherche.toLowerCase())
+        !normRecherche ||
+        nomNorm.includes(normRecherche) ||
+        zoneNorm.includes(normRecherche) ||
+        l.id.includes(normRecherche)
       const matchZone = zoneFiltre === 'tous' || l.zone === zoneFiltre
       return matchRecherche && matchZone
     })
-  }, [localites, recherche, zoneFiltre])
+  }, [listeEffective, recherche, zoneFiltre])
 
   if (!isOpen) return null
+
+  const cibleNorm = normaliserTexte(selectionActive || localiteActuelle)
 
   return (
     <div
@@ -122,7 +133,7 @@ export default function SurgaMeteoLocaliteModal({
             <div>
               <div style={{ fontSize: 15, fontWeight: 800 }}>Localité &amp; Position Météo</div>
               <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.75)' }}>
-                Dakar, banlieue, régions ou géolocalisation GPS
+                Dakar, banlieue, 14 régions du Sénégal ou GPS
               </div>
             </div>
           </div>
@@ -189,7 +200,7 @@ export default function SurgaMeteoLocaliteModal({
           </button>
         </div>
 
-        {/* Barre de recherche */}
+        {/* Barre de recherche (tolérante aux accents, tirets et majuscules) */}
         <div style={{ padding: '10px 14px 6px', flexShrink: 0 }}>
           <div
             style={{
@@ -207,7 +218,7 @@ export default function SurgaMeteoLocaliteModal({
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher un quartier ou une ville..."
+              placeholder="Rechercher (ex: Thiès, Guédiawaye, Almadies...)"
               style={{
                 flex: 1,
                 border: 'none',
@@ -229,7 +240,7 @@ export default function SurgaMeteoLocaliteModal({
           </div>
         </div>
 
-        {/* Filtres par zone géographique (flexShrink: 0 pour empêcher tout écrasement/troncature) */}
+        {/* Filtres par zone géographique */}
         <div
           style={{
             padding: '8px 14px 10px',
@@ -275,7 +286,7 @@ export default function SurgaMeteoLocaliteModal({
           })}
         </div>
 
-        {/* Liste des localités (minHeight: 0 pour permettre le scroll flex sans pousser les parents) */}
+        {/* Liste des localités avec détection active robuste */}
         <div
           style={{
             flex: 1,
@@ -294,11 +305,13 @@ export default function SurgaMeteoLocaliteModal({
             </div>
           ) : (
             localitesFiltrees.map((loc) => {
-              const cible = selectionActive || localiteActuelle
+              const locNorm = normaliserTexte(loc.nom)
+              const parts = loc.nom.split('/').map((p) => normaliserTexte(p))
               const estSelectionnee =
                 !estGpsActif &&
-                (loc.nom.toLowerCase().trim() === cible.toLowerCase().trim() ||
-                  loc.id === cible.toLowerCase().trim())
+                (locNorm === cibleNorm ||
+                  loc.id === cibleNorm ||
+                  parts.some((p) => p === cibleNorm))
 
               return (
                 <button
@@ -333,7 +346,7 @@ export default function SurgaMeteoLocaliteModal({
                         {loc.nom}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 1 }}>
-                        {loc.zone} {loc.maritime ? '• Littoral océanique (Marées)' : ''}
+                        {loc.zone} {loc.maritime ? '• Littoral (Marées directes)' : ''}
                       </div>
                     </div>
                   </div>

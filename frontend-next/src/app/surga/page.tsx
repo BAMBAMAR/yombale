@@ -304,6 +304,13 @@ export default function SurgaPage() {
               <SurgaMeteoCard
                 initialMeteo={briefingData?.meteo}
                 ville={preferences?.quartiers?.[0] || 'Dakar'}
+                onVilleChange={(nv) => {
+                  setPreferences((prev: any) => {
+                    const maj = { ...(prev || {}), quartiers: [nv] }
+                    try { localStorage.setItem('surga_preferences', JSON.stringify(maj)) } catch {}
+                    return maj
+                  })
+                }}
               />
             )}
 

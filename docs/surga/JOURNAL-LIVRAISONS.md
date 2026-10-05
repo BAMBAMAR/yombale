@@ -3,6 +3,41 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 4] — Résolution du Changement de Localité Météo, Catalogue 14 Régions & API Résiliente
+- **Tâches complétées :**
+  - **Diagnostic & Causes Racines** :
+    1. `localitesList` initialisé à `[]` dans `SurgaMeteoCard.tsx` et jamais chargé au montage si `initialMeteo` était présent (cas standard avec briefing). Modale ouverte vide (« Aucune localité trouvée pour "" »).
+    2. Endpoint distant `/api/surga/meteo` indisponible sur Render (404) car non encore déployé sur `origin/main`.
+    3. Sensibilité stricte aux accents dans la recherche textuelle de `SurgaMeteoLocaliteModal.tsx` ("thies" ne trouvait pas "Thiès", "guediawaye" ne trouvait pas "Guédiawaye", "sacre coeur" ne trouvait pas "Mermoz / Sacré-Cœur").
+    4. Catalogue limité à 23 localités sans plusieurs régions clés du Sénégal.
+  - **Bibliothèque Partagée & Types (`frontend-next/src/lib/surga-meteo.ts`)** :
+    - 28 localités couvrant l'intégralité des 14 régions du Sénégal et les quartiers clés de Dakar.
+    - Normalisation NFD anti-diacritiques avec remplacement des ligatures (`[œŒ]` -> `oe`, `[æÆ]` -> `ae`).
+    - Utilitaires de matching flou `trouverLocaliteParNom`, GPS et WMO.
+  - **Route Handler Next.js Autonome (`frontend-next/src/app/api/surga/meteo/route.ts`)** :
+    - Route API autonome servant la météo Open-Meteo en direct pour les 28 localités et coordonnées GPS avec marées et qualité de l'air, fonctionnant directement sans dépendre d'un déploiement séparé du backend Express.
+  - **Modale de Localité Resiliente (`SurgaMeteoLocaliteModal.tsx`)** :
+    - Fallback automatique immédiat sur le catalogue des 28 localités si la prop `localites` est vide, recherche insensible aux accents et détection de sélection fiabilisée.
+  - **Carte Météo Robuste & Sous-Composant Modulaire (`SurgaMeteoCard.tsx` & `SurgaMeteoPrevisions.tsx`)** :
+    - Extraction de `SurgaMeteoPrevisions.tsx` pour respecter strictement le plafond des 450 lignes (412 l. pour la carte).
+    - Pré-remplissage immédiat de `localitesList`, ajout d'un bouton d'action explicite « Changer » (`MapPin`), callback `onVilleChange` synchronisant les préférences de l'utilisateur, et fallback hors-ligne gracieux.
+  - **Alignement Backend (`backend/services/surga/meteo-service.js` & `backend/routes/surga/briefing.js`)** :
+    - Alignement du catalogue backend sur les 28 localités (14 régions), normalisation NFD intégrée dans le resolver backend, et injection de `localites` dans le briefing.
+- **Fichiers modifiés & créés :**
+  - `frontend-next/src/lib/surga-meteo.ts` (nouveau, 198 l.)
+  - `frontend-next/src/app/api/surga/meteo/route.ts` (nouveau, 166 l.)
+  - `frontend-next/src/app/surga/components/SurgaMeteoPrevisions.tsx` (nouveau, 101 l.)
+  - `frontend-next/src/app/surga/components/SurgaMeteoCard.tsx` (412 l.)
+  - `frontend-next/src/app/surga/components/SurgaMeteoLocaliteModal.tsx` (382 l.)
+  - `frontend-next/src/app/surga/page.tsx`
+  - `backend/services/surga/meteo-service.js`
+  - `backend/routes/surga/briefing.js`
+  - `tests/unit/surga.test.js`
+- **Validation :**
+  - `npx tsc --noEmit` 0 erreur.
+  - `npm run lint:slop` 100% conforme.
+  - 99/99 tests réussis dans `tests/unit/surga.test.js`, 87/87 suites Jest validées (1083 tests OK).
+
 ### [2026-10-05 — Soir 3] — Résolution du Crash d'Ouverture des Bons Plans & Normalisation Numérique PostgreSQL
 - **Tâches complétées :**
   - **Diagnostic & Cause Racine (`TypeError: place.note_moyenne.toFixed is not a function`)** :

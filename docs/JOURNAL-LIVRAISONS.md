@@ -1,6 +1,20 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
 
+- **Surga Météo & Marées — Résolution du Changement de Localité, Catalogue 14 Régions & API Résiliente (Session 2026-10-05, branche `feature/surga`)** :
+  * **Causes Racines** :
+    1. Dans `SurgaMeteoCard.tsx`, `localitesList` était initialisé à un tableau vide `[]` et n'était alimenté que lors de l'appel `chargerMeteo()`. Cependant, lorsque le briefing fournissait déjà les données météo (`initialMeteo` présent), `chargerMeteo()` n'était pas déclenché. Lors de l'ouverture de la modale, la liste des localités était totalement vide (« Aucune localité trouvée pour "" »), rendant tout changement impossible.
+    2. Sur le déploiement distant Render, le backend Express n'avait pas encore reçu la route `/api/surga/meteo` (retour 404). Aucun Route Handler Next.js n'existait pour assurer le relais local.
+    3. Dans `SurgaMeteoLocaliteModal.tsx`, la recherche textuelle était sensible aux accents. Les utilisateurs tapant usuellement sans accent sur mobile ("thies", "guediawaye", "sacre coeur") ne trouvaient aucune localité correspondante.
+    4. Le catalogue des localités ne couvrait que 23 villes, omettant les chefs-lieux comme Diourbel, Louga, Kaffrine, Kédougou, Sédhiou.
+  * **Correctifs & Remédiations Apportés** :
+    - **Bibliothèque Partagée & Types (`frontend-next/src/lib/surga-meteo.ts`, 198 l.)** : Catalogue exhaustif des 28 localités couvrant les 14 régions du Sénégal et les quartiers clés de Dakar. Normalisation NFD anti-diacritiques avec remplacement des ligatures (`[œŒ]` -> `oe`, `[æÆ]` -> `ae`), matching flou tolérant `trouverLocaliteParNom`, GPS et WMO.
+    - **Route Handler Next.js Autonome (`frontend-next/src/app/api/surga/meteo/route.ts`, 166 l.)** : Route API autonome servant la météo Open-Meteo en direct pour les 28 localités et coordonnées GPS avec marées et qualité de l'air, fonctionnant directement sans dépendre d'un déploiement séparé du backend Express.
+    - **Modale de Localité Resiliente (`SurgaMeteoLocaliteModal.tsx`, 382 l.)** : Fallback automatique immédiat sur le catalogue des 28 localités si la prop `localites` est vide, recherche insensible aux accents et détection de sélection fiabilisée.
+    - **Carte Météo Robuste & Sous-Composant Modulaire (`SurgaMeteoCard.tsx`, 412 l. & `SurgaMeteoPrevisions.tsx`, 101 l.)** : Extraction de `SurgaMeteoPrevisions.tsx` pour respecter strictement le plafond des 450 lignes. Pré-remplissage immédiat de `localitesList`, ajout d'un bouton d'action explicite « Changer » (`MapPin`), callback `onVilleChange` synchronisant les préférences de l'utilisateur, et fallback hors-ligne gracieux.
+    - **Alignement Backend (`backend/services/surga/meteo-service.js` & `backend/routes/surga/briefing.js`)** : Alignement du catalogue backend sur les 28 localités (14 régions), normalisation NFD intégrée dans le resolver backend, et injection de `localites` dans le briefing.
+  * **Validation & Conformité** : `npx tsc --noEmit` 0 erreur, `npm run lint:slop` 100% conforme, 99/99 tests réussis dans `tests/unit/surga.test.js`, 87/87 suites Jest validées (1083 tests OK).
+
 - **Boutique Commandes — Éradication de la Troncature des Commandes & Responsivité Mobile Étanche (Session 2026-10-05)** :
   - *Cause Racine* : Dans CommandeCard.tsx et commandes.css, la grille responsive .npl-commande-grid utilisait grid-template-columns: 1fr et les colonnes .npl-commande-col-left / .npl-commande-col-right n'avaient pas de min-width: 0 ni max-width: 100%. Comme .npl-commande-card a overflow: hidden;, tout contenu interne ayant une largeur minimale incompressible (barre d'actions secondaires avec flexWrap: nowrap, référence commande sans break-all, libellés longs) forçait la grille à s'étendre au-delà de la carte, provoquant un découpage brutal sur le bord droit (ex: "474 FCF" au lieu de "474 FCFA", "Client WhatsAp" au lieu de "Client WhatsApp", bouton "Annuler" tronqué).
   - *Correctif CSS & Responsivité Mobile (commandes.css)* :
