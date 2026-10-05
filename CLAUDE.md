@@ -66,6 +66,9 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
     - Schéma local mis à niveau dans `surga-offline-sync.ts`.
     - Endpoints backend mis à jour dans `backend/routes/surga/notes.js` et `backend/routes/surga/agenda.js`.
     - 97/97 tests Jest validés, compilation TypeScript 0 erreur.
+  - **Correction Sélection Équipes Favorites (`SurgaSportCustomModal.tsx`)** :
+    - *Cause racine* : La modale était enfermée dans `.surga-card`, dont la règle CSS `:active { transform: scale(0.99) }` modifiait la matrice du conteneur au mousedown, annulant le hit-testing du clic par le navigateur sur les éléments `<div>`.
+    - *Résolution* : Déportation de la modale dans le DOM via `createPortal(..., document.body)` avec `stopPropagation()` ; conversion des rangées d'équipes en véritables `<button type="button">` pleine largeur avec `pointerEvents: "none"` sur le badge d'icône pour zéro zone morte ; matching bidirectionnel intelligent `nom` / `id` ; bascule automatique sur l'onglet « Mes clubs » à l'enregistrement.
 
 - **Ajout des Radios Leaders, Religieuses et Internationales dans Surga (Session 2026-10-05, branche `feature/surga`)** :
   - **Stations Leaders de l'Information & Débats** :
