@@ -89,8 +89,11 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
 
   const handleEnregistrerEquipes = (nouvelles: string[]) => {
     setEquipesFavorites(nouvelles)
-    if (filtreCategorie === 'mes_equipes') {
+    if (nouvelles.length > 0) {
+      setFiltreCategorie('mes_equipes')
       rechargerScores('mes_equipes', nouvelles)
+    } else {
+      rechargerScores(filtreCategorie)
     }
   }
 

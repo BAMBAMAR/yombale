@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Search, Check, Plus, Trophy, RefreshCw } from 'lucide-react'
 
 export interface EquipeItem {
@@ -18,42 +19,101 @@ interface SurgaSportCustomModalProps {
   onEnregistrer: (nouvellesEquipes: string[]) => void
 }
 
+const DEFAULT_EQUIPES: EquipeItem[] = [
+  { id: 'senegal', nom: 'Sénégal (Lions de la Teranga)', categorie: 'nationale', championnat: 'Sélections CAF', pays: 'Sénégal' },
+  { id: 'real_madrid', nom: 'Real Madrid', categorie: 'laliga', championnat: 'LaLiga & UCL', pays: 'Espagne' },
+  { id: 'barcelona', nom: 'FC Barcelone', categorie: 'laliga', championnat: 'LaLiga & UCL', pays: 'Espagne' },
+  { id: 'atletico', nom: 'Atlético de Madrid', categorie: 'laliga', championnat: 'LaLiga & UCL', pays: 'Espagne' },
+  { id: 'man_city', nom: 'Manchester City', categorie: 'premier_league', championnat: 'Premier League & UCL', pays: 'Angleterre' },
+  { id: 'arsenal', nom: 'Arsenal FC', categorie: 'premier_league', championnat: 'Premier League & UCL', pays: 'Angleterre' },
+  { id: 'liverpool', nom: 'Liverpool FC', categorie: 'premier_league', championnat: 'Premier League & UCL', pays: 'Angleterre' },
+  { id: 'chelsea', nom: 'Chelsea FC (Nicolas Jackson)', categorie: 'premier_league', championnat: 'Premier League', pays: 'Angleterre' },
+  { id: 'tottenham', nom: 'Tottenham (Pape Matar Sarr)', categorie: 'premier_league', championnat: 'Premier League', pays: 'Angleterre' },
+  { id: 'man_united', nom: 'Manchester United', categorie: 'premier_league', championnat: 'Premier League', pays: 'Angleterre' },
+  { id: 'everton', nom: 'Everton (Iliman Ndiaye, I. Gueye)', categorie: 'premier_league', championnat: 'Premier League', pays: 'Angleterre' },
+  { id: 'crystal_palace', nom: 'Crystal Palace (Ismaïla Sarr)', categorie: 'premier_league', championnat: 'Premier League', pays: 'Angleterre' },
+  { id: 'psg', nom: 'Paris Saint-Germain', categorie: 'ligue1_fr', championnat: 'Ligue 1 & UCL', pays: 'France' },
+  { id: 'marseille', nom: 'Olympique de Marseille', categorie: 'ligue1_fr', championnat: 'Ligue 1', pays: 'France' },
+  { id: 'monaco', nom: 'AS Monaco', categorie: 'ligue1_fr', championnat: 'Ligue 1 & UCL', pays: 'France' },
+  { id: 'lyon', nom: 'Olympique Lyonnais', categorie: 'ligue1_fr', championnat: 'Ligue 1', pays: 'France' },
+  { id: 'bayern', nom: 'Bayern Munich', categorie: 'ucl', championnat: 'Bundesliga & UCL', pays: 'Allemagne' },
+  { id: 'inter_milan', nom: 'Inter Milan', categorie: 'serie_a', championnat: 'Serie A & UCL', pays: 'Italie' },
+  { id: 'juventus', nom: 'Juventus Turin', categorie: 'serie_a', championnat: 'Serie A & UCL', pays: 'Italie' },
+  { id: 'milan_ac', nom: 'AC Milan', categorie: 'serie_a', championnat: 'Serie A & UCL', pays: 'Italie' },
+  { id: 'al_nassr', nom: 'Al Nassr (Sadio Mané)', categorie: 'saudi_pro', championnat: 'Saudi Pro League', pays: 'Arabie Saoudite' },
+  { id: 'al_hilal', nom: 'Al Hilal (Kalidou Koulibaly)', categorie: 'saudi_pro', championnat: 'Saudi Pro League', pays: 'Arabie Saoudite' },
+  { id: 'jaraaf', nom: 'ASC Jaraaf de Dakar', categorie: 'ligue1_sn', championnat: 'Ligue 1 Sénégal', pays: 'Sénégal' },
+  { id: 'teungueth', nom: 'Teungueth FC', categorie: 'ligue1_sn', championnat: 'Ligue 1 Sénégal', pays: 'Sénégal' },
+  { id: 'generation_foot', nom: 'Génération Foot', categorie: 'ligue1_sn', championnat: 'Ligue 1 Sénégal', pays: 'Sénégal' },
+  { id: 'guediawaye', nom: 'Guédiawaye FC', categorie: 'ligue1_sn', championnat: 'Ligue 1 Sénégal', pays: 'Sénégal' },
+  { id: 'casa_sports', nom: 'Casa Sports de Ziguinchor', categorie: 'ligue1_sn', championnat: 'Ligue 1 Sénégal', pays: 'Sénégal' },
+  { id: 'as_pikine', nom: 'AS Pikine', categorie: 'ligue1_sn', championnat: 'Ligue 1 Sénégal', pays: 'Sénégal' },
+]
+
 export default function SurgaSportCustomModal({
   isOpen,
   onClose,
   equipesSelectionnees,
   onEnregistrer,
 }: SurgaSportCustomModalProps) {
-  const [catalogue, setCatalogue] = useState<EquipeItem[]>([])
-  const [selection, setSelection] = useState<string[]>(equipesSelectionnees)
+  const [catalogue, setCatalogue] = useState<EquipeItem[]>(DEFAULT_EQUIPES)
+  const [selection, setSelection] = useState<string[]>([])
   const [recherche, setRecherche] = useState('')
   const [filtreLigue, setFiltreLigue] = useState<string>('tous')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isOpen) {
-      setSelection(equipesSelectionnees)
+      setSelection(Array.isArray(equipesSelectionnees) ? [...equipesSelectionnees] : [])
+      setRecherche('')
+      setFiltreLigue('tous')
       setLoading(true)
+
       fetch('/api/surga/sport/equipes')
         .then((r) => r.json())
         .then((data) => {
-          if (data.success && Array.isArray(data.equipes)) {
+          if (data.success && Array.isArray(data.equipes) && data.equipes.length > 0) {
             setCatalogue(data.equipes)
           }
         })
         .catch(() => {})
         .finally(() => setLoading(false))
     }
-  }, [isOpen, equipesSelectionnees])
+  }, [isOpen])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted || typeof document === 'undefined') return null
 
-  const toggleEquipe = (nomEquipe: string) => {
-    if (selection.includes(nomEquipe)) {
-      setSelection(selection.filter((e) => e !== nomEquipe))
+  const isEquipeSelectionnee = (eq: EquipeItem) => {
+    return selection.some((item) => {
+      const lower = item.toLowerCase().trim()
+      return (
+        lower === eq.nom.toLowerCase().trim() ||
+        lower === eq.id.toLowerCase().trim() ||
+        eq.nom.toLowerCase().includes(lower)
+      )
+    })
+  }
+
+  const toggleEquipe = (eq: EquipeItem) => {
+    if (isEquipeSelectionnee(eq)) {
+      setSelection((prev) =>
+        prev.filter((item) => {
+          const lower = item.toLowerCase().trim()
+          return (
+            lower !== eq.nom.toLowerCase().trim() &&
+            lower !== eq.id.toLowerCase().trim() &&
+            !eq.nom.toLowerCase().includes(lower)
+          )
+        })
+      )
     } else {
-      setSelection([...selection, nomEquipe])
+      setSelection((prev) => [...prev, eq.nom])
     }
   }
 
@@ -78,8 +138,8 @@ export default function SurgaSportCustomModal({
     if (filtreLigue === 'nationale' && eq.categorie !== 'nationale') return false
     if (filtreLigue === 'saudi_pro' && eq.categorie !== 'saudi_pro') return false
 
-    if (recherche) {
-      const q = recherche.toLowerCase()
+    if (recherche.trim()) {
+      const q = recherche.toLowerCase().trim()
       return (
         eq.nom.toLowerCase().includes(q) ||
         eq.pays.toLowerCase().includes(q) ||
@@ -89,8 +149,11 @@ export default function SurgaSportCustomModal({
     return true
   })
 
-  return (
+  return createPortal(
     <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       style={{
         position: 'fixed',
         top: 0,
@@ -98,7 +161,7 @@ export default function SurgaSportCustomModal({
         right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0,0,0,0.55)',
-        zIndex: 9999,
+        zIndex: 99999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -109,6 +172,7 @@ export default function SurgaSportCustomModal({
       aria-label="Personnaliser mes équipes sportives"
     >
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
           maxWidth: 480,
@@ -215,7 +279,7 @@ export default function SurgaSportCustomModal({
 
         {/* Liste des équipes à cocher */}
         <div style={{ padding: '12px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {loading ? (
+          {loading && catalogue.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--text3, #73675E)' }}>
               <RefreshCw size={20} className="animate-spin" style={{ margin: '0 auto 8px auto' }} />
               Chargement des équipes...
@@ -226,36 +290,40 @@ export default function SurgaSportCustomModal({
             </div>
           ) : (
             catalogueFiltre.map((eq) => {
-              const isSelected = selection.includes(eq.nom) || selection.includes(eq.id)
+              const isSelected = isEquipeSelectionnee(eq)
               return (
-                <div
+                <button
                   key={eq.id}
-                  onClick={() => toggleEquipe(eq.nom)}
+                  type="button"
+                  onClick={() => toggleEquipe(eq)}
                   style={{
+                    width: '100%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: 8,
+                    padding: '12px 14px',
+                    borderRadius: 10,
                     cursor: 'pointer',
                     backgroundColor: isSelected ? 'rgba(199,91,0,0.08)' : 'var(--bg, #F8F5F0)',
-                    border: `1px solid ${isSelected ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)'}`,
-                    transition: 'all 0.15s ease',
+                    border: `1.5px solid ${isSelected ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)'}`,
+                    textAlign: 'left',
+                    transition: 'background-color 0.15s ease, border-color 0.15s ease',
+                    fontFamily: 'inherit',
                   }}
                 >
-                  <div>
+                  <div style={{ flex: 1, minWidth: 0, paddingRight: 10 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text1, #1A1612)' }}>
                       {eq.nom}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 2 }}>
                       {eq.championnat || eq.pays} • {eq.pays}
                     </div>
                   </div>
 
                   <div
                     style={{
-                      width: 22,
-                      height: 22,
+                      width: 24,
+                      height: 24,
                       borderRadius: 6,
                       display: 'flex',
                       alignItems: 'center',
@@ -263,11 +331,13 @@ export default function SurgaSportCustomModal({
                       backgroundColor: isSelected ? 'var(--accent, #C75B00)' : '#FFFFFF',
                       border: `1px solid ${isSelected ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)'}`,
                       color: '#FFFFFF',
+                      flexShrink: 0,
+                      pointerEvents: 'none',
                     }}
                   >
-                    {isSelected ? <Check size={14} /> : <Plus size={14} color="var(--text3, #73675E)" />}
+                    {isSelected ? <Check size={15} strokeWidth={3} /> : <Plus size={15} color="var(--text3, #73675E)" strokeWidth={2.5} />}
                   </div>
-                </div>
+                </button>
               )
             })
           )}
@@ -325,6 +395,7 @@ export default function SurgaSportCustomModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
