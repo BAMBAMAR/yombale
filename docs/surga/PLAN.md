@@ -210,6 +210,21 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Compilation TypeScript : **0 erreur**.
 - **Critère de sortie** : 100% des tranches (1 à 16) `DONE`, console d'administration `/admin/surga` opérationnelle, audits conformes, code prêt pour la fusion/déploiement sur ordre de l'utilisateur.
 
+### Tranche 17 — Sama Xaalis & Sport Direct Multi-Ligues (05 Octobre 2026)
+- [x] `DONE` Reproduction complète de Sama Xaalis dans Surga (`surga-kalpe.ts`, `SurgaSamaXaalisView.tsx`).
+- [x] `DONE` Portefeuille personnel intégré dans la barre d'onglets principale (`SurgaBottomNav.tsx`).
+- [x] `DONE` Suivi des dettes et créances avec remboursement direct, cagnottes et épargne avec jauges de progression.
+- [x] `DONE` Sport temps réel multi-ligues (Europe, Ligue 1 Sénégal, Lions de la Teranga) et modal de personnalisation (`SurgaSportCustomModal.tsx`).
+
+### Tranche 18 — Météo Multi-Localités (23 Zones), GPS 1-Clic & Kiosque Fluide (05 Octobre 2026)
+- [x] `DONE` Météo & Marées océaniques Open-Meteo haute précision (`meteo-service.js`, `SurgaMeteoCard.tsx`).
+- [x] `DONE` Catalogue exhaustif de 23 localités (Dakar intra-muros, banlieue, régions) et modale de sélection (`SurgaMeteoLocaliteModal.tsx`).
+- [x] `DONE` Géolocalisation GPS 1-clic avec algorithme de plus proche voisin (`trouverLocalitePlusProche`) et persistance `localStorage`.
+- [x] `DONE` Algorithme de résolution strict à deux passes (priorité absolue aux quartiers spécifiques comme "Dakar Plateau" ou "Ouakam" avant la ville générique "Dakar").
+- [x] `DONE` Défilement horizontal tactile fluide pour le Kiosque des Unes de la presse sénégalaise (`SurgaPresseCard.tsx`).
+- [x] `DONE` Durcissement des en-têtes HTTP de sécurité : `Permissions-Policy: geolocation=(self)` et conditionnement de `CSP-Report-Only` en production.
+- [x] `DONE` Suite de tests Jest portée à **98/98 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 0 violation.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

@@ -3,6 +3,43 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir] — Correctif d'Interactivité & Matching Strict des Localités Météo
+- **Tâches complétées :**
+  - **Résolution Backend Strict à Deux Passes (`backend/services/surga/meteo-service.js`)** :
+    - Éradication du bug de matching naïf par `includes()` qui ramenait tout quartier contenant le mot "Dakar" (ex: "Dakar Plateau", "Grand Dakar / Colobane") vers le premier élément du catalogue ("Dakar").
+    - Passe 1 stricte sur l'égalité exacte du nom normalisé (`itemNorm === cleNormalisee`).
+    - Passe 2 par ordre décroissant de longueur de nom (`b[1].nom.length - a[1].nom.length`), accordant une priorité absolue aux sous-quartiers spécifiques avant la désignation générique de ville.
+  - **Éradication de la Double Coche & Boutons Tactiles Natifs (`SurgaMeteoLocaliteModal.tsx`)** :
+    - Remplacement du test de sélection `includes()` par une égalité stricte (`===`), garantissant qu'une seule et unique localité est cochée.
+    - Transformation des `div onClick` en `<button type="button" aria-pressed={...}>` pleine largeur avec typographie alignée à gauche pour un clic tactile sans accroc.
+    - Remplacement du symbole d'entité HTML brute `&bull;` par le point médian `•`.
+    - Masquage de la scrollbar grise Windows sur la rangée des filtres (`scrollbarWidth: 'none'`).
+  - **Mise à Jour Optimiste Instantanée (`SurgaMeteoCard.tsx`)** :
+    - Prise en compte immédiate (`setMeteo`) de la nouvelle localité dès le clic de l'utilisateur et fermeture de la modale sans latence perçue.
+- **Validation** :
+  - Matching testé et vérifié sur Dakar, Dakar Plateau, Almadies / Ngor, Ouakam / Mamelles, Thiès, Saint-Louis.
+  - `npx tsc --noEmit` 0 erreur, composants sous le seuil des 450 lignes (`SurgaMeteoCard.tsx`: 445 l., `SurgaMeteoLocaliteModal.tsx`: 338 l.).
+
+### [2026-10-05 — Après-midi] — Sécurité En-têtes, Permissions Geolocation & Manifest PWA
+- **Tâches complétées :**
+  - **Autorisation de l'API Géolocalisation** : Modification du middleware `frontend-next/src/middleware.ts` pour remplacer `geolocation=()` par `geolocation=(self)` dans `Permissions-Policy`, autorisant la météo GPS native sur les navigateurs stricts.
+  - **Assainissement Console Dev** : Conditionnement de l'en-tête `Content-Security-Policy-Report-Only` (AUD-149) à `!isDev` afin de supprimer les alertes `eval()` générées par le Fast Refresh de Next.js en local.
+  - **Correction Scope Manifest** : Alignement de `"scope": "/surga"` dans `public/surga/manifest.json`.
+- **Validation** : Tests Vitest CSP 100% passés, zéro alerte console au chargement de Surga.
+
+### [2026-10-05 — Début d'Après-midi] — Sélecteur Multi-Localités (23 Zones) & GPS 1-Clic dans la Météo Surga
+- **Tâches complétées :**
+  - **Catalogue National 23 Localités** : 8 quartiers de Dakar, 4 communes de banlieue et 11 villes régionales intégrés avec coordonnées géographiques précises et drapeaux maritimes.
+  - **Modale de Sélection Dédiée (`SurgaMeteoLocaliteModal.tsx`)** : Recherche en temps réel, filtres par zone en pilules rapides (Dakar, Banlieue, Régions, etc.), sélection visuelle.
+  - **GPS 1-Clic & Plus Proche Voisin (`trouverLocalitePlusProche`)** : Détection automatique du quartier le plus proche lors de l'activation GPS, persistance dans `localStorage` (`surga_meteo_gps`, `surga_meteo_ville`).
+  - **Météo & Marées Live** : Interrogation Open-Meteo haute précision, calcul déterministe des marées dakariliennes pour les zones côtières, indice UV et qualité de l'air.
+
+### [2026-10-05 — Matin] — Défilement Horizontal Kiosque des Unes & Refonte Notes / Agenda v2
+- **Tâches complétées :**
+  - **Kiosque des Unes (`SurgaPresseCard.tsx`)** : Défilement horizontal tactile fluide avec indicateurs visuels et boutons de navigation gauche/droite pour parcourir l'ensemble des quotidiens nationaux sans blocage.
+  - **Notes & Agenda v2** : Modularisation et enrichissement de la productivité personnelle (catégorisation, alertes sonores et visuelles, intégration avec le calendrier local).
+  - **Sama Xaalis & Sport Direct** : Intégration du portefeuille Sama Xaalis dans la barre de navigation et scores en temps réel multi-ligues (Europe, Ligue 1 sénégalaise, Lions de la Teranga).
+
 ### [2026-10-05] — Finalisation Technique Surga, Clôture des 17 Remédiations (P0/P1/P2) & Verdict GO Production
 - **Tâches complétées :**
   - **P0 — Sécurité Anti-IDOR & Robustesse Données** :
