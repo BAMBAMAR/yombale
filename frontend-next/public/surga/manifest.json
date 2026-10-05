@@ -3,7 +3,7 @@
   "short_name": "Surga",
   "description": "Votre assistant personnel au quotidien au Sénégal : briefing, notes, dépenses et actualités.",
   "start_url": "/surga",
-  "scope": "/surga/",
+  "scope": "/surga",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#F8F5F0",

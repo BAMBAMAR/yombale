@@ -131,28 +131,31 @@ export async function middleware(req: NextRequest) {
   response.headers.set('Content-Security-Policy', csp)
   // AUD-149 : politique stricte (nonce + strict-dynamic, sans unsafe-inline ni unsafe-eval) évaluée en RAPPORT SEUL.
   // Elle ne bloque rien ; les violations arrivent sur /api/csp-report. Passage en application réelle quand le flux est propre.
-  const cspStricte = [
-    "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:`,
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data: https:",
-    "font-src 'self' data:",
-    "connect-src 'self' https: wss:",
-    "frame-src 'self' https:",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    'report-uri /api/csp-report',
-  ].join('; ')
-  response.headers.set('Content-Security-Policy-Report-Only', cspStricte)
+  // En environnement de développement (isDev), Next.js utilise activement eval() et HMR : on omet le Report-Only pour ne pas inonder la console.
+  if (!isDev) {
+    const cspStricte = [
+      "default-src 'self'",
+      `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:`,
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' blob: data: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https: wss:",
+      "frame-src 'self' https:",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      'report-uri /api/csp-report',
+    ].join('; ')
+    response.headers.set('Content-Security-Policy-Report-Only', cspStricte)
+  }
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   if (!isDev) {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
   }
-  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()')
+  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self)')
 
   // ── 3. Edge CDN Caching pour routes de catalogue publiques ────
   if (
