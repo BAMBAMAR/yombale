@@ -3,6 +3,33 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-05 — Soir 6] — Recalibrage Trafic Réel Dakar (Heures de Pointe & A1 Entrant / Front de Terre) & Passerelle Directe Google Maps Live
+- **Tâches complétées :**
+  - **Diagnostic & Causes Racines de l'Écart Constaté** :
+    1. Comparaison en temps réel à 18h11 : la modale Surga affichait l'Autoroute A1 entrant et la VDN sud comme « FLUIDE » alors que les flux réels Google Maps étaient rouge très foncé / bouchés sur l'axe A1 / N1 (goulot d'étranglement Hann / EMG / Yarakh / Colobane vers le Plateau) et sur la Route du Front de Terre (Khar Yalla ➔ Castors / EMG).
+    2. L'API TomTom (`calculateRoute`) renvoie systématiquement `trafficDelayInSeconds: 0` à Dakar en raison de l'absence de sondes FCD (Floating Car Data) locales. Le modèle théorique de repli ignorait l'engorgement du sens entrant le soir (camions du Port Autonome de Dakar et transit inter-quartiers) et omettait le corridor transversal clé du Front de Terre.
+  - **Recalibrage Déterministe Heuristique Heures de Pointe (`backend/services/surga/trafic-service.js`)** :
+    - Ajout du corridor stratégique `front-de-terre` (`Route du Front de Terre (Khar Yalla ➔ Castors / EMG)`) avec coordonnées GPS `{ lat: 14.717, lon: -17.446 }`, longueur 3.8 km et temps nominal de 10 min.
+    - Soir (15h00 - 20h45) : `a1-entrant` calibré en `DENSE` (42 min, 45 km/h), `front-de-terre` calibré en `BOUCHÉ` (28 min, 8 km/h), `vdn-sud` calibré en `DENSE` (17 min, 25 km/h), `patte-doie-echangeur` calibré en `BOUCHÉ` (35 min, 12 km/h).
+    - Matin (07h00 - 10h15) & Mi-journée (12h30 - 14h30) recalibrés selon les dynamiques réelles de Dakar.
+  - **Seeding PostgreSQL Automatisé (`scripts/seed-surga-data.js`)** :
+    - Synchronisation des 11 corridors clés avec insertion idempotente de `patte-doie-echangeur` et `front-de-terre`.
+  - **Passerelle 1-Tap vers le Trafic Crowdsourcé Google Maps en Temps Réel** :
+    - `SurgaTraficModal.tsx` (448 l. <= 450 l.) : Bannière d'accès direct cliquable vers la couche trafic Google Maps (`https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1`).
+    - `SurgaTraficCard.tsx` : Bouton « Carte Live » directement accessible sur l'en-tête de la carte du dashboard Surga.
+    - `SurgaTraficItemCard.tsx` : Lien externe Google Maps itinéraire direct sur chaque fiche de corridor.
+- **Fichiers modifiés :**
+  - `backend/services/surga/trafic-service.js`
+  - `scripts/seed-surga-data.js`
+  - `frontend-next/src/app/surga/components/SurgaTraficModal.tsx`
+  - `frontend-next/src/app/surga/components/SurgaTraficItemCard.tsx`
+  - `frontend-next/src/app/surga/components/SurgaTraficCard.tsx`
+- **Validation :**
+  - 99/99 tests Jest validés dans `tests/unit/surga.test.js`.
+  - `npx tsc --noEmit` : 0 erreur.
+  - `npm run lint:slop` : conforme.
+  - Endpoint REST `GET /api/surga/trafic` vérifié : 11 axes renvoyés dont `front-de-terre` (bouche) et `a1-entrant` (dense) en soirée.
+
 ### [2026-10-05 — Soir 5] — Expansion Bons Plans & Bonnes Adresses, Catalogue 42 Établissements, Seeding PostgreSQL & Filtres Banlieue
 - **Tâches complétées :**
   - **Diagnostic & Causes Racines** :

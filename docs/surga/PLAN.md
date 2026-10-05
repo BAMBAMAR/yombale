@@ -108,15 +108,16 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - **Démonstration** : l'utilisateur explore les stations sénégalaises par région ou thématique et lance l'écoute en direct d'un simple clic sans interruption.
 
 ### Tranche 11 — Trafic à Dakar (Corridors, Heures de Pointe & Sondes TomTom Live)
-- [x] `DONE` Tables SQL `surga_trafic_axes` et `surga_trafic_signalements` (migration idempotente dans `backend/migrate-inline.js`).
-- [x] `DONE` Connecteur temps réel TomTom Traffic Flow & Incidents API (`interrogerTomTomSegment`, `interrogerTomTomIncidents`) avec coordonnées GPS des 8 corridors de Dakar, détection des vitesses réelles (km/h) et des incidents.
+- [x] `DONE` Tables SQL `surga_trafic_axes` et `surga_trafic_signalements` (migration idempotente dans `backend/migrate-inline.js`) et 11 corridors synchronisés par seeding idempotent (`scripts/seed-surga-data.js`).
+- [x] `DONE` Connecteur temps réel TomTom Traffic Flow & Incidents API (`interrogerTomTomSegment`, `interrogerTomTomIncidents`) avec coordonnées GPS des 11 corridors de Dakar.
 - [x] `DONE` Cache mémoire serveur Low-Data (TTL 6 min) respectant strictement les 2 500 requêtes gratuites/jour sans carte bancaire.
-- [x] `DONE` Modèle déterministe d'heures de pointe de repli (matin vers Plateau, soir vers banlieue, TER et BRT fluides par défaut) et signalements participatifs citoyens vérifiés (< 180 caractères).
+- [x] `DONE` Modèle déterministe d'heures de pointe de repli recalibré (matin vers Plateau, soir vers banlieue + goulots EMG/Hann Maristes sur A1 entrant et Route du Front de Terre, TER et BRT fluides par défaut) et signalements participatifs citoyens vérifiés (< 180 caractères).
+- [x] `DONE` Passerelle directe 1-tap vers le trafic crowdsourcé Google Maps Live (`https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1`) sur `SurgaTraficModal.tsx` et `SurgaTraficCard.tsx`, avec boutons d'itinéraire direct par axe dans `SurgaTraficItemCard.tsx`.
 - [x] `DONE` Service `backend/services/surga/trafic-service.js` avec synthèse vocale/briefing au vouvoiement strict D19.
 - [x] `DONE` Routes REST complètes sur `/api/surga/trafic` (`GET /`, `GET /synthese`, `GET /axes`, `GET /incidents`, `POST /signalements`).
-- [x] `DONE` Composants React modulaires (< 450 lignes) : `SurgaTraficCard.tsx` (252 l.), `SurgaTraficModal.tsx` (409 l.), `SurgaTraficItemCard.tsx` (121 l.), `SurgaTraficReportForm.tsx` (118 l.).
-- [x] `DONE` Tests unitaires Jest : 58/58 passés (100%).
-- **Démonstration** : l'utilisateur consulte l'état des axes clés de Dakar en direct avec vitesse constatée (km/h) et badge DIRECT, explore les corridors et transports (TER/BRT), et signale un incident avec confirmation immédiate.
+- [x] `DONE` Composants React modulaires (< 450 lignes) : `SurgaTraficCard.tsx` (277 l.), `SurgaTraficModal.tsx` (448 l.), `SurgaTraficItemCard.tsx` (139 l.), `SurgaTraficReportForm.tsx` (118 l.).
+- [x] `DONE` Tests unitaires Jest : 99/99 passés (100%).
+- **Démonstration** : l'utilisateur consulte l'état des axes clés de Dakar en direct avec vitesse constatée (km/h) et badge DIRECT, accède en 1 clic à la carte en direct Google Maps, explore les corridors et transports (TER/BRT), et signale un incident avec confirmation immédiate.
 
 ### Tranche 12 — Immobilier (réutilise le pôle existant)
 - [x] `DONE` Réutilisation stricte du pôle immobilier existant (`annonces_immo`, `agences_immo`, `backend/lib/immo-publiable.js`) sans aucun doublon de catalogue.

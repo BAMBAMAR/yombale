@@ -9,6 +9,8 @@ import {
   Plus,
   Activity,
   AlertTriangle,
+  MapPin,
+  ExternalLink,
 } from 'lucide-react'
 import SurgaTraficItemCard from './SurgaTraficItemCard'
 import SurgaTraficReportForm from './SurgaTraficReportForm'
@@ -104,11 +106,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
       const res = await fetch('/api/surga/trafic/signalements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          axeId: axeSelectionne,
-          typeSignalement,
-          commentaire,
-        }),
+        body: JSON.stringify({ axeId: axeSelectionne, typeSignalement, commentaire }),
       })
       const data = await res.json()
       if (data.success) {
@@ -127,15 +125,9 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
 
   const axesFiltres = useMemo(() => {
     return axes.filter((a) => {
-      if (filtreActif === 'autoroute') {
-        return a.type === 'autoroute' || a.type === 'voie_express'
-      }
-      if (filtreActif === 'corniche') {
-        return a.type === 'corniche' || a.type === 'nationale' || a.type === 'echangeur'
-      }
-      if (filtreActif === 'transports') {
-        return a.type === 'ferroviaire' || a.type === 'bus_site_propre'
-      }
+      if (filtreActif === 'autoroute') return a.type === 'autoroute' || a.type === 'voie_express'
+      if (filtreActif === 'corniche') return a.type === 'corniche' || a.type === 'nationale' || a.type === 'echangeur'
+      if (filtreActif === 'transports') return a.type === 'ferroviaire' || a.type === 'bus_site_propre'
       return true
     })
   }, [axes, filtreActif])
@@ -269,6 +261,52 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
               {new Date(derniereMaj).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
+        </div>
+
+        {/* Passerelle directe Carte Trafic Google Maps Live */}
+        <div
+          style={{
+            padding: '10px 14px',
+            backgroundColor: '#FFF8F0',
+            borderBottom: '1px solid var(--border, #E8DDD2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <MapPin size={16} color="var(--accent, #C75B00)" style={{ flexShrink: 0 }} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                Carte Trafic Temps Réel (Google Maps)
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>
+                Bouchons et flux capteurs en direct sur la presqu'île
+              </div>
+            </div>
+          </div>
+          <a
+            href="https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              backgroundColor: 'var(--accent, #C75B00)',
+              color: '#FFFFFF',
+              fontSize: 11,
+              fontWeight: 700,
+              padding: '6px 10px',
+              borderRadius: 6,
+              textDecoration: 'none',
+              flexShrink: 0,
+            }}
+          >
+            <span>Voir la carte</span>
+            <ExternalLink size={12} />
+          </a>
         </div>
 
         {/* Message de succès */}

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { MapPin, Activity } from 'lucide-react'
+import { MapPin, Activity, ExternalLink } from 'lucide-react'
 import type { AxeTraficDetail } from './SurgaTraficModal'
 
 interface SurgaTraficItemCardProps {
@@ -109,12 +109,29 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
           <MapPin size={10} />
           {axe.pointsChauds.slice(0, 2).join(' • ')}
         </span>
-        <span>
-          {axe.vitesseReelleKmH ? (
-            <strong>{axe.vitesseReelleKmH} km/h • </strong>
-          ) : null}
-          Habituel : {axe.tempsHabituelMin} min • {axe.distanceKm} km
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>
+            {axe.vitesseReelleKmH ? <strong>{axe.vitesseReelleKmH} km/h • </strong> : null}
+            Habituel : {axe.tempsHabituelMin} min • {axe.distanceKm} km
+          </span>
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(axe.origine + ', Dakar')}&destination=${encodeURIComponent(axe.destination + ', Dakar')}&travelmode=driving`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Voir l'axe sur Google Maps"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 2,
+              color: 'var(--accent, #C75B00)',
+              textDecoration: 'none',
+              fontWeight: 700,
+            }}
+          >
+            <span>Carte</span>
+            <ExternalLink size={10} />
+          </a>
+        </div>
       </div>
     </div>
   )

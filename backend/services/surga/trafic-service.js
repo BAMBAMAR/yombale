@@ -131,6 +131,20 @@ const AXES_ROUTIERS_DAKAR = [
     pointsChauds: ['Rond-point 26', 'Stade Léopold Sédar Senghor'],
   },
   {
+    id: 'front-de-terre',
+    nom: 'Route du Front de Terre (Khar Yalla ➔ Castors / EMG)',
+    origine: 'Grand Yoff / Khar Yalla',
+    destination: 'Castors / A1 / EMG',
+    type: 'voie_express',
+    sens: 'mixte',
+    tempsHabituelMin: 11,
+    distanceKm: 5.2,
+    from: '14.7250,-17.4560',
+    to: '14.7088,-17.4372',
+    coords: { lat: 14.717, lon: -17.446 },
+    pointsChauds: ['Croisement Khar Yalla', 'HLM Grand Yoff', 'Castors', 'Raccordement EMG / A1'],
+  },
+  {
     id: 'ter-dakar',
     nom: 'Train Express Régional (TER)',
     origine: 'Gare de Dakar',
@@ -345,6 +359,14 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
         cause: 'Ralentissement au carrefour stratégique et Pont Sénégal 92 vers le centre',
       };
     }
+    if (axe.id === 'front-de-terre') {
+      return {
+        niveau: 'bouche',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.3), // ~25 min
+        vitesseReelleKmH: 12,
+        cause: 'Afflux matinal massif vers Castors, HLM et raccordement Autoroute A1',
+      };
+    }
     if (axe.id === 'vdn-sud') {
       return {
         niveau: 'dense',
@@ -369,7 +391,7 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
     };
   }
 
-  // 2. Grandes Sorties d'après-midi & Pointe du Soir (15h00 - 20h45) : sortie de Dakar vers banlieue
+  // 2. Grandes Sorties d'après-midi & Pointe du Soir (15h00 - 20h45) : sortie de Dakar vers banlieue & retards centre
   if (estPointeSoir) {
     if (axe.id === 'rn1-rufisque') {
       return {
@@ -377,6 +399,14 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
         tempsEstimeMin: Math.round(axe.tempsHabituelMin * 3.5), // ~77 min
         vitesseReelleKmH: 14,
         cause: 'Bouchon très dense du soir : saturation majeure Colobane ➔ Dalifort ➔ Thiaroye',
+      };
+    }
+    if (axe.id === 'front-de-terre') {
+      return {
+        niveau: 'bouche',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.5), // ~28 min
+        vitesseReelleKmH: 11,
+        cause: 'Saturation sévère du soir : congestion entre Khar Yalla, Grand Yoff et Castors/EMG',
       };
     }
     if (axe.id === 'a1-sortant') {
@@ -403,6 +433,14 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
         cause: 'Ralentissement soutenu du soir vers l’Échangeur Foire, CICES et Golf',
       };
     }
+    if (axe.id === 'vdn-sud') {
+      return {
+        niveau: 'dense',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 2.1), // ~17 min
+        vitesseReelleKmH: 23,
+        cause: 'Ralentissements en soirée : croisement Exclusive VDN, CICES et Sacré-Cœur',
+      };
+    }
     if (axe.id === 'corniche-ouest-nord') {
       return {
         niveau: 'dense',
@@ -413,10 +451,10 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
     }
     if (axe.id === 'a1-entrant') {
       return {
-        niveau: 'fluide',
-        tempsEstimeMin: axe.tempsHabituelMin,
-        vitesseReelleKmH: 72,
-        cause: 'Circulation fluide dans le sens entrant vers le centre',
+        niveau: 'dense',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.5), // ~42 min
+        vitesseReelleKmH: 45,
+        cause: 'Ralentissement soutenu du soir : goulots EMG, Hann Maristes et entrée Colobane',
       };
     }
     return {
@@ -443,6 +481,14 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
         tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.5), // ~22 min
         vitesseReelleKmH: 22,
         cause: 'Ralentissements réguliers aux abords du Rond-point 26 et du Stade LSS',
+      };
+    }
+    if (axe.id === 'front-de-terre') {
+      return {
+        niveau: 'dense',
+        tempsEstimeMin: Math.round(axe.tempsHabituelMin * 1.8), // ~20 min
+        vitesseReelleKmH: 16,
+        cause: 'Circulation soutenue en milieu de journée vers les marchés et commerces',
       };
     }
     return {

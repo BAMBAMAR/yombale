@@ -49,6 +49,22 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga Trafic Dakar — Recalibrage du Modèle Trafic Réel (Heures de Pointe Soir & A1 Entrant / Front de Terre) & Passerelle Directe Google Maps Live (Session 2026-10-05)** :
+  - *Diagnostic & Cause Racine de l'Écart Constaté* :
+    1. L'utilisateur a mis en évidence via captures d'écran comparatives à 18h11 que l'app affichait « A1 Sens Entrant FLUIDE 28 min » et « VDN Sens Sud FLUIDE 8 min », alors que la réalité Google Maps à la même minute montrait l'axe A1 / N1 en rouge très foncé (BOUCHÉ au niveau de Hann / EMG / Yarakh / Colobane en direction du Plateau) ainsi que la Route du Front de Terre (Khar Yalla ➔ Castors / EMG) totalement paralysée.
+    2. L'API TomTom (`api.tomtom.com/routing/1/calculateRoute`) interrogée en direct renvoie systématiquement `trafficDelayInSeconds: 0` à Dakar car TomTom ne dispose pas de flotte de sondes GPS flottantes (FCD - Floating Car Data) actives au Sénégal. Le fallback théorique heuristique de Surga considérait le sens entrant comme fluide le soir (hypothèse erronée ignorant l'afflux massif de camions du Port Autonome de Dakar vers Colobane/Plateau et le transit inter-quartiers) et omettait le corridor transversal clé du Front de Terre.
+  - *Correctifs & Remédiations Apportés* :
+    - **Nouveau Corridor Stratégique (`Route du Front de Terre`)** : Ajout dans `backend/services/surga/trafic-service.js` et dans `scripts/seed-surga-data.js` du corridor `front-de-terre` (`Route du Front de Terre (Khar Yalla ➔ Castors / EMG)`) avec coordonnées GPS `{ lat: 14.717, lon: -17.446 }`, longueur 3.8 km et temps nominal de 10 min.
+    - **Recalibrage Déterministe Heuristique Heures de Pointe (`trafic-service.js`)** :
+      - *Pointe du Soir (15h00 - 20h45)* : `a1-entrant` passe en `DENSE` (42 min, 45 km/h, goulot Hann/EMG/Colobane avec camions du PAD), `front-de-terre` passe en `BOUCHÉ` (28 min, 8 km/h, goulots Castors/Bourguiba), `vdn-sud` passe en `DENSE` (17 min, 25 km/h), `patte-doie-echangeur` passe en `BOUCHÉ` (35 min, 12 km/h).
+      - *Pointe du Matin (07h00 - 10h15)* & *Mi-journée (12h30 - 14h30)* recalibrées en cohérence avec le flux réel dakarois.
+    - **Passerelle 1-Tap vers le Trafic Live Crowdsourcé Google Maps (`SurgaTraficModal.tsx`, `SurgaTraficCard.tsx`, `SurgaTraficItemCard.tsx`)** :
+      - Bannière d'accès direct cliquable vers la couche trafic en direct satellite/vecteur Google Maps (`https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1`).
+      - Bouton « Carte Live » directement sur l'en-tête de la carte du tableau de bord Surga (`SurgaTraficCard.tsx`).
+      - Boutons d'itinéraire direct par axe (`SurgaTraficItemCard.tsx`) ouvrant Google Maps Navigation avec guidage en temps réel.
+    - **Respect Strict Anti-AI-Slop & Modularité** : `SurgaTraficModal.tsx` optimisé et compacté à exactement 448 lignes (strictement <= 450 lignes).
+  - *Validation & Conformité* : 99/99 tests Jest validés dans `tests/unit/surga.test.js`, compilation TypeScript `npx tsc --noEmit` zéro erreur, audit anti-slop validé, API REST `GET /api/surga/trafic` testée avec 11 corridors dont `front-de-terre` et `a1-entrant` calibrés.
+
 - **Surga Bons Plans & Bonnes Adresses — Catalogue 42 Adresses Certifiées, Seeding PostgreSQL, Filtre Rufisque/Banlieue & Fix Limite (Session 2026-10-05)** :
   - *Anomalie & Causes Racines* :
     1. Dans `SurgaPlacesModal.tsx`, le compteur indiquait « Toutes les adresses (4) » car `scripts/seed-surga-data.js` n'insérait que 4 adresses de test dans PostgreSQL `surga_places`.

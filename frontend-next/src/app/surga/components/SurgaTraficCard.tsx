@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Navigation, ChevronRight, Activity } from 'lucide-react'
+import { Navigation, ChevronRight, Activity, ExternalLink } from 'lucide-react'
 
 export interface AxeTraficItem {
   id: string
@@ -136,25 +136,49 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onOuvrirDetail}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--accent, #C75B00)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            padding: '4px 6px',
-          }}
-        >
-          <span>Détails</span>
-          <ChevronRight size={14} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <a
+            href="https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Carte Google Maps Trafic en temps réel"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--accent, #C75B00)',
+              backgroundColor: 'rgba(199, 91, 0, 0.08)',
+              padding: '4px 8px',
+              borderRadius: 6,
+              textDecoration: 'none',
+            }}
+          >
+            <span>Carte Live</span>
+            <ExternalLink size={11} />
+          </a>
+
+          <button
+            type="button"
+            onClick={onOuvrirDetail}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'var(--navy, #1C2B4A)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              padding: '4px 6px',
+            }}
+          >
+            <span>Détails</span>
+            <ChevronRight size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Synthèse textuelle */}
