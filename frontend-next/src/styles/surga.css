@@ -4,7 +4,8 @@
 /* ==========================================================================
    ISOLATION TOTALE DE L'INTERFACE SURGA (Autonome vis-à-vis de Nopalou)
    ========================================================================== */
-body:has(.surga-root) header[role="banner"],
+body:has(.surga-root) header[role="banner"]:not(.surga-header),
+body:has(.surga-root) .navbar,
 body:has(.surga-root) .site-footer,
 body:has(.surga-root) .mobile-bottom-nav,
 body:has(.surga-root) .drawer-cart,
@@ -75,29 +76,34 @@ body:has(.surga-root) #app-main {
   position: sticky;
   top: 0;
   z-index: 40;
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--surga-border);
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--surga-border, #E2E8F0);
   padding: 10px 16px;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
 }
 
 .surga-header-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .surga-header-logo-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surga-primary, #0F172A);
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  padding: 4px;
 }
 
 .surga-header-title {
