@@ -4,8 +4,14 @@
 - **Bannissement du Push Automatique** : L'assistant ne doit **JAMAIS** exécuter de `git push` de sa propre initiative.
 - **Attente Ordre Utilisateur** : Les modifications de code peuvent être testées et préparées localement, mais un `git push` vers `origin main` ne doit être exécuté **QUE SI et SEULEMENT SI** l'utilisateur le demande explicitement (ex: *"push"*, *"pousse sur github"*, *"déploie"*).
 
-## 📌 Règle Obligatoire de Documentation
-- **Mise à Jour Systématique de `CLAUDE.md`** : À la fin de chaque session ou dès qu'un déploiement/push git (`origin main`) est validé et demandé par l'utilisateur, l'assistant DOIT **systématiquement mettre à jour le fichier `CLAUDE.md`** avec le résumé précis des nouveautés, fonctionnalités ajoutées, migrations SQL et corrections effectuées.
+## 📌 Règle Obligatoire de Documentation Exhaustive pour les Prochaines Sessions
+- **Mise à Jour Systématique de TOUS les Documents** : À la fin de chaque session de travail, après chaque livraison ou tâche majeure (et obligatoirement avant tout déploiement / `git push`), l'assistant DOIT **systématiquement et sans exception mettre à jour l'ensemble des documents de documentation et de passation** pour garantir une reprise parfaite et sans perte de contexte lors des prochaines sessions :
+  1. **`CLAUDE.md`** : Résumé précis des nouveautés, fonctionnalités ajoutées, migrations SQL et corrections effectuées en tête du journal des versions.
+  2. **`docs/JOURNAL-LIVRAISONS.md`** : Compte-rendu des livraisons et correctifs en tête du journal racine du projet.
+  3. **`docs/surga/JOURNAL-LIVRAISONS.md`** (si module Surga) ou le journal du module concerné : Entrée détaillée horodatée en tête du fichier avec la liste des tâches et fichiers modifiés.
+  4. **`docs/surga/HANDOVER.md`** (ou document de passation actif) : Actualisation de la date, du statut global, du résumé exécutif, de la cartographie des composants clés, des commandes de test et des scores de validation.
+  5. **`docs/surga/PLAN.md`** (ou plan d'action actif) : Marquage strict `[x] DONE` des tranches et jalons réalisés.
+- **Commit Local Systématique** : Ces mises à jour documentaires doivent être commitées localement avec le code (sans aucun `git push` sans demande explicite de l'utilisateur).
 
 ## 🚫 Interdiction Absolue : Chargement Dynamique & Fetch Externe de Polices (Global Site & Images)
 - **Bannissement Strict du `fetch` / Téléchargement de Polices Externes sur Tout le Projet** : Il est STRICTEMENT INTERDIT de télécharger, `fetch`, `@import` ou injecter des polices d'écriture dynamiquement depuis des CDN externes (ex: fichiers TTF/WOFF/WOFF2 depuis `cdn.jsdelivr.net`, Google Fonts CDN, unpkg, fontsource CDN, ou tout autre serveur tiers) sur L'ENSEMBLE DU SITE et de l'application (`frontend-next`, routes d'images `ImageResponse` / `@vercel/og` / Satori, API, styles, scripts).

@@ -4,7 +4,12 @@
 
 ## 🛑 1. Déploiement & Git
 - **Bannissement du Push Automatique** : Ne **JAMAIS** exécuter de `git push` de sa propre initiative. Attendre un ordre explicite de l'utilisateur (ex: *"push"*, *"déploie"*).
-- **Documentation Systématique** : Ajouter le compte-rendu précis de chaque livraison/push en tête de `docs/JOURNAL-LIVRAISONS.md` (pas dans `CLAUDE.md`, chargé automatiquement dans chaque session).
+- **Documentation Systématique Exhaustive pour les Prochaines Sessions** : À la fin de chaque session ou livraison (et obligatoirement avant tout déploiement / `git push`), l'assistant DOIT systématiquement mettre à jour l'ensemble des documents de suivi et de passation pour que les sessions suivantes reprennent sans aucune friction :
+  1. `CLAUDE.md` (résumé des nouveautés et directives)
+  2. `docs/JOURNAL-LIVRAISONS.md` (journal complet racine)
+  3. `docs/surga/JOURNAL-LIVRAISONS.md` (journal détaillé du module concerné)
+  4. `docs/surga/HANDOVER.md` (document de passation & reprise actualisé avec cartographie, URLs de test et scores de tests)
+  5. `docs/surga/PLAN.md` (plan d'action avec statuts `[x] DONE`).
 - **Authentification Git** : jamais de jeton dans l'URL du remote (AUD-136). Le gestionnaire d'identifiants (`credential.helper manager` / `gh auth git-credential`) suffit ; à défaut, passer `GITHUB_TOKEN` (`.env`) par variable d'environnement : `git -c http.extraheader="AUTHORIZATION: bearer $env:GITHUB_TOKEN" push`.
 
 ## 🛡️ 2. Les 5 Règles d'Or Anti-IA-Slop & Standard Ingénieur Senior
