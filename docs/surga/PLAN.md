@@ -31,12 +31,12 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 ## NOYAU — l'assistant indispensable au quotidien
 
 ### Tranche 1 — "Je m'installe et je personnalise mon Surga"
-- [x] `DONE` Inscription et connexion OTP SMS / WhatsApp (réutiliser l'auth existante).
+- [x] `DONE` Inscription et connexion OTP SMS / WhatsApp in-app (`SurgaAuthModal.tsx`, pastille profil dans `SurgaHeader.tsx` et carte « Compte & Synchronisation » dans `SurgaParametresTab.tsx`).
 - [x] `DONE` PWA installable (manifest `/surga/manifest.json`, service worker dédié `/surga/sw.js`, icônes).
 - [x] `DONE` Profil de personnalisation : briques choisies, heure du briefing, langue, quartiers, équipes suivies (table `surga_preferences`, API `/api/surga/preferences` et `/api/surga/onboarding`).
 - [x] `DONE` Fixer le budget de poids de l'app connectée (point de départ : JS initial < 120 Ko tenu, zéro dépendance lourde).
 - [x] `DONE` Point d'entrée visible sur l'accueil (`/`) et dans la navigation desktop (D20).
-- **Démonstration** : un testeur installe l'app, choisit ses briques et son heure de briefing en moins de 2 minutes, et retrouve ses choix à la réouverture.
+- **Démonstration** : un testeur installe l'app, choisit ses briques et son heure de briefing en moins de 2 minutes, se connecte avec son numéro WhatsApp et retrouve ses choix et ses données synchronisées.
 
 ### Tranche 2 — "Je reçois mon briefing du matin"
 - [x] `DONE` Ingestion de sources (flux RSS d'actualité APS/Le Soleil/Seneweb, programme/scores sportifs).

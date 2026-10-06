@@ -3,6 +3,34 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Après-midi] — Module Compte Utilisateur & Authentification OTP WhatsApp in-app
+- **Demande Utilisateur :**
+  - « dans surga st ce quil est prevu des compte sur linface ya rien »
+- **Analyse & Contexte :**
+  - Dans l'architecture (D12), un compte unique Nopalou-Surga existe en backend avec liaison `user_id` et sessions JWT.
+  - Cependant, sur l'interface PWA Surga (`/surga`), l'isolation totale D22 masquant la navbar Nopalou a fait disparaître tout point d'accès pour se connecter, consulter son compte ou lier ses données.
+  - L'usager était confiné à un mode invité local sans synchronisation multi-appareils visible.
+- **Modifications Appliquées :**
+  - **`SurgaAuthModal.tsx` (nouveau, 370 l., < 450 l.)** :
+    - Modale native Surga avec onglets WhatsApp (recommandé) et Email/Mot de passe.
+    - Étape 1 : Saisie téléphone sénégalais (+221), envoi OTP via `POST /api/auth/whatsapp-otp-send`.
+    - Auto-détection de compte manquant : Si l'API renvoie `ACCOUNT_NOT_FOUND` (404), bascule transparente vers la création de compte avec saisie du nom sans recommencer.
+    - Étape 2 : Saisie OTP (6 chiffres), minuteur de renvoi 45s, validation via `whatsapp-otp-login` ou `whatsapp-otp-register`.
+    - Initialisation de session sécurisée : Appel de `setAuthCookieAction(token)` pour positionner le cookie HttpOnly `nopalou_session`.
+    - Synchronisation automatique post-connexion : Exécution de `synchroniserSurga()` pour transférer immédiatement les notes et dépenses locales vers PostgreSQL.
+  - **`SurgaHeader.tsx` (172 l., < 450 l.)** :
+    - Bouton interactif profil/connexion calé dans le bandeau supérieur à côté du badge réseau (état « Connexion » ou initiale et nom de l'usager connecté).
+  - **`SurgaParametresTab.tsx` (420 l., < 450 l.)** :
+    - Carte dédiée « Compte & Synchronisation » : Affiche l'état réel (Mode invité local vs Compte connecté), bouton « Se connecter », bouton « Synchroniser maintenant » (`synchroniserSurga()`) et bouton « Déconnexion ».
+  - **`frontend-next/src/app/actions/auth.ts`** :
+    - Ajout de la Server Action `deleteSessionAction()` pour purger les cookies de session sans forcer de redirection vers l'accueil général Nopalou (`redirect('/')`), permettant à l'utilisateur de rester sur l'écran Surga en mode invité.
+  - **Modularisation `SurgaAujourdhuiTab.tsx` (nouveau, 185 l.)** :
+    - Extraction propre du contenu du 1er onglet, maintenant `frontend-next/src/app/surga/page.tsx` à 439 lignes (< 450 l.).
+- **Validation :**
+  - 127/127 tests backend Jest validés (100%).
+  - TypeScript : 0 erreur (`tsc --noEmit`).
+  - Linter anti-slop : 100% conforme (zéro émoji, tokens du design system respectés).
+
 ### [2026-10-06 — Matin 12] — Emploi & Carrière : Correctif 401 « Token manquant » & Téléchargement CV PDF
 - **Demande Utilisateur :**
   - Message d'erreur et logs : « Token manquant telecharge pdf » avec codes 401 sur `/api/surga/emploi/*` (`profil`, `droits`, `documents`, `cv/generer`).

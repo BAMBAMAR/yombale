@@ -1,4 +1,18 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+ 
+- **Surga — Module Compte Utilisateur & Authentification OTP WhatsApp in-app (Session 2026-10-06 - Après-midi, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Réponse au constat utilisateur : Sur l'interface Surga, aucun point de connexion ou de compte n'était accessible en raison de l'isolation totale D22 (navbar Nopalou masquée).
+    - Création de `SurgaAuthModal.tsx` (370 l., < 450 l.) : Saisie numéro WhatsApp (+221), envoi OTP via `/api/auth/whatsapp-otp-send`, vérification `/api/auth/whatsapp-otp-login` ou `/api/auth/whatsapp-otp-register`, bascule 1-clic fluide « Créer un compte » si le numéro n'est pas encore enregistré, alternative Email/Mot de passe.
+    - Ajout du point d'entrée dans `SurgaHeader.tsx` : Pastille discrète à droite de l'en-tête (état invité avec icône `User` vs état connecté avec icône `UserCheck`).
+    - Ajout de la carte « Compte & Synchronisation » dans `SurgaParametresTab.tsx` : Statut du compte (Mode invité local vs Compte connecté), bouton « Se connecter », forçage de synchronisation (`synchroniserSurga()`) et bouton de déconnexion.
+    - Déconnexion in-app sans redirection sortante : Ajout de la Server Action `deleteSessionAction()` dans `frontend-next/src/app/actions/auth.ts` pour rester sur l'écran Surga en mode invité.
+    - Synchronisation automatique dès la connexion : Pousse immédiate de l'ensemble des notes et dépenses accumulées localement vers la base de données PostgreSQL de l'utilisateur.
+    - Modularisation de l'onglet « Aujourd'hui » dans `SurgaAujourdhuiTab.tsx` (185 l.) permettant de maintenir `page.tsx` à 439 lignes (< 450 l.).
+  * **Validation & Qualité** :
+    - Tests backend Jest : **127/127 validés (100%)**.
+    - Tests frontend TypeScript : 0 erreur (`tsc --noEmit`).
+    - Linter anti-slop : 100% conforme (zéro émoji, tokens du design system respectés).
 
 - **Surga — Emploi & Carrière : Correctif 401 « Token manquant » & Téléchargement CV PDF (Session 2026-10-06 - Matin 12, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :

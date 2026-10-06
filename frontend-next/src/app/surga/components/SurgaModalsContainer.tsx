@@ -20,6 +20,7 @@ const SurgaDonneesModal = dynamic(() => import('./SurgaDonneesModal'), { ssr: fa
 const SurgaVideosModal = dynamic(() => import('./SurgaVideosModal'), { ssr: false })
 const SurgaEmploiModal = dynamic(() => import('./SurgaEmploiModal'), { ssr: false })
 const SurgaDemarchesModal = dynamic(() => import('./SurgaDemarchesModal'), { ssr: false })
+const SurgaAuthModal = dynamic(() => import('./SurgaAuthModal'), { ssr: false })
 
 interface SurgaModalsContainerProps {
   isCalcOpen: boolean
@@ -37,6 +38,7 @@ interface SurgaModalsContainerProps {
   isVideosOpen?: boolean
   isEmploiOpen?: boolean
   isDemarchesOpen?: boolean
+  isAuthOpen?: boolean
 
   onCloseCalc: () => void
   onCloseVoice: () => void
@@ -53,6 +55,8 @@ interface SurgaModalsContainerProps {
   onCloseVideos?: () => void
   onCloseEmploi?: () => void
   onCloseDemarches?: () => void
+  onCloseAuth?: () => void
+  onAuthSuccess?: (user: any) => void
   onDonneesSupprimees?: () => void
 
   onInjectMontantCalc: () => void
@@ -82,6 +86,7 @@ export default function SurgaModalsContainer({
   isVideosOpen = false,
   isEmploiOpen = false,
   isDemarchesOpen = false,
+  isAuthOpen = false,
 
   onCloseCalc,
   onCloseVoice,
@@ -98,6 +103,8 @@ export default function SurgaModalsContainer({
   onCloseVideos = () => {},
   onCloseEmploi = () => {},
   onCloseDemarches = () => {},
+  onCloseAuth = () => {},
+  onAuthSuccess = () => {},
   onDonneesSupprimees,
 
   onInjectMontantCalc,
@@ -225,6 +232,13 @@ export default function SurgaModalsContainer({
           onCreerNoteChecklist={onCreerNoteChecklist}
           onAjouterDepense={onAjouterDepenseDemarche}
           onAjouterAgenda={onAjouterAgendaDemarche}
+        />
+      )}
+      {isAuthOpen && (
+        <SurgaAuthModal
+          isOpen={isAuthOpen}
+          onClose={onCloseAuth || (() => {})}
+          onSuccess={onAuthSuccess || (() => {})}
         />
       )}
     </>

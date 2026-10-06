@@ -14,6 +14,10 @@ import {
   ShieldCheck,
   GraduationCap,
   Tv,
+  User,
+  UserCheck,
+  LogOut,
+  RefreshCw,
 } from 'lucide-react'
 import SurgaServiceRow from './SurgaServiceRow'
 
@@ -24,6 +28,16 @@ interface SurgaParametresTabProps {
     plan?: string | null
     joursRestants?: number
   }
+  user?: {
+    id: string
+    nom?: string
+    telephone?: string
+    email?: string
+  } | null
+  onOpenAuth?: () => void
+  onDeconnexion?: () => void
+  onSynchroniser?: () => void
+  isSyncing?: boolean
   onToggleAudio: () => void
   onOpenRadio: () => void
   onOpenTrafic: () => void
@@ -42,6 +56,11 @@ interface SurgaParametresTabProps {
 export default function SurgaParametresTab({
   preferences,
   statutPremium,
+  user,
+  onOpenAuth,
+  onDeconnexion,
+  onSynchroniser,
+  isSyncing = false,
   onToggleAudio,
   onOpenRadio,
   onOpenTrafic,
@@ -68,6 +87,133 @@ export default function SurgaParametresTab({
         Heure du briefing : <strong>{preferences?.heure_briefing || '07:30'}</strong> &bull; Quartier :{' '}
         <strong>{preferences?.quartiers?.[0] || 'Dakar'}</strong>
       </p>
+
+      {/* Carte Compte Utilisateur & Synchronisation */}
+      <div
+        style={{
+          padding: '14px 16px',
+          borderRadius: 12,
+          backgroundColor: user ? 'rgba(28, 43, 74, 0.04)' : 'var(--bg, #F8F5F0)',
+          border: user ? '1.5px solid rgba(28, 43, 74, 0.2)' : '1px solid var(--border, #E8DDD2)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: user ? 'rgba(10, 92, 54, 0.1)' : 'rgba(28, 43, 74, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {user ? (
+                <UserCheck size={18} color="var(--price, #0A5C36)" />
+              ) : (
+                <User size={18} color="var(--navy, #1C2B4A)" />
+              )}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                {user ? (user.nom || 'Compte Surga') : 'Mode invité (Stockage local)'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user
+                  ? (user.telephone || user.email || 'Connecté • Synchronisation active')
+                  : 'Données enregistrées uniquement sur cet appareil'}
+              </div>
+            </div>
+          </div>
+
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              {onSynchroniser && (
+                <button
+                  type="button"
+                  onClick={onSynchroniser}
+                  className="surga-btn-secondary"
+                  disabled={isSyncing}
+                  style={{
+                    fontSize: 11,
+                    padding: '6px 10px',
+                    fontWeight: 700,
+                    width: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                  title="Forcer la synchronisation avec le cloud"
+                >
+                  <RefreshCw size={12} className={isSyncing ? 'surga-spin' : ''} />
+                  <span>{isSyncing ? 'Sync...' : 'Sync'}</span>
+                </button>
+              )}
+              {onDeconnexion && (
+                <button
+                  type="button"
+                  onClick={onDeconnexion}
+                  className="surga-btn-secondary"
+                  style={{
+                    fontSize: 11,
+                    padding: '6px 10px',
+                    fontWeight: 700,
+                    width: 'auto',
+                    color: 'var(--accent, #C75B00)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                  title="Se déconnecter"
+                >
+                  <LogOut size={12} />
+                  <span>Déconnexion</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            onOpenAuth && (
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="surga-btn-primary"
+                style={{
+                  fontSize: 11,
+                  padding: '6px 14px',
+                  fontWeight: 700,
+                  width: 'auto',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Se connecter
+              </button>
+            )
+          )}
+        </div>
+
+        {!user && (
+          <div
+            style={{
+              paddingTop: 8,
+              borderTop: '1px dashed var(--border, #E8DDD2)',
+              fontSize: 11,
+              color: 'var(--text2, #5A4E42)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>Connectez-vous avec WhatsApp pour sauvegarder et synchroniser vos données.</span>
+          </div>
+        )}
+      </div>
 
       {/* Carte Statut Abonnement */}
       <div

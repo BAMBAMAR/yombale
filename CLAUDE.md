@@ -49,6 +49,17 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Module Compte Utilisateur & Authentification OTP WhatsApp in-app (Session 2026-10-06 - Après-midi, branche `feature/surga`)** :
+  - *Demande Utilisateur & Constat* : « dans surga st ce quil est prevu des compte sur linface ya rien » — identification d'une absence complète de point d'entrée de compte / connexion sur l'interface Surga isolée.
+  - *Fonctionnalités Livrées* :
+    1. `SurgaAuthModal.tsx` (370 l., < 450 l.) : Modale native dédiée Surga permettant la connexion et la création de compte par code OTP WhatsApp (+221) ou Email/Mot de passe, avec bascule automatique fluide si le numéro n'a pas encore de compte, minuteur de renvoi et validation cryptographique.
+    2. `SurgaHeader.tsx` : Ajout d'une pastille interactive compacte dans le bandeau supérieur (« Connexion » si invité, Nom/Initiales et pastille verte si connecté).
+    3. `SurgaParametresTab.tsx` : Ajout de la carte « Compte & Synchronisation » affichant l'état réel (Mode invité vs Compte connecté), bouton « Se connecter », bouton « Synchroniser maintenant » et bouton « Déconnexion ».
+    4. Server Action `deleteSessionAction` dans `frontend-next/src/app/actions/auth.ts` : Déconnexion sans redirection brutale vers l'accueil e-commerce Nopalou (respect strict D22).
+    5. Synchronisation automatique post-connexion : Transfert instantané des notes et dépenses locales créées hors-ligne vers le cloud utilisateur.
+    6. Extraction modulaire de `SurgaAujourdhuiTab.tsx` (185 l.) ramenant `page.tsx` à 439 lignes (< 450 l.).
+  - *Validation* : 127/127 Jest unitaires passés (100%), TypeScript 0 erreur (`tsc --noEmit`), linter anti-slop validé (zéro émoji, tokens du design system respectés).
+
 - **Surga — Emploi & Carrière : Correctif 401 « Token manquant » & Téléchargement CV PDF (Session 2026-10-06 - Matin 12, branche `feature/surga`)** :
   - *Symptôme Corrigé* : Blocage total des routes `/api/surga/emploi/*` renvoyant 401 « Token manquant » lors de l'ouverture du pôle Emploi et du téléchargement de CV en PDF.
   - *Causes Racines Résolues* :

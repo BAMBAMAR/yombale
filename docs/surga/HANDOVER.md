@@ -1,17 +1,28 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 12)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Après-midi)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Emploi & Carrière : Correctif 401 « Token manquant » & Téléchargement CV PDF Résolu, SurgaEmploiNav Modulaire, Hub Services : Correctif Écrasement Boutons & Largeur Auto, Icônes SVG Dédiées & SurgaServiceRow, Harmonisation Onglet & En-tête « Services » avec LayoutGrid, Tranche 20 : Démarches Administratives avec source officielle e-senegal.sn, Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Module Compte Utilisateur & Authentification OTP WhatsApp in-app, SurgaAuthModal Modulaire, Pastille Header & Carte Compte/Sync Services, Emploi & Carrière : Correctif 401 « Token manquant » & Téléchargement CV PDF Résolu, SurgaEmploiNav Modulaire, Hub Services : Correctif Écrasement Boutons & Largeur Auto, Icônes SVG Dédiées & SurgaServiceRow, Harmonisation Onglet & En-tête « Services » avec LayoutGrid, Tranche 20 : Démarches Administratives avec source officielle e-senegal.sn, Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose désormais d'un pôle de démarches administratives sénégalaises vérifiées (**Tranche 20**) connecté au portail national officiel de référence de l'État du Sénégal (`https://e-senegal.sn/#/home/demarches`), d'un flux d'alertes vidéos officiel (**Tranche 17**) 100% fonctionnel et peuplé de **141 parutions authentiques** de séries et de combats de lutte sénégalais, avec un panachage équitable en base via `ROW_NUMBER()` SQL, des liens sortants YouTube directs en mode Low-Data, et l'ensemble des modules (Démarches, Emploi, CV, Entretien, Sama Xaalis, Météo) testés à 100%.
+L'assistant personnel de poche **Surga** intègre désormais une brique complète de **Gestion de Compte & Authentification OTP WhatsApp in-app** (`SurgaAuthModal.tsx`), directement accessible depuis le bandeau supérieur (`SurgaHeader.tsx`) et l'onglet Services (`SurgaParametresTab.tsx`). Les usagers peuvent ainsi passer en 1 clic du mode invité local à leur compte synchronisé via code WhatsApp (+221) ou Email/Mot de passe, avec transfert immédiat de leurs notes et dépenses hors-ligne vers PostgreSQL et support de la déconnexion in-app sans redirection intempestive.
 
-0. **Démarches Administratives Sénégalaises Vérifiées & Console Admin (Tranche 20 — 100% DONE)** :
+0. **Module Compte Utilisateur & Authentification OTP WhatsApp in-app (100% DONE)** :
+   - **Composant Modale `SurgaAuthModal.tsx` (370 l., < 450 l.)** :
+     - Flux WhatsApp : saisie téléphone (+221), envoi OTP via `POST /api/auth/whatsapp-otp-send`, bascule transparente vers création de compte si non trouvé (`ACCOUNT_NOT_FOUND`), saisie du code à 6 chiffres avec minuteur 45s, validation via `whatsapp-otp-login` ou `whatsapp-otp-register`.
+     - Flux alternatif Email & Mot de passe via `/api/auth/connexion`.
+     - Sauvegarde de session cryptographique : appel de la Server Action `setAuthCookieAction(token)` (`nopalou_session` HttpOnly).
+     - Synchronisation automatique post-connexion : exécution de `synchroniserSurga()` pour transférer immédiatement les notes et dépenses accumulées localement vers le cloud.
+   - **Bandeau Supérieur `SurgaHeader.tsx` (172 l., < 450 l.)** : Pastille interactive compacte affichant l'état du compte (« Connexion » ou initiale et prénom avec pastille verte).
+   - **Onglet Services `SurgaParametresTab.tsx` (420 l., < 450 l.)** : Carte « Compte & Synchronisation » affichant l'état du profil, bouton « Se connecter », bouton « Synchroniser maintenant » et bouton « Déconnexion ».
+   - **Server Action `deleteSessionAction()` (`frontend-next/src/app/actions/auth.ts`)** : Déconnexion sécurisée purgeant les cookies sans forcer de redirection vers l'accueil général Nopalou.
+   - **Modularisation `SurgaAujourdhuiTab.tsx` (185 l.)** : Extraction de l'onglet 1 maintenant `page.tsx` à 439 lignes (< 450 l.).
+
+1. **Démarches Administratives Sénégalaises Vérifiées & Console Admin (Tranche 20 — 100% DONE)** :
    - **Base de Données SQL & Migrations Idempotentes** : Tables `surga_demarches`, `surga_demarches_signalements` et `surga_demarches_suivis` créées dans `backend/migrate-inline.js`.
    - **Service Métier (`backend/services/surga/demarches-service.js`)** :
      - Catalogue de 7 démarches de référence réelles du Sénégal au statut `BROUILLON` avec source officielle `https://e-senegal.sn/#/home/demarches`.

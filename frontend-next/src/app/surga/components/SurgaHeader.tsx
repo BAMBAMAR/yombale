@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Wifi, WifiOff, ChevronLeft } from 'lucide-react'
+import { Wifi, WifiOff, ChevronLeft, User, UserCheck } from 'lucide-react'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
 
 interface SurgaHeaderProps {
@@ -9,6 +9,13 @@ interface SurgaHeaderProps {
   sousTitre?: string
   onRetour?: () => void
   afficherRetour?: boolean
+  user?: {
+    id: string
+    nom?: string
+    telephone?: string
+    email?: string
+  } | null
+  onOpenAuth?: () => void
 }
 
 export default function SurgaHeader({
@@ -16,6 +23,8 @@ export default function SurgaHeader({
   sousTitre,
   onRetour,
   afficherRetour = false,
+  user,
+  onOpenAuth,
 }: SurgaHeaderProps) {
   const isOnline = useOnlineStatus()
   const today = new Intl.DateTimeFormat('fr-FR', {
@@ -118,6 +127,43 @@ export default function SurgaHeader({
             </>
           )}
         </span>
+
+        {/* Bouton Compte / Connexion */}
+        {onOpenAuth && (
+          <button
+            type="button"
+            onClick={onOpenAuth}
+            className="surga-header-badge"
+            style={{
+              cursor: 'pointer',
+              border: user ? '1px solid rgba(10, 92, 54, 0.3)' : '1px solid var(--border, #E8DDD2)',
+              backgroundColor: user ? 'rgba(10, 92, 54, 0.08)' : 'var(--bg, #F8F5F0)',
+              color: user ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              fontWeight: 700,
+              padding: '4px 9px',
+              borderRadius: 20,
+              fontSize: 11,
+            }}
+            title={user ? `Compte : ${user.nom || user.telephone || 'Connecté'}` : 'Se connecter / Compte'}
+          >
+            {user ? (
+              <>
+                <UserCheck size={13} strokeWidth={2.5} />
+                <span style={{ maxWidth: 85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.nom ? user.nom.split(' ')[0] : 'Compte'}
+                </span>
+              </>
+            ) : (
+              <>
+                <User size={13} strokeWidth={2} />
+                <span>Connexion</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
     </header>
   )

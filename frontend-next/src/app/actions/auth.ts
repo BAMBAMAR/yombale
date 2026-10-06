@@ -86,6 +86,11 @@ export async function logout(): Promise<void> {
   redirect('/')
 }
 
+// Déconnexion sans redirection forcée (utilisé par Surga pour rester dans l'app)
+export async function deleteSessionAction(): Promise<void> {
+  await deleteSession()
+}
+
 // ── Mise à jour profil ───────────────────────────────────────────
 export async function updateProfil(prevState: AuthState, formData: FormData): Promise<AuthState> {
   const nom       = formData.get('nom')?.toString().trim() ?? ''
