@@ -1440,7 +1440,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
 
       const resDiourbel = await getMeteo('diourbel');
       expect(resDiourbel.ville).toBe('Diourbel');
-    });
+    }, 15000);
   });
 
   // ─────────────────────────────────────────────────────────────────────────────

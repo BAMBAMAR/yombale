@@ -11,7 +11,13 @@
 
 L'assistant personnel de poche **Surga** dispose d'un module **Emploi & Profil Pro** entièrement fiabilisé avec génération et téléchargement de CV PDF A4 professionnel sans erreur 400, supportant harmonieusement les alias de saisie, et gouverné par l'architecture **« Découverte libre, Engagement vérifié par WhatsApp OTP »** sur tous les services à quotas.
 
-0. **Emploi & CV : Correction Bug 400, PDF A4 & Contrôle Non-Inscrits par WhatsApp OTP (100% DONE)** :
+0. **Connexion WhatsApp OTP : Résolution Conflit 409 & Fusion Doublons Marchands (100% DONE)** :
+   - **Diagnostic & Correction Immédiate** : La tentative de connexion avec le numéro `777202086` déclenchait une erreur 409 (`Plusieurs comptes sont associés à ce numéro`). Un compte marchand auto-généré (`astou frip`) partageait le même numéro que le compte officiel de bamba.
+   - **Migration SQL & Dédoublonnage** : Les 5 boutiques marchandes et abonnements ont été rattachés au compte principal de bamba (`7c921561-e405-4eac-a871-6c1b6c26f6a0`), le numéro du compte doublon a été libéré et le compte archivé.
+   - **Défense en Profondeur (`telephoneIntegrity.js`)** : Ajout du filtre `AND supprime_le IS NULL` pour éviter qu'un compte supprimé ne bloque un compte actif.
+   - **Validation** : `POST /api/auth/whatsapp-otp-send` répond désormais **200 OK** (`Code envoyé`).
+
+0.bis. **Emploi & CV : Correction Bug 400, PDF A4 & Contrôle Non-Inscrits par WhatsApp OTP (100% DONE)** :
    - **Correction Bug 400 Bad Request (`backend/services/surga/emploi-service.js` & `backend/routes/surga/emploi.js`)** : Détection et élimination du mismatch de clés entre frontend (`titre_professionnel`, `adresse_ville`, `resume_pro`, `modele_design`, `exp.titre`) et backend (`titre_poste`, `adresse`, `resume`, `modele`, `exp.poste`). Le pont `formaterProfilPourClient` assure désormais la persistance et restitution simultanée de tous les champs.
    - **Génération & Téléchargement PDF A4 Natif** : Génération immédiate et téléchargement binaire sans friction via `/api/surga/emploi/documents/:id/pdf` ou directement en stream HTTP.
    - **Architecture Contrôle des Non-Inscrits (« Découverte libre, Engagement vérifié »)** :

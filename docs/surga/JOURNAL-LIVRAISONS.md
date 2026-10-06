@@ -3,6 +3,20 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 5 bis] — Auth : Résolution de l'Erreur 409 (« Plusieurs comptes associés ») & Fusion des Doublons Marchands
+- **Demande Utilisateur :**
+  - Capture d'écran de `SurgaAuthModal.tsx` avec l'alerte bloquante : `Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.` lors de la tentative de connexion avec `777202086`.
+- **Analyse & Contexte Technique :**
+  - Deux enregistrements existaient dans la table `utilisateurs` avec le même numéro : le compte officiel `bamba` (`7c921561-e405-4eac-a871-6c1b6c26f6a0`, hash bcrypt, créé le 05/08/2026) et un compte marchand auto-généré (`astou frip`, `0ffb8376-3b84-4536-a812-ce1ff306eae9`, hash `wa_autocreated`).
+  - La fonction de sécurité `resolverComptesParTelephone` (`backend/lib/telephoneIntegrity.js`) renvoyait `ambigu: true`, déclenchant un 409 Conflict.
+- **Modifications & Migration Appliquées :**
+  - *Fusion PostgreSQL* : Transfert des 5 boutiques (`Rama cosmetique`, `Astou friperie`, `astou frip`, `Misbah electro`, `ASTOU FRIP`) et de leurs abonnements vers le compte principal de bamba.
+  - *Nettoyage* : Le compte doublon `astou frip` a vu son numéro libéré (`telephone = NULL`) et a été archivé (`supprime_le = NOW()`).
+  - *Défense en profondeur* : Ajout de la clause `AND supprime_le IS NULL` dans `resolverComptesParTelephone`.
+- **Validation :**
+  - `POST /api/auth/whatsapp-otp-send` avec `777202086` : **200 OK**, `Code envoyé`.
+  - Tests unitaires Jest : **128/128 validés**.
+
 ### [2026-10-06 — Nuit 5] — Emploi & CV : Correction Immédiate du Bug 400 Bad Request, Téléchargement PDF A4 Natif & Architecture Contrôle des Non-Inscrits par WhatsApp OTP
 - **Demandes Utilisateur :**
   1. « impossible de generer le pdf react-dom.development.js:38560 ... api/surga/emploi/cv/generer:1 Failed to load resource: the server responded with a status of 400 (Bad Request) »

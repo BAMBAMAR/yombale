@@ -49,6 +49,21 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Auth — Résolution Définitive de l'Erreur 409 « Plusieurs comptes sont associés à ce numéro » & Dédoublonnage PostgreSQL (Session 2026-10-06 - Nuit 5 bis, branche `feature/surga`)** :
+  - *Capture Utilisateur & Problème* : L'utilisateur tentait de se connecter avec son numéro `777202086` dans `SurgaAuthModal.tsx` et recevait le message d'erreur : `Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.` (Statut HTTP 409).
+  - *Cause Racine* :
+    - La table `utilisateurs` contenait deux comptes pour ce numéro : un compte marchand auto-généré lors d'une prospection (`astou frip`, `0ffb8376-3b84-4536-a812-ce1ff306eae9`) avec `telephone: 221777202086` et le compte administrateur légitime (`bamba`, `7c921561-e405-4eac-a871-6c1b6c26f6a0`) avec `telephone: +221777202086`.
+    - La fonction de sécurité `resolverComptesParTelephone` (règle AUD-052) détectait `rows.length > 1` (`ambigu: true`) et rejetait l'envoi de code OTP pour empêcher toute connexion arbitraire.
+  - *Correctif Appliqué* :
+    1. **Migration & Fusion PostgreSQL** :
+       - Transfert des 5 boutiques marchandes (`Rama cosmetique`, `Astou friperie`, `astou frip`, `Misbah electro`, `ASTOU FRIP`) et des abonnements associés vers le compte principal de bamba (`7c921561-e405-4eac-a871-6c1b6c26f6a0`).
+       - Libération du numéro sur le compte doublon (`telephone = NULL`, `supprime_le = NOW()`).
+    2. **Défense en Profondeur dans `backend/lib/telephoneIntegrity.js`** :
+       - Ajout du filtre `AND supprime_le IS NULL` dans `resolverComptesParTelephone` pour garantir qu'un compte archivé ou supprimé ne bloque jamais l'accès d'un compte actif.
+    3. **Preuve & Test** :
+       - Appel `POST /api/auth/whatsapp-otp-send` avec `telephone: '777202086'` ➔ **`STATUS: 200 OK`**, `{"success": true, "message": "Code envoyé"}`.
+       - Suite de tests unitaires Jest : **128/128 tests validés**.
+
 - **Surga — Emploi & CV : Correction Immédiate du Bug 400 Bad Request, Téléchargement PDF A4 Natif & Architecture Contrôle des Non-Inscrits par WhatsApp OTP (Session 2026-10-06 - Nuit 5, branche `feature/surga`)** :
   - *Demandes Utilisateur & Constat* :
     1. « impossible de generer le pdf ... api/surga/emploi/cv/generer:1 Failed to load resource: the server responded with a status of 400 (Bad Request) »

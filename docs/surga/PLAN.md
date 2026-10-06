@@ -32,6 +32,7 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 
 ### Tranche 1 — "Je m'installe et je personnalise mon Surga"
 - [x] `DONE` Inscription et connexion OTP SMS / WhatsApp in-app (`SurgaAuthModal.tsx`, pastille profil dans `SurgaHeader.tsx` et carte « Compte & Synchronisation » dans `SurgaParametresTab.tsx`).
+- [x] `DONE` Résolution déterministe des conflits 409 multi-comptes par téléphone dans `telephoneIntegrity.js` (`supprime_le IS NULL`) et dédoublonnage PostgreSQL des comptes marchands rattachés à bamba.
 - [x] `DONE` PWA installable (manifest `/surga/manifest.json`, service worker dédié `/surga/sw.js`, icônes).
 - [x] `DONE` Profil de personnalisation : briques choisies, heure du briefing, langue, quartiers, équipes suivies (table `surga_preferences`, API `/api/surga/preferences` et `/api/surga/onboarding`).
 - [x] `DONE` Fixer le budget de poids de l'app connectée (point de départ : JS initial < 120 Ko tenu, zéro dépendance lourde).

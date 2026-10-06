@@ -19,7 +19,8 @@ async function resolverComptesParTelephone(pool, cleanPhone, colonnes = 'id') {
   const raw9Digits = cleanPhone.startsWith('221') ? cleanPhone.slice(3) : cleanPhone;
   const { rows } = await pool.query(
     `SELECT ${colonnes} FROM utilisateurs
-     WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1
+     WHERE (telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1)
+       AND supprime_le IS NULL
      ORDER BY id`,
     [cleanPhone, withPlus, raw9Digits]
   );

@@ -1,5 +1,17 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga / Auth — Résolution Définitive de l'Erreur 409 « Plusieurs comptes sont associés à ce numéro » & Dédoublonnage PostgreSQL (Session 2026-10-06 - Nuit 5 bis, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Diagnostic : La modal de connexion `SurgaAuthModal.tsx` bloquait la saisie du numéro `777202086` avec le message `Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.` (Erreur HTTP 409 renvoyée par `POST /api/auth/whatsapp-otp-send`).
+    - Cause racine : Deux comptes partageaient le même numéro en base : un compte marchand auto-créé lors d'un seed/prospection (`astou frip`, `0ffb8376-3b84-4536-a812-ce1ff306eae9`, sans mot de passe réel) et le compte administrateur principal (`bamba`, `7c921561-e405-4eac-a871-6c1b6c26f6a0`).
+    - Correctifs appliqués :
+      * Migration SQL transactionnelle : Réattribution des 5 boutiques marchandes et abonnements au compte légitime de bamba.
+      * Nettoyage du doublon : Suppression logique (`supprime_le = NOW()`) et libération du champ `telephone = NULL` sur le compte orphelin.
+      * Durcissement de sécurité dans `backend/lib/telephoneIntegrity.js` : Exclusion systématique des comptes supprimés via `AND supprime_le IS NULL` dans `resolverComptesParTelephone`.
+  * **Validation & Qualité** :
+    - Test direct `POST /api/auth/whatsapp-otp-send` avec `777202086` : **200 OK**, `Code envoyé`.
+    - Tests unitaires Jest : 128/128 tests passés (100%).
+ 
 - **Surga — Emploi & CV : Correction Immédiate du Bug 400 Bad Request, Téléchargement PDF A4 Natif & Architecture Contrôle des Non-Inscrits par WhatsApp OTP (Session 2026-10-06 - Nuit 5, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Réponse aux demandes utilisateur :
