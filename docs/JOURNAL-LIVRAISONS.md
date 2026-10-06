@@ -1,5 +1,34 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga / Distinction Vocale Sémantique & Extension Services Locaux (Concours, Trafic, Démarches, Radio, WhatsApp) (Session 2026-10-06 - Nuit 7, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Élimination des lacunes vocales et mise en œuvre des recommandations d'expérience utilisateur (disambiguation sémantique, couverture complète des services locaux, guidage interactif et découvrabilité).
+    - Correction de la collision sémantique entre notes et rappels à date : priorisation temporelle absolue évitant les classements abusifs en dépenses.
+    - Extension omnicanale (PWA web, backend déterministe, fallback LLM et WhatsApp).
+  * **Chantiers Clés Livrés** :
+    1. **Disambiguation Sémantique Stricte & Anti-Collision** :
+       - Réagencement des priorités dans `voice-interpreter.js` et `surga-voice.ts` : les expressions combinant une intention de prise de note et un ancrage temporel ("note réunion demain à 10h", "rappelle-moi ce soir 18h") sont routées en `ADD_REMINDER`.
+       - Extraction du titre préservant les accents d'origine (`texteBrut`) pour conserver les caractères accentués sénégalais et français ("réunion", "médecin").
+       - Exclusion des indications horaires (`\d+h`, `\d+ h`) du filtre des montants monétaires pour éviter les faux positifs financiers.
+    2. **Extension Vocale des Services Locaux Sénégalais** :
+       - `SEARCH_CONCOURS` : détection des requêtes orales de concours ("cherche concours douanes", "concours police", "date limite concours ena") et extraction du mot-clé/sigle.
+       - `CHECK_TRAFFIC` : détection du trafic live TomTom Dakar ("quel est le trafic sur la vdn", "bouchon corniche", "état autoroute") avec normalisation de l'axe routier.
+       - `SEARCH_DEMARCHES` : détection des démarches administratives citoyennes sénégalaises ("comment faire mon passeport", "pièces carte d'identité").
+       - `PLAY_RADIO` : commande de streaming direct des radios sénégalaises ("mets rfm", "arrête la radio", "lance sud fm").
+       - `BRIEFING` : invocation vocale directe du résumé du jour ("donne-moi le briefing", "actualités").
+    3. **PWA : Guidage Conversationnel & Découvrabilité Low-Data** :
+       - Intégration de 5 pastilles d'exemples interactives dans `SurgaVoiceModal.tsx` permettant à l'usager de comprendre immédiatement les capacités vocales et de tester en 1 tap.
+       - Cartes de confirmation dédiées avec boutons d'action contextuels dans `SurgaVoiceConfirmation.tsx` pour lancer directement le concours, l'axe de trafic, la démarche ou le lecteur radio.
+       - Bannière discrète d'activation audio (0 Mo) intégrée dans l'onglet Aujourd'hui (`SurgaAujourdhuiTab.tsx`).
+    4. **WhatsApp : Commandes Structurées & Menu d'Aide Complet** :
+       - Enrichissement du routeur `whatsapp-handler.js` pour traiter "cherche concours <nom>", "trafic <axe>", "démarche <nom>".
+       - Commande `aide` fournissant un guide d'utilisation clair (sans émojis, vouvoiement D19) sur l'ensemble des fonctionnalités texte et audio.
+  * **Score & Tests** :
+    - `tests/unit/surga-phases-1-3.test.js` : **27/27 PASS (100%)** (+9 tests couvrant la phase 4 vocale et WhatsApp).
+    - `tests/unit/surga.test.js` : **128/128 PASS (100%)**.
+    - Total général : **155 tests unitaires passants**.
+    - Frontend Next.js : **0 erreur TypeScript**, **0 violation de linter anti-slop**.
+
 - **Surga / Implémentation Réelle & Validation Finale — Phases 1, 2 et 3 (Agenda Web Push VAPID, Voix Groq Whisper STT & Podcast Stream MP3, IA Hybride L0/L1) (Session 2026-10-06 - Nuit 7, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Implémentation effective et tests de validation des améliorations prioritaires issues de l'audit technologique pointu, ciblant les 4 domaines faibles (Agenda 25/100, Voix 45/100, IA 35/100, WhatsApp 55/100).

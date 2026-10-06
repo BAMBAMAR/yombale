@@ -3,6 +3,36 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 7] — Distinction Vocale Sémantique & Services Locaux (Concours, Trafic, Démarches, Radio, WhatsApp)
+- **Objectif Atteint :**
+  - Corriger l'ensemble des lacunes vocales et mettre en œuvre les recommandations d'ergonomie et de guidage pour l'utilisateur.
+  - Résoudre définitivement l'ambiguïté sémantique entre notes et rappels datés ("note réunion demain à 10h") sans faux classement en dépense d'argent.
+  - Étendre la commande vocale aux services locaux sénégalais (concours d'État, trafic TomTom Dakar, démarches citoyennes, streaming radios FM).
+  - Fournir un guidage conversationnel interactif via des pastilles de suggestions dans la modale vocale et une bannière low-data dans l'onglet Aujourd'hui.
+- **Réalisations & Fichiers Clés :**
+  1. *Interpréteur Vocal Backend Déterministe (`backend/services/surga/voice-interpreter.js`)* :
+     - Inversion de priorité sémantique : évaluation des rappels et de l'agenda avant l'analyse des dépenses.
+     - Extraction du libellé de rappel depuis `texteBrut` pour conserver intacts les accents ("réunion", "médecin").
+     - Filtre strict anti-horaire sur les montants financiers (`\b\d+(?!\s*h(?:eures?)?)\b`).
+     - Ajout des intentions `SEARCH_CONCOURS`, `CHECK_TRAFFIC`, `SEARCH_DEMARCHES`, `PLAY_RADIO`, `BRIEFING`.
+  2. *Interpréteur Hybride Fast-Path & Fallback LLM (`backend/services/surga/ai-interpreter.js`)* :
+     - Enrichissement du schéma JSON Gemini 1.5 Flash et du Fast-Path L0 pour les 5 nouvelles intentions.
+     - Validation métier stricte (`validerCommandeMetier`).
+  3. *Interpréteur Vocal PWA Client (`frontend-next/src/lib/surga-voice.ts`)* :
+     - Alignement 1:1 avec le moteur backend (types `IntentionVocale` et `ActionVocaleDetectee` enrichis).
+  4. *Composants UI PWA Dédiés (`frontend-next/src/app/surga/components/`)* :
+     - `SurgaVoiceModal.tsx` : ajout de `PASTILLES_EXEMPLES` (Calculatrice, Concours, Trafic, Note, Dépense) guidant l'utilisateur sur ce qu'il peut dire et permettant de tester immédiatement d'un clic.
+     - `SurgaVoiceConfirmation.tsx` : cartes de confirmation spécifiques avec boutons d'actions contextuels (consulter le concours, afficher le trafic sur l'axe, voir les pièces de la démarche, écouter la station FM).
+     - `SurgaAujourdhuiTab.tsx` : bannière discrète d'activation audio (0 Mo) invitant à écouter le briefing du jour en 1 clic.
+     - `SurgaModalsContainer.tsx` & `page.tsx` : câblage des transitions automatiques de la modale vocale vers les modales cibles (Trafic, Démarches, Concours).
+  5. *Intégration WhatsApp Omnicanale (`backend/services/surga/whatsapp-handler.js`)* :
+     - Prise en charge des requêtes "cherche concours <nom>", "trafic <axe>", "démarche <nom>".
+     - Ajout d'une commande d'aide structurée `aide` détaillant toutes les syntaxes vocales et écrites (D19, zéro émoji).
+- **Validation & Scores :**
+  - `tests/unit/surga-phases-1-3.test.js` : **27/27 PASS (100%)** (+9 tests couvrant la phase 4 vocale et WhatsApp).
+  - `tests/unit/surga.test.js` : **128/128 PASS (100%)** (Total = 155 tests unitaires passants).
+  - TypeScript Frontend : **0 erreur**. Linter anti-slop : **0 violation**.
+
 ### [2026-10-06 — Nuit 7] — Implémentation Réelle & Validation Finale : Phases 1, 2 et 3 (Agenda Web Push, Voix STT, Audio Podcast MP3, IA Hybride)
 - **Objectif Atteint :**
   - Faire progresser Surga sur ses 4 piliers historiquement les plus faibles (Agenda 25/100, Voix 45/100, IA 35/100, WhatsApp 55/100) par des implémentations de code réelles, éprouvées et validées unitairement sans régression.

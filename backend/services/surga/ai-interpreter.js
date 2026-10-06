@@ -115,6 +115,47 @@ function validerCommandeMetier(intention, data = {}) {
     };
   }
 
+  if (intention === 'SEARCH_CONCOURS') {
+    const q = String(data.query || '').slice(0, 100).trim();
+    return {
+      valide: true,
+      donneesValidees: { query: q || 'tous' },
+    };
+  }
+
+  if (intention === 'CHECK_TRAFFIC') {
+    const axe = String(data.axe || 'global').slice(0, 50).trim();
+    return {
+      valide: true,
+      donneesValidees: { axe: axe || 'global' },
+    };
+  }
+
+  if (intention === 'SEARCH_DEMARCHES') {
+    const q = String(data.query || '').slice(0, 100).trim();
+    return {
+      valide: true,
+      donneesValidees: { query: q || 'tous' },
+    };
+  }
+
+  if (intention === 'PLAY_RADIO') {
+    return {
+      valide: true,
+      donneesValidees: {
+        action: data.action === 'STOP' ? 'STOP' : 'PLAY',
+        station: String(data.station || 'rfm').slice(0, 50).trim(),
+      },
+    };
+  }
+
+  if (intention === 'BRIEFING') {
+    return {
+      valide: true,
+      donneesValidees: {},
+    };
+  }
+
   return { valide: false, donneesValidees: {}, erreur: 'Intention non supportée' };
 }
 
@@ -133,7 +174,7 @@ Analyse la phrase suivante et déduis l'intention exacte de l'utilisateur sous f
 
 Schéma JSON attendu :
 {
-  "intention": "ADD_EXPENSE" | "ADD_REMINDER" | "ADD_NOTE" | "CALCULATE" | "QUESTION" | "INCONNU",
+  "intention": "ADD_EXPENSE" | "ADD_REMINDER" | "ADD_NOTE" | "CALCULATE" | "SEARCH_CONCOURS" | "CHECK_TRAFFIC" | "SEARCH_DEMARCHES" | "PLAY_RADIO" | "BRIEFING" | "INCONNU",
   "data": {
     "montant": number ou null (en FCFA),
     "categorie": "Alimentation" | "Transport" | "Logement" | "Santé" | "Factures" | "Loisirs" | "Autre",
@@ -142,7 +183,11 @@ Schéma JSON attendu :
     "date": "YYYY-MM-DD" ou null (utilise aujourd'hui = ${new Date().toISOString().slice(0, 10)} ou demain si mentionné),
     "heure": "HH:mm" ou null,
     "repetition": "AUCUNE" | "QUOTIDIEN" | "HEBDOMADAIRE" | "MENSUEL",
-    "expression": string ou null (pour calculs arithmétiques)
+    "expression": string ou null (pour calculs arithmétiques),
+    "query": string ou null (pour recherche concours ou démarches),
+    "axe": string ou null (axe routier pour trafic),
+    "station": string ou null,
+    "action": "PLAY" | "STOP" ou null
   },
   "confiance": number entre 0.0 et 1.0,
   "sensible": boolean (true si dépense, rappel ou note à enregistrer)
@@ -239,6 +284,24 @@ async function interpreterCommandeHybride(texte) {
       donneesL0 = l0Result.noteData;
       sensible = true;
       msg = `Note : "${donneesL0.titre}". Enregistrer ?`;
+    } else if (l0Result.intention === 'SEARCH_CONCOURS' && l0Result.concoursData) {
+      donneesL0 = l0Result.concoursData;
+      sensible = false;
+      msg = `Recherche du concours : "${donneesL0.query}".`;
+    } else if (l0Result.intention === 'CHECK_TRAFFIC' && l0Result.traficData) {
+      donneesL0 = l0Result.traficData;
+      sensible = false;
+      msg = `Consultation du trafic Dakar (${donneesL0.axe}).`;
+    } else if (l0Result.intention === 'SEARCH_DEMARCHES' && l0Result.demarcheData) {
+      donneesL0 = l0Result.demarcheData;
+      sensible = false;
+      msg = `Démarche administrative : "${donneesL0.query}".`;
+    } else if (l0Result.intention === 'PLAY_RADIO' && l0Result.radioData) {
+      donneesL0 = l0Result.radioData;
+      sensible = false;
+    } else if (l0Result.intention === 'BRIEFING') {
+      donneesL0 = {};
+      sensible = false;
     }
 
     const validation = validerCommandeMetier(l0Result.intention, donneesL0);

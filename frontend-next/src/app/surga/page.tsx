@@ -325,6 +325,7 @@ export default function SurgaPage() {
             preferences={preferences}
             briefingData={briefingData}
             audioScript={audioScript}
+            onToggleAudio={handleToggleAudio}
             soldeKalpeFormate={soldeKalpeFormate}
             statsApercu={statsApercu}
             nbNotes={nbNotes}
@@ -423,6 +424,8 @@ export default function SurgaPage() {
         onOpenEmploi={() => setIsEmploiOpen(true)}
         onOpenConcours={() => setIsConcoursOpen(true)}
         onOpenImmo={() => setIsImmoOpen(true)}
+        onOpenTrafic={() => setIsTraficOpen(true)}
+        onOpenDemarches={() => setIsDemarchesOpen(true)}
         onInjectMontantCalc={() => setActiveTab('depenses')}
         onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
         onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote}

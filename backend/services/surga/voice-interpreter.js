@@ -116,46 +116,118 @@ function interpreterCommandeVocale(transcription) {
     }
   }
 
-  // 2. Dépense (ex: "note 2500 de taxi", "dépense 5000 courses", "j'ai payé 1500 repas")
-  const matchMontant = texteNorm.match(/(\d+)\s*(?:fcfa|cfa|f|frs)?/i);
-  if (matchMontant && (/^(note|depense|dépense|j'ai payé|j'ai paye|achat)/i.test(texteNorm) || /(cfa|fcfa)/i.test(texteNorm))) {
-    const montant = parseInt(matchMontant[1], 10);
-    if (montant > 0) {
-      let libelle = texteBrut
-        .replace(/^(note|depense|dépense|j'ai payé|j'ai paye|achat)\s*/i, '')
-        .replace(new RegExp(matchMontant[1], 'i'), '')
-        .replace(/\b(?:fcfa|cfa|f|frs|de|pour)\b/gi, '')
-        .trim();
+  // 2. Radio FM (ex: "mets rfm", "lance sud fm", "écoute zik fm", "arrête la radio")
+  const matchRadioArret = texteNorm.match(/^(?:arr[êe]te|coupe|stop|ferme)\s+(?:la\s+)?radio$/i);
+  if (matchRadioArret) {
+    return {
+      intention: 'PLAY_RADIO',
+      texteBrut,
+      radioData: {
+        action: 'STOP',
+      },
+    };
+  }
+  const matchRadio = texteNorm.match(/^(?:mets|lance|[ée]coute|allume|joue)\s+(?:la\s+radio\s+)?([a-z0-9\s_-]+)$/i);
+  if (matchRadio && /(rfm|sud\s*fm|zik\s*fm|rfi|lamp\s*fall|walf|al[- ]fayda|radio)/i.test(matchRadio[1])) {
+    const stNom = matchRadio[1].replace(/^(?:la\s+)?radio\s*/i, '').trim();
+    return {
+      intention: 'PLAY_RADIO',
+      texteBrut,
+      radioData: {
+        action: 'PLAY',
+        station: stNom || 'rfm',
+      },
+    };
+  }
 
-      const categorie = devinerCategorieVocale(libelle || texteBrut);
+  // 3. Briefing matinal (ex: "mon briefing", "donne-moi le briefing", "actualités du jour")
+  if (/^(?:(?:donne[- ]moi\s+(?:mon\s+)?|lance\s+(?:le\s+)?|affiche\s+(?:le\s+)?)?briefing|actualit[ée]s?|point\s+du\s+jour)$/i.test(texteNorm)) {
+    return {
+      intention: 'BRIEFING',
+      texteBrut,
+    };
+  }
+
+  // 4. Concours & Examens (ex: "cherche concours douanes", "concours police", "date limite concours ena")
+  const matchConcours = texteNorm.match(/^(?:cherche|recherche|trouve|info|statut|date|dossier|quand(?:\s+a\s+lieu)?(?:\s+le)?|c['’]est\s+quand\s+le)?\s*concours\s+(?:de\s+(?:la\s+)?|d['’]\s*)?([a-z0-9\s_-]+)$/i);
+  const matchSigleConcoursDirect = texteNorm.match(/^(?:cherche|recherche|info|date)?\s*(douanes?|police|ena|gendarmerie|fastef|crem|cfj|sapeurs[- ]pompiers|bnsp|baccalaur[ée]at|bfem|cesti|esp|ensa)\b/i);
+
+  if (matchConcours) {
+    const qConcours = matchConcours[1].trim();
+    return {
+      intention: 'SEARCH_CONCOURS',
+      texteBrut,
+      concoursData: {
+        query: qConcours,
+      },
+    };
+  } else if (matchSigleConcoursDirect && !/(taxi|repas|courses|cfa|fcfa)/i.test(texteNorm)) {
+    return {
+      intention: 'SEARCH_CONCOURS',
+      texteBrut,
+      concoursData: {
+        query: matchSigleConcoursDirect[1].trim(),
+      },
+    };
+  }
+
+  // 5. Démarches administratives citoyennes (ex: "comment faire mon passeport", "pièces carte identité", "renouvellement permis")
+  const matchDemarche = texteNorm.match(/^(?:comment\s+(?:faire|obtenir|renouveler)|pi[èe]ces?\s+(?:pour|du)?|d[ée]marche\s+(?:pour)?)\s+([a-z0-9\s_-]+)$/i);
+  if (matchDemarche || /(?:passeport|carte\s+d['’]identit[ée]|cni|permis\s+de\s+conduire|casier\s+judiciaire|certificat\s+de\s+nationalit[ée])/i.test(texteNorm)) {
+    let qDemarche = matchDemarche ? matchDemarche[1].trim() : texteNorm;
+    qDemarche = qDemarche.replace(/^(?:comment\s+(?:faire|obtenir|renouveler)|pi[èe]ces?\s+(?:pour|du)?|d[ée]marche\s+(?:pour)?|mon|ma|mes|le|la|les)\s+/gi, '').trim();
+    if (qDemarche && /(passeport|identit|cni|permis|casier|nationalit|quittance)/i.test(qDemarche)) {
       return {
-        intention: 'ADD_EXPENSE',
+        intention: 'SEARCH_DEMARCHES',
         texteBrut,
-        depenseData: {
-          montant,
-          categorie,
-          note: libelle || categorie,
+        demarcheData: {
+          query: qDemarche,
         },
       };
     }
   }
 
-  // 3. Rappel (ex: "rappelle-moi demain à 14h réunion", "rappel docteur 8h30")
-  const matchRappel = texteNorm.match(/^(?:rappel|rappelle(?:-moi)?)\s+(.+)$/i);
-  if (matchRappel) {
-    const reste = matchRappel[1].trim();
+  // 6. Trafic routier live TomTom (ex: "quel est le trafic sur la vdn", "état du trafic", "bouchon corniche")
+  const matchTrafic = texteNorm.match(/^(?:(?:quel\s+est\s+le|point|etat\s+du)\s+)?(?:trafic|circulation|bouchons?|ralentissements?)\s*(?:sur\s+(?:la\s+)?|[àa]\s+(?:la\s+)?|de\s+)?([a-z0-9\s_-]*)$/i);
+  if (matchTrafic || /(?:trafic|bouchon|circulation)\s+(vdn|corniche|p[ée]age|autoroute|patte\s+d['’]oie|rn1)/i.test(texteNorm)) {
+    const rawAxe = matchTrafic ? matchTrafic[1].trim() : texteNorm;
+    let axeExtrait = 'global';
+    if (/vdn/i.test(rawAxe)) axeExtrait = 'vdn';
+    else if (/corniche/i.test(rawAxe)) axeExtrait = 'corniche';
+    else if (/p[ée]age|autoroute|a1/i.test(rawAxe)) axeExtrait = 'autoroute';
+    else if (/patte\s+d['’]oie/i.test(rawAxe)) axeExtrait = 'patte_d_oie';
+    else if (/rn1/i.test(rawAxe)) axeExtrait = 'rn1';
+
+    return {
+      intention: 'CHECK_TRAFFIC',
+      texteBrut,
+      traficData: {
+        axe: axeExtrait,
+      },
+    };
+  }
+
+  // 7. Rappel & Agenda (Priorité temporelle stricte : ex: "rappelle-moi demain à 14h réunion", "note réunion demain 10h")
+  const matchRappel = texteBrut.match(/^(?:rappel|rappelle(?:-moi)?)\s+(.+)$/i);
+  const contientDateHeure = /demain|ce soir|\b\d{1,2}\s*(?:h|:)\s*\d{0,2}\b|dans\s+\d+\s*(?:min|minute|heure)/i.test(texteNorm);
+
+  if (matchRappel || (contientDateHeure && /^(?:note|ajouter|programme|mets)\s+/i.test(texteNorm))) {
+    const reste = matchRappel
+      ? matchRappel[1].trim()
+      : texteBrut.replace(/^(?:note|ajouter|programme|mets)\s+/i, '').trim();
+
     let date = new Date().toISOString().slice(0, 10);
     let heure = '09:00';
     let titre = reste;
 
-    if (/demain/i.test(reste)) {
+    if (/demain/i.test(titre)) {
       const d = new Date();
       d.setDate(d.getDate() + 1);
       date = d.toISOString().slice(0, 10);
       titre = titre.replace(/demain/gi, '').trim();
     }
 
-    const matchHeure = titre.match(/(\d{1,2})(?:h|:)(\d{2})?/i);
+    const matchHeure = titre.match(/(\d{1,2})\s*(?:h|:)\s*(\d{2})?/i);
     if (matchHeure) {
       const h = String(parseInt(matchHeure[1], 10)).padStart(2, '0');
       const m = String(parseInt(matchHeure[2] || '0', 10)).padStart(2, '0');
@@ -176,7 +248,31 @@ function interpreterCommandeVocale(transcription) {
     };
   }
 
-  // 4. Note rapide (ex: "note appeler docteur demain", "mémo liste des prix")
+  // 8. Dépense (ex: "note 2500 de taxi", "dépense 5000 courses", "j'ai payé 1500 repas")
+  const matchMontant = texteNorm.match(/\b(\d+)(?!\s*h(?:eures?)?)\s*(?:fcfa|cfa|f|frs)?\b/i);
+  if (matchMontant && (/^(note|depense|dépense|j'ai payé|j'ai paye|achat)/i.test(texteNorm) || /(cfa|fcfa)/i.test(texteNorm))) {
+    const montant = parseInt(matchMontant[1], 10);
+    if (montant > 0) {
+      let libelle = texteBrut
+        .replace(/^(note|depense|dépense|j'ai payé|j'ai paye|achat)\s*/i, '')
+        .replace(new RegExp(`\\b${matchMontant[1]}\\b`, 'i'), '')
+        .replace(/\b(?:fcfa|cfa|f|frs|de|pour)\b/gi, '')
+        .trim();
+
+      const categorie = devinerCategorieVocale(libelle || texteBrut);
+      return {
+        intention: 'ADD_EXPENSE',
+        texteBrut,
+        depenseData: {
+          montant,
+          categorie,
+          note: libelle || categorie,
+        },
+      };
+    }
+  }
+
+  // 9. Note rapide intemporelle (ex: "note appeler docteur", "mémo liste des prix")
   const matchNote = texteBrut.match(/^(?:note|ajouter note|mémo|memo)\s+(.+)$/i);
   if (matchNote) {
     const contenu = matchNote[1].trim();

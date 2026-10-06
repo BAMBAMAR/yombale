@@ -57,7 +57,20 @@ interface SurgaVoiceModalProps {
   onConfirmerDepense?: (depense: { montant: number; categorie: string; note: string }) => Promise<void>;
   onConfirmerNote?: (note: { titre: string; contenu: string }) => Promise<void>;
   onConfirmerRappel?: (rappel: { titre: string; date: string; heure: string }) => Promise<void>;
+  onOpenConcours?: (query?: string) => void;
+  onOpenTrafic?: () => void;
+  onOpenDemarches?: (query?: string) => void;
+  onOpenRadio?: (station?: string) => void;
 }
+
+const PASTILLES_EXEMPLES = [
+  { label: 'Concours Douanes', texte: 'cherche concours douanes' },
+  { label: 'Rappel demain 8h', texte: 'rappelle-moi demain à 8h réviser' },
+  { label: '2 500 FCFA taxi', texte: 'note 2500 taxi' },
+  { label: 'Trafic VDN', texte: 'trafic sur la VDN' },
+  { label: 'Passeport', texte: 'comment faire mon passeport' },
+  { label: '15 000 * 3', texte: '15000 fois 3' },
+];
 
 export default function SurgaVoiceModal({
   isOpen,
@@ -65,6 +78,10 @@ export default function SurgaVoiceModal({
   onConfirmerDepense,
   onConfirmerNote,
   onConfirmerRappel,
+  onOpenConcours,
+  onOpenTrafic,
+  onOpenDemarches,
+  onOpenRadio,
 }: SurgaVoiceModalProps) {
   const [estSupporte, setEstSupporte] = useState(true);
   const [enEcoute, setEnEcoute] = useState(false);
@@ -376,7 +393,41 @@ export default function SurgaVoiceModal({
           </form>
         )}
 
-        {/* ── Chaîne de confirmation pour Dépense, Note ou Rappel ── */}
+        {/* Pastilles de suggestions cliquables pour guider l'utilisateur */}
+        {!enEcoute && !actionDetectee && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '0.78rem', color: '#8A94A6', marginBottom: '8px', fontWeight: 600 }}>
+              Exemples de commandes vocales :
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {PASTILLES_EXEMPLES.map((ex) => (
+                <button
+                  key={ex.label}
+                  type="button"
+                  onClick={() => {
+                    setTranscription(ex.texte);
+                    const action = interpreterCommandeVocale(ex.texte);
+                    setActionDetectee(action);
+                  }}
+                  style={{
+                    padding: '4px 9px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--bg)',
+                    fontSize: '0.76rem',
+                    color: 'var(--navy)',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                  }}
+                >
+                  {ex.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Chaîne de confirmation pour Dépense, Note, Rappel ou Consultation ── */}
         {actionDetectee && actionDetectee.intention !== 'INCONNU' && (
           <SurgaVoiceConfirmation
             actionDetectee={actionDetectee}
@@ -385,6 +436,22 @@ export default function SurgaVoiceModal({
             onAnnuler={() => {
               setActionDetectee(null);
               setTranscription('');
+            }}
+            onOpenConcours={(q) => {
+              onClose();
+              if (onOpenConcours) onOpenConcours(q);
+            }}
+            onOpenTrafic={() => {
+              onClose();
+              if (onOpenTrafic) onOpenTrafic();
+            }}
+            onOpenDemarches={(q) => {
+              onClose();
+              if (onOpenDemarches) onOpenDemarches(q);
+            }}
+            onOpenRadio={(st) => {
+              onClose();
+              if (onOpenRadio) onOpenRadio(st);
             }}
           />
         )}
@@ -401,7 +468,7 @@ export default function SurgaVoiceModal({
               marginBottom: '14px',
             }}
           >
-            Commande non reconnue. Exemples : <em>"note 2500 taxi"</em>, <em>"calcule 100 divisé par 3"</em>, <em>"rappel demain 14h"</em>.
+            Commande non reconnue. Exemples : <em>"cherche concours douanes"</em>, <em>"note 2500 taxi"</em>, <em>"rappel demain 14h"</em>, <em>"trafic VDN"</em>.
           </div>
         )}
 

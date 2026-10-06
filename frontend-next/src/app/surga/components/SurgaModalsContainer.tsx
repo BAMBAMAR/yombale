@@ -72,6 +72,8 @@ interface SurgaModalsContainerProps {
   onOpenEmploi?: () => void
   onOpenConcours?: () => void
   onOpenImmo?: () => void
+  onOpenTrafic?: () => void
+  onOpenDemarches?: () => void
 
   onInjectMontantCalc: () => void
   onOpenRadioFromPresse?: () => void
@@ -133,6 +135,8 @@ export default function SurgaModalsContainer({
   onOpenEmploi,
   onOpenConcours,
   onOpenImmo,
+  onOpenTrafic,
+  onOpenDemarches,
 
   onInjectMontantCalc,
   onOpenRadioFromPresse,
@@ -164,6 +168,22 @@ export default function SurgaModalsContainer({
           onConfirmerDepense={onConfirmerVoiceDepense}
           onConfirmerNote={onConfirmerVoiceNote}
           onConfirmerRappel={onConfirmerVoiceRappel}
+          onOpenConcours={() => {
+            onCloseVoice()
+            if (onOpenConcours) onOpenConcours()
+          }}
+          onOpenTrafic={() => {
+            onCloseVoice()
+            if (onOpenTrafic) onOpenTrafic()
+          }}
+          onOpenDemarches={() => {
+            onCloseVoice()
+            if (onOpenDemarches) onOpenDemarches()
+          }}
+          onOpenRadio={() => {
+            onCloseVoice()
+            openRadioModal()
+          }}
         />
       )}
       {isPresseOpen && (

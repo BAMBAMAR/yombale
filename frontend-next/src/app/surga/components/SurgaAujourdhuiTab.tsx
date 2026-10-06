@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Sun, Newspaper } from 'lucide-react'
+import { Sun, Newspaper, Headphones } from 'lucide-react'
 import SurgaBriefingActions from './SurgaBriefingActions'
 import SurgaAudioPlayer from './SurgaAudioPlayer'
 import SurgaMeteoCard, { type MeteoData } from './SurgaMeteoCard'
@@ -45,6 +45,7 @@ interface SurgaAujourdhuiTabProps {
   onOpenCalc: () => void
   onOpenVoice: () => void
   onReinitialiser: () => void
+  onToggleAudio?: () => void
 }
 
 export default function SurgaAujourdhuiTab({
@@ -68,6 +69,7 @@ export default function SurgaAujourdhuiTab({
   onOpenCalc,
   onOpenVoice,
   onReinitialiser,
+  onToggleAudio,
 }: SurgaAujourdhuiTabProps) {
   const heureBriefing = preferences?.heure_briefing || briefingData?.heure_briefing || '07:30'
   const quartier = preferences?.quartiers?.[0] || 'Dakar'
@@ -100,12 +102,48 @@ export default function SurgaAujourdhuiTab({
           onRefresh={chargerBriefing}
         />
 
-        {preferences?.audio_actif && audioScript && (
+        {preferences?.audio_actif && audioScript ? (
           <SurgaAudioPlayer
             script={audioScript}
             onOpenPodcastModal={onOpenPodcastModal}
             onOpenRadiosModal={openRadioModal}
           />
+        ) : (
+          <div
+            style={{
+              marginTop: 10,
+              padding: '8px 12px',
+              backgroundColor: 'var(--bg, #F8F5F0)',
+              borderRadius: 8,
+              border: '1px dashed var(--border, #E8DDD2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--navy, #1C2B4A)' }}>
+              <Headphones size={15} color="var(--accent, #C75B00)" />
+              <span>Écouter le briefing à la voix <strong>(0 Mo de données)</strong></span>
+            </div>
+            {onToggleAudio && (
+              <button
+                type="button"
+                onClick={onToggleAudio}
+                className="btn-npl"
+                style={{
+                  padding: '3px 8px',
+                  fontSize: 11,
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                }}
+              >
+                Activer
+              </button>
+            )}
+          </div>
         )}
       </div>
 

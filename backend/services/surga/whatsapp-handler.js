@@ -53,6 +53,11 @@ function parserIntentionWhatsApp(texteBrut) {
     return { intention: 'CONFIRMATION_NON' };
   }
 
+  // 1.2 Menu d'aide et orientation
+  if (/^(aide|help|infos?|commandes?|menu|bonjour|salut|hello)$/.test(texte)) {
+    return { intention: 'AIDE' };
+  }
+
   // 1.5 Correction de montant pour une action en attente (ex: "non c'était 3500", "plutôt 3500", "c'est 3500")
   const matchCorrectionMontant = texte.match(/(?:non\s*,?\s*c['’]etait|c['’]etait|plutot|mettre|c['’]est)\s*(\d+(?:[\s.,]\d+)?)\s*(?:fcfa|cfa|f|frs)?/i);
   if (matchCorrectionMontant) {
@@ -66,6 +71,52 @@ function parserIntentionWhatsApp(texteBrut) {
   // 2. Briefing
   if (/^(briefing|actu|actualite|actualites|mon briefing)$/.test(texte)) {
     return { intention: 'BRIEFING' };
+  }
+
+  // 2.2 Concours & Examens Nationaux (ex: "cherche concours douanes", "concours police", "date concours ena")
+  const matchConcours = texteNettoye.match(/^(?:cherche|recherche|trouve|info|statut|date|dossier|quand(?:\s+a\s+lieu)?(?:\s+le)?|c['’]est\s+quand\s+le)?\s*concours\s+(?:de\s+(?:la\s+)?|d['’]\s*)?([a-z0-9\s_-]+)$/i);
+  const matchSigleConcoursDirect = texteNettoye.match(/^(?:cherche|recherche|info|date)?\s*(douanes?|police|ena|gendarmerie|fastef|crem|cfj|sapeurs[- ]pompiers|bnsp|baccalaur[ée]at|bfem|cesti|esp|ensa)\b/i);
+
+  if (matchConcours) {
+    return {
+      intention: 'SEARCH_CONCOURS',
+      query: matchConcours[1].trim(),
+    };
+  } else if (matchSigleConcoursDirect && !/(taxi|repas|courses|cfa|fcfa)/i.test(texteNettoye)) {
+    return {
+      intention: 'SEARCH_CONCOURS',
+      query: matchSigleConcoursDirect[1].trim(),
+    };
+  }
+
+  // 2.3 Démarches administratives citoyennes (ex: "comment faire mon passeport", "pièces carte identité", "permis")
+  const matchDemarche = texteNettoye.match(/^(?:comment\s+(?:faire|obtenir|renouveler)|pi[èe]ces?\s+(?:pour|du)?|d[ée]marche\s+(?:pour)?)\s+([a-z0-9\s_-]+)$/i);
+  if (matchDemarche || /(?:passeport|carte\s+d['’]identit[ée]|cni|permis\s+de\s+conduire|casier\s+judiciaire|certificat\s+de\s+nationalit[ée])/i.test(texteNettoye)) {
+    let qDemarche = matchDemarche ? matchDemarche[1].trim() : texteNettoye;
+    qDemarche = qDemarche.replace(/^(?:comment\s+(?:faire|obtenir|renouveler)|pi[èe]ces?\s+(?:pour|du)?|d[ée]marche\s+(?:pour)?|mon|ma|mes|le|la|les)\s+/gi, '').trim();
+    if (qDemarche && /(passeport|identit|cni|permis|casier|nationalit|quittance)/i.test(qDemarche)) {
+      return {
+        intention: 'SEARCH_DEMARCHES',
+        query: qDemarche,
+      };
+    }
+  }
+
+  // 2.4 Trafic routier Dakar Live (ex: "quel est le trafic sur la vdn", "état du trafic", "bouchon corniche")
+  const matchTrafic = texteNettoye.match(/^(?:(?:quel\s+est\s+le|point|etat\s+du)\s+)?(?:trafic|circulation|bouchons?|ralentissements?)\s*(?:sur\s+(?:la\s+)?|[àa]\s+(?:la\s+)?|de\s+)?([a-z0-9\s_-]*)$/i);
+  if (matchTrafic || /(?:trafic|bouchon|circulation)\s+(vdn|corniche|p[ée]age|autoroute|patte\s+d['’]oie|rn1)/i.test(texteNettoye)) {
+    const rawAxe = matchTrafic ? matchTrafic[1].trim() : texteNettoye;
+    let axeExtrait = 'global';
+    if (/vdn/i.test(rawAxe)) axeExtrait = 'vdn';
+    else if (/corniche/i.test(rawAxe)) axeExtrait = 'corniche';
+    else if (/p[ée]age|autoroute|a1/i.test(rawAxe)) axeExtrait = 'autoroute';
+    else if (/patte\s+d['’]oie/i.test(rawAxe)) axeExtrait = 'patte_d_oie';
+    else if (/rn1/i.test(rawAxe)) axeExtrait = 'rn1';
+
+    return {
+      intention: 'CHECK_TRAFFIC',
+      axe: axeExtrait,
+    };
   }
 
   // 3. Calculatrice
@@ -451,6 +502,135 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
 
     await sendWhatsAppText(normPh, msgBriefing);
     return true;
+  }
+
+  // ── 3.2 Aide et Orientation des fonctionnalités ─────────────────────────────
+  if (parseResult.intention === 'AIDE') {
+    const msgAide =
+      `Surga : Bonjour. Je suis votre assistant de poche du quotidien. Vous pouvez m'écrire ou m'envoyer des notes vocales :\n\n` +
+      `• Concours : "cherche concours douanes", "concours police", "date concours ENA"\n` +
+      `• Démarches : "comment faire mon passeport", "pièces carte identité"\n` +
+      `• Trafic : "trafic sur la VDN", "bouchon corniche", "état du trafic"\n` +
+      `• Rappels : "rappelle-moi demain à 8h", "dans 30 min appeler maman"\n` +
+      `• Dépenses : "note 2500 taxi", "5000 courses"\n` +
+      `• Calculs : "15000 * 3", "100 / 3"\n` +
+      `• Actualités : "mon briefing"\n\n` +
+      `Accédez à l'application complète : https://surga.nopalou.com`;
+    await sendWhatsAppText(normPh, msgAide);
+    return true;
+  }
+
+  // ── 3.3 Recherche Concours & Examens Nationaux ───────────────────────────────
+  if (parseResult.intention === 'SEARCH_CONCOURS') {
+    try {
+      const { listerConcours } = require('./concours-service');
+      const resultat = await listerConcours({ q: parseResult.query, limit: 3 });
+      const items = resultat?.concours || [];
+
+      if (items.length === 0) {
+        await sendWhatsAppText(
+          normPh,
+          `Surga : Aucun concours national ne correspond à "${parseResult.query}".\n\n` +
+          `Consultez la liste des 22 concours officiels sur : https://surga.nopalou.com`
+        );
+        return true;
+      }
+
+      const premier = items[0];
+      const dateClotureFr = premier.date_cloture
+        ? new Date(premier.date_cloture).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+        : 'À déterminer';
+      const montantFrais = premier.frais_dossier_xof
+        ? formaterFCFA(premier.frais_dossier_xof)
+        : 'Gratuit';
+
+      const msgConcours =
+        `Surga : Fiche officielle du concours :\n\n` +
+        `• Titre : ${premier.titre}\n` +
+        `• Organisme : ${premier.organisme}\n` +
+        `• Niveau requis : ${premier.niveau_requis || 'Non spécifié'}\n` +
+        `• Statut : ${premier.statut === 'ouvert' ? 'Ouvert' : 'Fermé'} (Clôture le ${dateClotureFr})\n` +
+        `• Quittance Trésor : ${montantFrais}\n` +
+        (premier.lien_officiel ? `• Source : ${premier.lien_officiel}\n\n` : `\n`) +
+        `Retrouvez le dossier complet, les pièces requises et les alertes J-30/J-7 sur votre PWA : https://surga.nopalou.com`;
+
+      await sendWhatsAppText(normPh, msgConcours);
+      return true;
+    } catch (err) {
+      console.warn('[SURGA WHATSAPP CONCOURS ERR]:', err.message);
+      await sendWhatsAppText(
+        normPh,
+        `Surga : Impossible de récupérer les détails du concours pour le moment. Consultez votre application : https://surga.nopalou.com`
+      );
+      return true;
+    }
+  }
+
+  // ── 3.4 Consultation Trafic Routier Live ────────────────────────────────────
+  if (parseResult.intention === 'CHECK_TRAFFIC') {
+    try {
+      const { genererSyntheseBriefingTrafic, AXES_ROUTIERS_DAKAR } = require('./trafic-service');
+      const synthese = await genererSyntheseBriefingTrafic();
+      let detailAxe = '';
+
+      if (parseResult.axe && parseResult.axe !== 'global') {
+        const axeTrouve = AXES_ROUTIERS_DAKAR.find((a) =>
+          a.id.toLowerCase().includes(parseResult.axe) || a.nom.toLowerCase().includes(parseResult.axe)
+        );
+        if (axeTrouve) {
+          detailAxe = `\n\nAxe ciblé (${axeTrouve.nom}) : Temps habituel ~${axeTrouve.tempsHabituelMin} min (${axeTrouve.distanceKm} km).`;
+        }
+      }
+
+      await sendWhatsAppText(
+        normPh,
+        `Surga : Point Trafic Dakar en direct :\n\n` +
+        `${synthese}${detailAxe}\n\n` +
+        `Consultez la carte des ralentissements en direct : https://surga.nopalou.com`
+      );
+      return true;
+    } catch (err) {
+      console.warn('[SURGA WHATSAPP TRAFIC ERR]:', err.message);
+      await sendWhatsAppText(normPh, `Surga : Service trafic momentanément indisponible. Consultez https://surga.nopalou.com`);
+      return true;
+    }
+  }
+
+  // ── 3.5 Démarches Administratives Citoyennes ─────────────────────────────────
+  if (parseResult.intention === 'SEARCH_DEMARCHES') {
+    try {
+      const { rechercherDemarches } = require('./demarches-service');
+      const demarches = await rechercherDemarches(parseResult.query);
+
+      if (!demarches || demarches.length === 0) {
+        await sendWhatsAppText(
+          normPh,
+          `Surga : Aucune démarche trouvée pour "${parseResult.query}".\n\n` +
+          `Consultez le guide des démarches officielles : https://surga.nopalou.com`
+        );
+        return true;
+      }
+
+      const d = demarches[0];
+      const coutStr = d.cout_xof ? formaterFCFA(d.cout_xof) : 'Gratuit';
+      const piecesList = Array.isArray(d.pieces) && d.pieces.length > 0
+        ? d.pieces.slice(0, 3).map((p) => `  - ${typeof p === 'string' ? p : p.intitule}`).join('\n')
+        : '  - Consulter les pièces sur le portail';
+
+      await sendWhatsAppText(
+        normPh,
+        `Surga : Démarche administrative officielle :\n\n` +
+        `• Titre : ${d.titre}\n` +
+        `• Coût / Timbre : ${coutStr}\n` +
+        `• Principales pièces :\n${piecesList}\n\n` +
+        `Consultez la procédure complète : https://surga.nopalou.com`
+      );
+      return true;
+    } catch (err) {
+      console.warn('[SURGA WHATSAPP DEMARCHE ERR]:', err.message);
+      await sendWhatsAppText(normPh, `Surga : Consultez votre guide des démarches : https://surga.nopalou.com`);
+      return true;
+    }
   }
 
   // ── 4. Chaîne de confirmation préalable obligatoire pour les écritures ──────

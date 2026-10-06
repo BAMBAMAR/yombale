@@ -429,3 +429,85 @@ describe('PHASE 3 — IA Hybride (Fast-Path L0 + Fallback LLM L1) & Synthèse de
     }
   });
 });
+
+describe('PHASE 4 — Distinction Vocale Sémantique & Services Locaux (Concours, Trafic, Démarches, Radio)', () => {
+  const { interpreterCommandeVocale } = require('../../backend/services/surga/voice-interpreter');
+  const { interpreterCommandeHybride } = require('../../backend/services/surga/ai-interpreter');
+  const { parserIntentionWhatsApp, traiterMessageWhatsAppSurga } = require('../../backend/services/surga/whatsapp-handler');
+
+  beforeEach(() => {
+    mockQuery.mockReset();
+  });
+
+  test('1. Détection de recherche concours à la voix : "cherche concours douanes"', async () => {
+    const l0 = interpreterCommandeVocale('cherche concours douanes');
+    expect(l0.intention).toBe('SEARCH_CONCOURS');
+    expect(l0.concoursData).toBeDefined();
+    expect(l0.concoursData.query.toLowerCase()).toContain('douane');
+
+    const hybride = await interpreterCommandeHybride('cherche concours douanes');
+    expect(hybride.intention).toBe('SEARCH_CONCOURS');
+    expect(hybride.niveau).toBe('L0_FAST_PATH');
+    expect(hybride.donnees.query.toLowerCase()).toContain('douane');
+  });
+
+  test('2. Détection de concours par sigle direct : "concours police"', () => {
+    const l0 = interpreterCommandeVocale('concours police');
+    expect(l0.intention).toBe('SEARCH_CONCOURS');
+    expect(l0.concoursData.query.toLowerCase()).toContain('police');
+  });
+
+  test('3. Détection de trafic live : "quel est le trafic sur la vdn"', () => {
+    const l0 = interpreterCommandeVocale('quel est le trafic sur la vdn');
+    expect(l0.intention).toBe('CHECK_TRAFFIC');
+    expect(l0.traficData.axe).toBe('vdn');
+  });
+
+  test('4. Détection de démarche citoyenne : "comment faire mon passeport"', () => {
+    const l0 = interpreterCommandeVocale('comment faire mon passeport');
+    expect(l0.intention).toBe('SEARCH_DEMARCHES');
+    expect(l0.demarcheData.query.toLowerCase()).toContain('passeport');
+  });
+
+  test('5. Détection de streaming radio : "mets rfm" et "arrête la radio"', () => {
+    const play = interpreterCommandeVocale('mets rfm');
+    expect(play.intention).toBe('PLAY_RADIO');
+    expect(play.radioData.action).toBe('PLAY');
+    expect(play.radioData.station).toBe('rfm');
+
+    const stop = interpreterCommandeVocale('arrête la radio');
+    expect(stop.intention).toBe('PLAY_RADIO');
+    expect(stop.radioData.action).toBe('STOP');
+  });
+
+  test('6. Priorité sémantique stricte : Date/heure prime sur le mot "note" pour devenir un rappel', () => {
+    // "note réunion demain à 10h" contient "note" MAIS a un ancrage temporel précis -> ADD_REMINDER
+    const l0 = interpreterCommandeVocale('note réunion demain à 10h');
+    expect(l0.intention).toBe('ADD_REMINDER');
+    expect(l0.rappelData.heure).toBe('10:00');
+    expect(l0.rappelData.titre).toContain('réunion');
+  });
+
+  test('7. Parsing WhatsApp : Reconnaissance de la commande "cherche concours douanes"', () => {
+    const parse = parserIntentionWhatsApp('cherche concours douanes');
+    expect(parse.intention).toBe('SEARCH_CONCOURS');
+    expect(parse.query.toLowerCase()).toContain('douane');
+  });
+
+  test('8. WhatsApp Handler : Réponse structurée pour "cherche concours douanes"', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] }); // abonnement
+    mockQuery.mockResolvedValueOnce({ rows: [{ nb_commandes: 1, quota_max_gratuit: 10 }] }); // quota
+
+    const traite = await traiterMessageWhatsAppSurga('+221770003344', 'cherche concours douanes');
+    expect(traite).toBe(true);
+  });
+
+  test('9. WhatsApp Handler : Menu d’aide explicite sur les fonctions vocales et texte', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] }); // abonnement
+    mockQuery.mockResolvedValueOnce({ rows: [{ nb_commandes: 1, quota_max_gratuit: 10 }] }); // quota
+
+    const traite = await traiterMessageWhatsAppSurga('+221770003344', 'aide');
+    expect(traite).toBe(true);
+  });
+});
+
