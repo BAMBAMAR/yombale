@@ -365,6 +365,30 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Rectification déterministe du quota WhatsApp à 2 requêtes gratuites/jour (`CORR-P1-06`) dans `AdminConfigTab.tsx` et `AdminComptesTab.tsx`.
 - [x] `DONE` Validation & Zéro Régression : 105/105 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 
+### Tranche 18 (Extension Emploi) — Profil Professionnel, CV PDF & Lettres de Motivation (Modèle Mixte & Anti-Hallucination)
+- [ ] `PROPOSED` Schéma SQL (`surga_profil_pro`, `surga_documents_emploi`, `surga_usages`) avec index et contraintes Anti-IDOR.
+- [ ] `PROPOSED` Service des droits & quotas (`surga-usages-service.js`) : application stricte côté serveur des règles gratuites (1 CV sobre avec mention discrète, 1 lettre/mois) et déblocage Premium ou à l'acte (500 FCFA pour un CV sans mention, couvrant le document et ses retouches).
+- [ ] `PROPOSED` Moteur de génération PDF via `pdfkit` (stream direct, format A4, modèles `sobre_moderne` et `classique_pro`, sans photo par défaut, langue française exclusive au lancement).
+- [ ] `PROPOSED` Règle stricte Zéro-Hallucination : structuration exclusive des données réelles de l'utilisateur sans aucune invention de diplôme, date ni employeur.
+- [ ] `PROPOSED` Case à cocher obligatoire : « J'ai relu et je confirme l'exactitude » avant téléchargement.
+- [ ] `PROPOSED` Générateur de lettres de motivation : adaptation formelle et vouvoiement strict (D19) au texte de l'offre d'emploi collée.
+- [ ] `PROPOSED` Routes REST sécurisées sous `/api/surga/emploi` (`/profil`, `/documents/cv`, `/documents/lettre`, `/documents/:id/pdf`).
+- [ ] `PROPOSED` Interface PWA modulaire (< 450 l.) sous `SurgaEmploiModal.tsx` avec formulaires guidés et prévisualisation.
+- [ ] `PROPOSED` Conformité RGPD intégrale : export et purge de `surga_profil_pro` et `surga_documents_emploi` dans `donnees-service.js`.
+
+### Tranche 19 (Extension Emploi) — Préparation à l'Entretien d'Embauche (Simulateur In-App & Fiches de Révision)
+- [ ] `PROPOSED` Banque de questions types sectorielles gratuites (sans IA, coût nul).
+- [ ] `PROPOSED` Simulateur d'entretien in-app (questions-réponses clavier ou voix Web Speech, 1 simulation gratuite/semaine, illimité Premium).
+- [ ] `PROPOSED` Retour structuré sans promesse trompeuse (clarté, structure, points forts, axes de progression).
+- [ ] `PROPOSED` Passerelles vers l'Agenda (date d'entretien et rappel veille) et Notes (fiche de révision).
+
+### Tranche 20 (Extension Démarches) — Démarches Administratives Sénégalaises Vérifiées (Fiches Éditoriales Officielles)
+- [ ] `PROPOSED` Condition de démarrage : Aucun responsable éditorial n'étant désigné, livraison « techniquement terminée, contenu en attente » avec fiches de test marquées `BROUILLON` (zéro publication réelle sans éditeur).
+- [ ] `PROPOSED` Schéma SQL (`surga_demarches`, `surga_demarches_signalements`) et cycle de re-vérification fixé à 90 jours.
+- [ ] `PROPOSED` Moteur de consultation et recherche sans improvisation d'IA : affichage de la date de vérification, coûts exacts FCFA, pièces requises et lieux.
+- [ ] `PROPOSED` Passerelles vers Notes (checklist interactive des pièces), Sama Xaalis (frais de timbre/quittances) et Agenda (échéances).
+- [ ] `PROPOSED` Administration dédiée sous `/admin/surga` : création, re-vérification périodique (90 jours) et modération des signalements.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

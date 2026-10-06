@@ -33,6 +33,17 @@ consulte ce fichier avant de remettre en question un point.
 | D21 | Console d'administration dynamique `/admin/surga` : tout le contenu Surga (bonnes adresses, concours, unes de presse, trafic, abonnements) est administrable dynamiquement avec audit trail et RBAC admin. | Évite tout codage en dur et donne le plein contrôle opérationnel aux administrateurs |
 | D22 | Détachement total de l'interface Surga vis-à-vis de Nopalou et support sous-domaine `surga.nopalou.com` : Surga fonctionne comme une application autonome à part entière, sans header, footer, panier ou chat marketplace Nopalou (isolation SSR et CSS). | Expérience utilisateur pure, épurée, dédiée à l'assistant de poche sans distraction e-commerce |
 
+## Décisions de l'Extension — Alertes Vidéos, Emploi, Démarches (enregistrées le 2026-10-06)
+| # | Décision | Raison |
+|---|---|---|
+| D23 | Le CV, les lettres et l'entretien forment une seule brique unifiée « Emploi » partageant un profil professionnel centralisé (`surga_profil_pro`). | Cohérence du parcours candidat, zéro ressaisie, interopérabilité naturelle |
+| D24 | Préparation à l'entretien et génération de CV : exclusivité dans l'app PWA, jamais en conversation WhatsApp. | Conformité stricte à la politique Meta sur l'API WhatsApp Business et respect de l'ergonomie documentaire |
+| D25 | Démarches administratives : fiches éditoriales vérifiées avec source officielle et date, sans aucune improvisation ou réponse générative hallucinée. | Éviter tout coût réel ou démarche erronée pour l'usager sénégalais (frais de timbre, pièces, tribunaux) |
+| D26 | Alertes vidéos séries et lutte : ingestion Atom/RSS YouTube, métadonnées et liens directs sortants uniquement, aucun hébergement vidéo interne. | Économie de bande passante, respect de la propriété intellectuelle des producteurs sénégalais, Low-Data |
+| D27 | Modèle de droits unifié (gratuit, achat à l'acte et Premium) avec contrôle serveur strict via `surga_usages` et source unique de vérité dans l'onglet Plans. Option A retenue : le CV sans mention s'achète à l'unité pour 500 FCFA, en plus du Premium. | Fin de l'incohérence de quotas, protection absolue des coûts d'infrastructure et d'IA, conversion sans blocage silencieux |
+| D28 | CV et lettres de motivation rédigés en français uniquement au lancement. | L'anglais est hors périmètre pour le lancement sénégalais et constitue une évolution future |
+| D29 | Aucune fiche réelle de démarche administrative n'est publiée tant qu'un responsable éditorial n'est pas formellement désigné. La Tranche 20 est livrée « techniquement terminée, contenu en attente » avec des fiches de test marquées `BROUILLON`. | Empêcher toute diffusion de consignes administratives ou coûts erronés préjudiciables aux usagers |
+
 ## Points ouverts (à trancher en Phase 0, puis à déplacer ci-dessus)
 | # | Point | Comment le trancher |
 |---|---|---|
