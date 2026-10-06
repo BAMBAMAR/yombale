@@ -3,6 +3,25 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 9 suite - 3] — Éradication Définitive des Troncatures d'Actualités (« Lir » & Mots Coupés)
+- **Objectif Atteint :**
+  - Régler définitivement les troncatures visibles sur les cartes d'actualités mobiles : débordement du bouton « Lire » coupé en « Lir », et mots hachés dans les résumés (« qu'u... », « Agen... »).
+  - Réduire l'empreinte horizontale des actions de 245px à 108px en utilisant 3 boutons iconographiques précis 32×32px.
+  - Couper proprement les résumés aux frontières de mots complets dans `rss-collector.js` (limite <= 180 car.) et assainir les résumés existants dans `SurgaNewsList.tsx`.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composant Actualités (`frontend-next/src/app/surga/components/SurgaNewsList.tsx`, 252 l.)* :
+     - Remplacement des 5 boutons/textes encombrants par 3 boutons 32×32px (`Bookmark`, `SurgaShareButton sansCopier`, `ExternalLink`).
+     - Ajout de `assainirResume` supprimant toute coupure en plein mot.
+  2. *Bouton de Partage (`frontend-next/src/app/surga/components/SurgaShareButton.tsx`, 114 l.)* :
+     - Ajout de la prop `sansCopier` pour éliminer le second bouton redondant sur petit écran.
+     - Tokens CSS migrés vers `--surga-*`.
+  3. *Collecteur RSS Backend (`backend/services/surga/rss-collector.js`)* :
+     - `nettoyerResume` calibré avec recherche du dernier espace (`lastIndexOf(' ')`) et respect strict du plafond de 180 caractères.
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS (100%).
+  - Linter Anti-AI-Slop : 100% fichiers < 450 l.
+
 ### [2026-10-06 — Nuit 9 suite - 2] — Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique
 - **Objectif Atteint :**
   - Simplifier le titre de la section sportive : adoption de « Sports » en remplacement de « Sport & Équipe Nationale » pour éliminer tout retour à la ligne sur mobile.

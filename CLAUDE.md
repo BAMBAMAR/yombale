@@ -49,6 +49,13 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Éradication Définitive des Troncatures Mobiles sur les Actualités (Session 2026-10-06 - Nuit 9 suite - 3, branche `feature/surga`)** :
+  - *Sprint de Calibrage Strict des Boutons & Textes d'Articles* :
+    1. **Suppression du Débordement « Lir » (`SurgaNewsList.tsx`, `SurgaShareButton.tsx`)** : Remplacement des boutons encombrants avec libellés longs texte (`[En Note]`, `[Partager]`, `[Copier]`, `[Lire]`) qui dépassaient la largeur utile du mobile (300px) par 3 boutons iconographiques précis 32×32px (`Bookmark`, `Share2`, `ExternalLink`). Empreinte totale des boutons réduite de 245px à 108px, garantissant 192px d'espace libre pour la source et la date sans aucun débordement ni troncature.
+    2. **Suppression du Double Bouton Copier Redondant** : Ajout du mode `sansCopier` dans `SurgaShareButton.tsx` (le partage natif intègre déjà la copie presse-papier en repli transparent).
+    3. **Éradication des Troncatures Mi-Mots (`qu'u...`, `Agen...`)** : Réécriture de `nettoyerResume` dans `rss-collector.js` et fonction `assainirResume` dans `SurgaNewsList.tsx`. Les résumés sont désormais découpés proprement aux frontières des espaces et de la ponctuation, sans jamais tronquer un mot en plein milieu.
+    4. **Tests & Validation** : 158/158 tests Jest PASS, `tsc --noEmit` 0 erreur, tous les fichiers < 450 lignes.
+
 - **Surga / Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique (Session 2026-10-06 - Nuit 9 suite, branche `feature/surga`)** :
   - *Sprint de Raffinement Spécifique Sports & Clarté Mobile* :
     1. **Titre Dédié Monoligne (`SurgaSportCard.tsx`)** : Remplacement de l'intitulé encombrant `Sport & Équipe Nationale` (qui sautait sur 2 lignes) par `Sports` seulement, monoligne, fluide et parfaitement calibré à côté de l'icône Trophée.

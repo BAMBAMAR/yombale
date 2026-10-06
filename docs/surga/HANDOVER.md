@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 suite - 2 — Écran Sports : Titre Monoligne, Priorité Équipes Favorites & Limitation Ergonomique)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 suite - 3 — Éradication Définitive des Troncatures d'Actualités)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Écran Sports Raffiné — Titre « Sports » monoligne, Priorité absolue aux équipes favorites du compte (badge Favori), Limitation à 3 matchs avec bouton d'extension, Sous-composant `SurgaSportMatchItem.tsx` extrait (< 450 l.) — Build & 158 Tests Unitaires Validés (Zéro Régression)**  
+> **Statut global** : 🟢 **Troncatures Mobiles Éradiquées — Actions d'articles condensées en 3 boutons 32x32px (fin du débordement « Lir »), Résumés propres sans mots hachés (`rss-collector.js`, `assainirResume`), 100% Composants < 450 l. — Build & 158 Tests Unitaires Validés (Zéro Régression)**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
@@ -11,7 +11,12 @@
 
 L'assistant personnel de poche **Surga** a fait l'objet d'un sprint ciblé d'optimisation ergonomique mobile-first, résolvant l'ensemble des défauts d'affichage et de navigation identifiés sur écrans réels (360px - 390px) suite aux retours utilisateurs :
 
-0. **Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique (100% DONE — Nuit 9 suite - 2)** :
+0. **Éradication Définitive des Troncatures d'Actualités (« Lir » & Mots Coupés) (100% DONE — Nuit 9 suite - 3)** :
+   - **Éradication du Débordement « Lir » (`SurgaNewsList.tsx`, 252 l.)** : Les 5 éléments étalés en pied de carte d'article ont été convertis en 3 boutons d'actions iconographiques nets 32×32px (`Bookmark`, `Share2`, `ExternalLink`). Empreinte des actions réduite de 245px à 108px, garantissant 192px pour les sources et la date, sans aucun débordement sur petit écran.
+   - **Mode `sansCopier` (`SurgaShareButton.tsx`, 114 l.)** : Neutralisation du bouton de copie séparé superflu en espace restreint (le partage natif intègre déjà la copie presse-papier automatique en fallback).
+   - **Fin des Mots Coupés en Plein Vol (`rss-collector.js`, `SurgaNewsList.tsx`)** : Calibrage de `nettoyerResume` avec coupure intelligente aux frontières de mots complets (`lastIndexOf(' ')`) et fonction de nettoyage `assainirResume` sur les brèves existantes (élimination des `qu'u...`, `Agen...`).
+
+0.bis. **Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique (100% DONE — Nuit 9 suite - 2)** :
    - **Titre Monoligne « Sports » (`SurgaSportCard.tsx`, 409 l.)** : Suppression de l'intitulé à rallonge « Sport & Équipe Nationale » pour un titre épuré et net qui ne saute jamais de ligne sur petit écran.
    - **Priorisation Absolue des Équipes Favorites** : Matchs impliquant les clubs suivis par l'utilisateur placés en tête absolue du flux (`trierMatchsParPriorite`), rehaussés par le badge `<Star size={10} fill="currentColor" /> Favori`.
    - **Limitation Ergonomique à 3 Rencontres** : Hauteur sous contrôle sur mobile avec bouton tactile « Voir plus de rencontres (+X) » / « Afficher moins de matchs ».

@@ -185,7 +185,13 @@ function nettoyerResume(htmlOuTexte) {
     .trim();
 
   if (propre.length <= 180) return propre;
-  return propre.slice(0, 177).trim() + '...';
+  const MAX_LEN = 177;
+  const tranche = propre.slice(0, MAX_LEN);
+  const dernierEspace = tranche.lastIndexOf(' ');
+  if (dernierEspace > 80) {
+    return tranche.slice(0, dernierEspace).replace(/[,;:\s.]+$/, '') + '...';
+  }
+  return tranche.trim() + '...';
 }
 
 // Mémoïsation pour éviter de multiplier les requêtes de synchronisation sur la base

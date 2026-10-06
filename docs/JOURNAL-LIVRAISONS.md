@@ -1,4 +1,29 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Éradication Définitive des Troncatures Mobiles sur les Actualités (Session 2026-10-06 - Nuit 9 suite - 3, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Traitement immédiat des deux défauts de troncature signalés par capture d'écran sur les cartes d'actualités :
+      1. Débordement du bouton « Lire » tronqué en « Lir » en bordure droite de la carte.
+      2. Mots hachés en plein milieu dans les résumés textuels (« qu'u... », « Agen... »).
+    - Refonte ergonomique du pied de carte des articles : passage d'un alignement de 5 contrôles avec textes à 3 boutons iconographiques compacts 32×32px.
+    - Éradication des coupures de mots en plein vol dans le backend (`nettoyerResume`) et dans le frontend (`assainirResume`).
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Actions Rapides Calibrées Mobile (`SurgaNewsList.tsx`, 252 l.)** :
+       - Réduction drastique de l'empreinte horizontale des actions de 245px à 108px en utilisant 3 boutons 32×32px :
+         * Bouton 1 : Épingler dans les Notes (`Bookmark`, avec état actif ambre doux si déjà épinglé).
+         * Bouton 2 : Partage universel (`Share2`, WhatsApp / Web Share natif).
+         * Bouton 3 : Lien direct vers la source (`ExternalLink`).
+       - Les métadonnées à gauche (`Leral.net • Il y a 1 min`) bénéficient de 192px d'espace disponible sur un écran standard 360px, garantissant **zéro débordement, zéro troncature « Lir »**.
+    2. **Suppression du Double Bouton Copier Redondant (`SurgaShareButton.tsx`, 114 l.)** :
+       - Introduction de la prop `sansCopier={true}` pour éviter l'injection d'un second bouton de copie superflu lorsque la largeur est contrainte.
+       - Modernisation des tokens CSS vers `--surga-*`.
+    3. **Résumés Textuels Propres sans Mots Coupés (`rss-collector.js`, `SurgaNewsList.tsx`)** :
+       - Dans `backend/services/surga/rss-collector.js` : `nettoyerResume` coupe désormais à la frontière du dernier mot complet (`lastIndexOf(' ')`) avec respect strict de la limite <= 180 caractères.
+       - Dans `frontend-next/src/app/surga/components/SurgaNewsList.tsx` : `assainirResume` nettoie à la volée tout résidu d'ancien article dont le dernier mot aurait été coupé avant `...`.
+  * **Validation Technique & Scores** :
+    - TypeScript : `npx tsc --noEmit` 0 erreur.
+    - Tests Unitaires Jest : **158/158 tests PASS (100%)**.
+    - Règle 450 lignes : 100% conforme.
+
 - **Surga / Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique (Session 2026-10-06 - Nuit 9 suite, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Épuration du titre de la carte sportive : passage de l'encombrant « Sport & Équipe Nationale » à « Sports » seulement, monoligne sans troncature.

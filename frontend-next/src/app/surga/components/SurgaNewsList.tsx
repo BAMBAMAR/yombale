@@ -35,6 +35,16 @@ function formatRelativeTime(dateStr?: string): string {
   }
 }
 
+function assainirResume(resume?: string): string {
+  if (!resume) return ''
+  const trimmed = resume.trim()
+  // Si le résumé se termine par un mot tronqué de 1 à 4 lettres avant '...', reculer au mot complet
+  if (/\b[a-zA-ZÀ-ÿ']{1,4}\.\.\.$/.test(trimmed)) {
+    return trimmed.replace(/\s+[a-zA-ZÀ-ÿ']{1,4}\.\.\.$/, '...')
+  }
+  return trimmed
+}
+
 export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps) {
   const [articlesEnNote, setArticlesEnNote] = useState<string[]>([])
 
@@ -85,16 +95,17 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
           {/* Résumé court sourcé (Règle d'or Low-Data) */}
           {item.resume && item.resume !== item.titre && (
             <p style={{ fontSize: 13, color: 'var(--surga-text2, #475569)', margin: 0, lineHeight: 1.4 }}>
-              {item.resume}
+              {assainirResume(item.resume)}
             </p>
           )}
 
-          {/* Ligne 2 : Métadonnées et actions rapides */}
+          {/* Ligne 2 : Métadonnées et actions rapides calibrées mobile (Zéro débordement) */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: 8,
               marginTop: 4,
               paddingTop: 8,
               borderTop: '1px solid var(--surga-border, #E2E8F0)',
@@ -102,12 +113,36 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
               color: 'var(--surga-text3, #94A3B8)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, whiteSpace: 'nowrap' }}>
-              <span style={{ fontWeight: 700, color: 'var(--surga-primary, #0F172A)' }}>{item.source_nom}</span>
+            {/* Source & Date (monoligne sécurisé) */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                minWidth: 0,
+                flex: '1 1 auto',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: 'var(--surga-primary, #0F172A)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {item.source_nom}
+              </span>
               <span>•</span>
-              <span style={{ whiteSpace: 'nowrap' }}>{formatRelativeTime(item.published_at)}</span>
+              <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {formatRelativeTime(item.published_at)}
+              </span>
             </div>
 
+            {/* 3 Actions rapides ergonomiques 32x32px (Zéro troncature, aucun débordement) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               {(() => {
                 const itemKey = item.url || item.titre
@@ -124,28 +159,31 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 4,
-                      padding: '6px 10px',
+                      justifyContent: 'center',
+                      width: 32,
+                      height: 32,
                       borderRadius: 8,
                       border: '1px solid',
-                      borderColor: estEnNote ? 'var(--surga-primary, #0F172A)' : 'var(--surga-border, #E2E8F0)',
-                      backgroundColor: estEnNote ? 'rgba(15, 23, 42, 0.08)' : 'var(--surga-surface, #FFFFFF)',
-                      color: 'var(--surga-primary, #0F172A)',
-                      fontSize: 12,
-                      fontWeight: estEnNote ? 700 : 600,
+                      borderColor: estEnNote ? 'var(--surga-accent, #D97706)' : 'var(--surga-border, #E2E8F0)',
+                      backgroundColor: estEnNote ? 'rgba(217, 119, 6, 0.12)' : 'var(--surga-surface, #FFFFFF)',
+                      color: estEnNote ? 'var(--surga-accent, #D97706)' : 'var(--surga-primary, #0F172A)',
                       cursor: 'pointer',
-                      minHeight: 34,
+                      padding: 0,
                       transition: 'all 0.15s ease',
                     }}
-                    title={estEnNote ? "Brève présente dans vos Notes — Cliquer pour retirer" : "Épingler cette brève dans mes Notes"}
+                    title={estEnNote ? "Brève enregistrée dans vos Notes — Cliquer pour retirer" : "Épingler cette brève dans vos Notes"}
+                    aria-label="Épingler en note"
                   >
-                    <Bookmark size={12} color="var(--surga-primary, #0F172A)" />
-                    <span>{estEnNote ? 'Épinglé ✓' : 'En Note'}</span>
+                    <Bookmark
+                      size={14}
+                      fill={estEnNote ? 'currentColor' : 'none'}
+                      color={estEnNote ? 'var(--surga-accent, #D97706)' : undefined}
+                    />
                   </button>
                 )
               })()}
 
-              {/* Partage Web Share / WhatsApp */}
+              {/* Partage Web Share / WhatsApp sans bouton de copie redondant */}
               <SurgaShareButton
                 payload={{
                   titre: `Surga : ${item.titre}`,
@@ -157,30 +195,32 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
                   }),
                   url: item.url,
                 }}
-                libelle="Partager"
+                sansCopier
                 taille="sm"
               />
 
-              {/* Lien vers l'original */}
+              {/* Lien direct vers la source */}
               <a
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                title={`Lire l'article complet sur ${item.source_nom}`}
+                aria-label="Lire l'article complet"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  border: '1px solid var(--surga-border, #E2E8F0)',
+                  backgroundColor: 'var(--surga-surface, #FFFFFF)',
                   color: 'var(--surga-accent, #D97706)',
-                  fontWeight: 700,
                   textDecoration: 'none',
-                  fontSize: 12,
-                  padding: '6px 8px',
-                  borderRadius: 6,
-                  minHeight: 34,
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <span>Lire</span>
-                <ExternalLink size={12} />
+                <ExternalLink size={14} />
               </a>
             </div>
           </div>
