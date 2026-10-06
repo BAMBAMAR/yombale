@@ -350,6 +350,21 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Intégration en-tête `SurgaHeader.tsx` : affichage du symbole officiel squircle 34×34px avec bord arrondi 8px.
 - [x] `DONE` Validation in-app en conditions réelles sur serveur Next.js en affichage mobile et desktop, `tsc --noEmit` 0 erreur, linter Anti-AI-Slop 100% au vert.
 
+### Tranche 17 (Extension Vidéos) — Séries TV & Lutte Sénégalaise (Alertes Vidéos, Flux Atom & Quota 2/jour) (06 Octobre 2026 - Matin 2)
+- [x] `DONE` Audit préalable de `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md` (section 2) en lecture seule, validation et raccordement.
+- [x] `DONE` Ingestion officielle des flux Atom YouTube sans API payante via `cheerio` (mode XML).
+- [x] `DONE` Catalogue initial équilibré (Marodi TV, EvenProd, Leuz Média, Lutte TV, Albourakh Events, Gaston Productions).
+- [x] `DONE` Schéma SQL (`surga_video_sources`, `surga_video_items`, `surga_video_abonnements`), contrainte d'unicité `UNIQUE(url)` et dédoublonnage strict.
+- [x] `DONE` Intégration du cycle cron périodique de 30 minutes sans nouveau processus (`backend/services/cron-surga-rss.js`).
+- [x] `DONE` Endpoints REST sécurisés client et administration (`backend/routes/surga/videos.js` et `backend/routes/admin-surga.js`).
+- [x] `DONE` Passerelles transversales Surga : rappels dans l'Agenda (`surga-cross-actions.ts`).
+- [x] `DONE` Conformité RGPD intégrale : export et purge de données (`donnees-service.js` et `SurgaDonneesModal.tsx`).
+- [x] `DONE` Interface PWA client modulaire : `SurgaVideosModal.tsx` (393 l.) avec extraction de `SurgaVideoCard.tsx` (96 l.) (< 450 l., zéro émoji).
+- [x] `DONE` Console d'administration : `AdminVideosTab.tsx` (375 l.) avec extraction de `AdminVideoSourceModal.tsx` (175 l.) raccordé sur `/admin/surga`.
+- [x] `DONE` Maintien strict de la page principale `surga/page.tsx` à 411 lignes (< 450 l.).
+- [x] `DONE` Rectification déterministe du quota WhatsApp à 2 requêtes gratuites/jour (`CORR-P1-06`) dans `AdminConfigTab.tsx` et `AdminComptesTab.tsx`.
+- [x] `DONE` Validation & Zéro Régression : 105/105 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
+
 ---
 
 ## Évolutions futures (hors plan actuel)

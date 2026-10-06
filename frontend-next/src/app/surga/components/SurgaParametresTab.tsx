@@ -27,6 +27,7 @@ interface SurgaParametresTabProps {
   onOpenImmo: () => void
   onOpenConcours: () => void
   onOpenPlaces?: () => void
+  onOpenVideos?: () => void
   onOpenPremium?: () => void
   onOpenPro?: () => void
   onOpenDonnees?: () => void
@@ -42,6 +43,7 @@ export default function SurgaParametresTab({
   onOpenImmo,
   onOpenConcours,
   onOpenPlaces,
+  onOpenVideos,
   onOpenPremium,
   onOpenPro,
   onOpenDonnees,
@@ -298,6 +300,34 @@ export default function SurgaParametresTab({
           style={{ fontSize: 11, padding: '5px 12px' }}
         >
           Explorer
+        </button>
+      </div>
+
+      {/* Séries TV & Lutte du Sénégal */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: 10,
+          borderTop: '1px solid var(--border, #E8DDD2)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            Séries TV &amp; Lutte Sénégalaise
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            Alertes sorties d épisodes et vidéos officielles Low-Data
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenVideos}
+          className="surga-btn-secondary"
+          style={{ fontSize: 11, padding: '5px 12px' }}
+        >
+          Consulter
         </button>
       </div>
 

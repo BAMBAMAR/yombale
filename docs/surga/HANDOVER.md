@@ -1,15 +1,25 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 1)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 2)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 28 : Logo Officiel Caftan S Orienté à Droite, Zéro Or, Orange Micro Calibré & Pack PWA, En-tête Cliquable & Navigation Retour, Résolution Incohérence Sama Xaalis, Raccordement Kiosque ProjetBI, Météo 14 Régions, Passerelles Transversales, Console Pro 11 Modules)**  
-> **Auteur** : Antigravity (Assistant AI Senior & Direction Artistique)
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 17 : Séries TV & Lutte Sénégalaise, Alertes Vidéos Atom YouTube, Quota WhatsApp 2 req/j, Logo Officiel Caftan S, Zéro Or, Orange Micro Calibré & Pack PWA, En-tête Cliquable & Navigation Retour, Résolution Incohérence Sama Xaalis, Raccordement Kiosque ProjetBI, Météo 14 Régions, Passerelles Transversales, Console Pro 12 Modules)**  
+> **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose désormais de son identité visuelle officielle et souveraine : le logo officiel représente un homme digne en caftan traditionnel stylisé en arabesque "S", la tête et les épaules harmonieusement synchronisées et orientées vers la droite dans une posture de travail protectrice, affiné en bleu marine nuit (`#0A1128`) sans aucune couleur or, avec un nœud de ceinturon orange micro `#EA8F09` parfaitement raccord avec le bouton d'action vocal (FAB) de l'UI.
+L'assistant personnel de poche **Surga** s'enrichit des alertes vidéos de sorties pour les Séries TV et la Lutte sénégalaise (Tranche 17), propulsé par l'ingestion officielle des flux Atom YouTube sans quota API payant, un dédoublonnage strict en base, un cycle cron périodique de 30 minutes sans nouveau processus, et une conformité architecturale totale (< 450 lignes par composant, zéro émoji, vouvoiement strict D19).
+
+0. **Séries TV & Lutte Sénégalaise (Alertes Vidéos, Cron Atom & Modularisation) (Tranche 17 — 100% DONE)** :
+   - **Ingestion Officielle Atom/RSS YouTube** : Décodage XML via `cheerio` des chaînes de production de fictions dakaroises (Marodi TV, EvenProd, Leuz Média) et des promoteurs d'arène de lutte (Lutte TV, Albourakh Events, Gaston Productions).
+   - **Dédoublonnage Strict & Base de Données** : Tables `surga_video_sources`, `surga_video_items` (contrainte d'unicité sur `url`) et `surga_video_abonnements` (unicité `(user_id, source_id)`).
+   - **Cron Périodique Mutualisé** : Synchronisation toutes les 30 minutes dans `backend/services/cron-surga-rss.js` sans créer de processus arrière-plan lourd.
+   - **Modularisation Stricte (< 450 lignes)** :
+     - Client : `SurgaVideosModal.tsx` (393 l.) avec extraction de `SurgaVideoCard.tsx` (96 l.) : Onglets Séries / Lutte / Suivis, recherche instantanée, liens sortants direct YouTube Low-Data et passerelle Agenda.
+     - Admin : `AdminVideosTab.tsx` (375 l.) avec extraction de `AdminVideoSourceModal.tsx` (175 l.) dans `/admin/surga` : CRUD dynamique des flux, bascule actif/inactif et bouton de synchronisation immédiate.
+   - **Rectification Quota WhatsApp Déterministe** : Alignement de l'administration et des comptes sur 2 requêtes gratuites/jour conformément à `CORR-P1-06`, fiabilisation de la requête SQL de jointure dans `backend/routes/admin-surga.js`.
+   - **Conformité RGPD Intégrale** : Prise en charge des abonnements vidéo dans l'export de données et la purge intégrale (`donnees-service.js` et `SurgaDonneesModal.tsx`).
 
 0. **Logo Officiel de Marque, Symbole S Caftan & Pack PWA HD (Tranche 28 — 100% DONE)** :
    - **Sculpture Anatomique Synchronisée** : Silhouette noble d'un homme en caftan d'action dont la tête et les épaules tournent de concert vers la droite, suivant naturellement le sens dynamique de la courbe supérieure du S.
@@ -119,30 +129,32 @@ L'assistant personnel de poche **Surga** dispose désormais de son identité vis
 ### Frontend Next.js (`frontend-next/`)
 | Rôle | Emplacement |
 |---|---|
-| Page principale Surga | `src/app/surga/page.tsx` (< 450 l.) |
+| Page principale Surga | `src/app/surga/page.tsx` (411 l. < 450 l.) |
 | Layout & Manifest PWA | `src/app/surga/layout.tsx`, `public/surga/manifest.json` |
 | Logo Officiel & Actifs PWA | `public/surga/surga-symbol.png`, `public/surga/icon-*.png`, `public/surga/icons/` |
 | Styles & Isolation CSS | `src/styles/surga.css` |
 | Routage & Sous-domaine | `src/middleware.ts`, `src/app/[slug]/route.ts`, `src/app/layout.tsx` |
-| Passerelles Transversales & Toasts | `src/lib/surga-cross-actions.ts` (315 l.), `src/app/surga/components/SurgaToastContainer.tsx` (65 l.) |
+| Passerelles Transversales & Toasts | `src/lib/surga-cross-actions.ts` (368 l.), `src/app/surga/components/SurgaToastContainer.tsx` (65 l.) |
 | Navigation & En-tête | `src/app/surga/components/SurgaHeader.tsx`, `SurgaBottomNav.tsx` |
 | Sama Xaalis (Finances) | `src/app/surga/components/SurgaSamaXaalisView.tsx`, `src/lib/surga-kalpe.ts` |
+| Alertes Vidéos (Séries & Lutte) | `src/app/surga/components/SurgaVideosModal.tsx` (393 l.), `SurgaVideoCard.tsx` (96 l.) |
 | Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (412 l.), `SurgaMeteoLocaliteModal.tsx` (382 l.), `SurgaMeteoPrevisions.tsx` (101 l.), `src/lib/surga-meteo.ts` (198 l.), `src/app/api/surga/meteo/route.ts` (166 l.) |
 | Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx`, `SurgaSportCustomModal.tsx` |
 | Revue de Presse & Kiosque | `src/app/surga/components/SurgaPresseCard.tsx` (carrousel horizontal) |
 | Bons plans & Adresses | `src/app/surga/components/SurgaPlaceCard.tsx` (354 l.), `SurgaPlaceDetailModal.tsx` (393 l.), `SurgaPlacesModal.tsx` (382 l.), `backend/data/surga-places-catalogue.json` (927 l., 42 adresses) |
 | Briques & Vues Surga | `src/app/surga/components/Surga*.tsx` (tous < 450 l.) |
-| Console d'Administration Pro | `src/app/admin/surga/page.tsx`, `AdminSurgaClient.tsx`, `AdminSurgaSidebar.tsx`, 11 sous-composants `Admin*Tab.tsx` (< 450 l.) |
+| Console d'Administration Pro | `src/app/admin/surga/page.tsx`, `AdminSurgaClient.tsx`, `AdminSurgaSidebar.tsx`, 12 sous-composants `Admin*Tab.tsx` dont `AdminVideosTab.tsx` (375 l.) et `AdminVideoSourceModal.tsx` (175 l.) |
 | Synchronisation & Hors-ligne | `src/lib/surga-offline-sync.ts`, `src/lib/surga-reminders.ts`, `src/lib/surga-voice.ts` |
 
 ### Backend Express (`backend/`)
 | Rôle | Emplacement |
 |---|---|
 | Routeur maître Surga | `routes/surga/index.js` (monté sur `/api/surga`) |
-| Sous-routeurs REST | `routes/surga/` (`briefing.js`, `preferences.js`, `notes.js`, `depenses.js`, `agenda.js`, `presse.js`, `kiosque.js`, `audio.js`, `podcast.js`, `radios.js`, `trafic.js`, `immo.js`, `concours.js`, `places.js`, `abonnements.js`, `donnees.js`, `meteo.js`) |
-| Routeur Administration Pro | `routes/admin-surga.js` (`/plans`, `/utilisateurs`, `/canaux`, `/abonnements`, etc.) |
-| Services Métier Surga | `services/surga/` (`abonnement-service.js`, `meteo-service.js`, `calculator.js`, `whatsapp-handler.js`, `trafic-service.js`, `immo-service.js`, `concours-service.js`, `places-service.js`, `donnees-service.js`) |
-| Migrations SQL Idempotentes | `migrate-inline.js` (tables `surga_*` créées automatiquement) |
+| Sous-routeurs REST | `routes/surga/` (`briefing.js`, `preferences.js`, `notes.js`, `depenses.js`, `agenda.js`, `presse.js`, `kiosque.js`, `audio.js`, `podcast.js`, `radios.js`, `trafic.js`, `immo.js`, `concours.js`, `places.js`, `abonnements.js`, `donnees.js`, `meteo.js`, `videos.js`) |
+| Routeur Administration Pro | `routes/admin-surga.js` (`/plans`, `/utilisateurs`, `/canaux`, `/abonnements`, `/videos/sources`, etc.) |
+| Services Métier Surga | `services/surga/` (`video-service.js`, `abonnement-service.js`, `meteo-service.js`, `calculator.js`, `whatsapp-handler.js`, `trafic-service.js`, `immo-service.js`, `concours-service.js`, `places-service.js`, `donnees-service.js`) |
+| Synchronisation Cron | `services/cron-surga-rss.js` (cycle 30 min Presse & Vidéos Atom) |
+| Migrations SQL Idempotentes | `migrate-inline.js` (tables `surga_*` dont `surga_video_sources`, `surga_video_items`, `surga_video_abonnements`) |
 
 ---
 
@@ -170,6 +182,7 @@ npm run dev
 - **API Briefing Backend** : [http://localhost:3000/api/surga/briefing](http://localhost:3000/api/surga/briefing)
 - **API Météo & Localités** : [http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau](http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau)
 - **API Bonnes Adresses & Bons Plans** : [http://localhost:3000/api/surga/places](http://localhost:3000/api/surga/places)
+- **API Alertes Vidéos (Séries & Lutte)** : [http://localhost:3000/api/surga/videos/sources](http://localhost:3000/api/surga/videos/sources)
 - **Simulation Sous-Domaine (`surga.localhost`)** : [http://surga.localhost:3001/](http://surga.localhost:3001/) *(si `127.0.0.1 surga.localhost` est renseigné dans `hosts`)*
 
 ---
@@ -178,10 +191,10 @@ npm run dev
 
 Toutes les suites de tests sont actuellement au vert à 100% :
 ```powershell
-# 1. Tests Jest Surga (Backend) : 99/99 passés (100%)
+# 1. Tests Jest Surga (Backend) : 105/105 passés (100%)
 npx jest tests/unit/surga.test.js
 
-# 2. Tests Unitaires Frontend / Vitest CSP : 100% passés
+# 2. Tests Unitaires Frontend / Vitest CSP : 97/97 passés (100%)
 cd frontend-next
 npm test
 

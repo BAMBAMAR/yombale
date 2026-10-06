@@ -49,6 +49,30 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Tranche 17 : Séries TV & Lutte Sénégalaise (Alertes Vidéos, Cron Atom YouTube, Modularisation & Alignement Quotas) (Session 2026-10-06 - Matin 2, branche `feature/surga`)** :
+  - *Extension Séries & Lutte* :
+    - Ingestion officielle des flux Atom YouTube sans API payante via `cheerio` (mode XML).
+    - Catalogue de référence complet et équilibré : Marodi TV, EvenProd, Leuz Média pour les séries ; Lutte TV, Albourakh Events, Gaston Productions pour l'arène de lutte.
+    - Dédoublonnage strict par URL unique (`surga_video_items`).
+    - Bascule d'abonnements réversible (toggle Anti-IDOR sur `surga_video_abonnements`).
+    - Passerelles transversales Surga : Ajout direct des sorties vidéo dans l'Agenda et programmation de rappels.
+    - Conformité RGPD intégrale : export et purge de données raccordés sur `donnees-service.js` et `SurgaDonneesModal.tsx`.
+    - Cycle Cron périodique : `backend/services/cron-surga-rss.js` synchronise automatiquement les flux toutes les 30 minutes sans nouveau processus d'arrière-plan.
+  - *Composants PWA & Administration* :
+    - `SurgaVideosModal.tsx` (393 l.) et extraction de `SurgaVideoCard.tsx` (96 l.) avec onglets Séries / Lutte / Suivis, recherche instantanée et liens sortants Low-Data.
+    - `AdminVideosTab.tsx` (375 l.) et extraction de `AdminVideoSourceModal.tsx` (175 l.) dans l'administration Surga (`/admin/surga`) avec gestion CRUD des flux et déclenchement manuel de synchronisation.
+    - Raccordement dans `SurgaParametresTab.tsx`, `SurgaModalsContainer.tsx` et `surga/page.tsx` (maintenu strictement à 411 lignes).
+  - *Alignement Quota WhatsApp & Corrections Backend* :
+    - Rectification déterministe de l'incohérence de quota : alignement sur 2 requêtes gratuites/jour sur WhatsApp (`CORR-P1-06`) dans `AdminConfigTab.tsx` et `AdminComptesTab.tsx`.
+    - Correction de la requête SQL dans `backend/routes/admin-surga.js` : calcul direct `COALESCE(q.nb_commandes, 0) + COALESCE(q.nb_vocaux, 0)` sur `q.phone = u.telephone`.
+  - *Tests & Validation* :
+    - Tests backend Jest : 105/105 tests validés (100% de réussite sur `tests/unit/surga.test.js`).
+    - Tests frontend Jest : 97/97 tests validés (100% de réussite sur `frontend-next`).
+    - Compilation TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme (`npm run lint:slop`).
+    - Tous les composants React < 450 lignes.
+
+
 - **Surga — Logo Officiel de Marque (Homme en Caftan S, Tête & Épaules à Droite, Zéro Or, Orange Micro Calibré & Pack PWA) (Session 2026-10-06 - Matin 1, branche `feature/surga`)** :
   - *Demandes & Spécifications Utilisateur* :
     - « attache comme ca et en position de travail » : Homme digne en caftan traditionnel stylisé en arabesque "S", posture active et protectrice.

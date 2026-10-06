@@ -3,6 +3,59 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 2] — Tranche 17 : Séries TV & Lutte Sénégalaise (Alertes Vidéos, Flux Atom YouTube, Modularisation & Alignement Quotas)
+- **Demande Utilisateur :**
+  - Mise en œuvre de la Tranche 17 (Alertes vidéos Séries et Lutte) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md` avec respect de l'audit préalable, zéro émoji, vouvoiement D19, composants < 450 lignes, et rectification du quota WhatsApp à 2 requêtes gratuites/jour.
+- **Tâches complétées :**
+  - **Schéma SQL & Migrations Idempotentes** :
+    - `backend/migrate-inline.js` : Ajout des tables `surga_video_sources`, `surga_video_items` (contrainte `UNIQUE(url)`), `surga_video_abonnements` (contrainte `UNIQUE(user_id, source_id)`) et de leurs index de performance.
+  - **Service Backend d'Ingestion & Dédoublonnage** :
+    - `backend/services/surga/video-service.js` : Catalogue initial de chaînes officielles sénégalaises (Marodi TV, EvenProd, Leuz Média pour les fictions ; Lutte TV, Albourakh Events, Gaston Productions pour le Lamb).
+    - Construction d'URL et parsing Atom YouTube sans clé API payante via `cheerio` en mode XML. Dédoublonnage strict par URL et repli mémoire transparent si DB indisponible.
+  - **Automatisation Cron Sans Processus Supplémentaire** :
+    - `backend/services/cron-surga-rss.js` : Intégration de `synchroniserTousLesFlux()` dans la boucle de 30 minutes déjà existante.
+  - **Routes REST Sécurisées Client & Admin** :
+    - `backend/routes/surga/videos.js` : Endpoints `GET /videos/sources`, `GET /videos/abonnements`, `POST /videos/abonnements/:sourceId/toggle`, `GET /videos/derniers`.
+    - `backend/routes/admin-surga.js` : Endpoints CRUD `/api/admin/surga/videos/sources` et déclencheur `/videos/sync`.
+  - **Conformité RGPD & Passerelles Transversales** :
+    - `backend/services/surga/donnees-service.js` & `SurgaDonneesModal.tsx` : Prise en charge des abonnements vidéo dans l'export et la purge complète.
+    - `frontend-next/src/lib/surga-cross-actions.ts` : Ajout de `ajouterRappelVideo`, `supprimerRappelVideo`, `toggleRappelVideo`, `estVideoRappelee`.
+  - **Composants PWA Client & Administration (Modularisation < 450 l.)** :
+    - `SurgaVideosModal.tsx` (393 l.) avec extraction de `SurgaVideoCard.tsx` (96 l.) : Onglets thématiques, recherche instantanée, passerelle Agenda, liens sortants Low-Data.
+    - `AdminVideosTab.tsx` (375 l.) avec extraction de `AdminVideoSourceModal.tsx` (175 l.) : Administration dynamique des chaînes et synchronisation manuelle.
+    - Raccordement dans `SurgaParametresTab.tsx`, `SurgaModalsContainer.tsx` et `surga/page.tsx` (411 l.).
+  - **Alignement Quota WhatsApp Déterministe** :
+    - Remplacement de l'ancien chiffre 3 par 2 requêtes/jour (`CORR-P1-06`) dans `AdminConfigTab.tsx` et `AdminComptesTab.tsx`.
+    - Correction de la requête SQL dans `backend/routes/admin-surga.js` avec jointure robuste sur les quotas journaliers.
+  - **Validation & Qualité** :
+    - Backend : 105/105 tests unitaires Jest validés (`tests/unit/surga.test.js`).
+    - Frontend : 97/97 tests unitaires Jest validés (`npm test`).
+    - Typage : 0 erreur TypeScript (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme (`npm run lint:slop`).
+- **Fichiers modifiés :**
+  - `backend/migrate-inline.js`
+  - `backend/services/surga/video-service.js` (nouveau)
+  - `backend/routes/surga/videos.js` (nouveau)
+  - `backend/routes/surga/index.js`
+  - `backend/routes/admin-surga.js`
+  - `backend/services/cron-surga-rss.js`
+  - `backend/services/surga/donnees-service.js`
+  - `frontend-next/src/lib/surga-cross-actions.ts`
+  - `frontend-next/src/app/surga/components/SurgaVideosModal.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaVideoCard.tsx` (nouveau)
+  - `frontend-next/src/app/admin/surga/components/AdminVideosTab.tsx` (nouveau)
+  - `frontend-next/src/app/admin/surga/components/AdminVideoSourceModal.tsx` (nouveau)
+  - `frontend-next/src/app/admin/surga/components/AdminConfigTab.tsx`
+  - `frontend-next/src/app/admin/surga/components/AdminComptesTab.tsx`
+  - `frontend-next/src/app/admin/surga/components/AdminSurgaSidebar.tsx`
+  - `frontend-next/src/app/admin/surga/AdminSurgaClient.tsx`
+  - `frontend-next/src/app/surga/components/SurgaModalsContainer.tsx`
+  - `frontend-next/src/app/surga/components/SurgaParametresTab.tsx`
+  - `frontend-next/src/app/surga/components/SurgaDonneesModal.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+  - `CLAUDE.md`, `docs/JOURNAL-LIVRAISONS.md`, `docs/surga/JOURNAL-LIVRAISONS.md`, `docs/surga/HANDOVER.md`, `docs/surga/PLAN.md`
+
 ### [2026-10-06 — Matin 1] — Logo Officiel de Marque : Homme en Caftan S, Tête & Épaules à Droite, Zéro Or, Orange Micro Calibré & Pack PWA
 - **Demande Utilisateur :**
   - « attache comme ca et en position de travail »

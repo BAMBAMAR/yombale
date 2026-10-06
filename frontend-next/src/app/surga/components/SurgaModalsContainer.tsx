@@ -17,6 +17,7 @@ const SurgaPlacesModal = dynamic(() => import('./SurgaPlacesModal'), { ssr: fals
 const SurgaPremiumModal = dynamic(() => import('./SurgaPremiumModal'), { ssr: false })
 const SurgaProModal = dynamic(() => import('./SurgaProModal'), { ssr: false })
 const SurgaDonneesModal = dynamic(() => import('./SurgaDonneesModal'), { ssr: false })
+const SurgaVideosModal = dynamic(() => import('./SurgaVideosModal'), { ssr: false })
 
 interface SurgaModalsContainerProps {
   isCalcOpen: boolean
@@ -31,6 +32,7 @@ interface SurgaModalsContainerProps {
   isPremiumOpen: boolean
   isProOpen: boolean
   isDonneesOpen?: boolean
+  isVideosOpen?: boolean
 
   onCloseCalc: () => void
   onCloseVoice: () => void
@@ -44,6 +46,7 @@ interface SurgaModalsContainerProps {
   onClosePremium: () => void
   onClosePro: () => void
   onCloseDonnees?: () => void
+  onCloseVideos?: () => void
   onDonneesSupprimees?: () => void
 
   onInjectMontantCalc: () => void
@@ -67,6 +70,7 @@ export default function SurgaModalsContainer({
   isPremiumOpen,
   isProOpen,
   isDonneesOpen = false,
+  isVideosOpen = false,
 
   onCloseCalc,
   onCloseVoice,
@@ -80,6 +84,7 @@ export default function SurgaModalsContainer({
   onClosePremium,
   onClosePro,
   onCloseDonnees = () => {},
+  onCloseVideos = () => {},
   onDonneesSupprimees,
 
   onInjectMontantCalc,
@@ -176,8 +181,14 @@ export default function SurgaModalsContainer({
       {isDonneesOpen && (
         <SurgaDonneesModal
           isOpen={isDonneesOpen}
-          onClose={onCloseDonnees}
+          onClose={onCloseDonnees || (() => {})}
           onDonneesSupprimees={onDonneesSupprimees}
+        />
+      )}
+      {isVideosOpen && (
+        <SurgaVideosModal
+          isOpen={isVideosOpen}
+          onClose={onCloseVideos || (() => {})}
         />
       )}
     </>

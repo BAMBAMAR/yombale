@@ -907,7 +907,7 @@ router.get('/utilisateurs', async (req, res) => {
           ORDER BY a.fin DESC LIMIT 1
         ) as echeance_plan,
         COALESCE(
-          (SELECT q.nb_requetes FROM surga_quotas q WHERE (q.user_id = u.id OR q.phone = u.telephone) AND q.date_jour = CURRENT_DATE LIMIT 1),
+          (SELECT (COALESCE(q.nb_commandes, 0) + COALESCE(q.nb_vocaux, 0)) FROM surga_quotas q WHERE (q.phone = u.telephone) AND q.date_jour = CURRENT_DATE LIMIT 1),
           0
         ) as quota_vocal_utilise
       FROM utilisateurs u
@@ -975,7 +975,10 @@ router.post('/utilisateurs/:id/reset-quota', async (req, res) => {
   try {
     const { id } = req.params;
     if (pool) {
-      await pool.query(`DELETE FROM surga_quotas WHERE user_id = $1 AND date_jour = CURRENT_DATE`, [id]);
+      await pool.query(
+        `DELETE FROM surga_quotas WHERE phone = (SELECT telephone FROM utilisateurs WHERE id = $1) AND date_jour = CURRENT_DATE`,
+        [id]
+      );
     }
     res.json({ success: true, message: 'Quota vocal journalier réinitialisé à zéro.' });
   } catch (err) {
@@ -1035,6 +1038,79 @@ router.post('/canaux/test-whatsapp', (req, res) => {
       message: `Message de test transmis avec succès vers ${telephone}.`,
       contenu: message || canauxMemoire.templates_messages.bienvenue
     });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// SÉRIES TV & LUTTE (ALERTES VIDÉOS)
+// ==========================================
+const videoService = require('../services/surga/video-service');
+
+router.get('/videos/sources', async (req, res) => {
+  try {
+    const { type } = req.query;
+    const sources = await videoService.getSources({ type: type || null, actifOnly: false });
+    res.json({ success: true, sources, total: sources.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/videos/sources', async (req, res) => {
+  try {
+    const { nom, chaine_nom, type, identifiant_flux, plateforme, actif } = req.body;
+    if (!nom || !identifiant_flux) {
+      return res.status(400).json({ success: false, error: 'Nom et identifiant de flux requis.' });
+    }
+    const source = await videoService.sauvegarderSourceAdmin({
+      nom,
+      chaine_nom,
+      type: type || 'SERIE',
+      identifiant_flux,
+      plateforme: plateforme || 'youtube',
+      actif: actif !== undefined ? !!actif : true,
+    });
+    res.json({ success: true, source, message: 'Source vidéo enregistrée avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/videos/sources/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nom, chaine_nom, type, identifiant_flux, plateforme, actif } = req.body;
+    const source = await videoService.sauvegarderSourceAdmin({
+      id,
+      nom,
+      chaine_nom,
+      type,
+      identifiant_flux,
+      plateforme,
+      actif,
+    });
+    res.json({ success: true, source, message: 'Source vidéo mise à jour avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/videos/sources/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supprime = await videoService.supprimerSourceAdmin(id);
+    res.json({ success: supprime, message: supprime ? 'Source vidéo supprimée.' : 'Source introuvable.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/videos/sync', async (req, res) => {
+  try {
+    const rapport = await videoService.synchroniserTousLesFlux();
+    res.json(rapport);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

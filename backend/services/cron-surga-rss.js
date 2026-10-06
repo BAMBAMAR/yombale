@@ -3,12 +3,20 @@
 // Enregistre les métriques dans cron_executions via executerTacheCron
 
 const { collecterTousLesFlux } = require('./surga/rss-collector');
+const { synchroniserTousLesFlux } = require('./surga/video-service');
 
 const INTERVALLE_MS = 30 * 60 * 1000; // 30 minutes
 
 async function executerCollecteSurga() {
-  const resultat = await collecterTousLesFlux();
-  return resultat;
+  const [rssResult, videosResult] = await Promise.allSettled([
+    collecterTousLesFlux(),
+    synchroniserTousLesFlux(),
+  ]);
+
+  return {
+    rss: rssResult.status === 'fulfilled' ? rssResult.value : { erreur: rssResult.reason?.message },
+    videos: videosResult.status === 'fulfilled' ? videosResult.value : { erreur: videosResult.reason?.message },
+  };
 }
 
 if (process.env.NODE_ENV !== 'test') {

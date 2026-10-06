@@ -64,6 +64,7 @@ export default function SurgaDonneesModal({
           kalpe_operations: JSON.parse(localStorage.getItem('surga_kalpe_operations') || '[]'),
           kalpe_dettes: JSON.parse(localStorage.getItem('surga_kalpe_dettes') || '[]'),
           kalpe_objectifs: JSON.parse(localStorage.getItem('surga_kalpe_objectifs') || '[]'),
+          video_abonnements: JSON.parse(localStorage.getItem('surga_video_abonnements') || '[]'),
         }
       }
 
@@ -125,6 +126,7 @@ export default function SurgaDonneesModal({
         localStorage.removeItem('surga_kalpe_operations')
         localStorage.removeItem('surga_kalpe_dettes')
         localStorage.removeItem('surga_kalpe_objectifs')
+        localStorage.removeItem('surga_video_abonnements')
         window.dispatchEvent(new CustomEvent('surga-kalpe-change'))
         window.dispatchEvent(new CustomEvent('surga-data-change'))
       } catch {}

@@ -36,6 +36,7 @@ async function exporterDonneesUtilisateur({ userId }) {
     concours_suivis: [],
     favoris_places: [],
     abonnements: [],
+    video_abonnements: [],
   };
 
   if (!pool) {
@@ -131,6 +132,18 @@ async function exporterDonneesUtilisateur({ userId }) {
       );
       exportGlobal.abonnements = abosRes.rows;
     }
+
+    // 9. Abonnements Séries & Vidéos
+    if (userId) {
+      const vidAbosRes = await pool.query(
+        `SELECT va.id, va.source_id, va.canal, va.created_at, vs.nom as source_nom, vs.type as source_type
+         FROM surga_video_abonnements va
+         LEFT JOIN surga_video_sources vs ON va.source_id = vs.id
+         WHERE va.user_id = $1`,
+        [userId]
+      );
+      exportGlobal.video_abonnements = vidAbosRes.rows;
+    }
   } catch (err) {
     console.warn('[SURGA EXPORT ERREUR]:', err.message);
   }
@@ -198,6 +211,10 @@ async function supprimerDonneesUtilisateur({ userId }) {
       // Favoris places
       const resFav = await client.query('DELETE FROM surga_favoris_places WHERE user_id = $1', [userId]);
       resultats.favoris_supprimes = resFav.rowCount;
+
+      // Abonnements vidéos
+      const resVid = await client.query('DELETE FROM surga_video_abonnements WHERE user_id = $1', [userId]);
+      resultats.video_abonnements_supprimes = resVid.rowCount;
 
       // Préférences
       await client.query('DELETE FROM surga_preferences WHERE user_id = $1', [userId]);

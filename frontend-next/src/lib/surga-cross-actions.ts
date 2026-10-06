@@ -650,3 +650,75 @@ export function detecterMontantTexte(texte: string): number | null {
 
   return null
 }
+
+/* =========================================================================
+   8. SÉRIES & LUTTE (VIDÉOS) ➔ AGENDA
+   ========================================================================= */
+
+export function getCleVideo(video: { id: string; titre: string }): string {
+  return `[Vidéo] ${video.titre}`
+}
+
+export function estVideoRappelee(video: { id: string; titre: string }): boolean {
+  const cle = getCleVideo(video)
+  return getLocalAgenda().some(
+    (e) => e.titre.includes(cle) || (e.description && e.description.includes(video.id))
+  )
+}
+
+export function ajouterRappelVideo(video: {
+  id: string
+  titre: string
+  url: string
+  publie_le?: string
+}): { success: boolean; message: string } {
+  if (estVideoRappelee(video)) {
+    return { success: false, message: 'Cette vidéo est déjà dans votre agenda' }
+  }
+
+  const maintenant = new Date()
+  const heureVisionnage = new Date(maintenant.getTime() + 2 * 3600 * 1000)
+  const dateStr = heureVisionnage.toISOString().split('T')[0]
+  const heureStr = `${String(heureVisionnage.getHours()).padStart(2, '0')}:00`
+
+  saveLocalEvenement({
+    titre: getCleVideo(video),
+    description: `Visionnage : ${video.titre}\nLien : ${video.url}\nRef : ${video.id}`,
+    date_evenement: dateStr,
+    heure_evenement: heureStr,
+    est_rappel: true,
+  })
+
+  notifierChangementDonnees()
+  afficherToast('Rappel vidéo programmé dans l’Agenda', 'succes')
+  return { success: true, message: 'Rappel vidéo programmé' }
+}
+
+export function supprimerRappelVideo(video: { id: string; titre: string }): { success: boolean; message: string } {
+  const cle = getCleVideo(video)
+  const item = getLocalAgenda().find(
+    (e) => e.titre.includes(cle) || (e.description && e.description.includes(video.id))
+  )
+  if (item && item.id) {
+    deleteLocalEvenement(item.id)
+    notifierChangementDonnees()
+    afficherToast('Rappel vidéo retiré de l’Agenda', 'info')
+    return { success: true, message: 'Rappel vidéo retiré' }
+  }
+  return { success: false, message: 'Rappel introuvable' }
+}
+
+export function toggleRappelVideo(video: {
+  id: string
+  titre: string
+  url: string
+  publie_le?: string
+}): { success: boolean; actif: boolean; message: string } {
+  if (estVideoRappelee(video)) {
+    const res = supprimerRappelVideo(video)
+    return { success: res.success, actif: false, message: res.message }
+  } else {
+    const res = ajouterRappelVideo(video)
+    return { success: res.success, actif: true, message: res.message }
+  }
+}

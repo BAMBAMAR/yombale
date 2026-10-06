@@ -19,6 +19,7 @@ import {
   ArrowLeftRight,
   LogOut,
   ShieldCheck,
+  Tv,
 } from 'lucide-react'
 
 export type SurgaAdminTab =
@@ -29,6 +30,7 @@ export type SurgaAdminTab =
   | 'reseaux'
   | 'places'
   | 'concours'
+  | 'videos'
   | 'unes'
   | 'trafic'
   | 'radios'
@@ -174,6 +176,18 @@ export default function AdminSurgaSidebar({
           {stats && stats.nb_concours > 0 && (
             <span className="surga-nav-badge">{stats.nb_concours}</span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelectTab('videos')}
+          className={`surga-nav-item ${activeTab === 'videos' ? 'active' : ''}`}
+        >
+          <div className="surga-nav-item-left">
+            <Tv size={16} />
+            <span>Séries &amp; Lutte</span>
+          </div>
+          <span className="surga-nav-badge cyan">Vidéos</span>
         </button>
 
         <button

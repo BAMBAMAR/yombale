@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 export default function AdminConfigTab() {
-  const [quotaVocal, setQuotaVocal] = useState('20')
+  const [quotaVocal, setQuotaVocal] = useState('2')
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 

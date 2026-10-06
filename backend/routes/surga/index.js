@@ -22,6 +22,7 @@ router.use('/', require('./abonnements'));
 router.use('/', require('./donnees'));
 router.use('/', require('./meteo'));
 router.use('/', require('./sport'));
+router.use('/', require('./videos'));
 
 module.exports = router;
 

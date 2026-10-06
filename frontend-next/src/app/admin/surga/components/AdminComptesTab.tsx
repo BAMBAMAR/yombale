@@ -255,10 +255,10 @@ export default function AdminComptesTab() {
 
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontWeight: 800, color: (u.quota_vocal_utilise || 0) >= 20 ? '#EF4444' : '#0F172A' }}>
+                          <span style={{ fontWeight: 800, color: (u.quota_vocal_utilise || 0) >= 2 ? '#EF4444' : '#0F172A' }}>
                             {u.quota_vocal_utilise || 0}
                           </span>
-                          <span style={{ fontSize: 11, color: '#64748B' }}>/ 20 req. aujourd hui</span>
+                          <span style={{ fontSize: 11, color: '#64748B' }}>/ 2 req. aujourd hui</span>
                         </div>
                         {(u.quota_vocal_utilise || 0) > 0 && (
                           <button

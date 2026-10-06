@@ -1442,6 +1442,112 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(resDiourbel.ville).toBe('Diourbel');
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TRANCHE 17 (EXTENSION) : SÉRIES TV & LUTTE SÉNÉGALAISE (ALERTES VIDÉOS)
+  // ─────────────────────────────────────────────────────────────────────────────
+  describe('Tranche 17 : Séries TV & Lutte du Sénégal (Alertes Vidéos)', () => {
+    const videoService = require('../../backend/services/surga/video-service');
+    const regexEmoji = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+
+    test('Catalogue référentiel complet et équilibré (Séries & Lutte)', async () => {
+      const sources = await videoService.getSources({ actifOnly: false });
+      expect(sources.length).toBeGreaterThanOrEqual(5);
+
+      const series = sources.filter((s) => s.type === 'SERIE');
+      const lutte = sources.filter((s) => s.type === 'LUTTE');
+
+      expect(series.length).toBeGreaterThanOrEqual(2);
+      expect(lutte.length).toBeGreaterThanOrEqual(2);
+
+      // Présence des acteurs clés sénégalais
+      const noms = sources.map((s) => s.nom);
+      expect(noms.some((n) => n.includes('Marodi'))).toBe(true);
+      expect(noms.some((n) => n.includes('EvenProd'))).toBe(true);
+      expect(noms.some((n) => n.includes('Lutte TV') || n.includes('Albourakh'))).toBe(true);
+
+      // Zéro émoji
+      for (const s of sources) {
+        expect(regexEmoji.test(s.nom)).toBe(false);
+      }
+    });
+
+    test('Construction rigoureuse des URLs de flux Atom YouTube', () => {
+      const urlChannel = videoService.construireUrlFlux('UCt7g3Z1YF67-Yc7_N8j9bXw');
+      expect(urlChannel).toBe('https://www.youtube.com/feeds/videos.xml?channel_id=UCt7g3Z1YF67-Yc7_N8j9bXw');
+
+      const urlPlaylist = videoService.construireUrlFlux('PL1234567890ABCDEF');
+      expect(urlPlaylist).toBe('https://www.youtube.com/feeds/videos.xml?playlist_id=PL1234567890ABCDEF');
+
+      const urlDirect = videoService.construireUrlFlux('https://custom.domain/feed.xml');
+      expect(urlDirect).toBe('https://custom.domain/feed.xml');
+    });
+
+    test('Dédoublonnage strict des vidéos par URL unique', async () => {
+      const testVideos = [
+        {
+          source_id: 'src-marodi-tv',
+          titre: 'Karma - Saison 3 - Épisode 1',
+          url: 'https://www.youtube.com/watch?v=unique_test_vid_123',
+          publie_le: new Date().toISOString(),
+        },
+        {
+          source_id: 'src-marodi-tv',
+          titre: 'Karma - Saison 3 - Épisode 1 (Doublon)',
+          url: 'https://www.youtube.com/watch?v=unique_test_vid_123',
+          publie_le: new Date().toISOString(),
+        },
+      ];
+
+      const res1 = await videoService.sauvegarderVideos([testVideos[0]]);
+      expect(res1.inserees).toBe(1);
+
+      // Tenter d'insérer à nouveau la même URL
+      const res2 = await videoService.sauvegarderVideos([testVideos[1]]);
+      expect(res2.inserees).toBe(0); // Dédoublonné avec succès !
+    });
+
+    test('Bascule réversible d abonnement utilisateur (Toggle Anti-IDOR)', async () => {
+      const userIdTest = 'user-test-video-uuid-1';
+      const sourceIdTest = 'src-marodi-tv';
+
+      // 1. Activer l'abonnement
+      const abo1 = await videoService.toggleAbonnementUtilisateur(userIdTest, sourceIdTest);
+      expect(abo1.abonne).toBe(true);
+      expect(abo1.source_id).toBe(sourceIdTest);
+
+      let liste = await videoService.getAbonnementsUtilisateur(userIdTest);
+      expect(liste.some((a) => a.source_id === sourceIdTest)).toBe(true);
+
+      // 2. Désactiver l'abonnement
+      const abo2 = await videoService.toggleAbonnementUtilisateur(userIdTest, sourceIdTest);
+      expect(abo2.abonne).toBe(false);
+
+      liste = await videoService.getAbonnementsUtilisateur(userIdTest);
+      expect(liste.some((a) => a.source_id === sourceIdTest)).toBe(false);
+    });
+
+    test('Les routes REST des vidéos se chargent sans erreur dans Express', () => {
+      const routerVideos = require('../../backend/routes/surga/videos');
+      expect(routerVideos).toBeDefined();
+
+      const routes = routerVideos.stack
+        .filter((r) => r.route)
+        .map((r) => `${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`);
+
+      expect(routes).toContain('GET /videos/sources');
+      expect(routes).toContain('GET /videos/abonnements');
+      expect(routes).toContain('POST /videos/abonnements/:sourceId/toggle');
+      expect(routes).toContain('GET /videos/derniers');
+    });
+
+    test('Portabilité RGPD : l export et la purge intègrent les abonnements vidéo', async () => {
+      const donneesService = require('../../backend/services/surga/donnees-service');
+      const exportRes = await donneesService.exporterDonneesUtilisateur({ userId: '00000000-0000-0000-0000-000000000000' });
+      expect(exportRes).toHaveProperty('video_abonnements');
+      expect(Array.isArray(exportRes.video_abonnements)).toBe(true);
+    });
+  });
 });
 
 

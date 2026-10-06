@@ -55,7 +55,7 @@ export default function SurgaPage() {
   const [isTraficOpen, setIsTraficOpen] = useState<boolean>(false), [isImmoOpen, setIsImmoOpen] = useState<boolean>(false)
   const [isConcoursOpen, setIsConcoursOpen] = useState<boolean>(false), [isPlacesOpen, setIsPlacesOpen] = useState<boolean>(false)
   const [isPremiumOpen, setIsPremiumOpen] = useState<boolean>(false), [isProOpen, setIsProOpen] = useState<boolean>(false)
-  const [isDonneesOpen, setIsDonneesOpen] = useState<boolean>(false)
+  const [isDonneesOpen, setIsDonneesOpen] = useState<boolean>(false), [isVideosOpen, setIsVideosOpen] = useState<boolean>(false)
   const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; plan?: string | null; joursRestants?: number }>({ estPremium: false })
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
@@ -404,6 +404,7 @@ export default function SurgaPage() {
             onOpenImmo={() => setIsImmoOpen(true)}
             onOpenConcours={() => setIsConcoursOpen(true)}
             onOpenPlaces={() => setIsPlacesOpen(true)}
+            onOpenVideos={() => setIsVideosOpen(true)}
             onOpenPremium={() => setIsPremiumOpen(true)}
             onOpenPro={() => setIsProOpen(true)}
             onOpenDonnees={() => setIsDonneesOpen(true)}
@@ -428,13 +429,14 @@ export default function SurgaPage() {
         isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
         isPodcastOpen={isPodcastOpen} isTraficOpen={isTraficOpen}
         isImmoOpen={isImmoOpen} isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen}
-        isPremiumOpen={isPremiumOpen} isProOpen={isProOpen} isDonneesOpen={isDonneesOpen}
+        isPremiumOpen={isPremiumOpen} isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen}
         onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)}
         onClosePresse={() => setIsPresseOpen(false)} onClosePodcast={() => setIsPodcastOpen(false)}
         onCloseTrafic={() => setIsTraficOpen(false)} onCloseImmo={() => setIsImmoOpen(false)}
         onCloseConcours={() => setIsConcoursOpen(false)} onClosePlaces={() => setIsPlacesOpen(false)}
         onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)}
-        onCloseDonnees={() => setIsDonneesOpen(false)} onInjectMontantCalc={() => setActiveTab('depenses')}
+        onCloseDonnees={() => setIsDonneesOpen(false)} onCloseVideos={() => setIsVideosOpen(false)}
+        onInjectMontantCalc={() => setActiveTab('depenses')}
         onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
         onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote}
         onConfirmerVoiceRappel={handleVoiceRappel} onDonneesSupprimees={handleReinitialiser}

@@ -3290,6 +3290,37 @@ module.exports = async function migrateInline(customConnStr = null) {
     `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_user ON surga_abonnements(user_id, statut, fin)`,
     `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_phone ON surga_abonnements(phone, statut, fin)`,
     `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_statut_plan ON surga_abonnements(statut, plan)`,
+    `CREATE TABLE IF NOT EXISTS surga_video_sources (
+       id VARCHAR(50) PRIMARY KEY,
+       type VARCHAR(20) NOT NULL DEFAULT 'SERIE',
+       nom VARCHAR(120) NOT NULL,
+       chaine_nom VARCHAR(120),
+       plateforme VARCHAR(20) NOT NULL DEFAULT 'youtube',
+       identifiant_flux VARCHAR(255) NOT NULL,
+       actif BOOLEAN NOT NULL DEFAULT TRUE,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_video_sources_type ON surga_video_sources(type, actif)`,
+    `CREATE TABLE IF NOT EXISTS surga_video_items (
+       id VARCHAR(50) PRIMARY KEY,
+       source_id VARCHAR(50) REFERENCES surga_video_sources(id) ON DELETE CASCADE,
+       titre VARCHAR(255) NOT NULL,
+       url TEXT UNIQUE NOT NULL,
+       publie_le TIMESTAMPTZ DEFAULT NOW(),
+       miniature_url TEXT,
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_video_items_source_publie ON surga_video_items(source_id, publie_le DESC)`,
+    `CREATE TABLE IF NOT EXISTS surga_video_abonnements (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
+       source_id VARCHAR(50) REFERENCES surga_video_sources(id) ON DELETE CASCADE,
+       canal VARCHAR(20) DEFAULT 'in_app',
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_video_abonnements ON surga_video_abonnements(user_id, source_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_video_abonnements_user ON surga_video_abonnements(user_id)`,
   ];
   for (const sql of schemaCollecte) {
     try { await pool.query(sql); }
