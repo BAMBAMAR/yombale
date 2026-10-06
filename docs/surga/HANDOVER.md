@@ -1,15 +1,26 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 05 Octobre 2026 (Session Soir 16)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 1)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 27 : En-tête Cliquable & Navigation Retour, Résolution Incohérence Sama Xaalis, Identité de Marque Dépositaire Complète, Raccordement Kiosque des Unes au ProjetBI `LE-PROJET` / `projetbi.org`, Météo 14 Régions, Passerelles Transversales, Console Pro 11 Modules)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranches 1 à 28 : Logo Officiel Caftan S Orienté à Droite, Zéro Or, Orange Micro Calibré & Pack PWA, En-tête Cliquable & Navigation Retour, Résolution Incohérence Sama Xaalis, Raccordement Kiosque ProjetBI, Météo 14 Régions, Passerelles Transversales, Console Pro 11 Modules)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Direction Artistique)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** offre une navigation fluide et intuitive : l'en-tête est désormais entièrement cliquable avec un bouton de retour automatique permettant de revenir d'un geste vers le tableau de bord principal depuis n'importe quelle vue.
+L'assistant personnel de poche **Surga** dispose désormais de son identité visuelle officielle et souveraine : le logo officiel représente un homme digne en caftan traditionnel stylisé en arabesque "S", la tête et les épaules harmonieusement synchronisées et orientées vers la droite dans une posture de travail protectrice, affiné en bleu marine nuit (`#0A1128`) sans aucune couleur or, avec un nœud de ceinturon orange micro `#EA8F09` parfaitement raccord avec le bouton d'action vocal (FAB) de l'UI.
+
+0. **Logo Officiel de Marque, Symbole S Caftan & Pack PWA HD (Tranche 28 — 100% DONE)** :
+   - **Sculpture Anatomique Synchronisée** : Silhouette noble d'un homme en caftan d'action dont la tête et les épaules tournent de concert vers la droite, suivant naturellement le sens dynamique de la courbe supérieure du S.
+   - **Profil Unique & Zéro Artefact Fantôme** : Élimination méticuleuse de tout double profil résiduel ou ombre de tête superposée à l'arrière du crâne grâce à une découpe vectorielle et un masque occipital lissé.
+   - **Ligne Svelte & Élimination des Planches Inférieures** : Suppression radicale des deux blocs rectangulaires artificiels sous la ceinture ; affinement du corps du S par conversion des rubans et bandes secondaires en bleu marine nuit d'ombre (`#0A1128`), apportant légèreté et lisibilité à petite échelle.
+   - **Zéro Or & Accord Chromatique Parfait** : Éradication totale des tons dorés/jaunes éclatants. Étalonnage direct de l'accent sur l'orange exact `#EA8F09` (`rgb(234, 143, 9)`) échantillonné sur le FAB micro de l'application Surga, réservé au nœud du ceinturon (*takku ndig*).
+   - **Génération & Déploiement des Actifs PWA** :
+     - Master HD : `frontend-next/public/surga/surga-symbol.png` (1024×1024).
+     - Pack PWA & Favicons : `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, `favicon.png`, `favicon.svg` et miroir `public/surga/icons/`.
+     - Intégration en-tête `SurgaHeader.tsx` : affichage du symbole officiel squircle 34×34px avec bord arrondi 8px.
+   - **Validation In-App & Tests** : Rendu validé en conditions réelles sur serveur de développement Next.js (iPhone mobile et desktop). Zéro régression TypeScript (`tsc --noEmit`), linter Anti-AI-Slop 100% au vert.
 
 0. **En-tête Cliquable & Navigation Retour sur les Vues Internes (Tranche 27 — 100% DONE)** :
    - Fin de la rigidité de l'en-tête : `SurgaHeader.tsx` est désormais doté des props `onRetour` et `afficherRetour`.
@@ -110,6 +121,7 @@ L'assistant personnel de poche **Surga** offre une navigation fluide et intuitiv
 |---|---|
 | Page principale Surga | `src/app/surga/page.tsx` (< 450 l.) |
 | Layout & Manifest PWA | `src/app/surga/layout.tsx`, `public/surga/manifest.json` |
+| Logo Officiel & Actifs PWA | `public/surga/surga-symbol.png`, `public/surga/icon-*.png`, `public/surga/icons/` |
 | Styles & Isolation CSS | `src/styles/surga.css` |
 | Routage & Sous-domaine | `src/middleware.ts`, `src/app/[slug]/route.ts`, `src/app/layout.tsx` |
 | Passerelles Transversales & Toasts | `src/lib/surga-cross-actions.ts` (315 l.), `src/app/surga/components/SurgaToastContainer.tsx` (65 l.) |

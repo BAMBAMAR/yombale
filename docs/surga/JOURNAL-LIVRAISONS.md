@@ -3,6 +3,42 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 1] — Logo Officiel de Marque : Homme en Caftan S, Tête & Épaules à Droite, Zéro Or, Orange Micro Calibré & Pack PWA
+- **Demande Utilisateur :**
+  - « attache comme ca et en position de travail »
+  - « si la tete pouvai etre a linterieur aussi »
+  - « ya pas de couleur or dans surga actuellement il faut lenlever »
+  - « JE VEUX PAS DE couelur eclatant il faut que la tete soit dans le meme sens que le S.le S peut etre moins epais »
+  - « quand la tete tourne les epaule douvent suive .un S plus fin .enleve ca du logo » (avec capture des blocs rectangulaires marron inférieurs)
+  - « ya pas une ombre de tete ou deux tete » (artefact de profil fantôme)
+  - « orange moins sombre » (échantillon de l'UI du FAB micro Surga)
+  - « testons » & « commit »
+- **Tâches complétées :**
+  - **Sculpture Anatomique & Alignement Corporel Complet** :
+    - Homme digne en caftan traditionnel stylisé en arabesque "S", posture active et protectrice.
+    - Synchronisation stricte : tête et ligne d'épaules orientées vers la droite, parfaitement alignées dans la dynamique du S.
+    - Masquage précis et lissage de la nuque pour garantir un profil unique noble et supprimer tout artefact de double tête ou profil fantôme.
+  - **Élagage & Affinement Visuel du S** :
+    - Éradication totale des deux blocs/planches rectangulaires sous la ceinture.
+    - Épaississement réduit et rubans extérieurs assombris en bleu marine nuit (`#0A1128`) pour offrir une ligne élancée, moderne et subtile.
+  - **Purification Chromatique & Étalonnage Exact** :
+    - Zéro couleur or ou jaune éclatant.
+    - Teinte d'accent orange calibrée avec précision sur `#EA8F09` (`rgb(234, 143, 9)`), identique au bouton d'action vocal (FAB) de l'interface Surga, appliquée uniquement sur le nœud du ceinturon (*takku ndig*).
+  - **Génération & Déploiement des Actifs PWA** :
+    - Master HD généré : `frontend-next/public/surga/surga-symbol.png` (1024×1024 px).
+    - Déclinaisons PWA et Favicons synchronisées : `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, `favicon.png`, `favicon.svg`, et set miroir dans `public/surga/icons/`.
+    - Intégration En-tête : `SurgaHeader.tsx` mis à jour avec le nouveau symbole officiel squircle 34×34px.
+  - **Validation In-App & Qualité** :
+    - Vérification visuelle sur Next.js (`http://localhost:3001/surga`) en vue mobile (iPhone) et desktop widescreen.
+    - `npx tsc --noEmit` : 0 erreur de typage.
+    - `npm run lint:slop` : 100% conforme.
+- **Fichiers modifiés :**
+  - `frontend-next/public/surga/surga-symbol.png`
+  - `frontend-next/public/surga/icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, `favicon.png`, `favicon.svg`
+  - `frontend-next/public/surga/icons/surga-symbol.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`, `favicon.svg`
+  - `frontend-next/src/app/surga/components/SurgaHeader.tsx`
+  - `CLAUDE.md`, `docs/JOURNAL-LIVRAISONS.md`, `docs/surga/JOURNAL-LIVRAISONS.md`, `docs/surga/HANDOVER.md`, `docs/surga/PLAN.md`
+
 ### [2026-10-05 — Soir 16] — En-tête Cliquable & Navigation Retour sur les Vues Internes
 - **Demande Utilisateur :** « non cliquable » avec capture d'écran sur l'en-tête de `Sama Xaalis`.
 - **Tâches complétées :**

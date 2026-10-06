@@ -1,5 +1,19 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Logo Officiel de Marque (Homme en Caftan S, Tête & Épaules à Droite, Zéro Or, Orange Micro Calibré & Pack PWA) (Session 2026-10-06 - Matin 1, branche `feature/surga`)** :
+  * **Demande & Spécifications Utilisateur** :
+    - *« attache comme ca et en position de travail »* : Silhouette noble d'un homme en caftan traditionnel stylisé en arabesque "S", posture active et protectrice.
+    - *« quand la tete tourne les epaule douvent suive »* : Alignement anatomique naturel : tête et épaules synchronisées et orientées vers la droite dans le sens d'action du S.
+    - *« un S plus fin »* & *« enleve ca du logo »* : Retrait total des blocs/planches rectangulaires inférieurs, affinement des rubans par assombrissement navy nuit (`#0A1128`).
+    - *« ya pas une ombre de tete ou deux tete »* : Élimination absolue de tout artefact de double profil ou ombre fantôme derrière le crâne.
+    - *« ya pas de couleur or dans surga actuellement il faut lenlever »* & *« orange moins sombre »* : Élimination de toutes les teintes or/jaunes, calibrage de l'accent sur l'orange exact `#EA8F09` (`rgb(234, 143, 9)`) échantillonné directement sur le FAB micro de l'UI Surga.
+    - *« testons »* & *« commit »* : Validation visuelle live in-app et scellement du jalon.
+  * **Livrables Graphiques & Techniques Déployés** :
+    - Master HD généré : `frontend-next/public/surga/surga-symbol.png` (1024×1024).
+    - Déclinaisons PWA et Favicons synchronisées : `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, `favicon.png`, `favicon.svg`, et set miroir dans `public/surga/icons/`.
+    - Intégration En-tête : `SurgaHeader.tsx` mis à jour avec le nouveau symbole officiel squircle 34×34px.
+    - Tests et validation : 0 erreur TypeScript (`tsc --noEmit`), linter Anti-AI-Slop 100% conforme.
+
 - **Surga — En-tête Cliquable & Bouton Retour sur les Vues Internes (`Sama Xaalis`, `Notes`, `Agenda`, etc.) (Session 2026-10-05 - Suite 7, branche `feature/surga`)** :
   * **Demande Utilisateur** : Signalement d'inactivité de l'en-tête (« non cliquable ») avec capture d'écran sur `Sama Xaalis`.
   * **Cause Racine** : `SurgaHeader.tsx` était un conteneur statique dépourvu d'interactivité : aucun `onClick`, aucun curseur pointer, aucune prop de retour ni bouton de retour (`←`) pour revenir au tableau de bord d'accueil depuis les vues secondaires.

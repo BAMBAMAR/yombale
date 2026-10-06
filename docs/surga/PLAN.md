@@ -341,6 +341,15 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Raccordement dans `page.tsx` avec `afficherRetour={activeTab !== 'aujourdhui'}` et `onRetour={() => setActiveTab('aujourdhui')}` (449 lignes, < 450 l.).
 - [x] `DONE` Validation par test automatisé Playwright mobile vérifiant le curseur et la bascule d'état au clic.
 
+### Tranche 28 — Logo Officiel de Marque, Symbole S Caftan & Pack PWA HD (06 Octobre 2026 - Matin 1)
+- [x] `DONE` Sculpture anatomique synchronisée : silhouette noble d'un homme en caftan d'action dont la tête et les épaules tournent de concert vers la droite, suivant naturellement le sens dynamique de la courbe supérieure du S.
+- [x] `DONE` Élimination méticuleuse de tout double profil résiduel ou ombre de tête superposée à l'arrière du crâne grâce à une découpe vectorielle et un masque occipital lissé.
+- [x] `DONE` Affinement du S et suppression radicale des deux blocs rectangulaires artificiels sous la ceinture ; conversion des rubans et bandes secondaires en bleu marine nuit d'ombre (`#0A1128`).
+- [x] `DONE` Purification chromatique : zéro couleur or ou jaune éclatant, calibrage de l'accent sur l'orange exact `#EA8F09` (`rgb(234, 143, 9)`) échantillonné directement sur le FAB micro de l'application Surga, réservé au nœud du ceinturon (*takku ndig*).
+- [x] `DONE` Génération et déploiement des actifs PWA : master HD `surga-symbol.png` (1024×1024), `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, `favicon.png`, `favicon.svg`, et pack miroir dans `public/surga/icons/`.
+- [x] `DONE` Intégration en-tête `SurgaHeader.tsx` : affichage du symbole officiel squircle 34×34px avec bord arrondi 8px.
+- [x] `DONE` Validation in-app en conditions réelles sur serveur Next.js en affichage mobile et desktop, `tsc --noEmit` 0 erreur, linter Anti-AI-Slop 100% au vert.
+
 ---
 
 ## Évolutions futures (hors plan actuel)
