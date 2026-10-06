@@ -3,6 +3,43 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 5] — Emploi & CV : Correction Immédiate du Bug 400 Bad Request, Téléchargement PDF A4 Natif & Architecture Contrôle des Non-Inscrits par WhatsApp OTP
+- **Demandes Utilisateur :**
+  1. « impossible de generer le pdf react-dom.development.js:38560 ... api/surga/emploi/cv/generer:1 Failed to load resource: the server responded with a status of 400 (Bad Request) »
+  2. « comment le code controle les utilisateur non inscrit.puis je par exemple creer plusieurs CV »
+  3. « comment corriger ca » / « pas seulement sur le CV voir tous les service ou cest necessaife »
+- **Analyse & Contexte Technique :**
+  - Le frontend manipulait et envoyait dans le corps de requête `titre_professionnel`, `adresse_ville`, `resume_pro`, `modele_design` et `experiences[].titre`.
+  - La méthode backend `upsertProfilPro` attendait strictement `titre_poste`, `adresse`, `resume`, `modele` et `experiences[].poste`. En l'absence de ces clés, `titre_poste` était stocké comme chaîne vide `''` dans PostgreSQL.
+  - La route `POST /api/surga/emploi/cv/generer` vérifiait `if (!profil || !profil.nom_complet || (!profil.titre_poste && !profil.titre_professionnel))`, ce qui déclenchait un statut 400 immédiat.
+  - De plus, les utilisateurs non authentifiés pouvaient potentiellement contourner les quotas en renouvelant leur identifiant temporaire `x-surga-user-id` dans le `localStorage`.
+- **Modifications Appliquées :**
+  - **`backend/services/surga/emploi-service.js`** :
+    - Implémentation du normaliseur bidirectionnel `formaterProfilPourClient(profil)` assurant la présence conjointe des deux jeux de clés (`titre_poste` & `titre_professionnel`, `adresse` & `adresse_ville`, `resume` & `resume_pro`).
+    - Harmonisation des tableaux d'expériences (`titre` et `poste`) et de formations (`diplome` et `titre`, `etablissement` et `ecole`, `annee` et `date`).
+    - Adaptation de `construireDocumentPdf` pour lire indistinctement `titre_professionnel` / `titre_poste` et afficher un en-tête complet, les coordonnées nettes et les puces d'expériences.
+  - **`backend/routes/surga/emploi.js`** :
+    - Support de `modele_design` et `modele`.
+    - Validation souple avec repli sur `profilTransmis`.
+    - Ajout de `requireAuth: !!req.user.guest` sur les réponses 403 pour notifier le frontend d'exiger une connexion.
+  - **`frontend-next/src/app/surga/components/SurgaEmploiModal.tsx` & `SurgaModalsContainer.tsx`** :
+    - Envoi explicite de `modele` et `modele_design`.
+    - Propagation de la prop `onOpenAuth` pour ouvrir `SurgaAuthModal` dès que l'action requiert une session vérifiée.
+  - **`tests/unit/surga.test.js`** :
+    - Nouveau test unitaire vérifiant le support transparent des alias frontend et la non-régression.
+- **Architecture de Contrôle des Utilisateurs Non Inscrits (« Découverte libre, Engagement vérifié ») :**
+  - *Découverte libre (Sans compte)* : Tout utilisateur peut explorer librement Surga, rédiger et tester son Profil Pro, consulter les concours, démarches, météo et presse.
+  - *Engagement vérifié (WhatsApp OTP)* : Tout acte consommant un quota gratuit pérenne et coûteux (1er CV offert, 1 lettre de motivation/mois, 1 simulation d'entretien/semaine, alerte immobilière WhatsApp, suivi de concours officiel) exige une authentification par numéro de téléphone vérifié (+221...).
+  - *Impossibilité de triche* : L'unicité est garantie par le numéro physique en base PostgreSQL, rendant inopérants les changements de navigateur ou la navigation privée.
+- **Validation :**
+  - `POST /api/surga/emploi/cv/generer` : 200 OK avec payload document complet.
+  - `GET /api/surga/emploi/documents/:id/pdf` : 200 OK avec flux binaire PDF standardisé (2 121 octets).
+  - Quota 2ème CV : 403 Forbidden immédiat avec `requireAuth: true` et `prix_acte_xof: 500`.
+  - `npx tsc --noEmit` : 0 erreur TypeScript.
+  - `npm run lint:slop` : 100% conforme.
+  - Tests Jest : **128/128 validés (100% en 3.3s)**.
+  - Règle de déploiement : Commit local préparé sans aucun push automatique.
+
 ### [2026-10-06 — Nuit 4] — Kiosque des Unes : Visionneuse Agrandie, Moteur de Zoom (100% à 400%), Pan Glisser-Déplacer & Plein Écran
 - **Demande Utilisateur :**
   - « agrandir si possible et ajouter des bouton zoom agrandir plein ecran etc »

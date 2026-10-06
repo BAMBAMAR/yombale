@@ -32,11 +32,55 @@ function getPeriodeMoisCourant() {
 }
 
 /**
+ * Harmonise les alias de champs entre frontend et backend
+ */
+function formaterProfilPourClient(profil) {
+  if (!profil) return null;
+  const titre = cleanPdfText(profil.titre_professionnel || profil.titre_poste || '');
+  const adresse = cleanPdfText(profil.adresse_ville || profil.adresse || '');
+  const resume = cleanPdfText(profil.resume_pro || profil.resume || '');
+
+  const experiences = (Array.isArray(profil.experiences) ? profil.experiences : []).map((exp) => ({
+    ...exp,
+    titre: cleanPdfText(exp.titre || exp.poste || ''),
+    poste: cleanPdfText(exp.poste || exp.titre || ''),
+    entreprise: cleanPdfText(exp.entreprise || ''),
+    lieu: cleanPdfText(exp.lieu || ''),
+    date_debut: cleanPdfText(exp.date_debut || ''),
+    date_fin: cleanPdfText(exp.date_fin || ''),
+    description: cleanPdfText(exp.description || ''),
+  }));
+
+  const formations = (Array.isArray(profil.formations) ? profil.formations : []).map((form) => ({
+    ...form,
+    diplome: cleanPdfText(form.diplome || form.titre || ''),
+    titre: cleanPdfText(form.titre || form.diplome || ''),
+    etablissement: cleanPdfText(form.etablissement || form.ecole || ''),
+    ecole: cleanPdfText(form.ecole || form.etablissement || ''),
+    annee: cleanPdfText(form.annee || form.date || ''),
+    date: cleanPdfText(form.date || form.annee || ''),
+  }));
+
+  return {
+    ...profil,
+    titre_poste: titre,
+    titre_professionnel: titre,
+    adresse,
+    adresse_ville: adresse,
+    resume,
+    resume_pro: resume,
+    experiences,
+    formations,
+  };
+}
+
+/**
  * Récupère le profil professionnel d'un utilisateur
  */
 async function getProfilPro(userId) {
   if (!userId) return null;
 
+  let profil = null;
   if (pool) {
     try {
       const { rows } = await pool.query(
@@ -44,14 +88,18 @@ async function getProfilPro(userId) {
         [userId]
       );
       if (rows.length > 0) {
-        return rows[0];
+        profil = rows[0];
       }
     } catch (err) {
       // repli mémoire
     }
   }
 
-  return profilsMemoire.get(userId) || null;
+  if (!profil) {
+    profil = profilsMemoire.get(userId) || null;
+  }
+
+  return profil ? formaterProfilPourClient(profil) : null;
 }
 
 /**
@@ -63,11 +111,28 @@ async function upsertProfilPro(userId, data) {
   const nomComplet = cleanPdfText(data.nom_complet || '');
   const telephone = cleanPdfText(data.telephone || '');
   const email = cleanPdfText(data.email || '');
-  const adresse = cleanPdfText(data.adresse || '');
-  const titrePoste = cleanPdfText(data.titre_poste || '');
-  const resume = cleanPdfText(data.resume || '');
-  const experiences = Array.isArray(data.experiences) ? data.experiences : [];
-  const formations = Array.isArray(data.formations) ? data.formations : [];
+  const adresse = cleanPdfText(data.adresse_ville || data.adresse || '');
+  const titrePoste = cleanPdfText(data.titre_professionnel || data.titre_poste || '');
+  const resume = cleanPdfText(data.resume_pro || data.resume || '');
+  const experiences = (Array.isArray(data.experiences) ? data.experiences : []).map((exp) => ({
+    ...exp,
+    titre: cleanPdfText(exp.titre || exp.poste || ''),
+    poste: cleanPdfText(exp.poste || exp.titre || ''),
+    entreprise: cleanPdfText(exp.entreprise || ''),
+    lieu: cleanPdfText(exp.lieu || ''),
+    date_debut: cleanPdfText(exp.date_debut || ''),
+    date_fin: cleanPdfText(exp.date_fin || ''),
+    description: cleanPdfText(exp.description || ''),
+  }));
+  const formations = (Array.isArray(data.formations) ? data.formations : []).map((form) => ({
+    ...form,
+    diplome: cleanPdfText(form.diplome || form.titre || ''),
+    titre: cleanPdfText(form.titre || form.diplome || ''),
+    etablissement: cleanPdfText(form.etablissement || form.ecole || ''),
+    ecole: cleanPdfText(form.ecole || form.etablissement || ''),
+    annee: cleanPdfText(form.annee || form.date || ''),
+    date: cleanPdfText(form.date || form.annee || ''),
+  }));
   const competences = Array.isArray(data.competences) ? data.competences : [];
   const langues = Array.isArray(data.langues) ? data.langues : [];
 
@@ -107,7 +172,7 @@ async function upsertProfilPro(userId, data) {
         JSON.stringify(langues),
       ];
       const { rows } = await pool.query(query, params);
-      return rows[0];
+      return formaterProfilPourClient(rows[0]);
     } catch (err) {
       // repli mémoire
     }
@@ -119,8 +184,11 @@ async function upsertProfilPro(userId, data) {
     telephone,
     email,
     adresse,
+    adresse_ville: adresse,
     titre_poste: titrePoste,
+    titre_professionnel: titrePoste,
     resume,
+    resume_pro: resume,
     experiences,
     formations,
     competences,
@@ -128,7 +196,7 @@ async function upsertProfilPro(userId, data) {
     updated_at: new Date().toISOString(),
   };
   profilsMemoire.set(userId, profil);
-  return profil;
+  return formaterProfilPourClient(profil);
 }
 
 /**
@@ -446,7 +514,7 @@ function construireDocumentPdf(type, donnees, { modele = 'sobre_moderne', avecMe
   if (type === 'CV') {
     // En-tête CV
     const nom = cleanPdfText(donnees.nom_complet || 'CURRICULUM VITAE');
-    const titrePoste = cleanPdfText(donnees.titre_poste || '');
+    const titrePoste = cleanPdfText(donnees.titre_professionnel || donnees.titre_poste || '');
 
     doc.fillColor(NAVY).fontSize(20).font('Helvetica-Bold').text(nom, 40, 40);
     if (titrePoste) {
@@ -454,7 +522,7 @@ function construireDocumentPdf(type, donnees, { modele = 'sobre_moderne', avecMe
     }
 
     // Coordonnées
-    const coords = [donnees.telephone, donnees.email, donnees.adresse].filter(Boolean).join('  •  ');
+    const coords = [donnees.telephone, donnees.email, donnees.adresse_ville || donnees.adresse].filter(Boolean).join('  •  ');
     if (coords) {
       doc.fillColor(SLATE).fontSize(9).font('Helvetica').text(coords, 40, 84);
     }
@@ -465,10 +533,11 @@ function construireDocumentPdf(type, donnees, { modele = 'sobre_moderne', avecMe
     let currentY = 115;
 
     // Résumé
-    if (donnees.resume) {
+    const resumeTexte = donnees.resume_pro || donnees.resume;
+    if (resumeTexte) {
       doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('PROFIL & OBJECTIF', 40, currentY);
       currentY += 16;
-      doc.fillColor(DARK).fontSize(9.5).font('Helvetica').text(cleanPdfText(donnees.resume), 40, currentY, { width: 515, lineHeight: 1.25 });
+      doc.fillColor(DARK).fontSize(9.5).font('Helvetica').text(cleanPdfText(resumeTexte), 40, currentY, { width: 515, lineHeight: 1.25 });
       currentY = doc.y + 16;
     }
 
@@ -478,9 +547,9 @@ function construireDocumentPdf(type, donnees, { modele = 'sobre_moderne', avecMe
       currentY += 16;
 
       for (const exp of donnees.experiences) {
-        const poste = cleanPdfText(exp.poste || '');
+        const poste = cleanPdfText(exp.titre || exp.poste || '');
         const entreprise = cleanPdfText(exp.entreprise || '');
-        const dates = [exp.date_debut, exp.date_fin || 'Présent'].filter(Boolean).join(' - ');
+        const dates = [exp.date_debut, exp.date_fin || (exp.en_cours ? 'Présent' : '')].filter(Boolean).join(' - ');
 
         doc.fillColor(DARK).fontSize(10).font('Helvetica-Bold').text(poste, 40, currentY);
         if (dates) {

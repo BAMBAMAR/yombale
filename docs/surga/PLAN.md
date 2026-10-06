@@ -371,6 +371,9 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 ### Tranche 18 (Extension Emploi) — Profil Professionnel, CV PDF & Lettres de Motivation (Modèle Mixte & Anti-Hallucination) (06 Octobre 2026 - Matin 3)
 - [x] `DONE` Schéma SQL (`surga_profil_pro`, `surga_documents_emploi`, `surga_usages`) avec index et contraintes Anti-IDOR (`backend/migrate-inline.js`).
 - [x] `DONE` Service des droits & quotas (`backend/services/surga/emploi-service.js`) : application stricte côté serveur des règles gratuites (1 CV sobre avec mention discrète, 1 lettre/mois) et déblocage Premium ou à l'acte (500 FCFA pour un CV sans mention, Option A validée).
+- [x] `DONE` Fiabilisation du générateur de CV PDF : support bidirectionnel transparent des alias de saisie (`titre_professionnel` / `titre_poste`, `adresse_ville` / `adresse`, `resume_pro` / `resume`, `exp.titre` / `exp.poste`) éliminant définitivement l'erreur 400 Bad Request.
+- [x] `DONE` Téléchargement binaire direct et par streaming du fichier PDF A4 natif via `/api/surga/emploi/documents/:id/pdf` avec coordonnées complètes et mise en page soignée.
+- [x] `DONE` Architecture de contrôle des utilisateurs non inscrits (« Découverte libre, Engagement vérifié par WhatsApp OTP ») garantissant l'unicité stricte des quotas gratuits par numéro de téléphone physique (+221...) sur tous les services à quotas.
 - [x] `DONE` Moteur de génération PDF via `pdfkit` (stream direct, format A4, modèles `sobre_moderne` et `classique_pro`, sans photo par défaut, langue française exclusive au lancement D28).
 - [x] `DONE` Règle stricte Zéro-Hallucination : structuration exclusive des données réelles de l'utilisateur sans aucune invention de diplôme, date ni employeur.
 - [x] `DONE` Case à cocher obligatoire : « J'ai relu et je confirme l'exactitude » avant téléchargement.
@@ -379,7 +382,7 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Interface PWA modulaire (< 450 l.) avec `SurgaProfilProTab.tsx` (360 l.), `SurgaCvTab.tsx` (260 l.), `SurgaLettreTab.tsx` (274 l.) et `SurgaEmploiModal.tsx` (387 l.).
 - [x] `DONE` Maintien de la page principale `surga/page.tsx` à 447 lignes (< 450 l.).
 - [x] `DONE` Conformité RGPD intégrale : export et purge de `surga_profil_pro`, `surga_documents_emploi` et `surga_usages` dans `donnees-service.js` et `SurgaDonneesModal.tsx`.
-- [x] `DONE` Tests unitaires Jest portés à **113/113 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
+- [x] `DONE` Tests unitaires Jest portés à **128/128 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 - **Démonstration** : l'utilisateur remplit son profil professionnel, choisit son modèle (Sobre & Moderne ou Classique Épuré), coche la validation d'exactitude et télécharge son CV en PDF haute fidélité ; il colle une annonce pour générer une lettre de motivation au vouvoiement formel et retrouve ses documents générés dans son historique.
 
 ### Tranche 19 (Extension Emploi) — Préparation à l'Entretien d'Embauche (Simulateur In-App & Fiches de Révision) (06 Octobre 2026 - Matin 4)

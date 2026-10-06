@@ -55,6 +55,7 @@ interface SurgaModalsContainerProps {
   onCloseVideos?: () => void
   onCloseEmploi?: () => void
   onCloseDemarches?: () => void
+  onOpenAuth?: () => void
   onCloseAuth?: () => void
   onAuthSuccess?: (user: any) => void
   onDonneesSupprimees?: () => void
@@ -103,6 +104,7 @@ export default function SurgaModalsContainer({
   onCloseVideos = () => {},
   onCloseEmploi = () => {},
   onCloseDemarches = () => {},
+  onOpenAuth,
   onCloseAuth = () => {},
   onAuthSuccess = () => {},
   onDonneesSupprimees,
@@ -222,6 +224,7 @@ export default function SurgaModalsContainer({
             onCloseEmploi?.()
             onClosePremium?.() // Si besoin
           }}
+          onOpenAuth={onOpenAuth}
         />
       )}
       {isDemarchesOpen && (

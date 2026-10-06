@@ -1,17 +1,26 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 4)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 5)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Kiosque des Unes : Visionneuse Agrandie 1080px, Moteur de Zoom 1x à 4x, Pan Glisser-Déplacer, Plein Écran Immersif, Concours & Examens 22 Fiches Officielles Certifiées, Démarches 20 Fiches e-senegal.sn, Sport Temps Réel ESPN & Lions, Sélecteur Météo Portal, Compte OTP WhatsApp, Emploi CV PDF, Séries TV & Lutte)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Emploi & CV : Correction 400 Bad Request, PDF A4 Natif, Normalisation Alias & Contrôle Anti-Abus Non-Inscrits par WhatsApp OTP, Kiosque des Unes : 1080px & Zoom 1x-4x, Concours 22 Fiches Certifiées, Démarches 20 Fiches e-senegal.sn, Sport Temps Réel, Météo Portal, Compte OTP WhatsApp)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose d'un module **Kiosque des Unes de la Presse Sénégalaise** doté d'une visionneuse grand format (1080px / 96vw) avec moteur de zoom interactif multi-paliers (100% à 400%), glisser-déplacer (pan) fluide à la souris et au tactile, mode plein écran immersif HTML5, copie de lien direct et navigation rapide par raccourcis clavier.
+L'assistant personnel de poche **Surga** dispose d'un module **Emploi & Profil Pro** entièrement fiabilisé avec génération et téléchargement de CV PDF A4 professionnel sans erreur 400, supportant harmonieusement les alias de saisie, et gouverné par l'architecture **« Découverte libre, Engagement vérifié par WhatsApp OTP »** sur tous les services à quotas.
 
-0. **Kiosque des Unes : Visionneuse Agrandie, Zoom (1x à 4x), Pan & Plein Écran (100% DONE)** :
+0. **Emploi & CV : Correction Bug 400, PDF A4 & Contrôle Non-Inscrits par WhatsApp OTP (100% DONE)** :
+   - **Correction Bug 400 Bad Request (`backend/services/surga/emploi-service.js` & `backend/routes/surga/emploi.js`)** : Détection et élimination du mismatch de clés entre frontend (`titre_professionnel`, `adresse_ville`, `resume_pro`, `modele_design`, `exp.titre`) et backend (`titre_poste`, `adresse`, `resume`, `modele`, `exp.poste`). Le pont `formaterProfilPourClient` assure désormais la persistance et restitution simultanée de tous les champs.
+   - **Génération & Téléchargement PDF A4 Natif** : Génération immédiate et téléchargement binaire sans friction via `/api/surga/emploi/documents/:id/pdf` ou directement en stream HTTP.
+   - **Architecture Contrôle des Non-Inscrits (« Découverte libre, Engagement vérifié »)** :
+     - *Mode Découverte* : Accès libre à la création de profil, à la navigation, aux catalogues de concours et démarches.
+     - *Engagement Vérifié* : Tout acte engageant un quota gratuit pérenne (1er CV offert, 1 lettre/mois, 1 simulation d'entretien/semaine, alerte immobilière WhatsApp, suivi de concours) exige un compte lié à un numéro de téléphone vérifié par WhatsApp OTP (+221...). L'unicité est infalsifiable et insensible au vidage de cache ou mode privé.
+   - **Intégration Frontend PWA (`SurgaEmploiModal.tsx` & `SurgaModalsContainer.tsx`)** : Transmission fluide de `onOpenAuth` pour guider automatiquement l'usager vers la modale WhatsApp en cas de besoin d'authentification.
+   - **Validation Tests Unitaires** : **128/128 tests unitaires validés (100% en 3.3s)**, compilation TypeScript 0 erreur, linter anti-slop conforme (< 450 l., zéro émoji).
+
+0.bis. **Kiosque des Unes : Visionneuse Agrandie, Zoom (1x à 4x), Pan & Plein Écran (100% DONE)** :
    - **Boîte de Dialogue Agrandie (`SurgaKiosqueLightbox.tsx`, 397 l., < 450 l.)** : Largeur maximale doublée de 540px à 1080px (`width: 96vw`), hauteur adaptative jusqu'à 84vh sans les vignettes, offrant un confort de lecture optimal des manchettes et colonnes de journaux.
    - **Moteur de Zoom Multi-Paliers** : Paliers de 100% à 400% avec boutons ZoomIn (+), ZoomOut (-), Reset 100% (`RotateCcw`) et affichage du pourcentage courant.
    - **Pan Glisser-Déplacer** : Déplacement de l'image au curseur `grab`/`grabbing` à la souris et au glisser tactile sur smartphone quand `zoom > 1`.
@@ -22,7 +31,6 @@ L'assistant personnel de poche **Surga** dispose d'un module **Kiosque des Unes 
      - `SurgaKiosqueZoomControls.tsx` (166 l.) : barre des boutons de zoom et bascule d'affichage des vignettes.
      - `SurgaKiosqueHeader.tsx` (210 l.) : en-tête complet avec titre, date d'édition, navigation et copie de lien.
      - `SurgaKiosqueThumbnails.tsx` (79 l.) : carrousel horizontal des miniatures avec centrage automatique (`scrollIntoView`).
-   - **Validation Tests Unitaires** : 127/127 tests passés (`100%`), `tsc --noEmit` 0 erreur, linter anti-slop conforme.
 
 0.bis. **Concours & Examens du Sénégal : Catalogue Officiel Étendu à 22 Fiches Certifiées (100% DONE)** :
    - **Catalogue Officiel Porté à 22 Concours (`backend/services/surga/concours-service.js`)** :

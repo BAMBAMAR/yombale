@@ -22,6 +22,7 @@ interface SurgaEmploiModalProps {
   isOpen: boolean
   onClose: () => void
   onOpenPremium?: () => void
+  onOpenAuth?: () => void
 }
 
 const PROFIL_INITIAL: ProfilProData = {
@@ -41,6 +42,7 @@ export default function SurgaEmploiModal({
   isOpen,
   onClose,
   onOpenPremium = () => {},
+  onOpenAuth,
 }: SurgaEmploiModalProps) {
   const [activeTab, setActiveTab] = useState<TabEmploi>('profil')
   const [profil, setProfil] = useState<ProfilProData>(PROFIL_INITIAL)
@@ -128,7 +130,12 @@ export default function SurgaEmploiModal({
       const res = await fetch('/api/surga/emploi/cv/generer', {
         method: 'POST',
         headers: getSurgaEmploiHeaders(true),
-        body: JSON.stringify({ modele_design: modele, attestationExactitude: true, profil }),
+        body: JSON.stringify({
+          modele,
+          modele_design: modele,
+          attestationExactitude: true,
+          profil,
+        }),
       })
 
       const contentType = res.headers.get('content-type') || ''
@@ -149,8 +156,14 @@ export default function SurgaEmploiModal({
           const blob = await pdfRes.blob()
           telechargerBlobPdf(blob, `CV_${profil.nom_complet?.replace(/\s+/g, '_') || 'Surga'}.pdf`)
           afficherToast('CV généré et téléchargé avec succès.')
+        } else {
+          const errData = await pdfRes.json().catch(() => ({}))
+          alert(errData.error || 'Erreur lors du téléchargement du PDF.')
         }
         rechargerDonnees()
+      } else if (json.requireAuth && onOpenAuth) {
+        afficherToast('Connexion WhatsApp requise pour sécuriser votre quota gratuit.')
+        onOpenAuth()
       } else if (json.motif === 'limite_atteinte' || json.quotaAtteint) {
         onOpenPremium()
       } else {

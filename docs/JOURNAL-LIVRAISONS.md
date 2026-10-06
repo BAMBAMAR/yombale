@@ -1,5 +1,36 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga — Emploi & CV : Correction Immédiate du Bug 400 Bad Request, Téléchargement PDF A4 Natif & Architecture Contrôle des Non-Inscrits par WhatsApp OTP (Session 2026-10-06 - Nuit 5, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Réponse aux demandes utilisateur :
+      1. « impossible de generer le pdf ... api/surga/emploi/cv/generer:1 Failed to load resource: the server responded with a status of 400 (Bad Request) »
+      2. « comment le code controle les utilisateur non inscrit.puis je par exemple creer plusieurs CV »
+      3. « comment corriger ca » / « pas seulement sur le CV voir tous les service ou cest necessaife »
+    - Diagnostic : Déphasage des clés de profil entre frontend (`titre_professionnel`, `adresse_ville`, `resume_pro`, `modele_design`, `exp.titre`) et backend (`titre_poste`, `adresse`, `resume`, `modele`, `exp.poste`). Lors du `upsertProfilPro`, les champs absents écrasaient la base de données avec des chaînes vides, provoquant une erreur 400 systématique à la génération du CV.
+    - Correctifs appliqués :
+      * `backend/services/surga/emploi-service.js` :
+        - Implémentation de `formaterProfilPourClient` pour synchroniser bidirectionnellement `titre_poste` et `titre_professionnel`, `adresse` et `adresse_ville`, `resume` et `resume_pro`.
+        - Normalisation des tableaux `experiences` (`titre` et `poste`) et `formations` (`diplome` et `titre`, `etablissement` et `ecole`, `annee` et `date`).
+        - Prise en charge transparente de ces alias dans `construireDocumentPdf` pour un rendu A4 soigné avec coordonnées complètes.
+      * `backend/routes/surga/emploi.js` :
+        - Acceptation conjointe de `modele` et `modele_design`.
+        - Validation de profil robuste avec repli sur `profilTransmis`.
+        - Inclusion de `requireAuth: !!req.user.guest` sur les réponses 403 (CV, lettre, simulation entretien).
+      * `frontend-next/src/app/surga/components/SurgaEmploiModal.tsx` & `SurgaModalsContainer.tsx` :
+        - Transmission de la prop `onOpenAuth` pour ouvrir automatiquement `SurgaAuthModal` dès que l'utilisateur non inscrit doit s'authentifier.
+      * `tests/unit/surga.test.js` :
+        - Ajout d'un test dédié validant le support transparent des alias frontend et la non-régression.
+    - Architecture de contrôle des non-inscrits (« Découverte libre, Engagement vérifié ») :
+      - En mode invité : Découverte libre de toutes les fonctionnalités, édition locale du profil, consultation des catalogues.
+      - Engagement et quotas gratuits pérennes : Authentification WhatsApp OTP obligatoire (+221...) pour rattacher de façon unique et infalsifiable le quota d'un utilisateur réel (1er CV gratuit, 1 lettre/mois, 1 simulation/semaine, alertes immo, suivi concours).
+  * **Validation & Qualité** :
+    - `POST /api/surga/emploi/cv/generer` : `STATUS: 200 OK`.
+    - `GET /api/surga/emploi/documents/:id/pdf` : `STATUS: 200 OK`, `Content-Type: application/pdf`, `Header %PDF-` valide (2 121 octets).
+    - 2ème génération sans abonnement : bloquée en `403` avec `quotaAtteint: true` et `requireAuth: true`.
+    - `npx tsc --noEmit` : 0 erreur.
+    - Tests Jest : 128/128 validés (`128 passed, 128 total`).
+    - Linter anti-slop : Conforme (< 450 lignes, zéro émoji).
+ 
 - **Surga — Kiosque des Unes de la Presse Sénégalaise : Visionneuse Agrandie, Zoom Interactif (1x à 4x), Glisser-Déplacer Pan & Plein Écran Immersif (Session 2026-10-06 - Nuit 4, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Réponse à la demande utilisateur : « agrandir si possible et ajouter des bouton zoom agrandir plein ecran etc ».

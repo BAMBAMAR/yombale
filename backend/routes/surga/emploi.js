@@ -94,7 +94,8 @@ router.get('/emploi/droits', identifierSurgaUser, async (req, res) => {
 router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { modele = 'sobre_moderne', attestationExactitude = false, profil: profilTransmis } = req.body;
+    const { attestationExactitude = false, profil: profilTransmis } = req.body;
+    const modele = req.body.modele || req.body.modele_design || 'sobre_moderne';
 
     if (!attestationExactitude) {
       return res.status(400).json({
@@ -108,8 +109,11 @@ router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
       await emploiService.upsertProfilPro(userId, profilTransmis);
     }
 
-    const profil = await emploiService.getProfilPro(userId) || profilTransmis;
-    if (!profil || !profil.nom_complet || (!profil.titre_poste && !profil.titre_professionnel)) {
+    const profil = (await emploiService.getProfilPro(userId)) || profilTransmis;
+    const nomComplet = (profil?.nom_complet || profilTransmis?.nom_complet || '').trim();
+    const titrePoste = (profil?.titre_professionnel || profil?.titre_poste || profilTransmis?.titre_professionnel || profilTransmis?.titre_poste || '').trim();
+
+    if (!profil || !nomComplet || !titrePoste) {
       return res.status(400).json({
         success: false,
         error: 'Votre profil est incomplet. Veuillez renseigner au moins votre nom complet, votre titre de poste et vos coordonnées.',
@@ -124,11 +128,11 @@ router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
         motif: droit.motif,
         quotaAtteint: true,
         prix_acte_xof: 500,
+        requireAuth: !!req.user.guest,
       });
     }
 
-    const titrePoste = profil.titre_poste || profil.titre_professionnel || 'Professionnel';
-    const titre = `CV - ${profil.nom_complet} (${titrePoste})`;
+    const titre = `CV - ${nomComplet} (${titrePoste || 'Professionnel'})`;
     const doc = await emploiService.sauvegarderDocumentEmploi({
       userId,
       type: 'CV',
@@ -197,6 +201,7 @@ router.post('/emploi/lettre/generer', identifierSurgaUser, async (req, res) => {
         error: droit.message,
         motif: droit.motif,
         quotaAtteint: true,
+        requireAuth: !!req.user.guest,
       });
     }
 

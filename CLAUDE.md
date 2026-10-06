@@ -49,6 +49,39 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Emploi & CV : Correction Immédiate du Bug 400 Bad Request, Téléchargement PDF A4 Natif & Architecture Contrôle des Non-Inscrits par WhatsApp OTP (Session 2026-10-06 - Nuit 5, branche `feature/surga`)** :
+  - *Demandes Utilisateur & Constat* :
+    1. « impossible de generer le pdf ... api/surga/emploi/cv/generer:1 Failed to load resource: the server responded with a status of 400 (Bad Request) »
+    2. « comment le code controle les utilisateur non inscrit.puis je par exemple creer plusieurs CV »
+    3. « comment corriger ca » / « pas seulement sur le CV voir tous les service ou cest necessaife »
+  - *Cause Racine du Bug 400 CV* :
+    - Déphasage des noms de clés entre le formulaire frontend (`titre_professionnel`, `adresse_ville`, `resume_pro`, `modele_design`, `exp.titre`) et le service backend (`titre_poste`, `adresse`, `resume`, `modele`, `exp.poste`).
+    - Dans `upsertProfilPro`, la lecture stricte de `data.titre_poste` entraînait l'écrasement en base PostgreSQL par une chaîne vide `''`.
+    - La condition de garde de `POST /api/surga/emploi/cv/generer` (`(!profil.titre_poste && !profil.titre_professionnel)`) évaluait donc `true` et retournait systématiquement une erreur 400 !
+  - *Correctifs Appliqués* :
+    1. `backend/services/surga/emploi-service.js` :
+       - Fonction d'harmonisation bidirectionnelle `formaterProfilPourClient` : conserve et synchronise à la fois `titre_poste` et `titre_professionnel`, `adresse` et `adresse_ville`, `resume` et `resume_pro`, ainsi que `exp.titre` / `exp.poste` et `form.diplome` / `form.titre`.
+       - `upsertProfilPro` : accepte les deux variantes pour stocker des données complètes et exactes.
+       - `construireDocumentPdf` : lit tous les alias pour un rendu PDF A4 impeccable (coordonnées complètes, titre mis en valeur, résumé et postes d'expériences).
+    2. `backend/routes/surga/emploi.js` :
+       - Support souple de `modele` et `modele_design`.
+       - Validation tolérante avec repli sur `profilTransmis`.
+       - Ajout de `requireAuth: !!req.user.guest` dans les réponses 403 pour notifier le front que l'engagement vérifié requiert une session.
+    3. `frontend-next/src/app/surga/components/SurgaEmploiModal.tsx` & `SurgaModalsContainer.tsx` :
+       - Envoi explicite de `modele` et `modele_design`.
+       - Interception de `json.requireAuth` pour ouvrir automatiquement `SurgaAuthModal` via la prop `onOpenAuth`.
+  - *Architecture Contrôle des Non-Inscrits (« Découverte libre, Engagement vérifié »)* :
+    - **Découverte libre (Sans compte)** : Exploration complète de l'interface, saisie et enregistrement local du Profil Pro, consultation des 22 concours et 20 démarches, revue de presse, météo, etc.
+    - **Engagement vérifié (Unicité par WhatsApp OTP)** : Le numéro de téléphone sénégalais (+221...) est la clé d'unicité physique infalsifiable pour consommer les quotas gratuits pérennes (1er CV gratuit, lettre mensuelle, simulation hebdomadaire, alertes immo, suivi de concours). Impossible de contourner en mode incognito ou en vidant le cache du navigateur.
+  - *Validation & Tests* :
+    - Test direct `POST /api/surga/emploi/cv/generer` : `STATUS: 200 OK` (Document CV généré).
+    - Test direct `GET /api/surga/emploi/documents/:id/pdf` : `STATUS: 200 OK`, `Content-Type: application/pdf`, `Header %PDF-` valide (2 121 octets).
+    - Test quota : 2ème tentative bloquée en `403 Limite atteinte` avec `requireAuth: true`.
+    - Tests unitaires Jest : **128/128 tests passés** (100% dont nouveau test d'alias).
+    - Compilation TypeScript : `npx tsc --noEmit` **0 erreur**.
+    - Règle de déploiement : Commit local préparé sans aucun `git push` automatique.
+
+
 - **Surga — Kiosque des Unes de la Presse Sénégalaise : Visionneuse Agrandie, Zoom Interactif (1x à 4x), Glisser-Déplacer Pan & Plein Écran Immersif (Session 2026-10-06 - Nuit 4, branche `feature/surga`)** :
   - *Demande Utilisateur & Constat* : « agrandir si possible et ajouter des bouton zoom agrandir plein ecran etc » — L'affichage de la Une de journal était restreint à `maxWidth: 540px` avec `maxHeight: 64vh`, sans possibilité d'agrandir, sans aucun zoom pour lire les colonnes et articles, et sans mode plein écran.
   - *Correctifs Apportés* :

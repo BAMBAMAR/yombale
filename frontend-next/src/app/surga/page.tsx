@@ -419,6 +419,7 @@ export default function SurgaPage() {
         onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)}
         onCloseDonnees={() => setIsDonneesOpen(false)} onCloseVideos={() => setIsVideosOpen(false)}
         onCloseEmploi={() => setIsEmploiOpen(false)} onCloseDemarches={() => setIsDemarchesOpen(false)}
+        onOpenAuth={() => setIsAuthOpen(true)}
         onCloseAuth={() => setIsAuthOpen(false)}
         onAuthSuccess={handleAuthSuccess}
         onInjectMontantCalc={() => setActiveTab('depenses')}

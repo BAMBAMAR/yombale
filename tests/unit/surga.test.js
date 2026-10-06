@@ -1594,6 +1594,33 @@ describe('Module Surga — Tranches 1 & 2', () => {
       const lu = await emploiService.getProfilPro(userId);
       expect(lu).toBeDefined();
       expect(lu.email).toBe('moussa.diop@example.com');
+      expect(lu.titre_professionnel).toBe('Comptable Général SYSCOHADA');
+      expect(lu.adresse_ville).toBeDefined();
+    });
+
+    test('Support transparent des alias frontend (titre_professionnel, adresse_ville, resume_pro)', async () => {
+      const userId = 'user-pro-alias-' + Date.now();
+      const profilFrontend = {
+        nom_complet: 'Fatou Ndiaye',
+        titre_professionnel: 'Responsable Marketing',
+        adresse_ville: 'Dakar Fann',
+        resume_pro: 'Experte en acquisition digitale et stratégie locale.',
+        experiences: [{ titre: 'Chef de projet', entreprise: 'Agence Teranga', date_debut: '2021' }],
+        formations: [{ diplome: 'Licence Pro', etablissement: 'ISM Dakar', annee: '2020' }],
+      };
+
+      const sauve = await emploiService.upsertProfilPro(userId, profilFrontend);
+      expect(sauve.titre_poste).toBe('Responsable Marketing');
+      expect(sauve.titre_professionnel).toBe('Responsable Marketing');
+      expect(sauve.adresse).toBe('Dakar Fann');
+      expect(sauve.adresse_ville).toBe('Dakar Fann');
+      expect(sauve.resume).toContain('Experte');
+      expect(sauve.resume_pro).toContain('Experte');
+      expect(sauve.experiences[0].poste).toBe('Chef de projet');
+
+      const lu = await emploiService.getProfilPro(userId);
+      expect(lu.titre_professionnel).toBe('Responsable Marketing');
+      expect(lu.adresse_ville).toBe('Dakar Fann');
     });
 
     test('Règle Zéro-Hallucination : la structuration du CV reflète uniquement les données déclarées', async () => {
