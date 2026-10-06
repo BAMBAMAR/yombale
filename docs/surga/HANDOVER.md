@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 suite — Refonte Ergonomique Mobile-First, Auto-Hide FAB & Éradication Troncatures)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 suite - 2 — Écran Sports : Titre Monoligne, Priorité Équipes Favorites & Limitation Ergonomique)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Refonte Ergonomique Mobile-First Déployée — FAB Auto-Hide au scroll, SportCard 3 étages multiline pleine largeur, Header mobile allégé, Scrollbars filtres masquées, Titres notes multilignes — 100% Composants < 450 l. — Build & 158 Tests Unitaires Validés (Zéro Régression)**  
+> **Statut global** : 🟢 **Écran Sports Raffiné — Titre « Sports » monoligne, Priorité absolue aux équipes favorites du compte (badge Favori), Limitation à 3 matchs avec bouton d'extension, Sous-composant `SurgaSportMatchItem.tsx` extrait (< 450 l.) — Build & 158 Tests Unitaires Validés (Zéro Régression)**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
@@ -11,7 +11,13 @@
 
 L'assistant personnel de poche **Surga** a fait l'objet d'un sprint ciblé d'optimisation ergonomique mobile-first, résolvant l'ensemble des défauts d'affichage et de navigation identifiés sur écrans réels (360px - 390px) suite aux retours utilisateurs :
 
-0. **Refonte Ergonomique Mobile-First & Polish Réel (100% DONE — Nuit 9 suite)** :
+0. **Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique (100% DONE — Nuit 9 suite - 2)** :
+   - **Titre Monoligne « Sports » (`SurgaSportCard.tsx`, 409 l.)** : Suppression de l'intitulé à rallonge « Sport & Équipe Nationale » pour un titre épuré et net qui ne saute jamais de ligne sur petit écran.
+   - **Priorisation Absolue des Équipes Favorites** : Matchs impliquant les clubs suivis par l'utilisateur placés en tête absolue du flux (`trierMatchsParPriorite`), rehaussés par le badge `<Star size={10} fill="currentColor" /> Favori`.
+   - **Limitation Ergonomique à 3 Rencontres** : Hauteur sous contrôle sur mobile avec bouton tactile « Voir plus de rencontres (+X) » / « Afficher moins de matchs ».
+   - **Modularisation Senior (< 450 l.)** : Découpage de `SurgaSportMatchItem.tsx` (280 l.) assurant une architecture modulaire et pérenne.
+
+0.bis. **Refonte Ergonomique Mobile-First & Polish Réel (100% DONE — Nuit 9 suite)** :
    - **Bouton Flottant Vocal Auto-Hide (`useFabAutoHide.ts`, `page.tsx`, `surga.css`)** : Élimination du masquage physique d'articles et d'actions. Le FAB s'escamote automatiquement lors du défilement descendant (`translateY(110px) scale(0.75) opacity: 0`) et réapparaît à la remontée ou à l'arrêt du scroll. Format compacté à 48px sur mobile (`<= 480px`) et padding bas du conteneur sécurisé à 120px.
    - **Cartes Sport Multiline & Zéro Troncature (`SurgaSportCard.tsx`, 444 l.)** : Refonte en 3 étages verticaux. Noms complets des clubs affichés sur 100% de la largeur sans aucune troncature ni `whiteSpace: 'nowrap'` (« Génération Foot vs Casa Sports », « Al Fateh vs Al Kholood »). Boutons d'action compactés et calés sur la ligne inférieure de métadonnées. Tokens résiduels Nopalou purgés au profit de `--surga-*`.
    - **Cartes d'Actualités Monoligne Méta (`SurgaNewsList.tsx`, 213 l.)** : Verrouillage de la date relative et des sources (`Leral.net • Il y a 1 min`) avec `whiteSpace: 'nowrap'` et `flexShrink: 0`, empêchant la cassure sur 2 lignes horizontales.
@@ -368,7 +374,7 @@ L'assistant personnel de poche **Surga** a fait l'objet d'un sprint ciblé d'opt
 | Démarches Administratives Vérifiées | `src/app/surga/components/SurgaDemarchesModal.tsx` (415 l.), `SurgaDemarcheDetailModal.tsx` (384 l.), `SurgaDemarcheCard.tsx` (190 l.), `SurgaDemarchePiecesSection.tsx` (92 l.), `SurgaDemarcheSignalementForm.tsx` (114 l.), `SurgaDemarcheNonCouvertBanner.tsx` (51 l.) |
 | Alertes Vidéos (Séries & Lutte) | `src/app/surga/components/SurgaVideosModal.tsx` (393 l.), `SurgaVideoCard.tsx` (96 l.) |
 | Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (412 l.), `SurgaMeteoLocaliteModal.tsx` (382 l.), `SurgaMeteoPrevisions.tsx` (101 l.), `src/lib/surga-meteo.ts` (198 l.), `src/app/api/surga/meteo/route.ts` (166 l.) |
-| Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx`, `SurgaSportCustomModal.tsx` |
+| Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx` (409 l.), `SurgaSportMatchItem.tsx` (280 l.), `SurgaSportCustomModal.tsx` (402 l.) |
 | Revue de Presse & Kiosque | `src/app/surga/components/SurgaPresseCard.tsx` (carrousel horizontal) |
 | Bons plans & Adresses | `src/app/surga/components/SurgaPlaceCard.tsx` (354 l.), `SurgaPlaceDetailModal.tsx` (393 l.), `SurgaPlacesModal.tsx` (382 l.), `backend/data/surga-places-catalogue.json` (927 l., 42 adresses) |
 | Briques & Vues Surga | `src/app/surga/components/Surga*.tsx` (tous < 450 l.) |

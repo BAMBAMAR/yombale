@@ -1,4 +1,26 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique (Session 2026-10-06 - Nuit 9 suite, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Épuration du titre de la carte sportive : passage de l'encombrant « Sport & Équipe Nationale » à « Sports » seulement, monoligne sans troncature.
+    - Priorisation absolue des rencontres impliquant les équipes favorites du compte (définies dans `surga_preferences.equipes_suivies` ou en mémoire locale). Les matchs favoris sont propulsés en tête de liste avec un badge distingué `<Star /> Favori`.
+    - Plafonnement ergonomique du flux à 3 rencontres par défaut pour aérer la navigation verticale sur mobile, avec bouton d'expansion fluide « Voir plus de rencontres (+X) » / « Afficher moins de matchs ».
+    - Modularisation senior : extraction de `SurgaSportMatchItem.tsx` (280 l.) pour maintenir `SurgaSportCard.tsx` (409 l.) scrupuleusement sous le plafond des 450 lignes.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Titre Épuré Monoligne (`SurgaSportCard.tsx`)** :
+       - `<span className="surga-card-title">Sports</span>` garantit un affichage sur une seule ligne à côté du trophée même sur écran très étroit (320px).
+    2. **Algorithme de Tri Prioritaire (`trierMatchsParPriorite`, `SurgaSportCard.tsx`, `sport-service.js`)** :
+       - Front-end et Back-end : les matchs dont l'équipe à domicile, l'équipe à l'extérieur ou les buteurs correspondent aux équipes favorites de l'utilisateur sont placés en priorité absolue (devant les autres rencontres).
+       - Badge visuel distinctif `<Star size={10} fill="currentColor" /> Favori` sur chaque match d'une équipe suivie.
+    3. **Limitation Ergonomique à 3 Rencontres** :
+       - Par défaut, seuls les 3 premiers matchs prioritaires sont rendus (`LIMITE_MATCHS_DEFAUT = 3`).
+       - Un bouton d'action tactile permet d'afficher ou masquer le reste des rencontres en un clic.
+    4. **Modularisation Senior (< 450 l.)** :
+       - Création de `SurgaSportMatchItem.tsx` (280 l.) hébergeant le rendu d'un match (3 étages, score, buteurs, diffuseur, boutons d'action Rappel/Budget/Partage).
+  * **Validation Technique & Scores** :
+    - TypeScript : `npx tsc --noEmit` 0 erreur.
+    - Tests Unitaires Jest : **158/158 tests PASS (100%)**.
+    - Règle 450 lignes : 100% conforme.
+
 - **Surga / Refonte Ergonomique Mobile-First, Auto-Hide FAB & Éradication Troncatures (Session 2026-10-06 - Nuit 9 suite, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Traitement immédiat des régressions et défauts ergonomiques identifiés sur écrans mobiles réels (360px - 390px) suite aux retours utilisateurs.

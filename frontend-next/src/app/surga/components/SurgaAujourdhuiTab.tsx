@@ -201,7 +201,10 @@ export default function SurgaAujourdhuiTab({
 
       {/* Section Briques : Sport & Résultats */}
       {preferences?.modules_actifs?.includes('sport') && (
-        <SurgaSportCard sports={briefingData?.sports || []} />
+        <SurgaSportCard
+          sports={briefingData?.sports || []}
+          equipesFavoritesCompte={preferences?.equipes_suivies}
+        />
       )}
 
       {/* Section Briques : Trafic Dakar */}

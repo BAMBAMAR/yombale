@@ -3,6 +3,28 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 9 suite - 2] — Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique
+- **Objectif Atteint :**
+  - Simplifier le titre de la section sportive : adoption de « Sports » en remplacement de « Sport & Équipe Nationale » pour éliminer tout retour à la ligne sur mobile.
+  - Prioriser immédiatement les matchs des équipes favorites du compte (qu'elles proviennent de `surga_preferences.equipes_suivies` ou de la configuration locale).
+  - Plafonner l'affichage à 3 rencontres par défaut pour désengorger le viewport mobile, avec bouton d'expansion/réduction fluide.
+  - Extraire `SurgaSportMatchItem.tsx` (280 l.) pour préserver `SurgaSportCard.tsx` (409 l.) sous le seuil strict de 450 lignes.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composant Sport Principal (`frontend-next/src/app/surga/components/SurgaSportCard.tsx`, 409 l.)* :
+     - Titre monoligne `Sports` avec icône `Trophy`.
+     - Algorithme `trierMatchsParPriorite` propulsant les équipes favorites en tête absolue.
+     - État `afficherTous` limitant à 3 rencontres par défaut avec bouton tactile `ChevronDown` / `ChevronUp`.
+  2. *Sous-composant Match Dédié (`frontend-next/src/app/surga/components/SurgaSportMatchItem.tsx`, 280 l.)* :
+     - Rendu modulaire du match avec badge `<Star /> Favori` sur fond ambre doux pour les équipes suivies.
+  3. *Onglet Aujourd'hui (`frontend-next/src/app/surga/components/SurgaAujourdhuiTab.tsx`, 244 l.)* :
+     - Transmission dynamique de `preferences?.equipes_suivies` à `SurgaSportCard`.
+  4. *Service Backend Sport (`backend/services/surga/sport-service.js`, 307 l.)* :
+     - Priorisation des rencontres favorites (`[...favoris, ...autres]`) dans `filtrerMatchsSport`.
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS (100%).
+  - Linter Anti-AI-Slop : 100% fichiers < 450 l., 0 émoji Unicode dans l'UI.
+
 ### [2026-10-06 — Nuit 9 suite] — Refonte Ergonomique Mobile-First, Auto-Hide FAB & Éradication Troncatures
 - **Objectif Atteint :**
   - Résoudre immédiatement l'ensemble des défauts d'affichage et de navigation constatés sur appareils mobiles réels (360px - 390px) suite aux retours de l'utilisateur.

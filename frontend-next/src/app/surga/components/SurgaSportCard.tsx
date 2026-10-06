@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Trophy, Calendar, SlidersHorizontal, RefreshCw, Radio, Bell, BellCheck, Wallet } from 'lucide-react'
-import SurgaShareButton from './SurgaShareButton'
+import React, { useState, useEffect, useMemo } from 'react'
+import { Trophy, SlidersHorizontal, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import SurgaSportCustomModal from './SurgaSportCustomModal'
-import { formaterPartageSport } from '@/lib/surga-share'
+import SurgaSportMatchItem from './SurgaSportMatchItem'
 import {
   estMatchRappele,
   toggleRappelMatch,
@@ -29,41 +28,97 @@ export interface SportEventItem {
 
 interface SurgaSportCardProps {
   sports: SportEventItem[]
+  equipesFavoritesCompte?: string[]
   onRefresh?: () => void
 }
 
-function formatMatchDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr)
-    const isThisYear = d.getFullYear() === new Date().getFullYear()
-    return new Intl.DateTimeFormat('fr-FR', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      ...(isThisYear ? {} : { year: 'numeric' }),
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(d)
-  } catch {
-    return 'Prochainement'
-  }
+const LIMITE_MATCHS_DEFAUT = 3
+
+export function estMatchEquipeFavorite(match: SportEventItem, favorites: string[]): boolean {
+  if (!favorites || favorites.length === 0) return false
+  const dom = (match.equipe_domicile || '').toLowerCase().trim()
+  const ext = (match.equipe_exterieur || '').toLowerCase().trim()
+  const but = (match.buteurs || '').toLowerCase().trim()
+  return favorites.some((fav) => {
+    const f = fav.toLowerCase().trim()
+    if (!f) return false
+    return (
+      dom.includes(f) ||
+      ext.includes(f) ||
+      f.includes(dom) ||
+      f.includes(ext) ||
+      but.includes(f)
+    )
+  })
 }
 
-export default function SurgaSportCard({ sports: initialSports }: SurgaSportCardProps) {
+export function trierMatchsParPriorite(liste: SportEventItem[], favorites: string[]): SportEventItem[] {
+  return [...liste].sort((a, b) => {
+    const aFav = estMatchEquipeFavorite(a, favorites)
+    const bFav = estMatchEquipeFavorite(b, favorites)
+
+    // 1. En priorité absolue : les équipes favorites du compte
+    if (aFav && !bFav) return -1
+    if (!aFav && bFav) return 1
+
+    // 2. Les matchs EN DIRECT
+    if (a.statut === 'EN_DIRECT' && b.statut !== 'EN_DIRECT') return -1
+    if (b.statut === 'EN_DIRECT' && a.statut !== 'EN_DIRECT') return 1
+
+    // 3. Les matchs A_VENIR par ordre chronologique
+    if (a.statut === 'A_VENIR' && b.statut === 'A_VENIR') {
+      return new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime()
+    }
+    if (a.statut === 'A_VENIR' && b.statut === 'TERMINE') return -1
+    if (a.statut === 'TERMINE' && b.statut === 'A_VENIR') return 1
+
+    // 4. Les matchs TERMINE par ordre antéchronologique
+    return new Date(b.date_debut).getTime() - new Date(a.date_debut).getTime()
+  })
+}
+
+export default function SurgaSportCard({
+  sports: initialSports,
+  equipesFavoritesCompte,
+}: SurgaSportCardProps) {
   const [matchs, setMatchs] = useState<SportEventItem[]>(initialSports || [])
   const [loading, setLoading] = useState(false)
   const [filtreCategorie, setFiltreCategorie] = useState<string>('tous')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [afficherTous, setAfficherTous] = useState(false)
+
   const [equipesFavorites, setEquipesFavorites] = useState<string[]>(() => {
+    if (Array.isArray(equipesFavoritesCompte) && equipesFavoritesCompte.length > 0) {
+      return equipesFavoritesCompte
+    }
     try {
       const stored = localStorage.getItem('surga_equipes_favorites')
-      return stored ? JSON.parse(stored) : []
-    } catch {
-      return []
-    }
+      if (stored) return JSON.parse(stored)
+      const prefStored = localStorage.getItem('surga_preferences')
+      if (prefStored) {
+        const p = JSON.parse(prefStored)
+        if (Array.isArray(p.equipes_suivies) && p.equipes_suivies.length > 0) {
+          return p.equipes_suivies
+        }
+      }
+    } catch {}
+    return ['Équipe Nationale du Sénégal']
   })
+
   const [matchsRappeles, setMatchsRappeles] = useState<string[]>([])
   const [matchsBudgetes, setMatchsBudgetes] = useState<string[]>([])
+
+  useEffect(() => {
+    if (Array.isArray(equipesFavoritesCompte) && equipesFavoritesCompte.length > 0) {
+      setEquipesFavorites(equipesFavoritesCompte)
+    }
+  }, [equipesFavoritesCompte])
+
+  useEffect(() => {
+    if (Array.isArray(initialSports) && initialSports.length > 0) {
+      setMatchs(initialSports)
+    }
+  }, [initialSports])
 
   useEffect(() => {
     const synchroniserEtat = () => {
@@ -127,6 +182,7 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
   }
 
   useEffect(() => {
+    setAfficherTous(false)
     if (filtreCategorie === 'mes_equipes') {
       rechargerScores('mes_equipes', equipesFavorites)
     } else if (filtreCategorie !== 'tous') {
@@ -146,15 +202,44 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
     }
   }
 
+  // Tri par priorité : équipes favorites du compte en tête absolue
+  const matchsTries = useMemo(() => {
+    return trierMatchsParPriorite(matchs, equipesFavorites)
+  }, [matchs, equipesFavorites])
+
+  // Limitation ergonomique du nombre de matchs affichés
+  const matchsAffiches = useMemo(() => {
+    if (afficherTous) return matchsTries
+    return matchsTries.slice(0, LIMITE_MATCHS_DEFAUT)
+  }, [matchsTries, afficherTous])
+
   return (
     <div className="surga-card" style={{ marginBottom: 16 }}>
-      {/* En-tête */}
-      <div className="surga-card-header" style={{ marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Trophy size={17} color="var(--accent, #C75B00)" />
-          <span className="surga-card-title">Sport &amp; Équipe Nationale</span>
+      {/* En-tête : Sports seulement, monoligne sans troncature */}
+      <div
+        className="surga-card-header"
+        style={{
+          marginBottom: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexShrink: 1 }}>
+          <Trophy size={17} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
+          <span
+            className="surga-card-title"
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            Sports
+          </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           <button
             type="button"
             onClick={() => rechargerScores()}
@@ -165,7 +250,7 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
               border: 'none',
               padding: 4,
               cursor: loading ? 'wait' : 'pointer',
-              color: 'var(--text3, #73675E)',
+              color: 'var(--surga-text3, #73675E)',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -181,7 +266,7 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
               border: 'none',
               padding: 4,
               cursor: 'pointer',
-              color: 'var(--accent, #C75B00)',
+              color: 'var(--surga-accent, #D97706)',
               display: 'flex',
               alignItems: 'center',
               gap: 4,
@@ -197,6 +282,7 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
 
       {/* Onglets de filtres rapides */}
       <div
+        className="surga-scroll-tabs"
         style={{
           display: 'flex',
           gap: 6,
@@ -210,6 +296,7 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
       >
         {[
           { id: 'tous', label: 'Tous les matchs' },
+          { id: 'mes_equipes', label: `Mes clubs (${equipesFavorites.length})` },
           { id: 'ucl', label: 'Ligue des Champions' },
           { id: 'premier_league', label: 'Premier League' },
           { id: 'laliga', label: 'LaLiga' },
@@ -218,7 +305,6 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
           { id: 'saudi_pro', label: 'Saudi Pro League' },
           { id: 'nationale', label: 'Lions du Sénégal' },
           { id: 'ligue1_sn', label: 'Ligue 1 SN' },
-          { id: 'mes_equipes', label: `Mes clubs (${equipesFavorites.length})` },
         ].map((tab) => {
           const isActive = filtreCategorie === tab.id
           return (
@@ -245,192 +331,71 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
         })}
       </div>
 
-      {/* Liste des matchs */}
+      {/* Liste des matchs limités et ordonnés par priorité */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {matchs.length === 0 ? (
-          <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text3, #73675E)', fontSize: 13 }}>
+        {matchsAffiches.length === 0 ? (
+          <div style={{ padding: '16px', textAlign: 'center', color: 'var(--surga-text3, #73675E)', fontSize: 13 }}>
             Aucun match trouvé pour ce filtre.
           </div>
         ) : (
-          matchs.map((match, idx) => {
-            const isDirect = match.statut === 'EN_DIRECT'
-            const isTermine = match.statut === 'TERMINE'
-            const hasScore = match.score_domicile !== null && match.score_exterieur !== null
+          matchsAffiches.map((match, idx) => {
+            const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
+            const estFavori = estMatchEquipeFavorite(match, equipesFavorites)
+            const isRappele = matchsRappeles.includes(matchKey)
+            const isBudgete = matchsBudgetes.includes(matchKey)
 
             return (
-              <div
+              <SurgaSportMatchItem
                 key={match.id || idx}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: '12px 14px',
-                  borderRadius: 12,
-                  backgroundColor: isDirect ? 'rgba(217, 119, 6, 0.04)' : 'var(--surga-surface, #FFFFFF)',
-                  border: isDirect ? '1px solid var(--surga-accent, #D97706)' : '1px solid var(--surga-border, #E2E8F0)',
-                  gap: 8,
-                  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
-                }}
-              >
-                {/* Étage 1 : Compétition & Statut ou Score */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--surga-accent, #D97706)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {match.competition}
-                    </span>
-                    {isDirect && (
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          fontSize: 10,
-                          fontWeight: 900,
-                          color: '#FFFFFF',
-                          backgroundColor: '#DC2626',
-                          padding: '1px 6px',
-                          borderRadius: 4,
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        <Radio size={10} />
-                        DIRECT {match.minute_jeu || ''}
-                      </span>
-                    )}
-                  </div>
-
-                  {hasScore ? (
-                    <div
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 900,
-                        color: isDirect ? '#DC2626' : 'var(--surga-primary, #0F172A)',
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                        backgroundColor: 'var(--surga-bg, #F8FAFC)',
-                        border: isDirect ? '1px solid #DC2626' : '1px solid var(--surga-border, #E2E8F0)',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {match.score_domicile} - {match.score_exterieur}
-                    </div>
-                  ) : isTermine ? (
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                        backgroundColor: 'rgba(5, 150, 105, 0.08)',
-                        color: 'var(--surga-emerald, #059669)',
-                        flexShrink: 0,
-                      }}
-                    >
-                      Terminé
-                    </span>
-                  ) : (
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                        backgroundColor: 'rgba(15, 23, 42, 0.06)',
-                        color: 'var(--surga-primary, #0F172A)',
-                        flexShrink: 0,
-                      }}
-                    >
-                      À venir
-                    </span>
-                  )}
-                </div>
-
-                {/* Étage 2 : Noms complets des équipes (Pleine largeur, zéro troncature sauvage) */}
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--surga-primary, #0F172A)', lineHeight: 1.35, wordBreak: 'break-word' }}>
-                  {match.equipe_domicile} — {match.equipe_exterieur}
-                </div>
-
-                {match.buteurs && (
-                  <div style={{ fontSize: 11, color: 'var(--surga-emerald, #059669)', fontStyle: 'italic' }}>
-                    {match.buteurs}
-                  </div>
-                )}
-
-                {/* Étage 3 : Date/Heure/Diffuseur à gauche, Actions rapides à droite */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingTop: 4, borderTop: '1px solid var(--surga-border, #F1F5F9)' }}>
-                  <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                    <Calendar size={12} color="var(--surga-text3, #94A3B8)" />
-                    <span style={{ fontWeight: 600 }}>{formatMatchDate(match.date_debut)}</span>
-                    {match.diffuseur && (
-                      <span style={{ color: 'var(--surga-text3, #94A3B8)' }}>• {match.diffuseur}</span>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    {!isTermine && (() => {
-                      const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
-                      const estRappele = matchsRappeles.includes(matchKey)
-                      const estBudgete = matchsBudgetes.includes(matchKey)
-                      const getBtnStyle = (actif: boolean, accentColor = 'var(--surga-accent, #D97706)'): React.CSSProperties => ({
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        border: '1px solid',
-                        borderColor: actif ? accentColor : 'var(--surga-border, #E2E8F0)',
-                        backgroundColor: actif ? 'rgba(217, 119, 6, 0.12)' : 'var(--surga-surface, #FFFFFF)',
-                        color: actif ? accentColor : 'var(--surga-primary, #0F172A)',
-                        cursor: 'pointer',
-                        padding: 0,
-                      })
-
-                      return (
-                        <>
-                          <button
-                            type="button"
-                            onClick={(e) => handleToggleRappel(match, e)}
-                            title={estRappele ? "Rappel actif — Cliquer pour désactiver" : "Programmer un rappel dans l'Agenda"}
-                            aria-label="Rappel match"
-                            style={getBtnStyle(estRappele)}
-                          >
-                            {estRappele ? <BellCheck size={14} color="var(--surga-accent, #D97706)" /> : <Bell size={14} />}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={(e) => handleToggleBudget(match, e)}
-                            title={estBudgete ? "Budget noté — Cliquer pour retirer" : "Prévoir un budget sortie match"}
-                            aria-label="Budget match"
-                            style={getBtnStyle(estBudgete, 'var(--surga-emerald, #059669)')}
-                          >
-                            <Wallet size={14} color={estBudgete ? 'var(--surga-emerald, #059669)' : undefined} />
-                          </button>
-                        </>
-                      )
-                    })()}
-
-                    <SurgaShareButton
-                      payload={{
-                        titre: `Surga Sport : ${match.equipe_domicile} vs ${match.equipe_exterieur}`,
-                        texte: formaterPartageSport({
-                          competition: match.competition,
-                          equipeDomicile: match.equipe_domicile,
-                          equipeExterieur: match.equipe_exterieur,
-                          score: hasScore ? `${match.score_domicile} - ${match.score_exterieur}` : undefined,
-                          heure: !isTermine ? formatMatchDate(match.date_debut) : undefined,
-                          statut: match.statut,
-                        }),
-                      }}
-                      taille="sm"
-                    />
-                  </div>
-                </div>
-              </div>
+                match={match}
+                idx={idx}
+                estFavori={estFavori}
+                isRappele={isRappele}
+                isBudgete={isBudgete}
+                onToggleRappel={handleToggleRappel}
+                onToggleBudget={handleToggleBudget}
+              />
             )
           })
         )}
       </div>
+
+      {/* Bouton ergonomique d'extension pour limiter la hauteur par défaut */}
+      {matchsTries.length > LIMITE_MATCHS_DEFAUT && (
+        <button
+          type="button"
+          onClick={() => setAfficherTous((prev) => !prev)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            width: '100%',
+            padding: '8px 12px',
+            marginTop: 8,
+            borderRadius: 10,
+            backgroundColor: 'var(--surga-bg, #F8FAFC)',
+            border: '1px solid var(--surga-border, #E2E8F0)',
+            color: 'var(--surga-primary, #0F172A)',
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          {afficherTous ? (
+            <>
+              <ChevronUp size={14} />
+              <span>Afficher moins de matchs</span>
+            </>
+          ) : (
+            <>
+              <ChevronDown size={14} />
+              <span>Voir plus de rencontres ({matchsTries.length - LIMITE_MATCHS_DEFAUT} de plus)</span>
+            </>
+          )}
+        </button>
+      )}
 
       {/* Modale de sélection d'équipes favorites */}
       <SurgaSportCustomModal

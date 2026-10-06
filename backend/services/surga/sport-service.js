@@ -271,23 +271,28 @@ async function filtrerMatchsSport({ equipesSuivies = [], categorie = 'tous', lim
     resultats = resultats.filter((m) => m.categorie === categorie);
   }
 
-  // Filtre par équipes suivies
-  if (categorie === 'mes_equipes' || (Array.isArray(equipesSuivies) && equipesSuivies.length > 0 && categorie === 'tous')) {
-    if (Array.isArray(equipesSuivies) && equipesSuivies.length > 0) {
-      const termesMinuscules = equipesSuivies.map((eq) => eq.toLowerCase().trim());
-      const correspondants = tous.filter((m) => {
-        return termesMinuscules.some((terme) => {
-          return (
-            m.equipe_domicile.toLowerCase().includes(terme) ||
-            m.equipe_exterieur.toLowerCase().includes(terme) ||
-            (m.buteurs && m.buteurs.toLowerCase().includes(terme))
-          );
-        });
-      });
+  // Filtre et priorisation par équipes suivies du compte
+  if (Array.isArray(equipesSuivies) && equipesSuivies.length > 0) {
+    const termesMinuscules = equipesSuivies.map((eq) => eq.toLowerCase().trim());
+    const estFavori = (m) => {
+      const dom = (m.equipe_domicile || '').toLowerCase();
+      const ext = (m.equipe_exterieur || '').toLowerCase();
+      const but = (m.buteurs || '').toLowerCase();
+      return termesMinuscules.some((terme) =>
+        dom.includes(terme) || ext.includes(terme) || but.includes(terme) || terme.includes(dom) || terme.includes(ext)
+      );
+    };
 
+    if (categorie === 'mes_equipes') {
+      const correspondants = tous.filter(estFavori);
       if (correspondants.length > 0) {
         resultats = correspondants;
       }
+    } else {
+      // Priorité aux équipes favorites du compte au sommet de la liste
+      const favoris = resultats.filter(estFavori);
+      const autres = resultats.filter((m) => !estFavori(m));
+      resultats = [...favoris, ...autres];
     }
   }
 

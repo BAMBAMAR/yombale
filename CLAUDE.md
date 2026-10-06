@@ -49,6 +49,14 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Écran Sports : Titre Monoligne, Priorité Absolue aux Équipes Favorites & Limitation Ergonomique (Session 2026-10-06 - Nuit 9 suite, branche `feature/surga`)** :
+  - *Sprint de Raffinement Spécifique Sports & Clarté Mobile* :
+    1. **Titre Dédié Monoligne (`SurgaSportCard.tsx`)** : Remplacement de l'intitulé encombrant `Sport & Équipe Nationale` (qui sautait sur 2 lignes) par `Sports` seulement, monoligne, fluide et parfaitement calibré à côté de l'icône Trophée.
+    2. **Priorisation Absolue des Équipes Favorites du Compte (`SurgaSportCard.tsx`, `sport-service.js`)** : Détection et tri prioritaire des rencontres impliquant les clubs et sélections suivis par l'utilisateur (`equipes_suivies` du profil ou `localStorage`). Les matchs favoris apparaissent systématiquement au sommet de la liste avec un badge distingué `<Star size={10} fill="currentColor" /> Favori`.
+    3. **Limitation Ergonomique du Nombre de Rencontres** : Affichage plafonné par défaut à 3 matchs pour libérer l'espace vertical sur mobile, complété par un bouton d'action fluide `Voir plus de rencontres (+X)` / `Afficher moins de matchs`.
+    4. **Modularisation Senior (< 450 l.)** : Extraction du sous-composant `SurgaSportMatchItem.tsx` (280 l.), allégeant `SurgaSportCard.tsx` à 409 l. 100% des fichiers sous `src/app/surga/` restent strictement conformes au plafond (< 450 l.).
+    5. **Tests & Validation** : 158/158 tests Jest PASS, TypeScript `tsc --noEmit` 0 erreur, serveurs opérationnels.
+
 - **Surga / Refonte Ergonomique Mobile-First, Auto-Hide FAB & Éradication Troncatures (Session 2026-10-06 - Nuit 9 suite, branche `feature/surga`)** :
   - *Sprint de Rectification Ergonomique Mobile (360px - 390px)* :
     1. **Bouton Flottant Vocal Auto-Hide (`useFabAutoHide.ts` & `surga.css`)** : Élimination du masquage physique d'articles, notes et actions. Le FAB s'escamote avec transition fluide lors du défilement descendant (`translateY(110px) scale(0.75) opacity: 0`) et réapparaît à la remontée ou à l'arrêt du scroll. Format compacté à 48px sur mobile (`<= 480px`) et marge basse du conteneur sécurisée à 120px.
