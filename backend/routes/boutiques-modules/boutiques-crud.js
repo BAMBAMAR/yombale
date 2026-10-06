@@ -362,6 +362,22 @@ router.get('/', tokenOptional, limiterBudget, async (req, res) => {
         vals.push('%smartphone%', '%phone%', '%tech%', '%telephone%');
         const i1 = vals.length - 3, i2 = vals.length - 2, i3 = vals.length - 1, i4 = vals.length;
         conds.push(`(b.categorie ILIKE $${i1} OR b.categorie ILIKE $${i2} OR b.categorie ILIKE $${i3} OR b.categorie ILIKE $${i4})`);
+      } else if (catQuery === 'tv-electro') {
+        vals.push('%tv%', '%electro%', '%electronique%', '%électronique%');
+        const i1 = vals.length - 3, i2 = vals.length - 2, i3 = vals.length - 1, i4 = vals.length;
+        conds.push(`(b.categorie ILIKE $${i1} OR b.categorie ILIKE $${i2} OR b.categorie ILIKE $${i3} OR b.categorie ILIKE $${i4})`);
+      } else if (catQuery === 'alimentation') {
+        vals.push('%alimentation%', '%epicerie%', '%épicerie%');
+        const i1 = vals.length - 2, i2 = vals.length - 1, i3 = vals.length;
+        conds.push(`(b.categorie ILIKE $${i1} OR b.categorie ILIKE $${i2} OR b.categorie ILIKE $${i3})`);
+      } else if (catQuery === 'informatique') {
+        vals.push('%informatique%', '%laptop%', '%ordinateur%', '%pc%');
+        const i1 = vals.length - 3, i2 = vals.length - 2, i3 = vals.length - 1, i4 = vals.length;
+        conds.push(`(b.categorie ILIKE $${i1} OR b.categorie ILIKE $${i2} OR b.categorie ILIKE $${i3} OR b.categorie ILIKE $${i4})`);
+      } else if (catQuery === 'beaute') {
+        vals.push('%beaute%', '%parfum%', '%soin%');
+        const i1 = vals.length - 2, i2 = vals.length - 1, i3 = vals.length;
+        conds.push(`(b.categorie ILIKE $${i1} OR b.categorie ILIKE $${i2} OR b.categorie ILIKE $${i3})`);
       } else {
         vals.push(`%${catQuery}%`);
         conds.push(`b.categorie ILIKE $${vals.length}`);

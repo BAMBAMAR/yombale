@@ -75,7 +75,7 @@ export default function SearchableProductSelect({
   // Filtrer la liste des produits
   const q = searchTerm.trim().toLowerCase()
   const produitsFiltres = produits.filter(p => {
-    const matchCategory = selectedCategory === 'tous' || p.categorie === selectedCategory
+    const matchCategory = selectedCategory === 'tous' || (p.categorie ? p.categorie.toLowerCase().trim() === selectedCategory.toLowerCase().trim() : false)
     const matchText = !q ||
       p.nom.toLowerCase().includes(q) ||
       (p.categorie && p.categorie.toLowerCase().includes(q)) ||

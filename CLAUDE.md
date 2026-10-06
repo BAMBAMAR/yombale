@@ -34,6 +34,22 @@
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou — Résolution Complète du Filtre Catégorie Marketplace & Caisse POS (Session 2026-10-06 - Après-midi)** :
+  - *Demande Utilisateur & Constat* : « le filtre catgorie ne fonctionne pas dans nopalou » — Plusieurs causes racines identifiées :
+    1. Sur l'accueil (`frontend-next/src/app/page.tsx`), les pastilles de catégorie redirigeaient arbitrairement vers `/categorie/[slug]` au lieu de filtrer la grille produit in-page, perdant la recherche textuelle `q`, les filtres budget/tri et l'état actif des filtres.
+    2. Côté backend (`backend/routes/produits.js`), la clause de filtrage boutique `baseBoutique` effectuait une égalité stricte sensible à la casse (`p.categorie = $2`) alors que les produits marchands en base contiennent des libellés variés ('Mode', 'Smartphones', 'Électronique', 'Épicerie', etc.), masquant 80 à 100% des produits boutique lors d'un filtrage. De plus, `activeSlugs` dans `/categories-actives` n'était pas normalisé en minuscules.
+    3. Dans la caisse POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`), le filtrage catalogue comparait strictement `p.categorie === categorieFiltre`, masquant les produits dès lors que la casse ou les variantes de libellé différaient.
+    4. Sur l'annuaire des boutiques (`backend/routes/boutiques-modules/boutiques-crud.js`), les requêtes par catégorie ne géraient pas les synonymes marchands (ex: `tv-electro` vs `electronique`).
+  - *Correctifs Apportés* :
+    1. `frontend-next/src/app/page.tsx` : Restauration du filtrage in-page via `buildFilterUrl({ categorie: isSelected ? null : c.slug })`, préservant la recherche active, les facettes dynamiques et les badges de rétroaction.
+    2. `backend/routes/produits.js` : Implémentation de `bqCatCondition` avec correspondance insensible à la casse et synonymes marchands étendus (`BQ_CAT_ALIASES`), normalisation en minuscules des slugs dans `/categories-actives` et enrichissement des replis de catégories.
+    3. `backend/routes/categories.js` & Base de données : Synchronisation et insertion des 15 catégories manquantes dans la table `categories` (total 29 catégories).
+    4. `backend/routes/boutiques-modules/boutiques-crud.js` : Expansion des synonymes de catégories pour l'annuaire des marchands.
+    5. `frontend-next/src/app/boutique/caisse/` : Création de `lib/caisse-filtres.ts` (`matchCaisseCategorie`) avec correspondance tolérante et synonymes, intégré dans `CaisseClient.tsx` (maintien du composant modulaire).
+    6. `frontend-next/src/components/SearchableProductSelect.tsx` : Comparaison normalisée et insensible à la casse.
+    7. `frontend-next/src/app/categorie/[slug]/page.tsx` : Ajout du ruban de navigation horizontal des catégories pour fluidifier la navigation inter-catégories.
+  - *Validation* : 97/97 tests unitaires frontend passés (100%), compilation TypeScript `tsc --noEmit` validée sans erreur, linter anti-slop validé, tests de matching réussis.
+
 - **Boutique Commandes — Éradication de la Troncature des Commandes & Responsivité Mobile Étanche (Session 2026-10-05)** :
   - *Cause Racine* : Dans CommandeCard.tsx et commandes.css, la grille responsive .npl-commande-grid utilisait grid-template-columns: 1fr et les colonnes .npl-commande-col-left / .npl-commande-col-right n'avaient pas de min-width: 0 ni max-width: 100%. Comme .npl-commande-card a overflow: hidden;, tout contenu interne ayant une largeur minimale incompressible (barre d'actions secondaires avec flexWrap: nowrap, référence commande sans break-all, libellés longs) forçait la grille à s'étendre au-delà de la carte, provoquant un découpage brutal sur le bord droit (ex: "474 FCF" au lieu de "474 FCFA", "Client WhatsAp" au lieu de "Client WhatsApp", bouton "Annuler" tronqué).
   - *Correctif CSS & Responsivité Mobile (commandes.css)* :

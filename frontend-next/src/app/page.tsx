@@ -286,7 +286,7 @@ export default async function HomePage({
             return (
               <Link
                 key={c.slug}
-                href={isSelected ? '/' : `/categorie/${c.slug}`}
+                href={buildFilterUrl({ categorie: isSelected ? null : c.slug })}
                 prefetch={false}
                 aria-label={`Filtrer par catégorie ${c.label}`}
                 style={{

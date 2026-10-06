@@ -218,6 +218,50 @@ export default async function CategoriePage({
           compteur={total > 0 ? `${total.toLocaleString('fr-FR')} produit${total > 1 ? 's' : ''} comparés au Sénégal · Prix mis à jour régulièrement` : undefined}
         />
 
+        {/* Ruban de navigation par catégorie */}
+        <div
+          className="hero-split-categories"
+          style={{
+            display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8,
+            scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', marginBottom: 14,
+            width: '100%', boxSizing: 'border-box'
+          }}
+        >
+          <Link
+            href="/"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3.5px 9px', borderRadius: 14, fontSize: 11,
+              fontWeight: 600, textDecoration: 'none', background: '#fff', color: 'var(--text-strong, #2A231E)',
+              border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 1px 2px rgba(26,22,18,0.03)',
+              whiteSpace: 'nowrap', flexShrink: 0
+            }}
+          >
+            <span>Toutes les catégories</span>
+          </Link>
+          {Object.entries(CATEGORIES).map(([catSlug, catData]) => {
+            const isCur = catSlug === slug
+            return (
+              <Link
+                key={catSlug}
+                href={isCur ? '/' : `/categorie/${catSlug}`}
+                prefetch={false}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3.5px 9px', borderRadius: 14, fontSize: 11,
+                  fontWeight: isCur ? 800 : 600, textDecoration: 'none',
+                  background: isCur ? 'var(--accent, #C75B00)' : '#fff',
+                  color: isCur ? '#fff' : 'var(--text-strong, #2A231E)',
+                  border: isCur ? '1px solid var(--accent, #C75B00)' : '1px solid var(--border-light, #DDD5CB)',
+                  boxShadow: isCur ? '0 2px 5px rgba(199,91,0,0.2)' : '0 1px 2px rgba(26,22,18,0.03)',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap', flexShrink: 0
+                }}
+              >
+                <span>{catData.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+
         {/* Recherche texte */}
         <SearchWithAnchor 
           action={`/categorie/${slug}`} 

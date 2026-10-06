@@ -145,7 +145,7 @@ router.get('/categories-actives', async (req, res) => {
       WHERE bp.en_stock = true AND b.actif = true
         AND (bp.statut_moderation IS NULL OR bp.statut_moderation = 'actif')
     `);
-    const activeSlugs = rows.map(r => r.slug).filter(Boolean);
+    const activeSlugs = Array.from(new Set(rows.map(r => (r.slug || '').toLowerCase().trim()).filter(Boolean)));
     
     // Add other verticals if they have at least one active item
     const [immo, annonces, telecom] = await Promise.all([
@@ -228,6 +228,10 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async
       'sante-pharma':  ['pharmacie','medicament','vitamine','thermomettre','tensiometre','pansement'],
       'services':      ['service','reparation','installation','depannage'],
       'fournitures':   ['cahier','stylo','papier','bureau','fourniture','classeur'],
+      'parfum':        ['parfum','eau de parfum','eau de toilette','musc','fragrance'],
+      'optique':       ['lunette','monture','solaire','optique'],
+      'bijouterie':    ['montre','bague','collier','bracelet','bijou'],
+      'bebe-enfants':  ['bebe','enfant','couche','jouet','poussette'],
       'mixte':         [],
       'autre':         [],
       'divers':        [],
@@ -267,7 +271,33 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async
 
     const catCondition = `($2::text IS NULL
       OR p.categorie_id = (SELECT id FROM categories WHERE slug = $2 LIMIT 1)
+      OR LOWER(c.nom) ILIKE '%'||$2||'%'
       ${fallbackSQL})`;
+
+    // Équivalences & tolérance insensible à la casse pour les catégories des boutiques
+    const BQ_CAT_ALIASES = {
+      'smartphones':  ['smartphones', 'smartphone', 'telephone', 'telephones', 'telephonie', 'phone', 'mobile'],
+      'informatique': ['informatique', 'ordinateur', 'ordinateurs', 'laptop', 'laptops', 'pc', 'high-tech'],
+      'tv-electro':   ['tv-electro', 'tv', 'electro', 'electromenager', 'electronique', 'électronique', 'hi-fi'],
+      'mode':         ['mode', 'vetement', 'vetements', 'habillement', 'chaussure', 'chaussures', 'robe', 'pantalon'],
+      'maison':       ['maison', 'decoration', 'deco', 'mobilier', 'meuble'],
+      'auto-moto':    ['auto-moto', 'auto', 'moto', 'vehicule', 'pieces-auto'],
+      'jeux':         ['jeux', 'consoles', 'gaming', 'jeu-video'],
+      'beaute':       ['beaute', 'cosmetique', 'cosmetiques', 'soin', 'soins'],
+      'alimentation': ['alimentation', 'epicerie', 'épicerie', 'nourriture', 'agroalimentaire'],
+      'parfum':       ['parfum', 'parfums', 'parfumerie', 'fragrance'],
+      'sport':        ['sport', 'fitness'],
+      'fournitures':  ['fournitures', 'bureautique', 'papeterie'],
+      'quincaillerie':['quincaillerie', 'btp', 'outillage'],
+      'sante-pharma': ['sante-pharma', 'sante', 'pharmacie'],
+      'services':     ['services', 'service', 'prestation'],
+      'mixte':        ['mixte', 'divers', 'autre'],
+    };
+    const bqAliases = categorieNorm ? (BQ_CAT_ALIASES[categorieNorm] || [categorieNorm]) : [];
+    const bqCatMatchSQL = bqAliases.length > 0
+      ? '(' + bqAliases.map(a => `LOWER(p.categorie) LIKE '%${a}%'`).join(' OR ') + ')'
+      : `LOWER(p.categorie) LIKE '%'||LOWER($2)||'%'`;
+    const bqCatCondition = `($2::text IS NULL OR LOWER(TRIM(p.categorie)) = LOWER($2) OR ${bqCatMatchSQL})`;
 
     const sousMots = sousType ? (SOUS_TYPE_MOTS[sousType] || []) : [];
     const sousTypeCondition = sousMots.length > 0
@@ -374,7 +404,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, limiterBudget, async
           AND TRIM(p.images[1]) != '' 
           AND p.images[1] NOT ILIKE '%placeholder%'
           AND ${qCondBoutique}
-          AND ($2::text IS NULL OR p.categorie = $2)
+          AND ${bqCatCondition}
           AND ($3::numeric IS NULL OR p.prix <= $3::numeric)
           AND ($4::numeric IS NULL OR p.prix >= $4::numeric)
           AND ($7::text IS NULL OR $7 = 'Neuf')

@@ -27,6 +27,7 @@ import PosModalsHost from './components/PosModalsHost'
 import PosSyncEchecsBanner from './components/PosSyncEchecsBanner'
 import PosToast from './components/PosToast'
 import { usePosWebOrdersAlert } from './hooks/usePosWebOrdersAlert'
+import { matchCaisseCategorie } from './lib/caisse-filtres'
 import './caisse.css'
 
 export default function CaisseClient({
@@ -202,7 +203,7 @@ export default function CaisseClient({
   // ── Filtrage Catalogue Produits ──
   const produitsFiltres = useMemo(() => {
     let result = produits.filter((p) => {
-      const matchCat = categorieFiltre === 'tous' || p.categorie === categorieFiltre
+      const matchCat = matchCaisseCategorie(p.categorie, categorieFiltre)
       const matchSearch = !recherche || matcherProduitRecherche(p, recherche)
       return matchCat && matchSearch
     })

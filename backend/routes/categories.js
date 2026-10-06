@@ -28,10 +28,18 @@ const DEFAULT_CATEGORIES = [
   { nom: 'Auto & Moto', slug: 'auto-moto', icone: '🛵', ordre: 6 },
   { nom: 'Beauté & Parfums', slug: 'beaute', icone: '💄', ordre: 7 },
   { nom: 'Jeux & Consoles', slug: 'jeux', icone: '🎮', ordre: 8 },
-  { nom: 'Télécom & Forfaits', slug: 'telecom', icone: '📶', ordre: 9 },
-  { nom: 'Immobilier', slug: 'immo', icone: '🏡', ordre: 10 },
-  { nom: 'Emploi & Services', slug: 'emploi', icone: '💼', ordre: 11 },
-  { nom: 'Divers & Autres', slug: 'divers', icone: '📦', ordre: 12 },
+  { nom: 'Alimentation & Épicerie', slug: 'alimentation', icone: '🍚', ordre: 9 },
+  { nom: 'Sport & Fitness', slug: 'sport', icone: '⚽', ordre: 10 },
+  { nom: 'Fournitures & Bureautique', slug: 'fournitures', icone: '📚', ordre: 11 },
+  { nom: 'Quincaillerie & BTP', slug: 'quincaillerie', icone: '🧱', ordre: 12 },
+  { nom: 'Santé & Pharmacie', slug: 'sante-pharma', icone: '💊', ordre: 13 },
+  { nom: 'Parfumerie & Fragrances', slug: 'parfum', icone: '🌸', ordre: 14 },
+  { nom: 'Services & Pro', slug: 'services', icone: '🛠', ordre: 15 },
+  { nom: 'Boutique Mixte', slug: 'mixte', icone: '🛍', ordre: 16 },
+  { nom: 'Télécom & Forfaits', slug: 'telecom', icone: '📶', ordre: 17 },
+  { nom: 'Immobilier', slug: 'immo', icone: '🏡', ordre: 18 },
+  { nom: 'Emploi & Services', slug: 'emploi', icone: '💼', ordre: 19 },
+  { nom: 'Divers & Autres', slug: 'divers', icone: '📦', ordre: 20 },
 ];
 
 let categoriesTableEnsured = false;
