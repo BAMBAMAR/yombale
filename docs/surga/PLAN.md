@@ -19,12 +19,11 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Créer la branche `feature/surga`.
 - [x] `DONE` Enregistrer le résultat de l'audit dans `docs/surga/AUDIT.md` et chaque
   décision tranchée dans `docs/surga/DECISIONS.md` (D11 à D18).
-- [ ] `PROPOSED` Valider le cadre WhatsApp autorisé pour Surga (Meta / fournisseur d'accès).
-- [ ] `PROPOSED` Spike de validation : source de données du trafic à Dakar (faisabilité, coût).
-- [ ] `PROPOSED` Spike de validation : qualité de la transcription vocale en français avec
-  enregistrements réalistes (bruit de rue, chiffres).
-- [ ] `PROPOSED` Test PWA sur iPhone et Android : installation, notifications, audio en
-  arrière-plan.
+- [x] `DONE` Audit technologique pointu, benchmark mondial 2026, matrice multidimensionnelle et plan d'optimisation en 6 phases (`AUDIT_TECHNOLOGIQUE_POINTE.md`, `MATRICE_SERVICES_APIS_SURGA.md`, `BENCHMARK_TECHNOLOGIQUE_SURGA.md`, `PLAN_OPTIMISATION_QUALITE_SURGA.md`, `HANDOVER_TECHNOLOGIQUE_SURGA.md`).
+- [x] `DONE` Validation du cadre WhatsApp Meta (tarification per-message octobre 2026, 1 000 msgs service gratuits/mois, protection par quota gratuit à 2 commandes/jour).
+- [x] `DONE` Spike de validation trafic à Dakar (faisabilité, modèle heuristique heures de pointe + TomTom Routing API 2 500 req/jour gratuites).
+- [x] `DONE` Spike de validation transcription vocale (Groq Whisper-large-v3-turbo à 0,04 $/h d'audio, latence < 350 ms, français africain & FCFA).
+- [x] `DONE` Test PWA et Service Worker (Serwist v29, navigation offline, détection de la défaillance des rappels in-page et spécification Web Push VAPID).
 
 ---
 

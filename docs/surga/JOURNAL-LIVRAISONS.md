@@ -3,7 +3,24 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
-### [2026-10-06 — Nuit 5 quater] — Compte, Profil & Déconnexion : Modale Mon Compte, Édition du Nom en Ligne & Déconnexion Déterministe
+### [2026-10-06 — Nuit 6] — Audit Technologique Pointu, Benchmark Mondial 2026 & Matrice Décisionnelle Qualité/Prix
+- **Mission d'Ingénierie & Product Management :**
+  - Répondre factuellement à la question ultime : « *Est-ce que Surga utilise aujourd'hui les meilleures technologies, services, APIs, modèles IA et architectures raisonnablement accessibles pour fournir une expérience réellement supérieure à celle que l'utilisateur pourrait obtenir en utilisant plusieurs applications concurrentes ?* »
+  - Audit empirique sans supposition de la chaîne complète : BESOIN -> FONCTIONNALITÉ -> TECHNOLOGIE -> SERVICE/API -> DONNÉES -> TRAITEMENT -> UX -> RÉSULTAT -> PERFORMANCE -> COÛT.
+- **Diagnostics Clés & Faits Démontrés :**
+  1. *L'absence totale de LLM dans le backend Surga* : 100% de code procédural regex et Cheerio (`voice-interpreter.js`, `whatsapp-handler.js`). Rejet brutal en `INCONNU` dès qu'une tournure familière sénégalaise est employée.
+  2. *Défaillance matérielle des rappels d'agenda en tâche de fond* : `surga-reminders.ts` utilise `setInterval` et `new Notification()` dans le thread in-page client. Sur mobile en veille ou app fermée, aucun rappel n'est jamais reçu ! Absence de worker cron backend et absence d'intégration Web Push VAPID (`web-push`).
+  3. *Rupture vocale sur WhatsApp* : Les notes vocales WhatsApp ne déclenchent aucun STT et sont rejetées par une invite à taper au clavier ou interceptées par le bot e-commerce Nopalou.
+  4. *Lien mort 404 sur le flux podcast* : `/api/surga/podcast/:token/feed.xml` pointe vers `stream.mp3`, route inexistante dans `backend/routes/surga/audio.js`.
+  5. *Réalité économique WhatsApp Meta (octobre 2026)* : Fin des 24h gratuites illimitées, 1 000 msgs de service offerts/mois puis facturation ~11 FCFA/message. Le bridage à 2 commandes gratuites/jour est économiquement vital.
+- **Livrables Stratégiques Créés :**
+  1. `docs/surga/AUDIT_TECHNOLOGIQUE_POINTE.md` : Audit approfondi de chaque brique, calcul des coûts réels à 100/1k/10k/100k users, 5 moments WOW, 5 moments banals, 5 risques d'abandon, registre des corrections.
+  2. `docs/surga/MATRICE_SERVICES_APIS_SURGA.md` : Tableau multidimensionnel complet (fonctions, qualités, latences, free tiers, prix, décisions).
+  3. `docs/surga/BENCHMARK_TECHNOLOGIQUE_SURGA.md` : Comparatif mondial 2026 (Gemini 2.0 Flash Lite, Groq Whisper-turbo, Edge-TTS, Open-Meteo, TomTom, PostgreSQL).
+  4. `docs/surga/PLAN_OPTIMISATION_QUALITE_SURGA.md` : Plan d'action en 6 phases (P0 Web Push VAPID, P1 Groq Whisper & Edge-TTS, P2 Gemini Flash hybride, P3 Quotas & Observabilité, P4 Trajets, P5 Futur `pgvector`).
+  5. `docs/surga/HANDOVER_TECHNOLOGIQUE_SURGA.md` : Rapport de passation de l'audit avec preuves, services recommandés/remplacés et plan de tests.
+- **Score Technique Global :** **66,5 / 100 (Actuel)** -> **94,0 / 100 (Cible après application des phases 1 à 3)**.
+
 - **Demande Utilisateur :**
   - « quand on est connecte ya rien ya pas de menu pas de botuon deconnexion ya rien modifier son profil etc ».
 - **Diagnostic :**

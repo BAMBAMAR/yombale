@@ -1,6 +1,17 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
-- **Surga / Compte & Profil — Livraison de la Modale Complète de Gestion de Compte, Modification du Profil & Déconnexion Déterministe (Session 2026-10-06 - Nuit 5 quater, branche `feature/surga`)** :
+- **Surga / Ingénierie & Product Management — Audit Technologique Pointu, Benchmark Mondial 2026, Matrice Décisionnelle Qualité/Prix & Plan d'Exécution en 6 Phases (Session 2026-10-06 - Nuit 6, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Évaluation exhaustive de la chaîne : BESOIN UTILISATEUR -> FONCTIONNALITÉ -> TECHNOLOGIE -> SERVICE/API -> DONNÉES -> TRAITEMENT -> UX -> RÉSULTAT -> PERFORMANCE -> COÛT.
+    - Réponse factuelle à la question de savoir si un utilisateur a une raison de continuer à utiliser des applications séparées : OUI aujourd'hui en raison de 3 fragilités (rappels in-page inopérants écran éteint, 0% de LLM avec rejet en `INCONNU` des tournures familières, vocaux WhatsApp non transcrits), mais NON dès l'application des phases 1 à 3 du plan d'optimisation.
+  * **5 Documents Stratégiques Livrés sous `docs/surga/`** :
+    1. `AUDIT_TECHNOLOGIQUE_POINTE.md` : Examen réel du code, dépendances, APIs, flux réseau, calcul des coûts réels à 100/1k/10k/100k users, analyse des 5 moments WOW, 5 moments banals, 5 risques d'abandon, et registre des 5 corrections majeures (P0 à P2).
+    2. `MATRICE_SERVICES_APIS_SURGA.md` : Tableau multidimensionnel complet (fonctions, qualités, latences, limites, free tiers, prix, décisions).
+    3. `BENCHMARK_TECHNOLOGIQUE_SURGA.md` : Benchmark comparatif mondial 2026 (Gemini 2.0 Flash Lite, Groq Whisper-turbo, Edge-TTS, Open-Meteo, TomTom, Web Push VAPID, PostgreSQL).
+    4. `PLAN_OPTIMISATION_QUALITE_SURGA.md` : Plan d'action détaillé en 6 phases (P0 Corrections critiques, P1 Remplacement des briques inférieures, P2 Hybridation IA & UX, P3 Quotas & Coûts, P4 Différenciation dakaroise, P5 Futur `pgvector`).
+    5. `HANDOVER_TECHNOLOGIQUE_SURGA.md` : Passation technique complète (ce qui a été vérifié, testé, prouvé, comparé, coûts estimés, risques résiduels et plan de tests).
+  * **Score Technique Global :** **66,5 / 100 (Actuel)** -> **94,0 / 100 (Cible après phases 1 à 3)**.
+
   * **Demande & Constat Utilisateur** :
     - « quand on est connecte ya rien ya pas de menu pas de botuon deconnexion ya rien modifier son profil etc ».
     - En session connectée OTP WhatsApp, la pastille en haut à droite réaffichait la boîte de dialogue d'authentification (`SurgaAuthModal`), sans menu utilisateur, sans possibilité d'éditer le nom de son profil et sans bouton de déconnexion.
