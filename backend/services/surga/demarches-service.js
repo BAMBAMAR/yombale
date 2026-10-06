@@ -19,7 +19,7 @@ try {
 }
 
 const CYCLE_REVERIFICATION_JOURS = 90;
-const URL_PORTAIL_OFFICIEL = 'https://servicepublic.gouv.sn';
+const URL_PORTAIL_OFFICIEL = 'https://e-senegal.sn/#/home/demarches';
 
 /**
  * Catégories officielles des démarches administratives
@@ -70,7 +70,7 @@ const DEMARCHES_INITIALES = [
       'Remise du récépissé d\'enrôlement portant le numéro de dossier.',
       'Retrait de la carte sur présentation du récépissé au même centre.',
     ],
-    source_officielle: 'https://servicepublic.gouv.sn',
+    source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
     statut: 'BROUILLON',
@@ -98,7 +98,7 @@ const DEMARCHES_INITIALES = [
       'Délivrance d\'un talon de retrait.',
       'Retrait du passeport par le demandeur en personne muni de son talon et de sa CNI.',
     ],
-    source_officielle: 'https://servicepublic.gouv.sn',
+    source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
     statut: 'BROUILLON',
@@ -123,7 +123,7 @@ const DEMARCHES_INITIALES = [
       'Vérification du registre judiciaire par le greffier en chef.',
       'Délivrance du bulletin n°3 signé par le greffier.',
     ],
-    source_officielle: 'https://servicepublic.gouv.sn',
+    source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
     statut: 'BROUILLON',
@@ -150,7 +150,7 @@ const DEMARCHES_INITIALES = [
       'Instruction de la demande et vérification de la filiation par le juge d\'instance.',
       'Signature et délivrance du certificat de nationalité.',
     ],
-    source_officielle: 'https://servicepublic.gouv.sn',
+    source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
     statut: 'BROUILLON',
@@ -177,7 +177,7 @@ const DEMARCHES_INITIALES = [
       'Délivrance de l\'acte de naissance et des extraits timbrés.',
       'Attention : passé 30 jours, un jugement supplétif au Tribunal d\'Instance est obligatoire.',
     ],
-    source_officielle: 'https://servicepublic.gouv.sn',
+    source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
     statut: 'BROUILLON',
@@ -206,7 +206,7 @@ const DEMARCHES_INITIALES = [
       'Délivrance d\'une autorisation provisoire de conduire valable 3 mois.',
       'Enrôlement et remise du permis biométrique Capp Karangë.',
     ],
-    source_officielle: 'https://servicepublic.gouv.sn',
+    source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
     statut: 'BROUILLON',
@@ -232,7 +232,7 @@ const DEMARCHES_INITIALES = [
       'Apposition du timbre fiscal de 200 FCFA.',
       'Signature et délivrance du certificat de résidence.',
     ],
-    source_officielle: 'https://servicepublic.gouv.sn',
+    source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
     statut: 'BROUILLON',
@@ -245,10 +245,52 @@ const demarchesMemoire = new Map(DEMARCHES_INITIALES.map(d => [d.id, { ...d }]))
 const signalementsMemoire = new Map();
 const suivisMemoire = new Map(); // key: `${userId}:${demarcheId}`
 
+let demarchesInitialisees = false;
+
+/**
+ * Assure la création idempotente des fiches initiales et la mise à jour vers e-senegal.sn
+ */
+async function assurerDemarchesInitiales() {
+  if (demarchesInitialisees || !pool) return;
+  try {
+    const countRes = await pool.query('SELECT COUNT(*) FROM surga_demarches');
+    if (parseInt(countRes.rows[0].count, 10) === 0) {
+      for (const d of DEMARCHES_INITIALES) {
+        await pool.query(
+          `INSERT INTO surga_demarches (
+             id, slug, titre, categorie, public_concerne, pieces, cout_xof, delai,
+             lieux, etapes, source_officielle, date_verification,
+             date_prochaine_verification, statut, mots_cles
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+           ON CONFLICT (id) DO NOTHING`,
+          [
+            d.id, d.slug, d.titre, d.categorie, d.public_concerne,
+            JSON.stringify(d.pieces), d.cout_xof, d.delai, d.lieux,
+            JSON.stringify(d.etapes), d.source_officielle,
+            d.date_verification, d.date_prochaine_verification,
+            d.statut, JSON.stringify(d.mots_cles)
+          ]
+        );
+      }
+    } else {
+      await pool.query(
+        `UPDATE surga_demarches 
+         SET source_officielle = $1 
+         WHERE source_officielle = 'https://servicepublic.gouv.sn' OR source_officielle IS NULL`,
+        [URL_PORTAIL_OFFICIEL]
+      );
+    }
+    demarchesInitialisees = true;
+  } catch (err) {
+    // Tolérance
+  }
+}
+
 /**
  * Met à jour automatiquement les démarches dont le cycle de 90 jours est dépassé
  */
 async function actualiserStatutsPerimes() {
+  await assurerDemarchesInitiales();
   const maintenant = new Date();
 
   if (pool) {

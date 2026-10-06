@@ -1876,7 +1876,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(resInconnu.non_couvert).toBe(true);
       expect(resInconnu.fiches.length).toBe(0);
       expect(resInconnu.message).toContain('pas encore couverte');
-      expect(resInconnu.portail_officiel).toBe('https://servicepublic.gouv.sn');
+      expect(resInconnu.portail_officiel).toBe('https://e-senegal.sn/#/home/demarches');
     });
 
     test('Cycle de re-vérification de 90 jours et passage automatique en A_REVERIFIER', async () => {

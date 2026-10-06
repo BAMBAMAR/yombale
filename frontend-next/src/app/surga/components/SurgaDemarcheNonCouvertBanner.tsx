@@ -33,7 +33,7 @@ export default function SurgaDemarcheNonCouvertBanner() {
         </p>
       </div>
       <a
-        href="https://servicepublic.gouv.sn"
+        href="https://e-senegal.sn/#/home/demarches"
         target="_blank"
         rel="noopener noreferrer"
         className="surga-btn-primary"
@@ -46,7 +46,7 @@ export default function SurgaDemarcheNonCouvertBanner() {
           textDecoration: 'none',
         }}
       >
-        <span>Accéder à servicepublic.gouv.sn</span>
+        <span>Accéder au portail officiel e-senegal.sn</span>
         <ExternalLink size={13} />
       </a>
     </div>

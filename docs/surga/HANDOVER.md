@@ -1,21 +1,21 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 7)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 8)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 20 : Démarches Administratives Sénégalaises Vérifiées, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 20 : Démarches Administratives avec source officielle e-senegal.sn, Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose désormais d'un flux d'alertes vidéos officiel (**Tranche 17**) 100% fonctionnel et peuplé de **141 parutions authentiques** de séries et de combats de lutte sénégalais (EvenProd, Marodi TV, Pikini Production, Lutte TV Sénégal, Albourakh Events, Gaston Productions), avec un panachage équitable en base via `ROW_NUMBER()` SQL, des liens sortants YouTube directs en mode Low-Data, et l'ensemble des modules (Démarches, Emploi, CV, Entretien, Sama Xaalis, Météo) testés à 100%.
+L'assistant personnel de poche **Surga** dispose désormais d'un pôle de démarches administratives sénégalaises vérifiées (**Tranche 20**) connecté au portail national officiel de référence de l'État du Sénégal (`https://e-senegal.sn/#/home/demarches`), d'un flux d'alertes vidéos officiel (**Tranche 17**) 100% fonctionnel et peuplé de **141 parutions authentiques** de séries et de combats de lutte sénégalais, avec un panachage équitable en base via `ROW_NUMBER()` SQL, des liens sortants YouTube directs en mode Low-Data, et l'ensemble des modules (Démarches, Emploi, CV, Entretien, Sama Xaalis, Météo) testés à 100%.
 
 0. **Démarches Administratives Sénégalaises Vérifiées & Console Admin (Tranche 20 — 100% DONE)** :
    - **Base de Données SQL & Migrations Idempotentes** : Tables `surga_demarches`, `surga_demarches_signalements` et `surga_demarches_suivis` créées dans `backend/migrate-inline.js`.
    - **Service Métier (`backend/services/surga/demarches-service.js`)** :
-     - Catalogue de 7 démarches de référence réelles du Sénégal au statut `BROUILLON`.
-     - Recherche déterministe insensible aux accents/casse ; si absente, message neutre orientant vers le portail officiel de l'État (`servicepublic.gouv.sn`).
+     - Catalogue de 7 démarches de référence réelles du Sénégal au statut `BROUILLON` avec source officielle `https://e-senegal.sn/#/home/demarches`.
+     - Recherche déterministe insensible aux accents/casse ; si absente, message neutre orientant vers le portail officiel de l'État (`https://e-senegal.sn/#/home/demarches`).
      - Cycle de re-vérification 90 jours : méthode `actualiserStatutsPerimes` et action admin `reverifierDemarcheAdmin` qui repasse en `PUBLIE` pour 90 jours.
      - Modèle de droits & quotas (Section 1 bis) : consultation gratuite de toutes les fiches, checklist en Notes gratuite, 1 suivi de démarche avec rappel gratuit ; suivis et rappels illimités pour Surga Premium.
      - Signalements d'erreurs communautaires et traitement admin.

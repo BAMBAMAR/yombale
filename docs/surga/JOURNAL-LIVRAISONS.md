@@ -3,6 +3,23 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 8] — Démarches Administratives : Adoption de la Source Officielle e-senegal.sn
+- **Demande & Recommandation Utilisateur :**
+  - Prise en compte du nouveau portail officiel unifié des démarches de l'État du Sénégal : `https://e-senegal.sn/#/home/demarches` (SENUM SA).
+- **Modifications Appliquées :**
+  - **Backend (`demarches-service.js`)** :
+    - `URL_PORTAIL_OFFICIEL = 'https://e-senegal.sn/#/home/demarches'`.
+    - Mise à jour de la `source_officielle` des 7 fiches certifiées (`DEMARCHES_INITIALES`).
+    - Méthode d'ensemencement idempotent `assurerDemarchesInitiales()` pour mettre à jour la table PostgreSQL `surga_demarches` et basculer l'ancienne URL vers la nouvelle.
+    - Recherche sans résultat (`non_couvert: true`) renvoie vers `https://e-senegal.sn/#/home/demarches`.
+  - **Frontend PWA & Console Admin** :
+    - `SurgaDemarcheNonCouvertBanner.tsx` : Bouton redirigeant vers `https://e-senegal.sn/#/home/demarches` (« Accéder au portail officiel e-senegal.sn »).
+    - `AdminDemarcheModal.tsx` : Placeholder et URL par défaut initialisés sur `https://e-senegal.sn/#/home/demarches`.
+- **Validation :**
+  - 127/127 tests backend Jest passés (100%).
+  - 97/97 tests frontend Vitest passés (100%).
+  - 0 erreur de typage TypeScript (`npx tsc --noEmit`).
+
 ### [2026-10-06 — Matin 7] — Alertes Vidéos Séries TV & Lutte : Ingestion Réelle, Panachage Équitable & Liens Sortants Directs
 - **Demande Utilisateur :**
   - Signalement d'absence de parutions vidéos dans la modale Surga : « Dernières parutions (0) », « Aucune vidéo trouvée pour cette recherche ».

@@ -49,6 +49,14 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Démarches Administratives : Adoption de la Source Officielle e-senegal.sn (Session 2026-10-06 - Matin 8, branche `feature/surga`)** :
+  - *Adoption du Nouveau Portail National des Démarches* : Remplacement de l'ancien portail `servicepublic.gouv.sn` par le portail officiel unifié de l'État du Sénégal : `https://e-senegal.sn/#/home/demarches` (SENUM SA / Sénégal Numérique).
+  - *Mise à Jour Backend & Base SQL* : `URL_PORTAIL_OFFICIEL` et `source_officielle` de toutes les démarches certifiées (`DEMARCHES_INITIALES`) mis à jour vers `https://e-senegal.sn/#/home/demarches`. Méthode idempotente `assurerDemarchesInitiales()` pour mettre à jour la base PostgreSQL en direct.
+  - *Frontend PWA & Console Admin* :
+    - `SurgaDemarcheNonCouvertBanner.tsx` : Lien et bouton mis à jour vers `https://e-senegal.sn/#/home/demarches` (« Accéder au portail officiel e-senegal.sn »).
+    - `AdminDemarcheModal.tsx` : URL par défaut et placeholder mis à jour.
+  - *Tests & Qualité* : 127/127 tests Jest backend et 97/97 tests Vitest frontend validés (100%). 0 erreur TypeScript.
+
 - **Surga — Séries TV & Lutte du Sénégal : Ingestion Réelle, Panachage Équitable & Liens Directs (Session 2026-10-06 - Matin 7, branche `feature/surga`)** :
   - *Diagnostic & Cause Racine Résolus* :
     - Les flux Atom YouTube standard renvoyaient 404 et la table SQL `surga_video_items` était initialement vide (0 vidéo), affichant « Aucune vidéo trouvée pour cette recherche ».

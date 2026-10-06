@@ -70,7 +70,7 @@ export default function AdminDemarcheModal({
       setCoutXof(0);
       setDelai('');
       setLieux('');
-      setSourceOfficielle('https://servicepublic.gouv.sn');
+      setSourceOfficielle('https://e-senegal.sn/#/home/demarches');
       setStatut('BROUILLON');
       setPieces([]);
       setEtapes([]);
@@ -356,7 +356,7 @@ export default function AdminDemarcheModal({
               type="url"
               value={sourceOfficielle}
               onChange={(e) => setSourceOfficielle(e.target.value)}
-              placeholder="https://servicepublic.gouv.sn"
+              placeholder="https://e-senegal.sn/#/home/demarches"
               style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 13 }}
             />
           </div>

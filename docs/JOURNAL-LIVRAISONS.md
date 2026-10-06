@@ -1,30 +1,48 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
- 
-+- **Surga — Séries TV & Lutte du Sénégal : Ingestion Réelle, Panachage Équitable & Liens Directs (Session 2026-10-06 - Matin 7, branche `feature/surga`)** :
-+  * **Diagnostic & Cause Racine Traités** :
-+    - Constat utilisateur : absence de vidéos dans la modale Séries TV & Lutte (« Dernières parutions (0) », « Aucune vidéo trouvée pour cette recherche »).
-+    - Causes identifiées : flux Atom RSS YouTube dépréciés par YouTube (codes HTTP 404), table `surga_video_items` non ensemencée (0 ligne), et absence d'équilibrage dans la requête SQL `LIMIT` qui aurait pu favoriser une seule source au détriment des autres.
-+  * **Parseur YouTube Moderne sans Quota Google Cloud (`backend/services/surga/video-service.js`)** :
-+    - Implémentation d'une extraction HTML directe du bloc `ytInitialData` sur les URLs officielles des chaînes YouTube (`/@Chaine/videos`).
-+    - Détection et extraction des métadonnées du composant YouTube `lockupViewModel` (`contentId` pour la clé de vidéo, `lockupMetadataViewModel.title.content` pour le titre exact, `thumbnailViewModel` pour les miniatures WebP).
-+    - Ensemencement et actualisation des 6 chaînes sénégalaises phares : EvenProd Sénégal, Marodi TV Sénégal, Pikini Production, Lutte TV Sénégal, Albourakh Events, Gaston Productions.
-+    - Ensemencement de 11 vidéos de repli authentiques et ingestion réussie de **141 vidéos authentiques** en base de données PostgreSQL.
-+  * **Panachage Équitable SQL & Alternance Harmonieuse** :
-+    - Requête SQL fenêtrée avec `ROW_NUMBER() OVER (PARTITION BY vi.source_id ORDER BY vi.publie_le DESC, vi.id DESC)` permettant d'ordonner par rang (`ORDER BY rang_source ASC, publie_le DESC`).
-+    - Résultat : une parité parfaite (50% Séries TV, 50% Combats & Face-à-face de Lutte) et une alternance équilibrée de toutes les chaînes sur l'onglet Toutes.
-+    - Filtrage dynamique respecté sur `?type=LUTTE` et `?type=SERIE`.
-+  * **Frontend PWA & Modularité (`SurgaVideosModal.tsx`)** :
-+    - Augmentation de la limite à 50 vidéos chargées (`limit=50`).
-+    - Onglets fonctionnels avec compteurs dynamiques : « Toutes » (50), « Séries TV » (26), « Lutte » (24), « Mes suivis ».
-+    - Boutons « Voir » redirigeant directement vers la vidéo officielle YouTube avec attributs de sécurité (`target="_blank"`, `rel="noopener noreferrer"`).
-+    - Passerelle Agenda (« Rappel » / « Rappelé ») via `surga-cross-actions`.
-+    - Respect strict du plafond de 450 lignes (`SurgaVideosModal.tsx` à 422 lignes, `SurgaVideoCard.tsx` à 107 lignes).
-+    - Mode Low-Data intégral : zéro player vidéo intégré, zéro iframe lourde, aucune surcharge mémoire.
-+  * **Validation & Tests** :
-+    - Tests backend : **127/127 tests unitaires Jest validés (100% de réussite)**.
-+    - Tests frontend : **97/97 tests unitaires Vitest validés (100% de réussite)**.
-+    - Linter Anti-AI-Slop : **100% conforme, zéro émoji**.
-+
+
+- **Surga — Démarches Administratives : Adoption de la Source Officielle e-senegal.sn (Session 2026-10-06 - Matin 8, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Recommandation utilisateur prise en compte : adoption du nouveau portail national des démarches de l'État du Sénégal (`https://e-senegal.sn/#/home/demarches`) en remplacement de l'ancien portail `servicepublic.gouv.sn`.
+    - Backend (`backend/services/surga/demarches-service.js`) :
+      - `URL_PORTAIL_OFFICIEL` fixé à `https://e-senegal.sn/#/home/demarches`.
+      - Les 7 fiches officielles (`DEMARCHES_INITIALES`) portent la source officielle `https://e-senegal.sn/#/home/demarches`.
+      - `assurerDemarchesInitiales()` met à jour de façon idempotente la table SQL `surga_demarches` et applique la nouvelle URL.
+      - En cas de recherche sans résultat (`non_couvert: true`), le message neutre sans hallucination renvoie sur `https://e-senegal.sn/#/home/demarches`.
+    - Frontend PWA & Console Admin :
+      - `SurgaDemarcheNonCouvertBanner.tsx` : bouton et lien redirigeant vers `https://e-senegal.sn/#/home/demarches` (« Accéder au portail officiel e-senegal.sn »).
+      - `AdminDemarcheModal.tsx` : placeholder et valeur initiale pointant vers `https://e-senegal.sn/#/home/demarches`.
+    - Tests unitaires :
+      - Test Jest (`tests/unit/surga.test.js`) mis à jour et validé.
+      - **127/127 tests backend Jest validés (100%)**.
+      - **97/97 tests frontend Vitest validés (100%)**.
+      - Compilation TypeScript : 0 erreur.
+
+- **Surga — Séries TV & Lutte du Sénégal : Ingestion Réelle, Panachage Équitable & Liens Directs (Session 2026-10-06 - Matin 7, branche `feature/surga`)** :
+  * **Diagnostic & Cause Racine Traités** :
+    - Constat utilisateur : absence de vidéos dans la modale Séries TV & Lutte (« Dernières parutions (0) », « Aucune vidéo trouvée pour cette recherche »).
+    - Causes identifiées : flux Atom RSS YouTube dépréciés par YouTube (codes HTTP 404), table `surga_video_items` non ensemencée (0 ligne), et absence d'équilibrage dans la requête SQL `LIMIT` qui aurait pu favoriser une seule source au détriment des autres.
+  * **Parseur YouTube Moderne sans Quota Google Cloud (`backend/services/surga/video-service.js`)** :
+    - Implémentation d'une extraction HTML directe du bloc `ytInitialData` sur les URLs officielles des chaînes YouTube (`/@Chaine/videos`).
+    - Détection et extraction des métadonnées du composant YouTube `lockupViewModel` (`contentId` pour la clé de vidéo, `lockupMetadataViewModel.title.content` pour le titre exact, `thumbnailViewModel` pour les miniatures WebP).
+    - Ensemencement et actualisation des 6 chaînes sénégalaises phares : EvenProd Sénégal, Marodi TV Sénégal, Pikini Production, Lutte TV Sénégal, Albourakh Events, Gaston Productions.
+    - Ensemencement de 11 vidéos de repli authentiques et ingestion réussie de **141 vidéos authentiques** en base de données PostgreSQL.
+  * **Panachage Équitable SQL & Alternance Harmonieuse** :
+    - Requête SQL fenêtrée avec `ROW_NUMBER() OVER (PARTITION BY vi.source_id ORDER BY vi.publie_le DESC, vi.id DESC)` permettant d'ordonner par rang (`ORDER BY rang_source ASC, publie_le DESC`).
+    - Résultat : une parité parfaite (50% Séries TV, 50% Combats & Face-à-face de Lutte) et une alternance équilibrée de toutes les chaînes sur l'onglet Toutes.
+    - Filtrage dynamique respecté sur `?type=LUTTE` et `?type=SERIE`.
+  * **Frontend PWA & Modularité (`SurgaVideosModal.tsx`)** :
+    - Augmentation de la limite à 50 vidéos chargées (`limit=50`).
+    - Onglets fonctionnels avec compteurs dynamiques : « Toutes » (50), « Séries TV » (26), « Lutte » (24), « Mes suivis ».
+    - Boutons « Voir » redirigeant directement vers la vidéo officielle YouTube avec attributs de sécurité (`target="_blank"`, `rel="noopener noreferrer"`).
+    - Passerelle Agenda (« Rappel » / « Rappelé ») via `surga-cross-actions`.
+    - Respect strict du plafond de 450 lignes (`SurgaVideosModal.tsx` à 422 lignes, `SurgaVideoCard.tsx` à 107 lignes).
+    - Mode Low-Data intégral : zéro player vidéo intégré, zéro iframe lourde, aucune surcharge mémoire.
+  * **Validation & Tests** :
+    - Tests backend : **127/127 tests unitaires Jest validés (100% de réussite)**.
+    - Tests frontend : **97/97 tests unitaires Vitest validés (100% de réussite)**.
+    - Linter Anti-AI-Slop : **100% conforme, zéro émoji**.
+
+- **Surga — Épuration UI Dashboard & Suppression des Cartes de Test (Session 2026-10-06 - Matin 6, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Retrait définitif de la carte de test technique de développement « Tranche 6 active (Commande vocale & Calculs exacts) » et de son bouton « Recommencer la configuration » de `frontend-next/src/app/surga/components/SurgaDashboardTools.tsx`.
     - Interface épurée au standard de production, sans badge de jalon ni éléments parasites pour l'utilisateur final.
