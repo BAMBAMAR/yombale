@@ -1,8 +1,8 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 suite - 3 — Éradication Définitive des Troncatures d'Actualités)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 suite - 5 — Refonte Hiérarchie Premier Écran & Digest Actif)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Troncatures Mobiles Éradiquées — Actions d'articles condensées en 3 boutons 32x32px (fin du débordement « Lir »), Résumés propres sans mots hachés (`rss-collector.js`, `assainirResume`), 100% Composants < 450 l. — Build & 158 Tests Unitaires Validés (Zéro Régression)**  
+> **Statut global** : 🟢 **Premier Écran Digest Actif — 2 Titres à la Une, Rappel Agenda et Match Phare visibles en 2 secondes, Audio Épuré (0 Mo, vitesses conditionnelles), Météo Glanceable en 1 Ligne repliable (`SurgaMeteoDetailBloc.tsx`), 100% Composants < 450 l. — Build & 158 Tests Unitaires Validés (Zéro Régression)**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
@@ -11,7 +11,15 @@
 
 L'assistant personnel de poche **Surga** a fait l'objet d'un sprint ciblé d'optimisation ergonomique mobile-first, résolvant l'ensemble des défauts d'affichage et de navigation identifiés sur écrans réels (360px - 390px) suite aux retours utilisateurs :
 
-0. **Éradication Définitive des Troncatures d'Actualités (« Lir » & Mots Coupés) (100% DONE — Nuit 9 suite - 3)** :
+0. **Refonte de la Hiérarchie du Premier Écran (100% DONE — Nuit 9 suite - 5)** :
+   - **Digest Actif Immédiat (`SurgaAujourdhuiTab.tsx`, 317 l.)** : Fini l'effet "sommaire vide qui annonce 6 brèves sans rien montrer". La première carte affiche directement les 2 titres majeurs d'actualité du jour, le prochain rappel d'agenda (ou badge "Journée libre"), et le prochain match de sport phare.
+   - **Audio Épuré & Conditionnel (`SurgaAudioPlayer.tsx`, 220 l.)** : Un seul bouton « Écouter », vitesses conditionnelles à l'écoute, élimination des boutons "Radios FM" et "Podcast" qui débordaient sur mobile.
+   - **Météo Glanceable en 1 Ligne (`SurgaMeteoCard.tsx`, 380 l., `SurgaMeteoDetailBloc.tsx`, 112 l.)** : Ligne glanceable immédiate (`28°C Ensoleillé • Marée 17h45 • Air : Bonne (AQI 45)`) avec détails repliables à la demande, éliminant -150 px de hauteur sur le premier écran.
+   - **Alertes Matinales en Mini-Bandeau Discret (`SurgaBriefingActions.tsx`, 95 l.)** : Remplacement du gros bouton pleine largeur statique par un bandeau fin dismissible.
+   - **Titre Monoligne `Trafic` (`SurgaTraficCard.tsx`, 296 l.)** : Remplacement de l'intitulé « Trafic & Déplacements Dakar » qui débordait sur 2 lignes par `Trafic` seulement.
+   - **Typographie Backend (`backend/routes/surga/briefing.js`)** : Minuscule sur le jour de la semaine (`de ce mardi 6 octobre`).
+
+0.bis. **Éradication Définitive des Troncatures d'Actualités (« Lir » & Mots Coupés) (100% DONE — Nuit 9 suite - 3)** :
    - **Éradication du Débordement « Lir » (`SurgaNewsList.tsx`, 252 l.)** : Les 5 éléments étalés en pied de carte d'article ont été convertis en 3 boutons d'actions iconographiques nets 32×32px (`Bookmark`, `Share2`, `ExternalLink`). Empreinte des actions réduite de 245px à 108px, garantissant 192px pour les sources et la date, sans aucun débordement sur petit écran.
    - **Mode `sansCopier` (`SurgaShareButton.tsx`, 114 l.)** : Neutralisation du bouton de copie séparé superflu en espace restreint (le partage natif intègre déjà la copie presse-papier automatique en fallback).
    - **Fin des Mots Coupés en Plein Vol (`rss-collector.js`, `SurgaNewsList.tsx`)** : Calibrage de `nettoyerResume` avec coupure intelligente aux frontières de mots complets (`lastIndexOf(' ')`) et fonction de nettoyage `assainirResume` sur les brèves existantes (élimination des `qu'u...`, `Agen...`).

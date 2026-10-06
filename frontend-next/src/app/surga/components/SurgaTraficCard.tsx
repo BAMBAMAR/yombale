@@ -57,11 +57,11 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
   const getCouleurNiveau = (niveau: string) => {
     switch (niveau) {
       case 'bouche':
-        return '#B91C1C'
+        return '#DC2626'
       case 'dense':
-        return 'var(--accent, #C75B00)'
+        return 'var(--surga-accent, #D97706)'
       default:
-        return 'var(--price, #0A5C36)'
+        return 'var(--surga-emerald, #059669)'
     }
   }
 
@@ -87,40 +87,49 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
         gap: 10,
       }}
     >
-      {/* En-tête de la carte */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {/* En-tête épuré : Trafic seulement, monoligne et aéré */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '1 1 auto' }}>
           <div
             style={{
               width: 32,
               height: 32,
               borderRadius: 8,
-              backgroundColor: 'rgba(199, 91, 0, 0.1)',
+              backgroundColor: 'rgba(217, 119, 6, 0.1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--accent, #C75B00)',
+              color: 'var(--surga-accent, #D97706)',
+              flexShrink: 0,
             }}
           >
-            <Navigation size={18} />
+            <Navigation size={16} />
           </div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-                Trafic &amp; Déplacements Dakar
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 800,
+                  color: 'var(--surga-primary, #0F172A)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Trafic
               </span>
               {source === 'tomtom_live' && (
                 <span
                   style={{
                     fontSize: 9,
-                    fontWeight: 700,
-                    color: 'var(--price, #0A5C36)',
-                    backgroundColor: 'rgba(10, 92, 54, 0.1)',
+                    fontWeight: 800,
+                    color: 'var(--surga-emerald, #059669)',
+                    backgroundColor: 'rgba(5, 150, 105, 0.1)',
                     padding: '1px 5px',
                     borderRadius: 4,
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 3,
+                    flexShrink: 0,
                   }}
                 >
                   <Activity size={10} />
@@ -128,15 +137,23 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
                 </span>
               )}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--surga-text3, #94A3B8)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {source === 'tomtom_live'
-                ? 'Sondes TomTom en temps réel • TER & BRT'
-                : 'Modèle calibré Dakar • TER & BRT'}
+                ? 'Sondes TomTom en direct • TER & BRT'
+                : 'Dakar • TER & BRT'}
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           <a
             href="https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1"
             target="_blank"
@@ -148,11 +165,12 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
               gap: 4,
               fontSize: 11,
               fontWeight: 700,
-              color: 'var(--accent, #C75B00)',
-              backgroundColor: 'rgba(199, 91, 0, 0.08)',
+              color: 'var(--surga-accent, #D97706)',
+              backgroundColor: 'rgba(217, 119, 6, 0.1)',
               padding: '4px 8px',
               borderRadius: 6,
               textDecoration: 'none',
+              whiteSpace: 'nowrap',
             }}
           >
             <span>Carte Live</span>
@@ -162,17 +180,19 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
           <button
             type="button"
             onClick={onOuvrirDetail}
+            aria-label="Voir le détail du trafic"
             style={{
               background: 'transparent',
               border: 'none',
               fontSize: 12,
               fontWeight: 700,
-              color: 'var(--navy, #1C2B4A)',
+              color: 'var(--surga-primary, #0F172A)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: 2,
               padding: '4px 6px',
+              whiteSpace: 'nowrap',
             }}
           >
             <span>Détails</span>
@@ -186,12 +206,12 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
         <div
           style={{
             fontSize: 12,
-            color: 'var(--text2, #5A4E42)',
+            color: 'var(--surga-text2, #475569)',
             lineHeight: 1.4,
             padding: '8px 10px',
-            backgroundColor: 'var(--bg, #F8F5F0)',
+            backgroundColor: 'var(--surga-bg, #F8FAFC)',
             borderRadius: 8,
-            border: '1px solid var(--border, #E8DDD2)',
+            border: '1px solid var(--surga-border, #E2E8F0)',
           }}
         >
           {synthese}
@@ -200,7 +220,7 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
 
       {/* Aperçu des 3 axes clés */}
       {loading ? (
-        <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', padding: '6px 0' }}>
+        <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', padding: '6px 0' }}>
           Évaluation du trafic en cours...
         </div>
       ) : (
@@ -216,8 +236,8 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
                   justifyContent: 'space-between',
                   padding: '6px 8px',
                   borderRadius: 6,
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid var(--border, #E8DDD2)',
+                  backgroundColor: 'var(--surga-surface, #FFFFFF)',
+                  border: '1px solid var(--surga-border, #E2E8F0)',
                   fontSize: 11,
                 }}
               >
@@ -234,7 +254,7 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
                   <span
                     style={{
                       fontWeight: 600,
-                      color: 'var(--navy, #1C2B4A)',
+                      color: 'var(--surga-primary, #0F172A)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -246,7 +266,7 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                   {axe.vitesseReelleKmH ? (
-                    <span style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>
+                    <span style={{ fontSize: 10, color: 'var(--surga-text3, #94A3B8)' }}>
                       {axe.vitesseReelleKmH} km/h
                     </span>
                   ) : null}
@@ -257,12 +277,12 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
                       color: couleur,
                       padding: '1px 5px',
                       borderRadius: 4,
-                      backgroundColor: 'var(--bg, #F8F5F0)',
+                      backgroundColor: 'var(--surga-bg, #F8FAFC)',
                     }}
                   >
                     {getLibelleNiveau(axe.niveau)}
                   </span>
-                  <span style={{ fontSize: 10, color: 'var(--text3, #73675E)', fontWeight: 600 }}>
+                  <span style={{ fontSize: 10, color: 'var(--surga-text3, #94A3B8)', fontWeight: 600 }}>
                     {axe.tempsEstimeMin} min
                   </span>
                 </div>

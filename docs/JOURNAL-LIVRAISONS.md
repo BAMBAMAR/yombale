@@ -1,4 +1,40 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Refonte de la Hiérarchie du Premier Écran — Digest Actif Immédiat, Audio Épuré & Météo Compacte (Session 2026-10-06 - Nuit 9 suite - 5, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse intégrale et immédiate à l'audit de hiérarchie visuelle : faire voir à l'utilisateur ce qu'il cherche dès la première seconde sans devoir faire défiler la page.
+    - Transformation de la carte Briefing du Matin en un **Digest Actif** : inclusion directe des 2 grands titres d'actualité du jour, du prochain rappel d'agenda, et du match de foot phare.
+    - Épuration du lecteur audio : un seul bouton « Écouter », vitesses conditionnelles à la lecture active, suppression des boutons "Radios FM" et "Podcast" qui débordaient sur mobile.
+    - Compactage de la Météo en 1 ligne glanceable (`28°C Ensoleillé • Marée 17h45 • Air : Bonne`) avec détails repliables à la demande, éliminant -150 px de scroll initial.
+    - Suppression du gros bouton plein écran d'alertes matinales au profit d'un mini-bandeau discret fermable d'un clic `[✕]`.
+    - Correction grammaticale backend : `de ce mardi 6 octobre` au lieu de `de ce Mardi 6 octobre`.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Carte Briefing Digest Actif (`SurgaAujourdhuiTab.tsx`, 317 l.)** :
+       - Les 2 titres de presse majeurs sont désormais cliquables et immédiatement visibles au sommet de la page.
+       - Le prochain RDV ou le statut "Journée libre" et le match du jour sont affichés dans un encadré net.
+    2. **Lecteur Audio Compact & Contextuel (`SurgaAudioPlayer.tsx`, 220 l.)** :
+       - Réduit à un bouton circulaire avec libellé clair `Écouter le briefing (0 Mo)`.
+       - Vitesse (`1x`, `1.25x`, `1.5x`), bouton stop et barre de progression n'apparaissent qu'en cours de lecture.
+    3. **Météo Glanceable en 1 Ligne (`SurgaMeteoCard.tsx`, 380 l., `SurgaMeteoDetailBloc.tsx`, 112 l.)** :
+       - Barre résumée compacte et bouton chevron discret « Détails / Moins ».
+       - Suppression de l'icône de rafraîchissement trompeuse collée au mot "Ensoleillé".
+    4. **Mini-Bandeau Alerte Matinale (`SurgaBriefingActions.tsx`, 95 l.)** :
+       - Bouton volumineux remplacé par un bandeau fin dismissible.
+    5. **Standard Senior & Tests** :
+       - TypeScript `tsc --noEmit` 0 erreur, 158/158 tests Jest PASS, tous les fichiers < 450 lignes.
+
+- **Surga / Écran Trafic : Titre Monoligne Épuré & Normalisation Design System (`SurgaTraficCard.tsx`) (Session 2026-10-06 - Nuit 9 suite - 4, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Simplification du titre de la carte trafic : remplacement de l'intitulé « Trafic & Déplacements Dakar » qui sautait sur 2 lignes par « Trafic » seulement, monoligne, fluide et parfaitement aligné avec l'icône Navigation et les boutons d'action.
+    - Sous-titre compacté « Dakar • TER & BRT » (ou « Sondes TomTom en direct • TER & BRT ») avec ellipse de sécurité, sans saut de ligne.
+    - Éradication intégrale des anciens tokens Nopalou (`#1C2B4A`, `#C75B00`, `#0A5C36`, `#F8F5F0`, `#E8DDD2`) au profit exclusif des tokens `--surga-*`.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Titre Monoligne (`SurgaTraficCard.tsx`, 296 l.)** :
+       - `<span style={{ fontSize: 15, fontWeight: 800, color: 'var(--surga-primary, #0F172A)', whiteSpace: 'nowrap' }}>Trafic</span>`
+    2. **Sous-titre et Contrôles Droite Équilibrés** :
+       - Espace optimisé entre le badge DIRECT, le bouton `[Carte Live ↗]` et le chevron `[Détails >]`.
+    3. **Standard Senior** :
+       - 296 lignes (< 450 l.), TypeScript 0 erreur, 158/158 tests Jest validés.
+
 - **Surga / Éradication Définitive des Troncatures Mobiles sur les Actualités (Session 2026-10-06 - Nuit 9 suite - 3, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Traitement immédiat des deux défauts de troncature signalés par capture d'écran sur les cartes d'actualités :

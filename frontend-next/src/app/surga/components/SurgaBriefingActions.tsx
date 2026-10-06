@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Bell, Check, Sparkles, RefreshCw } from 'lucide-react'
+import { Bell, X, RefreshCw } from 'lucide-react'
 
 interface SurgaBriefingActionsProps {
   heureBriefing?: string
@@ -20,7 +20,7 @@ export default function SurgaBriefingActions({
     }
     return 'default'
   })
-  const [isTestSent, setIsTestSent] = useState(false)
+  const [masquerBandeau, setMasquerBandeau] = useState<boolean>(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleDemanderPermission = async () => {
@@ -28,33 +28,10 @@ export default function SurgaBriefingActions({
       try {
         const perm = await Notification.requestPermission()
         setPermissionState(perm)
-        if (perm === 'granted') {
-          declencherNotificationTest()
-        }
       } catch (err) {
         console.warn('[SURGA NOTIF PERM ERROR]:', err)
       }
     }
-  }
-
-  const declencherNotificationTest = () => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification('Surga — Votre Briefing du Matin', {
-          body: `Bonjour. Votre briefing de ${heureBriefing} est prêt : ${titrePremierItem.slice(0, 75)}...`,
-          icon: '/icons/icon-192.png',
-        })
-        setIsTestSent(true)
-        setTimeout(() => setIsTestSent(false), 5000)
-        return
-      } catch (e) {
-        // Fallback si context service worker nécessaire
-      }
-    }
-    // Simulation visuelle si notifications bloquées ou non supportées sur le périphérique
-    alert(`[Notification Surga (${heureBriefing})]\nBonjour. Votre briefing quotidien est prêt avec vos actualités et résultats sportifs.`)
-    setIsTestSent(true)
-    setTimeout(() => setIsTestSent(false), 5000)
   }
 
   const handleRefreshClick = async () => {
@@ -69,55 +46,64 @@ export default function SurgaBriefingActions({
   }
 
   return (
-    <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-      {permissionState !== 'granted' ? (
-        <button
-          type="button"
-          onClick={handleDemanderPermission}
-          className="surga-btn-secondary"
+    <>
+      {/* Mini bandeau d'alerte matinale : discret et fermable d'un clic */}
+      {!masquerBandeau && permissionState !== 'granted' && (
+        <div
           style={{
-            flex: 1,
-            minWidth: 160,
-            fontSize: 13,
-            padding: '8px 12px',
-            borderColor: 'var(--accent, #C75B00)',
-            color: 'var(--accent, #C75B00)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            padding: '6px 10px',
+            backgroundColor: 'rgba(217, 119, 6, 0.08)',
+            border: '1px solid rgba(217, 119, 6, 0.2)',
+            borderRadius: 8,
+            fontSize: 12,
+            marginTop: 8,
           }}
         >
-          <Bell size={15} />
-          <span>Activer les alertes matinales</span>
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={declencherNotificationTest}
-          className="surga-btn-secondary"
-          style={{
-            flex: 1,
-            minWidth: 160,
-            fontSize: 13,
-            padding: '8px 12px',
-            backgroundColor: isTestSent ? 'rgba(10,92,54,0.06)' : undefined,
-            color: isTestSent ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
-          }}
-        >
-          {isTestSent ? <Check size={15} /> : <Sparkles size={15} color="var(--accent, #C75B00)" />}
-          <span>{isTestSent ? 'Notification envoyée !' : 'Tester la notification de briefing'}</span>
-        </button>
+          <button
+            type="button"
+            onClick={handleDemanderPermission}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              color: 'var(--surga-accent, #D97706)',
+              fontWeight: 700,
+              fontSize: 12,
+              textAlign: 'left',
+              minHeight: 28,
+            }}
+          >
+            <Bell size={13} />
+            <span>Alerte matinale à {heureBriefing}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMasquerBandeau(true)}
+            aria-label="Fermer la suggestion"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '4px 6px',
+              cursor: 'pointer',
+              color: 'var(--surga-text2, #475569)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 28,
+            }}
+          >
+            <X size={13} />
+          </button>
+        </div>
       )}
-
-      {onRefresh && (
-        <button
-          type="button"
-          onClick={handleRefreshClick}
-          className="surga-btn-secondary"
-          style={{ width: 'auto', padding: '8px 12px' }}
-          title="Actualiser les flux d’actualité"
-          disabled={isRefreshing}
-        >
-          <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
-        </button>
-      )}
-    </div>
+    </>
   )
 }

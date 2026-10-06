@@ -83,7 +83,7 @@ router.get('/briefing', tokenOptional, async (req, res) => {
     const nbSports = sports.length;
     const nbAgenda = agendaDuJour.length;
 
-    let messageSynthese = `Bonjour. Voici votre briefing de ce ${dateFormatted} pour ${quartierPrincipal} : ${nbBreves} brève${nbBreves > 1 ? 's' : ''} d’actualité sourcée${nbBreves > 1 ? 's' : ''}${nbSports > 0 ? ` et ${nbSports} actualité${nbSports > 1 ? 's' : ''} sportive${nbSports > 1 ? 's' : ''}` : ''}.`;
+    let messageSynthese = `Bonjour. Voici votre briefing de ce ${today.toLowerCase()} pour ${quartierPrincipal} : ${nbBreves} brève${nbBreves > 1 ? 's' : ''} d’actualité sourcée${nbBreves > 1 ? 's' : ''}${nbSports > 0 ? ` et ${nbSports} actualité${nbSports > 1 ? 's' : ''} sportive${nbSports > 1 ? 's' : ''}` : ''}.`;
     if (nbAgenda > 0) {
       messageSynthese += ` Vous avez ${nbAgenda} rendez-vous ou rappel${nbAgenda > 1 ? 's' : ''} programmé${nbAgenda > 1 ? 's' : ''} aujourd’hui.`;
     }

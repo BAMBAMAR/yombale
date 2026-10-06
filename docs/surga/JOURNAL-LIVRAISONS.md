@@ -3,6 +3,45 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 9 suite - 5] — Refonte de la Hiérarchie du Premier Écran (Digest Actif Immédiat, Audio Épuré & Météo Compacte)
+- **Objectif Atteint :**
+  - Corriger la hiérarchie du premier écran : faire voir à l'utilisateur ce qu'il cherche dès l'ouverture de l'application sans défilement nécessaire.
+  - Transformer la carte Briefing du Matin en Digest Actif immédiat (2 titres d'actualité réels, prochain rappel agenda, match de foot phare).
+  - Épurer le lecteur audio : bouton « Écouter » unique, vitesses conditionnelles à l'écoute, élimination des boutons "Radios FM" et "Podcast" qui débordaient sur mobile.
+  - Compacter la Météo en 1 ligne glanceable (`28°C Ensoleillé • Marée 17h45 • Air : Bonne`) avec détails repliables à la demande via `SurgaMeteoDetailBloc.tsx` (-150 px de hauteur économisés).
+  - Remplacer le gros bouton d'alertes matinales par un mini-bandeau discret fermable d'un clic `[✕]`.
+  - Corriger la typographie de date dans la phrase de synthèse (`de ce mardi 6 octobre`).
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composant Accueil (`frontend-next/src/app/surga/components/SurgaAujourdhuiTab.tsx`, 317 l.)* :
+     - Ajout du bloc Digest Actif au sommet du flux matinal.
+  2. *Lecteur Audio (`frontend-next/src/app/surga/components/SurgaAudioPlayer.tsx`, 220 l.)* :
+     - Un seul bouton d'écoute, vitesses et stop strictement conditionnels.
+  3. *Météo Compacte (`frontend-next/src/app/surga/components/SurgaMeteoCard.tsx`, 380 l.) & Sous-composant (`SurgaMeteoDetailBloc.tsx`, 112 l.)* :
+     - Ligne glanceable immédiate avec chevron « Détails / Moins ».
+  4. *Alertes Matinales (`frontend-next/src/app/surga/components/SurgaBriefingActions.tsx`, 95 l.)* :
+     - Mini-bandeau dismissible.
+  5. *Backend Briefing (`backend/routes/surga/briefing.js`)* :
+     - Minuscule sur le jour de la semaine dans la phrase de synthèse.
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS (100%).
+  - Linter Anti-AI-Slop : 100% fichiers < 450 l.
+
+### [2026-10-06 — Nuit 9 suite - 4] — Écran Trafic : Titre « Trafic » Monoligne & Normalisation Tokens Surga
+- **Objectif Atteint :**
+  - Remplacer l'intitulé « Trafic & Déplacements Dakar » qui débordait sur 2 lignes par « Trafic » seulement.
+  - Aligner parfaitement le titre monoligne avec l'icône Navigation, le badge DIRECT et les boutons `[Carte Live ↗]` et `[Détails >]`.
+  - Normaliser l'ensemble des tokens CSS de `SurgaTraficCard.tsx` avec les variables officielles `--surga-*`.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composant Trafic Principal (`frontend-next/src/app/surga/components/SurgaTraficCard.tsx`, 296 l.)* :
+     - Titre monoligne `Trafic` sans retour à la ligne.
+     - Sous-titre compacté « Dakar • TER & BRT » avec `textOverflow: 'ellipsis'`.
+     - Purge des couleurs et tokens Nopalou (`#1C2B4A`, `#C75B00`, `#0A5C36`, `#F8F5F0`, `#E8DDD2`) remplacés par les tokens `--surga-*`.
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS (100%).
+  - Linter Anti-AI-Slop : 100% fichiers < 450 l.
+
 ### [2026-10-06 — Nuit 9 suite - 3] — Éradication Définitive des Troncatures d'Actualités (« Lir » & Mots Coupés)
 - **Objectif Atteint :**
   - Régler définitivement les troncatures visibles sur les cartes d'actualités mobiles : débordement du bouton « Lire » coupé en « Lir », et mots hachés dans les résumés (« qu'u... », « Agen... »).

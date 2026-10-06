@@ -49,6 +49,33 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Refonte de la Hiérarchie du Premier Écran — Digest Actif Immédiat, Audio Épuré & Météo Compacte (Session 2026-10-06 - Nuit 9 suite - 5, branche `feature/surga`)** :
+  - *Sprint d'Exécution UX & Priorité du Premier Regard* :
+    1. **Le Briefing Montre Immédiatement son Contenu (`SurgaAujourdhuiTab.tsx`, 317 l.)** :
+       - Fin de l'effet "sommaire vide qui annonce 6 brèves sans rien montrer".
+       - La première carte affiche directement le **Digest du Matin** : les 2 grands titres d'actualités réels cliquables, le prochain rendez-vous / rappel d'agenda (ou badge "Journée libre"), et le prochain match de sport phare. L'utilisateur a l'essentiel de sa journée sous les yeux en 2 secondes sans scroller.
+    2. **Audio Épuré & Conditionnel (`SurgaAudioPlayer.tsx`, 220 l.)** :
+       - Réduction au bouton d'écoute principal `[ ▶ Écouter le briefing (0 Mo) ]`.
+       - Vitesse (`1x, 1.25x, 1.5x`) et contrôles de lecture affichés **strictement en cours d'écoute**.
+       - Déplacement des boutons superflus "Radios FM" et "Podcast" vers l'onglet Services, éliminant tout débordement "Podca" sur mobile.
+    3. **Météo Glanceable en 1 Ligne & Détails Repliables (`SurgaMeteoCard.tsx`, 380 l., `SurgaMeteoDetailBloc.tsx`, 112 l.)** :
+       - Remplacement du bloc géant initial par une barre glanceable immédiate : `28°C Ensoleillé • Marée 17h45 • Air : Bonne (AQI 45)` avec bouton chevron « Détails / Moins ».
+       - Suppression du faux bouton refresh "Ensoleillé" : rafraîchissement réduit à une icône discrète 32×32px.
+       - Suppression du texte décoratif "Air océanique purifié". Gain : -150 px de hauteur sur le premier écran !
+    4. **Alertes Matinales en Mini-Bandeau Discret (`SurgaBriefingActions.tsx`, 95 l.)** :
+       - Remplacement du gros bouton pleine largeur statique par un mini-bandeau discret fermable d'un clic `[✕]`.
+    5. **Typographie & Grammaire Backend (`backend/routes/surga/briefing.js`)** :
+       - Correction de la majuscule abusive : `de ce mardi 6 octobre` au lieu de `de ce Mardi 6 octobre`.
+    6. **Tests & Modularisation** :
+       - 158/158 tests Jest PASS, `tsc --noEmit` 0 erreur, 100% fichiers < 450 lignes.
+
+- **Surga / Écran Trafic : Titre Monoligne Épuré & Normalisation Design System (`SurgaTraficCard.tsx`) (Session 2026-10-06 - Nuit 9 suite - 4, branche `feature/surga`)** :
+  - *Sprint de Calibrage Titre & Zéro Débordement* :
+    1. **Titre Monoligne `Trafic` (`SurgaTraficCard.tsx`)** : Remplacement de l'intitulé à rallonge `Trafic & Déplacements Dakar` (qui débordait sur 2 lignes horizontales) par `Trafic` seulement. S'insère impeccablement sur une seule ligne à côté du badge DIRECT et des boutons `[Carte Live ↗]` et `[Détails >]`.
+    2. **Sous-Titre Ajusté** : Format compact `Dakar • TER & BRT` avec `textOverflow: 'ellipsis'` évitant toute cassure sur 2 lignes.
+    3. **Design System & Tokens Purs** : Éradication complète des anciens tokens `#1C2B4A`, `#C75B00`, `#0A5C36`, `#F8F5F0`, `#E8DDD2` au profit exclusif des variables officielles `--surga-*`.
+    4. **Tests & Validation** : 158/158 tests Jest validés, `tsc --noEmit` 0 erreur, composant à 296 lignes (< 450 l.).
+
 - **Surga / Éradication Définitive des Troncatures Mobiles sur les Actualités (Session 2026-10-06 - Nuit 9 suite - 3, branche `feature/surga`)** :
   - *Sprint de Calibrage Strict des Boutons & Textes d'Articles* :
     1. **Suppression du Débordement « Lir » (`SurgaNewsList.tsx`, `SurgaShareButton.tsx`)** : Remplacement des boutons encombrants avec libellés longs texte (`[En Note]`, `[Partager]`, `[Copier]`, `[Lire]`) qui dépassaient la largeur utile du mobile (300px) par 3 boutons iconographiques précis 32×32px (`Bookmark`, `Share2`, `ExternalLink`). Empreinte totale des boutons réduite de 245px à 108px, garantissant 192px d'espace libre pour la source et la date sans aucun débordement ni troncature.

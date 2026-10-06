@@ -3,17 +3,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  Wind,
-  Droplets,
   Waves,
   ShieldAlert,
   RefreshCw,
   ChevronDown,
-  MapPin,
+  ChevronUp,
   LocateFixed,
 } from 'lucide-react'
 import SurgaMeteoLocaliteModal from './SurgaMeteoLocaliteModal'
-import SurgaMeteoPrevisions, { renderMeteoIcon } from './SurgaMeteoPrevisions'
+import SurgaMeteoDetailBloc from './SurgaMeteoDetailBloc'
+import { renderMeteoIcon } from './SurgaMeteoPrevisions'
 import {
   LOCALITES_SENEGAL_LIST,
   trouverLocaliteParNom,
@@ -39,6 +38,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
   const [localitesList, setLocalitesList] = useState<LocaliteItem[]>(LOCALITES_SENEGAL_LIST)
   const [gpsEnCours, setGpsEnCours] = useState(false)
   const [estGpsActif, setEstGpsActif] = useState(Boolean(initialMeteo?.est_gps))
+  const [estDeplie, setEstDeplie] = useState(false)
 
   const chargerMeteo = useCallback(
     async (params?: { ville?: string; lat?: number; lon?: number }) => {
@@ -272,119 +272,95 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
             onClick={() => chargerMeteo()}
             disabled={loading}
             aria-label="Actualiser la météo"
-            title="Actualiser les données"
+            title="Actualiser les données météo"
             style={{
               background: 'var(--surga-bg, #F8FAFC)',
               border: '1px solid var(--surga-border, #E2E8F0)',
               borderRadius: 8,
-              padding: '6px 10px',
+              width: 32,
+              height: 32,
+              padding: 0,
               cursor: loading ? 'wait' : 'pointer',
               color: 'var(--surga-text2, #475569)',
               display: 'flex',
               alignItems: 'center',
-              gap: 4,
-              fontSize: 11,
-              fontWeight: 700,
-              minHeight: 36,
+              justifyContent: 'center',
             }}
           >
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            <span style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {meteo?.condition_texte || 'Actualiser'}
-            </span>
           </button>
         </div>
       </div>
 
-      {/* Température principale & Conditions directes */}
+      {/* Ligne d'aperçu glanceable immédiate : 28°C Ensoleillé • Marée 17h45 • Air Bonne */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'auto 1fr',
-          gap: 16,
+          display: 'flex',
           alignItems: 'center',
-          padding: '12px 14px',
+          justifyContent: 'space-between',
+          gap: 10,
+          padding: '8px 12px',
           backgroundColor: 'var(--surga-bg, #F8FAFC)',
-          borderRadius: 10,
+          borderRadius: 8,
           border: '1px solid var(--surga-border, #E2E8F0)',
-          marginBottom: 10,
+          marginBottom: estDeplie ? 10 : 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-          <span style={{ fontSize: 32, fontWeight: 900, color: 'var(--surga-primary, #0F172A)', lineHeight: 1 }}>
-            {meteo?.temperature ?? '--'}°
-          </span>
-          <span style={{ fontSize: 13, color: 'var(--surga-text3, #94A3B8)', fontWeight: 600 }}>C</span>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-text1, #0F172A)' }}>
-            Ressenti {meteo?.ressenti ?? '--'}°C • Min {meteo?.temp_min ?? '--'}° / Max {meteo?.temp_max ?? '--'}°
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Wind size={12} color="var(--surga-accent, #D97706)" />
-              {meteo?.vent_vitesse_kmh ?? 0} km/h ({meteo?.vent_direction || 'Alizé'})
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {renderMeteoIcon(meteo?.condition_code || 'soleil', 18)}
+            <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--surga-primary, #0F172A)' }}>
+              {meteo?.temperature ?? '--'}°C
             </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Droplets size={12} color="var(--surga-primary, #0F172A)" />
-              {meteo?.humidite ?? '--'}%
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--surga-text1, #0F172A)' }}>
+              {meteo?.condition_texte || 'Ensoleillé'}
             </span>
           </div>
+
+          {meteo?.maree && (
+            <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <Waves size={12} color="var(--surga-primary, #0F172A)" />
+              {meteo.maree.etat} {meteo.maree.prochaine_heure}
+            </span>
+          )}
+
+          {meteo?.qualite_air && (
+            <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <ShieldAlert size={12} color={meteo.qualite_air.aqi > 70 ? 'var(--surga-accent, #D97706)' : 'var(--surga-emerald, #059669)'} />
+              Air : {meteo.qualite_air.niveau} (AQI {meteo.qualite_air.aqi})
+            </span>
+          )}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setEstDeplie(!estDeplie)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '4px 6px',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontWeight: 700,
+            color: 'var(--surga-accent, #D97706)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span>{estDeplie ? 'Moins' : 'Détails'}</span>
+          {estDeplie ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        </button>
       </div>
 
-      {/* Marées et Qualité de l'Air */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-        {meteo?.maree && (
-          <div
-            style={{
-              padding: '8px 10px',
-              borderRadius: 8,
-              backgroundColor: 'var(--surga-surface, #FFFFFF)',
-              border: '1px solid var(--surga-border, #E2E8F0)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-              <Waves size={13} color="var(--surga-primary, #0F172A)" />
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-primary, #0F172A)' }}>
-                {meteo.maree.etat}
-              </span>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text2, #475569)' }}>
-              Prochaine : {meteo.maree.prochaine_heure} ({meteo.maree.spot_reference})
-            </div>
-          </div>
-        )}
-
-        {meteo?.qualite_air && (
-          <div
-            style={{
-              padding: '8px 10px',
-              borderRadius: 8,
-              backgroundColor: 'var(--surga-surface, #FFFFFF)',
-              border: '1px solid var(--surga-border, #E2E8F0)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-              <ShieldAlert size={13} color={meteo.qualite_air.aqi > 70 ? 'var(--surga-accent, #D97706)' : 'var(--surga-emerald, #059669)'} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-text1, #0F172A)' }}>
-                Air : {meteo.qualite_air.niveau}
-              </span>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              AQI {meteo.qualite_air.aqi} • {meteo.qualite_air.particules}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Prévisions 3 jours sous-composant modulaire */}
-      {meteo?.previsions_3j && (
-        <SurgaMeteoPrevisions
-          previsions={meteo.previsions_3j}
+      {/* Détails complets repliables via sous-composant modulaire */}
+      {estDeplie && meteo && (
+        <SurgaMeteoDetailBloc
+          meteo={meteo}
           showPrevisions={showPrevisions}
-          onToggle={() => setShowPrevisions(!showPrevisions)}
+          onTogglePrevisions={() => setShowPrevisions(!showPrevisions)}
         />
       )}
 
