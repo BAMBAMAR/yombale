@@ -1824,9 +1824,9 @@ describe('Module Surga — Tranches 1 & 2', () => {
       demarchesService.reinitialiserMemoire();
     });
 
-    test('Catalogue initial certifié conforme (6 à 8 fiches de test réelles)', () => {
-      expect(demarchesService.DEMARCHES_INITIALES.length).toBeGreaterThanOrEqual(6);
-      expect(demarchesService.DEMARCHES_INITIALES.length).toBeLessThanOrEqual(8);
+    test('Catalogue initial certifié conforme (enrichi de fiches de référence réelles)', () => {
+      expect(demarchesService.DEMARCHES_INITIALES.length).toBeGreaterThanOrEqual(15);
+      expect(demarchesService.DEMARCHES_INITIALES.length).toBeLessThanOrEqual(30);
 
       const slugs = demarchesService.DEMARCHES_INITIALES.map((d) => d.slug);
       expect(slugs).toContain('carte-nationale-identite-cedeao');
@@ -1836,6 +1836,12 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(slugs).toContain('declaration-extrait-acte-naissance');
       expect(slugs).toContain('permis-conduire-senegalais');
       expect(slugs).toContain('certificat-residence-senegal');
+      expect(slugs).toContain('creation-entreprise-individuelle-gie');
+      expect(slugs).toContain('creation-societe-sarl-apix');
+      expect(slugs).toContain('quitus-fiscal-attestation-regularite');
+      expect(slugs).toContain('declaration-extrait-acte-mariage');
+      expect(slugs).toContain('permis-construire-autorisation-urbanisme');
+      expect(slugs).toContain('carte-grise-immatriculation-vehicule');
     });
 
     test('Condition de démarrage : toutes les fiches initiales sont en statut BROUILLON et invisibles pour le public', async () => {
@@ -1848,7 +1854,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
 
       // En mode admin / démo (includeBrouillons: true) : les fiches sont bien accessibles
       const resAdmin = await demarchesService.rechercherDemarches({ includeBrouillons: true });
-      expect(resAdmin.fiches.length).toBe(7);
+      expect(resAdmin.fiches.length).toBe(demarchesService.DEMARCHES_INITIALES.length);
     });
 
     test('Recherche textuelle déterministe insensible aux accents et à la casse', async () => {

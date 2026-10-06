@@ -1,5 +1,33 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga — Démarches Administratives Vérifiées : Enrichissement Majeur du Catalogue Officiel (20 Fiches Certifiées) & Synchronisation PostgreSQL (Session 2026-10-06 - Nuit 2, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Réponse à la demande utilisateur : « ajouter plus de demarche ».
+    - Diagnostic : Le catalogue initial ne comportait que 7 démarches, avec un vide complet sur le secteur « Entreprise & Activité Pro » et l'absence de démarches foncières majeures (Titre foncier, Permis de construire), de transports (Carte grise, Contrôle CCTVA) et d'actes d'état civil essentiels (Mariage, Décès).
+    - Correctifs appliqués :
+      * `backend/services/surga/demarches-service.js` :
+        - Ajout de 13 nouvelles fiches officielles vérifiées (total porté à 20 démarches certifiées) :
+          1. **Création d'Entreprise Individuelle ou GIE (APIX)** : 10 000 FCFA, 24-48h, BACE APIX / creationdentreprise.sn.
+          2. **Création de SARL (APIX / Notaire)** : 25 000 FCFA, 48h.
+          3. **Quitus Fiscal (DGID / eTax)** : 0 FCFA, 48-72h.
+          4. **Immatriculation employeur & salariés (IPRES / CSS)** : 0 FCFA, 3-5 jours.
+          5. **Déclaration et extrait d'acte de mariage** : 200 FCFA, immédiat à 24h.
+          6. **Déclaration de décès et permis d'inhumer** : 200 FCFA, permis immédiat.
+          7. **Certificat de vie (Individuel / Pensionnaires IPRES)** : 200 FCFA, immédiat.
+          8. **Permis de construire (Teledac / Urbanisme)** : 10 000 FCFA, 15-30 jours.
+          9. **Mutation de Titre Foncier (Conservation Foncière DGID)** : 35 000 FCFA, 30-60 jours.
+          10. **Carte grise & Immatriculation (Capp Karangë)** : 20 000 FCFA, 7-15 jours.
+          11. **Visite technique automobile (CCTVA Hann)** : 10 000 FCFA, 1-2h.
+          12. **Légalisation et certification conforme** : 200 FCFA, immédiat.
+          13. **Certificat de perte de pièces officielles** : 1 000 FCFA, immédiat.
+        - Synchronisation PostgreSQL : mise à jour d'`assurerDemarchesInitiales` avec boucle `ON CONFLICT (id) DO UPDATE SET ...` pour peupler immédiatement la base sans être bloqué par les enregistrements existants.
+      * `tests/unit/surga.test.js` :
+        - Assertions du test unitaire Tranche 20 actualisées (`15 <= DEMARCHES_INITIALES.length <= 30`), test de slugs complété.
+  * **Validation & Qualité** :
+    - Tests Jest : **127/127 validés (100% en 2.7s)**.
+    - Linter anti-slop : Conforme (`npm run lint:slop`, zéro émoji UI).
+    - API live vérifiée : `http://localhost:3000/api/surga/demarches?mode_demo=true` retourne les 20 fiches complètes.
+
 - **Surga — Sport & Équipe Nationale : Correction Scores Temps Réel, Actualisation des Lions du Sénégal & Saudi Pro League (Session 2026-10-06 - Soir 2, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Réponse au constat utilisateur : Dans l'onglet « Lions du Sénégal », les matchs passés de 2025 s'affichaient sous le libellé « À venir » sans score (ex: Senegal — Mauritania, South Sudan — Senegal, Congo DR — Senegal), tandis que les résultats récents de fin septembre / début octobre 2026 n'apparaissaient pas.

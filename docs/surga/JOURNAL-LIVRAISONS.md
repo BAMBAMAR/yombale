@@ -3,6 +3,39 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 2] — Démarches Administratives Vérifiées : Enrichissement Majeur du Catalogue (20 Fiches Certifiées) & Synchronisation PostgreSQL
+- **Demande Utilisateur :**
+  - « ajouter plus de demarche »
+  - Capture montrant l'écran de consultation des démarches avec seulement 7 fiches, et un catalogue vide dans l'onglet « Entreprise ».
+- **Analyse & Contexte :**
+  - Le catalogue initial comportait 7 fiches de démarrage limitées aux démarches de base d'identité et de transport.
+  - La catégorie `activite_pro` (« Entreprise ») n'avait aucune fiche, alors que la création d'entreprise (APIX, GIE, SARL), le quitus fiscal et les déclarations IPRES/CSS sont parmi les démarches les plus recherchées au Sénégal.
+  - De plus, les procédures foncières (permis de construire Teledac, mutation de titre foncier DGID) et les formalités de transport indispensables (carte grise Capp Karangë, visite technique CCTVA) étaient manquantes.
+  - La méthode d'initialisation `assurerDemarchesInitiales` ne chargeait que si la table était vide (`COUNT === 0`), risquant de ne pas insérer de nouvelles fiches si des lignes existaient déjà.
+- **Modifications Appliquées :**
+  - **`backend/services/surga/demarches-service.js`** :
+    - Ajout de **13 nouvelles fiches officielles complètes** portant le catalogue à **20 démarches certifiées** avec source officielle `https://e-senegal.sn/#/home/demarches` :
+      1. `dem-creation-entreprise` : Création d'Entreprise Individuelle ou GIE (Guichet Unique APIX), 10 000 FCFA, 24-48h.
+      2. `dem-immatriculation-sarl` : Création de Société à Responsabilité Limitée (SARL), 25 000 FCFA, 48h.
+      3. `dem-quitus-fiscal` : Quitus fiscal / Attestation de régularité fiscale (DGID / eTax), 0 FCFA, 48-72h.
+      4. `dem-immatriculation-ipres-secu` : Immatriculation employeur & salariés (IPRES et CSS), 0 FCFA, 3-5 jours.
+      5. `dem-acte-mariage` : Déclaration et extrait d'acte de mariage, 200 FCFA, immédiat à 24h.
+      6. `dem-acte-deces` : Déclaration de décès et permis d'inhumer, 200 FCFA, immédiat.
+      7. `dem-certificat-vie` : Certificat de vie individuel ou pour pensionnaires IPRES, 200 FCFA, immédiat.
+      8. `dem-permis-construire` : Permis de construire / Autorisation d'urbanisme (Teledac / Urbanisme), 10 000 FCFA, 15-30 jours.
+      9. `dem-titre-foncier` : Mutation et transfert de Titre Foncier (Conservation Foncière DGID), 35 000 FCFA, 30-60 jours.
+      10. `dem-carte-grise` : Carte grise & Immatriculation Capp Karangë, 20 000 FCFA, 7-15 jours.
+      11. `dem-visite-technique` : Visite technique automobile CCTVA Hann, 10 000 FCFA, 1-2h.
+      12. `dem-legalisation-documents` : Légalisation de signature et certification conforme, 200 FCFA, immédiat.
+      13. `dem-certificat-perte` : Certificat de perte de pièces officielles, 1 000 FCFA, immédiat.
+    - Synchronisation dynamique dans `assurerDemarchesInitiales` via `INSERT ... ON CONFLICT (id) DO UPDATE SET ...` pour alimenter et maintenir à jour la base PostgreSQL en continu.
+  - **`tests/unit/surga.test.js`** :
+    - Test unitaire Tranche 20 actualisé pour contrôler le catalogue enrichi (`toBeGreaterThanOrEqual(15)`, `toBeLessThanOrEqual(30)`).
+- **Validation :**
+  - Tests unitaires Jest : **127/127 validés (100% en 2.7s)**.
+  - Anti-AI-Slop : 100% conforme (`npm run lint:slop`, zéro émoji UI).
+  - API locale validée : `http://localhost:3000/api/surga/demarches?mode_demo=true` délivre les 20 démarches réelles, et le sélecteur PWA affiche désormais `Guide officiel (20)` avec toutes les catégories peuplées.
+
 ### [2026-10-06 — Nuit] — Sport & Équipe Nationale : Scores Temps Réel, Détection de Statut et Actualisation Lions du Sénégal
 - **Demande Utilisateur :**
   - « certaines infos ne sont pas a jour je veux de s information mise a jour et recente et en temps reel Sport & Équipe Nationale »

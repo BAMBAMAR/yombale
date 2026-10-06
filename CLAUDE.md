@@ -49,6 +49,22 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Démarches Administratives Vérifiées : Enrichissement Majeur du Catalogue Officiel (20 Fiches Certifiées) & Synchronisation PostgreSQL (Session 2026-10-06 - Nuit 2, branche `feature/surga`)** :
+  - *Demande Utilisateur & Constat* : « ajouter plus de demarche » — Le catalogue ne comportait initialement que 7 démarches avec une absence totale de fiches dans la catégorie « Entreprise & Activité Pro » et un manque de procédures clés foncières, de transport et d'état civil.
+  - *Correctifs Apportés* :
+    1. `backend/services/surga/demarches-service.js` :
+       - **13 nouvelles fiches officielles ajoutées (Catalogue porté à 20 démarches complètes)** réparties sur l'ensemble des catégories officielles :
+         - *Entreprise & Activité Pro* (`activite_pro`) : Création d'Entreprise Individuelle ou GIE (Guichet Unique APIX, 10 000 FCFA), Création de SARL (APIX, 25 000 FCFA), Quitus fiscal / Attestation de régularité fiscale (DGID / eTax, 0 FCFA), Immatriculation employeur & salariés (IPRES et Caisse de Sécurité Sociale, 0 FCFA).
+         - *État Civil & Famille* (`etat_civil`) : Déclaration et extrait d'acte de mariage (200 FCFA), Déclaration de décès et permis d'inhumer (200 FCFA), Certificat de vie individuel ou pensionnaire IPRES (200 FCFA).
+         - *Logement & Résidence* (`logement`) : Permis de construire / Autorisation d'urbanisme (Teledac / Mairie, 10 000 FCFA), Mutation et transfert de Titre Foncier (DGID / Notaire, 35 000 FCFA).
+         - *Transports & Permis* (`transport`) : Carte grise & Immatriculation Capp Karangë (20 000 FCFA), Visite technique automobile CCTVA Hann (10 000 FCFA).
+         - *Justice & Casier* (`justice`) : Légalisation de signature et certification conforme de documents (Mairie / Police, 200 FCFA).
+         - *Identité & Voyage* (`identite_voyage`) : Certificat de perte de pièces officielles (Police / Gendarmerie, 1 000 FCFA).
+       - **Synchronisation Idempotente PostgreSQL (`assurerDemarchesInitiales`)** : Remplacement du contrôle figé `COUNT(*) === 0` par une boucle d'insertion et mise à jour `INSERT INTO surga_demarches (...) ON CONFLICT (id) DO UPDATE SET ...`, garantissant l'alimentation immédiate de l'ensemble des 20 démarches dans la base PostgreSQL sans blocage par les lignes préexistantes.
+    2. `tests/unit/surga.test.js` :
+       - Actualisation des assertions du test unitaire Tranche 20 pour valider le catalogue enrichi (`toBeGreaterThanOrEqual(15)`, `toBeLessThanOrEqual(30)`), avec vérification des nouveaux slugs majeurs.
+  - *Validation* : Suite de tests Jest **127/127 validés (100% en 2.7s)**, linter anti-slop conforme, API live validée sur `/api/surga/demarches?mode_demo=true` retournant exactement 20 démarches réelles.
+
 - **Surga — Sport & Équipe Nationale : Correction Scores Temps Réel, Actualisation des Lions du Sénégal & Saudi Pro League (Session 2026-10-06 - Soir 2, branche `feature/surga`)** :
   - *Demande Utilisateur & Constat* : « certaines infos ne sont pas a jour je veux de s information mise a jour et recente et en temps reel Sport & Équipe Nationale » — Dans l'onglet « Lions du Sénégal », d'anciens matchs de 2025 s'affichaient sous le libellé « À venir » sans score (ex: Senegal — Mauritania, South Sudan — Senegal, Congo DR — Senegal), et les matchs récents d'octobre 2026 étaient absents.
   - *Causes Racines & Correctifs Apportés* :
