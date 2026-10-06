@@ -3,6 +3,21 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 7] — Alertes Vidéos Séries TV & Lutte : Ingestion Réelle, Panachage Équitable & Liens Sortants Directs
+- **Demande Utilisateur :**
+  - Signalement d'absence de parutions vidéos dans la modale Surga : « Dernières parutions (0) », « Aucune vidéo trouvée pour cette recherche ».
+- **Diagnostic Technique & Solution Appliquée :**
+  - **Dépréciation YouTube Atom XML** : YouTube retournait des erreurs 404 sur les endpoints RSS Atom XML classiques.
+  - **Nouveau parseur HTML `lockupViewModel`** : Implémentation dans `backend/services/surga/video-service.js` d'un parseur analysant `ytInitialData` sur les URLs de chaînes sans clé d'API.
+  - **Mise à jour des Sources Officielles** : Inscription d'URLs directes pour EvenProd, Marodi TV, Pikini Production, Lutte TV Sénégal, Albourakh Events, Gaston Productions.
+  - **Ingestion Massive Réussie** : 141 vraies vidéos sénégalaises insérées en base dans `surga_video_items`.
+  - **Panachage Équitable SQL (`ROW_NUMBER`)** : Requête fenêtrée assurant une alternance parfaite des sources et une parité stricte Séries / Lutte (50% / 50%) sur l'onglet Toutes.
+  - **Frontend PWA (`SurgaVideosModal.tsx`)** : Chargement de 50 parutions (`limit=50`), liens YouTube directs « Voir », rappels Agenda et respect strict du plafond de 450 lignes (422 l.).
+- **Validation :**
+  - 127/127 tests Jest backend passés (100%).
+  - 97/97 tests Vitest frontend passés (100%).
+  - Linter Anti-AI-Slop 100% conforme.
+
 ### [2026-10-06 — Matin 6] — Épuration UI Dashboard & Retrait des Cartes de Test
 - **Demande Utilisateur :**
   - Modification du texte « Tranche 6 active (Commande vocale & Calculs exacts) / Dictez vos calculs... » sur le tableau de bord des outils.

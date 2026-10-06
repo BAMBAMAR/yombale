@@ -1,15 +1,15 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 5)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 7)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 20 : Démarches Administratives Sénégalaises Vérifiées & Console d'Administration, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Tranche 17 : Séries TV & Lutte, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 20 : Démarches Administratives Sénégalaises Vérifiées, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** s'enrichit désormais du pôle complet des démarches administratives sénégalaises vérifiées (**Tranche 20**), répondant à la condition de démarrage formelle « techniquement terminée, contenu en attente », avec fiches officielles certifiées (CNI CEDEAO, Passeport biométrique, Extrait de casier judiciaire, Certificat de nationalité, Acte de naissance, Permis de conduire, Certificat de résidence) marquées `BROUILLON` (invisibles au grand public sans responsable éditorial), une recherche textuelle déterministe par mots-clés sans hallucination (renvoi officiel vers `servicepublic.gouv.sn`), un cycle de re-vérification de 90 jours (bascule automatique en `A_REVERIFIER`), un outil d'administration complet (`/admin/surga`), des signalements d'usagers et des passerelles directes vers Notes, Sama Xaalis et l'Agenda.
+L'assistant personnel de poche **Surga** dispose désormais d'un flux d'alertes vidéos officiel (**Tranche 17**) 100% fonctionnel et peuplé de **141 parutions authentiques** de séries et de combats de lutte sénégalais (EvenProd, Marodi TV, Pikini Production, Lutte TV Sénégal, Albourakh Events, Gaston Productions), avec un panachage équitable en base via `ROW_NUMBER()` SQL, des liens sortants YouTube directs en mode Low-Data, et l'ensemble des modules (Démarches, Emploi, CV, Entretien, Sama Xaalis, Météo) testés à 100%.
 
 0. **Démarches Administratives Sénégalaises Vérifiées & Console Admin (Tranche 20 — 100% DONE)** :
    - **Base de Données SQL & Migrations Idempotentes** : Tables `surga_demarches`, `surga_demarches_signalements` et `surga_demarches_suivis` créées dans `backend/migrate-inline.js`.

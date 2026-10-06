@@ -88,7 +88,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
 
       const [resSources, resVideos] = await Promise.all([
         fetch('/api/surga/videos/sources', { headers }).then((r) => r.json()).catch(() => ({ success: false })),
-        fetch('/api/surga/videos/derniers?limit=30', { headers }).then((r) => r.json()).catch(() => ({ success: false })),
+        fetch('/api/surga/videos/derniers?limit=50', { headers }).then((r) => r.json()).catch(() => ({ success: false })),
       ])
 
       if (resSources.success && Array.isArray(resSources.sources)) {

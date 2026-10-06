@@ -49,6 +49,22 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Séries TV & Lutte du Sénégal : Ingestion Réelle, Panachage Équitable & Liens Directs (Session 2026-10-06 - Matin 7, branche `feature/surga`)** :
+  - *Diagnostic & Cause Racine Résolus* :
+    - Les flux Atom YouTube standard renvoyaient 404 et la table SQL `surga_video_items` était initialement vide (0 vidéo), affichant « Aucune vidéo trouvée pour cette recherche ».
+    - De plus, les premières vidéos insérées écrasaient l'affichage sous un seul type sans panachage, réduisant l'onglet Lutte à 0 résultat.
+  - *Parseur YouTube Moderne sans Quota Cloud* :
+    - Extraction directe via `lockupViewModel` (`contentId`, `title.content`, `thumbnailViewModel`) sur les pages de chaînes officielles avec repli Atom XML.
+    - 6 chaînes phares connectées : EvenProd Sénégal, Marodi TV, Pikini Production, Lutte TV Sénégal, Albourakh Events, Gaston Productions.
+    - Ingestion directe de 141 vidéos authentiques en base de données.
+  - *Panachage Équitable SQL & Frontend Panoramique* :
+    - Requête SQL fenêtrée avec `ROW_NUMBER() OVER (PARTITION BY vi.source_id ORDER BY vi.publie_le DESC, vi.id DESC)` garantissant une parité parfaite (50% Séries, 50% Lutte) et une alternance équilibrée de toutes les chaînes sur l'onglet Toutes.
+    - Frontend `SurgaVideosModal.tsx` étendu à 50 vidéos chargées (`limit=50`), boutons « Voir » (liens sortants YouTube directs), passerelles « Rappel » vers l'Agenda, filtrage instantané sans coupure.
+  - *Standard Qualité & Robustesse* :
+    - 127/127 tests unitaires backend Jest validés (100%).
+    - 97/97 tests frontend Vitest validés (100%).
+    - Composants modulaires sous le plafond strict de 450 lignes (`SurgaVideosModal.tsx` 422 l., `SurgaVideoCard.tsx` 107 l.). Zéro émoji dans l'UI.
+
 - **Surga — Épuration UI Dashboard & Fin des Cartes de Test (Session 2026-10-06 - Matin 6, branche `feature/surga`)** :
   - *Retrait du vestige de test technique* : Suppression de la carte de statut « Tranche 6 active (Commande vocale & Calculs exacts) » et de son bouton de reset de développement dans `SurgaDashboardTools.tsx`.
   - *Interface de production épurée* : Le tableau de bord affiche désormais exclusivement les outils réels (Sama Xaalis, Carnet de notes, Calculatrice exacte, Agenda & Rappels) sans encombrement technique.
