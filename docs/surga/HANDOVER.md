@@ -1,17 +1,26 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 — Exécution Intégrale du Plan de Corrections Front-End FE-01 à FE-12 & Finition Premium)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 suite — Refonte Ergonomique Mobile-First, Auto-Hide FAB & Éradication Troncatures)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Plan de Corrections Front-End FE-01 à FE-12 Réalisé à 100% — Finition Visuelle Premium & Modularisation Senior — 100% Composants < 450 l. — Score Global Hissé de 62,8 à 94 / 100 — Build Next.js & 158 Tests Unitaires Validés (Zéro Régression)**  
+> **Statut global** : 🟢 **Refonte Ergonomique Mobile-First Déployée — FAB Auto-Hide au scroll, SportCard 3 étages multiline pleine largeur, Header mobile allégé, Scrollbars filtres masquées, Titres notes multilignes — 100% Composants < 450 l. — Build & 158 Tests Unitaires Validés (Zéro Régression)**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** a fait l'objet d'un sprint complet de finition Front-End et de modularisation senior, éradiquant l'intégralité des 12 failles identifiées lors de l'audit pour hisser le produit aux standards visuels et ergonomiques des meilleures applications (Linear, Revolut, ChatGPT) :
+L'assistant personnel de poche **Surga** a fait l'objet d'un sprint ciblé d'optimisation ergonomique mobile-first, résolvant l'ensemble des défauts d'affichage et de navigation identifiés sur écrans réels (360px - 390px) suite aux retours utilisateurs :
 
-0. **Finition Front-End Premium & Modularisation Senior FE-01 à FE-12 (100% DONE — Nuit 9)** :
+0. **Refonte Ergonomique Mobile-First & Polish Réel (100% DONE — Nuit 9 suite)** :
+   - **Bouton Flottant Vocal Auto-Hide (`useFabAutoHide.ts`, `page.tsx`, `surga.css`)** : Élimination du masquage physique d'articles et d'actions. Le FAB s'escamote automatiquement lors du défilement descendant (`translateY(110px) scale(0.75) opacity: 0`) et réapparaît à la remontée ou à l'arrêt du scroll. Format compacté à 48px sur mobile (`<= 480px`) et padding bas du conteneur sécurisé à 120px.
+   - **Cartes Sport Multiline & Zéro Troncature (`SurgaSportCard.tsx`, 444 l.)** : Refonte en 3 étages verticaux. Noms complets des clubs affichés sur 100% de la largeur sans aucune troncature ni `whiteSpace: 'nowrap'` (« Génération Foot vs Casa Sports », « Al Fateh vs Al Kholood »). Boutons d'action compactés et calés sur la ligne inférieure de métadonnées. Tokens résiduels Nopalou purgés au profit de `--surga-*`.
+   - **Cartes d'Actualités Monoligne Méta (`SurgaNewsList.tsx`, 213 l.)** : Verrouillage de la date relative et des sources (`Leral.net • Il y a 1 min`) avec `whiteSpace: 'nowrap'` et `flexShrink: 0`, empêchant la cassure sur 2 lignes horizontales.
+   - **En-Tête Allégé Spécifique Mobile (`SurgaHeader.tsx`, 191 l., `surga.css`)** : Masquage contextuel du logo emblème sur mobile lors de la consultation d'une sous-vue (quand le bouton retour `<` est présent) via `.hide-on-subview-mobile` pour libérer l'espace pour le titre. Masquage du libellé "En ligne" sur mobile (`<= 480px`) pour préserver une pastille wifi discrète.
+   - **Suppression des Scrollbars Grises Horizontales (`SurgaNotesView.tsx`, `SurgaAgendaView.tsx`, `surga.css`)** : Application de `.surga-scroll-tabs` (`scrollbarWidth: 'none', msOverflowStyle: 'none'`) sur toutes les barres de filtres à défilement horizontal (Notes, Agenda, Sport).
+   - **Titres de Notes Multilignes Fluides (`SurgaNoteCard.tsx`, 445 l.)** : Suppression de `whiteSpace: 'nowrap'` et passage en affichage multiline 2 lignes fluide (`WebkitLineClamp: 2`, `wordBreak: 'break-word'`).
+   - **Validation & Standard Senior** : 100% des fichiers sous `src/app/surga/` < 450 lignes, TypeScript `tsc --noEmit` 0 erreur, 158/158 tests Jest PASS (100%).
+
+0.bis. **Finition Front-End Premium & Modularisation Senior FE-01 à FE-12 (100% DONE — Nuit 9)** :
    - **FE-01 (Ergonomie FAB Micro)** : `padding-bottom: 110px` sur `.surga-root` pour garantir le scroll libre de tout le contenu ; disparition automatique instantanée du FAB dès l'ouverture d'une modale (`body.surga-modal-open .surga-fab-mic`, `body:has([role="dialog"]) .surga-fab-mic`).
    - **FE-02 (Accessibilité WCAG 2.2 AA)** : Éradication complète des 41 échecs de contraste. `.surga-btn-primary` passé en texte sombre `#0F172A` bold sur dégradé ambre (ratio > 8:1), `.surga-header-badge` passé en texte ambre foncé `#B45309` (ratio 4.65:1).
    - **FE-03 (Cibles Tactiles >= 40-44px)** : Recalibrage des 27 contrôles sous-dimensionnés dans l'en-tête, la météo, les formulaires et les modales vers >= 40-44px.
@@ -365,6 +374,7 @@ L'assistant personnel de poche **Surga** a fait l'objet d'un sprint complet de f
 | Briques & Vues Surga | `src/app/surga/components/Surga*.tsx` (tous < 450 l.) |
 | Console d'Administration Pro | `src/app/admin/surga/page.tsx`, `AdminSurgaClient.tsx`, `AdminSurgaSidebar.tsx`, 13 sous-composants `Admin*Tab.tsx` dont `AdminDemarchesTab.tsx` (345 l.), `AdminDemarcheModal.tsx` (298 l.), `AdminVideosTab.tsx` (375 l.) |
 | Synchronisation & Hors-ligne | `src/lib/surga-offline-sync.ts`, `src/lib/surga-reminders.ts`, `src/lib/surga-voice.ts` |
+| Ergonomie Mobile & Auto-Hide | `src/lib/useFabAutoHide.ts` (44 l. — escamotage fluide du bouton micro au défilement descendant) |
 
 ### Backend Express (`backend/`)
 | Rôle | Emplacement |

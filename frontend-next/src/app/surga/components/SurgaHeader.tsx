@@ -89,7 +89,7 @@ export default function SurgaHeader({
           </div>
         )}
         <div
-          className="surga-header-logo-wrap"
+          className={`surga-header-logo-wrap${afficherRetour ? ' hide-on-subview-mobile' : ''}`}
           title="Surga — Assistant de poche"
           aria-hidden="true"
           style={{
@@ -134,12 +134,12 @@ export default function SurgaHeader({
           {isOnline ? (
             <>
               <Wifi size={13} strokeWidth={2.5} />
-              <span>En ligne</span>
+              <span className="surga-header-badge-text">En ligne</span>
             </>
           ) : (
             <>
               <WifiOff size={13} strokeWidth={2.5} />
-              <span>Hors-ligne</span>
+              <span className="surga-header-badge-text">Hors-ligne</span>
             </>
           )}
         </span>

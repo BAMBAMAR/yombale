@@ -102,13 +102,13 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
               color: 'var(--surga-text3, #94A3B8)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, whiteSpace: 'nowrap' }}>
               <span style={{ fontWeight: 700, color: 'var(--surga-primary, #0F172A)' }}>{item.source_nom}</span>
               <span>•</span>
-              <span>{formatRelativeTime(item.published_at)}</span>
+              <span style={{ whiteSpace: 'nowrap' }}>{formatRelativeTime(item.published_at)}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               {(() => {
                 const itemKey = item.url || item.titre
                 const estEnNote = articlesEnNote.includes(itemKey)

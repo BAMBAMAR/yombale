@@ -201,10 +201,11 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
           display: 'flex',
           gap: 6,
           overflowX: 'auto',
-          paddingBottom: 8,
+          paddingBottom: 4,
           marginBottom: 10,
           whiteSpace: 'nowrap',
           scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
         }}
       >
         {[
@@ -226,14 +227,15 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
               type="button"
               onClick={() => setFiltreCategorie(tab.id)}
               style={{
-                padding: '4px 10px',
-                borderRadius: 16,
+                padding: '5px 12px',
+                borderRadius: 20,
                 fontSize: 11,
                 fontWeight: 700,
                 border: 'none',
                 cursor: 'pointer',
-                backgroundColor: isActive ? 'var(--navy, #1C2B4A)' : 'var(--bg, #F8F5F0)',
-                color: isActive ? '#FFFFFF' : 'var(--text2, #5A4E42)',
+                backgroundColor: isActive ? 'var(--surga-primary, #0F172A)' : 'var(--surga-surface, #FFFFFF)',
+                color: isActive ? '#FFFFFF' : 'var(--surga-text2, #475569)',
+                boxShadow: isActive ? 'none' : '0 1px 2px rgba(15, 23, 42, 0.05)',
                 transition: 'all 0.15s ease',
               }}
             >
@@ -260,18 +262,19 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                 key={match.id || idx}
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 12px',
-                  borderRadius: 8,
-                  backgroundColor: isDirect ? 'rgba(199,91,0,0.04)' : 'var(--bg, #F8F5F0)',
-                  border: isDirect ? '1px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                  flexDirection: 'column',
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  backgroundColor: isDirect ? 'rgba(217, 119, 6, 0.04)' : 'var(--surga-surface, #FFFFFF)',
+                  border: isDirect ? '1px solid var(--surga-accent, #D97706)' : '1px solid var(--surga-border, #E2E8F0)',
                   gap: 8,
+                  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
                 }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent, #C75B00)', textTransform: 'uppercase' }}>
+                {/* Étage 1 : Compétition & Statut ou Score */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--surga-accent, #D97706)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       {match.competition}
                     </span>
                     {isDirect && (
@@ -284,7 +287,7 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                           fontWeight: 900,
                           color: '#FFFFFF',
                           backgroundColor: '#DC2626',
-                          padding: '1px 5px',
+                          padding: '1px 6px',
                           borderRadius: 4,
                           textTransform: 'uppercase',
                         }}
@@ -295,36 +298,17 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                     )}
                   </div>
 
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text1, #1A1612)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {match.equipe_domicile} — {match.equipe_exterieur}
-                  </div>
-
-                  {match.buteurs && (
-                    <div style={{ fontSize: 11, color: 'var(--price, #0A5C36)', fontStyle: 'italic', marginTop: 2 }}>
-                      {match.buteurs}
-                    </div>
-                  )}
-
-                  <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                    <Calendar size={12} />
-                    <span>{formatMatchDate(match.date_debut)}</span>
-                    {match.diffuseur && (
-                      <span style={{ color: 'var(--text3, #73675E)' }}>• {match.diffuseur}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
                   {hasScore ? (
                     <div
                       style={{
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: 900,
-                        color: isDirect ? '#DC2626' : 'var(--navy, #1C2B4A)',
-                        padding: '4px 8px',
+                        color: isDirect ? '#DC2626' : 'var(--surga-primary, #0F172A)',
+                        padding: '2px 8px',
                         borderRadius: 6,
-                        backgroundColor: '#FFFFFF',
-                        border: isDirect ? '1px solid #DC2626' : '1px solid var(--border, #E8DDD2)',
+                        backgroundColor: 'var(--surga-bg, #F8FAFC)',
+                        border: isDirect ? '1px solid #DC2626' : '1px solid var(--surga-border, #E2E8F0)',
+                        flexShrink: 0,
                       }}
                     >
                       {match.score_domicile} - {match.score_exterieur}
@@ -334,10 +318,11 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                       style={{
                         fontSize: 11,
                         fontWeight: 700,
-                        padding: '3px 8px',
+                        padding: '2px 8px',
                         borderRadius: 6,
-                        backgroundColor: 'rgba(10,92,54,0.08)',
-                        color: 'var(--price, #0A5C36)',
+                        backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                        color: 'var(--surga-emerald, #059669)',
+                        flexShrink: 0,
                       }}
                     >
                       Terminé
@@ -347,76 +332,99 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                       style={{
                         fontSize: 11,
                         fontWeight: 700,
-                        padding: '3px 8px',
+                        padding: '2px 8px',
                         borderRadius: 6,
-                        backgroundColor: 'rgba(28,43,74,0.06)',
-                        color: 'var(--navy, #1C2B4A)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.06)',
+                        color: 'var(--surga-primary, #0F172A)',
+                        flexShrink: 0,
                       }}
                     >
                       À venir
                     </span>
                   )}
+                </div>
 
-                  {!isTermine && (() => {
-                    const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
-                    const estRappele = matchsRappeles.includes(matchKey)
-                    const estBudgete = matchsBudgetes.includes(matchKey)
-                    const getBtnStyle = (actif: boolean, accentColor = 'var(--accent, #C75B00)'): React.CSSProperties => ({
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 3,
-                      padding: '4px 7px',
-                      borderRadius: 6,
-                      border: '1px solid',
-                      borderColor: actif ? accentColor : 'var(--border, #E8DDD2)',
-                      backgroundColor: actif ? 'rgba(199, 91, 0, 0.12)' : '#FFFFFF',
-                      color: actif ? accentColor : 'var(--navy, #1C2B4A)',
-                      cursor: 'pointer',
-                      fontSize: 11,
-                      fontWeight: actif ? 700 : 500,
-                    })
+                {/* Étage 2 : Noms complets des équipes (Pleine largeur, zéro troncature sauvage) */}
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--surga-primary, #0F172A)', lineHeight: 1.35, wordBreak: 'break-word' }}>
+                  {match.equipe_domicile} — {match.equipe_exterieur}
+                </div>
 
-                    return (
-                      <>
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleRappel(match, e)}
-                          title={estRappele ? "Rappel actif — Cliquer pour désactiver" : "Programmer un rappel dans l'Agenda"}
-                          aria-label="Rappel match"
-                          style={getBtnStyle(estRappele)}
-                        >
-                          {estRappele ? <BellCheck size={14} /> : <Bell size={14} />}
-                          {estRappele && <span>Rappelé</span>}
-                        </button>
+                {match.buteurs && (
+                  <div style={{ fontSize: 11, color: 'var(--surga-emerald, #059669)', fontStyle: 'italic' }}>
+                    {match.buteurs}
+                  </div>
+                )}
 
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleBudget(match, e)}
-                          title={estBudgete ? "Budget noté — Cliquer pour retirer" : "Prévoir un budget sortie match"}
-                          aria-label="Budget match"
-                          style={getBtnStyle(estBudgete, 'var(--price, #0A5C36)')}
-                        >
-                          <Wallet size={14} />
-                          {estBudgete && <span>Budgété</span>}
-                        </button>
-                      </>
-                    )
-                  })()}
+                {/* Étage 3 : Date/Heure/Diffuseur à gauche, Actions rapides à droite */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingTop: 4, borderTop: '1px solid var(--surga-border, #F1F5F9)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                    <Calendar size={12} color="var(--surga-text3, #94A3B8)" />
+                    <span style={{ fontWeight: 600 }}>{formatMatchDate(match.date_debut)}</span>
+                    {match.diffuseur && (
+                      <span style={{ color: 'var(--surga-text3, #94A3B8)' }}>• {match.diffuseur}</span>
+                    )}
+                  </div>
 
-                  <SurgaShareButton
-                    payload={{
-                      titre: `Surga Sport : ${match.equipe_domicile} vs ${match.equipe_exterieur}`,
-                      texte: formaterPartageSport({
-                        competition: match.competition,
-                        equipeDomicile: match.equipe_domicile,
-                        equipeExterieur: match.equipe_exterieur,
-                        score: hasScore ? `${match.score_domicile} - ${match.score_exterieur}` : undefined,
-                        heure: !isTermine ? formatMatchDate(match.date_debut) : undefined,
-                        statut: match.statut,
-                      }),
-                    }}
-                    taille="sm"
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    {!isTermine && (() => {
+                      const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
+                      const estRappele = matchsRappeles.includes(matchKey)
+                      const estBudgete = matchsBudgetes.includes(matchKey)
+                      const getBtnStyle = (actif: boolean, accentColor = 'var(--surga-accent, #D97706)'): React.CSSProperties => ({
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        border: '1px solid',
+                        borderColor: actif ? accentColor : 'var(--surga-border, #E2E8F0)',
+                        backgroundColor: actif ? 'rgba(217, 119, 6, 0.12)' : 'var(--surga-surface, #FFFFFF)',
+                        color: actif ? accentColor : 'var(--surga-primary, #0F172A)',
+                        cursor: 'pointer',
+                        padding: 0,
+                      })
+
+                      return (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleRappel(match, e)}
+                            title={estRappele ? "Rappel actif — Cliquer pour désactiver" : "Programmer un rappel dans l'Agenda"}
+                            aria-label="Rappel match"
+                            style={getBtnStyle(estRappele)}
+                          >
+                            {estRappele ? <BellCheck size={14} color="var(--surga-accent, #D97706)" /> : <Bell size={14} />}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleBudget(match, e)}
+                            title={estBudgete ? "Budget noté — Cliquer pour retirer" : "Prévoir un budget sortie match"}
+                            aria-label="Budget match"
+                            style={getBtnStyle(estBudgete, 'var(--surga-emerald, #059669)')}
+                          >
+                            <Wallet size={14} color={estBudgete ? 'var(--surga-emerald, #059669)' : undefined} />
+                          </button>
+                        </>
+                      )
+                    })()}
+
+                    <SurgaShareButton
+                      payload={{
+                        titre: `Surga Sport : ${match.equipe_domicile} vs ${match.equipe_exterieur}`,
+                        texte: formaterPartageSport({
+                          competition: match.competition,
+                          equipeDomicile: match.equipe_domicile,
+                          equipeExterieur: match.equipe_exterieur,
+                          score: hasScore ? `${match.score_domicile} - ${match.score_exterieur}` : undefined,
+                          heure: !isTermine ? formatMatchDate(match.date_debut) : undefined,
+                          statut: match.statut,
+                        }),
+                      }}
+                      taille="sm"
+                    />
+                  </div>
                 </div>
               </div>
             )

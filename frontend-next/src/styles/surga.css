@@ -296,7 +296,7 @@ body:has(.surga-root) #app-main {
   border: none;
   cursor: pointer;
   z-index: 50;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, visibility 0.2s;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, visibility 0.22s;
 }
 
 .surga-fab-mic:hover {
@@ -308,6 +308,14 @@ body:has(.surga-root) #app-main {
   transform: scale(0.95);
 }
 
+/* Auto-hide fluide du FAB lors du défilement de lecture */
+.surga-fab-mic.surga-fab-hidden {
+  transform: translateY(110px) scale(0.75) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 /* Masquage immédiat du FAB dès qu'une modale est active */
 body.surga-modal-open .surga-fab-mic,
 body:has([role="dialog"]) .surga-fab-mic {
@@ -315,6 +323,63 @@ body:has([role="dialog"]) .surga-fab-mic {
   pointer-events: none !important;
   transform: scale(0.7) !important;
   visibility: hidden !important;
+}
+
+/* Défilement horizontal des filtres sans coupure de scrollbar */
+.surga-scroll-tabs,
+.surga-tabs-scroll {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-overflow-scrolling: touch;
+}
+.surga-scroll-tabs::-webkit-scrollbar,
+.surga-tabs-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@media (max-width: 480px) {
+  .surga-fab-mic {
+    bottom: 74px;
+    right: 14px;
+    width: 48px;
+    height: 48px;
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.32);
+  }
+
+  .surga-header {
+    padding: 8px 12px;
+  }
+
+  .surga-header-brand {
+    gap: 8px;
+  }
+
+  .surga-header-title {
+    font-size: 17px;
+  }
+
+  .surga-header-date {
+    font-size: 11px;
+  }
+
+  .surga-header-logo-wrap.hide-on-subview-mobile {
+    display: none !important;
+  }
+
+  .surga-header-badge-text {
+    display: none !important;
+  }
+
+  .surga-header-badge {
+    padding: 5px 8px !important;
+    min-height: 34px !important;
+  }
+
+  .surga-container {
+    padding: 12px 12px 120px 12px !important;
+  }
 }
 
 /* Navigation basse à 5 entrées Surga */

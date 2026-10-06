@@ -20,6 +20,7 @@ import {
   synchroniserSurga, type SurgaDepensesStats,
 } from '@/lib/surga-offline-sync'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
+import { useFabAutoHide } from '@/lib/useFabAutoHide'
 import { Mic } from 'lucide-react'
 
 export interface SurgaUser {
@@ -31,6 +32,7 @@ export interface SurgaUser {
 
 export default function SurgaPage() {
   const { openRadioModal } = useSurgaRadio()
+  const isFabHidden = useFabAutoHide()
   const [activeTab, setActiveTab] = useState<SurgaTab>('aujourdhui')
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null)
   const [afficherFormulaireOnboarding, setAfficherFormulaireOnboarding] = useState<boolean>(false)
@@ -385,15 +387,15 @@ export default function SurgaPage() {
         )}
       </div>
 
-      {/* Bouton micro flottant (FAB) */}
+      {/* Bouton micro flottant (FAB) avec auto-hide intelligent au scroll */}
       <button
         type="button"
-        className="surga-fab-mic"
+        className={`surga-fab-mic${isFabHidden ? ' surga-fab-hidden' : ''}`}
         aria-label="Commande vocale Surga"
         title="Parler à Surga"
         onClick={() => setIsVoiceOpen(true)}
       >
-        <Mic size={24} />
+        <Mic size={22} />
       </button>
 
       {/* Modales globales de Surga */}

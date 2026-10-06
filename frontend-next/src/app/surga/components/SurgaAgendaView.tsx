@@ -262,7 +262,17 @@ export default function SurgaAgendaView() {
 
       {/* Filtres et Bouton d'ajout */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+        <div
+          className="surga-scroll-tabs"
+          style={{
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            paddingBottom: 4,
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
           {(
             [
               { key: 'aujourdhui' as const, label: 'Aujourd’hui' },

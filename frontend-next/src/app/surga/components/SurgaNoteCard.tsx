@@ -196,11 +196,14 @@ export default function SurgaNoteCard({
             style={{
               fontSize: 15,
               fontWeight: 700,
-              color: 'var(--navy, #1C2B4A)',
+              color: 'var(--surga-primary, #0F172A)',
               margin: 0,
+              lineHeight: 1.35,
+              wordBreak: 'break-word',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
             }}
           >
             {note.titre}

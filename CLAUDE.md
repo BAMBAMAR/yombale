@@ -49,6 +49,16 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Refonte Ergonomique Mobile-First, Auto-Hide FAB & Éradication Troncatures (Session 2026-10-06 - Nuit 9 suite, branche `feature/surga`)** :
+  - *Sprint de Rectification Ergonomique Mobile (360px - 390px)* :
+    1. **Bouton Flottant Vocal Auto-Hide (`useFabAutoHide.ts` & `surga.css`)** : Élimination du masquage physique d'articles, notes et actions. Le FAB s'escamote avec transition fluide lors du défilement descendant (`translateY(110px) scale(0.75) opacity: 0`) et réapparaît à la remontée ou à l'arrêt du scroll. Format compacté à 48px sur mobile (`<= 480px`) et marge basse du conteneur sécurisée à 120px.
+    2. **Cartes Sport Multiline & Zéro Troncature (`SurgaSportCard.tsx`)** : Refonte en 3 étages verticaux. Les noms des clubs et affiches s'affichent en intégralité sur 100% de la largeur (`Generation Foot`, `Al Kholood`, etc.) sans découpe brutale ni points de suspension. Boutons d'action compactés et calés sur la ligne inférieure de métadonnées. Remplacement des tokens résiduels Nopalou par `--surga-*`.
+    3. **Cartes d'Actualités Monoligne Méta (`SurgaNewsList.tsx`)** : Verrouillage de la date relative et des sources (`Leral.net • Il y a 1 min`) avec `whiteSpace: 'nowrap'` et `flexShrink: 0`, empêchant la rupture de la mention temporelle sur 2 lignes horizontales.
+    4. **En-Tête Allégé Mobile (`SurgaHeader.tsx`)** : Masquage contextuel du logo emblème sur mobile lors de la consultation d'une sous-vue (quand le bouton retour `<` est présent) pour donner la priorité au titre de page. Masquage du libellé "En ligne" sur petit écran au profit de la pastille compacte Wifi.
+    5. **Élimination des Scrollbars Disgracieuses (`SurgaNotesView.tsx`, `SurgaAgendaView.tsx`, `surga.css`)** : Application de la classe utilitaire `.surga-scroll-tabs` (`scrollbarWidth: 'none', msOverflowStyle: 'none'`) sur toutes les barres de filtres à défilement horizontal (Notes, Agenda, Sport), supprimant la barre de défilement grise qui tronquait le bas des pilules.
+    6. **Titres de Notes Multilignes (`SurgaNoteCard.tsx`)** : Passage en affichage multiline 2 lignes fluide (`WebkitLineClamp: 2`, `wordBreak: 'break-word'`) au lieu de tronquer agressivement les titres dès la première ligne.
+    7. **Standard Senior & Tests** : 100% des composants < 450 lignes (SurgaSportCard: 444 l., SurgaAgendaView: 445 l., SurgaNoteCard: 445 l., page: 441 l.), TypeScript `tsc --noEmit` 0 erreur, 158/158 tests Jest validés (100%).
+
 - **Surga / Exécution Intégrale du Plan de Corrections Front-End FE-01 à FE-12 & Finition Premium (Session 2026-10-06 - Nuit 9, branche `feature/surga`)** :
   - *Sprint de Finition Visuelle & Modularisation Senior Anti-AI-Slop* :
     1. **Ergonomie & Élimination Superposition (FE-01)** : `padding-bottom: 110px` sur `.surga-root` et masquage immédiat automatique du FAB micro dès qu'une modale est ouverte (`body.surga-modal-open`, `body:has([role="dialog"])`).

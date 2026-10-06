@@ -1,4 +1,39 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Refonte Ergonomique Mobile-First, Auto-Hide FAB & Éradication Troncatures (Session 2026-10-06 - Nuit 9 suite, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Traitement immédiat des régressions et défauts ergonomiques identifiés sur écrans mobiles réels (360px - 390px) suite aux retours utilisateurs.
+    - Élimination des conflits d'espace horizontal, suppression du masquage de contenu par le bouton vocal flottant, suppression des barres de scroll parasites et rétablissement d'une lisibilité maximale sans aucune troncature sauvage de texte.
+    - Maintien scrupuleux de l'intégrité architecturale : 100% des fichiers sous `src/app/surga/` < 450 lignes, 0 impact sur Nopalou marketplace/POS, tests et compilation au vert.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Bouton Vocal Flottant Auto-Hide (`useFabAutoHide.ts`, `surga/page.tsx`, `surga.css`)** :
+       - Problème : Le FAB micro fixe masquait le quart inférieur droit de l'écran, recouvrant les cartes de notes, les boutons d'action des matchs et les articles d'actualité.
+       - Solution : Création d'un hook `useFabAutoHide.ts` détectant le défilement descendant (lecture active) pour escamoter le bouton avec transition CSS fluide (`transform: translateY(110px) scale(0.75); opacity: 0; pointer-events: none`). Le FAB réapparaît instantanément lors d'un léger scroll vers le haut ou lorsque l'usager s'arrête.
+       - Sur mobile (`<= 480px`), le bouton est redimensionné à 48px (au lieu de 56px) et le padding bas du conteneur est sécurisé à 120px.
+    2. **Refonte Cartes Sport en 3 Étages Verticaux (`SurgaSportCard.tsx`)** :
+       - Problème : 5 éléments entassés sur une même ligne horizontale provoquaient une troncature illisible des noms de clubs (« Génération... », « Al Kholood... », « Al Fateh —... »).
+       - Solution : Refonte en layout vertical à 3 étages distincts :
+         - Étage 1 : Compétition (badge) + Statut en direct / Score / Date & Heure.
+         - Étage 2 : Noms complets des équipes occupant 100% de la largeur, sans coupure ni `whiteSpace: 'nowrap'` (« Génération Foot vs Casa Sports », « Al Fateh vs Al Kholood »).
+         - Étage 3 : Ligne d'actions compacte (date, heure, diffuseur à gauche + 3 boutons micro Rappel/Budget/Partage à droite).
+       - Éradication des tokens résiduels Nopalou au profit des tokens `--surga-*`.
+    3. **Cartes d'Actualités Monoligne Méta (`SurgaNewsList.tsx`)** :
+       - Problème : La mention de temps relatif (« Il y a 1 min ») sautait à la ligne sur mobile, créant une disposition asymétrique.
+       - Solution : Application stricte de `whiteSpace: 'nowrap'` et `flexShrink: 0` sur la zone de métadonnées, garantissant un affichage monoligne net (« Leral.net • Il y a 1 min »).
+    4. **En-Tête Épuré Spécifique Mobile (`SurgaHeader.tsx`, `surga.css`)** :
+       - Problème : En-tête surchargé étouffant le titre de vue sur écran étroit (`<` + Logo + Titre + "En ligne" + "bamba v").
+       - Solution : Masquage conditionnel du logo emblème sur mobile uniquement en sous-vue (quand le bouton `<` est présent) via `.hide-on-subview-mobile`. Masquage du texte "En ligne" / "Hors-ligne" sur mobile (`<= 480px`) pour préserver une pastille wifi discrète et aérer l'espace.
+    5. **Suppression des Scrollbars Grises Horizontales (`SurgaNotesView.tsx`, `SurgaAgendaView.tsx`, `surga.css`)** :
+       - Problème : La barre de défilement native apparaissait sous les pilules de filtre, tronquant visuellement le bas des boutons.
+       - Solution : Création et application de la classe `.surga-scroll-tabs` (`scrollbar-width: none; -ms-overflow-style: none; &::-webkit-scrollbar { display: none; }`) sur tous les conteneurs de filtre horizontal (Notes, Agenda, Sport).
+    6. **Titres de Notes Multilignes Fluides (`SurgaNoteCard.tsx`)** :
+       - Problème : Les titres de notes étaient tronqués agressivement dès la première ligne avec `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`.
+       - Solution : Remplacement par un clamp multiline sur 2 lignes complètes (`WebkitLineClamp: 2`, `wordBreak: 'break-word'`) assurant une lisibilité complète sur écran mobile.
+  * **Validation Technique & Scores** :
+    - Build & TypeScript : **`npx tsc --noEmit` 0 erreur**.
+    - Tests Unitaires Jest : **158/158 tests PASS (100%)** (`surga.test.js` + `surga-phases-1-3.test.js`).
+    - Linter Anti-AI-Slop : **100% des fichiers < 450 lignes** (SurgaSportCard: 444 l., SurgaAgendaView: 445 l., SurgaNoteCard: 445 l., page: 441 l.), 0 émoji UI, 100% tokens CSS purs.
+    - Démarcation Nopalou/Surga : Intacte (zéro impact marketplace, POS ou comparateur).
+
 - **Surga / Exécution Intégrale du Plan de Corrections Front-End FE-01 à FE-12 & Finition Premium (Session 2026-10-06 - Nuit 9, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Exécuter la totalité des 12 fiches de corrections Front-End (`docs/surga/PLAN_CORRECTIONS_FRONTEND.md`) issues de l'audit approfondi, afin de transformer Surga en une application de niveau mondial (Linear, Revolut, ChatGPT).

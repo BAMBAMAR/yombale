@@ -3,6 +3,32 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 9 suite] — Refonte Ergonomique Mobile-First, Auto-Hide FAB & Éradication Troncatures
+- **Objectif Atteint :**
+  - Résoudre immédiatement l'ensemble des défauts d'affichage et de navigation constatés sur appareils mobiles réels (360px - 390px) suite aux retours de l'utilisateur.
+  - Supprimer le chevauchement du FAB micro sur les cartes et contrôles, éliminer les troncatures de noms d'équipes et de dates, assainir les barres de filtres horizontales et aérer l'en-tête mobile.
+  - Valider l'intégrité architecturale (100% des fichiers < 450 lignes, 0 régression tests et types).
+- **Réalisations & Fichiers Modifiés :**
+  1. *Bouton Vocal Flottant Auto-Hide (`frontend-next/src/lib/useFabAutoHide.ts`, `surga/page.tsx`, `styles/surga.css`)* :
+     - Élimination du masquage physique des articles, notes et actions de match. Le FAB s'escamote automatiquement pendant le défilement descendant (`translateY(110px) scale(0.75) opacity: 0`) et réapparaît à la remontée ou à l'arrêt du scroll.
+     - Dimensionnement compacté à 48px sur mobile (`<= 480px`) et marge basse du conteneur sécurisée à 120px.
+  2. *Cartes Sport Multiline & Zéro Troncature (`frontend-next/src/app/surga/components/SurgaSportCard.tsx`, 444 l.)* :
+     - Refonte complète en 3 étages verticaux : Étage 1 = Compétition + Statut/Score ; Étage 2 = Noms complets des clubs sur 100% de la largeur sans aucune troncature (« Génération Foot vs Casa Sports », « Al Fateh vs Al Kholood ») ; Étage 3 = Métadonnées à gauche + 3 boutons compacts Rappel/Budget/Partage à droite.
+     - Éradication des tokens résiduels Nopalou au profit des tokens `--surga-*`.
+  3. *Cartes d'Actualités Monoligne Méta (`frontend-next/src/app/surga/components/SurgaNewsList.tsx`, 213 l.)* :
+     - Ajout de `whiteSpace: 'nowrap'` et `flexShrink: 0` sur la zone de métadonnées, empêchant la mention de date relative (« Il y a 1 min ») de sauter à la ligne.
+  4. *En-Tête Allégé Mobile (`frontend-next/src/app/surga/components/SurgaHeader.tsx`, 191 l., `styles/surga.css`)* :
+     - Masquage contextuel du logo emblème sur mobile lors de la consultation d'une sous-vue (présence du bouton retour `<`) via `.hide-on-subview-mobile` pour libérer l'espace pour le titre.
+     - Masquage du libellé "En ligne" sur mobile (`<= 480px`) pour ne conserver que la pastille wifi discrète.
+  5. *Suppression des Scrollbars Grises Horizontales (`frontend-next/src/app/surga/components/SurgaNotesView.tsx`, `SurgaAgendaView.tsx`, `styles/surga.css`)* :
+     - Application de `.surga-scroll-tabs` (`scrollbarWidth: 'none', msOverflowStyle: 'none'`) sur toutes les barres de filtres à défilement horizontal (Notes, Agenda, Sport).
+  6. *Titres de Notes Multilignes Fluides (`frontend-next/src/app/surga/components/SurgaNoteCard.tsx`, 445 l.)* :
+     - Suppression de `whiteSpace: 'nowrap'` et passage en affichage multiline fluide 2 lignes (`WebkitLineClamp: 2`, `wordBreak: 'break-word'`).
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS (100%).
+  - Linter Anti-AI-Slop : 100% des fichiers sous `src/app/surga/` < 450 lignes, 0 composant monolithe.
+
 ### [2026-10-06 — Nuit 9] — Exécution Intégrale du Plan de Corrections Front-End FE-01 à FE-12 & Finition Premium
 - **Objectif Atteint :**
   - Exécuter l'intégralité du plan de corrections Front-End (`docs/surga/PLAN_CORRECTIONS_FRONTEND.md`, 12 fiches FE-01 à FE-12) issu de l'audit réel sous Playwright, pour élever Surga au niveau des applications de classe mondiale (Linear, Revolut, ChatGPT).

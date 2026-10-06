@@ -267,7 +267,17 @@ export default function SurgaNotesView() {
       </div>
 
       {/* Onglets de filtrage rapide */}
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+      <div
+        className="surga-scroll-tabs"
+        style={{
+          display: 'flex',
+          gap: 6,
+          overflowX: 'auto',
+          paddingBottom: 4,
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
         {ONGLETS_FILTRES.map((tab) => {
           const estActif = filtreActif === tab.key
           return (
