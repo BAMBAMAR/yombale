@@ -21,6 +21,7 @@ const SurgaVideosModal = dynamic(() => import('./SurgaVideosModal'), { ssr: fals
 const SurgaEmploiModal = dynamic(() => import('./SurgaEmploiModal'), { ssr: false })
 const SurgaDemarchesModal = dynamic(() => import('./SurgaDemarchesModal'), { ssr: false })
 const SurgaAuthModal = dynamic(() => import('./SurgaAuthModal'), { ssr: false })
+const SurgaCompteModal = dynamic(() => import('./SurgaCompteModal'), { ssr: false })
 
 interface SurgaModalsContainerProps {
   isCalcOpen: boolean
@@ -39,6 +40,7 @@ interface SurgaModalsContainerProps {
   isEmploiOpen?: boolean
   isDemarchesOpen?: boolean
   isAuthOpen?: boolean
+  isCompteOpen?: boolean
 
   onCloseCalc: () => void
   onCloseVoice: () => void
@@ -59,6 +61,17 @@ interface SurgaModalsContainerProps {
   onCloseAuth?: () => void
   onAuthSuccess?: (user: any) => void
   onDonneesSupprimees?: () => void
+  onCloseCompte?: () => void
+  user?: any
+  statutPremium?: { estPremium: boolean; plan?: string | null; joursRestants?: number }
+  onUserUpdated?: (user: any) => void
+  onDeconnexion?: () => void
+  onSynchroniser?: () => void
+  isSyncing?: boolean
+  onOpenPremium?: () => void
+  onOpenEmploi?: () => void
+  onOpenConcours?: () => void
+  onOpenImmo?: () => void
 
   onInjectMontantCalc: () => void
   onOpenRadioFromPresse?: () => void
@@ -88,6 +101,7 @@ export default function SurgaModalsContainer({
   isEmploiOpen = false,
   isDemarchesOpen = false,
   isAuthOpen = false,
+  isCompteOpen = false,
 
   onCloseCalc,
   onCloseVoice,
@@ -108,6 +122,17 @@ export default function SurgaModalsContainer({
   onCloseAuth = () => {},
   onAuthSuccess = () => {},
   onDonneesSupprimees,
+  onCloseCompte = () => {},
+  user,
+  statutPremium,
+  onUserUpdated = () => {},
+  onDeconnexion = () => {},
+  onSynchroniser = () => {},
+  isSyncing = false,
+  onOpenPremium,
+  onOpenEmploi,
+  onOpenConcours,
+  onOpenImmo,
 
   onInjectMontantCalc,
   onOpenRadioFromPresse,
@@ -243,6 +268,22 @@ export default function SurgaModalsContainer({
           isOpen={isAuthOpen}
           onClose={onCloseAuth || (() => {})}
           onSuccess={onAuthSuccess || (() => {})}
+        />
+      )}
+      {isCompteOpen && user && (
+        <SurgaCompteModal
+          isOpen={isCompteOpen}
+          onClose={onCloseCompte || (() => {})}
+          user={user}
+          statutPremium={statutPremium}
+          onUserUpdated={onUserUpdated || (() => {})}
+          onDeconnexion={onDeconnexion || (() => {})}
+          onSynchroniser={onSynchroniser || (() => {})}
+          isSyncing={isSyncing}
+          onOpenPremium={onOpenPremium}
+          onOpenEmploi={onOpenEmploi}
+          onOpenConcours={onOpenConcours}
+          onOpenImmo={onOpenImmo}
         />
       )}
     </>

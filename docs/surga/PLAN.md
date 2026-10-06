@@ -31,6 +31,7 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 ## NOYAU — l'assistant indispensable au quotidien
 
 ### Tranche 1 — "Je m'installe et je personnalise mon Surga"
+- [x] `DONE` Modale de gestion de compte complète `<SurgaCompteModal>` (profil, édition du nom en ligne, formule standard/premium, raccourcis services et déconnexion déterministe en un clic via `SurgaHeader.tsx` et `SurgaParametresTab.tsx`).
 - [x] `DONE` Inscription et connexion OTP SMS / WhatsApp in-app (`SurgaAuthModal.tsx`, pastille profil dans `SurgaHeader.tsx` et carte « Compte & Synchronisation » dans `SurgaParametresTab.tsx`).
 - [x] `DONE` Audit universel auth Nopalou vs Surga : Éradication des 7 doublons PostgreSQL, pose de l'index UNIQUE partiel `uidx_utilisateurs_tel_norm`, normalisation 115 comptes `+221...` et contrôles déterministes sur tous les services à quotas.
 - [x] `DONE` Résolution déterministe des conflits 409 multi-comptes par téléphone dans `telephoneIntegrity.js` (`supprime_le IS NULL`) et dédoublonnage PostgreSQL des comptes marchands rattachés à bamba.

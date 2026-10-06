@@ -46,7 +46,7 @@ export default function SurgaPage() {
   const [isPremiumOpen, setIsPremiumOpen] = useState(false), [isProOpen, setIsProOpen] = useState(false)
   const [isDonneesOpen, setIsDonneesOpen] = useState(false), [isVideosOpen, setIsVideosOpen] = useState(false)
   const [isEmploiOpen, setIsEmploiOpen] = useState(false), [isDemarchesOpen, setIsDemarchesOpen] = useState(false)
-  const [isAuthOpen, setIsAuthOpen] = useState(false)
+  const [isAuthOpen, setIsAuthOpen] = useState(false), [isCompteOpen, setIsCompteOpen] = useState(false)
 
   // Statuts et Utilisateur
   const [user, setUser] = useState<SurgaUser | null>(null)
@@ -70,12 +70,7 @@ export default function SurgaPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.user) {
-          setUser({
-            id: d.user.id,
-            nom: d.user.nom,
-            telephone: d.user.telephone,
-            email: d.user.email,
-          })
+          setUser({ id: d.user.id, nom: d.user.nom, telephone: d.user.telephone, email: d.user.email })
         } else {
           setUser(null)
         }
@@ -239,12 +234,8 @@ export default function SurgaPage() {
 
   const handleReinitialiser = () => {
     if (confirm('Voulez-vous réinitialiser votre configuration Surga pour recommencer l’onboarding ?')) {
-      try {
-        localStorage.removeItem('surga_onboarding_done')
-        localStorage.removeItem('surga_preferences')
-      } catch {}
-      setBriefingData(null)
-      setIsOnboarded(false)
+      try { localStorage.removeItem('surga_onboarding_done'); localStorage.removeItem('surga_preferences') } catch {}
+      setBriefingData(null); setIsOnboarded(false)
     }
   }
 
@@ -253,9 +244,7 @@ export default function SurgaPage() {
     try {
       await fetch('/api/auth/deconnexion', { method: 'POST' }).catch(() => {})
       await deleteSessionAction()
-      try {
-        localStorage.removeItem('token')
-      } catch {}
+      try { localStorage.removeItem('token') } catch {}
       setUser(null)
     } catch (err) {
       console.error('[SURGA LOGOUT ERROR]:', err)
@@ -311,7 +300,7 @@ export default function SurgaPage() {
     }
     return (
       <>
-        <SurgaHeader titre="Surga" sousTitre="Configuration initiale" user={user} onOpenAuth={() => setIsAuthOpen(true)} />
+        <SurgaHeader titre="Surga" sousTitre="Configuration initiale" user={user} onOpenAuth={() => setIsAuthOpen(true)} onOpenCompte={() => setIsCompteOpen(true)} />
         <SurgaOnboarding onComplete={handleOnboardingComplete} initialData={preferences || undefined} />
       </>
     )
@@ -326,6 +315,7 @@ export default function SurgaPage() {
         onRetour={() => setActiveTab('aujourdhui')}
         user={user}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenCompte={() => setIsCompteOpen(true)}
       />
 
       <div className="surga-container">
@@ -373,6 +363,7 @@ export default function SurgaPage() {
             statutPremium={statutPremium}
             user={user}
             onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenCompte={() => setIsCompteOpen(true)}
             onDeconnexion={handleDeconnexion}
             onSynchroniser={handleSynchroniser}
             isSyncing={isSyncing}
@@ -411,7 +402,7 @@ export default function SurgaPage() {
         isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isPremiumOpen={isPremiumOpen}
         isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen}
         isEmploiOpen={isEmploiOpen} isDemarchesOpen={isDemarchesOpen}
-        isAuthOpen={isAuthOpen}
+        isAuthOpen={isAuthOpen} isCompteOpen={isCompteOpen}
         onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)}
         onClosePresse={() => setIsPresseOpen(false)} onClosePodcast={() => setIsPodcastOpen(false)}
         onCloseTrafic={() => setIsTraficOpen(false)} onCloseImmo={() => setIsImmoOpen(false)}
@@ -422,6 +413,16 @@ export default function SurgaPage() {
         onOpenAuth={() => setIsAuthOpen(true)}
         onCloseAuth={() => setIsAuthOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+        onCloseCompte={() => setIsCompteOpen(false)}
+        user={user} statutPremium={statutPremium}
+        onUserUpdated={(u) => { setUser(u); chargerProfilUser() }}
+        onDeconnexion={handleDeconnexion}
+        onSynchroniser={handleSynchroniser}
+        isSyncing={isSyncing}
+        onOpenPremium={() => setIsPremiumOpen(true)}
+        onOpenEmploi={() => setIsEmploiOpen(true)}
+        onOpenConcours={() => setIsConcoursOpen(true)}
+        onOpenImmo={() => setIsImmoOpen(true)}
         onInjectMontantCalc={() => setActiveTab('depenses')}
         onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
         onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote}

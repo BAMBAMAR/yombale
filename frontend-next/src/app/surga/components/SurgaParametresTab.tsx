@@ -35,6 +35,7 @@ interface SurgaParametresTabProps {
     email?: string
   } | null
   onOpenAuth?: () => void
+  onOpenCompte?: () => void
   onDeconnexion?: () => void
   onSynchroniser?: () => void
   isSyncing?: boolean
@@ -58,6 +59,7 @@ export default function SurgaParametresTab({
   statutPremium,
   user,
   onOpenAuth,
+  onOpenCompte,
   onDeconnexion,
   onSynchroniser,
   isSyncing = false,
@@ -134,6 +136,26 @@ export default function SurgaParametresTab({
 
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              {onOpenCompte && (
+                <button
+                  type="button"
+                  onClick={onOpenCompte}
+                  className="surga-btn-primary"
+                  style={{
+                    fontSize: 11,
+                    padding: '6px 11px',
+                    fontWeight: 700,
+                    width: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                  title="Gérer mon profil et compte"
+                >
+                  <User size={12} />
+                  <span>Mon Compte</span>
+                </button>
+              )}
               {onSynchroniser && (
                 <button
                   type="button"
@@ -142,12 +164,12 @@ export default function SurgaParametresTab({
                   disabled={isSyncing}
                   style={{
                     fontSize: 11,
-                    padding: '6px 10px',
+                    padding: '6px 9px',
                     fontWeight: 700,
                     width: 'auto',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 5,
+                    gap: 4,
                   }}
                   title="Forcer la synchronisation avec le cloud"
                 >
@@ -162,7 +184,7 @@ export default function SurgaParametresTab({
                   className="surga-btn-secondary"
                   style={{
                     fontSize: 11,
-                    padding: '6px 10px',
+                    padding: '6px 9px',
                     fontWeight: 700,
                     width: 'auto',
                     color: 'var(--accent, #C75B00)',

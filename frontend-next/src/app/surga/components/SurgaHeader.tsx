@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Wifi, WifiOff, ChevronLeft, User, UserCheck } from 'lucide-react'
+import { Wifi, WifiOff, ChevronLeft, ChevronDown, User, UserCheck } from 'lucide-react'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
 
 interface SurgaHeaderProps {
@@ -16,6 +16,7 @@ interface SurgaHeaderProps {
     email?: string
   } | null
   onOpenAuth?: () => void
+  onOpenCompte?: () => void
 }
 
 export default function SurgaHeader({
@@ -25,6 +26,7 @@ export default function SurgaHeader({
   afficherRetour = false,
   user,
   onOpenAuth,
+  onOpenCompte,
 }: SurgaHeaderProps) {
   const isOnline = useOnlineStatus()
   const today = new Intl.DateTimeFormat('fr-FR', {
@@ -129,10 +131,10 @@ export default function SurgaHeader({
         </span>
 
         {/* Bouton Compte / Connexion */}
-        {onOpenAuth && (
+        {(onOpenAuth || onOpenCompte) && (
           <button
             type="button"
-            onClick={onOpenAuth}
+            onClick={user ? (onOpenCompte || onOpenAuth) : onOpenAuth}
             className="surga-header-badge"
             style={{
               cursor: 'pointer',
@@ -147,7 +149,7 @@ export default function SurgaHeader({
               borderRadius: 20,
               fontSize: 11,
             }}
-            title={user ? `Compte : ${user.nom || user.telephone || 'Connecté'}` : 'Se connecter / Compte'}
+            title={user ? `Gérer mon compte : ${user.nom || user.telephone || 'Connecté'}` : 'Se connecter / Compte'}
           >
             {user ? (
               <>
@@ -155,6 +157,7 @@ export default function SurgaHeader({
                 <span style={{ maxWidth: 85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {user.nom ? user.nom.split(' ')[0] : 'Compte'}
                 </span>
+                <ChevronDown size={11} strokeWidth={2.5} style={{ opacity: 0.7 }} />
               </>
             ) : (
               <>

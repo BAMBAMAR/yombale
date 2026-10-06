@@ -1,5 +1,29 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga / Compte & Profil — Livraison de la Modale Complète de Gestion de Compte, Modification du Profil & Déconnexion Déterministe (Session 2026-10-06 - Nuit 5 quater, branche `feature/surga`)** :
+  * **Demande & Constat Utilisateur** :
+    - « quand on est connecte ya rien ya pas de menu pas de botuon deconnexion ya rien modifier son profil etc ».
+    - En session connectée OTP WhatsApp, la pastille en haut à droite réaffichait la boîte de dialogue d'authentification (`SurgaAuthModal`), sans menu utilisateur, sans possibilité d'éditer le nom de son profil et sans bouton de déconnexion.
+  * **Composants & Fonctionnalités Réalisés** :
+    1. `<SurgaCompteModal>` (`frontend-next/src/app/surga/components/SurgaCompteModal.tsx`, 308 lignes, < 450 l.) :
+       - Modale de compte complète avec avatar, initiale, badge de sécurité `Connecté par WhatsApp`, formule d'abonnement (`Surga Gratuit` ou `Premium` avec jours restants).
+       - Coordonnées : Numéro de téléphone (+221...) et adresse email.
+       - Modification de profil en ligne : Édition immédiate du nom via `PUT /api/auth/profil` avec feedback visuel (toast succès/erreur) et mise à jour dynamique de l'en-tête.
+       - Raccourcis directs vers les services : « Mon CV & Emploi », « Rappels Concours », « Alertes Immo », « Passer Premium ».
+       - Synchronisation Cloud : Bouton explicite pour synchroniser les données locales avec la base PostgreSQL.
+       - Déconnexion propre : Bouton rouge avec boîte de confirmation, appel à `/api/auth/deconnexion`, `deleteSessionAction()`, nettoyage des clés locales et retour fluide en mode invité.
+    2. `SurgaHeader.tsx` (174 l., < 450 l.) :
+       - Ajout de la prop `onOpenCompte`.
+       - Quand l'utilisateur est connecté, le clic déclenche `onOpenCompte` au lieu de rouvrir la fenêtre de connexion, avec un chevron (`ChevronDown`, 11px) signalant l'interaction.
+    3. `SurgaParametresTab.tsx` (443 l., < 450 l.) :
+       - Intégration du bouton « Mon Compte » dans la carte de profil de l'onglet Services.
+    4. `SurgaModalsContainer.tsx` (292 l.) & `page.tsx` (441 l., < 450 l.) :
+       - Import dynamique (lazy loading SSR: false) et gestion de l'état `isCompteOpen`.
+  * **Validation & Qualité** :
+    - Tests Jest : **128/128 tests unitaires validés (100%)**.
+    - TypeScript : 0 erreur avec `npx tsc --noEmit`.
+    - Linter anti-slop : Composants strictement sous le seuil des 450 lignes, zéro émoji d'UI.
+
 - **Surga / Auth & Quotas — Audit Approfondi Authentification Universelle, Éradication des 7 Doublons PostgreSQL, Index UNIQUE et Contrôle Invités Déterministe (Session 2026-10-06 - Nuit 5 ter, branche `feature/surga`)** :
   * **Périmètre & Réponses aux Questions Utilisateur** :
     1. Relation Nopalou vs Surga : Identité partagée (`utilisateurs` + cookie `nopalou_session`) avec étanchéité visuelle 100% stricte. Un utilisateur Nopalou est reconnu et connecté immédiatement sans réinscription.

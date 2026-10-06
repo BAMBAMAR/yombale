@@ -3,6 +3,32 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 5 quater] — Compte, Profil & Déconnexion : Modale Mon Compte, Édition du Nom en Ligne & Déconnexion Déterministe
+- **Demande Utilisateur :**
+  - « quand on est connecte ya rien ya pas de menu pas de botuon deconnexion ya rien modifier son profil etc ».
+- **Diagnostic :**
+  - Après une connexion réussie par OTP WhatsApp, l'en-tête affichait le prénom de l'utilisateur mais le clic sur ce badge réactivait par erreur la modale de connexion (`SurgaAuthModal`). L'utilisateur n'avait aucun accès direct pour modifier son nom, voir son numéro et son abonnement, ou se déconnecter proprement.
+- **Réalisations & Composants Livrés :**
+  1. *Création de `<SurgaCompteModal>` (`SurgaCompteModal.tsx`, 308 l., < 450 l.)* :
+     - En-tête avec avatar, initiale, badge de sécurité `Connecté par WhatsApp`, et pilule de formule (`Surga Gratuit` ou `Premium` avec décompte des jours).
+     - Coordonnées : Numéro de téléphone normalisé (+221...) et email.
+     - Formulaire d'édition du nom avec appel `PUT /api/auth/profil`, gestion d'état réactive et toast de validation/erreur.
+     - Raccourcis de navigation directe : « Mon CV & Emploi », « Rappels Concours », « Alertes Immo », « Passer Premium ».
+     - Bouton « Synchroniser mes données » avec animation `RefreshCw`.
+     - Bouton « Se déconnecter » avec modal de confirmation, appel à `/api/auth/deconnexion`, nettoyage de session et retour immédiat en mode invité.
+  2. *Refonte de `SurgaHeader.tsx` (174 l., < 450 l.)* :
+     - Ajout de la prop `onOpenCompte`.
+     - Lorsque `user` est connecté, le clic ouvre `SurgaCompteModal`.
+     - Ajout de l'icône vectorielle `ChevronDown` (11px) pour matérialiser visuellement le menu déroulant/modale.
+  3. *Mise à jour de `SurgaParametresTab.tsx` (443 l., < 450 l.)* :
+     - Bouton d'action principal « Mon Compte » dans la carte utilisateur de l'onglet Services.
+  4. *Câblage dans `SurgaModalsContainer.tsx` (292 l.) & `page.tsx` (441 l., < 450 l.)* :
+     - Chargement dynamique (code splitting SSR false) et propagation de l'état `isCompteOpen`.
+- **Validation & Qualité :**
+  - Tests unitaires Jest : **128/128 tests validés (100%)**.
+  - TypeScript : 0 erreur (`tsc --noEmit`).
+  - Linter anti-slop : Composants < 450 lignes, zéro émoji d'UI.
+
 ### [2026-10-06 — Nuit 5 ter] — Audit Approfondi Authentification Universelle, Éradication des 7 Doublons PostgreSQL, Index UNIQUE et Contrôle Invités Déterministe
 - **Demandes Utilisateur :**
   1. « quel est le rapport entre utilisateur nopalou et surga? »

@@ -49,6 +49,28 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Compte & Profil — Livraison de la Modale Complète de Gestion de Compte, Modification du Profil & Déconnexion Déterministe (Session 2026-10-06 - Nuit 5 quater, branche `feature/surga`)** :
+  - *Demande Utilisateur* : « quand on est connecte ya rien ya pas de menu pas de botuon deconnexion ya rien modifier son profil etc ».
+  - *Problème Résolu* :
+    - Une fois connecté via OTP WhatsApp, l'utilisateur n'avait aucun menu de compte ni bouton de déconnexion visible depuis l'en-tête, et cliquer sur la pastille utilisateur rouvrait l'écran de connexion `SurgaAuthModal`.
+  - *Composants & Fonctionnalités Livrés* :
+    1. **Nouveau Composant `<SurgaCompteModal>` (`SurgaCompteModal.tsx`, 308 l., < 450 l.)** :
+       - Avatar avec initiale, badge de sécurité WhatsApp vérifié (`ShieldCheck`), et statut de formule (`Surga Gratuit` vs `Surga Premium` avec décompte des jours).
+       - Affichage propre du téléphone normalisé (+221...) et de l'email.
+       - **Modification du profil en ligne** : Édition du nom complet avec validation et appel réactif à `PUT /api/auth/profil`, mise à jour immédiate de l'état sans rechargement de page.
+       - **Raccourcis rapides & quotas** : Liens directs vers « Mon CV & Emploi », « Rappels Concours », « Alertes Immo » et « Passer Premium ».
+       - **Bouton de synchronisation Cloud** : Déclenchement de `synchroniserSurga()` avec animation spinner.
+       - **Bouton de déconnexion explicite** : Bouton rouge avec confirmation, appel à `/api/auth/deconnexion`, `deleteSessionAction()`, purge des tokens et bascule instantanée en mode invité.
+    2. **`SurgaHeader.tsx` (174 l., < 450 l.)** :
+       - Ajout de la prop `onOpenCompte`.
+       - En mode connecté : Le clic ouvre la modale de compte au lieu de rouvrir la modale d'auth, avec un chevron discret (`ChevronDown`, 11px) signalant l'interactivité du menu.
+       - En mode invité : Affiche « Connexion » et ouvre `SurgaAuthModal`.
+    3. **`SurgaParametresTab.tsx` (443 l., < 450 l.)** :
+       - Ajout d'un bouton d'action principal « Mon Compte » dans la carte de profil de l'onglet Services pour accéder à la gestion du compte à tout moment.
+    4. **`SurgaModalsContainer.tsx` (292 l.) & `page.tsx` (441 l., < 450 l.)** :
+       - Chargement dynamique de `SurgaCompteModal` (SSR false) et câblage de l'état `isCompteOpen` et des rappels de mise à jour utilisateur.
+  - *Validation & Tests* : **128/128 tests Jest passés (100%)**, `tsc --noEmit` 0 erreur, linter anti-slop conforme (zéro émoji, < 450 l.).
+
 - **Surga / Auth & Quotas — Audit Approfondi de l'Authentification Universelle (Nopalou vs Surga), Éradication des 7 Derniers Doublons de Base, Index Unique Posé et Contrôle Déterministe des Non-Inscrits (Session 2026-10-06 - Nuit 5 ter, branche `feature/surga`)** :
   - *Demandes & Questions Fondamentales Utilisateur* :
     1. « quel est le rapport entre utilisateur nopalou et surga? »

@@ -1,17 +1,31 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 5 ter)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 5 quater)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Audit Universel Auth Nopalou vs Surga, Dédoublonnage Intégral Base 0 Doublon, Index UNIQUE Posé, Contrôle Déterministe Invités sur Tous Quotas, Emploi & CV A4 Natif, Kiosque des Unes 1080px & Zoom 1x-4x, Concours 22 Fiches Certifiées, Démarches 20 Fiches, Sport Temps Réel, Météo Portal, Compte OTP WhatsApp)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Modale Mon Compte & Édition Profil, Déconnexion Déterministe, Audit Universel Auth Nopalou vs Surga, Dédoublonnage Intégral Base 0 Doublon, Index UNIQUE Posé, Contrôle Déterministe Invités sur Tous Quotas, Emploi & CV A4 Natif, Kiosque des Unes 1080px & Zoom 1x-4x, Concours 22 Fiches Certifiées, Démarches 20 Fiches, Sport Temps Réel, Météo Portal, Compte OTP WhatsApp)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose d'un modèle d'identité universel et étanche, parfaitement aligné avec l'écosystème Nopalou. L'intégrité de la base de données PostgreSQL a été portée à 100% avec l'élimination définitive de tous les comptes doublons historiques et la pose physique d'un index d'unicité partiel normalisé.
+L'assistant personnel de poche **Surga** dispose désormais d'une modale de compte et de gestion de profil complète et ergonomique, permettant à tout utilisateur connecté de modifier son profil, de suivre sa formule d'abonnement et de se déconnecter en un clic sans aucune friction.
 
-0. **Audit Approfondi de l'Authentification Universelle & Éradication des Doublons (100% DONE)** :
+0. **Modale Mon Compte, Édition de Profil en Ligne & Déconnexion Déterministe (100% DONE)** :
+   - **`<SurgaCompteModal>` (`SurgaCompteModal.tsx`, 308 l., < 450 l.)** :
+     - Identité : Avatar à initiale, badge de sécurité `Connecté par WhatsApp`, statut et décompte de formule (`Surga Gratuit` ou `Premium`), téléphone (+221...) et email.
+     - Édition de profil : Modification en direct du nom complet (`nom`) avec appel réactif à `PUT /api/auth/profil` et feedback instantané.
+     - Raccourcis de services : Boutons dédiés vers « Mon CV & Emploi », « Rappels Concours », « Alertes Immo » et « Passer Premium ».
+     - Synchronisation : Bouton « Synchroniser mes données » avec animation.
+     - Déconnexion : Bouton explicite avec confirmation, appel à `/api/auth/deconnexion`, `deleteSessionAction()`, purge des tokens et bascule instantanée en mode invité.
+   - **`SurgaHeader.tsx` (174 l., < 450 l.)** :
+     - Bouton interactif avec chevron vectoriel `ChevronDown` (11px).
+     - Le clic sur la pastille utilisateur ouvre immédiatement la modale de compte (au lieu de rouvrir la fenêtre de connexion).
+   - **`SurgaParametresTab.tsx` (443 l., < 450 l.)** :
+     - Ajout d'un bouton d'action principal « Mon Compte » dans la carte de profil de l'onglet Services.
+   - **Validation & Qualité** : **128/128 tests unitaires Jest validés (100%)**, `tsc --noEmit` 0 erreur, linter anti-slop conforme.
+
+0.bis. **Audit Approfondi de l'Authentification Universelle & Éradication des Doublons (100% DONE)** :
    - **Rapport Nopalou vs Surga** : Partage d'une identité unifiée via `utilisateurs` et le cookie HTTPOnly `nopalou_session`. Tout usager Nopalou est automatiquement reconnu sur Surga par son numéro WhatsApp sans réinscription, avec une étanchéité visuelle rigoureuse (zéro composant marketplace dans Surga).
    - **Dédoublonnage Intégral PostgreSQL** : Résolution transactionnelle des 7 paires de doublons historiques (`Gollock`, `Arame Business`, `Diamalaye`, `CMS Apple Store / Mouhamed Cissé`, `XAM STORE`, `Samaskin`, comptes tests). 100% des boutiques et abonnements rattachés aux comptes maîtres. Résultat : **0 doublon restant** dans toute la base.
    - **Index UNIQUE Partiel PostgreSQL** : Pose de `uidx_utilisateurs_tel_norm` sur `utilisateurs(REGEXP_REPLACE(...))` interdisant physiquement tout doublon de numéro normalisé. 115 comptes actifs convertis au format canonique `+221...`.
