@@ -1,5 +1,31 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga — Sport & Équipe Nationale : Correction Scores Temps Réel, Actualisation des Lions du Sénégal & Saudi Pro League (Session 2026-10-06 - Soir 2, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Réponse au constat utilisateur : Dans l'onglet « Lions du Sénégal », les matchs passés de 2025 s'affichaient sous le libellé « À venir » sans score (ex: Senegal — Mauritania, South Sudan — Senegal, Congo DR — Senegal), tandis que les résultats récents de fin septembre / début octobre 2026 n'apparaissaient pas.
+    - Diagnostic :
+      1. Dans `normaliserEvenementESPN`, le statut était extrait de `event.status` au lieu de `comp.status || event.status`. L'API de calendrier d'équipe ESPN ne renvoyant pas `event.status`, `state` et `completed` étaient indéfinis, forçant tous les matchs à basculer en statut `'A_VENIR'` par défaut.
+      2. Les scores retournés sous forme d'objets `{ value: 4, displayValue: "4" }` échouaient à `parseInt(home.score, 10)`, renvoyant `null`.
+      3. Seul l'ancien flux des éliminatoires mondial 2025 (`fifa.worldq.caf`) était interrogé pour le Sénégal, omettant les matchs amicaux récents (`fifa.friendly`) et les éliminatoires CAN 2026 (`caf.nations_qual`).
+      4. Le flux Saudi Pro League retournait une erreur HTTP 400 (`sau.1` au lieu de `ksa.1`).
+      5. La fonction de date frontend `formatMatchDate` masquait l'année, laissant croire à des matchs futurs alors qu'ils dataient de 2025.
+    - Correctifs appliqués :
+      * `backend/services/surga/sport-service.js` :
+        - Création d'`extraireScoreESPN` gérant les objets `{ displayValue, value }`, chaînes et entiers.
+        - Statut fiabilisé : `isTermine = completed || state === 'post' || (!isLive && isPast)`.
+        - Ajout des flux officiels récents des Lions : `fifa.friendly/teams/654/schedule` et `caf.nations_qual/teams/654/schedule`.
+        - Correction URL Saudi Pro League : `https://site.api.espn.com/apis/site/v2/sports/soccer/ksa.1/scoreboard`.
+        - Élimination des archives obsolètes (> 1 an) et dédoublonnage strict.
+        - Tri universel : `EN_DIRECT` d'abord, `A_VENIR` chronologique (prochain match d'abord), puis `TERMINE` antéchronologique (dernier résultat d'abord).
+      * `backend/routes/surga/sport.js` :
+        - Paramètre `force: req.query.refresh === 'true'` pour bypasser le cache mémoire lors d'un rafraîchissement manuel.
+      * `frontend-next/src/app/surga/components/SurgaSportCard.tsx` (437 l., < 450 l.) :
+        - Mention de l'année pour les dates passées (`formatMatchDate`), bouton Actualiser avec `refresh=true`, pilule de score réelle ou badge sobre « Terminé ».
+  * **Validation & Qualité** :
+    - Tests backend Jest : **127/127 validés (100% en 3.9s)**.
+    - Linter anti-slop : Conforme (`npm run lint:slop`, zéro émoji UI, 437 lignes).
+    - API testée en live : Comores 0 - 1 Sénégal (4 oct. 2026), Éthiopie 0 - 1 Sénégal (29 sept. 2026), Al Nassr (9 oct. 2026), UCL et Premier League vérifiés.
+
 - **Surga — Actualités & Revue de Presse : Intégration Seneweb, Sites Officiels Crédibles et Équilibrage Multi-Sources (Session 2026-10-06 - Soir, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Réponse au besoin utilisateur : « dans les actualites inclure dautres site officiel et credible comme seneweb Actualités & Revue de presse Explorer ».

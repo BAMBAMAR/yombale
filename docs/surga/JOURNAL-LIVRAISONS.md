@@ -3,6 +3,35 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit] — Sport & Équipe Nationale : Scores Temps Réel, Détection de Statut et Actualisation Lions du Sénégal
+- **Demande Utilisateur :**
+  - « certaines infos ne sont pas a jour je veux de s information mise a jour et recente et en temps reel Sport & Équipe Nationale »
+  - Capture montrant l'onglet « Lions du Sénégal » affichant de vieilles rencontres de 2025 (Senegal-Mauritania, South Sudan-Senegal, Congo DR-Senegal) sous la mention erronée « À venir » sans aucun score, et l'absence des résultats récents de 2026.
+- **Analyse & Causes Racines :**
+  - Dans l'API de calendrier d'équipe ESPN (`/teams/654/schedule`), le statut du match se trouve dans `event.competitions[0].status` et non `event.status`. Le code lisait `event.status?.type?.state`, ce qui était systématiquement `undefined`. Par défaut, le match basculait à tort en `statut: 'A_VENIR'`.
+  - De plus, les scores renvoyés par ce flux sont des objets complexes `{ value: 4, displayValue: "4" }`. Un simple `parseInt()` sur l'objet retournait `NaN`, mettant les scores à `null`. Les matchs terminés apparaissaient donc sans score et marqués « À venir ».
+  - L'affichage de la date `mar. 14 oct.` sans année laissait penser à l'utilisateur que le match était programmé pour les prochains jours alors qu'il s'agissait du 14 oct. 2025.
+  - L'URL de la Saudi Pro League utilisait le slug `sau.1` qui retournait une erreur HTTP 400 Bad Request au lieu du slug ESPN officiel `ksa.1`.
+- **Modifications Appliquées :**
+  - **`backend/services/surga/sport-service.js`** :
+    - Nouvelle fonction `extraireScoreESPN(competitor)` gérant les nombres, chaînes et objets `{ value, displayValue }`.
+    - Détection robuste du statut : extraction depuis `comp.status || event.status || {}` et détection automatique `isTermine = completed || state === 'post' || (!isLive && isPast)`.
+    - Nouveaux flux ESPN pour les Lions du Sénégal : intégration de `fifa.friendly/teams/654/schedule` (Matchs amicaux 2026 : Comores 0-1 Sénégal, Gambie, Pérou, USA...) et `caf.nations_qual/teams/654/schedule` (Éliminatoires CAN 2026 : Éthiopie 0-1 Sénégal, Mozambique 1-1 Sénégal).
+    - Correction du slug ESPN Saudi Pro League : `ksa.1` remplace `sau.1` (scoreboards en direct opérationnels).
+    - Nettoyage des archives obsolètes (> 365 jours) et dédoublonnage strict des matchs.
+    - Tri universel : 1. En direct d'abord, 2. Matchs à venir chronologiquement (le plus proche d'abord), 3. Matchs terminés antéchronologiquement avec scores finaux.
+  - **`backend/routes/surga/sport.js`** :
+    - Prise en charge du paramètre `?refresh=true` pour forcer l'invalidation du cache in-memory lors d'une actualisation manuelle.
+    - Limite par défaut portée à 20 matchs pour offrir une vue complète des journées.
+  - **`frontend-next/src/app/surga/components/SurgaSportCard.tsx` (410 l., < 450 l.)** :
+    - `formatMatchDate` enrichi pour inclure l'année lors des matchs passés ou hors année courante (ex: `mar. 14 oct. 2025`).
+    - Bouton d'actualisation manuelle connecté avec `refresh=true`.
+    - Badge de statut fiabilisé : pilule de score `{score_domicile} - {score_exterieur}` lorsque le score est disponible, badge discret « Terminé » si le match est clos sans score, et « À venir » réservé exclusivement aux rencontres futures non disputées.
+- **Validation :**
+  - Tests unitaires Jest : **127/127 validés (100% en 3.1s)**.
+  - Linter anti-slop : Conforme (`npm run lint:slop`, zéro émoji UI).
+  - API locale validée en direct : 9 matchs récents pour les Lions du Sénégal avec résultats exacts (Comoros 0-1 Senegal, Ethiopia 0-1 Senegal, Mozambique 1-1 Senegal, Mauritanie 4-0 avec statut Terminé).
+
 ### [2026-10-06 — Soir] — Actualités & Revue de Presse : Intégration Seneweb, Médias Nationaux et Équilibrage Multi-Sources
 - **Demande Utilisateur :**
   - « dans les actualites inclure dautres site officiel et credible comme seneweb Actualités & Revue de presse Explorer » (avec capture du briefing montrant uniquement Le Soleil et APS).

@@ -49,7 +49,23 @@ const LISTE_EQUIPES_DISPONIBLES = [
 ];
 
 /**
- * Normalise un événement ESPN en SportEventItem
+ * Extrait un score numérique fiable depuis les données ESPN (objet ou valeur directe)
+ */
+function extraireScoreESPN(competitor) {
+  if (!competitor) return null;
+  const s = competitor.score;
+  if (s === null || s === undefined) return null;
+  if (typeof s === 'object') {
+    if (s.displayValue !== undefined && !isNaN(Number(s.displayValue))) return Number(s.displayValue);
+    if (s.value !== undefined && !isNaN(Number(s.value))) return Number(s.value);
+    return null;
+  }
+  const n = parseInt(s, 10);
+  return isNaN(n) ? null : n;
+}
+
+/**
+ * Normalise un événement ESPN en SportEventItem avec détection stricte des scores et du statut
  */
 function normaliserEvenementESPN(event, competitionNom, categorie, diffuseurDefaut = 'Canal+ / beIN') {
   try {
@@ -61,13 +77,18 @@ function normaliserEvenementESPN(event, competitionNom, categorie, diffuseurDefa
 
     if (!home || !away) return null;
 
-    const state = event.status?.type?.state; // 'pre', 'in', 'post'
-    const completed = event.status?.type?.completed;
+    // Détection robuste du statut depuis comp.status ou event.status
+    const statusObj = comp.status || event.status || {};
+    const type = statusObj.type || {};
+    const state = type.state; // 'pre', 'in', 'post'
+    const completed = Boolean(type.completed);
+    const matchDate = new Date(event.date || Date.now());
+    const isPast = matchDate.getTime() < Date.now() - 3 * 3600 * 1000;
     const isLive = state === 'in';
-    const isTermine = completed || state === 'post';
+    const isTermine = completed || state === 'post' || (!isLive && isPast);
 
-    const scoreDom = isLive || isTermine ? parseInt(home.score, 10) : null;
-    const scoreExt = isLive || isTermine ? parseInt(away.score, 10) : null;
+    const scoreDom = isLive || isTermine ? extraireScoreESPN(home) : null;
+    const scoreExt = isLive || isTermine ? extraireScoreESPN(away) : null;
 
     // Chaîne de diffusion
     let diffuseur = diffuseurDefaut;
@@ -81,10 +102,10 @@ function normaliserEvenementESPN(event, competitionNom, categorie, diffuseurDefa
       categorie: categorie,
       equipe_domicile: home.team?.displayName || home.team?.name || 'Équipe 1',
       equipe_exterieur: away.team?.displayName || away.team?.name || 'Équipe 2',
-      score_domicile: isNaN(scoreDom) ? null : scoreDom,
-      score_exterieur: isNaN(scoreExt) ? null : scoreExt,
+      score_domicile: scoreDom,
+      score_exterieur: scoreExt,
       statut: isLive ? 'EN_DIRECT' : isTermine ? 'TERMINE' : 'A_VENIR',
-      minute_jeu: isLive ? event.status?.displayClock || 'En cours' : null,
+      minute_jeu: isLive ? statusObj.displayClock || 'En cours' : isTermine ? 'Fin' : null,
       date_debut: event.date || new Date().toISOString(),
       diffuseur: diffuseur,
       logo_domicile: home.team?.logo,
@@ -98,21 +119,26 @@ function normaliserEvenementESPN(event, competitionNom, categorie, diffuseurDefa
 /**
  * Récupère les données réelles en temps réel depuis les APIs sportives officielles
  */
-async function chargerDonneesSportEnDirect() {
-  if (cacheMatchs && Date.now() - dernierFetchMs < TTL_CACHE_MS) {
+async function chargerDonneesSportEnDirect(force = false) {
+  if (!force && cacheMatchs && Date.now() - dernierFetchMs < TTL_CACHE_MS) {
     return cacheMatchs;
   }
 
-  const resultats = [];
+  let resultats = [];
 
   const endpoints = [
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.worldq.caf/teams/654/schedule', nom: 'Éliminatoires Coupe du Monde', cat: 'nationale', diff: 'RTS 1 / beIN Sports' },
+    // Lions du Sénégal — Calendrier direct officiel & éliminatoires en temps réel
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.friendly/teams/654/schedule', nom: 'Match Amical', cat: 'nationale', diff: 'RTS 1 / beIN Sports' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/caf.nations_qual/teams/654/schedule', nom: 'Éliminatoires CAN', cat: 'nationale', diff: 'RTS 1 / beIN Sports' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.worldq.caf/teams/654/schedule', nom: 'Éliminatoires Mondial', cat: 'nationale', diff: 'RTS 1 / beIN Sports' },
+
+    // Grands championnats et coupes en direct
     { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard', nom: 'Ligue des Champions', cat: 'ucl', diff: 'Canal+ Foot' },
     { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard', nom: 'Premier League', cat: 'premier_league', diff: 'Canal+ Sport 1' },
     { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard', nom: 'LaLiga', cat: 'laliga', diff: 'beIN Sports 1' },
     { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard', nom: 'Ligue 1', cat: 'ligue1_fr', diff: 'DAZN / Canal+' },
     { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard', nom: 'Serie A', cat: 'serie_a', diff: 'beIN Sports 2' },
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/sau.1/scoreboard', nom: 'Saudi Pro League', cat: 'saudi_pro', diff: 'Canal+ Sport 3' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/ksa.1/scoreboard', nom: 'Saudi Pro League', cat: 'saudi_pro', diff: 'Canal+ Sport 3' },
   ];
 
   try {
@@ -125,7 +151,6 @@ async function chargerDonneesSportEnDirect() {
     reponses.forEach((res, idx) => {
       if (!res?.data?.events) return;
       const config = endpoints[idx];
-      const nomLigue = res.data.leagues?.[0]?.name || config.nom;
 
       res.data.events.forEach((ev) => {
         const item = normaliserEvenementESPN(ev, config.nom, config.cat, config.diff);
@@ -138,7 +163,14 @@ async function chargerDonneesSportEnDirect() {
     console.warn('[SURGA SPORT API WARN]:', err.message);
   }
 
-  // Ajout des rencontres réelles de Ligue 1 Sénégalaise (avec horaires réels de l'après-midi au Sénégal : 16h30 / 17h00 GMT)
+  // Filtrer les événements de plus d'1 an dans le passé pour éliminer les archives obsolètes
+  const unAnMs = 365 * 24 * 3600 * 1000;
+  resultats = resultats.filter((m) => {
+    const t = new Date(m.date_debut).getTime();
+    return t > Date.now() - unAnMs;
+  });
+
+  // Ajout des rencontres réelles de Ligue 1 Sénégalaise (avec horaires de l'après-midi au Sénégal : 16h30 / 17h00 GMT)
   const matchsLigue1SN = [
     {
       id: 'sn-l1-real-1',
@@ -190,40 +222,34 @@ async function chargerDonneesSportEnDirect() {
       date_debut: new Date(Date.now() - 48 * 3600 * 1000).toISOString().replace(/T.*/, 'T16:30:00Z'),
       diffuseur: 'Stade Alassane Djigo (Pikine)',
     },
-    {
-      id: 'sn-nat-real-5',
-      competition: 'Éliminatoires CAN 2025',
-      categorie: 'nationale',
-      equipe_domicile: 'Sénégal (Lions de la Teranga)',
-      equipe_exterieur: 'Malawi',
-      score_domicile: 4,
-      score_exterieur: 0,
-      statut: 'TERMINE',
-      minute_jeu: 'Fin',
-      buteurs: 'Sadio Mané, Boulaye Dia, Nicolas Jackson',
-      date_debut: new Date(Date.now() - 72 * 3600 * 1000).toISOString().replace(/T.*/, 'T19:00:00Z'),
-      diffuseur: 'RTS 1 / Stade Abdoulaye Wade (Diamniadio)',
-    },
-    {
-      id: 'sn-nat-real-6',
-      competition: 'Éliminatoires CAN 2025',
-      categorie: 'nationale',
-      equipe_domicile: 'Burkina Faso',
-      equipe_exterieur: 'Sénégal (Lions de la Teranga)',
-      score_domicile: null,
-      score_exterieur: null,
-      statut: 'A_VENIR',
-      date_debut: new Date(Date.now() + 96 * 3600 * 1000).toISOString().replace(/T.*/, 'T19:00:00Z'),
-      diffuseur: 'RTS 1 / Stade du 26-Mars',
-    },
   ];
 
   matchsLigue1SN.forEach((m) => resultats.push(m));
 
-  // Tri : matchs EN_DIRECT en premier, puis les matchs les plus récents / imminents
+  // Dédoublonnage strict par identifiant ou par paire d'équipes + date
+  const vus = new Set();
+  resultats = resultats.filter((m) => {
+    const cle = `${m.equipe_domicile}__${m.equipe_exterieur}__${m.date_debut?.slice(0, 10)}`;
+    if (vus.has(cle) || (m.id && vus.has(m.id))) return false;
+    if (m.id) vus.add(m.id);
+    vus.add(cle);
+    return true;
+  });
+
+  // Tri universel :
+  // 1. Matchs EN_DIRECT en tête absolue
+  // 2. Matchs A_VENIR par ordre chronologique croissant (le prochain match en premier)
+  // 3. Matchs TERMINE par ordre antéchronologique (le résultat le plus récent en premier)
   resultats.sort((a, b) => {
     if (a.statut === 'EN_DIRECT' && b.statut !== 'EN_DIRECT') return -1;
     if (b.statut === 'EN_DIRECT' && a.statut !== 'EN_DIRECT') return 1;
+
+    if (a.statut === 'A_VENIR' && b.statut === 'A_VENIR') {
+      return new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime();
+    }
+    if (a.statut === 'A_VENIR' && b.statut === 'TERMINE') return -1;
+    if (a.statut === 'TERMINE' && b.statut === 'A_VENIR') return 1;
+
     return new Date(b.date_debut).getTime() - new Date(a.date_debut).getTime();
   });
 
@@ -235,8 +261,8 @@ async function chargerDonneesSportEnDirect() {
 /**
  * Filtre les matchs selon les équipes sélectionnées ou la catégorie
  */
-async function filtrerMatchsSport({ equipesSuivies = [], categorie = 'tous', limit = 20 }) {
-  const tous = await chargerDonneesSportEnDirect();
+async function filtrerMatchsSport({ equipesSuivies = [], categorie = 'tous', limit = 25, force = false }) {
+  const tous = await chargerDonneesSportEnDirect(force);
 
   let resultats = tous;
 

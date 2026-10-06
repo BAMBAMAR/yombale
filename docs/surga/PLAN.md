@@ -395,7 +395,18 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Passerelles transversales Surga : export checklist interactive dans les Notes, intégration des frais dans Sama Xaalis, planification de rendez-vous dans l'Agenda et suivi avec rappels J-7/J-1 (1 suivi gratuit, illimité Surga Premium).
 - [x] `DONE` Console d'administration sous `/admin/surga` : catalogue complet, re-vérification périodique en 1 clic (report à J+90 au statut `PUBLIE`), modération des signalements usagers et modale de création/édition.
 - [x] `DONE` Respect strict des contraintes qualité : 100% des composants React sous 450 lignes, zéro émoji (100% `lucide-react`), 127/127 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
-- **Démonstration** : l'utilisateur recherche une démarche administrative vérifiée (ex: Passeport biométrique, CNI CEDEAO), consulte la liste des pièces et le coût officiel FCFA, transfère la checklist dans ses Notes et son budget dans Sama Xaalis, active le suivi de sa démarche avec alertes de rappel, signale une éventuelle anomalie au modérateur, et l'administrateur gère les fiches et renouvelle la validité 90 jours depuis la console admin.
+### Tranche 21 — Sport & Équipe Nationale Temps Réel, Scores Directs ESPN & Actualisation Lions du Sénégal (06 Octobre 2026 - Nuit)
+- [x] `DONE` Détection stricte de statut de match (`comp.status || event.status || {}`) résolvant le bug où tous les matchs de calendrier d'équipe basculaient par défaut en « À venir ».
+- [x] `DONE` Détection automatique des matchs achevés : `isTermine = completed || state === 'post' || (!isLive && isPast)`.
+- [x] `DONE` Extraction résiliente des scores ESPN (`extraireScoreESPN`) prenant en charge les objets `{ value, displayValue }` et les entiers sans retour `NaN`.
+- [x] `DONE` Intégration des flux officiels ESPN pour les Lions du Sénégal : matchs amicaux 2026 (`fifa.friendly/teams/654/schedule`) et éliminatoires CAN 2026 (`caf.nations_qual/teams/654/schedule`).
+- [x] `DONE` Affichage immédiat des résultats récents avec scores réels : Comores 0 - 1 Sénégal (4 oct. 2026), Éthiopie 0 - 1 Sénégal (29 sept. 2026), Mozambique 1 - 1 Sénégal (25 sept. 2026), Arabie Saoudite, Gambie, Pérou...
+- [x] `DONE` Correction du slug Saudi Pro League : `ksa.1` remplace `sau.1` (erreur 400 résolue).
+- [x] `DONE` Tri universel optimisé : 1. En direct d'abord, 2. Prochains matchs chronologiques, 3. Derniers résultats antéchronologiques avec score.
+- [x] `DONE` Rafraîchissement forcé (`?refresh=true`) sur route `/api/surga/sport` et bouton PWA dédié.
+- [x] `DONE` Affichage complet de la date avec année pour les matchs passés (`formatMatchDate`), évitant toute confusion temporelle.
+- [x] `DONE` Suite de tests unitaires Jest : **127/127 validés (100% en 3.1s)**, linter anti-slop conforme, composant React `< 450 lignes` (`SurgaSportCard.tsx`, 410 l.).
+- **Démonstration** : l'utilisateur ouvre l'onglet Sport & Équipe Nationale, consulte les résultats récents des Lions du Sénégal avec scores réels certifiés, constate les statuts exacts (Terminé, En Direct, À venir), et explore la Saudi Pro League et les championnats majeurs sans erreur.
 
 ---
 

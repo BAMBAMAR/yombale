@@ -35,10 +35,12 @@ interface SurgaSportCardProps {
 function formatMatchDate(dateStr: string): string {
   try {
     const d = new Date(dateStr)
+    const isThisYear = d.getFullYear() === new Date().getFullYear()
     return new Intl.DateTimeFormat('fr-FR', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
+      ...(isThisYear ? {} : { year: 'numeric' }),
       hour: '2-digit',
       minute: '2-digit',
     }).format(d)
@@ -105,6 +107,7 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
     setLoading(true)
     try {
       const params = new URLSearchParams()
+      params.append('refresh', 'true')
       if (categorie !== 'tous' && categorie !== 'mes_equipes') {
         params.append('categorie', categorie)
       }
@@ -326,6 +329,19 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                     >
                       {match.score_domicile} - {match.score_exterieur}
                     </div>
+                  ) : isTermine ? (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        backgroundColor: 'rgba(10,92,54,0.08)',
+                        color: 'var(--price, #0A5C36)',
+                      }}
+                    >
+                      Terminé
+                    </span>
                   ) : (
                     <span
                       style={{
@@ -345,33 +361,29 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                     const matchKey = match.id || `${match.equipe_domicile}-${match.equipe_exterieur}`
                     const estRappele = matchsRappeles.includes(matchKey)
                     const estBudgete = matchsBudgetes.includes(matchKey)
+                    const getBtnStyle = (actif: boolean, accentColor = 'var(--accent, #C75B00)'): React.CSSProperties => ({
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 3,
+                      padding: '4px 7px',
+                      borderRadius: 6,
+                      border: '1px solid',
+                      borderColor: actif ? accentColor : 'var(--border, #E8DDD2)',
+                      backgroundColor: actif ? 'rgba(199, 91, 0, 0.12)' : '#FFFFFF',
+                      color: actif ? accentColor : 'var(--navy, #1C2B4A)',
+                      cursor: 'pointer',
+                      fontSize: 11,
+                      fontWeight: actif ? 700 : 500,
+                    })
 
                     return (
                       <>
                         <button
                           type="button"
                           onClick={(e) => handleToggleRappel(match, e)}
-                          title={
-                            estRappele
-                              ? "Rappel actif à l'heure du match — Cliquer pour désactiver"
-                              : "Programmer un rappel à l'heure du match dans l'Agenda"
-                          }
+                          title={estRappele ? "Rappel actif — Cliquer pour désactiver" : "Programmer un rappel dans l'Agenda"}
                           aria-label="Rappel match"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            padding: '4px 7px',
-                            borderRadius: 6,
-                            border: '1px solid',
-                            borderColor: estRappele ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
-                            backgroundColor: estRappele ? 'rgba(199, 91, 0, 0.12)' : '#FFFFFF',
-                            color: estRappele ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
-                            cursor: 'pointer',
-                            fontSize: 11,
-                            fontWeight: estRappele ? 700 : 500,
-                            transition: 'all 0.15s ease',
-                          }}
+                          style={getBtnStyle(estRappele)}
                         >
                           {estRappele ? <BellCheck size={14} /> : <Bell size={14} />}
                           {estRappele && <span>Rappelé</span>}
@@ -380,30 +392,12 @@ export default function SurgaSportCard({ sports: initialSports }: SurgaSportCard
                         <button
                           type="button"
                           onClick={(e) => handleToggleBudget(match, e)}
-                          title={
-                            estBudgete
-                              ? "Budget sortie (3 000 FCFA) noté dans Sama Xaalis — Cliquer pour retirer"
-                              : "Prévoir un budget sortie match dans Sama Xaalis"
-                          }
+                          title={estBudgete ? "Budget noté — Cliquer pour retirer" : "Prévoir un budget sortie match"}
                           aria-label="Budget match"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            padding: '4px 7px',
-                            borderRadius: 6,
-                            border: '1px solid',
-                            borderColor: estBudgete ? 'var(--price, #0A5C36)' : 'var(--border, #E8DDD2)',
-                            backgroundColor: estBudgete ? 'rgba(10, 92, 54, 0.12)' : '#FFFFFF',
-                            color: estBudgete ? 'var(--price, #0A5C36)' : 'var(--text2, #5A4E42)',
-                            cursor: 'pointer',
-                            fontSize: 11,
-                            fontWeight: estBudgete ? 700 : 500,
-                            transition: 'all 0.15s ease',
-                          }}
+                          style={getBtnStyle(estBudgete, 'var(--price, #0A5C36)')}
                         >
                           <Wallet size={14} />
-                          {estBudgete && <span>Budgeté</span>}
+                          {estBudgete && <span>Budgété</span>}
                         </button>
                       </>
                     )

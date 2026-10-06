@@ -58,7 +58,8 @@ router.get('/sport', tokenOptional, async (req, res) => {
     const matchs = await filtrerMatchsSport({
       equipesSuivies: equipes,
       categorie,
-      limit: parseInt(req.query.limit, 10) || 12,
+      limit: parseInt(req.query.limit, 10) || 20,
+      force: req.query.refresh === 'true',
     });
 
     res.json({

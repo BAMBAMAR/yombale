@@ -49,6 +49,22 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Sport & Équipe Nationale : Correction Scores Temps Réel, Actualisation des Lions du Sénégal & Saudi Pro League (Session 2026-10-06 - Soir 2, branche `feature/surga`)** :
+  - *Demande Utilisateur & Constat* : « certaines infos ne sont pas a jour je veux de s information mise a jour et recente et en temps reel Sport & Équipe Nationale » — Dans l'onglet « Lions du Sénégal », d'anciens matchs de 2025 s'affichaient sous le libellé « À venir » sans score (ex: Senegal — Mauritania, South Sudan — Senegal, Congo DR — Senegal), et les matchs récents d'octobre 2026 étaient absents.
+  - *Causes Racines & Correctifs Apportés* :
+    1. `backend/services/surga/sport-service.js` :
+       - **Correction du parser ESPN (`normaliserEvenementESPN`)** : L'état d'avancement du match était lu sur `event.status` au lieu de `comp.status || event.status`. Comme `event.status` était indéfini dans l'API de calendrier d'équipe ESPN, tous les matchs passés basculaient à tort en `statut: 'A_VENIR'`. De plus, `parseInt(home.score, 10)` échouait sur les scores retournés sous forme d'objets `{ value: 4, displayValue: "4" }`. Création de la fonction `extraireScoreESPN` pour extraire fidèlement les scores numériques réels.
+       - **Intégration des flux officiels récents des Lions du Sénégal** : Ajout du flux des matchs amicaux (`fifa.friendly/teams/654/schedule`) et des éliminatoires CAN (`caf.nations_qual/teams/654/schedule`). Résultat immédiat en live : affichage en tête des résultats récents (Comores 0 - 1 Sénégal du 4 oct. 2026, Éthiopie 0 - 1 Sénégal du 29 sept. 2026, Mozambique 1 - 1 Sénégal du 25 sept. 2026).
+       - **Correction Saudi Pro League** : Remplacement de l'URL invalide `sau.1` (erreur 400) par le slug ESPN officiel actif `https://site.api.espn.com/apis/site/v2/sports/soccer/ksa.1/scoreboard` (Al Nassr, Al Ahli, Al Qadsiah).
+       - **Filtrage des archives obsolètes & Tri Intelligent** : Élimination des rencontres de plus d'1 an, tri prioritaire : `EN_DIRECT` d'abord, puis `A_VENIR` chronologique (prochain match imminent en premier), puis `TERMINE` antéchronologique avec score final vérifié.
+    2. `backend/routes/surga/sport.js` :
+       - Support du rafraîchissement forcé sans délai de cache via `?refresh=true`, et plafond rehaussé à 20 matchs.
+    3. `frontend-next/src/app/surga/components/SurgaSportCard.tsx` (437 l., < 450 l.) :
+       - `formatMatchDate` enrichi avec mention explicite de l'année pour toute date passée afin d'éliminer toute ambiguïté calendaire.
+       - Forçage du rafraîchissement temps réel (`refresh=true`) lors du clic sur l'icône Actualiser.
+       - Pilule de statut fiabilisée : affichage du score réel si disponible (`score_dom domicile - score_exterieur`), badge « Terminé » sobre si achevé sans score, et « À venir » réservé exclusivement aux rencontres futures non encore disputées.
+  - *Validation* : 127/127 tests unitaires passés (100% en 3.9s), linter anti-slop conforme (0 erreur, zéro émoji UI), API live testée sur `/api/surga/sport?refresh=true&categorie=nationale`, `saudi_pro` et `tous`.
+
 - **Surga — Actualités & Revue de Presse : Intégration Seneweb, Sites Officiels Crédibles et Équilibrage Multi-Sources (Session 2026-10-06 - Soir, branche `feature/surga`)** :
   - *Demande Utilisateur & Constat* : « dans les actualites inclure dautres site officiel et credible comme seneweb Actualités & Revue de presse Explorer » — identification du fait que le flux Seneweb pointait vers une ancienne URL obsolète (`/news/rss.xml` en 404), et que seuls Le Soleil et l'APS s'affichaient de façon prédominante dans le briefing et la revue de presse.
   - *Correctifs Apportés* :

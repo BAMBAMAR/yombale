@@ -1,17 +1,27 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Soir)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Actualités & Revue de Presse : Intégration Seneweb & Portails Nationaux, Équilibrage Multi-Sources, Batch Insert PostgreSQL, Sélecteur de Localité Météo Découplé Portal, Module Compte Utilisateur & Authentification OTP WhatsApp in-app, SurgaAuthModal Modulaire, Pastille Header & Carte Compte/Sync Services, Emploi & Carrière : Correctif 401 & Téléchargement CV PDF Résolu, SurgaEmploiNav Modulaire, Hub Services : Correctif Écrasement Boutons & Largeur Auto, Icônes SVG Dédiées & SurgaServiceRow, Harmonisation Onglet & En-tête « Services » avec LayoutGrid, Tranche 20 : Démarches Administratives avec source officielle e-senegal.sn, Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Sport & Équipe Nationale : Scores Temps Réel ESPN, Détection Statuts Précis, Actualisation Lions du Sénégal & Saudi Pro League ksa.1, Actualités & Revue de Presse : Seneweb & Portails Nationaux, Équilibrage Multi-Sources, Batch Insert PostgreSQL, Sélecteur Météo Découplé Portal, Module Compte OTP WhatsApp in-app, Emploi & CV PDF, Démarches e-senegal.sn, Séries TV & Lutte, Préparation Entretien, Météo 14 Régions)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose d'un pôle **Actualités & Revue de Presse** enrichi de l'ensemble des grands portails d'information crédibles et officiels du Sénégal (**Seneweb**, **APS**, **Le Soleil**, **PressAfrik**, **SeneNews**, **Leral.net**, **Dakaractu**, **Le Quotidien**, **Sud Quotidien**) avec un algorithme d'équilibrage multi-sources garantissant une pluralité d'affichage dans le briefing du matin et la modale Explorer. L'architecture bénéficie d'une ingestion par lots (batch chunks), d'un cache in-memory instantané et de la mémoïsation de synchronisation.
+L'assistant personnel de poche **Surga** dispose d'un module **Sport & Équipe Nationale** actualisé en temps réel avec scores réels certifiés, détection automatique des statuts de match (En Direct, Terminé, À venir) et intégration complète des résultats et calendriers récents des **Lions du Sénégal** (Matchs amicaux 2026 : Comores 0-1 Sénégal, Éthiopie 0-1 Sénégal, Mozambique 1-1 Sénégal) et de la **Saudi Pro League** (`ksa.1`).
 
-0. **Actualités & Revue de Presse : Intégration Seneweb & Multi-Sources (100% DONE)** :
+0. **Sport & Équipe Nationale : Scores Temps Réel & Calendrier Lions du Sénégal (100% DONE)** :
+   - **Correction Racine Détection Statut (`backend/services/surga/sport-service.js`)** : Dans l'API de calendrier ESPN (`/teams/654/schedule`), le statut se trouve dans `event.competitions[0].status` et non `event.status`. Le code résout désormais `comp.status || event.status || {}` et marque automatiquement un match `isTermine = completed || state === 'post' || (!isLive && isPast)`.
+   - **Parsing Robuste des Scores ESPN (`extraireScoreESPN`)** : Prise en charge des objets `{ value, displayValue }` et nombres, évitant le retour `NaN` de `parseInt()` qui forçait les scores à `null`. Les matchs achevés affichent désormais leur vrai score numérique.
+   - **Flux Dédiés Lions du Sénégal** : Ajout des flux officiels `fifa.friendly/teams/654/schedule` et `caf.nations_qual/teams/654/schedule`, fournissant immédiatement les derniers résultats des Lions (Comores 0-1 Sénégal du 4 oct. 2026, Éthiopie 0-1 Sénégal du 29 sept. 2026, Mozambique 1-1 Sénégal, Gambie, Pérou...).
+   - **Correction Saudi Pro League** : Remplacement du slug erroné `sau.1` (400 Bad Request) par le slug ESPN officiel `ksa.1`.
+   - **Tri Universel des Rencontres** : 1. En Direct en tête, 2. À Venir par ordre chronologique (le plus proche en premier), 3. Terminés par ordre antéchronologique avec scores finaux.
+   - **Rafraîchissement Forcé (`backend/routes/surga/sport.js`)** : Prise en charge de `?refresh=true` invalidant le cache mémoire lors d'un clic d'actualisation manuelle, limite par défaut étendue à 20 matchs.
+   - **Affichage PWA Optimisé (`SurgaSportCard.tsx`, 410 l., < 450 l.)** : Affichage explicite de l'année pour les matchs passés (`mar. 14 oct. 2025`), pilule de score dédiée `{score_domicile} - {score_exterieur}` et mention « À venir » restreinte strictement aux matchs futurs.
+   - **Validation Tests Unitaires** : 127/127 tests passés avec succès (**100% en 3.1s**), linter anti-slop sans erreur.
+
+0.bis. **Actualités & Revue de Presse : Intégration Seneweb & Multi-Sources (100% DONE)** :
    - **Flux Direct Seneweb (`backend/services/surga/rss-collector.js`)** : Détection et intégration de l'URL active `https://www.seneweb.com/feed` (remplaçant l'ancienne URL 404).
    - **Diversification des Portails Nationaux** : Intégration de PressAfrik (`/xml/syndication.rss`), SeneNews (`/feed`), Leral.net (`/xml/syndication.rss`), et flux ciblés Google News pour Dakaractu, Le Quotidien et Sud Quotidien.
    - **Algorithme d'Équilibrage Multi-Sources** : Répartition équitable plafonnant la représentation par média pour éviter qu'une source unique ne monopolise l'affichage.
