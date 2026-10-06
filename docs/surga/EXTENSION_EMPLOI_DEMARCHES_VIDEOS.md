@@ -170,9 +170,9 @@ Une fiche non vérifiée n'est jamais publiée ; une fiche périmée passe en «
 
 ## 8. À coller dans `docs/surga/PLAN.md`
 - [x] Tranche 17 : Séries et lutte (alertes vidéos). *(Fait)*
-- [ ] Tranche 18 : Emploi, profil, CV et lettres.
-- [ ] Tranche 19 : Préparation à l'entretien.
-- [ ] Tranche 20 : Démarches administratives.
+- [x] Tranche 18 : Emploi, profil, CV et lettres. *(Fait)*
+- [x] Tranche 19 : Préparation à l'entretien. *(Fait)*
+- [x] Tranche 20 : Démarches administratives. *(Fait)*
 
 *Ordre proposé : 17, 18, 19, 20 (la 19 dépend du profil de la 18 ; la 20 est livrée techniquement, son contenu attend la désignation d'un responsable éditorial).*
 
