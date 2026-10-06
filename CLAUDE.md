@@ -49,6 +49,29 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Kiosque des Unes de la Presse Sénégalaise : Visionneuse Agrandie, Zoom Interactif (1x à 4x), Glisser-Déplacer Pan & Plein Écran Immersif (Session 2026-10-06 - Nuit 4, branche `feature/surga`)** :
+  - *Demande Utilisateur & Constat* : « agrandir si possible et ajouter des bouton zoom agrandir plein ecran etc » — L'affichage de la Une de journal était restreint à `maxWidth: 540px` avec `maxHeight: 64vh`, sans possibilité d'agrandir, sans aucun zoom pour lire les colonnes et articles, et sans mode plein écran.
+  - *Correctifs Apportés* :
+    1. `frontend-next/src/app/surga/components/SurgaKiosqueLightbox.tsx` (397 l., < 450 l.) :
+       - **Boîte de dialogue agrandie** : `maxWidth` étendu de 540px à **1080px** (`width: 96vw`), offrant une lisibilité doublée sur grand écran et mobile.
+       - **Moteur de Zoom interactif multi-paliers** : Zoom de 100% à 400% avec boutons ZoomIn (+), ZoomOut (-), Reset 100% (`RotateCcw`) et affichage du pourcentage en temps réel.
+       - **Glisser-Déplacer (Pan / Drag)** : Déplacement fluide de l'image à la souris (curseur `grab` / `grabbing`) et au toucher tactile mobile lorsque `zoom > 1` pour explorer chaque paragraphe de la Une.
+       - **Double-clic / Double-tap** : Bascule instantanée entre 100% et 200%.
+       - **Molette de la souris** : Zoom avant / arrière intuitif au scroll.
+       - **Mode Plein Écran immersif** : Bascule 1-clic (`Maximize2` / `Minimize2`) occupant 100% de la fenêtre et synchronisé avec l'API Web `requestFullscreen`.
+       - **Bouton Copier le lien de la Une** : Copie dans le presse-papiers avec feedback visuel `Check`.
+       - **Raccourcis clavier universels** : `+` / `=` (zoom avant), `-` (zoom arrière), `0` / `r` (reset 100%), `f` (plein écran), `Flèches gauche/droite` (journal précédent/suivant), `Échap` (reset zoom, sortie plein écran ou fermeture).
+    2. `frontend-next/src/app/surga/components/SurgaKiosqueZoomControls.tsx` (166 l., < 450 l.) :
+       - Contrôles de zoom compacts, élégants, conformes aux tokens Nopalou (`--navy`, `--border`, `--bg`, `--accent`), avec bouton de masquage des vignettes pour dédier 100% de la hauteur à l'image.
+    3. `frontend-next/src/app/surga/components/SurgaKiosqueHeader.tsx` (210 l., < 450 l.) :
+       - En-tête modulaire extrait pour respecter strictement le standard ingénieur senior (< 450 lignes).
+    4. `frontend-next/src/app/surga/components/SurgaKiosqueThumbnails.tsx` (79 l., < 450 l.) :
+       - Bande inférieure de miniatures avec défilement fluide et centrage automatique de la Une active (`scrollIntoView`).
+    5. *Validation & Qualité* :
+       - `tsc --noEmit` : 0 erreur TypeScript.
+       - `npm run lint:slop` : Conforme (zéro émoji, tokens déclarés).
+       - Tests Jest : 127/127 validés (`127 passed, 127 total`).
+
 - **Surga — Concours & Examens du Sénégal : Catalogue Officiel Étendu à 22 Concours Certifiés, Synchronisation PostgreSQL & Couverture 100% des Catégories (Session 2026-10-06 - Nuit 3, branche `feature/surga`)** :
   - *Demande Utilisateur & Constat* : « trop peu de concours et les infos doivent etre conforme et prise dans des sources officiel » — L'interface n'affichait que 5 concours (Police, ENA, FASTEF, Douanes, CFJ), les catégories « Santé & Social », « Grandes Écoles d Ingénieurs » et « Examens Nationaux » étaient vides, et l'ENA / le CFJ étaient mal catégorisés.
   - *Correctifs Apportés* :

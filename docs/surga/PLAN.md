@@ -38,11 +38,13 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Point d'entrée visible sur l'accueil (`/`) et dans la navigation desktop (D20).
 - **Démonstration** : un testeur installe l'app, choisit ses briques et son heure de briefing en moins de 2 minutes, se connecte avec son numéro WhatsApp et retrouve ses choix et ses données synchronisées.
 
-### Tranche 2 — "Je reçois mon briefing du matin"
+### Tranche 2 — "Je reçois mon briefing du matin" (Actualités & Kiosque des Unes de Presse)
 - [x] `DONE` Ingestion de sources multi-médias (flux RSS d'actualité Seneweb, APS, Le Soleil, PressAfrik, SeneNews, Leral.net, Dakaractu, Le Quotidien, Sud Quotidien, équilibrage multi-sources et programme/scores sportifs).
+- [x] `DONE` Kiosque des Unes de la presse sénégalaise : Visionneuse grand format (1080px / 96vw), moteur de zoom interactif multi-paliers (100% à 400%), pan glisser-déplacer, double-clic 2x, molette souris, mode plein écran immersif HTML5 et copie de lien direct.
+- [x] `DONE` Modularisation Anti-AI-Slop (< 450 l.) : `SurgaKiosqueLightbox.tsx` (397 l.), `SurgaKiosqueHeader.tsx` (210 l.), `SurgaKiosqueZoomControls.tsx` (166 l.), `SurgaKiosqueThumbnails.tsx` (79 l.).
 - [x] `DONE` Génération du briefing texte personnalisé (résumés courts, liens vers les sources).
 - [x] `DONE` Écran "Aujourd'hui" et notification à l'heure choisie (push web & notification API).
-- **Démonstration** : à l'heure choisie, le testeur reçoit une notification et ouvre un briefing correspondant à ses briques.
+- **Démonstration** : à l'heure choisie, le testeur reçoit une notification et ouvre son briefing, et peut explorer les Unes des quotidiens nationaux en grand format avec zoom, pan et plein écran.
 
 ### Tranche 3 — "Je note, je compte, je calcule"
 - [x] `DONE` Notes (création, recherche instantanée, modification, suppression locale et distante).

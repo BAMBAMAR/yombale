@@ -1,17 +1,30 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 3)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 4)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Concours & Examens : Catalogue Officiel Étendu à 22 Concours Certifiés des Ministères & Écoles Supérieures, Synchronisation PostgreSQL, Démarches Administratives 20 Fiches e-senegal.sn, Sport Temps Réel ESPN & Lions du Sénégal, Actualités Seneweb, Sélecteur Météo Portal, Compte OTP WhatsApp in-app, Emploi CV PDF, Séries TV & Lutte)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Kiosque des Unes : Visionneuse Agrandie 1080px, Moteur de Zoom 1x à 4x, Pan Glisser-Déplacer, Plein Écran Immersif, Concours & Examens 22 Fiches Officielles Certifiées, Démarches 20 Fiches e-senegal.sn, Sport Temps Réel ESPN & Lions, Sélecteur Météo Portal, Compte OTP WhatsApp, Emploi CV PDF, Séries TV & Lutte)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose d'un module **Concours & Examens du Sénégal** enrichi d'un catalogue officiel de **22 concours et examens certifiés de l'État** couvrant 100% des 6 catégories officielles (Fonction Publique, Forces de Défense, Éducation & Enseignement, Grandes Écoles d Ingénieurs, Examens Nationaux, Santé & Social) avec sources officielles de l'État, dates limites, pièces à fournir et rappels stratégiques J-30 / J-7 / J-1.
+L'assistant personnel de poche **Surga** dispose d'un module **Kiosque des Unes de la Presse Sénégalaise** doté d'une visionneuse grand format (1080px / 96vw) avec moteur de zoom interactif multi-paliers (100% à 400%), glisser-déplacer (pan) fluide à la souris et au tactile, mode plein écran immersif HTML5, copie de lien direct et navigation rapide par raccourcis clavier.
 
-0. **Concours & Examens du Sénégal : Catalogue Officiel Étendu à 22 Fiches Certifiées (100% DONE)** :
+0. **Kiosque des Unes : Visionneuse Agrandie, Zoom (1x à 4x), Pan & Plein Écran (100% DONE)** :
+   - **Boîte de Dialogue Agrandie (`SurgaKiosqueLightbox.tsx`, 397 l., < 450 l.)** : Largeur maximale doublée de 540px à 1080px (`width: 96vw`), hauteur adaptative jusqu'à 84vh sans les vignettes, offrant un confort de lecture optimal des manchettes et colonnes de journaux.
+   - **Moteur de Zoom Multi-Paliers** : Paliers de 100% à 400% avec boutons ZoomIn (+), ZoomOut (-), Reset 100% (`RotateCcw`) et affichage du pourcentage courant.
+   - **Pan Glisser-Déplacer** : Déplacement de l'image au curseur `grab`/`grabbing` à la souris et au glisser tactile sur smartphone quand `zoom > 1`.
+   - **Double-clic / Double-tap** : Bascule instantanée entre 100% et 200%.
+   - **Zoom Molette Souris (`onWheel`)** : Zoom avant / arrière fluide au scroll de la souris.
+   - **Mode Plein Écran Immersif** : Bouton dédié (`Maximize2` / `Minimize2`) et touche `F`, occupant 100% de l'écran avec intégration de l'API standard `requestFullscreen`.
+   - **Modularisation Ingénieur Senior (< 450 lignes)** :
+     - `SurgaKiosqueZoomControls.tsx` (166 l.) : barre des boutons de zoom et bascule d'affichage des vignettes.
+     - `SurgaKiosqueHeader.tsx` (210 l.) : en-tête complet avec titre, date d'édition, navigation et copie de lien.
+     - `SurgaKiosqueThumbnails.tsx` (79 l.) : carrousel horizontal des miniatures avec centrage automatique (`scrollIntoView`).
+   - **Validation Tests Unitaires** : 127/127 tests passés (`100%`), `tsc --noEmit` 0 erreur, linter anti-slop conforme.
+
+0.bis. **Concours & Examens du Sénégal : Catalogue Officiel Étendu à 22 Fiches Certifiées (100% DONE)** :
    - **Catalogue Officiel Porté à 22 Concours (`backend/services/surga/concours-service.js`)** :
      - *Fonction Publique* (3) : ENA (`https://ena.sn`, 10 000 FCFA), CFJ Magistrature & Greffe (`https://cfj.sn`, 10 000 FCFA), Concours Direct Fonction Publique (`https://fonctionpublique.gouv.sn`, 0 FCFA).
      - *Forces de Défense & Sécurité* (5) : Police Nationale (`https://policenationale.sec.gouv.sn`, 5 000 FCFA), Douanes (`https://douanes.sn`, 5 000 FCFA), Gendarmerie Nationale (`https://gendarmerie.sn`, 5 000 FCFA), BNSP Sapeurs-Pompiers (`https://bnsp.sn`, 5 000 FCFA), DAP Administration Pénitentiaire (`https://justice.sec.gouv.sn`, 5 000 FCFA).

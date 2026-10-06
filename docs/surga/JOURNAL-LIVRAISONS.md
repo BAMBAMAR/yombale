@@ -3,6 +3,33 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 4] — Kiosque des Unes : Visionneuse Agrandie, Moteur de Zoom (100% à 400%), Pan Glisser-Déplacer & Plein Écran
+- **Demande Utilisateur :**
+  - « agrandir si possible et ajouter des bouton zoom agrandir plein ecran etc »
+  - Capture d'écran montrant la visionneuse de la Une du quotidien (L'AS / Le Soleil) confinée dans une boîte étroite, sans zoom possible et sans mode plein écran.
+- **Analyse & Contexte :**
+  - La modale `SurgaKiosqueLightbox.tsx` utilisait un `maxWidth: 540px` très restrictif et un `maxHeight: 64vh` sur l'image, rendant les colonnes et manchettes illisibles sans zoom.
+  - L'interface ne proposait aucun contrôle de zoom ni de déplacement (pan) dans l'image, et aucun bouton plein écran pour afficher le journal sur tout l'écran.
+- **Modifications Appliquées :**
+  - **`frontend-next/src/app/surga/components/SurgaKiosqueLightbox.tsx`** (397 l., < 450 l.) :
+    - Boîte agrandie à **1080px de largeur** (`width: 96vw`) par défaut.
+    - Moteur de zoom multi-paliers de 1x à 4x avec boutons ZoomIn (+), ZoomOut (-), Reset 100% (`RotateCcw`) et affichage du pourcentage actif.
+    - Glisser-déplacer (Pan) fluide à la souris et au tactile dès que `zoom > 1` pour explorer chaque colonne du journal.
+    - Double-clic / double-tap basculant instantanément entre 100% et 200%.
+    - Zoom molette souris (`onWheel`).
+    - Mode plein écran immersif (`Maximize2` / `Minimize2`) synchronisé avec l'API Web standard `requestFullscreen`.
+    - Bouton Copier le lien direct avec badge de validation visuelle (`Check`).
+    - Raccourcis clavier universels (`+`, `-`, `0`, `f`, flèches gauche/droite, `Échap`).
+  - **Modularisation Anti-AI-Slop (< 450 lignes)** :
+    - `SurgaKiosqueZoomControls.tsx` (166 l.) : barre des boutons de zoom, plein écran et bascule des miniatures.
+    - `SurgaKiosqueHeader.tsx` (210 l.) : en-tête complet avec titre, édition, navigation et partage.
+    - `SurgaKiosqueThumbnails.tsx` (79 l.) : bande horizontale de miniatures avec centrage automatique (`scrollIntoView`).
+- **Validation :**
+  - `npx tsc --noEmit` : 0 erreur TypeScript.
+  - `npm run lint:slop` : 100% conforme (zéro émoji, tokens déclarés).
+  - Tests Jest : 127/127 validés (`127 passed, 127 total`).
+  - Règle de déploiement : Commit local préparé sans aucun `git push` automatique.
+
 ### [2026-10-06 — Nuit 3] — Concours & Examens du Sénégal : Catalogue Étendu à 22 Concours Certifiés & Synchronisation PostgreSQL
 - **Demande Utilisateur :**
   - « trop peu de concours et les infos doivent etre conforme et prise dans des sources officiel »

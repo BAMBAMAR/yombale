@@ -1,5 +1,29 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga — Kiosque des Unes de la Presse Sénégalaise : Visionneuse Agrandie, Zoom Interactif (1x à 4x), Glisser-Déplacer Pan & Plein Écran Immersif (Session 2026-10-06 - Nuit 4, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Réponse à la demande utilisateur : « agrandir si possible et ajouter des bouton zoom agrandir plein ecran etc ».
+    - Diagnostic : La modale d'affichage de la Une était confinée à `maxWidth: 540px` avec `maxHeight: 64vh`, sans possibilité de zoom pour lire les colonnes et sans mode plein écran.
+    - Correctifs appliqués :
+      * `frontend-next/src/app/surga/components/SurgaKiosqueLightbox.tsx` :
+        - Boîte de dialogue agrandie de 540px à 1080px (`width: 96vw`) pour doubler la surface d'affichage.
+        - Moteur de Zoom interactif multi-paliers de 100% à 400% avec réinitialisation automatique au changement de journal.
+        - Déplacement fluide de l'image (Pan) à la souris (`onMouseDown`/`onMouseMove`, curseur `grab`/`grabbing`) et au toucher tactile mobile lorsque `zoom > 1`.
+        - Raccourci double-clic / double-tap basculant entre 100% et 200%.
+        - Zoom à la molette de souris (`onWheel`).
+        - Mode Plein Écran immersif (`isPleinEcran`) avec synchronisation `requestFullscreen` de l'API HTML5.
+        - Bouton Copier le lien direct de la Une avec confirmation visuelle `Check`.
+        - Raccourcis clavier complets (`+`, `-`, `0`, `f`, flèches, `Échap`).
+      * Modularisation stricte respectant la règle des 450 lignes :
+        - `SurgaKiosqueZoomControls.tsx` (166 l.) : barre de contrôles de zoom et masquage des vignettes.
+        - `SurgaKiosqueHeader.tsx` (210 l.) : en-tête complet avec navigation, partage et fermeture.
+        - `SurgaKiosqueThumbnails.tsx` (79 l.) : carrousel horizontal des miniatures avec centrage actif.
+        - `SurgaKiosqueLightbox.tsx` ramené à 397 lignes (< 450 l.).
+  * **Validation & Qualité** :
+    - `tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 100% conforme.
+    - Tests Jest : 127/127 validés (`127 passed, 127 total`).
+ 
 - **Surga — Concours & Examens du Sénégal : Catalogue Officiel Étendu à 22 Concours Certifiés, Synchronisation PostgreSQL & Couverture 100% des Catégories (Session 2026-10-06 - Nuit 3, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Réponse à la demande utilisateur : « trop peu de concours et les infos doivent etre conforme et prise dans des sources officiel » — L'interface n'affichait que 5 concours, plusieurs catégories étaient totalement vides (Santé & Social, Examens Nationaux, Grandes Écoles) et l'ENA / le CFJ étaient mal classés.

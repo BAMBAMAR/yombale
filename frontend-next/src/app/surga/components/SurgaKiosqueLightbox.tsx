@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useCallback, useState } from 'react'
-import { X, ChevronLeft, ChevronRight } from 'lucide-react'
-import SurgaShareButton from './SurgaShareButton'
+import React, { useEffect, useCallback, useState, useRef } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import SurgaKiosqueHeader from './SurgaKiosqueHeader'
+import SurgaKiosqueThumbnails from './SurgaKiosqueThumbnails'
 
 export interface UneItem {
   id: string
@@ -25,79 +26,209 @@ export default function SurgaKiosqueLightbox({
   onClose,
   onSelectIndex,
 }: SurgaKiosqueLightboxProps) {
+  // États de zoom, pan et plein écran
+  const [zoom, setZoom] = useState<number>(1)
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState<boolean>(false)
+  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [isPleinEcran, setIsPleinEcran] = useState<boolean>(false)
+  const [afficherVignettes, setAfficherVignettes] = useState<boolean>(true)
+  const [lienCopie, setLienCopie] = useState<boolean>(false)
+
+  // Touch gestures
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
-  const [touchEndX, setTouchEndX] = useState<number | null>(null)
+
+  const lightboxRef = useRef<HTMLDivElement>(null)
 
   const selectedUne = selectedIndex !== null && unes[selectedIndex] ? unes[selectedIndex] : null
+
+  // Réinitialiser zoom et déplacement
+  const resetZoom = useCallback(() => {
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }, [])
+
+  const zoomIn = useCallback(() => {
+    setZoom((z) => Math.min(4, Math.round((z + 0.5) * 10) / 10))
+  }, [])
+
+  const zoomOut = useCallback(() => {
+    setZoom((z) => {
+      const next = Math.max(1, Math.round((z - 0.5) * 10) / 10)
+      if (next === 1) setPan({ x: 0, y: 0 })
+      return next
+    })
+  }, [])
 
   const allerPrecedent = useCallback(
     (e?: React.MouseEvent) => {
       if (e) e.stopPropagation()
       if (selectedIndex === null || unes.length === 0) return
+      resetZoom()
       onSelectIndex((selectedIndex - 1 + unes.length) % unes.length)
     },
-    [selectedIndex, unes.length, onSelectIndex]
+    [selectedIndex, unes.length, onSelectIndex, resetZoom]
   )
 
   const allerSuivant = useCallback(
     (e?: React.MouseEvent) => {
       if (e) e.stopPropagation()
       if (selectedIndex === null || unes.length === 0) return
+      resetZoom()
       onSelectIndex((selectedIndex + 1) % unes.length)
     },
-    [selectedIndex, unes.length, onSelectIndex]
+    [selectedIndex, unes.length, onSelectIndex, resetZoom]
   )
 
-  // Navigation clavier (flèches et Échap)
+  const togglePleinEcran = useCallback(() => {
+    if (!document.fullscreenElement) {
+      lightboxRef.current?.requestFullscreen?.().catch(() => {})
+      setIsPleinEcran(true)
+    } else {
+      document.exitFullscreen?.().catch(() => {})
+      setIsPleinEcran(false)
+    }
+  }, [])
+
+  // Synchronisation avec l'API fullscreen native
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsPleinEcran(Boolean(document.fullscreenElement))
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  // Copier le lien
+  const handleCopierLien = async () => {
+    if (!selectedUne) return
+    try {
+      const url = selectedUne.image_url || 'https://surga.nopalou.com'
+      await navigator.clipboard.writeText(url)
+      setLienCopie(true)
+      setTimeout(() => setLienCopie(false), 2000)
+    } catch {}
+  }
+
+  // Navigation clavier complète
   useEffect(() => {
     if (selectedIndex === null) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') allerPrecedent()
-      else if (e.key === 'ArrowRight') allerSuivant()
-      else if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowLeft' && zoom === 1) allerPrecedent()
+      else if (e.key === 'ArrowRight' && zoom === 1) allerSuivant()
+      else if (e.key === '+' || e.key === '=') zoomIn()
+      else if (e.key === '-') zoomOut()
+      else if (e.key === '0' || e.key.toLowerCase() === 'r') resetZoom()
+      else if (e.key.toLowerCase() === 'f') togglePleinEcran()
+      else if (e.key === 'Escape') {
+        if (zoom > 1) {
+          resetZoom()
+        } else if (isPleinEcran) {
+          togglePleinEcran()
+        } else {
+          onClose()
+        }
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedIndex, allerPrecedent, allerSuivant, onClose])
+  }, [selectedIndex, zoom, isPleinEcran, allerPrecedent, allerSuivant, zoomIn, zoomOut, resetZoom, togglePleinEcran, onClose])
 
-  // Geste tactile Swipe pour smartphones
+  // Molette de souris pour zoomer
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault()
+    if (e.deltaY < 0) {
+      zoomIn()
+    } else {
+      zoomOut()
+    }
+  }
+
+  // Double clic pour basculer rapidement entre 1x et 2x
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (zoom === 1) {
+      setZoom(2)
+      setPan({ x: 0, y: 0 })
+    } else {
+      resetZoom()
+    }
+  }
+
+  // Drag souris quand zoom > 1
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom <= 1) return
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || zoom <= 1) return
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    })
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  // Gestes tactiles mobiles
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEndX(null)
-    setTouchStartX(e.targetTouches[0].clientX)
+    if (e.touches.length === 1) {
+      const touch = e.touches[0]
+      setTouchStartX(touch.clientX)
+      if (zoom > 1) {
+        setIsDragging(true)
+        setDragStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y })
+      }
+    }
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.targetTouches[0].clientX)
+    if (e.touches.length === 1 && zoom > 1 && isDragging) {
+      const touch = e.touches[0]
+      setPan({
+        x: touch.clientX - dragStart.x,
+        y: touch.clientY - dragStart.y,
+      })
+    }
   }
 
-  const handleTouchEnd = () => {
-    if (touchStartX === null || touchEndX === null) return
-    const diff = touchStartX - touchEndX
-    if (diff > 45) {
-      allerSuivant()
-    } else if (diff < -45) {
-      allerPrecedent()
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    setIsDragging(false)
+    if (zoom === 1 && touchStartX !== null) {
+      const touchEndX = e.changedTouches[0].clientX
+      const diffX = touchStartX - touchEndX
+      if (diffX > 50) {
+        allerSuivant()
+      } else if (diffX < -50) {
+        allerPrecedent()
+      }
     }
+    setTouchStartX(null)
   }
 
   if (!selectedUne || selectedIndex === null) return null
 
   return (
     <div
+      ref={lightboxRef}
       role="dialog"
       aria-modal="true"
       aria-label={`Une de ${selectedUne.nom_journal}`}
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(20, 25, 38, 0.9)',
-        backdropFilter: 'blur(6px)',
+        backgroundColor: 'rgba(15, 23, 42, 0.94)',
+        backdropFilter: 'blur(8px)',
         zIndex: 1100,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 12,
+        padding: isPleinEcran ? 0 : 12,
         animation: 'fadeIn 0.2s ease-out',
       }}
       onClick={onClose}
@@ -105,282 +236,160 @@ export default function SurgaKiosqueLightbox({
       <div
         style={{
           position: 'relative',
-          maxWidth: 540,
-          width: '100%',
-          maxHeight: '92vh',
+          maxWidth: isPleinEcran ? '100vw' : '1080px',
+          width: isPleinEcran ? '100vw' : '96vw',
+          maxHeight: isPleinEcran ? '100vh' : '95vh',
+          height: isPleinEcran ? '100vh' : 'auto',
           backgroundColor: '#FFFFFF',
-          borderRadius: 14,
+          borderRadius: isPleinEcran ? 0 : 16,
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 16px 40px rgba(0, 0, 0, 0.4)',
+          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.5)',
+          transition: 'max-width 0.2s ease, max-height 0.2s ease, border-radius 0.2s ease',
         }}
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
-        {/* Header avec titre, compteur et contrôles */}
+        {/* Header avec informations, contrôles de zoom et boutons d'action */}
+        <SurgaKiosqueHeader
+          selectedUne={selectedUne}
+          selectedIndex={selectedIndex}
+          totalUnes={unes.length}
+          zoom={zoom}
+          isPleinEcran={isPleinEcran}
+          afficherVignettes={afficherVignettes}
+          lienCopie={lienCopie}
+          onZoomIn={zoomIn}
+          onZoomOut={zoomOut}
+          onResetZoom={resetZoom}
+          onTogglePleinEcran={togglePleinEcran}
+          onToggleVignettes={() => setAfficherVignettes((v) => !v)}
+          onPrecedent={allerPrecedent}
+          onSuivant={allerSuivant}
+          onCopierLien={handleCopierLien}
+          onClose={onClose}
+        />
+
+        {/* Zone de visualisation de l'image (Agrandie + Zoom + Pan) */}
         <div
-          style={{
-            padding: '10px 14px',
-            borderBottom: '1px solid var(--border, #E8DDD2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: '#FFFFFF',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ minWidth: 0, flex: 1, paddingRight: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 800,
-                  color: 'var(--navy, #1C2B4A)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {selectedUne.nom_journal}
-              </span>
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: 'var(--accent, #C75B00)',
-                  backgroundColor: 'rgba(199, 91, 0, 0.1)',
-                  padding: '1px 6px',
-                  borderRadius: 10,
-                  flexShrink: 0,
-                }}
-              >
-                {selectedIndex + 1} / {unes.length}
-              </span>
-            </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: 'var(--text3, #73675E)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {selectedUne.description || 'Quotidien national d’information'}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={allerPrecedent}
-              aria-label="Une précédente"
-              title="Une précédente (Flèche gauche)"
-              style={{
-                background: 'var(--bg, #F8F5F0)',
-                border: '1px solid var(--border, #E8DDD2)',
-                width: 28,
-                height: 28,
-                borderRadius: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'var(--navy, #1C2B4A)',
-              }}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={allerSuivant}
-              aria-label="Une suivante"
-              title="Une suivante (Flèche droite)"
-              style={{
-                background: 'var(--bg, #F8F5F0)',
-                border: '1px solid var(--border, #E8DDD2)',
-                width: 28,
-                height: 28,
-                borderRadius: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'var(--navy, #1C2B4A)',
-              }}
-            >
-              <ChevronRight size={16} />
-            </button>
-
-            <SurgaShareButton
-              payload={{
-                titre: `Une de ${selectedUne.nom_journal}`,
-                texte: `*Surga — Kiosque de la Presse Sénégalaise*\n• Journal : ${selectedUne.nom_journal}\n• Date : ${selectedUne.date_parution || 'Aujourd’hui'}\nConsulter la revue de presse sur Surga : https://surga.nopalou.com`,
-                url: 'https://surga.nopalou.com',
-              }}
-              libelle="Partager"
-              taille="sm"
-            />
-
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Fermer la vue"
-              title="Fermer (Échap)"
-              style={{
-                background: 'none',
-                border: 'none',
-                width: 28,
-                height: 28,
-                borderRadius: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'var(--text2, #5A4E42)',
-              }}
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Conteneur Image avec boutons de défilement latéraux */}
-        <div
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           style={{
             position: 'relative',
             flex: 1,
-            overflowY: 'auto',
+            overflow: 'hidden',
             backgroundColor: '#0F172A',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '8px 36px',
-            minHeight: 280,
+            minHeight: isPleinEcran ? 'calc(100vh - 120px)' : '320px',
+            userSelect: 'none',
+            cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
           }}
+          title={zoom === 1 ? 'Double-cliquez pour zoomer ou utilisez la molette' : 'Glissez pour déplacer l’image'}
         >
+          {/* Bouton Précédent flottant */}
           <button
             type="button"
             onClick={allerPrecedent}
             aria-label="Journal précédent"
             style={{
               position: 'absolute',
-              left: 6,
+              left: 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 2,
-              width: 34,
-              height: 34,
+              zIndex: 10,
+              width: 38,
+              height: 38,
               borderRadius: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 0.88)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
+              backgroundColor: 'rgba(255, 255, 255, 0.92)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
               color: 'var(--navy, #1C2B4A)',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.35)',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               backdropFilter: 'blur(4px)',
+              transition: 'transform 0.15s ease',
             }}
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={22} />
           </button>
 
+          {/* L'image de la Une avec scale & translate */}
           <img
             key={selectedUne.id}
             src={selectedUne.image_url}
             alt={`Une complète de ${selectedUne.nom_journal}`}
+            onDoubleClick={handleDoubleClick}
+            draggable={false}
             style={{
               maxWidth: '100%',
-              maxHeight: '64vh',
+              maxHeight: isPleinEcran
+                ? afficherVignettes
+                  ? 'calc(100vh - 130px)'
+                  : 'calc(100vh - 65px)'
+                : afficherVignettes
+                ? '75vh'
+                : '84vh',
               objectFit: 'contain',
               borderRadius: 4,
               display: 'block',
-              animation: 'fadeIn 0.15s ease-out',
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: 'center center',
+              transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)',
+              pointerEvents: 'auto',
             }}
           />
 
+          {/* Bouton Suivant flottant */}
           <button
             type="button"
             onClick={allerSuivant}
             aria-label="Journal suivant"
             style={{
               position: 'absolute',
-              right: 6,
+              right: 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 2,
-              width: 34,
-              height: 34,
+              zIndex: 10,
+              width: 38,
+              height: 38,
               borderRadius: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 0.88)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
+              backgroundColor: 'rgba(255, 255, 255, 0.92)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
               color: 'var(--navy, #1C2B4A)',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.35)',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               backdropFilter: 'blur(4px)',
+              transition: 'transform 0.15s ease',
             }}
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={22} />
           </button>
         </div>
 
-        {/* Carrousel inférieur des miniatures */}
-        <div
-          style={{
-            padding: '8px 12px',
-            backgroundColor: '#FFFFFF',
-            borderTop: '1px solid var(--border, #E8DDD2)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            overflowX: 'auto',
-            flexShrink: 0,
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          {unes.map((une, idx) => {
-            const estActif = idx === selectedIndex
-            return (
-              <button
-                key={une.id}
-                type="button"
-                onClick={() => onSelectIndex(idx)}
-                title={une.nom_journal}
-                style={{
-                  background: 'none',
-                  border: estActif ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
-                  borderRadius: 6,
-                  padding: 2,
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  opacity: estActif ? 1 : 0.6,
-                  transform: estActif ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <img
-                  src={une.image_url}
-                  alt={une.nom_journal}
-                  style={{
-                    width: 32,
-                    height: 42,
-                    objectFit: 'cover',
-                    objectPosition: 'top',
-                    borderRadius: 4,
-                    display: 'block',
-                  }}
-                />
-              </button>
-            )
-          })}
-        </div>
+        {/* Carrousel inférieur des miniatures (masquable pour 100% de hauteur) */}
+        {afficherVignettes && (
+          <SurgaKiosqueThumbnails
+            unes={unes}
+            selectedIndex={selectedIndex}
+            onSelectIndex={(idx) => {
+              resetZoom()
+              onSelectIndex(idx)
+            }}
+          />
+        )}
       </div>
     </div>
   )
