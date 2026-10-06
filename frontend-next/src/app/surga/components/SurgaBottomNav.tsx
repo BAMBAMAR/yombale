@@ -2,9 +2,9 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Sun, FileText, Wallet, Calendar, SlidersHorizontal, type LucideIcon } from 'lucide-react'
+import { Sun, FileText, Wallet, Calendar, LayoutGrid, type LucideIcon } from 'lucide-react'
 
-export type SurgaTab = 'aujourdhui' | 'notes' | 'depenses' | 'agenda' | 'plus'
+export type SurgaTab = 'aujourdhui' | 'notes' | 'depenses' | 'agenda' | 'services' | 'plus'
 
 interface SurgaBottomNavProps {
   activeTab: SurgaTab
@@ -17,7 +17,7 @@ export default function SurgaBottomNav({ activeTab, onTabChange }: SurgaBottomNa
     { id: 'notes', label: 'Notes', icon: FileText },
     { id: 'depenses', label: 'Sama Xaalis', icon: Wallet },
     { id: 'agenda', label: 'Agenda', icon: Calendar },
-    { id: 'plus', label: 'Plus', icon: SlidersHorizontal },
+    { id: 'services', label: 'Services', icon: LayoutGrid },
   ]
 
   const handleTabClick = (tabId: SurgaTab, e: React.MouseEvent) => {
@@ -31,7 +31,7 @@ export default function SurgaBottomNav({ activeTab, onTabChange }: SurgaBottomNa
     <nav className="surga-bottom-nav" aria-label="Navigation principale Surga">
       {tabs.map((tab) => {
         const Icon = tab.icon
-        const isActive = activeTab === tab.id
+        const isActive = activeTab === tab.id || (tab.id === 'services' && activeTab === 'plus')
         return (
           <Link
             key={tab.id}

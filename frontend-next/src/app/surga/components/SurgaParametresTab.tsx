@@ -60,7 +60,7 @@ export default function SurgaParametresTab({
   return (
     <div className="surga-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-        Paramètres &amp; Formule Surga
+        Services &amp; Formule Surga
       </div>
       <p style={{ fontSize: 13, color: 'var(--text2, #5A4E42)', margin: 0 }}>
         Heure du briefing : <strong>{preferences?.heure_briefing || '07:30'}</strong> &bull; Quartier :{' '}

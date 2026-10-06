@@ -1,5 +1,17 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Navigation & Header : Harmonisation de l'Onglet en « Services » (Session 2026-10-06 - Matin 9, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Application du choix utilisateur (Option 2 Plus Valorisante) : l'onglet « Plus » et son en-tête « Paramètres » sont harmonisés en **« Services »**.
+    - Remplacement de l'icône `SlidersHorizontal` par l'icône vectorielle SVG `LayoutGrid` dans `SurgaBottomNav.tsx`.
+    - Titre de l'en-tête dynamique dans `SurgaHeader.tsx` (via `page.tsx`) affichant désormais « Services ».
+    - Carte principale dans `SurgaParametresTab.tsx` renommée en « Services & Formule Surga ».
+    - Rétrocompatibilité totale assurée pour les URLs (`tab=services` et `tab=plus`).
+  * **Validation & Qualité** :
+    - Tests backend Jest : **127/127 validés (100%)**.
+    - Tests frontend Vitest : **97/97 validés (100%)**.
+    - Compilation TypeScript : 0 erreur. Linter Anti-AI-Slop : 100% conforme.
+
 - **Surga — Démarches Administratives : Adoption de la Source Officielle e-senegal.sn (Session 2026-10-06 - Matin 8, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Recommandation utilisateur prise en compte : adoption du nouveau portail national des démarches de l'État du Sénégal (`https://e-senegal.sn/#/home/demarches`) en remplacement de l'ancien portail `servicepublic.gouv.sn`.

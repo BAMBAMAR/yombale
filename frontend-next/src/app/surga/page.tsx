@@ -260,7 +260,7 @@ export default function SurgaPage() {
   return (
     <>
       <SurgaHeader
-        titre={activeTab === 'notes' ? 'Mes Notes' : activeTab === 'depenses' ? 'Sama Xaalis' : activeTab === 'agenda' ? 'Mon Agenda' : activeTab === 'plus' ? 'Paramètres' : 'Surga'}
+        titre={activeTab === 'notes' ? 'Mes Notes' : activeTab === 'depenses' ? 'Sama Xaalis' : activeTab === 'agenda' ? 'Mon Agenda' : (activeTab === 'services' || activeTab === 'plus') ? 'Services' : 'Surga'}
         sousTitre={activeTab === 'aujourdhui' ? briefingData?.date : undefined}
         afficherRetour={activeTab !== 'aujourdhui'}
         onRetour={() => setActiveTab('aujourdhui')}
@@ -394,8 +394,8 @@ export default function SurgaPage() {
         {activeTab === 'depenses' && <SurgaSamaXaalisView />}
         {activeTab === 'agenda' && <SurgaAgendaView />}
 
-        {/* Onglet 5 : Plus / Paramètres */}
-        {activeTab === 'plus' && (
+        {/* Onglet 5 : Services & Préférences */}
+        {(activeTab === 'services' || activeTab === 'plus') && (
           <SurgaParametresTab
             preferences={preferences} statutPremium={statutPremium} onToggleAudio={handleToggleAudio} onOpenRadio={openRadioModal}
             onOpenTrafic={() => setIsTraficOpen(true)} onOpenImmo={() => setIsImmoOpen(true)} onOpenConcours={() => setIsConcoursOpen(true)}

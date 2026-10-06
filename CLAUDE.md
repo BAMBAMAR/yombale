@@ -49,6 +49,15 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Navigation & Header : Harmonisation de l'Onglet en « Services » (Session 2026-10-06 - Matin 9, branche `feature/surga`)** :
+  - *Option 2 (Plus Valorisante) Appliquée* : Remplacement du libellé ambigu « Plus » et du titre réducteur « Paramètres » par **« Services »** dans toute l'interface.
+  - *Nouvelle Icône Vectorielle SVG* : Utilisation de `LayoutGrid` de `lucide-react` au lieu de `SlidersHorizontal` dans `SurgaBottomNav.tsx`.
+  - *Cohérence Header & Contenu* :
+    - `SurgaHeader.tsx` (via `page.tsx`) affiche fidèlement le titre **« Services »** (et non plus « Paramètres »).
+    - La carte principale dans `SurgaParametresTab.tsx` affiche désormais **« Services & Formule Surga »**.
+    - Rétrocompatibilité totale conservée pour les URLs avec `tab=services` et `tab=plus`.
+  - *Validation & Qualité* : 127/127 tests backend Jest, 97/97 tests frontend Vitest, 0 erreur TypeScript.
+
 - **Surga — Démarches Administratives : Adoption de la Source Officielle e-senegal.sn (Session 2026-10-06 - Matin 8, branche `feature/surga`)** :
   - *Adoption du Nouveau Portail National des Démarches* : Remplacement de l'ancien portail `servicepublic.gouv.sn` par le portail officiel unifié de l'État du Sénégal : `https://e-senegal.sn/#/home/demarches` (SENUM SA / Sénégal Numérique).
   - *Mise à Jour Backend & Base SQL* : `URL_PORTAIL_OFFICIEL` et `source_officielle` de toutes les démarches certifiées (`DEMARCHES_INITIALES`) mis à jour vers `https://e-senegal.sn/#/home/demarches`. Méthode idempotente `assurerDemarchesInitiales()` pour mettre à jour la base PostgreSQL en direct.
