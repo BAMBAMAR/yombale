@@ -3,6 +3,49 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 4] — Tranche 19 : Préparation à l'Entretien d'Embauche & Fiches de Révision
+- **Demande Utilisateur :**
+  - Mise en œuvre complète de la Tranche 19 (Simulation d'entretien in-app, Feedback constructif STAR, Banque de questions par secteur et Fiches de révision) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.
+  - Pas de calcul par IA, zéro hallucination, évaluation déterministe constructive (méthode STAR, verbes d'action, zéro note arbitraire, vouvoiement strict D19).
+  - Contrôle serveur des quotas (1 simulation gratuite/semaine via `surga_usages`, illimité en Premium).
+  - Passerelles vers Notes (fiche de révision), Agenda (date et rappels) et Sama Xaalis (budget transport).
+  - Composants < 450 lignes, zéro émoji, tokens officiels.
+- **Tâches complétées :**
+  - **Service Backend Métier** :
+    - `backend/services/surga/emploi-service.js` :
+      - Banque de questions d'entretien sectorielles (`BANQUE_QUESTIONS_ENTRETIEN`) couvrant 6 secteurs (Général, Comptabilité & Finance SYSCOHADA, Commerce & Vente, Informatique & Tech, Administration & RH, Logistique Dakar).
+      - Analyse déterministe et constructive des réponses (`evaluerReponseEntretien`) : volume, verbes d'action, conformité STAR, points forts, axes d'amélioration et suggestion inspirante.
+      - Contrôle serveur du quota hebdomadaire (`verifierDroitSimulationEntretien`) avec clé `AAAA-Wxx`.
+      - Générateur de fiche de révision textuelle (`genererFicheRevisionEntretien`).
+  - **Routes REST API Client** :
+    - `backend/routes/surga/emploi.js` :
+      - `GET /emploi/entretien/banque` (questions types filtrables par secteur).
+      - `GET /emploi/entretien/droits` (statut quota / Premium).
+      - `POST /emploi/entretien/evaluer` (analyse structurée de la réponse).
+      - `POST /emploi/entretien/session` (validation de simulation et incrémentation de l'usage hebdomadaire).
+      - `POST /emploi/entretien/fiche-revision` (génération de fiche pour enregistrement en Notes).
+  - **Composants Frontend PWA (< 450 l. & Zéro Émoji)** :
+    - `SurgaEntretienTab.tsx` (342 l.) : choix du secteur et poste, questions guidées, affichage des attentes du recruteur, dictée vocale Web Speech API, analyse STAR et boutons d'actions transversales.
+    - `SurgaDocumentsEmploiTab.tsx` (96 l.) : extraction modulaire de la liste des documents permettant de maintenir `SurgaEmploiModal.tsx` à 385 lignes (< 450 l.).
+    - Raccordement dans `SurgaEmploiModal.tsx` avec 5 onglets complets.
+  - **Validation & Tests** :
+    - Backend : 118/118 tests unitaires Jest validés (+5 nouveaux tests Tranche 19 sur `tests/unit/surga.test.js`).
+    - Frontend : 97/97 tests validés (`npm test`).
+    - Typage : 0 erreur TypeScript (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme (`npm run lint:slop`).
+- **Fichiers modifiés :**
+  - `backend/services/surga/emploi-service.js`
+  - `backend/routes/surga/emploi.js`
+  - `tests/unit/surga.test.js`
+  - `frontend-next/src/app/surga/components/SurgaEntretienTab.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaDocumentsEmploiTab.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaEmploiModal.tsx`
+  - `CLAUDE.md`
+  - `docs/JOURNAL-LIVRAISONS.md`
+  - `docs/surga/JOURNAL-LIVRAISONS.md`
+  - `docs/surga/HANDOVER.md`
+  - `docs/surga/PLAN.md`
+
 ### [2026-10-06 — Matin 3] — Tranche 18 : Emploi, Profil Professionnel, CV PDF & Lettres de Motivation
 - **Demande Utilisateur :**
   - Mise en œuvre complète de la Tranche 18 (Pôle Emploi & Carrière) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md` et les décisions D26 à D29.

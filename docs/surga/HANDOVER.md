@@ -1,15 +1,27 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 3)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 4)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 18 : Emploi, Profil Pro, CV PDF & Lettres de Motivation, Tranche 17 : Séries TV & Lutte Sénégalaise, Alertes Vidéos Atom YouTube, Quota WhatsApp 2 req/j, Logo Officiel Caftan S, Zéro Or, Orange Micro Calibré & Pack PWA, En-tête Cliquable & Navigation Retour, Résolution Incohérence Sama Xaalis, Raccordement Kiosque ProjetBI, Météo 14 Régions, Passerelles Transversales, Console Pro 12 Modules)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 19 : Préparation Entretien d'Embauche, Fiches de Révision & Simulateur STAR, Tranche 18 : Emploi, Profil Pro, CV PDF & Lettres, Tranche 17 : Séries TV & Lutte, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** intègre désormais le pôle complet **Emploi & Carrière (Tranche 18)** : profil professionnel exhaustif, générateur de CV PDF natif `pdfkit` avec choix de modèles (`sobre_moderne` et `classique_pro`), générateur déterministe de lettres de motivation, respect strict de la règle Zéro-Hallucination avec case à cocher obligatoire d'exactitude, et modèle de droits & quotas équilibré (1 CV gratuit avec mention, puis 500 FCFA à l'acte selon Option A ou Surga Premium ; 1 lettre/mois puis Premium).
+L'assistant personnel de poche **Surga** s'enrichit désormais du simulateur de préparation à l'entretien d'embauche in-app (**Tranche 19**), articulé autour d'une banque de questions sectorielles sans IA, d'un feedback constructif fondé sur la méthode STAR et les verbes d'action (zéro note chiffrée arbitraire), d'un contrôle rigoureux du quota hebdomadaire (1 simulation gratuite/semaine, illimité Premium), et de passerelles transversales directes vers Notes (fiche de révision), Agenda (rappels d'entretien) et Sama Xaalis (budget transport).
+
+0. **Préparation à l'Entretien d'Embauche & Fiches de Révision (Tranche 19 — 100% DONE)** :
+   - **Banque de Questions Types par Secteur** : Catalogue de questions représentatives de l'économie dakaroise (Général, Comptabilité SYSCOHADA, Commerce & Vente, Informatique & Tech, Administration & RH, Logistique Dakar) avec conseils ciblés sur les attentes du recruteur.
+   - **Évaluation Déterministe STAR (Anti-IA-Slop & D19)** : Analyse du volume, verbes d'action, impact mesurable, points forts, points de vigilance et proposition de reformulation inspirante (zéro note artificielle, vouvoiement strict).
+   - **Contrôle des Quotas Côté Serveur** : 1 simulation gratuite par semaine calculée sur la période `AAAA-Wxx` via `surga_usages`, simulations illimitées en formule Surga Premium.
+   - **Passerelles Transversales Surga** :
+     - Enregistrement direct de la fiche de révision textuelle en Note.
+     - Planification de la date d'entretien dans l'Agenda avec rappel automatique la veille à 18h et le matin à 8h.
+     - Inscription du budget transport prévisionnel (3 000 FCFA taxi) dans Sama Xaalis.
+   - **Composants Frontend PWA (< 450 lignes & Zéro Émoji)** :
+     - `SurgaEntretienTab.tsx` (342 l.) : simulation interactive, dictée vocale Web Speech API, analyse STAR et boutons d'actions transversales.
+     - `SurgaDocumentsEmploiTab.tsx` (96 l.) : extraction modulaire de la liste des documents permettant de maintenir `SurgaEmploiModal.tsx` à 385 lignes (< 450 l.).
 
 0. **Emploi, Profil Pro, CV PDF & Lettres de Motivation (Tranche 18 — 100% DONE)** :
    - **Base de Données & Migrations Idempotentes** : Tables `surga_profil_pro` (unique user_id), `surga_documents_emploi` (index user_id), `surga_usages` (unique `user_id, type_action, mois_cle`) dans `backend/migrate-inline.js`.
@@ -149,7 +161,7 @@ L'assistant personnel de poche **Surga** intègre désormais le pôle complet **
 | Passerelles Transversales & Toasts | `src/lib/surga-cross-actions.ts` (368 l.), `src/app/surga/components/SurgaToastContainer.tsx` (65 l.) |
 | Navigation & En-tête | `src/app/surga/components/SurgaHeader.tsx`, `SurgaBottomNav.tsx` |
 | Sama Xaalis (Finances) | `src/app/surga/components/SurgaSamaXaalisView.tsx`, `src/lib/surga-kalpe.ts` |
-| Emploi, Profil Pro & CV PDF | `src/app/surga/components/SurgaEmploiModal.tsx` (387 l.), `SurgaProfilProTab.tsx` (360 l.), `SurgaCvTab.tsx` (260 l.), `SurgaLettreTab.tsx` (274 l.) |
+| Emploi, Profil, CV & Entretien | `src/app/surga/components/SurgaEmploiModal.tsx` (385 l.), `SurgaProfilProTab.tsx` (360 l.), `SurgaCvTab.tsx` (260 l.), `SurgaLettreTab.tsx` (274 l.), `SurgaEntretienTab.tsx` (342 l.), `SurgaDocumentsEmploiTab.tsx` (96 l.) |
 | Alertes Vidéos (Séries & Lutte) | `src/app/surga/components/SurgaVideosModal.tsx` (393 l.), `SurgaVideoCard.tsx` (96 l.) |
 | Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (412 l.), `SurgaMeteoLocaliteModal.tsx` (382 l.), `SurgaMeteoPrevisions.tsx` (101 l.), `src/lib/surga-meteo.ts` (198 l.), `src/app/api/surga/meteo/route.ts` (166 l.) |
 | Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx`, `SurgaSportCustomModal.tsx` |
@@ -205,7 +217,7 @@ npm run dev
 
 Toutes les suites de tests sont actuellement au vert à 100% :
 ```powershell
-# 1. Tests Jest Surga (Backend) : 113/113 passés (100%)
+# 1. Tests Jest Surga (Backend) : 118/118 passés (100%)
 npx jest tests/unit/surga.test.js
 
 # 2. Tests Unitaires Frontend / Vitest CSP : 97/97 passés (100%)

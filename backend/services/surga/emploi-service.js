@@ -632,11 +632,281 @@ function genererPdfStream(res, type, donnees, filename, options = {}) {
   doc.end();
 }
 
+
+// ============================================================================
+// TRANCHE 19 : PRÉPARATION À L'ENTRETIEN D'EMBAUCHE & FICHES DE RÉVISION
+// ============================================================================
+
+/**
+ * Banque de questions types par secteur économique dakarisé & sénégalais (Sans IA, coût nul)
+ */
+const BANQUE_QUESTIONS_ENTRETIEN = {
+  general: [
+    {
+      id: 'gen_1',
+      categorie: 'presentation',
+      question: 'Pouvez-vous vous présenter en deux minutes et résumer votre parcours professionnel ?',
+      conseils: 'Structurez votre réponse : 1. Votre profil actuel, 2. Deux réussites concrètes, 3. La raison de votre intérêt pour ce poste précis. Évitez de réciter tout votre CV.',
+    },
+    {
+      id: 'gen_2',
+      categorie: 'motivation',
+      question: 'Quelles sont les raisons qui vous motivent à rejoindre notre entreprise plutôt qu’une autre ?',
+      conseils: 'Montrez que vous avez étudié l’entreprise (ses projets, ses valeurs, ses défis locaux) et expliquez ce que vous pouvez lui apporter concrètement.',
+    },
+    {
+      id: 'gen_3',
+      categorie: 'comportemental',
+      question: 'Décrivez une situation où vous avez fait face à un imprévu ou à un conflit professionnel, et la manière dont vous l’avez résolu.',
+      conseils: 'Utilisez la méthode STAR (Situation, Tâche, Action, Résultat). Restez factuel, ne critiquez jamais vos anciens employeurs et mettez en avant votre calme.',
+    },
+    {
+      id: 'gen_4',
+      categorie: 'valeur_ajoutee',
+      question: 'Que pensez-vous apporter à notre équipe dès vos cent premiers jours ?',
+      conseils: 'Proposez une démarche d’intégration pragmatique : écoute, prise en main rapide des outils et premiers livrables mesurables.',
+    },
+  ],
+  comptabilite_finance: [
+    {
+      id: 'cpt_1',
+      categorie: 'technique',
+      question: 'Comment procédez-vous concrètement pour effectuer un rapprochement bancaire et traiter les suspens non régularisés ?',
+      conseils: 'Détaillez votre rigueur : vérification des écritures de trésorerie, lettrage, identification des agios ou écarts de dates et communication avec l’agence bancaire.',
+    },
+    {
+      id: 'cpt_2',
+      categorie: 'technique',
+      question: 'Quelle est votre expérience avec le référentiel comptable SYSCOHADA et les déclarations fiscales mensuelles (TVA, BRS) au Sénégal ?',
+      conseils: 'Précisez les états financiers maîtrisés, le respect des échéances légales (15 du mois) et vos réflexes de contrôle préventif.',
+    },
+    {
+      id: 'cpt_3',
+      categorie: 'organisation',
+      question: 'Comment organisez-vous la clôture des comptes dans les délais impartis par la direction générale ?',
+      conseils: 'Insistez sur la planification en amont, les inventaires physiques, le calendrier partagé avec les équipes et la gestion des priorités.',
+    },
+  ],
+  commercial_vente: [
+    {
+      id: 'com_1',
+      categorie: 'terrain',
+      question: 'Comment abordez-vous la prospection de nouveaux clients sur le marché dakarisé ?',
+      conseils: 'Expliquez votre stratégie multicanale : présence terrain, réseau direct, réactivité sur WhatsApp Business et qualification du besoin client.',
+    },
+    {
+      id: 'com_2',
+      categorie: 'negociation',
+      question: 'Face à un client qui juge vos prix trop élevés par rapport à la concurrence, quels sont vos arguments de persuasion ?',
+      conseils: 'Déplacez la discussion du prix vers la valeur réelle : qualité du service, garanties, disponibilité locale et rapidité de livraison.',
+    },
+    {
+      id: 'com_3',
+      categorie: 'resultats',
+      question: 'Racontez une vente complexe que vous avez conclue malgré des réticences initiales.',
+      conseils: 'Montrez votre écoute active, votre patience et comment vous avez trouvé une solution sur-mesure répondant exactement au besoin exprimé.',
+    },
+  ],
+  informatique_tech: [
+    {
+      id: 'tech_1',
+      categorie: 'resolution',
+      question: 'Comment réagissez-vous face à une panne critique ou un bug bloquant en production un vendredi soir ?',
+      conseils: 'Insistez sur le sang-froid, la méthodologie de diagnostic (logs, monitoring), la communication transparente et la mise en place d’un correctif testé.',
+    },
+    {
+      id: 'tech_2',
+      categorie: 'qualite',
+      question: 'Comment assurez-vous la qualité et la sécurité du code au sein d’une équipe de développement ?',
+      conseils: 'Citez des pratiques concrètes : revues de code systématiques, tests automatisés, gestion des variables d’environnement et respect des règles anti-failles.',
+    },
+  ],
+  administration_rh: [
+    {
+      id: 'rh_1',
+      categorie: 'organisation',
+      question: 'Comment gérez-vous les urgences administratives quotidiennes tout en assurant l’accueil professionnel des partenaires ?',
+      conseils: 'Mettez en valeur votre gestion des priorités, votre courtoisie constante et votre capacité à filtrer les demandes avec discernement.',
+    },
+    {
+      id: 'rh_2',
+      categorie: 'confidentialite',
+      question: 'Comment garantissez-vous la stricte confidentialité des dossiers RH et des contrats de travail ?',
+      conseils: 'Expliquez vos règles de classement sécurisé, la protection des accès numériques et votre discrétion absolue au quotidien.',
+    },
+  ],
+  logistique_transport: [
+    {
+      id: 'log_1',
+      categorie: 'exploitation',
+      question: 'Comment planifiez-vous les livraisons à Dakar en tenant compte des encombrements routiers et des imprévus ?',
+      conseils: 'Évoquez le zonage géographique, les départs matinaux, l’utilisation des corridors rapides et la communication en direct avec les chauffeurs.',
+    },
+  ],
+};
+
+/**
+ * Calcule la clé de période pour la semaine en cours (AAAA-Wxx)
+ */
+function getPeriodeSemaineCourante() {
+  const d = new Date();
+  const annee = d.getFullYear();
+  const premierJanvier = new Date(annee, 0, 1);
+  const nbJours = Math.floor((d - premierJanvier) / (24 * 60 * 60 * 1000));
+  const semaine = Math.ceil((nbJours + premierJanvier.getDay() + 1) / 7);
+  return `${annee}-W${String(semaine).padStart(2, '0')}`;
+}
+
+/**
+ * Récupère les questions de la banque pour un secteur donné (avec repli général)
+ */
+function getBanqueQuestions(secteur = 'general') {
+  const specifiques = BANQUE_QUESTIONS_ENTRETIEN[secteur] || [];
+  const generals = BANQUE_QUESTIONS_ENTRETIEN.general || [];
+  if (secteur === 'general') return generals;
+  return [...generals.slice(0, 2), ...specifiques, ...generals.slice(2)];
+}
+
+/**
+ * Vérifie les droits pour la simulation d'entretien (Gratuit : 1/semaine, Premium : illimité)
+ */
+async function verifierDroitSimulationEntretien(userId) {
+  const estPremium = await verifierEstPremium(userId);
+  if (estPremium) {
+    return {
+      autorise: true,
+      quotaAtteint: false,
+      estPremium: true,
+      simulationsSemaine: 0,
+      message: 'Simulations d’entretien illimitées avec Surga Premium.',
+    };
+  }
+
+  const periode = getPeriodeSemaineCourante();
+  const nbUtilise = await getUsageCompteur(userId, 'entretien_simulation', periode);
+  if (nbUtilise < 1) {
+    return {
+      autorise: true,
+      quotaAtteint: false,
+      estPremium: false,
+      simulationsSemaine: nbUtilise,
+      message: '1 simulation gratuite par semaine incluse.',
+    };
+  }
+
+  return {
+    autorise: false,
+    quotaAtteint: true,
+    estPremium: false,
+    simulationsSemaine: nbUtilise,
+    message: 'Quota hebdomadaire atteint (1 simulation gratuite par semaine). Passez à Surga Premium pour vous entraîner sans limite.',
+  };
+}
+
+/**
+ * Évalue de manière déterministe et constructive une réponse d'entretien
+ * (Zéro note d'IA arbitraire, vouvoiement strict D19, conseils concrets méthode STAR)
+ */
+function evaluerReponseEntretien({ question, reponse, poste = '', secteur = '' }) {
+  const texte = cleanPdfText(reponse);
+  const mots = texte ? texte.split(/\s+/).filter(Boolean) : [];
+  const nbMots = mots.length;
+
+  const pointsForts = [];
+  const axesAmelioration = [];
+
+  // Mots d'action et d'engagement professionnel
+  const motsAction = [
+    'j\'ai', 'mis en place', 'réalisé', 'coordonné', 'géré', 'développé', 'résultat',
+    'chiffre', 'équipe', 'projet', 'solution', 'optimisé', 'succès', 'client', 'délai'
+  ];
+  const texteMinuscule = texte.toLowerCase();
+  const actionsTrouvees = motsAction.filter((m) => texteMinuscule.includes(m));
+
+  // 1. Analyse de la concision et du volume
+  if (nbMots < 15) {
+    axesAmelioration.push('Votre réponse est très courte. Étoffez votre explication en détaillant une situation concrète vécue.');
+  } else if (nbMots >= 30 && nbMots <= 160) {
+    pointsForts.push('Longueur de réponse équilibrée et adaptée à un échange oral en entretien (ni trop brève, ni verbeuse).');
+  } else if (nbMots > 200) {
+    axesAmelioration.push('Votre réponse est un peu longue. Veillez à aller droit au but afin de conserver l’attention active du recruteur.');
+  }
+
+  // 2. Détection d'exemples d'action concrets
+  if (actionsTrouvees.length >= 2) {
+    pointsForts.push(`Vous employez un vocabulaire d'action actif (${actionsTrouvees.slice(0, 3).join(', ')}) qui valorise votre rôle direct.`);
+  } else {
+    axesAmelioration.push('Illustrez votre propos avec un exemple personnel précis plutôt qu’une considération générale.');
+  }
+
+  // 3. Détection de la méthode STAR (Situation, Action, Résultat)
+  const aResultat = texteMinuscule.includes('résultat') || texteMinuscule.includes('succès') || texteMinuscule.includes('permis de') || texteMinuscule.includes('atteint');
+  if (aResultat) {
+    pointsForts.push('Vous mentionnez le résultat ou l’impact de vos démarches, ce qui crédibilise votre expérience.');
+  } else if (nbMots >= 20) {
+    axesAmelioration.push('Pensez à conclure en rappelant le résultat ou le bénéfice obtenu pour l’organisation (méthode STAR).');
+  }
+
+  // Suggestion de reformulation déterministe
+  let suggestionReformulation = '';
+  if (nbMots < 15) {
+    suggestionReformulation = `« Lors de ma précédente expérience, j'ai eu l'opportunité de traiter ce type de problématique en analysant d'abord les besoins de l'équipe, puis en mettant en œuvre une solution méthodique qui a permis d'obtenir des résultats probants. »`;
+  } else {
+    suggestionReformulation = `« En situation réelle, je m'assure de bien cerner le contexte, puis j'agis avec méthode pour transformer le défi en résultat mesurable pour la structure. »`;
+  }
+
+  return {
+    nb_mots: nbMots,
+    points_forts: pointsForts.length > 0 ? pointsForts : ['Expression posée et respectueuse des convenances professionnelles.'],
+    axes_amelioration: axesAmelioration.length > 0 ? axesAmelioration : ['Conservez cette clarté et restez attentif aux relances de votre interlocuteur.'],
+    suggestion: suggestionReformulation,
+  };
+}
+
+/**
+ * Génère une fiche de révision textuelle complète prête à enregistrer en Note
+ */
+function genererFicheRevisionEntretien({ poste, secteur, evaluations = [] }) {
+  const dateJour = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const titre = `Fiche de Révision : Entretien ${cleanPdfText(poste || 'Professionnel')} (${dateJour})`;
+
+  let contenu = `=== FICHE DE RÉVISION D'ENTRETIEN ===\n`;
+  contenu += `Poste visé : ${poste || 'Non spécifié'}\n`;
+  contenu += `Secteur : ${secteur || 'Général'}\n`;
+  contenu += `Date de préparation : ${dateJour}\n\n`;
+
+  contenu += `--- QUESTIONS PRÉPARÉES & CONSEILS CIBLÉS ---\n\n`;
+  evaluations.forEach((item, index) => {
+    contenu += `[Question ${index + 1}] : ${item.question}\n`;
+    if (item.reponse) {
+      contenu += `Votre réponse préparée :\n"${item.reponse}"\n\n`;
+    }
+    if (item.evaluation?.points_forts?.length) {
+      contenu += `Points forts : ${item.evaluation.points_forts.join(' • ')}\n`;
+    }
+    if (item.evaluation?.axes_amelioration?.length) {
+      contenu += `Points de vigilance : ${item.evaluation.axes_amelioration.join(' • ')}\n`;
+    }
+    contenu += `\n--------------------------------------------\n\n`;
+  });
+
+  contenu += `RAPPELS CLÉS POUR LE JOUR J :\n`;
+  contenu += `• Arriver 15 minutes en avance au lieu de l'entretien à Dakar.\n`;
+  contenu += `• Se munir de 2 exemplaires imprimés de son CV et d'un carnet de notes.\n`;
+  contenu += `• Garder une posture ouverte, écouter jusqu'au bout chaque question avant de répondre.\n`;
+
+  return { titre, contenu };
+}
+
 module.exports = {
   getProfilPro,
   upsertProfilPro,
   verifierDroitCv,
   verifierDroitLettre,
+  verifierDroitSimulationEntretien,
+  getBanqueQuestions,
+  evaluerReponseEntretien,
+  genererFicheRevisionEntretien,
   incrementerUsage,
   sauvegarderDocumentEmploi,
   getDocumentEmploi,
@@ -647,4 +917,6 @@ module.exports = {
   genererPdfStream,
   profilsMemoire,
   documentsMemoire,
+  BANQUE_QUESTIONS_ENTRETIEN,
 };
+

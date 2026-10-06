@@ -1711,6 +1711,108 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(exportRes).toHaveProperty('usages');
     });
   });
+
+  describe('Tranche 19 : Préparation à l Entretien d Embauche & Fiches de Révision', () => {
+    test('Banque de questions d entretien complète et diversifiée par secteur', () => {
+      const emploiService = require('../../backend/services/surga/emploi-service');
+      expect(emploiService.BANQUE_QUESTIONS_ENTRETIEN).toBeDefined();
+
+      const questionsGen = emploiService.getBanqueQuestions('general');
+      expect(questionsGen.length).toBeGreaterThanOrEqual(4);
+      expect(questionsGen[0].question).toContain('présenter');
+      expect(questionsGen[0].conseils).toBeDefined();
+
+      const questionsCpt = emploiService.getBanqueQuestions('comptabilite_finance');
+      expect(questionsCpt.length).toBeGreaterThanOrEqual(5);
+      expect(questionsCpt.some((q) => q.question.includes('SYSCOHADA') || q.question.includes('rapprochement'))).toBe(true);
+
+      const questionsTech = emploiService.getBanqueQuestions('informatique_tech');
+      expect(questionsTech.length).toBeGreaterThanOrEqual(4);
+      expect(questionsTech.some((q) => q.question.includes('production') || q.question.includes('qualité'))).toBe(true);
+    });
+
+    test('Évaluation constructive et déterministe de la réponse (Vouvoiement D19 & Zéro note arbitraire)', () => {
+      const emploiService = require('../../backend/services/surga/emploi-service');
+
+      const reponseCourte = 'Je suis sérieux et travailleur.';
+      const evalCourte = emploiService.evaluerReponseEntretien({
+        question: 'Parlez-moi de vous.',
+        reponse: reponseCourte,
+      });
+      expect(evalCourte.nb_mots).toBeLessThan(15);
+      expect(evalCourte.axes_amelioration.some((a) => a.includes('courte'))).toBe(true);
+      expect(evalCourte).not.toHaveProperty('note'); // Règle stricte : Aucune note arbitraire
+
+      const reponseStructuree = 'Lors de ma mission précédente, j ai coordonné la mise en place d un nouveau système de stock avec l équipe. Ce projet nous a permis d optimiser les délais de livraison et d obtenir un résultat mesurable sans retard pour nos clients.';
+      const evalStructuree = emploiService.evaluerReponseEntretien({
+        question: 'Racontez un projet mené à bien.',
+        reponse: reponseStructuree,
+      });
+      expect(evalStructuree.points_forts.length).toBeGreaterThanOrEqual(1);
+      expect(evalStructuree.points_forts.some((p) => p.includes('action') || p.includes('résultat'))).toBe(true);
+      expect(evalStructuree.suggestion).toBeDefined();
+    });
+
+    test('Modèle de droits & quotas : 1 simulation gratuite par semaine puis blocage pour passage Premium', async () => {
+      const emploiService = require('../../backend/services/surga/emploi-service');
+      const userIdTest = 'user-entretien-free-' + Date.now();
+
+      // 1. Première simulation : autorisée
+      const droit1 = await emploiService.verifierDroitSimulationEntretien(userIdTest);
+      expect(droit1.autorise).toBe(true);
+      expect(droit1.quotaAtteint).toBe(false);
+
+      // Simulation de l'utilisation de la semaine
+      const d = new Date();
+      const annee = d.getFullYear();
+      const premierJanvier = new Date(annee, 0, 1);
+      const nbJours = Math.floor((d - premierJanvier) / (24 * 60 * 60 * 1000));
+      const semaine = Math.ceil((nbJours + premierJanvier.getDay() + 1) / 7);
+      const periode = `${annee}-W${String(semaine).padStart(2, '0')}`;
+      await emploiService.incrementerUsage(userIdTest, 'entretien_simulation', periode);
+
+      // 2. Deuxième tentative : bloquée avec incitation Premium
+      const droit2 = await emploiService.verifierDroitSimulationEntretien(userIdTest);
+      expect(droit2.autorise).toBe(false);
+      expect(droit2.quotaAtteint).toBe(true);
+      expect(droit2.message).toContain('Quota hebdomadaire atteint');
+    });
+
+    test('Génération d une fiche de révision textuelle complète pour l enregistrement en Notes', () => {
+      const emploiService = require('../../backend/services/surga/emploi-service');
+      const fiche = emploiService.genererFicheRevisionEntretien({
+        poste: 'Comptable Général',
+        secteur: 'comptabilite_finance',
+        evaluations: [
+          {
+            question: 'Présentation de votre parcours',
+            reponse: 'J ai 3 ans d expérience dans la gestion de trésorerie.',
+            evaluation: {
+              points_forts: ['Clarté du parcours'],
+              axes_amelioration: ['Citez des logiciels maîtrisés'],
+            },
+          },
+        ],
+      });
+
+      expect(fiche.titre).toContain('Comptable Général');
+      expect(fiche.contenu).toContain('FICHE DE RÉVISION D\'ENTRETIEN');
+      expect(fiche.contenu).toContain('RAPPELS CLÉS POUR LE JOUR J');
+    });
+
+    test('Les routes REST entretien se chargent et répondent dans Express', () => {
+      const routerEmploi = require('../../backend/routes/surga/emploi');
+      const routes = routerEmploi.stack
+        .filter((r) => r.route)
+        .map((r) => `${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`);
+
+      expect(routes).toContain('GET /emploi/entretien/banque');
+      expect(routes).toContain('GET /emploi/entretien/droits');
+      expect(routes).toContain('POST /emploi/entretien/evaluer');
+      expect(routes).toContain('POST /emploi/entretien/session');
+      expect(routes).toContain('POST /emploi/entretien/fiche-revision');
+    });
+  });
 });
 
 

@@ -1,5 +1,25 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Tranche 19 : Préparation à l'Entretien d'Embauche & Fiches de Révision (Session 2026-10-06 - Matin 4, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Mise en œuvre complète de la Tranche 19 (Simulation d'entretien in-app, Feedback constructif STAR & Fiches de révision) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.
+    - Banque de questions d'entretien sectorielles complète (Général, Comptabilité & Finance SYSCOHADA, Commerce & Vente, Informatique & Tech, Administration & RH, Logistique & Transport Dakar).
+    - Évaluation déterministe et constructive : analyse du volume de mots, détection de verbes d'action, conformité méthode STAR, points forts, axes d'amélioration, suggestion inspirante de reformulation (zéro note chiffrée arbitraire, vouvoiement strict D19).
+    - Modèle de droits & quotas côté serveur (`surga_usages`) : 1 simulation gratuite par semaine (période `AAAA-Wxx`), illimité pour les abonnés Surga Premium.
+    - Passerelles transversales Surga :
+      - Enregistrement immédiat de la fiche de révision complète en Note.
+      - Planification de la date d'entretien dans l'Agenda avec rappels programmés la veille à 18h et le matin à 8h.
+      - Inscription prévisionnelle du budget transport (3 000 FCFA taxi/déplacement) dans Sama Xaalis.
+  * **Composants Frontend PWA (Modularisation < 450 l. & Zéro Émoji)** :
+    - `SurgaEntretienTab.tsx` (342 l.) : choix du secteur et du poste, consultation des conseils du recruteur, dictée vocale Web Speech API / clavier, feedback structuré et actions transversales.
+    - `SurgaDocumentsEmploiTab.tsx` (96 l.) : extraction modulaire de la liste des documents permettant de maintenir `SurgaEmploiModal.tsx` à 385 lignes (< 450 l.).
+  * **Validation & Tests** :
+    - Tests backend Jest : 118/118 tests validés (100% de réussite sur `tests/unit/surga.test.js`, incluant 5 nouveaux tests unitaires Tranche 19).
+    - Tests frontend : 97/97 tests validés (100% de réussite sur `frontend-next`).
+    - Compilation TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme (`npm run lint:slop`).
+    - Tous les composants React < 450 lignes.
+
 - **Surga — Tranche 18 : Emploi, Profil Professionnel, CV PDF & Lettres de Motivation (Session 2026-10-06 - Matin 3, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Mise en œuvre complète de la Tranche 18 (Pôle Emploi & Carrière) selon les spécifications de `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md` et les décisions D26 à D29.

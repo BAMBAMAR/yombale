@@ -49,6 +49,19 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Tranche 19 : Préparation à l'Entretien d'Embauche & Fiches de Révision (Session 2026-10-06, branche `feature/surga`)** :
+  - *Extension Emploi : Simulateur in-app, Feedback constructif STAR & Passerelles transversales* :
+    - Banque de questions types par secteur économique dakarisé & sénégalais (Général, Comptabilité SYSCOHADA, Vente & Commercial, Tech & Informatique, Administration & RH, Logistique Dakar) avec conseils ciblés sur les attentes du recruteur.
+    - Évaluation constructive et déterministe (méthode STAR : Situation, Tâche, Action, Résultat, mots d'action, zéro note arbitraire, vouvoiement strict D19).
+    - Contrôle des quotas serveur via `surga_usages` : 1 simulation gratuite par semaine (période `AAAA-Wxx`), illimité pour Surga Premium.
+    - Passerelles transversales Surga :
+      - Enregistrement direct de la fiche de révision complète en Note.
+      - Planification de la date d'entretien dans l'Agenda avec rappel automatique la veille à 18h et le matin à 8h.
+      - Inscription prévisionnelle du budget transport (3 000 FCFA) dans Sama Xaalis.
+    - Composant Frontend PWA dédié : `SurgaEntretienTab.tsx` (342 l. < 450 l.) et modularisation de `SurgaDocumentsEmploiTab.tsx` (96 l.) ramenant `SurgaEmploiModal.tsx` à 385 lignes (< 450 l.).
+    - Routes REST API : `GET /emploi/entretien/banque`, `GET /emploi/entretien/droits`, `POST /emploi/entretien/evaluer`, `POST /emploi/entretien/session`, `POST /emploi/entretien/fiche-revision`.
+    - Tests & Qualité : 118/118 tests unitaires Jest validés (+5 nouveaux tests Tranche 19), 97/97 tests frontend validés, `tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
+
 - **Surga — Tranche 18 : Emploi, Profil Professionnel, CV PDF & Lettres de Motivation (Session 2026-10-06, branche `feature/surga`)** :
   - *Extension Emploi & Carrière (D26 à D29 & Spécifications validées)* :
     - Tables SQL créées avec index et contraintes idempotentes : `surga_profil_pro`, `surga_documents_emploi`, `surga_usages`.

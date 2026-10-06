@@ -379,11 +379,14 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Tests unitaires Jest portés à **113/113 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 - **Démonstration** : l'utilisateur remplit son profil professionnel, choisit son modèle (Sobre & Moderne ou Classique Épuré), coche la validation d'exactitude et télécharge son CV en PDF haute fidélité ; il colle une annonce pour générer une lettre de motivation au vouvoiement formel et retrouve ses documents générés dans son historique.
 
-### Tranche 19 (Extension Emploi) — Préparation à l'Entretien d'Embauche (Simulateur In-App & Fiches de Révision)
-- [ ] `PROPOSED` Banque de questions types sectorielles gratuites (sans IA, coût nul).
-- [ ] `PROPOSED` Simulateur d'entretien in-app (questions-réponses clavier ou voix Web Speech, 1 simulation gratuite/semaine, illimité Premium).
-- [ ] `PROPOSED` Retour structuré sans promesse trompeuse (clarté, structure, points forts, axes de progression).
-- [ ] `PROPOSED` Passerelles vers l'Agenda (date d'entretien et rappel veille) et Notes (fiche de révision).
+### Tranche 19 (Extension Emploi) — Préparation à l'Entretien d'Embauche (Simulateur In-App & Fiches de Révision) (06 Octobre 2026 - Matin 4)
+- [x] `DONE` Banque de questions types sectorielles gratuites sans IA et coût nul (Général, Comptabilité SYSCOHADA, Vente & Commercial, Tech & Informatique, Administration & RH, Logistique Dakar) avec conseils ciblés sur les attentes du recruteur.
+- [x] `DONE` Simulateur d'entretien in-app (saisie au clavier ou dictée vocale Web Speech API, 1 simulation gratuite/semaine via `surga_usages`, illimité en Premium).
+- [x] `DONE` Évaluation constructive et déterministe sans note arbitraire (méthode STAR, verbes d'action, points forts, axes d'amélioration, suggestion inspirante et vouvoiement strict D19).
+- [x] `DONE` Passerelles transversales Surga : enregistrement de la fiche de révision complète en Note, planification de l'entretien dans l'Agenda avec rappels (veille 18h / jour J 8h), prévision du budget transport (3 000 FCFA) dans Sama Xaalis.
+- [x] `DONE` Modularisation PWA : `SurgaEntretienTab.tsx` (342 l.) et `SurgaDocumentsEmploiTab.tsx` (96 l.) maintenant `SurgaEmploiModal.tsx` à 385 lignes (< 450 l.).
+- [x] `DONE` Tests unitaires Jest portés à **118/118 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
+- **Démonstration** : l'utilisateur choisit son secteur et son poste visé, consulte les questions types avec les conseils du recruteur, dicte ou saisit sa réponse, reçoit un feedback constructif STAR immédiat, enregistre sa fiche de révision dans ses Notes et planifie la date de son entretien dans son Agenda avec rappel la veille.
 
 ### Tranche 20 (Extension Démarches) — Démarches Administratives Sénégalaises Vérifiées (Fiches Éditoriales Officielles)
 - [ ] `PROPOSED` Condition de démarrage : Aucun responsable éditorial n'étant désigné, livraison « techniquement terminée, contenu en attente » avec fiches de test marquées `BROUILLON` (zéro publication réelle sans éditeur).

@@ -237,4 +237,116 @@ router.delete('/emploi/documents/:id', verifierToken, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/surga/emploi/entretien/banque
+ * Récupère la banque de questions types pour un secteur donné
+ */
+router.get('/emploi/entretien/banque', verifierToken, async (req, res) => {
+  try {
+    const { secteur = 'general' } = req.query;
+    const questions = emploiService.getBanqueQuestions(secteur);
+    return res.json({ success: true, secteur, questions });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/surga/emploi/entretien/droits
+ * Vérifie le quota hebdomadaire pour les simulations d'entretien
+ */
+router.get('/emploi/entretien/droits', verifierToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const droits = await emploiService.verifierDroitSimulationEntretien(userId);
+    return res.json({ success: true, droits });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/surga/emploi/entretien/evaluer
+ * Analyse constructive et déterministe d'une réponse fournie à une question
+ */
+router.post('/emploi/entretien/evaluer', verifierToken, async (req, res) => {
+  try {
+    const { question, reponse, poste = '', secteur = '' } = req.body;
+    if (!question || !reponse) {
+      return res.status(400).json({
+        success: false,
+        error: 'La question et votre réponse sont obligatoires pour l analyse.',
+      });
+    }
+
+    const evaluation = emploiService.evaluerReponseEntretien({
+      question,
+      reponse,
+      poste,
+      secteur,
+    });
+
+    return res.json({ success: true, evaluation });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/surga/emploi/entretien/session
+ * Valide la réalisation d'une simulation et incrémente le compteur hebdomadaire si gratuit
+ */
+router.post('/emploi/entretien/session', verifierToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const droits = await emploiService.verifierDroitSimulationEntretien(userId);
+
+    if (!droits.autorise) {
+      return res.status(403).json({
+        success: false,
+        error: droits.message,
+        quotaAtteint: true,
+      });
+    }
+
+    // Si utilisateur non premium, on incrémente l'usage hebdomadaire
+    if (!droits.estPremium) {
+      const d = new Date();
+      const annee = d.getFullYear();
+      const premierJanvier = new Date(annee, 0, 1);
+      const nbJours = Math.floor((d - premierJanvier) / (24 * 60 * 60 * 1000));
+      const semaine = Math.ceil((nbJours + premierJanvier.getDay() + 1) / 7);
+      const periode = `${annee}-W${String(semaine).padStart(2, '0')}`;
+
+      await emploiService.incrementerUsage(userId, 'entretien_simulation', periode);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Session de simulation d entretien validée avec succès.',
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/surga/emploi/entretien/fiche-revision
+ * Génère une fiche de révision textuelle complète pour l'enregistrement en Notes
+ */
+router.post('/emploi/entretien/fiche-revision', verifierToken, async (req, res) => {
+  try {
+    const { poste, secteur, evaluations = [] } = req.body;
+    const fiche = emploiService.genererFicheRevisionEntretien({
+      poste,
+      secteur,
+      evaluations,
+    });
+
+    return res.json({ success: true, fiche });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
