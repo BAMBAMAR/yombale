@@ -85,6 +85,14 @@ export default function SurgaEmploiModal({
           formations: Array.isArray(data.profil.formations) ? data.profil.formations : [],
           langues: Array.isArray(data.profil.langues) ? data.profil.langues : [],
         })
+      } else if (typeof window !== 'undefined') {
+        try {
+          const draft = localStorage.getItem('surga_offline_profil_pro')
+          if (draft) {
+            const parsed = JSON.parse(draft)
+            if (parsed && typeof parsed === 'object') setProfil((prev) => ({ ...prev, ...parsed }))
+          }
+        } catch {}
       }
       if (data.droits) {
         setDroits(data.droits)
@@ -104,19 +112,28 @@ export default function SurgaEmploiModal({
     }
   }, [isOpen, rechargerDonnees])
 
+  useEffect(() => {
+    const handleSync = () => { rechargerDonnees() }
+    window.addEventListener('surga-data-change', handleSync)
+    return () => window.removeEventListener('surga-data-change', handleSync)
+  }, [rechargerDonnees])
+
   // Sauvegarde du profil
   const handleSauvegarderProfil = async () => {
     setSaving(true)
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('surga_offline_profil_pro', JSON.stringify(profil))
+      }
       const res = await fetch('/api/surga/emploi/profil', {
         method: 'PUT',
         headers: getSurgaEmploiHeaders(true),
         body: JSON.stringify(profil),
       })
       const data = await res.json()
-      if (data.success && data.profil) {
-        setProfil((prev) => ({ ...prev, ...data.profil }))
-        afficherToast('Profil professionnel enregistré avec succès.')
+      if (data.success) {
+        if (data.profil) setProfil((prev) => ({ ...prev, ...data.profil }))
+        afficherToast(data.guest ? 'Brouillon sauvegardé en local.' : 'Profil professionnel enregistré avec succès.')
       }
     } finally {
       setSaving(false)
@@ -125,6 +142,9 @@ export default function SurgaEmploiModal({
 
   // Génération CV
   const handleGenererCv = async (modele: 'sobre_moderne' | 'classique_pro') => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('surga_offline_profil_pro', JSON.stringify(profil))
+    }
     setGenerant(true)
     try {
       const res = await fetch('/api/surga/emploi/cv/generer', {
@@ -211,6 +231,9 @@ export default function SurgaEmploiModal({
           afficherToast('Lettre générée et téléchargée avec succès.')
         }
         rechargerDonnees()
+      } else if (json.requireAuth && onOpenAuth) {
+        afficherToast('Connexion WhatsApp requise pour générer votre lettre.')
+        onOpenAuth()
       } else if (json.motif === 'limite_atteinte' || json.quotaAtteint) {
         onOpenPremium()
       } else {

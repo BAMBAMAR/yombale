@@ -189,6 +189,13 @@ router.get('/immo/alertes', tokenOptional, async (req, res) => {
 router.post('/immo/alertes', tokenOptional, async (req, res) => {
   try {
     const userId = req.user?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        requireAuth: true,
+        error: 'Connectez-vous via WhatsApp pour activer vos alertes immobilières.',
+      });
+    }
     const {
       titre,
       type_bien,

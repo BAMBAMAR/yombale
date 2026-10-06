@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { verifierToken } = require('../../middlewares/auth');
+const { verifierToken, tokenOptional } = require('../../middlewares/auth');
 const demarchesService = require('../../services/surga/demarches-service');
 
 /**
@@ -45,11 +45,21 @@ router.get('/demarches/categories', (req, res) => {
 
 /**
  * GET /api/surga/demarches/suivis
- * Récupère les démarches suivies par l'utilisateur connecté
+ * Récupère les démarches suivies par l'utilisateur connecté (ou vide si invité)
  */
-router.get('/demarches/suivis', verifierToken, async (req, res) => {
+router.get('/demarches/suivis', tokenOptional, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.userId || req.user?.id;
+    if (!userId) {
+      return res.json({
+        success: true,
+        guest: true,
+        suivis: [],
+        total: 0,
+        quota: { autorise: false, limite: 1, totalSuivis: 0, guest: true },
+      });
+    }
+
     const suivis = await demarchesService.getSuivisUtilisateur(userId);
     const droit = await demarchesService.verifierDroitSuiviDemarche(userId);
 

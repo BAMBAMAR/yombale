@@ -17,9 +17,10 @@ import SurgaConcoursDetailModal from './SurgaConcoursDetailModal'
 interface SurgaConcoursModalProps {
   isOpen: boolean
   onClose: () => void
+  onOpenAuth?: () => void
 }
 
-export default function SurgaConcoursModal({ isOpen, onClose }: SurgaConcoursModalProps) {
+export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: SurgaConcoursModalProps) {
   const [onglet, setOnglet] = useState<'tous' | 'suivis'>('tous')
   const [concours, setConcours] = useState<ConcoursItem[]>([])
   const [suivisIds, setSuivisIds] = useState<Set<string>>(new Set())
@@ -89,12 +90,19 @@ export default function SurgaConcoursModal({ isOpen, onClose }: SurgaConcoursMod
           return next
         })
       } else {
-        await fetch(`/api/surga/concours/${item.id}/suivre`, { method: 'POST' })
-        setSuivisIds((prev) => {
-          const next = new Set(prev)
-          next.add(item.id)
-          return next
-        })
+        const res = await fetch(`/api/surga/concours/${item.id}/suivre`, { method: 'POST' })
+        const json = await res.json().catch(() => ({}))
+        if (json.requireAuth && onOpenAuth) {
+          onOpenAuth()
+          return
+        }
+        if (res.ok && json.success) {
+          setSuivisIds((prev) => {
+            const next = new Set(prev)
+            next.add(item.id)
+            return next
+          })
+        }
       }
     } catch (err) {
       console.error('Erreur toggle suivi concours:', err)

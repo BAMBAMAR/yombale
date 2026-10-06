@@ -182,6 +182,7 @@ export default function SurgaModalsContainer({
         <SurgaConcoursModal
           isOpen={isConcoursOpen}
           onClose={onCloseConcours}
+          onOpenAuth={onOpenAuth}
         />
       )}
       {isPlacesOpen && (

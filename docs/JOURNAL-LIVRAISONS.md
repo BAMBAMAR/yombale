@@ -1,5 +1,31 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga / Auth & Quotas — Audit Approfondi Authentification Universelle, Éradication des 7 Doublons PostgreSQL, Index UNIQUE et Contrôle Invités Déterministe (Session 2026-10-06 - Nuit 5 ter, branche `feature/surga`)** :
+  * **Périmètre & Réponses aux Questions Utilisateur** :
+    1. Relation Nopalou vs Surga : Identité partagée (`utilisateurs` + cookie `nopalou_session`) avec étanchéité visuelle 100% stricte. Un utilisateur Nopalou est reconnu et connecté immédiatement sans réinscription.
+    2. Cause de l'erreur doublon : Ingestion historique de comptes marchands et d'imports prospection sous des formats hétérogènes (`221...` vs `+221...`). Dès qu'un utilisateur tentait de se connecter, `resolverComptesParTelephone` bloquait avec 409 Conflict.
+    3. Traitement des 4 scénarios :
+       - Nouveau visiteur inconnu : création en 1 clic via WhatsApp OTP.
+       - Compte Nopalou existant : connexion instantanée sans mot de passe.
+       - Mode Invité : Découverte libre (météo, actualités, radios, 22 concours, 20 démarches, édition et aperçu visuel du CV).
+       - Transition Invité ➔ Connecté : Sauvegarde locale du brouillon (`surga_offline_profil_pro`), synchronisation automatique post-connexion sans perte d'une seule saisie.
+  * **Actions Réalisées** :
+    - Dédoublonnage PostgreSQL intégral : Résolution transactionnelle des 7 paires de doublons (`Gollock`, `Arame Business`, `Diamalaye`, `CMS Apple Store / Mouhamed Cissé`, `XAM STORE`, `Samaskin`, comptes tests). 100% des boutiques et abonnements rattachés aux comptes maîtres.
+    - Création et pose de l'index partiel `CREATE UNIQUE INDEX uidx_utilisateurs_tel_norm ON utilisateurs (REGEXP_REPLACE(...)) WHERE telephone IS NOT NULL AND supprime_le IS NULL;`.
+    - Normalisation internationale : 115 comptes actifs convertis en format canonique `+221...`.
+    - Durcissement des contrôles invités :
+      * `backend/routes/surga/emploi.js` : `POST /cv/generer`, `POST /lettre/generer`, `POST /entretien/session`, `GET /documents/:id/pdf` renvoient 401 `requireAuth: true` pour les invités.
+      * `backend/routes/surga/concours.js` : `POST /concours/:id/suivre` exige `requireAuth: true`.
+      * `backend/routes/surga/immo.js` : `POST /immo/alertes` exige `requireAuth: true`.
+      * `backend/routes/surga/demarches.js` : `GET /demarches/suivis` utilise `tokenOptional` pour servir `[]` sans erreur 500 aux invités.
+      * Frontend PWA (`SurgaEmploiModal.tsx` & `SurgaConcoursModal.tsx`) : Gestion fluide de `onOpenAuth` et mise en cache locale du brouillon pro.
+  * **Validation & Qualité** :
+    - Vérification PostgreSQL : 0 doublon restant (`count = 0`).
+    - Tests routes invités : 200 OK sur droits et démarches, 401 requireAuth sur génération et alertes.
+    - Tests unitaires Jest : **128/128 tests passés (100%)**.
+    - Compilation TypeScript : 0 erreur (`tsc --noEmit`).
+    - Linter anti-slop : Composants < 450 lignes, zéro émoji.
+
 - **Surga / Auth — Résolution Définitive de l'Erreur 409 « Plusieurs comptes sont associés à ce numéro » & Dédoublonnage PostgreSQL (Session 2026-10-06 - Nuit 5 bis, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Diagnostic : La modal de connexion `SurgaAuthModal.tsx` bloquait la saisie du numéro `777202086` avec le message `Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.` (Erreur HTTP 409 renvoyée par `POST /api/auth/whatsapp-otp-send`).

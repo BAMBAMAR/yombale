@@ -155,11 +155,18 @@ router.get('/concours/:id', async (req, res) => {
 router.post('/concours/:id/suivre', tokenOptional, async (req, res) => {
   try {
     const userId = req.user?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        requireAuth: true,
+        error: 'Connectez-vous via WhatsApp pour programmer vos rappels J-30, J-7 et J-1.',
+      });
+    }
     const { id } = req.params;
     const { phone } = req.body || {};
 
     const resultat = await suivreConcours({
-      userId: userId || null,
+      userId,
       concoursId: id,
       phone: phone || null,
     });

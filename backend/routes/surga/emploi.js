@@ -38,9 +38,12 @@ function identifierSurgaUser(req, res, next) {
  */
 router.get('/emploi/profil', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.json({ success: true, profil: null, guest: true });
+    }
     const userId = req.user.id;
     const profil = await emploiService.getProfilPro(userId);
-    return res.json({ success: true, profil, guest: !!req.user.guest });
+    return res.json({ success: true, profil, guest: false });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -52,8 +55,11 @@ router.get('/emploi/profil', identifierSurgaUser, async (req, res) => {
  */
 router.put('/emploi/profil', identifierSurgaUser, async (req, res) => {
   try {
-    const userId = req.user.id;
     const data = req.body || {};
+    if (req.user.guest) {
+      return res.json({ success: true, guest: true, profil: data, message: 'Brouillon sauvegardé localement.' });
+    }
+    const userId = req.user.id;
     const profil = await emploiService.upsertProfilPro(userId, data);
     return res.json({ success: true, profil, message: 'Profil professionnel mis à jour avec succès.' });
   } catch (err) {
@@ -67,6 +73,22 @@ router.put('/emploi/profil', identifierSurgaUser, async (req, res) => {
  */
 router.get('/emploi/droits', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.json({
+        success: true,
+        guest: true,
+        droitCv: { autorise: false, motif: 'require_auth', message: 'Connectez-vous via WhatsApp pour activer votre 1er CV gratuit.' },
+        droitLettre: { autorise: false, motif: 'require_auth', message: 'Connectez-vous via WhatsApp pour générer votre lettre.' },
+        droits: {
+          estPremium: false,
+          quotaCvAtteint: false,
+          cvTelecharges: 0,
+          quotaLettreAtteint: false,
+          lettresMoisEnCours: 0,
+          guest: true,
+        },
+      });
+    }
     const userId = req.user.id;
     const droitCv = await emploiService.verifierDroitCv(userId);
     const droitLettre = await emploiService.verifierDroitLettre(userId);
@@ -93,6 +115,14 @@ router.get('/emploi/droits', identifierSurgaUser, async (req, res) => {
  */
 router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.status(401).json({
+        success: false,
+        requireAuth: true,
+        quotaAtteint: false,
+        error: 'Veuillez vous connecter avec votre numéro WhatsApp pour activer votre 1er CV gratuit et télécharger votre document.',
+      });
+    }
     const userId = req.user.id;
     const { attestationExactitude = false, profil: profilTransmis } = req.body;
     const modele = req.body.modele || req.body.modele_design || 'sobre_moderne';
@@ -172,6 +202,14 @@ router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
  */
 router.post('/emploi/lettre/generer', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.status(401).json({
+        success: false,
+        requireAuth: true,
+        quotaAtteint: false,
+        error: 'Veuillez vous connecter avec votre numéro WhatsApp pour générer votre lettre de motivation.',
+      });
+    }
     const userId = req.user.id;
     const { titrePosteOffre, entrepriseOffre, offreTexte, attestationExactitude = false, profil: profilTransmis } = req.body;
 
@@ -250,6 +288,9 @@ router.post('/emploi/lettre/generer', identifierSurgaUser, async (req, res) => {
  */
 router.get('/emploi/documents', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.json({ success: true, documents: [], guest: true });
+    }
     const userId = req.user.id;
     const type = req.query.type || null;
     const documents = await emploiService.listerDocumentsUtilisateur(userId, type);
@@ -265,6 +306,9 @@ router.get('/emploi/documents', identifierSurgaUser, async (req, res) => {
  */
 router.get('/emploi/documents/:id/pdf', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.status(401).json({ success: false, requireAuth: true, error: 'Connexion requise pour télécharger ce document.' });
+    }
     const userId = req.user.id;
     const docId = req.params.id;
 
@@ -367,6 +411,14 @@ router.post('/emploi/entretien/evaluer', (req, res) => {
  */
 router.post('/emploi/entretien/session', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.status(401).json({
+        success: false,
+        requireAuth: true,
+        quotaAtteint: false,
+        error: 'Veuillez vous connecter avec votre numéro WhatsApp pour lancer votre simulation d entretien.',
+      });
+    }
     const userId = req.user.id;
     const droits = await emploiService.verifierDroitSimulationEntretien(userId);
 

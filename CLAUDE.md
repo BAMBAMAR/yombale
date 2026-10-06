@@ -49,6 +49,30 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Auth & Quotas — Audit Approfondi de l'Authentification Universelle (Nopalou vs Surga), Éradication des 7 Derniers Doublons de Base, Index Unique Posé et Contrôle Déterministe des Non-Inscrits (Session 2026-10-06 - Nuit 5 ter, branche `feature/surga`)** :
+  - *Demandes & Questions Fondamentales Utilisateur* :
+    1. « quel est le rapport entre utilisateur nopalou et surga? »
+    2. « pourquoi on me parle de duplicata alors que cetait ma premiere fois sur surga je vouslais juste teste si ca allait me dire que tu nest pas inscrit sur surga ou ca me dit juste tu es utilisateur nopalou veut tu tinscrire aussi sur surga.il faut un schema clair pour tous les scenario »
+    3. « comment le code controle les utilisateur non inscrit.puis je par exemple creer plusieurs CV » / « pas seulement sur le CV voir tous les service ou cest necessaife »
+  - *Architecture & Réponses Établies* :
+    1. **Identité Commune & Écosystème Décloisonné** : Nopalou et Surga partagent le même compte unifié (`utilisateurs`) et le même JWT de session (`nopalou_session`). Un commerçant ou acheteur Nopalou est automatiquement reconnu sur Surga avec son numéro WhatsApp sans réinscription, tout en bénéficiant d'une étanchéité visuelle absolue (zéro composant marketplace dans Surga).
+    2. **Les 4 Scénarios d'Onboarding** :
+       - *Nouveau numéro inconnu* : 404 `ACCOUNT_NOT_FOUND` intercepté ➔ invitation chaleureuse en 1 clic ➔ validation OTP WhatsApp ➔ compte créé et session ouverte.
+       - *Numéro existant Nopalou* : Reconnaissance immédiate ➔ code WhatsApp envoyé sans mot de passe ➔ accès direct.
+       - *Mode Invité (Non-Inscrit)* : Découverte 100% libre (météo, actualités, radios, 22 fiches concours, 20 fiches démarches, saisie de notes/dépenses locales, édition et prévisualisation du CV). Toute action engageante à quota (télécharger CV PDF, alerte immo WhatsApp, rappel concours J-30/J-7/J-1, simulation d'entretien) exige la connexion OTP (`requireAuth: true`).
+       - *Transition Invité ➔ Connecté* : Zéro perte de données ! Le brouillon pro (`surga_offline_profil_pro`) ainsi que les notes et dépenses locales sont automatiquement aspirés et synchronisés dans PostgreSQL via `surga-offline-sync`.
+  - *Résolution Intégrale de la Base de Données* :
+    1. **Éradication des 7 Paires de Doublons Restantes** : Fusion transactionnelle complète des comptes historiques (`Gollock`, `Arame Business`, `Diamalaye vaisselle`, `CMS Apple Store / Mouhamed Cissé`, `XAM STORE`, `Samaskin`, comptes tests d'audit) avec réattribution de toutes les boutiques et abonnements marchands sans aucune perte.
+    2. **Pose de l'Index UNIQUE Partiel PostgreSQL** : Exécution de `CREATE UNIQUE INDEX uidx_utilisateurs_tel_norm ON utilisateurs (REGEXP_REPLACE(REPLACE(REPLACE(REPLACE(telephone, '+', ''), ' ', ''), '-', ''), '^00', '')) WHERE telephone IS NOT NULL AND supprime_le IS NULL;`. Il est désormais physiquement impossible d'insérer un doublon dans la base.
+    3. **Normalisation Internationale** : 115 comptes actifs ont été vérifiés et unifiés sous le format canonique `+221...`.
+  - *Durcissement des Contrôles Invités / Quotas* :
+    - `backend/routes/surga/emploi.js` : Les routes `POST /cv/generer`, `POST /lettre/generer`, `POST /entretien/session`, `GET /documents/:id/pdf` renvoient un statut 401 propre avec `{ success: false, requireAuth: true }` si l'utilisateur est invité, évitant toute fuite ou pollution de la table `surga_usages`.
+    - `backend/routes/surga/concours.js` : `POST /concours/:id/suivre` exige `requireAuth: true` pour activer les alertes WhatsApp.
+    - `backend/routes/surga/immo.js` : `POST /immo/alertes` exige `requireAuth: true` pour programmer les alertes immobilières.
+    - `backend/routes/surga/demarches.js` : `GET /demarches/suivis` utilise `tokenOptional` pour servir un tableau vide aux invités sans générer d'erreur 500.
+    - Frontend PWA (`SurgaEmploiModal.tsx` & `SurgaConcoursModal.tsx`) : Sauvegarde immédiate du brouillon dans `localStorage`, écoute de `surga-data-change`, et ouverture fluide de `SurgaAuthModal` sur `requireAuth`.
+  - *Validation & Tests* : **128/128 tests unitaires Jest validés (100%)**, `tsc --noEmit` 0 erreur, linter anti-slop sans anomalie, backend daemon 3000 opérationnel.
+
 - **Surga / Auth — Résolution Définitive de l'Erreur 409 « Plusieurs comptes sont associés à ce numéro » & Dédoublonnage PostgreSQL (Session 2026-10-06 - Nuit 5 bis, branche `feature/surga`)** :
   - *Capture Utilisateur & Problème* : L'utilisateur tentait de se connecter avec son numéro `777202086` dans `SurgaAuthModal.tsx` et recevait le message d'erreur : `Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.` (Statut HTTP 409).
   - *Cause Racine* :

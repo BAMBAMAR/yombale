@@ -3,6 +3,35 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 5 ter] — Audit Approfondi Authentification Universelle, Éradication des 7 Doublons PostgreSQL, Index UNIQUE et Contrôle Invités Déterministe
+- **Demandes Utilisateur :**
+  1. « quel est le rapport entre utilisateur nopalou et surga? »
+  2. « pourquoi on me parle de duplicata alors que cetait ma premiere fois sur surga je vouslais juste teste si ca allait me dire que tu nest pas inscrit sur surga ou ca me dit juste tu es utilisateur nopalou veut tu tinscrire aussi sur surga.il faut un schema clair pour tous les scenario »
+  3. « comment le code controle les utilisateur non inscrit.puis je par exemple creer plusieurs CV » / « pas seulement sur le CV voir tous les service ou cest necessaife »
+- **Audit & Réponses Architecturales :**
+  1. *Lien Nopalou vs Surga* : Écosystème unique partageant la même table maîtresse `utilisateurs` et le même token de session HTTPOnly. Tout utilisateur Nopalou accède à Surga sans mot de passe via son WhatsApp OTP, avec étanchéité visuelle totale (zéro élément marketplace dans Surga).
+  2. *Origine des doublons* : Ingestion historique de comptes marchands lors de campagnes prospection sans index d'unicité normalisé (`221...` vs `+221...`).
+  3. *Les 4 scénarios d'onboarding* :
+     - Visiteur inconnu ➔ création de compte 1 clic par WhatsApp OTP.
+     - Compte existant Nopalou ➔ connexion directe instantanée.
+     - Mode invité Surga ➔ découverte libre de l'ensemble des modules.
+     - Transition invité ➔ connecté : sauvegarde locale du brouillon (`surga_offline_profil_pro`), synchronisation automatique post-connexion sans perte d'une seule donnée.
+- **Modifications Techniques Appliquées :**
+  - *Dédoublonnage intégral de la base* : Résolution des 7 paires de doublons (`Gollock`, `Arame Business`, `Diamalaye`, `CMS Apple Store / Mouhamed Cissé`, `XAM STORE`, `Samaskin`, comptes tests d'audit) avec réattribution de toutes les boutiques et abonnements.
+  - *Index UNIQUE partiel* : Création de `uidx_utilisateurs_tel_norm` sur `utilisateurs(REGEXP_REPLACE(...))` interdisant physiquement tout doublon futur.
+  - *Normalisation 115 comptes* : Format canonique international `+221...` appliqué à l'ensemble des numéros actifs.
+  - *Protection des quotas sur tous les services* :
+    - `backend/routes/surga/emploi.js` : Renvoi de 401 `{ success: false, requireAuth: true }` sur `POST /cv/generer`, `POST /lettre/generer`, `POST /entretien/session`, `GET /documents/:id/pdf` si invité.
+    - `backend/routes/surga/concours.js` : `POST /concours/:id/suivre` exige `requireAuth: true`.
+    - `backend/routes/surga/immo.js` : `POST /immo/alertes` exige `requireAuth: true`.
+    - `backend/routes/surga/demarches.js` : `GET /demarches/suivis` utilise `tokenOptional` pour servir un tableau vide aux invités sans crash 500.
+    - Frontend PWA (`SurgaEmploiModal.tsx` & `SurgaConcoursModal.tsx`) : Sauvegarde locale du profil pro dans `localStorage`, gestion de `onOpenAuth` et écoute de l'événement `surga-data-change`.
+- **Validation :**
+  - PostgreSQL : 0 doublon restant (`count = 0`).
+  - Tests automatisés des routes invités : 200 OK sur consultation, 401 requireAuth sur actes engageants.
+  - Suite de tests Jest : **128/128 tests validés (100%)**.
+  - TypeScript : `tsc --noEmit` 0 erreur. Linter anti-slop sans anomalie.
+
 ### [2026-10-06 — Nuit 5 bis] — Auth : Résolution de l'Erreur 409 (« Plusieurs comptes associés ») & Fusion des Doublons Marchands
 - **Demande Utilisateur :**
   - Capture d'écran de `SurgaAuthModal.tsx` avec l'alerte bloquante : `Plusieurs comptes sont associés à ce numéro. Contactez le support Nopalou.` lors de la tentative de connexion avec `777202086`.
