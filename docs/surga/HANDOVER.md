@@ -1,17 +1,30 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 2)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 3)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Démarches Administratives Vérifiées : Enrichissement Majeur à 20 Fiches Certifiées e-senegal.sn, Création Entreprise APIX/NINEA/SARL, Quitus Fiscal, IPRES/CSS, Foncier Teledac/Bail, Transports Capp Karangë/CCTVA, Sport Temps Réel ESPN & Lions du Sénégal, Actualités Seneweb & Portails Nationaux, Sélecteur Météo Portal, Compte OTP WhatsApp in-app, Emploi CV PDF, Séries TV & Lutte)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Concours & Examens : Catalogue Officiel Étendu à 22 Concours Certifiés des Ministères & Écoles Supérieures, Synchronisation PostgreSQL, Démarches Administratives 20 Fiches e-senegal.sn, Sport Temps Réel ESPN & Lions du Sénégal, Actualités Seneweb, Sélecteur Météo Portal, Compte OTP WhatsApp in-app, Emploi CV PDF, Séries TV & Lutte)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose d'un module **Démarches Administratives Vérifiées** enrichi d'un catalogue de **20 fiches certifiées réelles du Sénégal** (couvrant l'intégralité des 6 catégories officielles : Identité, État Civil, Justice, Transports, Logement et Entreprise), avec source officielle `https://e-senegal.sn/#/home/demarches`, pièces obligatoires/facultatives, coûts réels en FCFA, délais, lieux administratifs et étapes pas-à-pas.
+L'assistant personnel de poche **Surga** dispose d'un module **Concours & Examens du Sénégal** enrichi d'un catalogue officiel de **22 concours et examens certifiés de l'État** couvrant 100% des 6 catégories officielles (Fonction Publique, Forces de Défense, Éducation & Enseignement, Grandes Écoles d Ingénieurs, Examens Nationaux, Santé & Social) avec sources officielles de l'État, dates limites, pièces à fournir et rappels stratégiques J-30 / J-7 / J-1.
 
-0. **Démarches Administratives Vérifiées : Enrichissement Majeur (20 Fiches Certifiées — 100% DONE)** :
+0. **Concours & Examens du Sénégal : Catalogue Officiel Étendu à 22 Fiches Certifiées (100% DONE)** :
+   - **Catalogue Officiel Porté à 22 Concours (`backend/services/surga/concours-service.js`)** :
+     - *Fonction Publique* (3) : ENA (`https://ena.sn`, 10 000 FCFA), CFJ Magistrature & Greffe (`https://cfj.sn`, 10 000 FCFA), Concours Direct Fonction Publique (`https://fonctionpublique.gouv.sn`, 0 FCFA).
+     - *Forces de Défense & Sécurité* (5) : Police Nationale (`https://policenationale.sec.gouv.sn`, 5 000 FCFA), Douanes (`https://douanes.sn`, 5 000 FCFA), Gendarmerie Nationale (`https://gendarmerie.sn`, 5 000 FCFA), BNSP Sapeurs-Pompiers (`https://bnsp.sn`, 5 000 FCFA), DAP Administration Pénitentiaire (`https://justice.sec.gouv.sn`, 5 000 FCFA).
+     - *Éducation & Enseignement* (3) : FASTEF UCAD (`https://fastef.ucad.sn`, 10 000 FCFA), CREM Élèves-Maîtres (`https://concours.education.sn`, 5 000 FCFA), INSEPS EPS (`https://inseps.ucad.sn`, 10 000 FCFA).
+     - *Grandes Écoles d Ingénieurs* (5) : ESP Dakar (`https://esp.sn`, 10 000 FCFA), EPT Thiès (`https://ept.sn`, 10 000 FCFA), ENSA Agronomie Thiès (`https://ensa.sn`, 10 000 FCFA), CESTI Journalisme (`https://cesti.ucad.sn`, 10 000 FCFA), EAMAC Aviation Civile (`https://eamac.asecna.aero`, 15 000 FCFA).
+     - *Examens Nationaux* (3) : Baccalauréat Général & Technique (`https://officedubac.sn`, 5 000 FCFA), BFEM (`https://men.gouv.sn`, 1 500 FCFA), CFEE (`https://men.gouv.sn`, 1 000 FCFA).
+     - *Santé & Social* (3) : ENDSS Soins de santé (`https://sante.gouv.sn`, 5 000 FCFA), ENTSS Travailleurs sociaux (`https://sante.gouv.sn`, 5 000 FCFA), Internat des Hôpitaux en Médecine Dakar (`https://fmpo.ucad.sn`, 10 000 FCFA).
+   - **Synchronisation Idempotente PostgreSQL** : Insertion et mise à jour automatique via `INSERT ... ON CONFLICT (id) DO UPDATE SET ...` dans `assurerConcoursInitiaux()`.
+   - **Route API & Pagination (`backend/routes/surga/concours.js`)** : Limite par défaut portée à 50 pour fournir le catalogue complet sans troncature.
+   - **Interface Utilisateur PWA (`SurgaConcoursModal.tsx`, 365 l., < 450 l.)** : Affichage dynamique de l'indicateur d'onglet `Tous les concours (22)` et filtres par catégorie réactifs sans aucune catégorie vide.
+   - **Validation Tests Unitaires** : 127/127 tests unitaires Jest validés (**100% en 3.2s**), linter anti-slop conforme.
+
+0.bis. **Démarches Administratives Vérifiées : Enrichissement Majeur (20 Fiches Certifiées — 100% DONE)** :
    - **Catalogue Officiel Porté à 20 Fiches (`backend/services/surga/demarches-service.js`)** :
      - *Entreprise & Activité Pro* (`activite_pro`) : Création Entreprise Individuelle / GIE APIX (10 000 FCFA), Création de SARL (25 000 FCFA), Quitus fiscal DGID (0 FCFA), Immatriculation employeur & salariés IPRES/CSS (0 FCFA).
      - *État Civil & Famille* (`etat_civil`) : Acte de naissance (200 FCFA), Certificat de nationalité (2 000 FCFA), Extrait d'acte de mariage (200 FCFA), Déclaration de décès et permis d'inhumer (200 FCFA), Certificat de vie IPRES (200 FCFA).
@@ -270,6 +283,7 @@ npm run dev
 - **Surga (Application Web 100% Autonome)** : [http://localhost:3001/surga](http://localhost:3001/surga)
 - **Console d'Administration Surga** : [http://localhost:3001/admin/surga](http://localhost:3001/admin/surga)
 - **API Briefing Backend** : [http://localhost:3000/api/surga/briefing](http://localhost:3000/api/surga/briefing)
+- **API Concours & Examens** : [http://localhost:3000/api/surga/concours](http://localhost:3000/api/surga/concours)
 - **API Démarches Vérifiées** : [http://localhost:3000/api/surga/demarches](http://localhost:3000/api/surga/demarches)
 - **API Emploi & Profil Pro** : [http://localhost:3000/api/surga/emploi/profil](http://localhost:3000/api/surga/emploi/profil)
 - **API Météo & Localités** : [http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau](http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau)

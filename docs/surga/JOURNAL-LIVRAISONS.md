@@ -3,6 +3,50 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 3] — Concours & Examens du Sénégal : Catalogue Étendu à 22 Concours Certifiés & Synchronisation PostgreSQL
+- **Demande Utilisateur :**
+  - « trop peu de concours et les infos doivent etre conforme et prise dans des sources officiel »
+  - Capture montrant l'écran des concours avec seulement 5 fiches (Police, ENA, FASTEF, Douanes, CFJ), et un catalogue vide dans plusieurs catégories comme « Santé & Social », « Grandes Écoles d Ingénieurs » et « Examens Nationaux ».
+- **Analyse & Contexte :**
+  - La table `surga_concours` avait été peuplée initialement par un seed restreint à 5 lignes.
+  - La méthode `listerConcours` lisait la base existante sans la resynchroniser si le nombre d'entrées était inférieur ou si de nouveaux concours apparaissaient dans le code.
+  - Les filtres de catégories présentaient 6 catégories dont la moitié ne comportait aucun concours, et l'ENA ainsi que le CFJ étaient catégorisés sous `grandes_ecoles` au lieu de `fonction_publique`.
+  - La limite par défaut de la route Express était de 20 concours par page.
+- **Modifications Appliquées :**
+  - **`backend/services/surga/concours-service.js`** :
+    - Élargissement du catalogue officiel à **22 concours et examens nationaux certifiés** basés sur les arrêtés ministériels et sources officielles de l'État :
+      1. **ENA** (`https://ena.sn`) — Catégorie Fonction Publique, Licence/Master, 10 000 FCFA.
+      2. **CFJ (Magistrature & Greffe)** (`https://cfj.sn`) — Catégorie Fonction Publique, Master 2 Droit, 10 000 FCFA.
+      3. **Concours Direct Fonction Publique** (`https://fonctionpublique.gouv.sn`) — Catégorie Fonction Publique, BFEM/Bac/Licence/Master, 0 FCFA.
+      4. **Police Nationale** (`https://policenationale.sec.gouv.sn`) — Catégorie Forces de Défense, BFEM ou Licence, 5 000 FCFA.
+      5. **Douanes Sénégalaises** (`https://douanes.sn`) — Catégorie Forces de Défense, BFEM/Bac, 5 000 FCFA.
+      6. **Gendarmerie Nationale** (`https://gendarmerie.sn`) — Catégorie Forces de Défense, BFEM/Bac/Licence, 5 000 FCFA.
+      7. **BNSP Sapeurs-Pompiers** (`https://bnsp.sn`) — Catégorie Forces de Défense, BFEM/Bac, 5 000 FCFA.
+      8. **DAP Administration Pénitentiaire** (`https://justice.sec.gouv.sn`) — Catégorie Forces de Défense, BFEM/Bac, 5 000 FCFA.
+      9. **FASTEF UCAD** (`https://fastef.ucad.sn`) — Catégorie Éducation & Enseignement, Licence/Master, 10 000 FCFA.
+      10. **CREM Élèves-Maîtres** (`https://concours.education.sn`) — Catégorie Éducation & Enseignement, Baccalauréat, 5 000 FCFA.
+      11. **INSEPS EPS** (`https://inseps.ucad.sn`) — Catégorie Éducation & Enseignement, Baccalauréat, 10 000 FCFA.
+      12. **ESP Dakar** (`https://esp.sn`) — Catégorie Grandes Écoles d Ingénieurs, Bac S/Technique, 10 000 FCFA.
+      13. **EPT Thiès** (`https://ept.sn`) — Catégorie Grandes Écoles d Ingénieurs, Bac S1/S2/S3, 10 000 FCFA.
+      14. **ENSA Agronomie Thiès** (`https://ensa.sn`) — Catégorie Grandes Écoles d Ingénieurs, Bac S1/S2, 10 000 FCFA.
+      15. **CESTI Journalisme** (`https://cesti.ucad.sn`) — Catégorie Grandes Écoles d Ingénieurs, Bac toutes séries, 10 000 FCFA.
+      16. **EAMAC Aviation Civile** (`https://eamac.asecna.aero`) — Catégorie Grandes Écoles d Ingénieurs, Bac S ou Licence scientifique, 15 000 FCFA.
+      17. **Baccalauréat Sénégal** (`https://officedubac.sn`) — Catégorie Examens Nationaux, Classe de Terminale, 5 000 FCFA.
+      18. **BFEM Sénégal** (`https://men.gouv.sn`) — Catégorie Examens Nationaux, Classe de 3ème, 1 500 FCFA.
+      19. **CFEE Sénégal** (`https://men.gouv.sn`) — Catégorie Examens Nationaux, Classe de CM2, 1 000 FCFA.
+      20. **ENDSS Soins & Santé** (`https://sante.gouv.sn`) — Catégorie Santé & Social, BFEM/Bac, 5 000 FCFA.
+      21. **ENTSS Travailleurs Sociaux** (`https://sante.gouv.sn`) — Catégorie Santé & Social, Baccalauréat, 5 000 FCFA.
+      22. **Internat en Médecine Dakar** (`https://fmpo.ucad.sn`) — Catégorie Santé & Social, 6ème année médecine, 10 000 FCFA.
+    - Synchronisation automatique et idempotente PostgreSQL via `assurerConcoursInitiaux()` appelée dans `listerConcours()` et `recupererConcoursParId()`.
+    - Calcul du décompte exact (`SELECT COUNT(*)`) pour les réponses de requêtes filtrées.
+  - **`backend/routes/surga/concours.js`** :
+    - Augmentation du paramètre `limit` par défaut à 50 afin de fournir l'intégralité du catalogue à la PWA dès l'ouverture du modal.
+- **Validation :**
+  - Tests Jest : **127/127 validés (100% en 3.2s)**.
+  - Linter anti-slop : Conforme (`npm run lint:slop`, zéro émoji UI).
+  - API HTTP live : `http://localhost:3000/api/surga/concours` retourne `total: 22` et les 6 catégories sont pourvues (3 Fonction Publique, 5 Forces de Défense, 3 Enseignement, 5 Grandes Écoles, 3 Examens Nationaux, 3 Santé).
+  - Règle de déploiement : Commit local préparé sans aucun `git push` automatique.
+
 ### [2026-10-06 — Nuit 2] — Démarches Administratives Vérifiées : Enrichissement Majeur du Catalogue (20 Fiches Certifiées) & Synchronisation PostgreSQL
 - **Demande Utilisateur :**
   - « ajouter plus de demarche »

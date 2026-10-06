@@ -140,22 +140,23 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Tests unitaires Jest : 67/67 passés (100%).
 - **Démonstration** : l'utilisateur explore les biens certifiés de Dakar par filtres ou recherche libre, active une alerte personnalisée avec notification sous 2 minutes et contacte directement l'agence par WhatsApp en 1 clic.
 
-### Tranche 13 — Concours et examens du Sénégal
+### Tranche 13 — Concours et examens du Sénégal (Catalogue Officiel Étendu à 22 Fiches Certifiées)
 - [x] `DONE` Tables SQL idempotentes `surga_concours` et `surga_suivi_concours` avec index de performance dans `backend/migrate-inline.js`.
-- [x] `DONE` Service `backend/services/surga/concours-service.js` avec :
-  - Catalogue riche des concours nationaux (ENA, FASTEF, Douanes, Police, CREM, Baccalauréat, BFEM, CESTI, ESP, ENSA).
-  - Calcul déterministe des échéances et phases d'urgence (`calculerEcheances` : J-30, J-7, J-1, Clôture).
-  - Moteur de suivi (`suivreConcours`) avec injection automatique des rappels dans l'Agenda Surga (`surga_agenda`).
-  - Synthèse pour le briefing du matin au vouvoiement strict D19 (`genererSyntheseConcoursBriefing`).
-- [x] `DONE` Routes REST dans `backend/routes/surga/concours.js` (`GET /concours`, `GET /concours/categories`, `GET /concours/suivis`, `GET /concours/synthese`, `GET /concours/:id`, `POST /concours/:id/suivre`, `DELETE /concours/:id/suivre`).
+- [x] `DONE` Synchronisation PostgreSQL idempotente continue (`assurerConcoursInitiaux` avec `ON CONFLICT (id) DO UPDATE SET ...`) appelée à chaque lecture de l'API.
+- [x] `DONE` Catalogue étendu de 5 à **22 concours et examens nationaux certifiés** basés sur les arrêtés ministériels et sources officielles de l'État (`ena.sn`, `cfj.sn`, `fonctionpublique.gouv.sn`, `policenationale.sec.gouv.sn`, `douanes.sn`, `gendarmerie.sn`, `bnsp.sn`, `justice.sec.gouv.sn`, `fastef.ucad.sn`, `concours.education.sn`, `inseps.ucad.sn`, `esp.sn`, `ept.sn`, `ensa.sn`, `cesti.ucad.sn`, `eamac.asecna.aero`, `officedubac.sn`, `men.gouv.sn`, `sante.gouv.sn`, `fmpo.ucad.sn`).
+- [x] `DONE` Couverture intégrale des 6 catégories officielles sans catégorie vide : Fonction Publique (3), Forces de Défense & Sécurité (5), Éducation & Enseignement (3), Grandes Écoles d Ingénieurs (5), Examens Nationaux (3), Santé & Social (3).
+- [x] `DONE` Calcul déterministe des échéances et phases d'urgence (`calculerEcheances` : J-30, J-7, J-1, Clôture).
+- [x] `DONE` Moteur de suivi (`suivreConcours`) avec injection automatique des rappels dans l'Agenda Surga (`surga_agenda`).
+- [x] `DONE` Synthèse pour le briefing du matin au vouvoiement strict D19 (`genererSyntheseConcoursBriefing`).
+- [x] `DONE` Routes REST dans `backend/routes/surga/concours.js` (`GET /concours`, `GET /concours/categories`, `GET /concours/suivis`, `GET /concours/synthese`, `GET /concours/:id`, `POST /concours/:id/suivre`, `DELETE /concours/:id/suivre`) avec pagination par défaut portée à 50.
 - [x] `DONE` Composants React modulaires (< 450 lignes) :
-  - `SurgaConcoursCard.tsx` (175 l.) : carte d'aperçu d'un concours avec statut, décompte J-X et bouton Suivre.
-  - `SurgaConcoursDetailModal.tsx` (340 l.) : modale avec calendrier officiel, checklist interactive des pièces administratives et centres de préparation.
-  - `SurgaConcoursModal.tsx` (395 l.) : vue complète avec barre de recherche instantanée, filtres par catégorie et onglets *Tous* et *Mes concours suivis*.
+  - `SurgaConcoursCard.tsx` (199 l.) : carte d'aperçu d'un concours avec statut, décompte J-X et bouton Suivre.
+  - `SurgaConcoursDetailModal.tsx` (447 l.) : modale avec calendrier officiel, checklist interactive des pièces administratives, lien officiel direct et centres de préparation.
+  - `SurgaConcoursModal.tsx` (365 l.) : vue complète avec barre de recherche instantanée, filtres par catégorie réactifs et onglets *Tous les concours (22)* et *Mes concours suivis*.
   - `SurgaConcoursDashboardCard.tsx` (170 l.) : carte d'aperçu sur le tableau de bord Surga.
   - `SurgaParametresTab.tsx` (190 l.) : raccourci de paramétrage vers les concours nationaux.
-- [x] `DONE` Tests unitaires Jest : **73/73 passés (100%)**.
-- **Démonstration** : l'utilisateur explore les concours ouverts de la fonction publique et des grandes écoles, active le suivi en 1 clic pour recevoir les alertes J-30/J-7/J-1 dans son agenda et utilise la checklist pour préparer ses pièces justificatives.
+- [x] `DONE` Tests unitaires Jest : **127/127 passés (100%)**, linter anti-slop conforme.
+- **Démonstration** : l'utilisateur explore les 22 concours officiels du Sénégal par catégorie sans aucune section vide, consulte le lien du site officiel de chaque établissement/ministère, active le suivi avec programmation de ses rappels d'échéance J-30/J-7/J-1 et gère sa checklist de pièces.
 
 ### Tranche 14 — Bons plans & Adresses à Dakar
 - [x] `DONE` Tables SQL idempotentes `surga_places` et `surga_favoris_places` avec index de performance dans `backend/migrate-inline.js`.

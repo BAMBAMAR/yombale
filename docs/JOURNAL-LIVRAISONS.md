@@ -1,5 +1,43 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga — Concours & Examens du Sénégal : Catalogue Officiel Étendu à 22 Concours Certifiés, Synchronisation PostgreSQL & Couverture 100% des Catégories (Session 2026-10-06 - Nuit 3, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Réponse à la demande utilisateur : « trop peu de concours et les infos doivent etre conforme et prise dans des sources officiel » — L'interface n'affichait que 5 concours, plusieurs catégories étaient totalement vides (Santé & Social, Examens Nationaux, Grandes Écoles) et l'ENA / le CFJ étaient mal classés.
+    - Diagnostic : La table PostgreSQL `surga_concours` ne contenait que les 5 concours insérés lors d'un ancien seed. `listerConcours()` lisait la base et ne synchronisait pas le catalogue mémoire. De plus, la limite par défaut de l'API était de 20.
+    - Correctifs appliqués :
+      * `backend/services/surga/concours-service.js` :
+        - Extension du catalogue à **22 concours et examens nationaux certifiés** basés sur les arrêtés et plateformes officielles de l'État :
+          1. *ENA* (`ena.sn`) : Fonction Publique, Licence/Master, 10 000 FCFA.
+          2. *CFJ Magistrature & Greffe* (`cfj.sn`) : Fonction Publique, Master 2 Droit, 10 000 FCFA.
+          3. *Concours Direct Fonction Publique* (`fonctionpublique.gouv.sn`) : Fonction Publique, BFEM/Bac/Licence/Master, 0 FCFA.
+          4. *Police Nationale* (`policenationale.sec.gouv.sn`) : Forces de Défense, BFEM ou Licence, 5 000 FCFA.
+          5. *Douanes Sénégalaises* (`douanes.sn`) : Forces de Défense, BFEM/Bac, 5 000 FCFA.
+          6. *Gendarmerie Nationale* (`gendarmerie.sn`) : Forces de Défense, BFEM/Bac/Licence, 5 000 FCFA.
+          7. *BNSP Sapeurs-Pompiers* (`bnsp.sn`) : Forces de Défense, BFEM/Bac, 5 000 FCFA.
+          8. *DAP Administration Pénitentiaire* (`justice.sec.gouv.sn`) : Forces de Défense, BFEM/Bac, 5 000 FCFA.
+          9. *FASTEF UCAD* (`fastef.ucad.sn`) : Éducation, Licence/Master, 10 000 FCFA.
+          10. *CREM Élèves-Maîtres* (`concours.education.sn`) : Éducation, Baccalauréat, 5 000 FCFA.
+          11. *INSEPS EPS* (`inseps.ucad.sn`) : Éducation, Baccalauréat, 10 000 FCFA.
+          12. *ESP Dakar* (`esp.sn`) : Grandes Écoles, Bac S/Technique, 10 000 FCFA.
+          13. *EPT Thiès* (`ept.sn`) : Grandes Écoles, Bac S1/S2/S3, 10 000 FCFA.
+          14. *ENSA Agronomie Thiès* (`ensa.sn`) : Grandes Écoles, Bac S1/S2, 10 000 FCFA.
+          15. *CESTI Journalisme* (`cesti.ucad.sn`) : Grandes Écoles, Bac toutes séries, 10 000 FCFA.
+          16. *EAMAC Aviation Civile* (`eamac.asecna.aero`) : Grandes Écoles, Bac S ou Licence scientifique, 15 000 FCFA.
+          17. *Baccalauréat Général & Technique* (`officedubac.sn`) : Examens Nationaux, Classe de Terminale, 5 000 FCFA.
+          18. *BFEM* (`men.gouv.sn`) : Examens Nationaux, Classe de 3ème, 1 500 FCFA.
+          19. *CFEE* (`men.gouv.sn`) : Examens Nationaux, Classe de CM2, 1 000 FCFA.
+          20. *ENDSS École Santé* (`sante.gouv.sn`) : Santé & Social, BFEM/Bac, 5 000 FCFA.
+          21. *ENTSS Travailleurs Sociaux* (`sante.gouv.sn`) : Santé & Social, Baccalauréat, 5 000 FCFA.
+          22. *Internat des Hôpitaux en Médecine* (`fmpo.ucad.sn`) : Santé & Social, 6ème année médecine, 10 000 FCFA.
+        - Synchronisation PostgreSQL : mise en œuvre d'`assurerConcoursInitiaux()` avec `INSERT ... ON CONFLICT (id) DO UPDATE SET ...` pour garantir que toute modification du catalogue mémoire est automatiquement et immédiatement répercutée en base.
+        - Correction du décompte exact `SELECT COUNT(*)` dans `listerConcours()`.
+      * `backend/routes/surga/concours.js` :
+        - Pagination augmentée à `limit = 50` par défaut pour que `SurgaConcoursModal.tsx` reçoive l'ensemble du catalogue.
+  * **Validation & Qualité** :
+    - Tests Jest : **127/127 validés (100%)**.
+    - Vérification live API : `http://localhost:3000/api/surga/concours` retourne `total: 22` et les 6 catégories sont pourvues (3 Fonction Publique, 5 Forces de Défense, 3 Enseignement, 5 Grandes Écoles, 3 Examens Nationaux, 3 Santé).
+    - Linter anti-slop : Conforme (`npm run lint:slop`, zéro émoji UI).
+ 
 - **Surga — Démarches Administratives Vérifiées : Enrichissement Majeur du Catalogue Officiel (20 Fiches Certifiées) & Synchronisation PostgreSQL (Session 2026-10-06 - Nuit 2, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Réponse à la demande utilisateur : « ajouter plus de demarche ».

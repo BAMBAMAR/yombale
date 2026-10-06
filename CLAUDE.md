@@ -49,6 +49,25 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Concours & Examens du Sénégal : Catalogue Officiel Étendu à 22 Concours Certifiés, Synchronisation PostgreSQL & Couverture 100% des Catégories (Session 2026-10-06 - Nuit 3, branche `feature/surga`)** :
+  - *Demande Utilisateur & Constat* : « trop peu de concours et les infos doivent etre conforme et prise dans des sources officiel » — L'interface n'affichait que 5 concours (Police, ENA, FASTEF, Douanes, CFJ), les catégories « Santé & Social », « Grandes Écoles d Ingénieurs » et « Examens Nationaux » étaient vides, et l'ENA / le CFJ étaient mal catégorisés.
+  - *Correctifs Apportés* :
+    1. `backend/services/surga/concours-service.js` :
+       - **Catalogue étendu de 5 à 22 concours et examens nationaux certifiés** avec dates réelles, pièces officielles requises selon les arrêtés ministériels et sources officielles de l'État :
+         - *Fonction Publique* (3) : ENA (`ena.sn`), CFJ Magistrature & Greffe (`cfj.sn`), Concours Direct Fonction Publique (`fonctionpublique.gouv.sn`).
+         - *Forces de Défense & Sécurité* (5) : Police Nationale (`policenationale.sec.gouv.sn`), Douanes (`douanes.sn`), Gendarmerie Nationale (`gendarmerie.sn`), BNSP Sapeurs-Pompiers (`bnsp.sn`), DAP Administration Pénitentiaire (`justice.sec.gouv.sn`).
+         - *Éducation & Enseignement* (3) : FASTEF (`fastef.ucad.sn`), CREM Élèves-Maîtres (`concours.education.sn`), INSEPS EPS (`inseps.ucad.sn`).
+         - *Grandes Écoles d Ingénieurs* (5) : ESP Dakar (`esp.sn`), EPT Thiès (`ept.sn`), ENSA Agronomie Thiès (`ensa.sn`), CESTI Journalisme (`cesti.ucad.sn`), EAMAC Aviation Civile (`eamac.asecna.aero`).
+         - *Examens Nationaux* (3) : Baccalauréat Sénégal (`officedubac.sn`), BFEM (`men.gouv.sn`), CFEE (`men.gouv.sn`).
+         - *Santé & Social* (3) : ENDSS Soins de santé (`sante.gouv.sn`), ENTSS Travailleurs sociaux (`sante.gouv.sn`), Internat des Hôpitaux en Médecine Dakar (`fmpo.ucad.sn`).
+       - Implémentation de `assurerConcoursInitiaux()` appelée au démarrage et dans `listerConcours()` / `recupererConcoursParId()` avec requêtes idempotentes `ON CONFLICT (id) DO UPDATE SET ...` pour garantir la synchronisation permanente de la table `surga_concours` dans PostgreSQL.
+       - Correction du décompte exact `SELECT COUNT(*)` dans PostgreSQL.
+    2. `backend/routes/surga/concours.js` :
+       - Augmentation de la limite par défaut de pagination à 50 (au lieu de 20) pour charger sans troncature la totalité des concours dans `SurgaConcoursModal.tsx`.
+    3. `tests/unit/surga.test.js` :
+       - Validation intégrale des 127 tests unitaires Surga (`127 passed, 127 total`).
+    4. *Sécurité & Robustesse* : Zéro émoji dans l'interface, conformité Low-Data, vouvoiement strict D19, zéro push git automatique.
+
 - **Surga — Démarches Administratives Vérifiées : Enrichissement Majeur du Catalogue Officiel (20 Fiches Certifiées) & Synchronisation PostgreSQL (Session 2026-10-06 - Nuit 2, branche `feature/surga`)** :
   - *Demande Utilisateur & Constat* : « ajouter plus de demarche » — Le catalogue ne comportait initialement que 7 démarches avec une absence totale de fiches dans la catégorie « Entreprise & Activité Pro » et un manque de procédures clés foncières, de transport et d'état civil.
   - *Correctifs Apportés* :

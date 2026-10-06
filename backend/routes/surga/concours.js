@@ -38,7 +38,7 @@ router.get('/concours', async (req, res) => {
       niveau = 'tous',
       q = '',
       page = 1,
-      limit = 20,
+      limit = 50,
     } = req.query;
 
     const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
@@ -47,7 +47,7 @@ router.get('/concours', async (req, res) => {
       statut,
       niveau,
       q,
-      limit: parseInt(limit, 10) || 20,
+      limit: parseInt(limit, 10) || 50,
       offset,
     });
 
