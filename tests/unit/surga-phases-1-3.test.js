@@ -509,5 +509,74 @@ describe('PHASE 4 — Distinction Vocale Sémantique & Services Locaux (Concours
     const traite = await traiterMessageWhatsAppSurga('+221770003344', 'aide');
     expect(traite).toBe(true);
   });
+
+  test('10. Reconnaissance Zéro-Rejet de Mots Uniques & Services (Screenshots Utilisateur)', () => {
+    // Cas screenshot 1 : « concours » seul
+    const resConcours = interpreterCommandeVocale('concours');
+    expect(resConcours.intention).toBe('SEARCH_CONCOURS');
+
+    // Cas screenshot 2 : « douane » seul
+    const resDouane = interpreterCommandeVocale('douane');
+    expect(resDouane.intention).toBe('SEARCH_CONCOURS');
+
+    // Cas screenshot 3 : « examen » seul
+    const resExamen = interpreterCommandeVocale('examen');
+    expect(resExamen.intention).toBe('SEARCH_CONCOURS');
+
+    // Cas screenshot 4 : « bon coin »
+    const resBonCoin = interpreterCommandeVocale('bon coin');
+    expect(resBonCoin.intention).toBe('SEARCH_PLACES');
+
+    // Nouveaux services & mots isolés
+    expect(interpreterCommandeVocale('bonnes adresses').intention).toBe('SEARCH_PLACES');
+    expect(interpreterCommandeVocale('resto').intention).toBe('SEARCH_PLACES');
+    expect(interpreterCommandeVocale('restaurant').intention).toBe('SEARCH_PLACES');
+    expect(interpreterCommandeVocale('immo').intention).toBe('SEARCH_IMMO');
+    expect(interpreterCommandeVocale('appartement').intention).toBe('SEARCH_IMMO');
+    expect(interpreterCommandeVocale('villa').intention).toBe('SEARCH_IMMO');
+    expect(interpreterCommandeVocale('meteo').intention).toBe('CHECK_METEO');
+    expect(interpreterCommandeVocale('pluie').intention).toBe('CHECK_METEO');
+    expect(interpreterCommandeVocale('sport').intention).toBe('CHECK_SPORT');
+    expect(interpreterCommandeVocale('lutte').intention).toBe('CHECK_SPORT');
+    expect(interpreterCommandeVocale('lamb').intention).toBe('CHECK_SPORT');
+    expect(interpreterCommandeVocale('presse').intention).toBe('OPEN_PRESSE');
+    expect(interpreterCommandeVocale('kiosque').intention).toBe('OPEN_PRESSE');
+    expect(interpreterCommandeVocale('emploi').intention).toBe('SEARCH_EMPLOI');
+    expect(interpreterCommandeVocale('cv').intention).toBe('SEARCH_EMPLOI');
+    expect(interpreterCommandeVocale('videos').intention).toBe('OPEN_VIDEOS');
+    expect(interpreterCommandeVocale('series').intention).toBe('OPEN_VIDEOS');
+    expect(interpreterCommandeVocale('calculatrice').intention).toBe('OPEN_CALCULATOR');
+    expect(interpreterCommandeVocale('notes').intention).toBe('OPEN_NOTES');
+    expect(interpreterCommandeVocale('depenses').intention).toBe('OPEN_DEPENSES');
+    expect(interpreterCommandeVocale('kalpe').intention).toBe('OPEN_DEPENSES');
+    expect(interpreterCommandeVocale('agenda').intention).toBe('OPEN_AGENDA');
+    expect(interpreterCommandeVocale('compte').intention).toBe('OPEN_COMPTE');
+    expect(interpreterCommandeVocale('premium').intention).toBe('OPEN_PREMIUM');
+    expect(interpreterCommandeVocale('pro').intention).toBe('OPEN_PRO');
+  });
+
+  test('11. Reconnaissance WhatsApp Zéro-Rejet de Mots Uniques & Services', () => {
+    expect(parserIntentionWhatsApp('concours').intention).toBe('SEARCH_CONCOURS');
+    expect(parserIntentionWhatsApp('douane').intention).toBe('SEARCH_CONCOURS');
+    expect(parserIntentionWhatsApp('examen').intention).toBe('SEARCH_CONCOURS');
+    expect(parserIntentionWhatsApp('bon coin').intention).toBe('SEARCH_PLACES');
+    expect(parserIntentionWhatsApp('bonnes adresses').intention).toBe('SEARCH_PLACES');
+    expect(parserIntentionWhatsApp('immo').intention).toBe('SEARCH_IMMO');
+    expect(parserIntentionWhatsApp('appartement').intention).toBe('SEARCH_IMMO');
+    expect(parserIntentionWhatsApp('meteo').intention).toBe('CHECK_METEO');
+    expect(parserIntentionWhatsApp('sport').intention).toBe('CHECK_SPORT');
+    expect(parserIntentionWhatsApp('presse').intention).toBe('OPEN_PRESSE');
+    expect(parserIntentionWhatsApp('emploi').intention).toBe('SEARCH_EMPLOI');
+    expect(parserIntentionWhatsApp('cv').intention).toBe('SEARCH_EMPLOI');
+    expect(parserIntentionWhatsApp('videos').intention).toBe('OPEN_VIDEOS');
+    expect(parserIntentionWhatsApp('calculatrice').intention).toBe('OPEN_CALCULATOR');
+    expect(parserIntentionWhatsApp('notes').intention).toBe('OPEN_NOTES');
+    expect(parserIntentionWhatsApp('depenses').intention).toBe('OPEN_DEPENSES');
+    expect(parserIntentionWhatsApp('agenda').intention).toBe('OPEN_AGENDA');
+    expect(parserIntentionWhatsApp('compte').intention).toBe('OPEN_COMPTE');
+    expect(parserIntentionWhatsApp('premium').intention).toBe('OPEN_PREMIUM');
+    expect(parserIntentionWhatsApp('pro').intention).toBe('OPEN_PRO');
+  });
 });
+
 

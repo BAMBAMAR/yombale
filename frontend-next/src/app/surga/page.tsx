@@ -423,9 +423,16 @@ export default function SurgaPage() {
         onOpenPremium={() => setIsPremiumOpen(true)}
         onOpenEmploi={() => setIsEmploiOpen(true)}
         onOpenConcours={() => setIsConcoursOpen(true)}
+        onOpenPlaces={() => setIsPlacesOpen(true)}
         onOpenImmo={() => setIsImmoOpen(true)}
         onOpenTrafic={() => setIsTraficOpen(true)}
         onOpenDemarches={() => setIsDemarchesOpen(true)}
+        onOpenPresse={() => setIsPresseOpen(true)}
+        onOpenVideos={() => setIsVideosOpen(true)}
+        onOpenCalc={() => setIsCalcOpen(true)}
+        onOpenCompte={() => setIsCompteOpen(true)}
+        onOpenPro={() => setIsProOpen(true)}
+        onNavigateTab={(t) => setActiveTab(t)}
         onInjectMontantCalc={() => setActiveTab('depenses')}
         onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
         onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote}

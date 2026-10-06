@@ -1,5 +1,30 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga / Reconnaissance Vocale Exhaustive Zéro-Rejet (Mots Uniques, Synonymes & Couverture 100% des 20 Services Surga) (Session 2026-10-06 - Nuit 7 bis, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Éradication totale des rejets vocaux et textuels WhatsApp sur les mots simples isolés (« concours », « douane », « examen », « bon coin ») qui étaient auparavant rejetés en commande inconnue par manque de mots périphériques.
+    - Extension à l'intégralité des 20 services Surga (PWA, Fast-Path L0, Fallback L1 Gemini et WhatsApp) assurant une complétude 100% sans trou de couverture.
+    - Modularisation senior des composants d'affichage vocal (< 450 lignes) et intégration de cartes d'action directes sans boutons superflus Valider/Annuler.
+  * **Chantiers Clés Livrés** :
+    1. **Parser Vocale & Textuel Zéro-Rejet des Mots Uniques & Shorthands** :
+       - Support déterministe immédiat des mots seuls et syntagmes courts (« concours », « douane », « examen », « bon coin », « resto », « immo », « appartement », « météo », « sport », « lutte », « lamb », « presse », « kiosque », « emploi », « cv », « vidéos », « séries », « calculatrice », « notes », « dépenses », « agenda », « compte », « premium », « pro »).
+       - Élimination des contraintes d'expressions régulières exigeant des verbes ou des compléments pour déclencher le service.
+    2. **Couverture Exhaustive des 20 Services Surga** :
+       - Alignement 1:1 rigoureux entre `frontend-next/src/lib/surga-voice.ts`, `backend/services/surga/voice-interpreter.js`, `backend/services/surga/ai-interpreter.js` et `backend/services/surga/whatsapp-handler.js`.
+       - Ajout des intentions dédiées : `SEARCH_PLACES`, `SEARCH_IMMO`, `CHECK_METEO`, `CHECK_SPORT`, `OPEN_PRESSE`, `SEARCH_EMPLOI`, `OPEN_VIDEOS`, `OPEN_CALCULATOR`, `OPEN_NOTES`, `OPEN_DEPENSES`, `OPEN_AGENDA`, `OPEN_COMPTE`, `OPEN_PREMIUM`, `OPEN_PRO`.
+    3. **PWA : Cartes d'Action Contextuelles Dédiées & Modularisation Senior** :
+       - Composant modulaire `<SurgaVoiceServiceCard>` (`SurgaVoiceServiceCard.tsx`, 311 l., < 450 l.) factorisé avec `ServiceItem`.
+       - `<SurgaVoiceConfirmation>` (`SurgaVoiceConfirmation.tsx`, 206 l., < 450 l.) allégé et recentré sur la validation des écritures (`ADD_EXPENSE`, `ADD_REMINDER`, `ADD_NOTE`) et l'affichage des calculs exacts.
+       - Chaque service dispose d'un libellé contextuel clair et d'un bouton d'action directe (« Découvrir les adresses », « Voir les annonces immo », « Consulter la météo », « Ouvrir le kiosque », « Ouvrir la calculatrice », etc.).
+       - Pastilles d'exemples enrichies dans `SurgaVoiceModal.tsx` reflétant les déclencheurs courts (« Concours », « Bon coin », « Rappel 8h », « 2 500 taxi », « Trafic VDN », « Passeport », « Appartement », « Météo », « Radio », « 15 000 * 3 »).
+    4. **WhatsApp : Réponses Structurées et Raccourcis pour les 20 Services** :
+       - Routage automatique dans `whatsapp-handler.js` pour fournir un retour informatif direct avec lien certifié PWA vers le bon écran pour chaque service.
+  * **Score & Tests** :
+    - `tests/unit/surga.test.js` : **129/129 PASS (100%)**.
+    - `tests/unit/surga-phases-1-3.test.js` : **29/29 PASS (100%)**.
+    - Total général : **158 tests unitaires passants**.
+    - Frontend Next.js : **0 erreur TypeScript**, **0 violation de linter anti-slop**.
+ 
 - **Surga / Distinction Vocale Sémantique & Extension Services Locaux (Concours, Trafic, Démarches, Radio, WhatsApp) (Session 2026-10-06 - Nuit 7, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Élimination des lacunes vocales et mise en œuvre des recommandations d'expérience utilisateur (disambiguation sémantique, couverture complète des services locaux, guidage interactif et découvrabilité).

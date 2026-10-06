@@ -3,6 +3,29 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 7 bis] — Reconnaissance Vocale Exhaustive Zéro-Rejet (Mots Uniques, Synonymes & Couverture 100% des 20 Services Surga)
+- **Objectif Atteint :**
+  - Éliminer le problème de rejet des commandes courtes ou mots uniques (« concours », « douane », « examen », « bon coin ») qui provoquaient une erreur "Commande non reconnue".
+  - Assurer une couverture vocale et textuelle WhatsApp exhaustive à 100% sur l'intégralité des 20 services Surga.
+  - Respecter scrupuleusement la règle d'or senior de modularisation (< 450 lignes par composant) en factorisant les cartes d'action vocale contextuelles.
+- **Réalisations & Fichiers Clés :**
+  1. *Parser Vocal Déterministe (`frontend-next/src/lib/surga-voice.ts` & `backend/services/surga/voice-interpreter.js`)* :
+     - Ajout de règles de détection isolées et shorthand pour l'ensemble des services : Lieux (`SEARCH_PLACES`), Immo (`SEARCH_IMMO`), Météo (`CHECK_METEO`), Sport (`CHECK_SPORT`), Presse (`OPEN_PRESSE`), Emploi/CV (`SEARCH_EMPLOI`), Vidéos (`OPEN_VIDEOS`), Calculatrice (`OPEN_CALCULATOR`), Notes (`OPEN_NOTES`), Dépenses (`OPEN_DEPENSES`), Agenda (`OPEN_AGENDA`), Compte (`OPEN_COMPTE`), Premium (`OPEN_PREMIUM`), Pro (`OPEN_PRO`).
+  2. *Interpréteur Hybride Fast-Path & Fallback LLM (`backend/services/surga/ai-interpreter.js`)* :
+     - Intégration de la reconnaissance L0 et compatibilité schéma L1 pour les nouvelles intentions.
+  3. *Composants UI PWA Dédiés (`frontend-next/src/app/surga/components/`)* :
+     - `SurgaVoiceServiceCard.tsx` (311 l., < 450 l.) : factorisation propre des cartes de guidage et d'action directe vers chaque écran et modale avec `ServiceItem`.
+     - `SurgaVoiceConfirmation.tsx` (206 l., < 450 l.) : allègement senior et concentration sur les écritures (`ADD_EXPENSE`, `ADD_REMINDER`, `ADD_NOTE`) et la calculatrice exacte.
+     - `SurgaVoiceModal.tsx` : pastilles d'exemples enrichies de syntagmes courts (« Concours », « Bon coin », « Rappel 8h », « 2 500 taxi », etc.).
+     - `SurgaModalsContainer.tsx` & `page.tsx` : navigation fluide et déclencheurs vers toutes les modales et onglets.
+  4. *Routage WhatsApp Structuré (`backend/services/surga/whatsapp-handler.js`)* :
+     - Parser étendu et réponses informatives directes avec lien certifié PWA pour l'ensemble des 20 services.
+- **Validation & Scores :**
+  - `tests/unit/surga.test.js` : **129/129 PASS (100%)**.
+  - `tests/unit/surga-phases-1-3.test.js` : **29/29 PASS (100%)**.
+  - Total : **158 tests unitaires passants**.
+  - TypeScript Frontend : **0 erreur**. Linter anti-slop : **0 violation**.
+
 ### [2026-10-06 — Nuit 7] — Distinction Vocale Sémantique & Services Locaux (Concours, Trafic, Démarches, Radio, WhatsApp)
 - **Objectif Atteint :**
   - Corriger l'ensemble des lacunes vocales et mettre en œuvre les recommandations d'ergonomie et de guidage pour l'utilisateur.

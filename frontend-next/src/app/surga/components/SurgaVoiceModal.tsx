@@ -58,17 +58,33 @@ interface SurgaVoiceModalProps {
   onConfirmerNote?: (note: { titre: string; contenu: string }) => Promise<void>;
   onConfirmerRappel?: (rappel: { titre: string; date: string; heure: string }) => Promise<void>;
   onOpenConcours?: (query?: string) => void;
-  onOpenTrafic?: () => void;
+  onOpenPlaces?: (query?: string) => void;
+  onOpenTrafic?: (axe?: string) => void;
   onOpenDemarches?: (query?: string) => void;
+  onOpenImmo?: (query?: string) => void;
+  onOpenMeteo?: () => void;
+  onOpenSport?: () => void;
+  onOpenPresse?: () => void;
   onOpenRadio?: (station?: string) => void;
+  onOpenEmploi?: () => void;
+  onOpenVideos?: () => void;
+  onOpenCalc?: () => void;
+  onOpenCompte?: () => void;
+  onOpenPremium?: () => void;
+  onOpenPro?: () => void;
+  onNavigateTab?: (tab: 'notes' | 'depenses' | 'agenda' | 'aujourdhui' | 'services') => void;
 }
 
 const PASTILLES_EXEMPLES = [
-  { label: 'Concours Douanes', texte: 'cherche concours douanes' },
-  { label: 'Rappel demain 8h', texte: 'rappelle-moi demain à 8h réviser' },
-  { label: '2 500 FCFA taxi', texte: 'note 2500 taxi' },
-  { label: 'Trafic VDN', texte: 'trafic sur la VDN' },
+  { label: 'Concours', texte: 'concours' },
+  { label: 'Bon coin', texte: 'bon coin' },
+  { label: 'Rappel 8h', texte: 'rappel demain 8h' },
+  { label: '2 500 taxi', texte: 'note 2500 taxi' },
+  { label: 'Trafic VDN', texte: 'trafic VDN' },
   { label: 'Passeport', texte: 'comment faire mon passeport' },
+  { label: 'Appartement', texte: 'appartement' },
+  { label: 'Météo', texte: 'météo' },
+  { label: 'Radio', texte: 'radio' },
   { label: '15 000 * 3', texte: '15000 fois 3' },
 ];
 
@@ -79,9 +95,21 @@ export default function SurgaVoiceModal({
   onConfirmerNote,
   onConfirmerRappel,
   onOpenConcours,
+  onOpenPlaces,
   onOpenTrafic,
   onOpenDemarches,
+  onOpenImmo,
+  onOpenMeteo,
+  onOpenSport,
+  onOpenPresse,
   onOpenRadio,
+  onOpenEmploi,
+  onOpenVideos,
+  onOpenCalc,
+  onOpenCompte,
+  onOpenPremium,
+  onOpenPro,
+  onNavigateTab,
 }: SurgaVoiceModalProps) {
   const [estSupporte, setEstSupporte] = useState(true);
   const [enEcoute, setEnEcoute] = useState(false);
@@ -441,17 +469,65 @@ export default function SurgaVoiceModal({
               onClose();
               if (onOpenConcours) onOpenConcours(q);
             }}
-            onOpenTrafic={() => {
+            onOpenPlaces={(q) => {
               onClose();
-              if (onOpenTrafic) onOpenTrafic();
+              if (onOpenPlaces) onOpenPlaces(q);
+            }}
+            onOpenTrafic={(axe) => {
+              onClose();
+              if (onOpenTrafic) onOpenTrafic(axe);
             }}
             onOpenDemarches={(q) => {
               onClose();
               if (onOpenDemarches) onOpenDemarches(q);
             }}
+            onOpenImmo={(q) => {
+              onClose();
+              if (onOpenImmo) onOpenImmo(q);
+            }}
+            onOpenMeteo={() => {
+              onClose();
+              if (onOpenMeteo) onOpenMeteo();
+            }}
+            onOpenSport={() => {
+              onClose();
+              if (onOpenSport) onOpenSport();
+            }}
+            onOpenPresse={() => {
+              onClose();
+              if (onOpenPresse) onOpenPresse();
+            }}
             onOpenRadio={(st) => {
               onClose();
               if (onOpenRadio) onOpenRadio(st);
+            }}
+            onOpenEmploi={() => {
+              onClose();
+              if (onOpenEmploi) onOpenEmploi();
+            }}
+            onOpenVideos={() => {
+              onClose();
+              if (onOpenVideos) onOpenVideos();
+            }}
+            onOpenCalc={() => {
+              onClose();
+              if (onOpenCalc) onOpenCalc();
+            }}
+            onOpenCompte={() => {
+              onClose();
+              if (onOpenCompte) onOpenCompte();
+            }}
+            onOpenPremium={() => {
+              onClose();
+              if (onOpenPremium) onOpenPremium();
+            }}
+            onOpenPro={() => {
+              onClose();
+              if (onOpenPro) onOpenPro();
+            }}
+            onNavigateTab={(tab) => {
+              onClose();
+              if (onNavigateTab) onNavigateTab(tab);
             }}
           />
         )}

@@ -149,10 +149,18 @@ function validerCommandeMetier(intention, data = {}) {
     };
   }
 
-  if (intention === 'BRIEFING') {
+  if (['SEARCH_PLACES', 'SEARCH_IMMO'].includes(intention)) {
+    const q = String(data.query || '').slice(0, 100).trim();
     return {
       valide: true,
-      donneesValidees: {},
+      donneesValidees: { query: q || 'Dakar' },
+    };
+  }
+
+  if (['CHECK_METEO', 'CHECK_SPORT', 'OPEN_PRESSE', 'SEARCH_EMPLOI', 'OPEN_VIDEOS', 'OPEN_CALCULATOR', 'OPEN_NOTES', 'OPEN_DEPENSES', 'OPEN_AGENDA', 'OPEN_COMPTE', 'OPEN_PREMIUM', 'OPEN_PRO', 'BRIEFING'].includes(intention)) {
+    return {
+      valide: true,
+      donneesValidees: data || {},
     };
   }
 
@@ -174,7 +182,7 @@ Analyse la phrase suivante et déduis l'intention exacte de l'utilisateur sous f
 
 Schéma JSON attendu :
 {
-  "intention": "ADD_EXPENSE" | "ADD_REMINDER" | "ADD_NOTE" | "CALCULATE" | "SEARCH_CONCOURS" | "CHECK_TRAFFIC" | "SEARCH_DEMARCHES" | "PLAY_RADIO" | "BRIEFING" | "INCONNU",
+  "intention": "ADD_EXPENSE" | "ADD_REMINDER" | "ADD_NOTE" | "CALCULATE" | "SEARCH_CONCOURS" | "SEARCH_PLACES" | "CHECK_TRAFFIC" | "SEARCH_DEMARCHES" | "SEARCH_IMMO" | "CHECK_METEO" | "CHECK_SPORT" | "OPEN_PRESSE" | "PLAY_RADIO" | "SEARCH_EMPLOI" | "OPEN_VIDEOS" | "OPEN_CALCULATOR" | "OPEN_NOTES" | "OPEN_DEPENSES" | "OPEN_AGENDA" | "OPEN_COMPTE" | "OPEN_PREMIUM" | "OPEN_PRO" | "BRIEFING" | "INCONNU",
   "data": {
     "montant": number ou null (en FCFA),
     "categorie": "Alimentation" | "Transport" | "Logement" | "Santé" | "Factures" | "Loisirs" | "Autre",
@@ -299,7 +307,15 @@ async function interpreterCommandeHybride(texte) {
     } else if (l0Result.intention === 'PLAY_RADIO' && l0Result.radioData) {
       donneesL0 = l0Result.radioData;
       sensible = false;
-    } else if (l0Result.intention === 'BRIEFING') {
+    } else if (l0Result.intention === 'SEARCH_PLACES' && l0Result.placesData) {
+      donneesL0 = l0Result.placesData;
+      sensible = false;
+      msg = `Bonnes adresses & bons plans : "${donneesL0.query}".`;
+    } else if (l0Result.intention === 'SEARCH_IMMO' && l0Result.immoData) {
+      donneesL0 = l0Result.immoData;
+      sensible = false;
+      msg = `Pôle Immobilier : "${donneesL0.query}".`;
+    } else if (['CHECK_METEO', 'CHECK_SPORT', 'OPEN_PRESSE', 'SEARCH_EMPLOI', 'OPEN_VIDEOS', 'OPEN_CALCULATOR', 'OPEN_NOTES', 'OPEN_DEPENSES', 'OPEN_AGENDA', 'OPEN_COMPTE', 'OPEN_PREMIUM', 'OPEN_PRO', 'BRIEFING'].includes(l0Result.intention)) {
       donneesL0 = {};
       sensible = false;
     }

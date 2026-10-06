@@ -73,14 +73,14 @@ function parserIntentionWhatsApp(texteBrut) {
     return { intention: 'BRIEFING' };
   }
 
-  // 2.2 Concours & Examens Nationaux (ex: "cherche concours douanes", "concours police", "date concours ena")
-  const matchConcours = texteNettoye.match(/^(?:cherche|recherche|trouve|info|statut|date|dossier|quand(?:\s+a\s+lieu)?(?:\s+le)?|c['’]est\s+quand\s+le)?\s*concours\s+(?:de\s+(?:la\s+)?|d['’]\s*)?([a-z0-9\s_-]+)$/i);
+  // 2.2 Concours & Examens Nationaux (ex: "concours", "examen", "cherche concours douanes", "concours police")
+  const matchConcours = texteNettoye.match(/^(?:cherche|recherche|trouve|info|statut|date|dossier|quand(?:\s+a\s+lieu)?(?:\s+le)?|c['’]est\s+quand\s+le)?\s*(?:concours|examens?)(?:\s+(?:de\s+(?:la\s+)?|d['’]\s*)?([a-z0-9\s_-]*))?$/i);
   const matchSigleConcoursDirect = texteNettoye.match(/^(?:cherche|recherche|info|date)?\s*(douanes?|police|ena|gendarmerie|fastef|crem|cfj|sapeurs[- ]pompiers|bnsp|baccalaur[ée]at|bfem|cesti|esp|ensa)\b/i);
 
   if (matchConcours) {
     return {
       intention: 'SEARCH_CONCOURS',
-      query: matchConcours[1].trim(),
+      query: (matchConcours[1] || '').trim(),
     };
   } else if (matchSigleConcoursDirect && !/(taxi|repas|courses|cfa|fcfa)/i.test(texteNettoye)) {
     return {
@@ -89,7 +89,37 @@ function parserIntentionWhatsApp(texteBrut) {
     };
   }
 
-  // 2.3 Démarches administratives citoyennes (ex: "comment faire mon passeport", "pièces carte identité", "permis")
+  // 2.3 Bonnes adresses & Lieux / Bon coin Dakar
+  if (/^(?:bon\s*coin|bonnes?\s*adresses?|resto|restaurants?|sorties?|lieux?)\b/i.test(texteNettoye)) {
+    return { intention: 'SEARCH_PLACES', query: texteNettoye };
+  }
+
+  // 2.4 Immobilier certifié
+  if (/^(?:immo|immobilier|appartement|appartements?|villa|villas?|studio|studios?|location\s+maison)\b/i.test(texteNettoye) && !/(cfa|fcfa|\d{4,})/i.test(texteNettoye)) {
+    return { intention: 'SEARCH_IMMO', query: texteNettoye };
+  }
+
+  // 2.5 Météo & Climat Dakar
+  if (/^(?:meteo|m[ée]t[ée]o|previsions?\s+meteo|pluie|temperature|quel\s+temps)\b/i.test(texteNettoye)) {
+    return { intention: 'CHECK_METEO' };
+  }
+
+  // 2.6 Sport & Lutte sénégalaise
+  if (/^(?:sport|sports|foot|football|lutte|lamb|classement\s+foot)\b/i.test(texteNettoye)) {
+    return { intention: 'CHECK_SPORT' };
+  }
+
+  // 2.7 Presse & Kiosque des Unes
+  if (/^(?:presse|journaux|kiosque|revue\s+de\s+presse|les\s+unes)\b/i.test(texteNettoye)) {
+    return { intention: 'OPEN_PRESSE' };
+  }
+
+  // 2.8 Emploi & Recrutement
+  if (/^(?:emploi|emplois|offres?\s+d['’]emploi|recrutement|cv|stages?)\b/i.test(texteNettoye)) {
+    return { intention: 'SEARCH_EMPLOI', query: texteNettoye };
+  }
+
+  // 2.9 Démarches administratives citoyennes (ex: "comment faire mon passeport", "pièces carte identité", "permis")
   const matchDemarche = texteNettoye.match(/^(?:comment\s+(?:faire|obtenir|renouveler)|pi[èe]ces?\s+(?:pour|du)?|d[ée]marche\s+(?:pour)?)\s+([a-z0-9\s_-]+)$/i);
   if (matchDemarche || /(?:passeport|carte\s+d['’]identit[ée]|cni|permis\s+de\s+conduire|casier\s+judiciaire|certificat\s+de\s+nationalit[ée])/i.test(texteNettoye)) {
     let qDemarche = matchDemarche ? matchDemarche[1].trim() : texteNettoye;
@@ -102,7 +132,7 @@ function parserIntentionWhatsApp(texteBrut) {
     }
   }
 
-  // 2.4 Trafic routier Dakar Live (ex: "quel est le trafic sur la vdn", "état du trafic", "bouchon corniche")
+  // 2.10 Trafic routier Dakar Live (ex: "quel est le trafic sur la vdn", "état du trafic", "bouchon corniche")
   const matchTrafic = texteNettoye.match(/^(?:(?:quel\s+est\s+le|point|etat\s+du)\s+)?(?:trafic|circulation|bouchons?|ralentissements?)\s*(?:sur\s+(?:la\s+)?|[àa]\s+(?:la\s+)?|de\s+)?([a-z0-9\s_-]*)$/i);
   if (matchTrafic || /(?:trafic|bouchon|circulation)\s+(vdn|corniche|p[ée]age|autoroute|patte\s+d['’]oie|rn1)/i.test(texteNettoye)) {
     const rawAxe = matchTrafic ? matchTrafic[1].trim() : texteNettoye;
@@ -119,7 +149,50 @@ function parserIntentionWhatsApp(texteBrut) {
     };
   }
 
+  // 2.11 Radios FM Dakar
+  if (/^(?:radio|radios|ecouter\s+(?:la\s+)?radio|rfm|zik\s*fm|rfi|al\s*fayda)\b/i.test(texteNettoye)) {
+    return { intention: 'OPEN_RADIO' };
+  }
+
+  // 2.12 Séries TV & Vidéos
+  if (/^(?:videos?|vid[ée]os?|s[ée]ries?|marodi|evenprod|replay)\b/i.test(texteNettoye)) {
+    return { intention: 'OPEN_VIDEOS' };
+  }
+
+  // 2.13 Agenda & Calendrier
+  if (/^(?:agenda|calendrier|[ée]v[ée]nements?|planning)\b/i.test(texteNettoye)) {
+    return { intention: 'OPEN_AGENDA' };
+  }
+
+  // 2.14 Dépenses & Kalpé (sans chiffre de dépense directe)
+  if (/^(?:d[ée]penses?|budget|kalp[ée]|portefeuille|mes\s+d[ée]penses)$/i.test(texteNettoye)) {
+    return { intention: 'OPEN_DEPENSES' };
+  }
+
+  // 2.15 Compte & Profil
+  if (/^(?:compte|profil|param[èe]tres|mon\s+compte)$/i.test(texteNettoye)) {
+    return { intention: 'OPEN_COMPTE' };
+  }
+
+  // 2.16 Premium & Abonnement
+  if (/^(?:premium|abonnement|pass\s+premium)$/i.test(texteNettoye)) {
+    return { intention: 'OPEN_PREMIUM' };
+  }
+
+  // 2.17 Espace Pro B2B
+  if (/^(?:pro|espace\s+pro|b2b|partenaire|partenaires)$/i.test(texteNettoye)) {
+    return { intention: 'OPEN_PRO' };
+  }
+
+  // 2.18 Notes & Mémos
+  if (/^(?:notes?|mes\s+notes|carnet|memos?)$/i.test(texteNettoye)) {
+    return { intention: 'OPEN_NOTES' };
+  }
+
   // 3. Calculatrice
+  if (/^(?:calculatrice|calculette|ouvr(?:ir|e)?\s+la\s+calculatrice)$/i.test(texteNettoye)) {
+    return { intention: 'OPEN_CALCULATOR' };
+  }
   const matchCalcul = texteNettoye.match(/^(?:calcule|combien fait|calcul)\s+(.+)$/i);
   if (matchCalcul) {
     return { intention: 'CALCULATE', expression: matchCalcul[1].trim() };
@@ -229,6 +302,11 @@ function parserIntentionWhatsApp(texteBrut) {
       titre: contenu.slice(0, 60),
       contenu,
     };
+  }
+
+  // Mot seul "note" ou "notes" ou "carnet" -> Consultation du carnet
+  if (/^(?:notes?|mes\s+notes|carnet|bloc[- ]notes?)$/i.test(texteNettoye)) {
+    return { intention: 'OPEN_NOTES' };
   }
 
   return { intention: 'INCONNU' };
@@ -631,6 +709,167 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
       await sendWhatsAppText(normPh, `Surga : Consultez votre guide des démarches : https://surga.nopalou.com`);
       return true;
     }
+  }
+
+  // ── 3.6 Bonnes Adresses & Lieux / Bon Coin Dakar ───────────────────────────
+  if (parseResult.intention === 'SEARCH_PLACES') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Bonnes Adresses & Bon Coin Dakar :\n\n` +
+      `Retrouvez les meilleures adresses, restaurants, dibiteries et sorties certifiées avec géolocalisation et contacts directs sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.7 Immobilier Certifié ─────────────────────────────────────────────────
+  if (parseResult.intention === 'SEARCH_IMMO') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Immobilier certifié Dakar :\n\n` +
+      `Consultez les annonces vérifiées d'appartements, villas et studios sans commission cachée sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.8 Météo Dakar Live ───────────────────────────────────────────────────
+  if (parseResult.intention === 'CHECK_METEO') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Météo Dakar en direct :\n\n` +
+      `Consultez la météo côtière, températures, indice UV et prévisions sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.9 Sport & Lutte Sénégalaise ───────────────────────────────────────────
+  if (parseResult.intention === 'CHECK_SPORT') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Sport & Lamb (Lutte sénégalaise) :\n\n` +
+      `Suivez les résultats de football, l'actualité sportive et les grands combats de lutte sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.10 Presse & Kiosque des Unes ──────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_PRESSE') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Revue de Presse & Kiosque des Unes :\n\n` +
+      `Consultez les Unes des quotidiens nationaux sénégalais en direct sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.11 Emploi & Opportunités ──────────────────────────────────────────────
+  if (parseResult.intention === 'SEARCH_EMPLOI') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Emploi & Recrutement Sénégal :\n\n` +
+      `Consultez les offres d'emploi vérifiées et préparez vos entretiens sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.12 Radios FM Dakar ────────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_RADIO') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Radios FM Dakar en direct :\n\n` +
+      `Écoutez RFM, Zik FM, RFI, Al Fayda et vos stations sénégalaises favorites en direct sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.13 Séries TV & Vidéos ─────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_VIDEOS') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Séries TV & Replays sénégalais :\n\n` +
+      `Retrouvez vos séries et émissions favorites (Marodi, EvenProd, TFM) sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.14 Agenda & Événements ────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_AGENDA') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Agenda & Calendrier :\n\n` +
+      `Consultez votre planning et vos rappels programmés sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.15 Dépenses & Kalpé ───────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_DEPENSES') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Kalpé & Dépenses du mois :\n\n` +
+      `Suivez votre budget, vos totaux par catégorie et votre solde sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.16 Carnet de Notes ────────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_NOTES') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Carnet de Notes :\n\n` +
+      `Consultez l'ensemble de vos notes et mémos enregistrés sur votre PWA :\n` +
+      `https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.17 Mon Compte & Profil ────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_COMPTE') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Compte & Profil personnel :\n\n` +
+      `Gérez vos informations de compte, vos sauvegardes et vos préférences sur : https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.18 Surga Premium ──────────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_PREMIUM') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Surga Premium (1 500 FCFA/mois) :\n\n` +
+      `Débloquez les commandes WhatsApp illimitées et les fonctionnalités prioritaires sur : https://surga.nopalou.com/premium`
+    );
+    return true;
+  }
+
+  // ── 3.19 Espace Pro B2B ─────────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_PRO') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Espace Professionnel & Partenaires B2B :\n\n` +
+      `Découvrez nos solutions entreprises et partenariats certifiés sur : https://surga.nopalou.com`
+    );
+    return true;
+  }
+
+  // ── 3.20 Calculatrice ───────────────────────────────────────────────────────
+  if (parseResult.intention === 'OPEN_CALCULATOR') {
+    await sendWhatsAppText(
+      normPh,
+      `Surga : Calculatrice déterministe FCFA :\n\n` +
+      `Posez votre calcul directement (ex: "calcule 15000 * 3" ou "5000 + 18%") ou ouvrez la calculatrice sur votre PWA : https://surga.nopalou.com`
+    );
+    return true;
   }
 
   // ── 4. Chaîne de confirmation préalable obligatoire pour les écritures ──────

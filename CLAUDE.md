@@ -49,6 +49,22 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Reconnaissance Vocale Exhaustive Zéro-Rejet (Mots Uniques, Synonymes & Couverture 100% des 20 Services Surga) (Session 2026-10-06 - Nuit 7 bis, branche `feature/surga`)** :
+  - *Lacunes Corrigées & Évolutions Majeures* :
+    1. **Élimination du Rejet sur Mots Uniques & Shorthand** : Correction de la faille de parsing sur les mots uniques (« concours », « examen », « bon coin ») qui étaient rejetés en "Commande non reconnue" car l'expression régulière exigeait des mots supplémentaires. Le parser gère désormais les mots seuls et les syntagmes courts sans exiger de phrase complexe.
+    2. **Couverture Exhaustive des 20 Services Surga** : Ajout de 14 nouvelles intentions vocales couvrant l'intégralité des fonctionnalités :
+       - `SEARCH_PLACES` : « bon coin », « bonnes adresses », « resto », « restaurant », « dibi », « sortir », « manger ».
+       - `SEARCH_IMMO` : « immo », « immobilier », « appartement », « appart », « villa », « studio », « maison », « louer », « location », « achat ».
+       - `CHECK_METEO` : « meteo », « météo », « temps », « pluie », « temperature ».
+       - `CHECK_SPORT` : « sport », « foot », « football », « lutte », « lamb », « combat ».
+       - `OPEN_PRESSE` : « presse », « journaux », « journal », « kiosque », « revue de presse », « la une ».
+       - `SEARCH_EMPLOI` : « emploi », « travail », « recrutement », « job », « cv », « entretien ».
+       - `OPEN_VIDEOS` : « videos », « vidéos », « series », « séries », « youtube », « tele », « lutte video ».
+       - `OPEN_CALCULATOR`, `OPEN_NOTES`, `OPEN_DEPENSES`, `OPEN_AGENDA`, `OPEN_COMPTE`, `OPEN_PREMIUM`, `OPEN_PRO` : Déclencheurs vocaux directs vers chaque écran et modal de Surga.
+    3. **Cartes d'Action Contextuelles Dédiées (PWA)** : Dans `SurgaVoiceConfirmation.tsx`, affichage d'une carte personnalisée avec description claire et bouton d'action directe (« Découvrir les adresses », « Voir les annonces immo », « Consulter la météo », « Ouvrir le kiosque », « Ouvrir la calculatrice », etc.) sans boutons superflus Valider/Annuler.
+    4. **Alignement 1:1 Frontend PWA & Backend Node.js** : Parser déterministe répliqué fidèlement dans `frontend-next/src/lib/surga-voice.ts`, `backend/services/surga/voice-interpreter.js`, `backend/services/surga/ai-interpreter.js` et `backend/services/surga/whatsapp-handler.js`.
+    5. **Tests & Intégrité** : 158/158 tests unitaires validés avec succès (`surga.test.js` 129/129, `surga-phases-1-3.test.js` 29/29), `npx tsc --noEmit` sans erreur, audit lint Anti-IA-slop validé, modularisation stricte < 450 lignes (`SurgaVoiceConfirmation.tsx` 206 l., `SurgaVoiceServiceCard.tsx` 311 l.).
+
 - **Surga / Distinction Vocale Sémantique & Extension Services Locaux (Concours, Trafic, Démarches, Radio, WhatsApp) (Session 2026-10-06 - Nuit 7, branche `feature/surga`)** :
   - *Lacunes Corrigées & Évolutions Majeures* :
     1. **Priorité Sémantique Stricte & Anti-Collision Vocale** : Résolution de la confusion entre dépenses et rappels. L'ancrage temporel (ex: "note réunion demain à 10h") est priorisé sur le mot "note" pour produire fidèlement un `ADD_REMINDER` avec titre accentué préservé. Exclusion stricte des heures (`10h`, `15h`) du calcul de montant financier dans `voice-interpreter.js` et `surga-voice.ts`.

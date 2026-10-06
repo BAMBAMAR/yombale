@@ -71,9 +71,16 @@ interface SurgaModalsContainerProps {
   onOpenPremium?: () => void
   onOpenEmploi?: () => void
   onOpenConcours?: () => void
+  onOpenPlaces?: () => void
   onOpenImmo?: () => void
   onOpenTrafic?: () => void
   onOpenDemarches?: () => void
+  onOpenPresse?: () => void
+  onOpenVideos?: () => void
+  onOpenCalc?: () => void
+  onOpenCompte?: () => void
+  onOpenPro?: () => void
+  onNavigateTab?: (tab: 'notes' | 'depenses' | 'agenda' | 'aujourdhui' | 'services') => void
 
   onInjectMontantCalc: () => void
   onOpenRadioFromPresse?: () => void
@@ -134,9 +141,16 @@ export default function SurgaModalsContainer({
   onOpenPremium,
   onOpenEmploi,
   onOpenConcours,
+  onOpenPlaces,
   onOpenImmo,
   onOpenTrafic,
   onOpenDemarches,
+  onOpenPresse,
+  onOpenVideos,
+  onOpenCalc,
+  onOpenCompte,
+  onOpenPro,
+  onNavigateTab,
 
   onInjectMontantCalc,
   onOpenRadioFromPresse,
@@ -172,6 +186,10 @@ export default function SurgaModalsContainer({
             onCloseVoice()
             if (onOpenConcours) onOpenConcours()
           }}
+          onOpenPlaces={() => {
+            onCloseVoice()
+            if (onOpenPlaces) onOpenPlaces()
+          }}
           onOpenTrafic={() => {
             onCloseVoice()
             if (onOpenTrafic) onOpenTrafic()
@@ -180,9 +198,53 @@ export default function SurgaModalsContainer({
             onCloseVoice()
             if (onOpenDemarches) onOpenDemarches()
           }}
+          onOpenImmo={() => {
+            onCloseVoice()
+            if (onOpenImmo) onOpenImmo()
+          }}
+          onOpenMeteo={() => {
+            onCloseVoice()
+            if (onNavigateTab) onNavigateTab('services')
+          }}
+          onOpenSport={() => {
+            onCloseVoice()
+            if (onNavigateTab) onNavigateTab('services')
+          }}
+          onOpenPresse={() => {
+            onCloseVoice()
+            if (onOpenPresse) onOpenPresse()
+          }}
           onOpenRadio={() => {
             onCloseVoice()
             openRadioModal()
+          }}
+          onOpenEmploi={() => {
+            onCloseVoice()
+            if (onOpenEmploi) onOpenEmploi()
+          }}
+          onOpenVideos={() => {
+            onCloseVoice()
+            if (onOpenVideos) onOpenVideos()
+          }}
+          onOpenCalc={() => {
+            onCloseVoice()
+            if (onOpenCalc) onOpenCalc()
+          }}
+          onOpenCompte={() => {
+            onCloseVoice()
+            if (onOpenCompte) onOpenCompte()
+          }}
+          onOpenPremium={() => {
+            onCloseVoice()
+            if (onOpenPremium) onOpenPremium()
+          }}
+          onOpenPro={() => {
+            onCloseVoice()
+            if (onOpenPro) onOpenPro()
+          }}
+          onNavigateTab={(tab) => {
+            onCloseVoice()
+            if (onNavigateTab) onNavigateTab(tab)
           }}
         />
       )}

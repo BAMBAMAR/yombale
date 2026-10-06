@@ -305,6 +305,41 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(action.intention).toBe('INCONNU');
     });
 
+    test('Reconnaissance vocale exhaustive des mots simples et services Surga (concours, examen, bon coin, etc.)', () => {
+      // Cas 1 : "concours" seul
+      expect(interpreterCommandeVocale('concours').intention).toBe('SEARCH_CONCOURS');
+      // Cas 2 : "examen" seul
+      expect(interpreterCommandeVocale('examen').intention).toBe('SEARCH_CONCOURS');
+      // Cas 3 : "douane" ou "douanes" seul
+      expect(interpreterCommandeVocale('douane').intention).toBe('SEARCH_CONCOURS');
+      expect(interpreterCommandeVocale('cherche concours douanes').intention).toBe('SEARCH_CONCOURS');
+
+      // Bonnes adresses / Bon coin / Restos
+      expect(interpreterCommandeVocale('bon coin').intention).toBe('SEARCH_PLACES');
+      expect(interpreterCommandeVocale('bonnes adresses').intention).toBe('SEARCH_PLACES');
+      expect(interpreterCommandeVocale('resto').intention).toBe('SEARCH_PLACES');
+
+      // Immobilier
+      expect(interpreterCommandeVocale('immo').intention).toBe('SEARCH_IMMO');
+      expect(interpreterCommandeVocale('appartement').intention).toBe('SEARCH_IMMO');
+
+      // Météo, Sport, Presse, Emploi
+      expect(interpreterCommandeVocale('meteo').intention).toBe('CHECK_METEO');
+      expect(interpreterCommandeVocale('sport').intention).toBe('CHECK_SPORT');
+      expect(interpreterCommandeVocale('presse').intention).toBe('OPEN_PRESSE');
+      expect(interpreterCommandeVocale('emploi').intention).toBe('SEARCH_EMPLOI');
+
+      // Multimédia & Outils
+      expect(interpreterCommandeVocale('videos').intention).toBe('OPEN_VIDEOS');
+      expect(interpreterCommandeVocale('calculatrice').intention).toBe('OPEN_CALCULATOR');
+      expect(interpreterCommandeVocale('notes').intention).toBe('OPEN_NOTES');
+      expect(interpreterCommandeVocale('depenses').intention).toBe('OPEN_DEPENSES');
+      expect(interpreterCommandeVocale('agenda').intention).toBe('OPEN_AGENDA');
+      expect(interpreterCommandeVocale('compte').intention).toBe('OPEN_COMPTE');
+      expect(interpreterCommandeVocale('premium').intention).toBe('OPEN_PREMIUM');
+      expect(interpreterCommandeVocale('pro').intention).toBe('OPEN_PRO');
+    });
+
     test('Le routeur audio expose l’endpoint POST /audio/interpret pour l’interprétation vocale', () => {
       const audioRouter = require('../../backend/routes/surga/audio');
       const routeInterpret = audioRouter.stack.find(

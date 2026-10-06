@@ -10,9 +10,23 @@ export type IntentionVocale =
   | 'ADD_REMINDER'
   | 'ADD_NOTE'
   | 'SEARCH_CONCOURS'
+  | 'SEARCH_PLACES'
   | 'CHECK_TRAFFIC'
   | 'SEARCH_DEMARCHES'
+  | 'SEARCH_IMMO'
+  | 'CHECK_METEO'
+  | 'CHECK_SPORT'
+  | 'OPEN_PRESSE'
   | 'PLAY_RADIO'
+  | 'SEARCH_EMPLOI'
+  | 'OPEN_VIDEOS'
+  | 'OPEN_CALCULATOR'
+  | 'OPEN_NOTES'
+  | 'OPEN_DEPENSES'
+  | 'OPEN_AGENDA'
+  | 'OPEN_COMPTE'
+  | 'OPEN_PREMIUM'
+  | 'OPEN_PRO'
   | 'BRIEFING'
   | 'INCONNU'
 
@@ -37,10 +51,16 @@ export interface ActionVocaleDetectee {
   concoursData?: {
     query: string
   }
+  placesData?: {
+    query: string
+  }
   traficData?: {
     axe: string
   }
   demarcheData?: {
+    query: string
+  }
+  immoData?: {
     query: string
   }
   radioData?: {
@@ -154,98 +174,7 @@ export function interpreterCommandeVocale(transcription: string): ActionVocaleDe
     }
   }
 
-  // 2. Radio FM (ex: "mets rfm", "lance sud fm", "écoute zik fm", "arrête la radio")
-  const matchRadioArret = texteNorm.match(/^(?:arr[êe]te|coupe|stop|ferme)\s+(?:la\s+)?radio$/i)
-  if (matchRadioArret) {
-    return {
-      intention: 'PLAY_RADIO',
-      texteBrut,
-      radioData: {
-        action: 'STOP',
-      },
-    }
-  }
-  const matchRadio = texteNorm.match(/^(?:mets|lance|[ée]coute|allume|joue)\s+(?:la\s+radio\s+)?([a-z0-9\s_-]+)$/i)
-  if (matchRadio && /(rfm|sud\s*fm|zik\s*fm|rfi|lamp\s*fall|walf|al[- ]fayda|radio)/i.test(matchRadio[1])) {
-    const stNom = matchRadio[1].replace(/^(?:la\s+)?radio\s*/i, '').trim()
-    return {
-      intention: 'PLAY_RADIO',
-      texteBrut,
-      radioData: {
-        action: 'PLAY',
-        station: stNom || 'rfm',
-      },
-    }
-  }
-
-  // 3. Briefing matinal (ex: "mon briefing", "donne-moi le briefing", "actualités du jour")
-  if (/^(?:(?:donne[- ]moi\s+(?:mon\s+)?|lance\s+(?:le\s+)?|affiche\s+(?:le\s+)?)?briefing|actualit[ée]s?|point\s+du\s+jour)$/i.test(texteNorm)) {
-    return {
-      intention: 'BRIEFING',
-      texteBrut,
-    }
-  }
-
-  // 4. Concours & Examens (ex: "cherche concours douanes", "concours police", "date limite concours ena")
-  const matchConcours = texteNorm.match(/^(?:cherche|recherche|trouve|info|statut|date|dossier|quand(?:\s+a\s+lieu)?(?:\s+le)?|c['’]est\s+quand\s+le)?\s*concours\s+(?:de\s+(?:la\s+)?|d['’]\s*)?([a-z0-9\s_-]+)$/i)
-  const matchSigleConcoursDirect = texteNorm.match(/^(?:cherche|recherche|info|date)?\s*(douanes?|police|ena|gendarmerie|fastef|crem|cfj|sapeurs[- ]pompiers|bnsp|baccalaur[ée]at|bfem|cesti|esp|ensa)\b/i)
-
-  if (matchConcours) {
-    const qConcours = matchConcours[1].trim()
-    return {
-      intention: 'SEARCH_CONCOURS',
-      texteBrut,
-      concoursData: {
-        query: qConcours,
-      },
-    }
-  } else if (matchSigleConcoursDirect && !/(taxi|repas|courses|cfa|fcfa)/i.test(texteNorm)) {
-    return {
-      intention: 'SEARCH_CONCOURS',
-      texteBrut,
-      concoursData: {
-        query: matchSigleConcoursDirect[1].trim(),
-      },
-    }
-  }
-
-  // 5. Démarches administratives citoyennes (ex: "comment faire mon passeport", "pièces carte identité", "renouvellement permis")
-  const matchDemarche = texteNorm.match(/^(?:comment\s+(?:faire|obtenir|renouveler)|pi[èe]ces?\s+(?:pour|du)?|d[ée]marche\s+(?:pour)?)\s+([a-z0-9\s_-]+)$/i)
-  if (matchDemarche || /(?:passeport|carte\s+d['’]identit[ée]|cni|permis\s+de\s+conduire|casier\s+judiciaire|certificat\s+de\s+nationalit[ée])/i.test(texteNorm)) {
-    let qDemarche = matchDemarche ? matchDemarche[1].trim() : texteNorm
-    qDemarche = qDemarche.replace(/^(?:comment\s+(?:faire|obtenir|renouveler)|pi[èe]ces?\s+(?:pour|du)?|d[ée]marche\s+(?:pour)?|mon|ma|mes|le|la|les)\s+/gi, '').trim()
-    if (qDemarche && /(passeport|identit|cni|permis|casier|nationalit|quittance)/i.test(qDemarche)) {
-      return {
-        intention: 'SEARCH_DEMARCHES',
-        texteBrut,
-        demarcheData: {
-          query: qDemarche,
-        },
-      }
-    }
-  }
-
-  // 6. Trafic routier live TomTom (ex: "quel est le trafic sur la vdn", "état du trafic", "bouchon corniche")
-  const matchTrafic = texteNorm.match(/^(?:(?:quel\s+est\s+le|point|etat\s+du)\s+)?(?:trafic|circulation|bouchons?|ralentissements?)\s*(?:sur\s+(?:la\s+)?|[àa]\s+(?:la\s+)?|de\s+)?([a-z0-9\s_-]*)$/i)
-  if (matchTrafic || /(?:trafic|bouchon|circulation)\s+(vdn|corniche|p[ée]age|autoroute|patte\s+d['’]oie|rn1)/i.test(texteNorm)) {
-    const rawAxe = matchTrafic ? matchTrafic[1].trim() : texteNorm
-    let axeExtrait = 'global'
-    if (/vdn/i.test(rawAxe)) axeExtrait = 'vdn'
-    else if (/corniche/i.test(rawAxe)) axeExtrait = 'corniche'
-    else if (/p[ée]age|autoroute|a1/i.test(rawAxe)) axeExtrait = 'autoroute'
-    else if (/patte\s+d['’]oie/i.test(rawAxe)) axeExtrait = 'patte_d_oie'
-    else if (/rn1/i.test(rawAxe)) axeExtrait = 'rn1'
-
-    return {
-      intention: 'CHECK_TRAFFIC',
-      texteBrut,
-      traficData: {
-        axe: axeExtrait,
-      },
-    }
-  }
-
-  // 7. Rappel & Agenda (Priorité temporelle stricte : ex: "rappelle-moi demain à 14h réunion", "note réunion demain 10h")
+  // 2. Rappel & Agenda (Priorité temporelle stricte : ex: "rappelle-moi demain à 14h réunion", "note réunion demain 10h")
   const matchRappel = texteBrut.match(/^(?:rappel|rappelle(?:-moi)?)\s+(.+)$/i)
   const contientDateHeure = /demain|ce soir|\b\d{1,2}\s*(?:h|:)\s*\d{0,2}\b|dans\s+\d+\s*(?:min|minute|heure)/i.test(texteNorm)
 
@@ -286,7 +215,7 @@ export function interpreterCommandeVocale(transcription: string): ActionVocaleDe
     }
   }
 
-  // 8. Dépense (ex: "note 2500 de taxi", "dépense 5000 courses", "j'ai payé 1500 repas")
+  // 3. Dépense financière (ex: "note 2500 de taxi", "dépense 5000 courses", "j'ai payé 1500 repas")
   const matchMontant = texteNorm.match(/\b(\d+)(?!\s*h(?:eures?)?)\s*(?:fcfa|cfa|f|frs)?\b/i)
   if (matchMontant && (/^(note|depense|dépense|j'ai payé|j'ai paye|achat)/i.test(texteNorm) || /(cfa|fcfa)/i.test(texteNorm))) {
     const montant = parseInt(matchMontant[1], 10)
@@ -310,7 +239,233 @@ export function interpreterCommandeVocale(transcription: string): ActionVocaleDe
     }
   }
 
-  // 9. Note rapide intemporelle (ex: "note appeler docteur", "mémo liste des prix")
+  // 4. Radio FM (ex: "mets rfm", "lance sud fm", "arrête la radio", ou simplement "radio", "les radios", "fm")
+  const matchRadioArret = texteNorm.match(/^(?:arr[êe]te|coupe|stop|ferme)\s+(?:la\s+)?radio$/i)
+  if (matchRadioArret) {
+    return {
+      intention: 'PLAY_RADIO',
+      texteBrut,
+      radioData: { action: 'STOP' },
+    }
+  }
+  const matchRadio = texteNorm.match(/^(?:mets|lance|[ée]coute|allume|joue)\s+(?:la\s+radio\s+)?([a-z0-9\s_-]+)$/i)
+  if (matchRadio && /(rfm|sud\s*fm|zik\s*fm|rfi|lamp\s*fall|walf|al[- ]fayda|rsi|rewmi|radio)/i.test(matchRadio[1])) {
+    const stNom = matchRadio[1].replace(/^(?:la\s+)?radio\s*/i, '').trim()
+    return {
+      intention: 'PLAY_RADIO',
+      texteBrut,
+      radioData: { action: 'PLAY', station: stNom || 'rfm' },
+    }
+  }
+  if (/^(?:les\s+)?radios?(?:\s+fm|\s+du\s+senegal|\s+en\s+direct)?$/i.test(texteNorm) || /^(?:rfm|sud\s*fm|zik\s*fm|rsi|rewmi\s*fm|lamp\s*fall)$/i.test(texteNorm)) {
+    const stationDirecte = /rfm/i.test(texteNorm) ? 'rfm' : (/sud/i.test(texteNorm) ? 'sud fm' : (/zik/i.test(texteNorm) ? 'zik fm' : ''))
+    return {
+      intention: 'PLAY_RADIO',
+      texteBrut,
+      radioData: { action: 'PLAY', station: stationDirecte },
+    }
+  }
+
+  // 5. Concours & Examens du Sénégal (ex: "concours", "examen", "examens", "cherche concours douanes", "concours police", "douane", "date ena")
+  const matchConcoursVerbe = texteNorm.match(/^(?:cherche|recherche|trouve|info|statut|date|dossier|quand(?:\s+a\s+lieu)?(?:\s+le)?|c['’]est\s+quand\s+le)?\s*concours(?:\s+(?:de\s+(?:la\s+)?|d['’]\s*)?([a-z0-9\s_-]*))?$/i)
+  const matchSigleOuMotConcours = texteNorm.match(/(?:^|\b)(concours|examens?|douanes?|police|ena|gendarmerie|fastef|crem|cfj|sapeurs[- ]pompiers|bnsp|baccalaur[ée]at|bac|bfem|cesti|esp|ensa|epac|fonction\s+publique)\b/i)
+
+  if (matchConcoursVerbe || matchSigleOuMotConcours) {
+    let qConcours = ''
+    if (matchConcoursVerbe && matchConcoursVerbe[1]) {
+      qConcours = matchConcoursVerbe[1].trim()
+    } else if (matchSigleOuMotConcours) {
+      const captured = matchSigleOuMotConcours[1].trim().toLowerCase()
+      if (!/^(concours|examens?)$/i.test(captured)) {
+        qConcours = captured
+      } else {
+        qConcours = texteNorm.replace(/(?:cherche|recherche|trouve|info|date|dossier|concours|examens?|de|la|le|du)\s*/gi, '').trim()
+      }
+    }
+    return {
+      intention: 'SEARCH_CONCOURS',
+      texteBrut,
+      concoursData: { query: qConcours },
+    }
+  }
+
+  // 6. Bonnes Adresses, Bons Plans, Restaurants & "Bon Coin" (ex: "bon coin", "bonnes adresses", "resto", "restaurant", "dibi", "ou manger")
+  const matchPlaces = /(?:^|\b)(bon\s+coin|bons\s+coins|bonnes?\s+adresses?|bons?\s+plans?|restaurants?|restos?|dibiterie|dibi|fast[- ]foods?|thieboudienne|thieb|cafes?|coworking|ou\s+manger|ou\s+sortir|manger\s+a\s+dakar)(?:\b|$)/i.test(texteNorm)
+  if (matchPlaces) {
+    const qPlaces = texteNorm
+      .replace(/^(?:cherche|recherche|trouve|donne[- ]moi|ou\s+trouver|affiche)?\s*(?:un\s+|des\s+|le\s+|la\s+|les\s+)?/gi, '')
+      .replace(/^(?:bon\s+coin|bons\s+coins|bonnes?\s+adresses?|bons?\s+plans?)\s*(?:a|de|pour)?\s*/gi, '')
+      .trim()
+    return {
+      intention: 'SEARCH_PLACES',
+      texteBrut,
+      placesData: { query: qPlaces || 'Dakar' },
+    }
+  }
+
+  // 7. Trafic routier live TomTom Dakar (ex: "trafic", "circulation", "bouchons", "quel est le trafic sur la vdn", "etat corniche")
+  const matchTraficDeclencheur = /(?:^|\b)(trafic|circulation|bouchons?|ralentissements?|embouteillages?|etat\s+de\s+la\s+route|route\s+dakar)\b/i.test(texteNorm)
+  const matchAxeDirect = /(?:^|\b)(vdn|corniche|p[ée]age|autoroute|patte\s+d['’]oie|rn1|pont\s+fann|brt|ter)\b/i.test(texteNorm)
+
+  if (matchTraficDeclencheur || matchAxeDirect) {
+    let axeExtrait = 'global'
+    if (/vdn/i.test(texteNorm)) axeExtrait = 'vdn'
+    else if (/corniche/i.test(texteNorm)) axeExtrait = 'corniche'
+    else if (/p[ée]age|autoroute|a1/i.test(texteNorm)) axeExtrait = 'autoroute'
+    else if (/patte\s+d['’]oie/i.test(texteNorm)) axeExtrait = 'patte_d_oie'
+    else if (/rn1/i.test(texteNorm)) axeExtrait = 'rn1'
+    else if (/brt/i.test(texteNorm)) axeExtrait = 'brt'
+    else if (/ter/i.test(texteNorm)) axeExtrait = 'ter'
+
+    return {
+      intention: 'CHECK_TRAFFIC',
+      texteBrut,
+      traficData: { axe: axeExtrait },
+    }
+  }
+
+  // 8. Démarches administratives citoyennes (ex: "demarche", "papiers", "comment faire mon passeport", "carte d'identite", "cni", "permis")
+  const matchDemarcheDeclencheur = /(?:^|\b)(d[ée]marches?|papiers?|formalit[ée]s?|service\s+public|etat\s+civil)\b/i.test(texteNorm)
+  const matchDocDirect = /(?:^|\b)(passeport|carte\s+d['’]identit[ée]|cni|permis\s+de\s+conduire|permis|casier\s+judiciaire|casier|certificat\s+de\s+nationalit[ée]|nationalit[ée]|acte\s+de\s+naissance|extrait\s+de\s+naissance|quittance\s+tr[ée]sor|timbre\s+fiscal)\b/i.test(texteNorm)
+
+  if (matchDemarcheDeclencheur || matchDocDirect) {
+    let qDemarche = texteNorm
+      .replace(/^(?:comment\s+(?:faire|obtenir|renouveler)|pi[èe]ces?\s+(?:pour|du)?|d[ée]marche\s+(?:pour)?|papiers?\s+(?:pour)?|mon|ma|mes|le|la|les)\s+/gi, '')
+      .trim()
+    if (!qDemarche || /^(?:d[ée]marches?|papiers?)$/i.test(qDemarche)) {
+      qDemarche = 'Démarches citoyennes'
+    }
+    return {
+      intention: 'SEARCH_DEMARCHES',
+      texteBrut,
+      demarcheData: { query: qDemarche },
+    }
+  }
+
+  // 9. Immobilier & Logement (ex: "immo", "immobilier", "appartement", "maison", "villa", "studio", "louer a dakar", "logement")
+  const matchImmo = /(?:^|\b)(immo|immobilier|appartements?|apparts?|maisons?|villas?|studios?|logements?|loyer|loyers|louer|location|a\s+louer|a\s+vendre|terrains?|parcelles?|bureaux?)\b/i.test(texteNorm)
+  if (matchImmo) {
+    const qImmo = texteNorm
+      .replace(/^(?:cherche|recherche|trouve|annonces?|offres?|prix)?\s*(?:d['’]|de\s+l['’]|de\s+la\s+|des\s+|du\s+|un\s+|une\s+)?/gi, '')
+      .replace(/^(?:immo|immobilier)\s*/gi, '')
+      .trim()
+    return {
+      intention: 'SEARCH_IMMO',
+      texteBrut,
+      immoData: { query: qImmo || 'Dakar' },
+    }
+  }
+
+  // 10. Météo & Climat (ex: "meteo", "temps", "temperature", "pluie", "pleuvoir", "marees")
+  const matchMeteo = /(?:^|\b)(m[ée]t[ée]o|temps\s+qu['’]il\s+fait|temp[ée]ratures?|pluie|pleuvoir|orage|soleil|mar[ée]es?|climat\s+dakar|pr[ée]visions?\s+m[ée]t[ée]o)\b/i.test(texteNorm)
+  if (matchMeteo) {
+    return {
+      intention: 'CHECK_METEO',
+      texteBrut,
+    }
+  }
+
+  // 11. Sport & Lutte Sénégalaise (ex: "sport", "football", "foot", "match", "score", "lutte", "lamb", "arene")
+  const matchSport = /(?:^|\b)(sports?|football|foot|matchs?|scores?|classement\s+ligue\s+1|lutte|lutte\s+s[ée]n[ée]galaise|lamb|combats?|ar[èe]ne\s+nationale|lions\s+de\s+la\s+t[ée]ranga)\b/i.test(texteNorm)
+  if (matchSport) {
+    return {
+      intention: 'CHECK_SPORT',
+      texteBrut,
+    }
+  }
+
+  // 12. Presse & Kiosque des Unes (ex: "presse", "revue de presse", "kiosque", "journaux", "unes", "actualites")
+  const matchPresse = /(?:^|\b)(presse|revue\s+de\s+presse|kiosque|kiosque\s+des\s+unes|journaux|journal|unes?\s+des\s+journaux|actualit[ée]s?|infos\s+du\s+jour|titres\s+du\s+matin)\b/i.test(texteNorm)
+  if (matchPresse) {
+    return {
+      intention: 'OPEN_PRESSE',
+      texteBrut,
+    }
+  }
+
+  // 13. Emploi, CV, Entretiens (ex: "emploi", "travail", "boulot", "cv", "stage", "entretien d'embauche", "lettre de motivation")
+  const matchEmploi = /(?:^|\b)(emploi|emplois|travail|boulot|recrutement|embauche|offres?\s+d['’]emploi|(?:mon\s+)?cv|faire\s+un\s+cv|curriculum|stages?|entretien\s+d['’]embauche|lettre\s+de\s+motivation|candidature)\b/i.test(texteNorm)
+  if (matchEmploi) {
+    return {
+      intention: 'SEARCH_EMPLOI',
+      texteBrut,
+    }
+  }
+
+  // 14. Séries TV & Vidéos (ex: "videos", "series", "series tv", "replay", "marodi", "evenprod")
+  const matchVideos = /(?:^|\b)(vid[ée]os?|s[ée]ries?|s[ée]ries?\s+tv|replay|marodi|evenprod|lutte\s+tv)\b/i.test(texteNorm)
+  if (matchVideos) {
+    return {
+      intention: 'OPEN_VIDEOS',
+      texteBrut,
+    }
+  }
+
+  // 15. Briefing matinal (ex: "briefing", "mon briefing", "sommaire")
+  if (/^(?:(?:donne[- ]moi\s+(?:mon\s+)?|lance\s+(?:le\s+)?|affiche\s+(?:le\s+)?)?briefing|point\s+du\s+jour)$/i.test(texteNorm)) {
+    return {
+      intention: 'BRIEFING',
+      texteBrut,
+    }
+  }
+
+  // 16. Calculatrice (consultation sans formule : "calculatrice", "calculette", "compter")
+  if (/^(?:ouvrir\s+la\s+|afficher\s+la\s+)?(?:calculatrice|calculette|calcul)$/i.test(texteNorm)) {
+    return {
+      intention: 'OPEN_CALCULATOR',
+      texteBrut,
+    }
+  }
+
+  // 17. Notes & Mémos (consultation : "mes notes", "notes", "carnet")
+  if (/^(?:mes\s+notes|afficher\s+les\s+notes|carnet|notes?)$/i.test(texteNorm)) {
+    return {
+      intention: 'OPEN_NOTES',
+      texteBrut,
+    }
+  }
+
+  // 18. Dépenses & Budget (consultation : "mes depenses", "mon budget", "depenses", "kalpe")
+  if (/^(?:mes\s+d[ée]penses|mon\s+budget|kalp[ée]|d[ée]penses?|mon\s+argent|mon\s+portefeuille)$/i.test(texteNorm)) {
+    return {
+      intention: 'OPEN_DEPENSES',
+      texteBrut,
+    }
+  }
+
+  // 19. Agenda & Rappels (consultation : "mon agenda", "mes rappels", "agenda", "calendrier")
+  if (/^(?:mon\s+agenda|mes\s+rappels|agenda|mon\s+calendrier|rappels?)$/i.test(texteNorm)) {
+    return {
+      intention: 'OPEN_AGENDA',
+      texteBrut,
+    }
+  }
+
+  // 20. Mon Compte, Profil & Paramètres (ex: "mon compte", "compte", "profil", "parametres", "reglages", "synchroniser", "deconnexion")
+  if (/(?:^|\b)((?:mon\s+)?compte|profil|mon\s+profil|param[èe]tres|r[ée]glages|synchronisation|synchroniser|d[ée]connexion|connexion|se\s+connecter|login)\b/i.test(texteNorm)) {
+    return {
+      intention: 'OPEN_COMPTE',
+      texteBrut,
+    }
+  }
+
+  // 21. Surga Premium (ex: "premium", "surga premium", "abonnement", "passer premium", "tarifs")
+  if (/(?:^|\b)(premium|surga\s+premium|abonnement|passer\s+premium|formule\s+premium|tarifs\s+surga|souscrire)\b/i.test(texteNorm)) {
+    return {
+      intention: 'OPEN_PREMIUM',
+      texteBrut,
+    }
+  }
+
+  // 22. Espaces Pro B2B (ex: "espace pro", "pro", "professionnel", "b2b")
+  if (/(?:^|\b)(espace\s+pro|pro|professionnel|b2b|partenaires)\b/i.test(texteNorm)) {
+    return {
+      intention: 'OPEN_PRO',
+      texteBrut,
+    }
+  }
+
+  // 23. Ajout d'une note intemporelle (ex: "note appeler docteur", "mémo liste des prix")
   const matchNote = texteBrut.match(/^(?:note|ajouter note|mémo|memo)\s+(.+)$/i)
   if (matchNote) {
     const contenu = matchNote[1].trim()
