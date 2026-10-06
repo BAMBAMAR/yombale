@@ -3,6 +3,18 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 6] — Épuration UI Dashboard & Retrait des Cartes de Test
+- **Demande Utilisateur :**
+  - Modification du texte « Tranche 6 active (Commande vocale & Calculs exacts) / Dictez vos calculs... » sur le tableau de bord des outils.
+  - Option validée : suppression complète de cette carte de test de développement, vestige technique superflu en production.
+- **Fichiers modifiés :**
+  - `frontend-next/src/app/surga/components/SurgaDashboardTools.tsx` : retrait de la carte de statut, nettoyage des imports Lucide inutilisés (`CheckCircle2`, `RotateCcw`), prop `onReinitialiser` rendue facultative.
+  - Composant ramené de 215 à 182 lignes (< 450 l.).
+- **Validation :**
+  - 97/97 tests frontend passés (100%).
+  - `tsc --noEmit` 0 erreur.
+  - Linter Anti-AI-Slop 100% conforme.
+
 ### [2026-10-06 — Matin 5] — Tranche 20 : Démarches Administratives Sénégalaises Vérifiées & Console d'Administration
 - **Demande Utilisateur :**
   - Mise en œuvre complète de la Tranche 20 (Fiches administratives officielles, Cycle de 90 jours, Outil d'administration et Passerelles transversales) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.

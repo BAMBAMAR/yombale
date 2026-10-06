@@ -49,6 +49,11 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Épuration UI Dashboard & Fin des Cartes de Test (Session 2026-10-06 - Matin 6, branche `feature/surga`)** :
+  - *Retrait du vestige de test technique* : Suppression de la carte de statut « Tranche 6 active (Commande vocale & Calculs exacts) » et de son bouton de reset de développement dans `SurgaDashboardTools.tsx`.
+  - *Interface de production épurée* : Le tableau de bord affiche désormais exclusivement les outils réels (Sama Xaalis, Carnet de notes, Calculatrice exacte, Agenda & Rappels) sans encombrement technique.
+  - *Modularité & Qualité* : `SurgaDashboardTools.tsx` allégé à 182 lignes (< 450 l.), zéro émoji, 97/97 tests frontend passés, `tsc --noEmit` 0 erreur.
+
 - **Surga — Tranche 20 : Démarches Administratives Sénégalaises Vérifiées & Outil d'Administration (Session 2026-10-06, branche `feature/surga`)** :
   - *Fiches Éditoriales Officielles, Cycle 90 Jours, Zéro-Hallucination & Passerelles Transversales* :
     - Fiches certifiées officielles (CNI CEDEAO, Passeport biométrique, Extrait de casier judiciaire n°3, Certificat de nationalité, Acte de naissance, Permis de conduire, Certificat de résidence) avec pièces justificatives, coûts réels en FCFA, délais constatés et lieux de délivrance.

@@ -1,5 +1,11 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Épuration UI Dashboard & Suppression des Cartes de Test (Session 2026-10-06 - Matin 6, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Retrait définitif de la carte de test technique de développement « Tranche 6 active (Commande vocale & Calculs exacts) » et de son bouton « Recommencer la configuration » de `frontend-next/src/app/surga/components/SurgaDashboardTools.tsx`.
+    - Interface épurée au standard de production, sans badge de jalon ni éléments parasites pour l'utilisateur final.
+    - `SurgaDashboardTools.tsx` ramené de 215 à 182 lignes (< 450 l.), zéro émoji, 97/97 tests frontend validés, `tsc --noEmit` 0 erreur.
+
 - **Surga — Tranche 20 : Démarches Administratives Sénégalaises Vérifiées & Console d'Administration (Session 2026-10-06 - Matin 5, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Mise en œuvre complète de la Tranche 20 (Démarches administratives vérifiées & Outil d'administration) selon les spécifications de `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.

@@ -12,8 +12,6 @@ import {
   Calendar,
   Mic,
   ArrowRight,
-  CheckCircle2,
-  RotateCcw,
 } from 'lucide-react';
 import type { SurgaTab } from './SurgaBottomNav';
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync';
@@ -26,7 +24,7 @@ interface SurgaDashboardToolsProps {
   onNavigateTab: (tab: SurgaTab) => void;
   onOpenCalc: () => void;
   onOpenVoice: () => void;
-  onReinitialiser: () => void;
+  onReinitialiser?: () => void;
 }
 
 export default function SurgaDashboardTools({
@@ -186,28 +184,6 @@ export default function SurgaDashboardTools({
           </div>
         </div>
         <ArrowRight size={16} color="var(--text3, #73675E)" />
-      </div>
-
-      {/* Carte de statut / réinitialisation pour tests */}
-      <div className="surga-card" style={{ marginTop: 24, backgroundColor: '#FAF8F5' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <CheckCircle2 size={18} color="var(--price, #0A5C36)" />
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Tranche 6 active (Commande vocale &amp; Calculs exacts)
-          </span>
-        </div>
-        <p style={{ fontSize: 13, color: 'var(--text2, #5A4E42)', margin: '0 0 12px 0' }}>
-          Dictez vos calculs (&quot;100 divisé par 3&quot;), vos dépenses et rappels à la voix avec confirmation préalable.
-        </p>
-        <button
-          type="button"
-          onClick={onReinitialiser}
-          className="surga-btn-secondary"
-          style={{ fontSize: 13, padding: '6px 12px' }}
-        >
-          <RotateCcw size={14} />
-          <span>Recommencer la configuration</span>
-        </button>
       </div>
     </div>
   );
