@@ -49,6 +49,13 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Correction Sélection de Localité Météo & Rendu Portal (Session 2026-10-06 - Après-midi, branche `feature/surga`)** :
+  - *Demande Utilisateur & Constat* : « on ne peut pas selectionne la localite » — La modale de sélection météo était piégée dans le DOM de `.surga-card`, dont la règle CSS `:active { transform: scale(0.99) }` décalait les coordonnées et annulait les clics/taps tactiles. De plus, aucun bouton d'action explicite (« Valider la localité ») n'était visible au bas de la liste pour rassurer et confirmer le choix d'un quartier pré-coché (ex: Dakar Plateau).
+  - *Correctifs Apportés* :
+    1. `SurgaMeteoLocaliteModal.tsx` (433 l., < 450 l.) : Découplage complet via `createPortal(..., document.body)` éliminant tout conflit avec les transforms CSS de `.surga-card`, ajout d'un bandeau sticky inférieur avec bouton d'action primaire (« Valider la localité : [Nom] »), et fiabilisation du clic direct sur chaque élément de liste.
+    2. `SurgaMeteoCard.tsx` (435 l., < 450 l.) : Résolution canonique via `trouverLocaliteParNom`, mise à jour d'état optimiste garantie (ne pouvant plus rester bloquée sur null), synchronisation du stockage local et propagation de l'événement `onVilleChange`.
+  - *Validation* : Suite de tests Playwright exécutée et validée avec succès sur le cycle complet (sélection directe par clic, sélection via bouton sticky de validation, mise à jour immédiate du titre de carte météo), `tsc --noEmit` 0 erreur, 100% des tests unitaires validés (97/97 passés).
+
 - **Surga — Module Compte Utilisateur & Authentification OTP WhatsApp in-app (Session 2026-10-06 - Après-midi, branche `feature/surga`)** :
   - *Demande Utilisateur & Constat* : « dans surga st ce quil est prevu des compte sur linface ya rien » — identification d'une absence complète de point d'entrée de compte / connexion sur l'interface Surga isolée.
   - *Fonctionnalités Livrées* :

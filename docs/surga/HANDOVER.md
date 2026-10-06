@@ -1,17 +1,23 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Après-midi)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Après-midi 2)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Module Compte Utilisateur & Authentification OTP WhatsApp in-app, SurgaAuthModal Modulaire, Pastille Header & Carte Compte/Sync Services, Emploi & Carrière : Correctif 401 « Token manquant » & Téléchargement CV PDF Résolu, SurgaEmploiNav Modulaire, Hub Services : Correctif Écrasement Boutons & Largeur Auto, Icônes SVG Dédiées & SurgaServiceRow, Harmonisation Onglet & En-tête « Services » avec LayoutGrid, Tranche 20 : Démarches Administratives avec source officielle e-senegal.sn, Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Sélecteur de Localité Météo Découplé Portal & Validation Sticky, Module Compte Utilisateur & Authentification OTP WhatsApp in-app, SurgaAuthModal Modulaire, Pastille Header & Carte Compte/Sync Services, Emploi & Carrière : Correctif 401 & Téléchargement CV PDF Résolu, SurgaEmploiNav Modulaire, Hub Services : Correctif Écrasement Boutons & Largeur Auto, Icônes SVG Dédiées & SurgaServiceRow, Harmonisation Onglet & En-tête « Services » avec LayoutGrid, Tranche 20 : Démarches Administratives avec source officielle e-senegal.sn, Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** intègre désormais une brique complète de **Gestion de Compte & Authentification OTP WhatsApp in-app** (`SurgaAuthModal.tsx`), directement accessible depuis le bandeau supérieur (`SurgaHeader.tsx`) et l'onglet Services (`SurgaParametresTab.tsx`). Les usagers peuvent ainsi passer en 1 clic du mode invité local à leur compte synchronisé via code WhatsApp (+221) ou Email/Mot de passe, avec transfert immédiat de leurs notes et dépenses hors-ligne vers PostgreSQL et support de la déconnexion in-app sans redirection intempestive.
+L'assistant personnel de poche **Surga** dispose d'un **Sélecteur de Localité Météo & Position GPS entièrement fiabilisé** (`SurgaMeteoLocaliteModal.tsx`, `SurgaMeteoCard.tsx`), découplé de tout conflit CSS via `createPortal(..., document.body)` et doté d'une double validation (clic direct par ligne ou bouton sticky « Valider la localité »). Le module intègre également la brique de **Gestion de Compte & Authentification OTP WhatsApp in-app** (`SurgaAuthModal.tsx`), directement accessible depuis le bandeau supérieur (`SurgaHeader.tsx`) et l'onglet Services (`SurgaParametresTab.tsx`).
 
-0. **Module Compte Utilisateur & Authentification OTP WhatsApp in-app (100% DONE)** :
+0. **Sélecteur de Localité Météo : Découplage Portal & Validation Sticky (100% DONE)** :
+   - **Découplage Portal `SurgaMeteoLocaliteModal.tsx` (433 l., < 450 l.)** : Monté via `createPortal(modalContent, document.body)` éliminant tout conflit avec la règle `.surga-card:active { transform: scale(0.99) }` qui décalait la matrice de coordonnées et annulait les clics/taps tactiles.
+   - **Double Mode de Sélection & CTA Sticky** : L'usager peut cliquer directement sur n'importe quelle localité dans la liste (sélection et fermeture immédiates), ou cliquer sur le bouton proéminent inférieur (« Valider la localité : [Nom] ») pour confirmer un quartier pré-coché (ex: Dakar Plateau).
+   - **Résolution Canonique & Optimisme Garanti (`SurgaMeteoCard.tsx`, 435 l., < 450 l.)** : Résolution via `trouverLocaliteParNom`, mise à jour d'état immédiate et synchronisation `localStorage`.
+   - **Validation Playwright & Tests Unitaires** : 100% des tests validés (cycle de sélection complet, `tsc --noEmit` 0 erreur, 97/97 tests unitaires passés).
+
+0.bis. **Module Compte Utilisateur & Authentification OTP WhatsApp in-app (100% DONE)** :
    - **Composant Modale `SurgaAuthModal.tsx` (370 l., < 450 l.)** :
      - Flux WhatsApp : saisie téléphone (+221), envoi OTP via `POST /api/auth/whatsapp-otp-send`, bascule transparente vers création de compte si non trouvé (`ACCOUNT_NOT_FOUND`), saisie du code à 6 chiffres avec minuteur 45s, validation via `whatsapp-otp-login` ou `whatsapp-otp-register`.
      - Flux alternatif Email & Mot de passe via `/api/auth/connexion`.

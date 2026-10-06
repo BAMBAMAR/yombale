@@ -3,6 +3,27 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Après-midi 2] — Sélecteur de Localité Météo : Découplage Portal & Validation Explicite
+- **Demande Utilisateur :**
+  - « on ne peut pas selectionne la localite » (avec capture d'écran de la modale ouverte et quartier « Dakar Plateau » pré-coché).
+- **Analyse & Causes Racines :**
+  - Piège DOM & Transform CSS : La modale `SurgaMeteoLocaliteModal.tsx` était rendue comme enfant direct de `.surga-card`. Dans `surga.css`, la règle `.surga-card:active { transform: scale(0.99) }` modifiait la matrice de coordonnées au moment de l'appui tactile ou du clic, ce qui annulait fréquemment l'émission de l'événement `click` dans les navigateurs Chromium/WebKit.
+  - Absence de CTA explicite de validation : Lorsqu'un quartier était déjà sélectionné/coché par défaut (Dakar Plateau), aucun bouton explicite d'action (« Valider la localité ») n'était visible au bas de l'écran pour confirmer et fermer la sélection.
+- **Modifications Appliquées :**
+  - **`SurgaMeteoLocaliteModal.tsx` (433 l., < 450 l.)** :
+    - Découplage total via `createPortal(modalContent, document.body)` : L'overlay plein écran est maintenant monté directement sur `document.body`, éliminant toute interférence avec les transformations et styles d'ancêtres.
+    - Ajout d'un bandeau sticky inférieur avec bouton d'action primaire : « Valider la localité : [Nom sélectionné] » pour offrir une confirmation immédiate et évidente.
+    - Fiabilisation du clic sur chaque ligne : Clic direct sur la ligne qui sélectionne canoniquement la localité et ferme instantanément la modale.
+  - **`SurgaMeteoCard.tsx` (435 l., < 450 l.)** :
+    - Résolution canonique via `trouverLocaliteParNom` dans `choisirLocalite` pour éviter toute incohérence de casse ou d'accent.
+    - Mise à jour d'état optimiste garantie (ne pouvant plus rester bloquée sur null).
+    - Sauvegarde locale synchronisée (`surga_meteo_ville`) et émission de `onVilleChange`.
+- **Validation :**
+  - Tests Playwright automatisés validés de bout en bout (sélection directe par clic, validation par bouton sticky inférieur, mise à jour du titre de carte météo en direct).
+  - TypeScript : 0 erreur (`tsc --noEmit`).
+  - Tests unitaires : 97/97 validés (100%).
+  - Linter anti-slop : Conforme (zéro émoji, tokens du design system respectés).
+
 ### [2026-10-06 — Après-midi] — Module Compte Utilisateur & Authentification OTP WhatsApp in-app
 - **Demande Utilisateur :**
   - « dans surga st ce quil est prevu des compte sur linface ya rien »

@@ -1,5 +1,18 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga — Correction Sélection de Localité Météo & Rendu Portal (Session 2026-10-06 - Après-midi, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Diagnostic : La modale `SurgaMeteoLocaliteModal.tsx` était rendue à l'intérieur de `.surga-card`, soumis à la pseudo-classe CSS `:active { transform: scale(0.99) }`. Lors des clics ou appuis tactiles, ce transform ancêtre décalait la matrice de coordonnées et annulait l'émission des événements `click` dans Chromium/WebKit.
+    - Également, aucun bouton d'action explicite (« Valider la localité ») n'était présent au bas de la modale pour rassurer l'utilisateur et confirmer un quartier pré-coché (ex: Dakar Plateau).
+    - Découplage Portal : Utilisation de `createPortal(..., document.body)` dans `SurgaMeteoLocaliteModal.tsx` (433 l.) isolant complètement l'overlay du cycle de vie et des styles de carte.
+    - Ajout du bandeau sticky de confirmation : Bouton proéminent « Valider la localité : [Nom] » au bas de la modale en complément du clic direct sur chaque ligne de localité.
+    - Fiabilisation du contrôleur `SurgaMeteoCard.tsx` (435 l.) : Résolution canonique immédiate via `trouverLocaliteParNom`, mise à jour d'état optimiste garantie et synchronisation `localStorage`.
+  * **Validation & Qualité** :
+    - Tests automatisés Playwright (Chromium mobile & desktop) : Cycle complet validé (sélection directe par clic, sélection par bouton sticky de validation, fermeture de modale, mise à jour instantanée du titre).
+    - Tests frontend TypeScript : 0 erreur (`tsc --noEmit`).
+    - Tests unitaires Vitest : **97/97 validés (100%)**.
+    - Règle des 450 lignes respectée (`SurgaMeteoLocaliteModal`: 433 l., `SurgaMeteoCard`: 435 l.).
+
 - **Surga — Module Compte Utilisateur & Authentification OTP WhatsApp in-app (Session 2026-10-06 - Après-midi, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Réponse au constat utilisateur : Sur l'interface Surga, aucun point de connexion ou de compte n'était accessible en raison de l'isolation totale D22 (navbar Nopalou masquée).

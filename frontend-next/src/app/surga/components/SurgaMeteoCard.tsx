@@ -142,18 +142,42 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
   }
 
   const choisirLocalite = async (nomVille: string) => {
+    const resolu = trouverLocaliteParNom(nomVille)
+    const nomCanonique = resolu.nom
     try {
-      localStorage.setItem('surga_meteo_ville', nomVille)
+      localStorage.setItem('surga_meteo_ville', nomCanonique)
       localStorage.removeItem('surga_meteo_gps')
     } catch {}
     setEstGpsActif(false)
     setIsLocaliteModalOpen(false)
-    // Mise à jour optimiste immédiate pour un feedback visuel direct
-    setMeteo((prev) => (prev ? { ...prev, ville: nomVille, est_gps: false } : prev))
+    // Mise à jour optimiste immédiate pour un feedback visuel direct et garanti
+    setMeteo((prev) => ({
+      ville: nomCanonique,
+      est_gps: false,
+      temperature: prev?.temperature ?? 28,
+      ressenti: prev?.ressenti ?? 31,
+      temp_min: prev?.temp_min ?? 24,
+      temp_max: prev?.temp_max ?? 30,
+      condition_code: prev?.condition_code ?? 'soleil',
+      condition_texte: prev?.condition_texte ?? 'Ensoleillé',
+      humidite: prev?.humidite ?? 72,
+      vent_vitesse_kmh: prev?.vent_vitesse_kmh ?? 18,
+      vent_direction: prev?.vent_direction ?? 'Alizé maritime',
+      indice_uv: prev?.indice_uv ?? 8,
+      qualite_air: prev?.qualite_air,
+      maree: resolu.maritime ? prev?.maree : null,
+      previsions_3j: prev?.previsions_3j,
+      source: 'Mise à jour directe',
+      updated_at: new Date().toISOString(),
+    }))
     if (onVilleChange) {
-      onVilleChange(nomVille)
+      try {
+        onVilleChange(nomCanonique)
+      } catch (e) {
+        console.warn('[SURGA VILLE PROP ERR]:', e)
+      }
     }
-    await chargerMeteo({ ville: nomVille })
+    await chargerMeteo({ ville: nomCanonique })
   }
 
   useEffect(() => {

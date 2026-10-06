@@ -235,8 +235,8 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Extension du catalogue à 28 localités couvrant l'intégralité des 14 régions du Sénégal et les quartiers clés de Dakar (`src/lib/surga-meteo.ts`).
 - [x] `DONE` Normalisation NFD anti-diacritiques et ligatures (`[œŒ]` -> `oe`) garantissant la détection parfaite des requêtes sans accent ("thies", "guediawaye", "sacre coeur").
 - [x] `DONE` Route Handler Next.js autonome (`src/app/api/surga/meteo/route.ts`) servant la météo Open-Meteo sans dépendre du backend Express distant.
-- [x] `DONE` Modale de sélection résiliente (`SurgaMeteoLocaliteModal.tsx`, 382 l.) avec fallback catalogue automatique immédiat et détection de sélection fiabilisée.
-- [x] `DONE` Carte Météo (`SurgaMeteoCard.tsx`, 412 l.) avec extraction modulaire de `SurgaMeteoPrevisions.tsx` (101 l., règle des 450 lignes), bouton d'action explicite « Changer » (`MapPin`), callback `onVilleChange` liant la météo aux préférences du briefing et fallback local gracieux.
+- [x] `DONE` Modale de sélection résiliente (`SurgaMeteoLocaliteModal.tsx`, 433 l.) : Découplage `createPortal(..., document.body)` éliminant tout conflit avec le transform `:active` de `.surga-card`, bandeau sticky inférieur avec bouton primaire « Valider la localité », fiabilisation du clic direct sur chaque ligne et sélection canonique immédiate (`SurgaMeteoCard.tsx`, 435 l.).
+- [x] `DONE` Carte Météo (`SurgaMeteoCard.tsx`, 435 l.) avec extraction modulaire de `SurgaMeteoPrevisions.tsx` (101 l., règle des 450 lignes), bouton d'action explicite « Changer » (`MapPin`), callback `onVilleChange` liant la météo aux préférences du briefing et fallback local gracieux.
 - [x] `DONE` Alignement du backend (`meteo-service.js`, `briefing.js`) et enrichissement des tests Jest portés à **99/99 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 0 violation.
 
 ### Tranche 20 — Passerelles Transversales, Synergies Inter-Modules & Toasts Globaux (05 Octobre 2026)

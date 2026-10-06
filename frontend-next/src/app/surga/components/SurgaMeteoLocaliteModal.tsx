@@ -2,10 +2,12 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Search, MapPin, LocateFixed, Check, Compass } from 'lucide-react'
 import {
   LOCALITES_SENEGAL_LIST,
   normaliserTexte,
+  trouverLocaliteParNom,
   type LocaliteItem,
 } from '@/lib/surga-meteo'
 
@@ -32,12 +34,19 @@ export default function SurgaMeteoLocaliteModal({
   onDetecterGps,
   gpsEnCours,
 }: SurgaMeteoLocaliteModalProps) {
+  const [mounted, setMounted] = useState(false)
   const [recherche, setRecherche] = useState('')
   const [zoneFiltre, setZoneFiltre] = useState<string>('tous')
   const [selectionActive, setSelectionActive] = useState<string>(localiteActuelle)
 
   useEffect(() => {
-    setSelectionActive(localiteActuelle)
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (localiteActuelle) {
+      setSelectionActive(localiteActuelle)
+    }
   }, [localiteActuelle])
 
   // Fallback automatique sur le catalogue complet des 28 localités (14 régions) si la liste API est vide
@@ -66,11 +75,18 @@ export default function SurgaMeteoLocaliteModal({
     })
   }, [listeEffective, recherche, zoneFiltre])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const cibleNorm = normaliserTexte(selectionActive || localiteActuelle)
 
-  return (
+  const handleConfirmer = (nom: string) => {
+    const resolu = trouverLocaliteParNom(nom)
+    setSelectionActive(resolu.nom)
+    onSelectLocalite(resolu.nom)
+    onClose()
+  }
+
+  const modalContent = (
     <div
       role="dialog"
       aria-modal="true"
@@ -80,7 +96,7 @@ export default function SurgaMeteoLocaliteModal({
         inset: 0,
         backgroundColor: 'rgba(20, 25, 38, 0.75)',
         backdropFilter: 'blur(4px)',
-        zIndex: 9999,
+        zIndex: 99999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -93,7 +109,7 @@ export default function SurgaMeteoLocaliteModal({
         style={{
           width: '100%',
           maxWidth: 480,
-          maxHeight: '88vh',
+          maxHeight: '90vh',
           backgroundColor: '#FFFFFF',
           borderRadius: 14,
           overflow: 'hidden',
@@ -232,6 +248,7 @@ export default function SurgaMeteoLocaliteModal({
               <button
                 type="button"
                 onClick={() => setRecherche('')}
+                aria-label="Effacer la recherche"
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text3, #73675E)' }}
               >
                 <X size={14} />
@@ -286,7 +303,7 @@ export default function SurgaMeteoLocaliteModal({
           })}
         </div>
 
-        {/* Liste des localités avec détection active robuste */}
+        {/* Liste des localités */}
         <div
           style={{
             flex: 1,
@@ -317,11 +334,7 @@ export default function SurgaMeteoLocaliteModal({
                 <button
                   key={loc.id}
                   type="button"
-                  onClick={() => {
-                    setSelectionActive(loc.nom)
-                    onSelectLocalite(loc.nom)
-                    onClose()
-                  }}
+                  onClick={() => handleConfirmer(loc.nom)}
                   aria-pressed={estSelectionnee}
                   style={{
                     width: '100%',
@@ -339,7 +352,7 @@ export default function SurgaMeteoLocaliteModal({
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1, pointerEvents: 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
                     <MapPin size={15} color={estSelectionnee ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)'} style={{ flexShrink: 0 }} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: estSelectionnee ? 800 : 600, color: 'var(--navy, #1C2B4A)' }}>
@@ -364,7 +377,6 @@ export default function SurgaMeteoLocaliteModal({
                         justifyContent: 'center',
                         flexShrink: 0,
                         marginLeft: 8,
-                        pointerEvents: 'none',
                       }}
                     >
                       <Check size={13} />
@@ -375,7 +387,47 @@ export default function SurgaMeteoLocaliteModal({
             })
           )}
         </div>
+
+        {/* Footer avec bouton explicite de confirmation directe */}
+        <div
+          style={{
+            padding: '10px 14px',
+            backgroundColor: '#FFFFFF',
+            borderTop: '1px solid var(--border, #E8DDD2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => handleConfirmer(selectionActive || localiteActuelle || 'Dakar')}
+            style={{
+              flex: 1,
+              height: 42,
+              borderRadius: 8,
+              border: 'none',
+              backgroundColor: 'var(--accent, #C75B00)',
+              color: '#FFFFFF',
+              fontSize: 13,
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              touchAction: 'manipulation',
+              boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
+            }}
+          >
+            <Check size={16} strokeWidth={2.5} />
+            <span>Valider la localité : {selectionActive || localiteActuelle}</span>
+          </button>
+        </div>
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
