@@ -3,6 +3,18 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 11] — Hub Services : Correctif Écrasement Boutons & Largeur Auto
+- **Demande Utilisateur :**
+  - Constat visuel de l'écrasement du texte et de l'icône par les boutons d'action (« ecrase »).
+- **Modifications Appliquées :**
+  - **`SurgaServiceRow.tsx` & `SurgaParametresTab.tsx`** :
+    - Neutralisation de l'héritage `width: 100%` de `.surga-btn-secondary` via l'application explicite de `width: 'auto'`, `flexShrink: 0`, et `whiteSpace: 'nowrap'`.
+    - Les boutons restent compacts et alignés à droite sans jamais déborder ni recouvrir la vignette ou le texte.
+- **Validation :**
+  - 127/127 tests backend Jest validés (100%).
+  - 97/97 tests frontend Vitest validés (100%).
+  - 0 erreur TypeScript, zéro émoji.
+
 ### [2026-10-06 — Matin 10] — Hub Services : Intégration des Icônes Dédiées & Composant SurgaServiceRow
 - **Demande Utilisateur :**
   - Signalement de l'absence totale d'icônes dans l'écran des services (« pas d'icone »).

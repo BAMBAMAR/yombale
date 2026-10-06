@@ -31,9 +31,11 @@ export default function SurgaServiceRow({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingTop: 12,
-        paddingBottom: 2,
+        paddingBottom: 4,
         borderTop: '1px solid var(--border, #E8DDD2)',
         gap: 12,
+        width: '100%',
+        boxSizing: 'border-box',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
@@ -52,14 +54,15 @@ export default function SurgaServiceRow({
           <Icon size={18} color={iconColor} />
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', lineHeight: 1.3 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', lineHeight: 1.35 }}>
             {titre}
           </div>
           <div
             style={{
               fontSize: 11,
               color: 'var(--text3, #73675E)',
-              lineHeight: 1.3,
+              lineHeight: 1.35,
+              marginTop: 2,
             }}
           >
             {description}
@@ -71,7 +74,14 @@ export default function SurgaServiceRow({
           type="button"
           onClick={onAction}
           className={actionVariant === 'primary' ? 'surga-btn-primary' : 'surga-btn-secondary'}
-          style={{ fontSize: 11, padding: '6px 12px', flexShrink: 0 }}
+          style={{
+            fontSize: 11,
+            padding: '6px 14px',
+            width: 'auto',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+            lineHeight: 1.2,
+          }}
         >
           {actionLabel}
         </button>

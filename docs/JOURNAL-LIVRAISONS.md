@@ -1,5 +1,15 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Hub Services : Correctif Écrasement Boutons & Largeur Auto (Session 2026-10-06 - Matin 11, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Diagnostic : Les boutons d'action des rangées de services (`.surga-btn-secondary`) héritaient d'une règle globale `width: 100%` dans `surga.css`, provoquant l'étalement horizontal du bouton et l'écrasement du texte et de l'icône de gauche.
+    - Solution : Ajout explicite de `width: 'auto'`, `flexShrink: 0`, et `whiteSpace: 'nowrap'` dans `SurgaServiceRow.tsx` et `SurgaParametresTab.tsx`.
+    - Résultat : Bouton compact, calé strictement à droite, laissant 100% de la largeur disponible pour l'icône 38x38px et la description.
+  * **Validation & Qualité** :
+    - Tests backend Jest : **127/127 validés (100%)**.
+    - Tests frontend Vitest : **97/97 validés (100%)**.
+    - TypeScript : 0 erreur. Anti-AI-Slop : conforme (zéro émoji).
+
 - **Surga — Hub Services : Intégration des Icônes Dédiées & Composant SurgaServiceRow (Session 2026-10-06 - Matin 10, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Prise en compte immédiate du retour visuel utilisateur : ajout d'icônes distinctives pour chaque ligne de service dans l'onglet Services.

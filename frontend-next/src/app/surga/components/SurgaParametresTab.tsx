@@ -100,7 +100,7 @@ export default function SurgaParametresTab({
               type="button"
               onClick={onOpenPremium}
               className={estPremium ? 'surga-btn-secondary' : 'surga-btn-primary'}
-              style={{ fontSize: 11, padding: '6px 12px', fontWeight: 700 }}
+              style={{ fontSize: 11, padding: '6px 14px', fontWeight: 700, width: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               {estPremium ? 'Gérer' : 'Passer à Premium'}
             </button>

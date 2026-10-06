@@ -49,6 +49,13 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Hub Services : Correctif Écrasement Boutons & Largeur Auto (Session 2026-10-06 - Matin 11, branche `feature/surga`)** :
+  - *Symptôme Corrigé* : Les boutons d'action des rangées de services (`.surga-btn-secondary`) héritaient d'un `width: 100%` global qui recouvrait et écrasait le texte et l'icône de gauche.
+  - *Correctif Appliqué (`SurgaServiceRow.tsx` & `SurgaParametresTab.tsx`)* :
+    - Ajout explicite de `width: 'auto'`, `flexShrink: 0` et `whiteSpace: 'nowrap'` sur tous les boutons d'action des services.
+    - Calage strict du bouton à droite sans débordement, préservant 100% de la largeur du bloc texte et de l'icône.
+  - *Validation* : 127/127 tests Jest, 97/97 tests Vitest, 0 erreur TypeScript, zéro émoji.
+
 - **Surga — Hub Services : Intégration des Icônes Dédiées & Composant SurgaServiceRow (Session 2026-10-06 - Matin 10, branche `feature/surga`)** :
   - *Correction Visuelle Demandée par l'Utilisateur* : Les rangées de services dans l'onglet Services s'affichaient sous forme de texte brut sans aucune icône visuelle.
   - *Nouveau Composant Modulaire (`SurgaServiceRow.tsx`, 65 l.)* :
