@@ -28,8 +28,8 @@ ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant 
      - Refonte de `SurgaMeteoCard.tsx` avec titre monoligne `"Météo & Marées • Dakar Plateau"` et chevron fluide.
   8. *FE-08 (Commande Vocale Bienveillante)* :
      - Remplacement de l'icône `MicOff` barrée par l'icône `Mic` bienveillante sur cercle ambre et animation d'onde douce `.surga-voice-listening` dans `SurgaVoiceModal.tsx` et `surga.css`.
-  9. *FE-09 (Logo SVG Vectoriel Léger)* :
-     - `SurgaHeader.tsx` migré du PNG 92 ko vers le SVG officiel 2 ko `/surga/icons/surga-symbol-white.svg` (gain de 90 ko par chargement).
+  9. *FE-09 (Emblème Signature Officiel Surga)* :
+     - Sanctuarisation de l'emblème signature officiel `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S sur fond nuit avec ceinture ambre) dans `SurgaHeader.tsx` (format 34x34 arrondi 8px).
   10. *FE-10 (Responsive Multi-Écrans)* :
      - Intégration de media-queries 360px & 320px dans `surga.css` évitant tout débordement horizontal.
   11. *FE-11 (Modularisation Stricte < 450 Lignes)* :

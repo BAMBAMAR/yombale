@@ -20,7 +20,7 @@ L'assistant personnel de poche **Surga** a fait l'objet d'un sprint complet de f
    - **FE-06 (Flux Dashboard & Squelette Shimmer)** : Création de `SurgaBriefingSkeleton.tsx` avec effet shimmer doux et plafonnement à 3 brèves majeures dans `SurgaAujourdhuiTab.tsx` et `SurgaNewsList.tsx`.
    - **FE-07 (En-tête Météo Aéré)** : Refonte de `SurgaMeteoCard.tsx` avec titre monoligne `"Météo & Marées • Dakar Plateau"` et chevron fluide.
    - **FE-08 (Commande Vocale Bienveillante)** : Remplacement de l'icône `MicOff` par `Mic` sur fond ambre et animation d'onde douce `.surga-voice-listening` dans `SurgaVoiceModal.tsx` et `surga.css`.
-   - **FE-09 (Logo SVG Léger)** : `SurgaHeader.tsx` migré du PNG 92 ko vers le SVG officiel 2 ko `/surga/icons/surga-symbol-white.svg` (gain de 90 ko).
+   - **FE-09 (Emblème Signature Officiel Surga)** : Sanctuarisation de l'emblème officiel `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S sur fond nuit avec ceinture ambre) dans `SurgaHeader.tsx` (format 34x34 arrondi 8px).
    - **FE-10 (Responsive Multi-Écrans)** : Media-queries 360px & 320px dans `surga.css` garantissant zéro débordement horizontal sur petits écrans.
    - **FE-11 (Modularisation Stricte < 450 Lignes)** : Découpage des 6 composants géants en 11 sous-composants dédiés et 2 hooks personnalisés (`useSurgaAuthModal.ts`, `useSurgaSpeechRecognition.ts`). 100% des fichiers sous `src/app/surga/` respectent désormais scrupuleusement le plafond des 450 lignes.
    - **FE-12 (Thème Sombre Natif)** : Support complet sous `@media (prefers-color-scheme: dark)` dans `surga.css` (`--surga-bg: #0B1120`, `--surga-surface: #1E293B`, `--surga-border: #334155`, etc.).

@@ -88,13 +88,27 @@ export default function SurgaHeader({
             <ChevronLeft size={18} strokeWidth={2.5} />
           </div>
         )}
-        <div className="surga-header-logo-wrap" title="Surga — Assistant de poche" aria-hidden="true">
+        <div
+          className="surga-header-logo-wrap"
+          title="Surga — Assistant de poche"
+          aria-hidden="true"
+          style={{
+            width: 34,
+            height: 34,
+            flexShrink: 0,
+            borderRadius: 8,
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <img
-            src="/surga/icons/surga-symbol-white.svg"
+            src="/surga/surga-symbol.png"
             alt="Surga"
-            width={26}
-            height={26}
-            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+            width={34}
+            height={34}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
         </div>
         <div>
