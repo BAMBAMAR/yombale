@@ -10,8 +10,6 @@ import React, { useState, useEffect } from 'react'
 import {
   HelpCircle,
   Lightbulb,
-  CheckCircle2,
-  AlertTriangle,
   Mic,
   MicOff,
   Sparkles,
@@ -19,12 +17,12 @@ import {
   Calendar,
   Wallet,
   Crown,
-  Lock,
   ChevronRight,
   Send,
 } from 'lucide-react'
 import type { ProfilProData } from './SurgaProfilProTab'
 import { saveLocalNote, saveLocalEvenement, saveLocalDepense } from '@/lib/surga-offline-sync'
+import { getSurgaEmploiHeaders } from '@/lib/surga-emploi-api'
 
 interface QuestionItem {
   id: string
@@ -129,7 +127,7 @@ export default function SurgaEntretienTab({
     try {
       const res = await fetch('/api/surga/emploi/entretien/evaluer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getSurgaEmploiHeaders(true),
         body: JSON.stringify({
           question: questionCourante.question,
           reponse,
@@ -141,45 +139,37 @@ export default function SurgaEntretienTab({
       if (data.success && data.evaluation) {
         setEvaluation(data.evaluation)
         // Enregistrement de session
-        fetch('/api/surga/emploi/entretien/session', { method: 'POST' }).catch(() => {})
+        fetch('/api/surga/emploi/entretien/session', {
+          method: 'POST',
+          headers: getSurgaEmploiHeaders(true),
+        }).catch(() => {})
       }
     } finally {
       setEvaluant(false)
     }
   }
 
-  // Passerelle 1 : Enregistrer en Note de révision
+  // Passerelles transversales Surga
   const handleEnregistrerEnNote = () => {
     if (!questionCourante || !reponse.trim()) return
     const titre = `Révision Entretien : ${poste || 'Poste'} (${new Date().toLocaleDateString('fr-FR')})`
-    const contenu = `Question préparée :\n${questionCourante.question}\n\nMa réponse :\n${reponse}\n\nConseils & Points forts :\n${evaluation?.points_forts.join('\n') || ''}`
+    const contenu = `Question préparée :\n${questionCourante.question}\n\nMa réponse :\n${reponse}\n\nConseils :\n${evaluation?.points_forts.join('\n') || ''}`
     saveLocalNote({ titre, contenu })
     setNoteEnregistree(true)
     onNotifierSucces?.('Fiche de révision enregistrée dans vos Notes.')
     setTimeout(() => setNoteEnregistree(false), 3000)
   }
 
-  // Passerelle 2 : Planifier dans l'Agenda avec rappel
   const handlePlanifierAgenda = () => {
     const dateCible = dateEntretien || new Date().toISOString().slice(0, 10)
-    saveLocalEvenement({
-      titre: `Entretien d'embauche : ${poste || 'Poste visé'}`,
-      date_evenement: dateCible,
-      heure_evenement: '09:00',
-      est_rappel: true,
-    })
+    saveLocalEvenement({ titre: `Entretien : ${poste || 'Poste visé'}`, date_evenement: dateCible, heure_evenement: '09:00', est_rappel: true })
     setAgendaEnregistre(true)
     onNotifierSucces?.('Entretien planifié dans votre Agenda avec rappel la veille.')
     setTimeout(() => setAgendaEnregistre(false), 3000)
   }
 
-  // Passerelle 3 : Budget transport dans Sama Xaalis
   const handleInscrireBudgetTransport = () => {
-    saveLocalDepense({
-      montant_xof: 3000,
-      categorie: 'transport',
-      note: `Transport entretien : ${poste || 'Entreprise'}`,
-    })
+    saveLocalDepense({ montant_xof: 3000, categorie: 'transport', note: `Transport entretien : ${poste || 'Entreprise'}` })
     setBudgetEnregistre(true)
     onNotifierSucces?.('Budget transport (3 000 FCFA) inscrit dans Sama Xaalis.')
     setTimeout(() => setBudgetEnregistre(false), 3000)
@@ -424,30 +414,28 @@ export default function SurgaEntretienTab({
                 type="button"
                 onClick={handleEnregistrerEnNote}
                 className="surga-btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px', width: 'auto' }}
               >
                 <FileText size={13} color="var(--navy, #1C2B4A)" />
-                <span>{noteEnregistree ? 'Fiche en Note ✓' : 'Fiche de révision en Note'}</span>
+                <span>{noteEnregistree ? 'Fiche enregistrée' : 'Fiche de révision en Note'}</span>
               </button>
-
               <button
                 type="button"
                 onClick={handlePlanifierAgenda}
                 className="surga-btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px', width: 'auto' }}
               >
                 <Calendar size={13} color="var(--accent, #C75B00)" />
-                <span>{agendaEnregistre ? 'Rappels fixés ✓' : 'Planifier date dans l’Agenda'}</span>
+                <span>{agendaEnregistre ? 'Rappels planifiés' : 'Planifier date Agenda'}</span>
               </button>
-
               <button
                 type="button"
                 onClick={handleInscrireBudgetTransport}
                 className="surga-btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px', width: 'auto' }}
               >
                 <Wallet size={13} color="var(--price, #0A5C36)" />
-                <span>{budgetEnregistre ? 'Transport budgeté ✓' : 'Budget transport (3 000 F)'}</span>
+                <span>{budgetEnregistre ? 'Budget inscrit' : 'Budget transport (3 000 F)'}</span>
               </button>
             </div>
           </div>

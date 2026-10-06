@@ -5,27 +5,24 @@
 // Respect strict : < 450 lignes, zéro émoji, tokens CSS officiels, anti-IDOR
 
 import React, { useState, useEffect, useCallback } from 'react'
-import {
-  X,
-  User,
-  FileText,
-  Mail,
-  HelpCircle,
-  FolderArchive,
-} from 'lucide-react'
+import { X } from 'lucide-react'
 import SurgaProfilProTab, { type ProfilProData } from './SurgaProfilProTab'
 import SurgaCvTab from './SurgaCvTab'
 import SurgaLettreTab from './SurgaLettreTab'
 import SurgaEntretienTab from './SurgaEntretienTab'
 import SurgaDocumentsEmploiTab, { type DocumentEmploi } from './SurgaDocumentsEmploiTab'
+import SurgaEmploiNav, { type TabEmploi } from './SurgaEmploiNav'
+import {
+  getSurgaEmploiHeaders,
+  telechargerBlobPdf,
+  fetchSurgaEmploiDonnees,
+} from '@/lib/surga-emploi-api'
 
 interface SurgaEmploiModalProps {
   isOpen: boolean
   onClose: () => void
   onOpenPremium?: () => void
 }
-
-type TabEmploi = 'profil' | 'cv' | 'lettre' | 'entretien' | 'documents'
 
 const PROFIL_INITIAL: ProfilProData = {
   nom_complet: '',
@@ -58,48 +55,43 @@ export default function SurgaEmploiModal({
     estPremium: false,
     quotaAtteint: false,
     simulationsSemaine: 0,
-    message: '1 simulation gratuite par semaine incluse.',
   })
   const [documents, setDocuments] = useState<DocumentEmploi[]>([])
   const [saving, setSaving] = useState<boolean>(false)
   const [generant, setGenerant] = useState<boolean>(false)
   const [messageToast, setMessageToast] = useState<string>('')
 
+  const afficherToast = (msg: string) => {
+    setMessageToast(msg)
+    setTimeout(() => setMessageToast(''), 3500)
+  }
+
   // Chargement des données
   const rechargerDonnees = useCallback(async () => {
     try {
-      const [resProfil, resDroits, resDocs, resDroitsEntretien] = await Promise.all([
-        fetch('/api/surga/emploi/profil').then((r) => r.json()).catch(() => ({})),
-        fetch('/api/surga/emploi/droits').then((r) => r.json()).catch(() => ({})),
-        fetch('/api/surga/emploi/documents').then((r) => r.json()).catch(() => ({})),
-        fetch('/api/surga/emploi/entretien/droits').then((r) => r.json()).catch(() => ({})),
-      ])
-
-      if (resProfil?.success && resProfil.profil) {
+      const data = await fetchSurgaEmploiDonnees()
+      if (data.profil) {
         setProfil({
-          nom_complet: resProfil.profil.nom_complet || '',
-          email: resProfil.profil.email || '',
-          telephone: resProfil.profil.telephone || '',
-          adresse_ville: resProfil.profil.adresse_ville || 'Dakar',
-          titre_professionnel: resProfil.profil.titre_professionnel || '',
-          resume_pro: resProfil.profil.resume_pro || '',
-          competences: Array.isArray(resProfil.profil.competences) ? resProfil.profil.competences : [],
-          experiences: Array.isArray(resProfil.profil.experiences) ? resProfil.profil.experiences : [],
-          formations: Array.isArray(resProfil.profil.formations) ? resProfil.profil.formations : [],
-          langues: Array.isArray(resProfil.profil.langues) ? resProfil.profil.langues : [],
+          nom_complet: data.profil.nom_complet || '',
+          email: data.profil.email || '',
+          telephone: data.profil.telephone || '',
+          adresse_ville: data.profil.adresse_ville || data.profil.adresse || 'Dakar',
+          titre_professionnel: data.profil.titre_professionnel || data.profil.titre_poste || '',
+          resume_pro: data.profil.resume_pro || data.profil.resume || '',
+          competences: Array.isArray(data.profil.competences) ? data.profil.competences : [],
+          experiences: Array.isArray(data.profil.experiences) ? data.profil.experiences : [],
+          formations: Array.isArray(data.profil.formations) ? data.profil.formations : [],
+          langues: Array.isArray(data.profil.langues) ? data.profil.langues : [],
         })
       }
-
-      if (resDroits?.success && resDroits.droits) {
-        setDroits(resDroits.droits)
+      if (data.droits) {
+        setDroits(data.droits)
       }
-
-      if (resDocs?.success && Array.isArray(resDocs.documents)) {
-        setDocuments(resDocs.documents)
+      if (Array.isArray(data.documents)) {
+        setDocuments(data.documents)
       }
-
-      if (resDroitsEntretien?.success && resDroitsEntretien.droits) {
-        setDroitsSimulation(resDroitsEntretien.droits)
+      if (data.droitsEntretien) {
+        setDroitsSimulation(data.droitsEntretien)
       }
     } catch {}
   }, [])
@@ -116,28 +108,17 @@ export default function SurgaEmploiModal({
     try {
       const res = await fetch('/api/surga/emploi/profil', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getSurgaEmploiHeaders(true),
         body: JSON.stringify(profil),
       })
       const data = await res.json()
       if (data.success && data.profil) {
-        setProfil(data.profil)
+        setProfil((prev) => ({ ...prev, ...data.profil }))
+        afficherToast('Profil professionnel enregistré avec succès.')
       }
     } finally {
       setSaving(false)
     }
-  }
-
-  // Téléchargement Blob
-  const telechargerBlob = (blob: Blob, nomFichier: string) => {
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = nomFichier
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
   }
 
   // Génération CV
@@ -146,22 +127,37 @@ export default function SurgaEmploiModal({
     try {
       const res = await fetch('/api/surga/emploi/cv/generer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modele_design: modele, attestationExactitude: true }),
+        headers: getSurgaEmploiHeaders(true),
+        body: JSON.stringify({ modele_design: modele, attestationExactitude: true, profil }),
       })
 
-      if (res.headers.get('content-type')?.includes('application/pdf')) {
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('application/pdf')) {
         const blob = await res.blob()
-        telechargerBlob(blob, `CV_${profil.nom_complet?.replace(/\s+/g, '_') || 'Surga'}.pdf`)
+        telechargerBlobPdf(blob, `CV_${profil.nom_complet?.replace(/\s+/g, '_') || 'Surga'}.pdf`)
+        afficherToast('CV généré et téléchargé avec succès.')
         rechargerDonnees()
-      } else {
-        const json = await res.json()
-        if (json.quotaAtteint) {
-          onOpenPremium()
-        } else {
-          alert(json.error || 'Erreur lors de la génération du CV.')
-        }
+        return
       }
+
+      const json = await res.json()
+      if (json.success && json.document?.id) {
+        const pdfRes = await fetch(`/api/surga/emploi/documents/${json.document.id}/pdf`, {
+          headers: getSurgaEmploiHeaders(false),
+        })
+        if (pdfRes.ok) {
+          const blob = await pdfRes.blob()
+          telechargerBlobPdf(blob, `CV_${profil.nom_complet?.replace(/\s+/g, '_') || 'Surga'}.pdf`)
+          afficherToast('CV généré et téléchargé avec succès.')
+        }
+        rechargerDonnees()
+      } else if (json.motif === 'limite_atteinte' || json.quotaAtteint) {
+        onOpenPremium()
+      } else {
+        alert(json.error || 'Erreur lors de la génération du CV.')
+      }
+    } catch {
+      alert('Erreur réseau lors de la génération du CV.')
     } finally {
       setGenerant(false)
     }
@@ -178,22 +174,37 @@ export default function SurgaEmploiModal({
     try {
       const res = await fetch('/api/surga/emploi/lettre/generer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...donnees, attestationExactitude: true }),
+        headers: getSurgaEmploiHeaders(true),
+        body: JSON.stringify({ ...donnees, attestationExactitude: true, profil }),
       })
 
-      if (res.headers.get('content-type')?.includes('application/pdf')) {
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('application/pdf')) {
         const blob = await res.blob()
-        telechargerBlob(blob, `Lettre_${donnees.poste_vise.replace(/\s+/g, '_') || 'Surga'}.pdf`)
+        telechargerBlobPdf(blob, `Lettre_${donnees.poste_vise.replace(/\s+/g, '_') || 'Surga'}.pdf`)
+        afficherToast('Lettre générée et téléchargée avec succès.')
         rechargerDonnees()
-      } else {
-        const json = await res.json()
-        if (json.quotaAtteint) {
-          onOpenPremium()
-        } else {
-          alert(json.error || 'Erreur lors de la génération de la lettre.')
-        }
+        return
       }
+
+      const json = await res.json()
+      if (json.success && json.document?.id) {
+        const pdfRes = await fetch(`/api/surga/emploi/documents/${json.document.id}/pdf`, {
+          headers: getSurgaEmploiHeaders(false),
+        })
+        if (pdfRes.ok) {
+          const blob = await pdfRes.blob()
+          telechargerBlobPdf(blob, `Lettre_${donnees.poste_vise.replace(/\s+/g, '_') || 'Surga'}.pdf`)
+          afficherToast('Lettre générée et téléchargée avec succès.')
+        }
+        rechargerDonnees()
+      } else if (json.motif === 'limite_atteinte' || json.quotaAtteint) {
+        onOpenPremium()
+      } else {
+        alert(json.error || 'Erreur lors de la génération de la lettre.')
+      }
+    } catch {
+      alert('Erreur réseau lors de la génération de la lettre.')
     } finally {
       setGenerant(false)
     }
@@ -201,23 +212,29 @@ export default function SurgaEmploiModal({
 
   // Télécharger un document existant
   const handleTelechargerDocExistant = async (id: string, nom: string) => {
-    const res = await fetch(`/api/surga/emploi/documents/${id}/pdf`)
-    if (res.ok) {
-      const blob = await res.blob()
-      telechargerBlob(blob, nom || 'document.pdf')
+    try {
+      const res = await fetch(`/api/surga/emploi/documents/${id}/pdf`, {
+        headers: getSurgaEmploiHeaders(false),
+      })
+      if (res.ok) {
+        const blob = await res.blob()
+        telechargerBlobPdf(blob, nom || 'document.pdf')
+      } else {
+        alert('Impossible de télécharger ce document.')
+      }
+    } catch {
+      alert('Erreur réseau lors du téléchargement.')
     }
   }
 
   // Supprimer un document
   const handleSupprimerDoc = async (id: string) => {
     if (!confirm('Voulez-vous supprimer définitivement ce document ?')) return
-    await fetch(`/api/surga/emploi/documents/${id}`, { method: 'DELETE' })
+    await fetch(`/api/surga/emploi/documents/${id}`, {
+      method: 'DELETE',
+      headers: getSurgaEmploiHeaders(true),
+    })
     setDocuments((prev) => prev.filter((d) => d.id !== id))
-  }
-
-  const afficherToast = (msg: string) => {
-    setMessageToast(msg)
-    setTimeout(() => setMessageToast(''), 3000)
   }
 
   if (!isOpen) return null
@@ -272,141 +289,18 @@ export default function SurgaEmploiModal({
             type="button"
             onClick={onClose}
             className="surga-btn-secondary"
-            style={{ border: 'none', background: 'none', padding: 4 }}
+            style={{ border: 'none', background: 'none', padding: 4, width: 'auto' }}
           >
             <X size={20} color="var(--navy, #1C2B4A)" />
           </button>
         </div>
 
-        {/* Barre d'onglets (5 onglets) */}
-        <div
-          style={{
-            display: 'flex',
-            borderBottom: '1px solid var(--border, #E8DDD2)',
-            backgroundColor: 'var(--bg, #F8F5F0)',
-            overflowX: 'auto',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setActiveTab('profil')}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              padding: '10px 8px',
-              fontSize: 12,
-              fontWeight: 700,
-              border: 'none',
-              background: activeTab === 'profil' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'profil' ? 'var(--accent, #C75B00)' : 'var(--text2, #5A4E42)',
-              borderBottom: activeTab === 'profil' ? '2px solid var(--accent, #C75B00)' : 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <User size={14} />
-            <span>Profil Pro</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('cv')}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              padding: '10px 8px',
-              fontSize: 12,
-              fontWeight: 700,
-              border: 'none',
-              background: activeTab === 'cv' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'cv' ? 'var(--accent, #C75B00)' : 'var(--text2, #5A4E42)',
-              borderBottom: activeTab === 'cv' ? '2px solid var(--accent, #C75B00)' : 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <FileText size={14} />
-            <span>Mon CV PDF</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('lettre')}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              padding: '10px 8px',
-              fontSize: 12,
-              fontWeight: 700,
-              border: 'none',
-              background: activeTab === 'lettre' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'lettre' ? 'var(--accent, #C75B00)' : 'var(--text2, #5A4E42)',
-              borderBottom: activeTab === 'lettre' ? '2px solid var(--accent, #C75B00)' : 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <Mail size={14} />
-            <span>Lettres</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('entretien')}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              padding: '10px 8px',
-              fontSize: 12,
-              fontWeight: 700,
-              border: 'none',
-              background: activeTab === 'entretien' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'entretien' ? 'var(--accent, #C75B00)' : 'var(--text2, #5A4E42)',
-              borderBottom: activeTab === 'entretien' ? '2px solid var(--accent, #C75B00)' : 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <HelpCircle size={14} />
-            <span>Entretien</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('documents')}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              padding: '10px 8px',
-              fontSize: 12,
-              fontWeight: 700,
-              border: 'none',
-              background: activeTab === 'documents' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'documents' ? 'var(--accent, #C75B00)' : 'var(--text2, #5A4E42)',
-              borderBottom: activeTab === 'documents' ? '2px solid var(--accent, #C75B00)' : 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <FolderArchive size={14} />
-            <span>Docs ({documents.length})</span>
-          </button>
-        </div>
+        {/* Barre d'onglets modulaire */}
+        <SurgaEmploiNav
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          nbDocuments={documents.length}
+        />
 
         {/* Corps défilable */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>

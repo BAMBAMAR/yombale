@@ -1,21 +1,46 @@
 // backend/routes/surga/emploi.js
 // Routes REST pour la brique Emploi : Profil pro, CV PDF, Lettres de motivation (Tranche 18)
-// Anti-IDOR strict, monétisation mixte, vérification serveur des droits
+// Anti-IDOR strict, monétisation mixte, identification universelle client PWA
 
 const express = require('express');
 const router = express.Router();
-const { verifierToken } = require('../../middlewares/auth');
+const { tokenOptional } = require('../../middlewares/auth');
 const emploiService = require('../../services/surga/emploi-service');
 
 /**
- * GET /api/surga/emploi/profil
- * Récupère le profil professionnel de l'utilisateur authentifié
+ * Middleware d'identification pour Surga Emploi :
+ * 1. Décode le JWT s'il est présent (session Nopalou / Surga)
+ * 2. Si pas de JWT, utilise l'identifiant matériel/local (x-surga-user-id / x-device-id)
+ * 3. En repli, attribue un identifiant invité stable sans bloquer l'usage
  */
-router.get('/emploi/profil', verifierToken, async (req, res) => {
+function identifierSurgaUser(req, res, next) {
+  tokenOptional(req, res, () => {
+    let uid = req.user?.userId || req.user?.id;
+    if (!uid) {
+      const clientHeader = req.headers['x-surga-user-id'] || req.headers['x-device-id'] || req.query.surga_user_id;
+      if (clientHeader && typeof clientHeader === 'string' && clientHeader.trim()) {
+        uid = clientHeader.trim();
+      } else {
+        uid = 'surga_guest_default';
+      }
+      req.user = { id: uid, userId: uid, guest: true };
+    } else {
+      req.user.id = uid;
+      req.user.userId = uid;
+    }
+    next();
+  });
+}
+
+/**
+ * GET /api/surga/emploi/profil
+ * Récupère le profil professionnel de l'utilisateur
+ */
+router.get('/emploi/profil', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const profil = await emploiService.getProfilPro(userId);
-    return res.json({ success: true, profil });
+    return res.json({ success: true, profil, guest: !!req.user.guest });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -23,9 +48,9 @@ router.get('/emploi/profil', verifierToken, async (req, res) => {
 
 /**
  * PUT /api/surga/emploi/profil
- * Met à jour le profil professionnel de l'utilisateur authentifié
+ * Met à jour le profil professionnel de l'utilisateur
  */
-router.put('/emploi/profil', verifierToken, async (req, res) => {
+router.put('/emploi/profil', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const data = req.body || {};
@@ -40,12 +65,23 @@ router.put('/emploi/profil', verifierToken, async (req, res) => {
  * GET /api/surga/emploi/droits
  * Vérifie l'état des droits et quotas pour le CV et la lettre
  */
-router.get('/emploi/droits', verifierToken, async (req, res) => {
+router.get('/emploi/droits', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const droitCv = await emploiService.verifierDroitCv(userId);
     const droitLettre = await emploiService.verifierDroitLettre(userId);
-    return res.json({ success: true, droitCv, droitLettre });
+    return res.json({
+      success: true,
+      droitCv,
+      droitLettre,
+      droits: {
+        estPremium: droitCv.motif === 'premium',
+        quotaCvAtteint: !droitCv.autorise,
+        cvTelecharges: droitCv.autorise ? 0 : 1,
+        quotaLettreAtteint: !droitLettre.autorise,
+        lettresMoisEnCours: droitLettre.autorise ? 0 : 1,
+      },
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -55,10 +91,10 @@ router.get('/emploi/droits', verifierToken, async (req, res) => {
  * POST /api/surga/emploi/cv/generer
  * Génère et enregistre un CV à partir du profil pro (Anti-Hallucination)
  */
-router.post('/emploi/cv/generer', verifierToken, async (req, res) => {
+router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { modele = 'sobre_moderne', attestationExactitude = false } = req.body;
+    const { modele = 'sobre_moderne', attestationExactitude = false, profil: profilTransmis } = req.body;
 
     if (!attestationExactitude) {
       return res.status(400).json({
@@ -67,8 +103,13 @@ router.post('/emploi/cv/generer', verifierToken, async (req, res) => {
       });
     }
 
-    const profil = await emploiService.getProfilPro(userId);
-    if (!profil || !profil.nom_complet || !profil.titre_poste) {
+    // Si le client transmet son profil mis à jour, l'enregistrer d'abord
+    if (profilTransmis && typeof profilTransmis === 'object') {
+      await emploiService.upsertProfilPro(userId, profilTransmis);
+    }
+
+    const profil = await emploiService.getProfilPro(userId) || profilTransmis;
+    if (!profil || !profil.nom_complet || (!profil.titre_poste && !profil.titre_professionnel)) {
       return res.status(400).json({
         success: false,
         error: 'Votre profil est incomplet. Veuillez renseigner au moins votre nom complet, votre titre de poste et vos coordonnées.',
@@ -81,11 +122,13 @@ router.post('/emploi/cv/generer', verifierToken, async (req, res) => {
         success: false,
         error: droit.message,
         motif: droit.motif,
+        quotaAtteint: true,
         prix_acte_xof: 500,
       });
     }
 
-    const titre = `CV - ${profil.nom_complet} (${profil.titre_poste})`;
+    const titrePoste = profil.titre_poste || profil.titre_professionnel || 'Professionnel';
+    const titre = `CV - ${profil.nom_complet} (${titrePoste})`;
     const doc = await emploiService.sauvegarderDocumentEmploi({
       userId,
       type: 'CV',
@@ -95,9 +138,17 @@ router.post('/emploi/cv/generer', verifierToken, async (req, res) => {
       estAchete: !droit.avecMention,
     });
 
-    // Incrémente le compteur uniquement si gratuit
     if (droit.motif === 'gratuit_decouverte') {
       await emploiService.incrementerUsage(userId, 'cv_generation', 'global');
+    }
+
+    // Si le client préfère recevoir directement le binaire PDF
+    if (req.query.format === 'pdf' || req.headers.accept?.includes('application/pdf')) {
+      const filename = `cv_${doc.id}.pdf`;
+      return emploiService.genererPdfStream(res, 'CV', profil, filename, {
+        modele,
+        avecMention: droit.avecMention,
+      });
     }
 
     return res.json({
@@ -115,10 +166,10 @@ router.post('/emploi/cv/generer', verifierToken, async (req, res) => {
  * POST /api/surga/emploi/lettre/generer
  * Génère et enregistre une lettre de motivation adaptée à une offre
  */
-router.post('/emploi/lettre/generer', verifierToken, async (req, res) => {
+router.post('/emploi/lettre/generer', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { titrePosteOffre, entrepriseOffre, offreTexte, attestationExactitude = false } = req.body;
+    const { titrePosteOffre, entrepriseOffre, offreTexte, attestationExactitude = false, profil: profilTransmis } = req.body;
 
     if (!attestationExactitude) {
       return res.status(400).json({
@@ -127,7 +178,11 @@ router.post('/emploi/lettre/generer', verifierToken, async (req, res) => {
       });
     }
 
-    const profil = await emploiService.getProfilPro(userId);
+    if (profilTransmis && typeof profilTransmis === 'object') {
+      await emploiService.upsertProfilPro(userId, profilTransmis);
+    }
+
+    const profil = await emploiService.getProfilPro(userId) || profilTransmis;
     if (!profil || !profil.nom_complet) {
       return res.status(400).json({
         success: false,
@@ -141,6 +196,7 @@ router.post('/emploi/lettre/generer', verifierToken, async (req, res) => {
         success: false,
         error: droit.message,
         motif: droit.motif,
+        quotaAtteint: true,
       });
     }
 
@@ -165,6 +221,14 @@ router.post('/emploi/lettre/generer', verifierToken, async (req, res) => {
     const periode = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     await emploiService.incrementerUsage(userId, 'lettre_generation', periode);
 
+    if (req.query.format === 'pdf' || req.headers.accept?.includes('application/pdf')) {
+      const filename = `lettre_${doc.id}.pdf`;
+      return emploiService.genererPdfStream(res, 'LETTRE', proposition, filename, {
+        modele: 'sobre_moderne',
+        avecMention: false,
+      });
+    }
+
     return res.json({
       success: true,
       document: doc,
@@ -179,7 +243,7 @@ router.post('/emploi/lettre/generer', verifierToken, async (req, res) => {
  * GET /api/surga/emploi/documents
  * Liste les documents créés par l'utilisateur
  */
-router.get('/emploi/documents', verifierToken, async (req, res) => {
+router.get('/emploi/documents', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const type = req.query.type || null;
@@ -194,7 +258,7 @@ router.get('/emploi/documents', verifierToken, async (req, res) => {
  * GET /api/surga/emploi/documents/:id/pdf
  * Télécharge le PDF d'un document avec vérification Anti-IDOR
  */
-router.get('/emploi/documents/:id/pdf', verifierToken, async (req, res) => {
+router.get('/emploi/documents/:id/pdf', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const docId = req.params.id;
@@ -221,7 +285,7 @@ router.get('/emploi/documents/:id/pdf', verifierToken, async (req, res) => {
  * DELETE /api/surga/emploi/documents/:id
  * Supprime un document (Anti-IDOR)
  */
-router.delete('/emploi/documents/:id', verifierToken, async (req, res) => {
+router.delete('/emploi/documents/:id', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const docId = req.params.id;
@@ -241,7 +305,7 @@ router.delete('/emploi/documents/:id', verifierToken, async (req, res) => {
  * GET /api/surga/emploi/entretien/banque
  * Récupère la banque de questions types pour un secteur donné
  */
-router.get('/emploi/entretien/banque', verifierToken, async (req, res) => {
+router.get('/emploi/entretien/banque', (req, res) => {
   try {
     const { secteur = 'general' } = req.query;
     const questions = emploiService.getBanqueQuestions(secteur);
@@ -255,7 +319,7 @@ router.get('/emploi/entretien/banque', verifierToken, async (req, res) => {
  * GET /api/surga/emploi/entretien/droits
  * Vérifie le quota hebdomadaire pour les simulations d'entretien
  */
-router.get('/emploi/entretien/droits', verifierToken, async (req, res) => {
+router.get('/emploi/entretien/droits', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const droits = await emploiService.verifierDroitSimulationEntretien(userId);
@@ -269,7 +333,7 @@ router.get('/emploi/entretien/droits', verifierToken, async (req, res) => {
  * POST /api/surga/emploi/entretien/evaluer
  * Analyse constructive et déterministe d'une réponse fournie à une question
  */
-router.post('/emploi/entretien/evaluer', verifierToken, async (req, res) => {
+router.post('/emploi/entretien/evaluer', (req, res) => {
   try {
     const { question, reponse, poste = '', secteur = '' } = req.body;
     if (!question || !reponse) {
@@ -296,7 +360,7 @@ router.post('/emploi/entretien/evaluer', verifierToken, async (req, res) => {
  * POST /api/surga/emploi/entretien/session
  * Valide la réalisation d'une simulation et incrémente le compteur hebdomadaire si gratuit
  */
-router.post('/emploi/entretien/session', verifierToken, async (req, res) => {
+router.post('/emploi/entretien/session', identifierSurgaUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const droits = await emploiService.verifierDroitSimulationEntretien(userId);
@@ -309,7 +373,6 @@ router.post('/emploi/entretien/session', verifierToken, async (req, res) => {
       });
     }
 
-    // Si utilisateur non premium, on incrémente l'usage hebdomadaire
     if (!droits.estPremium) {
       const d = new Date();
       const annee = d.getFullYear();
@@ -334,7 +397,7 @@ router.post('/emploi/entretien/session', verifierToken, async (req, res) => {
  * POST /api/surga/emploi/entretien/fiche-revision
  * Génère une fiche de révision textuelle complète pour l'enregistrement en Notes
  */
-router.post('/emploi/entretien/fiche-revision', verifierToken, async (req, res) => {
+router.post('/emploi/entretien/fiche-revision', (req, res) => {
   try {
     const { poste, secteur, evaluations = [] } = req.body;
     const fiche = emploiService.genererFicheRevisionEntretien({

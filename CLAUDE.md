@@ -49,6 +49,20 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Emploi & Carrière : Correctif 401 « Token manquant » & Téléchargement CV PDF (Session 2026-10-06 - Matin 12, branche `feature/surga`)** :
+  - *Symptôme Corrigé* : Blocage total des routes `/api/surga/emploi/*` renvoyant 401 « Token manquant » lors de l'ouverture du pôle Emploi et du téléchargement de CV en PDF.
+  - *Causes Racines Résolues* :
+    1. `SurgaEmploiModal.tsx` et `SurgaEntretienTab.tsx` n'envoyaient aucun header d'authentification dans leurs appels fetch.
+    2. Le middleware backend utilisait `verifierToken` strict au lieu d'identifier les utilisateurs locaux PWA et les utilisateurs invités via `tokenOptional` et `x-surga-user-id`.
+    3. `req.user.id` était lu au lieu de `req.user.userId || req.user.id` pour les sessions JWT.
+    4. Divergence entre `POST /cv/generer` (renvoyant du JSON) et le client attendant un stream direct.
+  - *Modifications Appliquées* :
+    - `backend/routes/surga/emploi.js` : Middleware `identifierSurgaUser` universel, téléchargement direct PDF supporté (`format=pdf` ou stream doc id).
+    - `frontend-next/src/lib/surga-emploi-api.ts` (nouveau) : Gestion automatique des headers JWT et `x-surga-user-id`, helper `telechargerBlobPdf`.
+    - `SurgaEmploiNav.tsx` (nouveau, 71 l.) : Extraction modulaire de la barre d'onglets.
+    - `SurgaEmploiModal.tsx` (383 l.) et `SurgaEntretienTab.tsx` (446 l.) : Allégés sous le plafond strict de 450 lignes, zéro émoji.
+  - *Validation* : 127/127 tests Jest, 97/97 tests Vitest, tsc 0 erreur, génération et téléchargement PDF 200 OK validés en réel.
+
 - **Surga — Hub Services : Correctif Écrasement Boutons & Largeur Auto (Session 2026-10-06 - Matin 11, branche `feature/surga`)** :
   - *Symptôme Corrigé* : Les boutons d'action des rangées de services (`.surga-btn-secondary`) héritaient d'un `width: 100%` global qui recouvrait et écrasait le texte et l'icône de gauche.
   - *Correctif Appliqué (`SurgaServiceRow.tsx` & `SurgaParametresTab.tsx`)* :

@@ -3,6 +3,33 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 12] — Emploi & Carrière : Correctif 401 « Token manquant » & Téléchargement CV PDF
+- **Demande Utilisateur :**
+  - Message d'erreur et logs : « Token manquant telecharge pdf » avec codes 401 sur `/api/surga/emploi/*` (`profil`, `droits`, `documents`, `cv/generer`).
+- **Analyse & Causes Racines :**
+  - Les requêtes frontend vers `/api/surga/emploi/*` n'incluaient aucun header d'authentification.
+  - Le routeur backend exigeait un token JWT strict (`verifierToken`), bloquant tout utilisateur PWA ou invité sans compte Nopalou.
+  - Divergence entre la route `POST /cv/generer` retournant une charge JSON et le client attendant un stream binaire PDF direct.
+- **Modifications Appliquées :**
+  - **`backend/routes/surga/emploi.js`** :
+    - Middleware `identifierSurgaUser` avec détection JWT et support des identifiants locaux (`x-surga-user-id` / `x-device-id`).
+    - Correction de la lecture `req.user.userId || req.user.id`.
+    - Support de la génération et streaming direct du PDF.
+  - **`frontend-next/src/lib/surga-emploi-api.ts` (nouveau)** :
+    - Helper centralisé injectant le JWT ou un `surga_device_id` stable pour les utilisateurs PWA.
+    - Helper `telechargerBlobPdf` pour le téléchargement sans blocage navigateur.
+  - **`SurgaEmploiNav.tsx` (nouveau, 71 l.)** :
+    - Barre d'onglets modulaire pour alléger `SurgaEmploiModal.tsx`.
+  - **Modularisation & Respect des Règles d'Or** :
+    - `SurgaEmploiModal.tsx` ramené de 514 à 383 lignes (< 450 l.).
+    - `SurgaEntretienTab.tsx` ramené de 462 à 446 lignes (< 450 l.).
+    - Zéro émoji dans l'UI.
+- **Validation :**
+  - 127/127 tests backend Jest validés (100%).
+  - 97/97 tests frontend Vitest validés (100%).
+  - TypeScript : 0 erreur (`tsc --noEmit`).
+  - Téléchargement du binaire PDF 200 OK testé avec succès en direct.
+
 ### [2026-10-06 — Matin 11] — Hub Services : Correctif Écrasement Boutons & Largeur Auto
 - **Demande Utilisateur :**
   - Constat visuel de l'écrasement du texte et de l'icône par les boutons d'action (« ecrase »).
