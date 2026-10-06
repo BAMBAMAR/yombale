@@ -49,6 +49,19 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Tranche 20 : Démarches Administratives Sénégalaises Vérifiées & Outil d'Administration (Session 2026-10-06, branche `feature/surga`)** :
+  - *Fiches Éditoriales Officielles, Cycle 90 Jours, Zéro-Hallucination & Passerelles Transversales* :
+    - Fiches certifiées officielles (CNI CEDEAO, Passeport biométrique, Extrait de casier judiciaire n°3, Certificat de nationalité, Acte de naissance, Permis de conduire, Certificat de résidence) avec pièces justificatives, coûts réels en FCFA, délais constatés et lieux de délivrance.
+    - Condition de démarrage formelle : Fiches initiales de test marquées `BROUILLON` (invisibles au grand public sans validation éditoriale préalable, mode démo technique pour administration et tests).
+    - Règle Zéro-Hallucination : recherche déterministe par mots-clés ; toute démarche non répertoriée renvoie immédiatement vers le portail officiel de l'État (`servicepublic.gouv.sn`) sans improvisation d'IA.
+    - Cycle de re-vérification de 90 jours : bascule automatique au statut `A_REVERIFIER` des fiches échues ; bouton de re-vérification en 1 clic côté console admin réinitialisant le cycle pour 90 jours au statut `PUBLIE`.
+    - Signalements d'erreurs : formulaire usager permettant de remonter les inexactitudes administratives avec file de modération dédiée dans la console admin.
+    - Quotas Section 1 bis : consultation libre et gratuite de toutes les fiches, checklist en Note gratuite, 1 suivi de démarche avec rappel gratuit ; suivis et rappels d'échéance illimités pour Surga Premium.
+    - Passerelles transversales : export des pièces requises en Note Surga interactive, inscription des frais de dossier dans Sama Xaalis, programmation de l'échéance/rappel dans l'Agenda.
+    - Portabilité RGPD & CDP : intégration des tables `surga_demarches_suivis` et `surga_demarches_signalements` dans l'export complet et la purge irréversible (`donnees-service.js`).
+    - Console Admin `/admin/surga` : onglet Démarches Vérifiées avec catalogue complet, file des fiches à re-vérifier (90j) et file des signalements usagers.
+    - Tests & Qualité : 127/127 tests Jest backend passés à 100%, 97/97 tests frontend passés, typage TypeScript strict à 0 erreur, composants < 450 lignes et 0 violation lint anti-slop.
+
 - **Surga — Tranche 19 : Préparation à l'Entretien d'Embauche & Fiches de Révision (Session 2026-10-06, branche `feature/surga`)** :
   - *Extension Emploi : Simulateur in-app, Feedback constructif STAR & Passerelles transversales* :
     - Banque de questions types par secteur économique dakarisé & sénégalais (Général, Comptabilité SYSCOHADA, Vente & Commercial, Tech & Informatique, Administration & RH, Logistique Dakar) avec conseils ciblés sur les attentes du recruteur.

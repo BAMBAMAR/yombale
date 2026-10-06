@@ -24,6 +24,7 @@ router.use('/', require('./meteo'));
 router.use('/', require('./sport'));
 router.use('/', require('./videos'));
 router.use('/', require('./emploi'));
+router.use('/', require('./demarches'));
 
 module.exports = router;
 

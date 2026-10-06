@@ -34,15 +34,19 @@ router.get('/stats', async (req, res) => {
           nb_concours: 0,
           nb_unes: 0,
           nb_signalements_attente: 0,
+          nb_demarches: 0,
+          nb_demarches_a_reverifier: 0,
         },
       });
     }
 
-    const [placesRes, concoursRes, unesRes, signalementsRes] = await Promise.all([
+    const [placesRes, concoursRes, unesRes, signalementsRes, demarchesRes, demarchesReverifRes] = await Promise.all([
       pool.query(`SELECT COUNT(*)::int AS count FROM surga_places WHERE actif = true`).catch(() => ({ rows: [{ count: 0 }] })),
       pool.query(`SELECT COUNT(*)::int AS count FROM surga_concours WHERE actif = true`).catch(() => ({ rows: [{ count: 0 }] })),
       pool.query(`SELECT COUNT(*)::int AS count FROM surga_unes_presse`).catch(() => ({ rows: [{ count: 0 }] })),
       pool.query(`SELECT COUNT(*)::int AS count FROM surga_trafic_signalements WHERE statut = 'en_attente'`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_demarches`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_demarches WHERE statut = 'A_REVERIFIER' OR date_prochaine_verification <= NOW()`).catch(() => ({ rows: [{ count: 0 }] })),
     ]);
 
     res.json({
@@ -52,6 +56,8 @@ router.get('/stats', async (req, res) => {
         nb_concours: concoursRes.rows[0]?.count || 0,
         nb_unes: unesRes.rows[0]?.count || 0,
         nb_signalements_attente: signalementsRes.rows[0]?.count || 0,
+        nb_demarches: demarchesRes.rows[0]?.count || 0,
+        nb_demarches_a_reverifier: demarchesReverifRes.rows[0]?.count || 0,
       },
     });
   } catch (err) {
@@ -1111,6 +1117,101 @@ router.post('/videos/sync', async (req, res) => {
   try {
     const rapport = await videoService.synchroniserTousLesFlux();
     res.json(rapport);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// DÉMARCHES ADMINISTRATIVES (Tranche 20)
+// ==========================================
+const demarchesService = require('../services/surga/demarches-service');
+
+router.get('/demarches', async (req, res) => {
+  try {
+    const { q, categorie, statut } = req.query;
+    const resultat = await demarchesService.rechercherDemarches({
+      query: q,
+      categorie,
+      statut,
+      includeBrouillons: true,
+    });
+    res.json({ success: true, demarches: resultat.fiches, total: resultat.total });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/demarches', async (req, res) => {
+  try {
+    const donnees = req.body || {};
+    if (!donnees.titre || !donnees.titre.trim()) {
+      return res.status(400).json({ success: false, error: 'Titre de la démarche requis.' });
+    }
+    const demarche = await demarchesService.sauvegarderDemarcheAdmin(donnees);
+    res.json({ success: true, demarche, message: 'Fiche de démarche enregistrée avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/demarches/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const donnees = { ...req.body, id };
+    const demarche = await demarchesService.sauvegarderDemarcheAdmin(donnees);
+    res.json({ success: true, demarche, message: 'Fiche de démarche mise à jour avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/demarches/:id/reverifier', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const demarche = await demarchesService.reverifierDemarcheAdmin(id);
+    if (!demarche) {
+      return res.status(404).json({ success: false, error: 'Démarche introuvable.' });
+    }
+    res.json({
+      success: true,
+      demarche,
+      message: 'Cycle de vérification réinitialisé pour 90 jours avec statut PUBLIE.',
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/demarches/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supprime = await demarchesService.supprimerDemarcheAdmin(id);
+    res.json({ success: supprime, message: supprime ? 'Démarche supprimée.' : 'Démarche introuvable.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/demarches/signalements/liste', async (req, res) => {
+  try {
+    const { statut } = req.query;
+    const signalements = await demarchesService.getSignalementsAdmin({ statut });
+    res.json({ success: true, signalements, total: signalements.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/demarches/signalements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { statut, reponse_admin } = req.body || {};
+    const sig = await demarchesService.traiterSignalementAdmin(id, { statut, reponse_admin });
+    if (!sig) {
+      return res.status(404).json({ success: false, error: 'Signalement introuvable.' });
+    }
+    res.json({ success: true, signalement: sig, message: 'Statut du signalement mis à jour.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

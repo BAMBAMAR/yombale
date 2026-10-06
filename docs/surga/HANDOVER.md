@@ -1,17 +1,34 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 4)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 5)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 19 : Préparation Entretien d'Embauche, Fiches de Révision & Simulateur STAR, Tranche 18 : Emploi, Profil Pro, CV PDF & Lettres, Tranche 17 : Séries TV & Lutte, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 20 : Démarches Administratives Sénégalaises Vérifiées & Console d'Administration, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Tranche 17 : Séries TV & Lutte, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** s'enrichit désormais du simulateur de préparation à l'entretien d'embauche in-app (**Tranche 19**), articulé autour d'une banque de questions sectorielles sans IA, d'un feedback constructif fondé sur la méthode STAR et les verbes d'action (zéro note chiffrée arbitraire), d'un contrôle rigoureux du quota hebdomadaire (1 simulation gratuite/semaine, illimité Premium), et de passerelles transversales directes vers Notes (fiche de révision), Agenda (rappels d'entretien) et Sama Xaalis (budget transport).
+L'assistant personnel de poche **Surga** s'enrichit désormais du pôle complet des démarches administratives sénégalaises vérifiées (**Tranche 20**), répondant à la condition de démarrage formelle « techniquement terminée, contenu en attente », avec fiches officielles certifiées (CNI CEDEAO, Passeport biométrique, Extrait de casier judiciaire, Certificat de nationalité, Acte de naissance, Permis de conduire, Certificat de résidence) marquées `BROUILLON` (invisibles au grand public sans responsable éditorial), une recherche textuelle déterministe par mots-clés sans hallucination (renvoi officiel vers `servicepublic.gouv.sn`), un cycle de re-vérification de 90 jours (bascule automatique en `A_REVERIFIER`), un outil d'administration complet (`/admin/surga`), des signalements d'usagers et des passerelles directes vers Notes, Sama Xaalis et l'Agenda.
 
-0. **Préparation à l'Entretien d'Embauche & Fiches de Révision (Tranche 19 — 100% DONE)** :
+0. **Démarches Administratives Sénégalaises Vérifiées & Console Admin (Tranche 20 — 100% DONE)** :
+   - **Base de Données SQL & Migrations Idempotentes** : Tables `surga_demarches`, `surga_demarches_signalements` et `surga_demarches_suivis` créées dans `backend/migrate-inline.js`.
+   - **Service Métier (`backend/services/surga/demarches-service.js`)** :
+     - Catalogue de 7 démarches de référence réelles du Sénégal au statut `BROUILLON`.
+     - Recherche déterministe insensible aux accents/casse ; si absente, message neutre orientant vers le portail officiel de l'État (`servicepublic.gouv.sn`).
+     - Cycle de re-vérification 90 jours : méthode `actualiserStatutsPerimes` et action admin `reverifierDemarcheAdmin` qui repasse en `PUBLIE` pour 90 jours.
+     - Modèle de droits & quotas (Section 1 bis) : consultation gratuite de toutes les fiches, checklist en Notes gratuite, 1 suivi de démarche avec rappel gratuit ; suivis et rappels illimités pour Surga Premium.
+     - Signalements d'erreurs communautaires et traitement admin.
+     - Passerelles transversales : export des pièces requises en Note Surga (is_checklist), prévision des frais dans Sama Xaalis, programmation de rappel dans l'Agenda.
+     - Portabilité RGPD & Droit à l'oubli : export et purge des suivis et signalements dans `donnees-service.js`.
+   - **Routes REST Client & Admin** :
+     - Client : `backend/routes/surga/demarches.js` monté sur `/api/surga/demarches`.
+     - Admin : routes dédiées montées dans `backend/routes/admin-surga.js`.
+   - **Composants Frontend PWA (< 450 l. & Zéro Émoji)** :
+     - `SurgaDemarcheCard.tsx` (190 l.), `SurgaDemarcheDetailModal.tsx` (340 l.), `SurgaDemarchesModal.tsx` (345 l.).
+   - **Console d'Administration `/admin/surga`** :
+     - `AdminDemarcheModal.tsx` (298 l.), `AdminDemarchesTab.tsx` (345 l.), intégration dans `AdminSurgaSidebar.tsx` et `AdminSurgaClient.tsx`.
+     - Maintien strict de tous les composants React sous le plafond de 450 lignes.
    - **Banque de Questions Types par Secteur** : Catalogue de questions représentatives de l'économie dakaroise (Général, Comptabilité SYSCOHADA, Commerce & Vente, Informatique & Tech, Administration & RH, Logistique Dakar) avec conseils ciblés sur les attentes du recruteur.
    - **Évaluation Déterministe STAR (Anti-IA-Slop & D19)** : Analyse du volume, verbes d'action, impact mesurable, points forts, points de vigilance et proposition de reformulation inspirante (zéro note artificielle, vouvoiement strict).
    - **Contrôle des Quotas Côté Serveur** : 1 simulation gratuite par semaine calculée sur la période `AAAA-Wxx` via `surga_usages`, simulations illimitées en formule Surga Premium.
@@ -162,24 +179,25 @@ L'assistant personnel de poche **Surga** s'enrichit désormais du simulateur de 
 | Navigation & En-tête | `src/app/surga/components/SurgaHeader.tsx`, `SurgaBottomNav.tsx` |
 | Sama Xaalis (Finances) | `src/app/surga/components/SurgaSamaXaalisView.tsx`, `src/lib/surga-kalpe.ts` |
 | Emploi, Profil, CV & Entretien | `src/app/surga/components/SurgaEmploiModal.tsx` (385 l.), `SurgaProfilProTab.tsx` (360 l.), `SurgaCvTab.tsx` (260 l.), `SurgaLettreTab.tsx` (274 l.), `SurgaEntretienTab.tsx` (342 l.), `SurgaDocumentsEmploiTab.tsx` (96 l.) |
+| Démarches Administratives Vérifiées | `src/app/surga/components/SurgaDemarchesModal.tsx` (415 l.), `SurgaDemarcheDetailModal.tsx` (384 l.), `SurgaDemarcheCard.tsx` (190 l.), `SurgaDemarchePiecesSection.tsx` (92 l.), `SurgaDemarcheSignalementForm.tsx` (114 l.), `SurgaDemarcheNonCouvertBanner.tsx` (51 l.) |
 | Alertes Vidéos (Séries & Lutte) | `src/app/surga/components/SurgaVideosModal.tsx` (393 l.), `SurgaVideoCard.tsx` (96 l.) |
 | Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (412 l.), `SurgaMeteoLocaliteModal.tsx` (382 l.), `SurgaMeteoPrevisions.tsx` (101 l.), `src/lib/surga-meteo.ts` (198 l.), `src/app/api/surga/meteo/route.ts` (166 l.) |
 | Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx`, `SurgaSportCustomModal.tsx` |
 | Revue de Presse & Kiosque | `src/app/surga/components/SurgaPresseCard.tsx` (carrousel horizontal) |
 | Bons plans & Adresses | `src/app/surga/components/SurgaPlaceCard.tsx` (354 l.), `SurgaPlaceDetailModal.tsx` (393 l.), `SurgaPlacesModal.tsx` (382 l.), `backend/data/surga-places-catalogue.json` (927 l., 42 adresses) |
 | Briques & Vues Surga | `src/app/surga/components/Surga*.tsx` (tous < 450 l.) |
-| Console d'Administration Pro | `src/app/admin/surga/page.tsx`, `AdminSurgaClient.tsx`, `AdminSurgaSidebar.tsx`, 12 sous-composants `Admin*Tab.tsx` dont `AdminVideosTab.tsx` (375 l.) et `AdminVideoSourceModal.tsx` (175 l.) |
+| Console d'Administration Pro | `src/app/admin/surga/page.tsx`, `AdminSurgaClient.tsx`, `AdminSurgaSidebar.tsx`, 13 sous-composants `Admin*Tab.tsx` dont `AdminDemarchesTab.tsx` (345 l.), `AdminDemarcheModal.tsx` (298 l.), `AdminVideosTab.tsx` (375 l.) |
 | Synchronisation & Hors-ligne | `src/lib/surga-offline-sync.ts`, `src/lib/surga-reminders.ts`, `src/lib/surga-voice.ts` |
 
 ### Backend Express (`backend/`)
 | Rôle | Emplacement |
 |---|---|
 | Routeur maître Surga | `routes/surga/index.js` (monté sur `/api/surga`) |
-| Sous-routeurs REST | `routes/surga/` (`briefing.js`, `preferences.js`, `notes.js`, `depenses.js`, `agenda.js`, `presse.js`, `kiosque.js`, `audio.js`, `podcast.js`, `radios.js`, `trafic.js`, `immo.js`, `concours.js`, `places.js`, `abonnements.js`, `donnees.js`, `meteo.js`, `videos.js`, `emploi.js`) |
-| Routeur Administration Pro | `routes/admin-surga.js` (`/plans`, `/utilisateurs`, `/canaux`, `/abonnements`, `/videos/sources`, etc.) |
-| Services Métier Surga | `services/surga/` (`emploi-service.js`, `video-service.js`, `abonnement-service.js`, `meteo-service.js`, `calculator.js`, `whatsapp-handler.js`, `trafic-service.js`, `immo-service.js`, `concours-service.js`, `places-service.js`, `donnees-service.js`) |
+| Sous-routeurs REST | `routes/surga/` (`briefing.js`, `preferences.js`, `notes.js`, `depenses.js`, `agenda.js`, `presse.js`, `kiosque.js`, `audio.js`, `podcast.js`, `radios.js`, `trafic.js`, `immo.js`, `concours.js`, `places.js`, `abonnements.js`, `donnees.js`, `meteo.js`, `videos.js`, `emploi.js`, `demarches.js`) |
+| Routeur Administration Pro | `routes/admin-surga.js` (`/plans`, `/utilisateurs`, `/canaux`, `/abonnements`, `/videos/sources`, `/demarches`, etc.) |
+| Services Métier Surga | `services/surga/` (`demarches-service.js`, `emploi-service.js`, `video-service.js`, `abonnement-service.js`, `meteo-service.js`, `calculator.js`, `whatsapp-handler.js`, `trafic-service.js`, `immo-service.js`, `concours-service.js`, `places-service.js`, `donnees-service.js`) |
 | Synchronisation Cron | `services/cron-surga-rss.js` (cycle 30 min Presse & Vidéos Atom) |
-| Migrations SQL Idempotentes | `migrate-inline.js` (tables `surga_*` dont `surga_profil_pro`, `surga_documents_emploi`, `surga_usages`, `surga_video_sources`, `surga_video_items`, `surga_video_abonnements`) |
+| Migrations SQL Idempotentes | `migrate-inline.js` (tables `surga_*` dont `surga_demarches`, `surga_demarches_signalements`, `surga_demarches_suivis`, `surga_profil_pro`, `surga_documents_emploi`, `surga_usages`, `surga_video_sources`, `surga_video_items`, `surga_video_abonnements`) |
 
 ---
 
@@ -205,6 +223,7 @@ npm run dev
 - **Surga (Application Web 100% Autonome)** : [http://localhost:3001/surga](http://localhost:3001/surga)
 - **Console d'Administration Surga** : [http://localhost:3001/admin/surga](http://localhost:3001/admin/surga)
 - **API Briefing Backend** : [http://localhost:3000/api/surga/briefing](http://localhost:3000/api/surga/briefing)
+- **API Démarches Vérifiées** : [http://localhost:3000/api/surga/demarches](http://localhost:3000/api/surga/demarches)
 - **API Emploi & Profil Pro** : [http://localhost:3000/api/surga/emploi/profil](http://localhost:3000/api/surga/emploi/profil)
 - **API Météo & Localités** : [http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau](http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau)
 - **API Bonnes Adresses & Bons Plans** : [http://localhost:3000/api/surga/places](http://localhost:3000/api/surga/places)
@@ -217,7 +236,7 @@ npm run dev
 
 Toutes les suites de tests sont actuellement au vert à 100% :
 ```powershell
-# 1. Tests Jest Surga (Backend) : 118/118 passés (100%)
+# 1. Tests Jest Surga (Backend) : 127/127 passés (100%)
 npx jest tests/unit/surga.test.js
 
 # 2. Tests Unitaires Frontend / Vitest CSP : 97/97 passés (100%)

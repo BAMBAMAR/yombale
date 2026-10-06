@@ -1813,6 +1813,195 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(routes).toContain('POST /emploi/entretien/fiche-revision');
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TRANCHE 20 : DÉMARCHES ADMINISTRATIVES SÉNÉGALAISES VÉRIFIÉES & ADMIN
+  // ─────────────────────────────────────────────────────────────────────────────
+  describe('Tranche 20 : Démarches administratives sénégalaises vérifiées & Console Admin', () => {
+    const demarchesService = require('../../backend/services/surga/demarches-service');
+
+    beforeEach(() => {
+      demarchesService.reinitialiserMemoire();
+    });
+
+    test('Catalogue initial certifié conforme (6 à 8 fiches de test réelles)', () => {
+      expect(demarchesService.DEMARCHES_INITIALES.length).toBeGreaterThanOrEqual(6);
+      expect(demarchesService.DEMARCHES_INITIALES.length).toBeLessThanOrEqual(8);
+
+      const slugs = demarchesService.DEMARCHES_INITIALES.map((d) => d.slug);
+      expect(slugs).toContain('carte-nationale-identite-cedeao');
+      expect(slugs).toContain('passeport-biometrique-ordinaire');
+      expect(slugs).toContain('casier-judiciaire-bulletin-3');
+      expect(slugs).toContain('certificat-nationalite-senegalaise');
+      expect(slugs).toContain('declaration-extrait-acte-naissance');
+      expect(slugs).toContain('permis-conduire-senegalais');
+      expect(slugs).toContain('certificat-residence-senegal');
+    });
+
+    test('Condition de démarrage : toutes les fiches initiales sont en statut BROUILLON et invisibles pour le public', async () => {
+      // Toutes les fiches initiales sont marquées BROUILLON
+      expect(demarchesService.DEMARCHES_INITIALES.every((d) => d.statut === 'BROUILLON')).toBe(true);
+
+      // Côté utilisateur public sans mode démo (includeBrouillons: false) : 0 fiche retournée
+      const resPublic = await demarchesService.rechercherDemarches({ includeBrouillons: false });
+      expect(resPublic.fiches.length).toBe(0);
+
+      // En mode admin / démo (includeBrouillons: true) : les fiches sont bien accessibles
+      const resAdmin = await demarchesService.rechercherDemarches({ includeBrouillons: true });
+      expect(resAdmin.fiches.length).toBe(7);
+    });
+
+    test('Recherche textuelle déterministe insensible aux accents et à la casse', async () => {
+      // Recherche "cni"
+      const resCni = await demarchesService.rechercherDemarches({ query: 'cni', includeBrouillons: true });
+      expect(resCni.fiches.length).toBeGreaterThanOrEqual(1);
+      expect(resCni.fiches[0].slug).toBe('carte-nationale-identite-cedeao');
+
+      // Recherche avec accents "identité"
+      const resAccents = await demarchesService.rechercherDemarches({ query: 'identité', includeBrouillons: true });
+      expect(resAccents.fiches.length).toBeGreaterThanOrEqual(1);
+
+      // Recherche par lieu "Dieuppeul"
+      const resLieu = await demarchesService.rechercherDemarches({ query: 'Dieuppeul', includeBrouillons: true });
+      expect(resLieu.fiches.length).toBeGreaterThanOrEqual(1);
+      expect(resLieu.fiches[0].slug).toBe('passeport-biometrique-ordinaire');
+    });
+
+    test('Règle Zéro-Hallucination : démarche non couverte renvoie vers le portail officiel de l État sans invention d IA', async () => {
+      const resInconnu = await demarchesService.rechercherDemarches({
+        query: 'permis de port d arme spatiale',
+        includeBrouillons: true,
+      });
+
+      expect(resInconnu.non_couvert).toBe(true);
+      expect(resInconnu.fiches.length).toBe(0);
+      expect(resInconnu.message).toContain('pas encore couverte');
+      expect(resInconnu.portail_officiel).toBe('https://servicepublic.gouv.sn');
+    });
+
+    test('Cycle de re-vérification de 90 jours et passage automatique en A_REVERIFIER', async () => {
+      // 1. Publier une démarche avec une date de prochaine vérification expirée (il y a 2 jours)
+      const demarcheExpiree = await demarchesService.sauvegarderDemarcheAdmin({
+        id: 'dem-test-cycle-90j',
+        titre: 'Démarche Test Cycle',
+        statut: 'PUBLIE',
+        date_verification: new Date(Date.now() - 95 * 24 * 3600 * 1000).toISOString(),
+        date_prochaine_verification: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+      });
+      expect(demarcheExpiree.statut).toBe('PUBLIE');
+
+      // 2. Déclenchement de la mise à jour des statuts périmés
+      await demarchesService.actualiserStatutsPerimes();
+
+      // 3. Vérification que la démarche est passée en A_REVERIFIER
+      const demarcheApres = await demarchesService.getDemarcheParIdOuSlug('dem-test-cycle-90j', {
+        includeBrouillons: true,
+      });
+      expect(demarcheApres.statut).toBe('A_REVERIFIER');
+
+      // 4. Action admin de re-vérification : réinitialisation à J+90 et retour au statut PUBLIE
+      const demarcheReverifiee = await demarchesService.reverifierDemarcheAdmin('dem-test-cycle-90j');
+      expect(demarcheReverifiee.statut).toBe('PUBLIE');
+      const diffJours = Math.round(
+        (new Date(demarcheReverifiee.date_prochaine_verification) - new Date()) / (24 * 3600 * 1000)
+      );
+      expect(diffJours).toBeGreaterThanOrEqual(89);
+      expect(diffJours).toBeLessThanOrEqual(91);
+    });
+
+    test('Gestion des signalements d erreurs par les usagers et modération admin', async () => {
+      // 1. Création d'un signalement
+      const sig = await demarchesService.creerSignalement({
+        demarche_id: 'dem-cni-cedeao',
+        message: 'Le centre DAF de Guédiawaye a changé d adresse.',
+        contact_email: 'usager@test.sn',
+      });
+      expect(sig.id).toBeDefined();
+      expect(sig.statut).toBe('EN_ATTENTE');
+
+      // 2. Récupération dans la file admin
+      const fileAdmin = await demarchesService.getSignalementsAdmin({ statut: 'EN_ATTENTE' });
+      expect(fileAdmin.some((s) => s.message.includes('Guédiawaye'))).toBe(true);
+
+      // 3. Traitement admin
+      const sigTraite = await demarchesService.traiterSignalementAdmin(sig.id, {
+        statut: 'TRAITE',
+        reponse_admin: 'Pris en compte et mis à jour.',
+      });
+      expect(sigTraite.statut).toBe('TRAITE');
+    });
+
+    test('Modèle de quotas de suivi : 1 démarche suivie gratuite puis blocage avec incitation Premium', async () => {
+      const userIdTest = 'user-demarche-free-' + Date.now();
+
+      // 1. Premier suivi : autorisé
+      const suivi1 = await demarchesService.ajouterSuiviDemarche(userIdTest, 'dem-cni-cedeao', {
+        notes: 'Dépôt prévu lundi',
+      });
+      expect(suivi1).toBeDefined();
+      expect(suivi1.demarche_id).toBe('dem-cni-cedeao');
+
+      // 2. Deuxième suivi sur une autre démarche : bloqué par le quota gratuit (1 suivi max)
+      await expect(
+        demarchesService.ajouterSuiviDemarche(userIdTest, 'dem-passeport-bio', {
+          notes: 'Renouvellement',
+        })
+      ).rejects.toThrow(/formule gratuite vous permet de suivre 1 démarche/);
+
+      // 3. Récupération des démarches suivies
+      const suivis = await demarchesService.getSuivisUtilisateur(userIdTest);
+      expect(suivis.length).toBe(1);
+      expect(suivis[0].demarche_id).toBe('dem-cni-cedeao');
+
+      // 4. Retrait du suivi (Anti-IDOR)
+      const supprime = await demarchesService.supprimerSuiviDemarche(userIdTest, 'dem-cni-cedeao');
+      expect(supprime).toBe(true);
+      const suivisApres = await demarchesService.getSuivisUtilisateur(userIdTest);
+      expect(suivisApres.length).toBe(0);
+    });
+
+    test('Portabilité RGPD : l export intègre les démarches suivies et signalements', async () => {
+      const donneesService = require('../../backend/services/surga/donnees-service');
+      const userIdTest = 'user-rgpd-demarches-' + Date.now();
+
+      const exportDonnees = await donneesService.exporterDonneesUtilisateur({ userId: userIdTest });
+      expect(exportDonnees).toBeDefined();
+      expect(Array.isArray(exportDonnees.demarches_suivies)).toBe(true);
+      expect(Array.isArray(exportDonnees.demarches_signalements)).toBe(true);
+
+      const purgeResultats = await donneesService.supprimerDonneesUtilisateur({ userId: userIdTest });
+      expect(purgeResultats).toBeDefined();
+    });
+
+    test('Les routeurs REST démarches (client et admin) se chargent et répondent dans Express', () => {
+      const routerDemarchesClient = require('../../backend/routes/surga/demarches');
+      const routerAdmin = require('../../backend/routes/admin-surga');
+
+      const clientRoutes = routerDemarchesClient.stack
+        .filter((r) => r.route)
+        .map((r) => `${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`);
+
+      expect(clientRoutes).toContain('GET /demarches');
+      expect(clientRoutes).toContain('GET /demarches/categories');
+      expect(clientRoutes).toContain('GET /demarches/suivis');
+      expect(clientRoutes).toContain('POST /demarches/:id/suivis');
+      expect(clientRoutes).toContain('DELETE /demarches/:id/suivis');
+      expect(clientRoutes).toContain('POST /demarches/:id/signalements');
+      expect(clientRoutes).toContain('GET /demarches/:id');
+
+      const adminRoutes = routerAdmin.stack
+        .filter((r) => r.route)
+        .map((r) => `${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`);
+
+      expect(adminRoutes).toContain('GET /demarches');
+      expect(adminRoutes).toContain('POST /demarches');
+      expect(adminRoutes).toContain('PUT /demarches/:id');
+      expect(adminRoutes).toContain('POST /demarches/:id/reverifier');
+      expect(adminRoutes).toContain('DELETE /demarches/:id');
+      expect(adminRoutes).toContain('GET /demarches/signalements/liste');
+      expect(adminRoutes).toContain('PUT /demarches/signalements/:id');
+    });
+  });
 });
 
 

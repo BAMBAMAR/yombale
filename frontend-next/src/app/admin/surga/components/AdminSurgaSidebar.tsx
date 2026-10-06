@@ -20,6 +20,7 @@ import {
   LogOut,
   ShieldCheck,
   Tv,
+  FileCheck,
 } from 'lucide-react'
 
 export type SurgaAdminTab =
@@ -30,6 +31,7 @@ export type SurgaAdminTab =
   | 'reseaux'
   | 'places'
   | 'concours'
+  | 'demarches'
   | 'videos'
   | 'unes'
   | 'trafic'
@@ -44,6 +46,8 @@ interface AdminSurgaSidebarProps {
     nb_concours: number
     nb_unes: number
     nb_signalements_attente: number
+    nb_demarches?: number
+    nb_demarches_a_reverifier?: number
     abonnementsActifs?: number
   }
   adminEmail?: string
@@ -176,6 +180,22 @@ export default function AdminSurgaSidebar({
           {stats && stats.nb_concours > 0 && (
             <span className="surga-nav-badge">{stats.nb_concours}</span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelectTab('demarches')}
+          className={`surga-nav-item ${activeTab === 'demarches' ? 'active' : ''}`}
+        >
+          <div className="surga-nav-item-left">
+            <FileCheck size={16} />
+            <span>Démarches Vérifiées</span>
+          </div>
+          {stats && (stats.nb_demarches_a_reverifier || 0) > 0 ? (
+            <span className="surga-nav-badge danger">{stats.nb_demarches_a_reverifier}</span>
+          ) : stats && (stats.nb_demarches || 0) > 0 ? (
+            <span className="surga-nav-badge">{stats.nb_demarches}</span>
+          ) : null}
         </button>
 
         <button

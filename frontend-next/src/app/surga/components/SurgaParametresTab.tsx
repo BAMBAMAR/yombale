@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Sparkles,
   Shield,
+  BookOpen,
 } from 'lucide-react'
 
 interface SurgaParametresTabProps {
@@ -26,6 +27,7 @@ interface SurgaParametresTabProps {
   onOpenTrafic: () => void
   onOpenImmo: () => void
   onOpenConcours: () => void
+  onOpenDemarches?: () => void
   onOpenPlaces?: () => void
   onOpenVideos?: () => void
   onOpenEmploi?: () => void
@@ -43,6 +45,7 @@ export default function SurgaParametresTab({
   onOpenTrafic,
   onOpenImmo,
   onOpenConcours,
+  onOpenDemarches,
   onOpenPlaces,
   onOpenVideos,
   onOpenEmploi,
@@ -275,6 +278,36 @@ export default function SurgaParametresTab({
         >
           Consulter
         </button>
+      </div>
+
+      {/* Démarches Administratives Vérifiées */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: 10,
+          borderTop: '1px solid var(--border, #E8DDD2)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            Démarches Administratives Vérifiées
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            Fiches officielles de l État, pièces, coûts &amp; délais
+          </div>
+        </div>
+        {onOpenDemarches && (
+          <button
+            type="button"
+            onClick={onOpenDemarches}
+            className="surga-btn-secondary"
+            style={{ fontSize: 11, padding: '5px 12px' }}
+          >
+            Consulter
+          </button>
+        )}
       </div>
 
       {/* Bons Plans & Bonnes Adresses Dakar */}

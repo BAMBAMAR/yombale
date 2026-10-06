@@ -14,6 +14,7 @@ import AdminComptesTab from './components/AdminComptesTab'
 import AdminReseauxTab from './components/AdminReseauxTab'
 import AdminPlacesTab from './components/AdminPlacesTab'
 import AdminConcoursTab from './components/AdminConcoursTab'
+import AdminDemarchesTab from './components/AdminDemarchesTab'
 import AdminVideosTab from './components/AdminVideosTab'
 import AdminUnesTab from './components/AdminUnesTab'
 import AdminTraficTab from './components/AdminTraficTab'
@@ -62,6 +63,10 @@ const TAB_TITLES: Record<SurgaAdminTab, { title: string; subtitle: string }> = {
   concours: {
     title: 'Concours & Examens Nationaux',
     subtitle: 'Calendrier officiel ENA, FASTEF, Douanes, quittances Trésor et alertes candidats.',
+  },
+  demarches: {
+    title: 'Démarches Administratives Vérifiées',
+    subtitle: 'Fiches officielles certifiées de l État sénégalais, re-vérification 90 jours et modération des signalements.',
   },
   videos: {
     title: 'Séries TV & Lutte Sénégalaise',
@@ -205,6 +210,7 @@ export default function AdminSurgaClient({
           {activeTab === 'reseaux' && <AdminReseauxTab />}
           {activeTab === 'places' && <AdminPlacesTab />}
           {activeTab === 'concours' && <AdminConcoursTab />}
+          {activeTab === 'demarches' && <AdminDemarchesTab />}
           {activeTab === 'videos' && <AdminVideosTab />}
           {activeTab === 'unes' && <AdminUnesTab />}
           {activeTab === 'trafic' && <AdminTraficTab />}

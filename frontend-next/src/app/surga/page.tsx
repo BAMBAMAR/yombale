@@ -56,7 +56,7 @@ export default function SurgaPage() {
   const [isConcoursOpen, setIsConcoursOpen] = useState(false), [isPlacesOpen, setIsPlacesOpen] = useState(false)
   const [isPremiumOpen, setIsPremiumOpen] = useState(false), [isProOpen, setIsProOpen] = useState(false)
   const [isDonneesOpen, setIsDonneesOpen] = useState(false), [isVideosOpen, setIsVideosOpen] = useState(false)
-  const [isEmploiOpen, setIsEmploiOpen] = useState(false)
+  const [isEmploiOpen, setIsEmploiOpen] = useState(false), [isDemarchesOpen, setIsDemarchesOpen] = useState(false)
   const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; plan?: string | null; joursRestants?: number }>({ estPremium: false })
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
@@ -397,12 +397,10 @@ export default function SurgaPage() {
         {/* Onglet 5 : Plus / Paramètres */}
         {activeTab === 'plus' && (
           <SurgaParametresTab
-            preferences={preferences} statutPremium={statutPremium}
-            onToggleAudio={handleToggleAudio} onOpenRadio={openRadioModal}
-            onOpenTrafic={() => setIsTraficOpen(true)} onOpenImmo={() => setIsImmoOpen(true)}
-            onOpenConcours={() => setIsConcoursOpen(true)} onOpenPlaces={() => setIsPlacesOpen(true)}
-            onOpenVideos={() => setIsVideosOpen(true)} onOpenEmploi={() => setIsEmploiOpen(true)}
-            onOpenPremium={() => setIsPremiumOpen(true)} onOpenPro={() => setIsProOpen(true)}
+            preferences={preferences} statutPremium={statutPremium} onToggleAudio={handleToggleAudio} onOpenRadio={openRadioModal}
+            onOpenTrafic={() => setIsTraficOpen(true)} onOpenImmo={() => setIsImmoOpen(true)} onOpenConcours={() => setIsConcoursOpen(true)}
+            onOpenDemarches={() => setIsDemarchesOpen(true)} onOpenPlaces={() => setIsPlacesOpen(true)} onOpenVideos={() => setIsVideosOpen(true)}
+            onOpenEmploi={() => setIsEmploiOpen(true)} onOpenPremium={() => setIsPremiumOpen(true)} onOpenPro={() => setIsProOpen(true)}
             onOpenDonnees={() => setIsDonneesOpen(true)} onReinitialiser={handleReinitialiser}
           />
         )}
@@ -424,19 +422,23 @@ export default function SurgaPage() {
         isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
         isPodcastOpen={isPodcastOpen} isTraficOpen={isTraficOpen} isImmoOpen={isImmoOpen}
         isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isPremiumOpen={isPremiumOpen}
-        isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen} isEmploiOpen={isEmploiOpen}
+        isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen}
+        isEmploiOpen={isEmploiOpen} isDemarchesOpen={isDemarchesOpen}
         onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)}
         onClosePresse={() => setIsPresseOpen(false)} onClosePodcast={() => setIsPodcastOpen(false)}
         onCloseTrafic={() => setIsTraficOpen(false)} onCloseImmo={() => setIsImmoOpen(false)}
         onCloseConcours={() => setIsConcoursOpen(false)} onClosePlaces={() => setIsPlacesOpen(false)}
         onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)}
         onCloseDonnees={() => setIsDonneesOpen(false)} onCloseVideos={() => setIsVideosOpen(false)}
-        onCloseEmploi={() => setIsEmploiOpen(false)}
+        onCloseEmploi={() => setIsEmploiOpen(false)} onCloseDemarches={() => setIsDemarchesOpen(false)}
         onInjectMontantCalc={() => setActiveTab('depenses')}
         onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
         onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote}
         onConfirmerVoiceRappel={handleVoiceRappel} onDonneesSupprimees={handleReinitialiser}
         onAbonnementActive={() => setStatutPremium({ estPremium: true, joursRestants: 30 })}
+        onCreerNoteChecklist={(titre, items) => { saveLocalNote({ titre, contenu: items.join('\n'), categorie: 'general', is_checklist: true }); rafraichirApercus() }}
+        onAjouterDepenseDemarche={(m, d) => { saveLocalDepense({ montant_xof: m, categorie: 'autre', note: d, date_depense: new Date().toISOString() }); rafraichirApercus() }}
+        onAjouterAgendaDemarche={(t, date) => { saveLocalEvenement({ titre: t, date_evenement: date, heure_evenement: '09:00', categorie: 'demarche' }); rafraichirApercus() }}
       />
 
       {/* Navigation basse */}

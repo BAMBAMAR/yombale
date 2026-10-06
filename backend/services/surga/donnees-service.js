@@ -40,6 +40,8 @@ async function exporterDonneesUtilisateur({ userId }) {
     profil_pro: null,
     documents_emploi: [],
     usages: [],
+    demarches_suivies: [],
+    demarches_signalements: [],
   };
 
   if (!pool) {
@@ -167,6 +169,26 @@ async function exporterDonneesUtilisateur({ userId }) {
         [userId]
       );
       exportGlobal.usages = usagesRes.rows;
+
+      // 11. Démarches administratives (Tranche 20)
+      const demarchesRes = await pool.query(
+        `SELECT s.id, s.demarche_id, s.date_echeance, s.notes, s.statut, s.created_at, d.titre, d.slug, d.categorie
+         FROM surga_demarches_suivis s
+         LEFT JOIN surga_demarches d ON s.demarche_id = d.id
+         WHERE s.user_id = $1
+         ORDER BY s.created_at DESC`,
+        [userId]
+      );
+      exportGlobal.demarches_suivies = demarchesRes.rows;
+
+      const sigRes = await pool.query(
+        `SELECT id, demarche_id, message, statut, created_at
+         FROM surga_demarches_signalements
+         WHERE user_id = $1
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+      exportGlobal.demarches_signalements = sigRes.rows;
     }
   } catch (err) {
     console.warn('[SURGA EXPORT ERREUR]:', err.message);
@@ -207,7 +229,13 @@ async function supprimerDonneesUtilisateur({ userId }) {
 
   if (!pool) return resultats;
 
-  const client = await pool.connect();
+  let client = null;
+  try {
+    client = await pool.connect();
+  } catch (errConnect) {
+    // Mode offline ou test unitaire Jest sans base Postgres
+    return resultats;
+  }
   try {
     await client.query('BEGIN');
 
@@ -248,6 +276,11 @@ async function supprimerDonneesUtilisateur({ userId }) {
       resultats.profil_pro_supprime = resProf.rowCount > 0;
 
       await client.query('DELETE FROM surga_usages WHERE user_id = $1', [userId]);
+
+      // Démarches administratives (Tranche 20)
+      const resDemSuivis = await client.query('DELETE FROM surga_demarches_suivis WHERE user_id = $1', [userId]);
+      resultats.demarches_suivies_supprimees = resDemSuivis.rowCount;
+      await client.query('DELETE FROM surga_demarches_signalements WHERE user_id = $1', [userId]);
 
       // Préférences
       await client.query('DELETE FROM surga_preferences WHERE user_id = $1', [userId]);

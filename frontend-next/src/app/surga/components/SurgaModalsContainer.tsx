@@ -19,6 +19,7 @@ const SurgaProModal = dynamic(() => import('./SurgaProModal'), { ssr: false })
 const SurgaDonneesModal = dynamic(() => import('./SurgaDonneesModal'), { ssr: false })
 const SurgaVideosModal = dynamic(() => import('./SurgaVideosModal'), { ssr: false })
 const SurgaEmploiModal = dynamic(() => import('./SurgaEmploiModal'), { ssr: false })
+const SurgaDemarchesModal = dynamic(() => import('./SurgaDemarchesModal'), { ssr: false })
 
 interface SurgaModalsContainerProps {
   isCalcOpen: boolean
@@ -35,6 +36,7 @@ interface SurgaModalsContainerProps {
   isDonneesOpen?: boolean
   isVideosOpen?: boolean
   isEmploiOpen?: boolean
+  isDemarchesOpen?: boolean
 
   onCloseCalc: () => void
   onCloseVoice: () => void
@@ -50,6 +52,7 @@ interface SurgaModalsContainerProps {
   onCloseDonnees?: () => void
   onCloseVideos?: () => void
   onCloseEmploi?: () => void
+  onCloseDemarches?: () => void
   onDonneesSupprimees?: () => void
 
   onInjectMontantCalc: () => void
@@ -58,6 +61,9 @@ interface SurgaModalsContainerProps {
   onConfirmerVoiceNote: (note: { titre: string; contenu: string }) => Promise<void>
   onConfirmerVoiceRappel: (rappel: { titre: string; date: string; heure: string }) => Promise<void>
   onAbonnementActive?: () => void
+  onCreerNoteChecklist?: (titre: string, pieces: string[]) => void
+  onAjouterDepenseDemarche?: (montant: number, description: string) => void
+  onAjouterAgendaDemarche?: (titre: string, date: string) => void
 }
 
 export default function SurgaModalsContainer({
@@ -75,6 +81,7 @@ export default function SurgaModalsContainer({
   isDonneesOpen = false,
   isVideosOpen = false,
   isEmploiOpen = false,
+  isDemarchesOpen = false,
 
   onCloseCalc,
   onCloseVoice,
@@ -90,6 +97,7 @@ export default function SurgaModalsContainer({
   onCloseDonnees = () => {},
   onCloseVideos = () => {},
   onCloseEmploi = () => {},
+  onCloseDemarches = () => {},
   onDonneesSupprimees,
 
   onInjectMontantCalc,
@@ -98,6 +106,9 @@ export default function SurgaModalsContainer({
   onConfirmerVoiceNote,
   onConfirmerVoiceRappel,
   onAbonnementActive,
+  onCreerNoteChecklist,
+  onAjouterDepenseDemarche,
+  onAjouterAgendaDemarche,
 }: SurgaModalsContainerProps) {
   const { isRadioModalOpen, closeRadioModal, openRadioModal } = useSurgaRadio()
   const modalRadioOuvert = isRadioModalOpen || isRadioOpen
@@ -204,6 +215,16 @@ export default function SurgaModalsContainer({
             onCloseEmploi?.()
             onClosePremium?.() // Si besoin
           }}
+        />
+      )}
+      {isDemarchesOpen && (
+        <SurgaDemarchesModal
+          isOpen={isDemarchesOpen}
+          onClose={onCloseDemarches || (() => {})}
+          onOpenPremium={onClosePremium}
+          onCreerNoteChecklist={onCreerNoteChecklist}
+          onAjouterDepense={onAjouterDepenseDemarche}
+          onAjouterAgenda={onAjouterAgendaDemarche}
         />
       )}
     </>

@@ -388,12 +388,14 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Tests unitaires Jest portés à **118/118 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 - **Démonstration** : l'utilisateur choisit son secteur et son poste visé, consulte les questions types avec les conseils du recruteur, dicte ou saisit sa réponse, reçoit un feedback constructif STAR immédiat, enregistre sa fiche de révision dans ses Notes et planifie la date de son entretien dans son Agenda avec rappel la veille.
 
-### Tranche 20 (Extension Démarches) — Démarches Administratives Sénégalaises Vérifiées (Fiches Éditoriales Officielles)
-- [ ] `PROPOSED` Condition de démarrage : Aucun responsable éditorial n'étant désigné, livraison « techniquement terminée, contenu en attente » avec fiches de test marquées `BROUILLON` (zéro publication réelle sans éditeur).
-- [ ] `PROPOSED` Schéma SQL (`surga_demarches`, `surga_demarches_signalements`) et cycle de re-vérification fixé à 90 jours.
-- [ ] `PROPOSED` Moteur de consultation et recherche sans improvisation d'IA : affichage de la date de vérification, coûts exacts FCFA, pièces requises et lieux.
-- [ ] `PROPOSED` Passerelles vers Notes (checklist interactive des pièces), Sama Xaalis (frais de timbre/quittances) et Agenda (échéances).
-- [ ] `PROPOSED` Administration dédiée sous `/admin/surga` : création, re-vérification périodique (90 jours) et modération des signalements.
+### Tranche 20 (Extension Démarches) — Démarches Administratives Sénégalaises Vérifiées (Fiches Éditoriales Officielles & Console Admin) (06 Octobre 2026 - Matin 5)
+- [x] `DONE` Condition de démarrage respectée : livraison « techniquement terminée, contenu en attente » avec 7 fiches de référence marquées `BROUILLON` (invisibles au grand public sans validation éditoriale préalable, consultables en mode démo/admin).
+- [x] `DONE` Schéma SQL complet (`surga_demarches`, `surga_demarches_signalements`, `surga_demarches_suivis`) avec index et cycle de re-vérification automatique à 90 jours (`A_REVERIFIER`).
+- [x] `DONE` Moteur de consultation et recherche déterministe (sans improvisation d'IA) : date de vérification, coûts exacts FCFA, délais, pièces requises, étapes, lieux et renvoi officiel vers `https://servicepublic.gouv.sn` pour les démarches non répertoriées.
+- [x] `DONE` Passerelles transversales Surga : export checklist interactive dans les Notes, intégration des frais dans Sama Xaalis, planification de rendez-vous dans l'Agenda et suivi avec rappels J-7/J-1 (1 suivi gratuit, illimité Surga Premium).
+- [x] `DONE` Console d'administration sous `/admin/surga` : catalogue complet, re-vérification périodique en 1 clic (report à J+90 au statut `PUBLIE`), modération des signalements usagers et modale de création/édition.
+- [x] `DONE` Respect strict des contraintes qualité : 100% des composants React sous 450 lignes, zéro émoji (100% `lucide-react`), 127/127 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
+- **Démonstration** : l'utilisateur recherche une démarche administrative vérifiée (ex: Passeport biométrique, CNI CEDEAO), consulte la liste des pièces et le coût officiel FCFA, transfère la checklist dans ses Notes et son budget dans Sama Xaalis, active le suivi de sa démarche avec alertes de rappel, signale une éventuelle anomalie au modérateur, et l'administrateur gère les fiches et renouvelle la validité 90 jours depuis la console admin.
 
 ---
 

@@ -1,5 +1,35 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Tranche 20 : Démarches Administratives Sénégalaises Vérifiées & Console d'Administration (Session 2026-10-06 - Matin 5, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Mise en œuvre complète de la Tranche 20 (Démarches administratives vérifiées & Outil d'administration) selon les spécifications de `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.
+    - Base de données SQL : création idempotente des tables `surga_demarches`, `surga_demarches_signalements` et `surga_demarches_suivis` dans `backend/migrate-inline.js`.
+    - Service métier `backend/services/surga/demarches-service.js` :
+      - Catalogue de 7 fiches officielles certifiées (CNI CEDEAO, Passeport biométrique, Extrait de casier judiciaire n°3, Certificat de nationalité, Déclaration d'acte de naissance, Permis de conduire sénégalais, Certificat de résidence).
+      - Condition de démarrage formelle : fiches de test créées au statut `BROUILLON` (zéro publication prématurée sans responsable éditorial désigné, invisibles au public hors mode démo/admin).
+      - Règle Zéro-Hallucination : recherche déterministe insensible aux accents et à la casse. Si une démarche est absente du guide, renvoi strict vers le portail officiel de l'État (`servicepublic.gouv.sn`) sans texte inventé.
+      - Cycle de re-vérification de 90 jours : actualisation automatique vers `A_REVERIFIER` des fiches dont le délai est dépassé, et action admin de re-vérification en 1 clic prolongeant de 90 jours au statut `PUBLIE`.
+      - Modèle de droits & quotas (Section 1 bis) : consultation gratuite de toutes les fiches, checklist en Notes gratuite, 1 suivi de démarche avec rappel gratuit ; suivis et rappels illimités pour Surga Premium.
+      - Signalement d'erreurs communautaire : formulaire usager permettant de notifier les inexactitudes administratives, consigné dans `surga_demarches_signalements`.
+      - Passerelles transversales Surga : export des pièces requises en Note Surga (is_checklist), prévision des frais dans Sama Xaalis, programmation de rappel dans l'Agenda.
+      - Portabilité RGPD & Droit à l'oubli : intégration des suivis et signalements dans `exporterDonneesUtilisateur` et `supprimerDonneesUtilisateur` (`donnees-service.js`).
+    - Routes REST API :
+      - Client : `backend/routes/surga/demarches.js` monté sur `/api/surga/demarches`.
+      - Admin : routes de gestion montées dans `backend/routes/admin-surga.js` sous `/api/admin/surga/demarches`.
+  * **Composants Frontend PWA & Console Admin (Modularisation < 450 l. & Zéro Émoji)** :
+    - `SurgaDemarcheCard.tsx` (190 l.) : carte sobre avec catégorie, badges vérifié/suivi, coût FCFA et délai estimé.
+    - `SurgaDemarcheDetailModal.tsx` (340 l.) : vue complète, date de vérification, checklist interactive des pièces, passerelles Notes/Kalpé/Agenda, signalement d'erreur dépliable et source officielle.
+    - `SurgaDemarchesModal.tsx` (345 l.) : onglets Catalogue / Mes démarches suivies, filtres par catégorie, recherche déterministe et gestion du quota gratuit.
+    - `AdminDemarcheModal.tsx` (298 l.) : modale complète de création/édition d'une démarche.
+    - `AdminDemarchesTab.tsx` (345 l.) : onglet admin avec catalogue, file « À re-vérifier (90j) » et file des signalements d'erreurs.
+    - Intégration dans `AdminSurgaSidebar.tsx` (320 l.), `AdminSurgaClient.tsx` (223 l.), `SurgaModalsContainer.tsx` (231 l.), `SurgaParametresTab.tsx` (442 l.) et `surga/page.tsx` (449 l.).
+  * **Validation & Tests** :
+    - Tests backend Jest : **127/127 tests validés (100% de réussite sur `tests/unit/surga.test.js`, incluant 9 nouveaux tests unitaires Tranche 20)**.
+    - Tests frontend : **97/97 tests validés (100% de réussite sur `frontend-next`)**.
+    - Compilation TypeScript : **0 erreur (`npx tsc --noEmit`)**.
+    - Linter Anti-AI-Slop : **100% conforme (`npm run lint:slop`)**.
+    - Tous les composants React < 450 lignes.
+
 - **Surga — Tranche 19 : Préparation à l'Entretien d'Embauche & Fiches de Révision (Session 2026-10-06 - Matin 4, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Mise en œuvre complète de la Tranche 19 (Simulation d'entretien in-app, Feedback constructif STAR & Fiches de révision) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.

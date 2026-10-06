@@ -3360,6 +3360,53 @@ module.exports = async function migrateInline(customConnStr = null) {
      )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_usages_user_svc_periode ON surga_usages(user_id, service, periode)`,
     `CREATE INDEX IF NOT EXISTS idx_surga_usages_user ON surga_usages(user_id)`,
+    // Tranche 20 : Démarches administratives sénégalaises vérifiées & Outil d'administration
+    `CREATE TABLE IF NOT EXISTS surga_demarches (
+       id VARCHAR(64) PRIMARY KEY,
+       slug VARCHAR(120) UNIQUE NOT NULL,
+       titre VARCHAR(255) NOT NULL,
+       categorie VARCHAR(80) NOT NULL,
+       public_concerne VARCHAR(255),
+       pieces JSONB DEFAULT '[]'::jsonb,
+       cout_xof INT NOT NULL DEFAULT 0,
+       delai VARCHAR(150),
+       lieux TEXT,
+       etapes JSONB DEFAULT '[]'::jsonb,
+       source_officielle TEXT,
+       date_verification TIMESTAMPTZ DEFAULT NOW(),
+       date_prochaine_verification TIMESTAMPTZ,
+       statut VARCHAR(30) NOT NULL DEFAULT 'BROUILLON',
+       mots_cles JSONB DEFAULT '[]'::jsonb,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_demarches_statut_cat ON surga_demarches(statut, categorie)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_demarches_slug ON surga_demarches(slug)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_demarches_prochaine_verif ON surga_demarches(date_prochaine_verification)`,
+    `CREATE TABLE IF NOT EXISTS surga_demarches_signalements (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       demarche_id VARCHAR(64) REFERENCES surga_demarches(id) ON DELETE CASCADE,
+       user_id UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+       message TEXT NOT NULL,
+       contact_email VARCHAR(150),
+       statut VARCHAR(30) NOT NULL DEFAULT 'EN_ATTENTE',
+       reponse_admin TEXT,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_demarches_signalements_statut ON surga_demarches_signalements(statut, created_at DESC)`,
+    `CREATE TABLE IF NOT EXISTS surga_demarches_suivis (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+       demarche_id VARCHAR(64) NOT NULL REFERENCES surga_demarches(id) ON DELETE CASCADE,
+       date_echeance DATE,
+       notes TEXT,
+       statut VARCHAR(30) DEFAULT 'EN_COURS',
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW(),
+       UNIQUE(user_id, demarche_id)
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_demarches_suivis_user ON surga_demarches_suivis(user_id)`,
   ];
   for (const sql of schemaCollecte) {
     try { await pool.query(sql); }

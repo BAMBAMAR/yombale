@@ -3,6 +3,62 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 5] — Tranche 20 : Démarches Administratives Sénégalaises Vérifiées & Console d'Administration
+- **Demande Utilisateur :**
+  - Mise en œuvre complète de la Tranche 20 (Fiches administratives officielles, Cycle de 90 jours, Outil d'administration et Passerelles transversales) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.
+  - Condition de démarrage formelle : livraison « techniquement terminée, contenu en attente », fiches de test créées au statut `BROUILLON` (zéro publication sans responsable éditorial désigné, invisibles du grand public hors mode démo).
+  - Règle Zéro-Hallucination : recherche textuelle déterministe par mots-clés, aucune réponse inventée ; si une démarche n'est pas répertoriée, message neutre orientant vers `servicepublic.gouv.sn`.
+  - Cycle de re-vérification : fixé à 90 jours par défaut, bascule automatique en `A_REVERIFIER`.
+  - Passerelles : Pièces requises ➔ Checklist Note ; Coût officiel ➔ Sama Xaalis ; Échéance ➔ Agenda.
+  - Quotas Section 1 bis : fiches gratuites, checklist gratuite, 1 suivi avec rappel gratuit, illimité pour Premium.
+  - Signalements communautaires modérables en console admin.
+  - Modularité < 450 lignes, zéro émoji, tokens officiels, conformité RGPD.
+- **Tâches complétées :**
+  - **Base de données SQL (`backend/migrate-inline.js`)** :
+    - Tables `surga_demarches`, `surga_demarches_signalements`, `surga_demarches_suivis` créées de façon idempotente avec index.
+  - **Service Métier (`backend/services/surga/demarches-service.js`)** :
+    - Catalogue initial de 7 fiches officielles (CNI CEDEAO, Passeport, Casier judiciaire, Certificat de nationalité, Déclaration de naissance, Permis de conduire, Certificat de résidence) au statut `BROUILLON`.
+    - Recherche insensible aux accents et à la casse avec détection `non_couvert: true` et lien officiel de l'État.
+    - `actualiserStatutsPerimes` et `reverifierDemarcheAdmin` (réinitialisation cycle 90j au statut `PUBLIE`).
+    - Gestion des signalements usagers et modération admin.
+    - Contrôle de quota serveur : 1 suivi gratuit, illimité pour les abonnés Surga Premium.
+  - **Routes REST Client & Admin** :
+    - `backend/routes/surga/demarches.js` monté sur `/api/surga/demarches` (`GET /demarches`, `GET /categories`, `GET /suivis`, `POST /:id/suivis`, `DELETE /:id/suivis`, `POST /:id/signalements`, `GET /:id`).
+    - `backend/routes/admin-surga.js` étendu avec CRUD démarches, file 90j et modération des signalements.
+    - `backend/services/surga/donnees-service.js` étendu pour exporter et purger les démarches suivies et signalements (RGPD).
+  - **Composants Frontend PWA (< 450 l. & Zéro Émoji)** :
+    - `SurgaDemarcheCard.tsx` (190 l.) : vignette soignée avec badges officiel/suivi, coût FCFA et délai.
+    - `SurgaDemarcheDetailModal.tsx` (340 l.) : fiche complète, checklist interactive des pièces, passerelles Notes/Kalpé/Agenda, signalement d'erreur dépliable.
+    - `SurgaDemarchesModal.tsx` (345 l.) : onglets Catalogue / Suivis, filtres catégoriels, recherche déterministe et gestion du quota gratuit.
+  - **Composants Console Admin** :
+    - `AdminDemarcheModal.tsx` (298 l.) : modale complète de création/édition.
+    - `AdminDemarchesTab.tsx` (345 l.) : onglet admin avec catalogue, file « À re-vérifier (90j) » et file signalements.
+    - Raccordement dans `AdminSurgaSidebar.tsx` et `AdminSurgaClient.tsx`.
+    - Raccordement PWA dans `SurgaParametresTab.tsx`, `SurgaModalsContainer.tsx` et `page.tsx` (449 l.).
+  - **Validation & Tests** :
+    - Backend Jest : 127/127 tests validés (100% sur `tests/unit/surga.test.js`, +9 nouveaux tests Tranche 20).
+    - Frontend : 97/97 tests validés (`npm test`).
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme (`npm run lint:slop`).
+- **Fichiers modifiés & créés :**
+  - `backend/migrate-inline.js`
+  - `backend/services/surga/demarches-service.js` (nouveau)
+  - `backend/routes/surga/demarches.js` (nouveau)
+  - `backend/routes/surga/index.js`
+  - `backend/routes/admin-surga.js`
+  - `backend/services/surga/donnees-service.js`
+  - `frontend-next/src/app/surga/components/SurgaDemarcheCard.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaDemarcheDetailModal.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaDemarchesModal.tsx` (nouveau)
+  - `frontend-next/src/app/admin/surga/components/AdminDemarcheModal.tsx` (nouveau)
+  - `frontend-next/src/app/admin/surga/components/AdminDemarchesTab.tsx` (nouveau)
+  - `frontend-next/src/app/admin/surga/components/AdminSurgaSidebar.tsx`
+  - `frontend-next/src/app/admin/surga/AdminSurgaClient.tsx`
+  - `frontend-next/src/app/surga/components/SurgaModalsContainer.tsx`
+  - `frontend-next/src/app/surga/components/SurgaParametresTab.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `tests/unit/surga.test.js`
+
 ### [2026-10-06 — Matin 4] — Tranche 19 : Préparation à l'Entretien d'Embauche & Fiches de Révision
 - **Demande Utilisateur :**
   - Mise en œuvre complète de la Tranche 19 (Simulation d'entretien in-app, Feedback constructif STAR, Banque de questions par secteur et Fiches de révision) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.
