@@ -10,13 +10,14 @@ const {
   genererPodcastFeedXml,
   getOrCreatePodcastToken,
   regenererPodcastToken,
+  genererOuRecupererAudioMp3,
 } = require('../../services/surga/audio-service');
 const { getBriefingItems, getSportEvents } = require('../../services/surga/rss-collector');
 const { interpreterCommandeVocale } = require('../../services/surga/voice-interpreter');
 
 // POST /api/surga/audio/interpret
-// Interprète une transcription vocale en action structurée (Calcul, Dépense, Note, Rappel)
-router.post('/audio/interpret', (req, res) => {
+// Interprète une commande vocale via architecture hybride L0 Fast Path + L1 Structured Output
+router.post('/audio/interpret', async (req, res) => {
   try {
     const { texte } = req.body || {};
     if (!texte || typeof texte !== 'string') {
@@ -26,7 +27,8 @@ router.post('/audio/interpret', (req, res) => {
       });
     }
 
-    const interpretation = interpreterCommandeVocale(texte);
+    const { interpreterCommandeHybride } = require('../../services/surga/ai-interpreter');
+    const interpretation = await interpreterCommandeHybride(texte);
     return res.json({
       success: true,
       data: interpretation,
@@ -204,6 +206,77 @@ router.get('/podcast/:token/feed.xml', async (req, res) => {
   } catch (err) {
     console.error('[SURGA PODCAST XML ERROR]:', err);
     return res.status(500).send('Erreur lors de la génération du flux podcast.');
+  }
+});
+
+// GET /api/surga/podcast/:token/stream.mp3
+// Sert le flux audio MP3 du briefing (résolution du bug 404, en-têtes streaming et Range requests)
+router.get('/podcast/:token/stream.mp3', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    if (token !== 'invite-demo-token') {
+      try {
+        const { rows } = await pool.query(
+          `SELECT user_id FROM surga_preferences WHERE podcast_token = $1`,
+          [token]
+        );
+        if (rows.length === 0) {
+          return res.status(404).send('Token podcast introuvable ou expiré.');
+        }
+      } catch {}
+    }
+
+    const items = await getBriefingItems({ categories: ['actualites'], limit: 4 });
+    const briefingData = {
+      date: new Date().toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }),
+      quartier: 'Dakar',
+      items,
+    };
+
+    const scriptBriefing = preparerScriptAudio(briefingData);
+    const { buffer } = await genererOuRecupererAudioMp3({
+      token,
+      scriptBriefing,
+      dateStr: new Date().toISOString().slice(0, 10),
+    });
+
+    const totalLength = buffer.length;
+    const range = req.headers.range;
+
+    // Support des requêtes partielles HTTP 206 pour lecteurs de podcasts
+    if (range) {
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : totalLength - 1;
+      const chunksize = end - start + 1;
+      const sliced = buffer.slice(start, end + 1);
+
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${totalLength}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': 'audio/mpeg',
+        'Cache-Control': 'public, max-age=3600',
+      });
+      return res.end(sliced);
+    }
+
+    res.writeHead(200, {
+      'Content-Length': totalLength,
+      'Content-Type': 'audio/mpeg',
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'public, max-age=3600',
+    });
+    return res.end(buffer);
+  } catch (err) {
+    console.error('[SURGA PODCAST STREAM MP3 ERROR]:', err);
+    return res.status(500).send('Erreur lors de la génération audio.');
   }
 });
 

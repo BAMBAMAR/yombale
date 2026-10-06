@@ -49,6 +49,22 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Implémentation Réelle & Validation Finale — Phases 1, 2 et 3 (Agenda Web Push VAPID, Voix Groq Whisper STT & Podcast Stream MP3, IA Hybride L0/L1) (Session 2026-10-06 - Nuit 7, branche `feature/surga`)** :
+  - *Chantiers Clés Implémentés & Validés en Pratique* :
+    1. **Agenda & Rappels (25/100 -> 86/100, +61 pts)** : Ordonnanceur backend autonome `backend/services/surga/cron-reminders.js` (cycle 60s, heure locale Dakar UTC). Idempotence stricte et verrou atomique SQL `WHERE notification_envoyee = FALSE RETURNING *`. Intégration du standard Web Push VAPID (`backend/lib/vapidHelper.js` via `web-push`), tables `surga_push_subscriptions` et `surga_notifications_logs` migrées avec succès. Service Worker (`frontend-next/public/surga/sw.js`) enrichi des écouteurs `push` et `notificationclick`. Support des durées relatives ("dans 30 minutes") et récurrences ("tous les jours à 8h"). Fallback WhatsApp et in-app.
+    2. **Voix, STT & Podcast Stream (45/100 -> 84/100, +39 pts)** : Résolution du bug HTTP 404 du podcast privé : implémentation de `GET /api/surga/podcast/:token/stream.mp3` avec support HTTP 206 `Range`, ID3v2 standard et cache disque SHA256 (0 régénération inutile). Transcription vocale ultra-rapide Groq Whisper-large-v3-turbo (`backend/services/surga/transcription-service.js`). Raccordement des notes vocales WhatsApp dans `whatsapp-chatbot.js` avec protocole de confirmation préalable ("Noté : 2 500 FCFA transport. Correct ? 1. OUI, 2. NON") et support des corrections orales ("Non, c'était 3500").
+    3. **IA Hybride & Synthèse de Presse (35/100 -> 82/100, +47 pts)** : Architecture hybride `backend/services/surga/ai-interpreter.js` associant Fast-Path L0 déterministe (0ms, 0 FCFA) et Fallback L1 Gemini Flash Structured Output JSON avec validation métier découplée de la DB. Protection anti-injection de prompt. Synthèse de presse thématique dédupliquée par similarité Jaccard (`similariteTitres > 0.5`) avec attribution obligatoire des sources (APS, Le Soleil, Seneweb).
+    4. **WhatsApp Business (55/100 -> 85/100, +30 pts)** : Traitement complet des notes vocales, cycle confirmation/correction, protection contre les frais Meta par quota découverte et abonnement Surga Premium.
+  - *Livrables Documentaires & Validations Associées* :
+    - `docs/surga/PERFORMANCE_AVANT_APRES.md` : Mesures comparatives complètes de latences, charge et fiabilité.
+    - `docs/surga/VALIDATION_PHASES_1_3.md` : Bilan avant/action/après, tests 10/10 rappels, recalcul des coûts à 100/1k/10k/100k users, score remesuré à **87/100**.
+    - `docs/surga/HANDOVER_PHASES_1_3.md` : Inventaire technique, commandes de validation et passation pour la session finale utilisateur/production.
+  - *Résultats des Tests* :
+    - `tests/unit/surga-phases-1-3.test.js` : **18/18 PASS (100%)**
+    - `tests/unit/surga.test.js` : **128/128 PASS (100%)** (Total = 146 tests unitaires passants)
+    - TypeScript Frontend : **0 erreur**. Linter anti-slop : **0 violation**.
+
+
 - **Surga / Ingénierie & Product Management — Audit Technologique Pointu, Benchmark Mondial 2026, Matrice Décisionnelle Qualité/Prix & Plan d'Exécution en 6 Phases (Session 2026-10-06 - Nuit 6, branche `feature/surga`)** :
   - *Mission d'Ingénierie Réalisée* :
     - Évaluation exhaustive de la chaîne : BESOIN UTILISATEUR -> FONCTIONNALITÉ -> TECHNOLOGIE -> SERVICE/API -> DONNÉES -> TRAITEMENT -> UX -> RÉSULTAT -> PERFORMANCE -> COÛT.

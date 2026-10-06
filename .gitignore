@@ -60,3 +60,4 @@ docs/AUDIT-*.md
 docs/PLAN-*.md
 scripts/qa-campaign/report-*.json
 !docs/PLAN-MARKETING.md
+backend/cache/

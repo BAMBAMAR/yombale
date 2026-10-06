@@ -3407,6 +3407,30 @@ module.exports = async function migrateInline(customConnStr = null) {
        UNIQUE(user_id, demarche_id)
      )`,
     `CREATE INDEX IF NOT EXISTS idx_surga_demarches_suivis_user ON surga_demarches_suivis(user_id)`,
+    `CREATE TABLE IF NOT EXISTS surga_push_subscriptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        endpoint TEXT NOT NULL UNIQUE,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        user_agent TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_push_user ON surga_push_subscriptions(user_id)`,
+    `CREATE TABLE IF NOT EXISTS surga_notifications_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        rappel_id UUID REFERENCES surga_agenda(id) ON DELETE SET NULL,
+        user_id UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        canal VARCHAR(30) NOT NULL,
+        statut VARCHAR(30) NOT NULL,
+        tentatives INT NOT NULL DEFAULT 1,
+        details JSONB,
+        erreur TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_notif_logs_rappel ON surga_notifications_logs(rappel_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_notif_logs_date ON surga_notifications_logs(created_at DESC)`,
   ];
   for (const sql of schemaCollecte) {
     try { await pool.query(sql); }

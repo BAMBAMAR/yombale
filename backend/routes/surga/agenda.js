@@ -241,4 +241,95 @@ router.delete('/agenda/:id', tokenOptional, async (req, res) => {
   }
 });
 
+// ── Web Push Notifications VAPID ─────────────────────────────────────────────
+
+// GET /api/surga/push/vapid-key
+router.get('/push/vapid-key', async (req, res) => {
+  try {
+    const { getVapidPublicKey } = require('../../lib/vapidHelper');
+    const publicKey = await getVapidPublicKey();
+    return res.json({ success: true, publicKey });
+  } catch (err) {
+    console.error('[SURGA PUSH KEY ERROR]:', err);
+    return res.status(500).json({ success: false, error: 'Erreur récupération clé VAPID' });
+  }
+});
+
+// POST /api/surga/push/subscribe
+router.post('/push/subscribe', tokenOptional, async (req, res) => {
+  try {
+    const userId = req.user?.userId || req.user?.id || null;
+    const { subscription, userAgent } = req.body;
+
+    if (!subscription || !subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
+      return res.status(400).json({ success: false, error: 'Payload d’abonnement Web Push invalide' });
+    }
+
+    const { endpoint, keys } = subscription;
+
+    await pool.query(
+      `INSERT INTO surga_push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (endpoint) DO UPDATE SET
+         user_id = COALESCE(EXCLUDED.user_id, surga_push_subscriptions.user_id),
+         p256dh = EXCLUDED.p256dh,
+         auth = EXCLUDED.auth,
+         user_agent = EXCLUDED.user_agent,
+         updated_at = NOW()`,
+      [userId, endpoint, keys.p256dh, keys.auth, userAgent || req.headers['user-agent'] || null]
+    );
+
+    return res.json({ success: true, message: 'Abonnement Web Push enregistré avec succès' });
+  } catch (err) {
+    console.error('[SURGA PUSH SUBSCRIBE ERROR]:', err);
+    return res.status(500).json({ success: false, error: 'Erreur enregistrement abonnement Web Push' });
+  }
+});
+
+// POST /api/surga/push/unsubscribe
+router.post('/push/unsubscribe', async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) {
+      return res.status(400).json({ success: false, error: 'Endpoint requis' });
+    }
+
+    await pool.query('DELETE FROM surga_push_subscriptions WHERE endpoint = $1', [endpoint]);
+    return res.json({ success: true, message: 'Désabonnement réussi' });
+  } catch (err) {
+    console.error('[SURGA PUSH UNSUBSCRIBE ERROR]:', err);
+    return res.status(500).json({ success: false, error: 'Erreur désabonnement' });
+  }
+});
+
+// POST /api/surga/push/test
+router.post('/push/test', tokenOptional, async (req, res) => {
+  try {
+    const userId = req.user?.userId || req.user?.id;
+    const { subscription } = req.body;
+    const { sendWebPushNotification } = require('../../lib/vapidHelper');
+
+    const targetSub = subscription || (userId ? (await pool.query('SELECT endpoint, p256dh, auth FROM surga_push_subscriptions WHERE user_id = $1 LIMIT 1', [userId])).rows[0] : null);
+
+    if (!targetSub || !targetSub.endpoint) {
+      return res.status(400).json({ success: false, error: 'Aucun abonnement Web Push trouvé pour le test' });
+    }
+
+    const testPayload = {
+      title: 'Surga — Test de notification',
+      body: 'Le système de notifications Web Push est opérationnel.',
+      icon: '/surga/icon-192.png',
+      badge: '/surga/icon-192.png',
+      url: '/surga/agenda',
+      tag: 'surga-test-notif',
+    };
+
+    const result = await sendWebPushNotification(targetSub, testPayload);
+    return res.json({ success: result.success, result });
+  } catch (err) {
+    console.error('[SURGA PUSH TEST ERROR]:', err);
+    return res.status(500).json({ success: false, error: 'Erreur test push' });
+  }
+});
+
 module.exports = router;

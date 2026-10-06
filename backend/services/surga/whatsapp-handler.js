@@ -45,12 +45,22 @@ function parserIntentionWhatsApp(texteBrut) {
   let texte = normaliser(texteNettoye);
   if (!texte) return { intention: 'INCONNU' };
 
-  // 1. Confirmations
+  // 1. Confirmations & Annulations
   if (/^(oui|1|confirmer|valider|d'accord|ok)$/.test(texte)) {
     return { intention: 'CONFIRMATION_OUI' };
   }
   if (/^(non|0|annuler|arreter|stop)$/.test(texte)) {
     return { intention: 'CONFIRMATION_NON' };
+  }
+
+  // 1.5 Correction de montant pour une action en attente (ex: "non c'était 3500", "plutôt 3500", "c'est 3500")
+  const matchCorrectionMontant = texte.match(/(?:non\s*,?\s*c['’]etait|c['’]etait|plutot|mettre|c['’]est)\s*(\d+(?:[\s.,]\d+)?)\s*(?:fcfa|cfa|f|frs)?/i);
+  if (matchCorrectionMontant) {
+    const rawVal = matchCorrectionMontant[1].replace(/[\s.,]/g, '');
+    const montant = parseInt(rawVal, 10);
+    if (montant && montant > 0) {
+      return { intention: 'CORRECTION_MONTANT', montant };
+    }
   }
 
   // 2. Briefing
@@ -67,51 +77,84 @@ function parserIntentionWhatsApp(texteBrut) {
     return { intention: 'CALCULATE', expression: texteNettoye };
   }
 
-  // 4. Rappel
+  // 4. Rappel (Cas 1, 2, 3 de l'audit : demain, dans X min, récurrent tous les jours)
   const matchRappel = texteNettoye.match(/^(?:rappel|rappelle(?:-moi)?)\s+(.+)$/i);
   if (matchRappel) {
-    const reste = matchRappel[1].trim();
-    let date = new Date().toISOString().slice(0, 10);
+    let reste = matchRappel[1].trim();
+    const nowUtc = new Date();
+    let targetDate = new Date();
+    let repetition = 'AUCUNE';
     let heure = null;
-    let titre = reste;
+
+    // Détection de la récurrence
+    if (/tous les jours|chaque jour|quotidien/i.test(reste)) {
+      repetition = 'QUOTIDIEN';
+      reste = reste.replace(/tous les jours|chaque jour|quotidien/gi, '').trim();
+    } else if (/toutes les semaines|chaque semaine|hebdomadaire/i.test(reste)) {
+      repetition = 'HEBDOMADAIRE';
+      reste = reste.replace(/toutes les semaines|chaque semaine|hebdomadaire/gi, '').trim();
+    } else if (/tous les mois|chaque mois|mensuel/i.test(reste)) {
+      repetition = 'MENSUEL';
+      reste = reste.replace(/tous les mois|chaque mois|mensuel/gi, '').trim();
+    }
+
+    // Détection de durée relative (ex: "dans 30 minutes", "dans 15 min", "dans 2 heures")
+    const matchDansMin = reste.match(/dans\s+(\d+)\s*(?:minute|minutes|min)\b/i);
+    const matchDansHeure = reste.match(/dans\s+(\d+)\s*(?:heure|heures|h)\b/i);
+
+    if (matchDansMin) {
+      const minutesAjoutees = parseInt(matchDansMin[1], 10);
+      targetDate = new Date(nowUtc.getTime() + minutesAjoutees * 60000);
+      const hh = String(targetDate.getUTCHours()).padStart(2, '0');
+      const mm = String(targetDate.getUTCMinutes()).padStart(2, '0');
+      heure = `${hh}:${mm}`;
+      reste = reste.replace(matchDansMin[0], '').trim();
+    } else if (matchDansHeure) {
+      const heuresAjoutees = parseInt(matchDansHeure[1], 10);
+      targetDate = new Date(nowUtc.getTime() + heuresAjoutees * 3600000);
+      const hh = String(targetDate.getUTCHours()).padStart(2, '0');
+      const mm = String(targetDate.getUTCMinutes()).padStart(2, '0');
+      heure = `${hh}:${mm}`;
+      reste = reste.replace(matchDansHeure[0], '').trim();
+    }
 
     // Détection de "demain"
     if (/demain/i.test(reste)) {
-      const d = new Date();
-      d.setDate(d.getDate() + 1);
-      date = d.toISOString().slice(0, 10);
-      titre = titre.replace(/demain/gi, '').trim();
+      targetDate.setDate(targetDate.getDate() + 1);
+      reste = reste.replace(/demain/gi, '').trim();
     }
 
-    // Détection d'heure (ex: 8h, 8h30, 14:00, 14h30)
-    const matchHeure = titre.match(/(\d{1,2})(?:h|:)(\d{2})?/i);
-    if (matchHeure) {
+    // Détection d'heure explicite (ex: 8h, 8h30, 14:00, 14h30)
+    const matchHeure = reste.match(/(\d{1,2})(?:h|:)(\d{2})?/i);
+    if (matchHeure && !heure) {
       const h = String(parseInt(matchHeure[1], 10)).padStart(2, '0');
       const m = String(parseInt(matchHeure[2] || '0', 10)).padStart(2, '0');
       heure = `${h}:${m}`;
-      titre = titre.replace(matchHeure[0], '').replace(/\ba\b/gi, '').trim();
+      reste = reste.replace(matchHeure[0], '').replace(/\b(?:à|a)\b/gi, '').trim();
     }
 
-    titre = titre.replace(/\s+/g, ' ').trim();
+    let date = targetDate.toISOString().slice(0, 10);
+    let titre = reste.replace(/\b(?:à|a|de|pour)\b/gi, ' ').replace(/\s+/g, ' ').trim();
 
     return {
       intention: 'ADD_REMINDER',
       titre: titre || 'Rappel Surga',
       date,
       heure: heure || '09:00',
+      repetition,
     };
   }
 
-  // 5. Dépense (si présence de "note", "depense", "achete", "paye" suivi ou précédé d'un montant)
+  // 5. Dépense (ex: "note 2500 transport", "j'ai dépensé 2500 taxi", "2500 fcfa courses")
   const regexMontant = /(\d+(?:[\s.,]\d+)?)\s*(?:fcfa|cfa|f|frs)?/i;
   const matchMontant = texte.match(regexMontant);
 
-  if (matchMontant && (/^(note|depense|j'ai paye|j'ai achete|achat)/.test(texte) || /(cfa|fcfa)/.test(texte))) {
+  if (matchMontant && (/^(note|depense|dépense|j'ai depense|j'ai dépensé|j'ai paye|j'ai payé|j'ai achete|achat)/.test(texte) || /(cfa|fcfa)/.test(texte) || /^(taxi|courses|repas|pain|dejeuner)/.test(texte))) {
     const rawVal = matchMontant[1].replace(/[\s.,]/g, '');
     const montant = parseInt(rawVal, 10);
     if (montant && montant > 0) {
       let libelle = texteNettoye
-        .replace(/^(note|depense|j'ai paye|j'ai achete|achat)\s*/i, '')
+        .replace(/^(note|depense|dépense|j'ai depense|j'ai dépensé|j'ai paye|j'ai payé|j'ai achete|achat)\s*/i, '')
         .replace(matchMontant[0], '')
         .replace(/\bde\b|\bpour\b/gi, '')
         .trim();
@@ -343,6 +386,33 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
       await sendWhatsAppText(normPh, `Surga : Aucune action en cours. Que souhaitez-vous faire ?`);
     }
     return true;
+  }
+
+  // 1.5 Prise en charge d'une correction de montant orale ou textuelle en cours de confirmation
+  if (parseResult.intention === 'CORRECTION_MONTANT') {
+    if (actionEnAttente && actionEnAttente.intention === 'ADD_EXPENSE') {
+      const nouveauMontant = parseResult.montant;
+      actionEnAttente.data.montant = nouveauMontant;
+
+      await pool.query(
+        `UPDATE surga_whatsapp_sessions
+         SET action_en_attente = $1, updated_at = NOW()
+         WHERE phone = $2`,
+        [JSON.stringify(actionEnAttente), normPh]
+      );
+
+      const msgDemande =
+        `Surga : Montant corrigé à ${formaterFCFA(nouveauMontant)} (${actionEnAttente.data.categorie}).\n\n` +
+        `Confirmez-vous cette dépense ?\n` +
+        `1. OUI pour valider\n` +
+        `2. NON pour annuler`;
+
+      await sendWhatsAppText(normPh, msgDemande);
+      return true;
+    } else {
+      await sendWhatsAppText(normPh, `Surga : Aucune dépense en attente à corriger.`);
+      return true;
+    }
   }
 
   // ── 2. Calculatrice Déterministe (Exécution directe sans confirmation) ───────

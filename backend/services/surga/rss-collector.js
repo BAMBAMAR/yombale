@@ -571,11 +571,111 @@ async function getSportEvents({ limit = 4 } = {}) {
   return SPORT_EVENEMENTS_DEFAUT.slice(0, limit);
 }
 
+/**
+ * Calcule la similarité Jaccard entre deux titres pour déduplication stricte
+ */
+function similariteTitres(titreA, titreB) {
+  const motsA = new Set(String(titreA).toLowerCase().split(/\W+/).filter((w) => w.length > 3));
+  const motsB = new Set(String(titreB).toLowerCase().split(/\W+/).filter((w) => w.length > 3));
+  if (motsA.size === 0 || motsB.size === 0) return 0;
+  let intersection = 0;
+  for (const m of motsA) {
+    if (motsB.has(m)) intersection++;
+  }
+  const union = motsA.size + motsB.size - intersection;
+  return union > 0 ? intersection / union : 0;
+}
+
+/**
+ * Génère une synthèse de presse thématique sourcée et dédupliquée sans hallucination
+ * Regroupe par grand thème (Économie, Société, Politique, Tech) avec citation explicite de la source
+ */
+async function genererSynthesePresseThematique() {
+  const articlesBruts = await recupererRevuePresse({ limit: 30 });
+  if (!articlesBruts || articlesBruts.length === 0) {
+    return {
+      themes: [],
+      syntheseGlobale: 'Aucune actualité disponible pour le moment.',
+      date: new Date().toISOString(),
+    };
+  }
+
+  // 1. Déduplication stricte
+  const articlesUniques = [];
+  for (const art of articlesBruts) {
+    const estDoublon = articlesUniques.some(
+      (existant) => similariteTitres(existant.titre, art.titre) > 0.65
+    );
+    if (!estDoublon) {
+      articlesUniques.push(art);
+    }
+  }
+
+  // 2. Regroupement par thématique
+  const parTheme = {
+    economie: [],
+    societe: [],
+    politique: [],
+    tech: [],
+  };
+
+  for (const art of articlesUniques) {
+    const rub = art.rubrique_presse || 'societe';
+    if (parTheme[rub]) {
+      parTheme[rub].push(art);
+    } else {
+      parTheme.societe.push(art);
+    }
+  }
+
+  // 3. Construction des résumés thématiques sourcés
+  const labelsThemes = {
+    economie: 'Économie & Marchés',
+    societe: 'Société & Vie quotidienne',
+    politique: 'Institutions & Gouvernance',
+    tech: 'Numérique & Innovation',
+  };
+
+  const themesResultats = [];
+
+  for (const [codeTheme, items] of Object.entries(parTheme)) {
+    if (items.length === 0) continue;
+
+    const topItems = items.slice(0, 3);
+    const faitsSources = topItems.map((it) => {
+      const src = it.source_nom ? `(source: ${it.source_nom})` : '';
+      return `${it.titre} ${src}`.trim();
+    });
+
+    themesResultats.push({
+      code: codeTheme,
+      label: labelsThemes[codeTheme] || codeTheme,
+      nbArticles: items.length,
+      faits: faitsSources,
+      sources: Array.from(new Set(topItems.map((it) => it.source_nom).filter(Boolean))),
+      articles: topItems.map((it) => ({
+        titre: it.titre,
+        resume: it.resume,
+        url: it.url,
+        source: it.source_nom,
+      })),
+    });
+  }
+
+  return {
+    date: new Date().toISOString(),
+    nbTotalArticles: articlesUniques.length,
+    themes: themesResultats,
+  };
+}
+
 module.exports = {
   collecterTousLesFlux,
   getBriefingItems,
   getSportEvents,
   recupererRevuePresse,
+  genererSynthesePresseThematique,
+  similariteTitres,
   classerRubriquePresse,
   nettoyerResume,
   assurerDonneesInitiales,

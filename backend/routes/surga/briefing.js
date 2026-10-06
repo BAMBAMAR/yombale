@@ -128,4 +128,20 @@ router.post('/briefing/refresh', tokenOptional, async (req, res) => {
   }
 });
 
+// GET /api/surga/briefing/synthese-thematique
+// Retourne la synthèse de presse thématique sourcée et dédupliquée sans hallucination
+router.get('/briefing/synthese-thematique', async (req, res) => {
+  try {
+    const { genererSynthesePresseThematique } = require('../../services/surga/rss-collector');
+    const synthese = await genererSynthesePresseThematique();
+    return res.json({
+      success: true,
+      data: synthese,
+    });
+  } catch (err) {
+    console.error('[SURGA SYNTHESE THEMATIQUE ERR]:', err.message);
+    return res.status(500).json({ success: false, error: 'Erreur lors de la génération de la synthèse' });
+  }
+});
+
 module.exports = router;
