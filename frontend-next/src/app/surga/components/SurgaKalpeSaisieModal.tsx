@@ -1,9 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { X, ArrowDownLeft, ArrowUpRight, Users, PiggyBank, Calendar, FileText } from 'lucide-react'
 import {
-  type KalpeDirection,
   type KalpeModePaiement,
   saveKalpeOperation,
   saveKalpeDette,
@@ -11,6 +9,9 @@ import {
   verserKalpeObjectif,
   type KalpeObjectifLocal,
 } from '@/lib/surga-kalpe'
+import SurgaKalpeModeTabs from './SurgaKalpeModeTabs'
+import SurgaKalpeDetteFields from './SurgaKalpeDetteFields'
+import SurgaKalpeEpargneFields from './SurgaKalpeEpargneFields'
 
 export type SaisieMode = 'entree' | 'depense' | 'dette' | 'epargne'
 
@@ -74,6 +75,12 @@ export default function SurgaKalpeSaisieModal({
 
   if (!isOpen) return null
 
+  const handleModeChange = (newMode: SaisieMode) => {
+    setMode(newMode)
+    if (newMode === 'entree') setCategorie(CATEGORIES_ENTREE[0])
+    if (newMode === 'depense') setCategorie(CATEGORIES_DEPENSE[0])
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const valMontant = parseFloat(montant.replace(/\s+/g, ''))
@@ -127,7 +134,6 @@ export default function SurgaKalpeSaisieModal({
           return
         }
         verserKalpeObjectif(objectifSelectionneId, valMontant)
-        // Enregistrer également une opération de sortie du disponible vers l'épargne
         saveKalpeOperation({
           direction: 'sortie',
           type: 'versement_epargne',
@@ -157,6 +163,15 @@ export default function SurgaKalpeSaisieModal({
     onClose()
   }
 
+  const getButtonBg = () => {
+    switch (mode) {
+      case 'entree': return 'var(--surga-emerald, #059669)'
+      case 'depense': return 'var(--surga-primary, #0F172A)'
+      case 'dette': return 'var(--surga-accent, #D97706)'
+      case 'epargne': return '#2563EB'
+    }
+  }
+
   return (
     <div
       style={{
@@ -165,7 +180,8 @@ export default function SurgaKalpeSaisieModal({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.55)',
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        backdropFilter: 'blur(4px)',
         zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
@@ -179,148 +195,48 @@ export default function SurgaKalpeSaisieModal({
         style={{
           width: '100%',
           maxWidth: 480,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surga-surface, #FFFFFF)',
           borderRadius: 16,
-          boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+          boxShadow: '0 20px 40px rgba(15, 23, 42, 0.25)',
           display: 'flex',
           flexDirection: 'column',
           maxHeight: '92vh',
           overflow: 'hidden',
+          border: '1px solid var(--surga-border, #E2E8F0)',
         }}
       >
-        {/* En-tête avec choix de mode */}
-        <div
-          style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid var(--border, #E8DDD2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => { setMode('entree'); setCategorie(CATEGORIES_ENTREE[0]) }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '6px 10px',
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 800,
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: mode === 'entree' ? 'var(--price, #0A5C36)' : 'var(--bg, #F8F5F0)',
-                color: mode === 'entree' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-              }}
-            >
-              <ArrowDownLeft size={14} />
-              <span>Entrée</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode('depense'); setCategorie(CATEGORIES_DEPENSE[0]) }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '6px 10px',
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 800,
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: mode === 'depense' ? 'var(--navy, #1C2B4A)' : 'var(--bg, #F8F5F0)',
-                color: mode === 'depense' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-              }}
-            >
-              <ArrowUpRight size={14} />
-              <span>Dépense</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('dette')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '6px 10px',
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 800,
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: mode === 'dette' ? 'var(--accent, #C75B00)' : 'var(--bg, #F8F5F0)',
-                color: mode === 'dette' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-              }}
-            >
-              <Users size={14} />
-              <span>Dette/Créance</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('epargne')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '6px 10px',
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 800,
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: mode === 'epargne' ? '#2563EB' : 'var(--bg, #F8F5F0)',
-                color: mode === 'epargne' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-              }}
-            >
-              <PiggyBank size={14} />
-              <span>Épargne</span>
-            </button>
-          </div>
+        <SurgaKalpeModeTabs
+          mode={mode}
+          onSelectMode={handleModeChange}
+          onClose={onClose}
+        />
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 4,
-              cursor: 'pointer',
-              color: 'var(--text3, #73675E)',
-            }}
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Corps de formulaire */}
         <form onSubmit={handleSubmit} style={{ padding: '16px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Montant principal */}
+          {/* Montant principal avec inputMode="numeric" */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', marginBottom: 6 }}>
               Montant (FCFA) *
             </label>
             <input
-              type="number"
-              step="any"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               required
+              autoComplete="off"
               placeholder="Ex: 15000"
               value={montant}
-              onChange={(e) => setMontant(e.target.value)}
+              onChange={(e) => setMontant(e.target.value.replace(/[^0-9]/g, ''))}
               style={{
                 width: '100%',
                 padding: '12px 14px',
                 fontSize: 18,
                 fontWeight: 800,
                 borderRadius: 8,
-                border: '1px solid var(--border, #E8DDD2)',
-                backgroundColor: 'var(--bg, #F8F5F0)',
-                color: 'var(--navy, #1C2B4A)',
+                border: '1px solid var(--surga-border, #E2E8F0)',
+                backgroundColor: 'var(--surga-bg, #F8FAFC)',
+                color: 'var(--surga-primary, #0F172A)',
                 outline: 'none',
+                boxSizing: 'border-box',
               }}
             />
           </div>
@@ -329,7 +245,7 @@ export default function SurgaKalpeSaisieModal({
           {(mode === 'entree' || mode === 'depense') && (
             <>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', marginBottom: 6 }}>
                   Catégorie
                 </label>
                 <select
@@ -338,10 +254,11 @@ export default function SurgaKalpeSaisieModal({
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    fontSize: 13,
+                    fontSize: 14,
                     borderRadius: 8,
-                    border: '1px solid var(--border, #E8DDD2)',
-                    backgroundColor: '#FFFFFF',
+                    border: '1px solid var(--surga-border, #E2E8F0)',
+                    backgroundColor: 'var(--surga-surface, #FFFFFF)',
+                    boxSizing: 'border-box',
                   }}
                 >
                   {(mode === 'entree' ? CATEGORIES_ENTREE : CATEGORIES_DEPENSE).map((c) => (
@@ -353,28 +270,30 @@ export default function SurgaKalpeSaisieModal({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', marginBottom: 6 }}>
                   Moyen de paiement
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   {[
                     { id: 'wave', label: 'Wave' },
                     { id: 'om', label: 'Orange Money' },
-                    { id: 'cash', label: 'Espèces (Cash)' },
+                    { id: 'cash', label: 'Espèces' },
                   ].map((mp) => (
                     <button
                       key={mp.id}
                       type="button"
                       onClick={() => setModePaiement(mp.id as KalpeModePaiement)}
                       style={{
-                        padding: '8px 6px',
-                        borderRadius: 6,
-                        fontSize: 12,
+                        padding: '10px 6px',
+                        borderRadius: 8,
+                        fontSize: 13,
                         fontWeight: 700,
-                        border: `1px solid ${modePaiement === mp.id ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)'}`,
-                        backgroundColor: modePaiement === mp.id ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-                        color: modePaiement === mp.id ? '#FFFFFF' : 'var(--text2, #5A4E42)',
+                        minHeight: 42,
+                        border: `1px solid ${modePaiement === mp.id ? 'var(--surga-primary, #0F172A)' : 'var(--surga-border, #E2E8F0)'}`,
+                        backgroundColor: modePaiement === mp.id ? 'var(--surga-primary, #0F172A)' : '#FFFFFF',
+                        color: modePaiement === mp.id ? '#FFFFFF' : 'var(--surga-text2, #475569)',
                         cursor: 'pointer',
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       {mp.label}
@@ -384,7 +303,7 @@ export default function SurgaKalpeSaisieModal({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', marginBottom: 6 }}>
                   Libellé ou Note
                 </label>
                 <input
@@ -395,9 +314,10 @@ export default function SurgaKalpeSaisieModal({
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    fontSize: 13,
+                    fontSize: 14,
                     borderRadius: 8,
-                    border: '1px solid var(--border, #E8DDD2)',
+                    border: '1px solid var(--surga-border, #E2E8F0)',
+                    boxSizing: 'border-box',
                   }}
                 />
               </div>
@@ -406,198 +326,36 @@ export default function SurgaKalpeSaisieModal({
 
           {/* Mode Dette / Créance */}
           {mode === 'dette' && (
-            <>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
-                  Type d’opération
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                  <button
-                    type="button"
-                    onClick={() => setDirectionDette('a_recevoir')}
-                    style={{
-                      padding: '8px',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      border: `1px solid ${directionDette === 'a_recevoir' ? 'var(--price, #0A5C36)' : 'var(--border, #E8DDD2)'}`,
-                      backgroundColor: directionDette === 'a_recevoir' ? 'var(--price, #0A5C36)' : '#FFFFFF',
-                      color: directionDette === 'a_recevoir' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    On me doit (À recevoir)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDirectionDette('a_payer')}
-                    style={{
-                      padding: '8px',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      border: `1px solid ${directionDette === 'a_payer' ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)'}`,
-                      backgroundColor: directionDette === 'a_payer' ? 'var(--accent, #C75B00)' : '#FFFFFF',
-                      color: directionDette === 'a_payer' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Je dois (À payer)
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
-                  Nom de la personne ou entreprise *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Ibrahima Fall"
-                  value={tiersNom}
-                  onChange={(e) => setTiersNom(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: 13,
-                    borderRadius: 8,
-                    border: '1px solid var(--border, #E8DDD2)',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
-                  Numéro de téléphone (optionnel)
-                </label>
-                <input
-                  type="tel"
-                  placeholder="Ex: +221 77 000 00 00"
-                  value={tiersTel}
-                  onChange={(e) => setTiersTel(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: 13,
-                    borderRadius: 8,
-                    border: '1px solid var(--border, #E8DDD2)',
-                  }}
-                />
-              </div>
-            </>
+            <SurgaKalpeDetteFields
+              directionDette={directionDette}
+              setDirectionDette={setDirectionDette}
+              tiersNom={tiersNom}
+              setTiersNom={setTiersNom}
+              tiersTel={tiersTel}
+              setTiersTel={setTiersTel}
+              dateEcheance={dateEcheance}
+              setDateEcheance={setDateEcheance}
+            />
           )}
 
           {/* Mode Épargne */}
           {mode === 'epargne' && (
-            <>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  type="button"
-                  onClick={() => setTypeActionEpargne('verser')}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    border: `1px solid ${typeActionEpargne === 'verser' ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)'}`,
-                    backgroundColor: typeActionEpargne === 'verser' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-                    color: typeActionEpargne === 'verser' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Ajouter un versement
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTypeActionEpargne('creer')}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    border: `1px solid ${typeActionEpargne === 'creer' ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)'}`,
-                    backgroundColor: typeActionEpargne === 'creer' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-                    color: typeActionEpargne === 'creer' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Créer un objectif
-                </button>
-              </div>
-
-              {typeActionEpargne === 'verser' ? (
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
-                    Sélectionner l’objectif *
-                  </label>
-                  <select
-                    value={objectifSelectionneId}
-                    onChange={(e) => setObjectifSelectionneId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: 13,
-                      borderRadius: 8,
-                      border: '1px solid var(--border, #E8DDD2)',
-                      backgroundColor: '#FFFFFF',
-                    }}
-                  >
-                    {objectifsExistants.map((obj) => (
-                      <option key={obj.id} value={obj.id}>
-                        {obj.titre} (Cible: {obj.montant_cible.toLocaleString('fr-FR')} FCFA)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
-                      Titre de l’objectif *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Achat matériel, Tabaski, Permis..."
-                      value={titreNouvelObjectif}
-                      onChange={(e) => setTitreNouvelObjectif(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        fontSize: 13,
-                        borderRadius: 8,
-                        border: '1px solid var(--border, #E8DDD2)',
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
-                      Montant cible total (FCFA) *
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="Ex: 300000"
-                      value={montantCibleNouvelObjectif}
-                      onChange={(e) => setMontantCibleNouvelObjectif(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        fontSize: 13,
-                        borderRadius: 8,
-                        border: '1px solid var(--border, #E8DDD2)',
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-            </>
+            <SurgaKalpeEpargneFields
+              typeActionEpargne={typeActionEpargne}
+              setTypeActionEpargne={setTypeActionEpargne}
+              objectifsExistants={objectifsExistants}
+              objectifSelectionneId={objectifSelectionneId}
+              setObjectifSelectionneId={setObjectifSelectionneId}
+              titreNouvelObjectif={titreNouvelObjectif}
+              setTitreNouvelObjectif={setTitreNouvelObjectif}
+              montantCibleNouvelObjectif={montantCibleNouvelObjectif}
+              setMontantCibleNouvelObjectif={setMontantCibleNouvelObjectif}
+            />
           )}
 
           {/* Date de l'opération */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 4 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', marginBottom: 6 }}>
               Date
             </label>
             <input
@@ -607,9 +365,10 @@ export default function SurgaKalpeSaisieModal({
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                fontSize: 13,
+                fontSize: 14,
                 borderRadius: 8,
-                border: '1px solid var(--border, #E8DDD2)',
+                border: '1px solid var(--surga-border, #E2E8F0)',
+                boxSizing: 'border-box',
               }}
             />
           </div>
@@ -621,20 +380,16 @@ export default function SurgaKalpeSaisieModal({
               style={{
                 width: '100%',
                 padding: '12px',
-                borderRadius: 8,
+                borderRadius: 10,
                 border: 'none',
-                backgroundColor:
-                  mode === 'entree'
-                    ? 'var(--price, #0A5C36)'
-                    : mode === 'depense'
-                    ? 'var(--navy, #1C2B4A)'
-                    : mode === 'dette'
-                    ? 'var(--accent, #C75B00)'
-                    : '#2563EB',
+                backgroundColor: getButtonBg(),
                 color: '#FFFFFF',
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: 800,
+                minHeight: 46,
                 cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.15)',
+                transition: 'all 0.15s ease',
               }}
             >
               Enregistrer

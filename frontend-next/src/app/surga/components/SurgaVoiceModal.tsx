@@ -1,92 +1,43 @@
-'use client';
+'use client'
 
-// frontend-next/src/app/surga/components/SurgaVoiceModal.tsx
-// Modale de commande vocale pour Surga
-// Web Speech API, calcul exact, chaîne de confirmation obligatoire, zéro émoji
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState } from 'react'
 import {
   Mic,
-  MicOff,
   X,
   AlertCircle,
   Keyboard,
   ArrowRight,
-} from 'lucide-react';
+} from 'lucide-react'
 import {
   interpreterCommandeVocale,
-  estReconnaissanceVocaleSupportee,
-  type ActionVocaleDetectee,
-} from '@/lib/surga-voice';
-import SurgaVoiceConfirmation from './SurgaVoiceConfirmation';
-
-interface SpeechRecognitionEvent {
-  resultIndex: number;
-  results: {
-    length: number;
-    [index: number]: {
-      isFinal: boolean;
-      [index: number]: {
-        transcript: string;
-      };
-    };
-  };
-}
-
-interface SpeechRecognitionErrorEvent {
-  error: string;
-  message?: string;
-}
-
-interface SpeechRecognitionInstance {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-  onstart: (() => void) | null;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-}
+} from '@/lib/surga-voice'
+import { useSurgaSpeechRecognition } from '@/lib/useSurgaSpeechRecognition'
+import SurgaVoiceConfirmationBridge from './SurgaVoiceConfirmationBridge'
+import SurgaVoicePillsList from './SurgaVoicePillsList'
 
 interface SurgaVoiceModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirmerDepense?: (depense: { montant: number; categorie: string; note: string }) => Promise<void>;
-  onConfirmerNote?: (note: { titre: string; contenu: string }) => Promise<void>;
-  onConfirmerRappel?: (rappel: { titre: string; date: string; heure: string }) => Promise<void>;
-  onOpenConcours?: (query?: string) => void;
-  onOpenPlaces?: (query?: string) => void;
-  onOpenTrafic?: (axe?: string) => void;
-  onOpenDemarches?: (query?: string) => void;
-  onOpenImmo?: (query?: string) => void;
-  onOpenMeteo?: () => void;
-  onOpenSport?: () => void;
-  onOpenPresse?: () => void;
-  onOpenRadio?: (station?: string) => void;
-  onOpenEmploi?: () => void;
-  onOpenVideos?: () => void;
-  onOpenCalc?: () => void;
-  onOpenCompte?: () => void;
-  onOpenPremium?: () => void;
-  onOpenPro?: () => void;
-  onNavigateTab?: (tab: 'notes' | 'depenses' | 'agenda' | 'aujourdhui' | 'services') => void;
+  isOpen: boolean
+  onClose: () => void
+  onConfirmerDepense?: (depense: { montant: number; categorie: string; note: string }) => Promise<void>
+  onConfirmerNote?: (note: { titre: string; contenu: string }) => Promise<void>
+  onConfirmerRappel?: (rappel: { titre: string; date: string; heure: string }) => Promise<void>
+  onOpenConcours?: (query?: string) => void
+  onOpenPlaces?: (query?: string) => void
+  onOpenTrafic?: (axe?: string) => void
+  onOpenDemarches?: (query?: string) => void
+  onOpenImmo?: (query?: string) => void
+  onOpenMeteo?: () => void
+  onOpenSport?: () => void
+  onOpenPresse?: () => void
+  onOpenRadio?: (station?: string) => void
+  onOpenEmploi?: () => void
+  onOpenVideos?: () => void
+  onOpenCalc?: () => void
+  onOpenCompte?: () => void
+  onOpenPremium?: () => void
+  onOpenPro?: () => void
+  onNavigateTab?: (tab: 'notes' | 'depenses' | 'agenda' | 'aujourdhui' | 'services') => void
 }
-
-const PASTILLES_EXEMPLES = [
-  { label: 'Concours', texte: 'concours' },
-  { label: 'Bon coin', texte: 'bon coin' },
-  { label: 'Rappel 8h', texte: 'rappel demain 8h' },
-  { label: '2 500 taxi', texte: 'note 2500 taxi' },
-  { label: 'Trafic VDN', texte: 'trafic VDN' },
-  { label: 'Passeport', texte: 'comment faire mon passeport' },
-  { label: 'Appartement', texte: 'appartement' },
-  { label: 'Météo', texte: 'météo' },
-  { label: 'Radio', texte: 'radio' },
-  { label: '15 000 * 3', texte: '15000 fois 3' },
-];
 
 export default function SurgaVoiceModal({
   isOpen,
@@ -111,197 +62,119 @@ export default function SurgaVoiceModal({
   onOpenPro,
   onNavigateTab,
 }: SurgaVoiceModalProps) {
-  const [estSupporte, setEstSupporte] = useState(true);
-  const [enEcoute, setEnEcoute] = useState(false);
-  const [transcription, setTranscription] = useState('');
-  const [texteSaisiManuel, setTexteSaisiManuel] = useState('');
-  const [actionDetectee, setActionDetectee] = useState<ActionVocaleDetectee | null>(null);
-  const [statutSauvegarde, setStatutSauvegarde] = useState<'IDLE' | 'EN_COURS' | 'VALIDE' | 'ERREUR'>('IDLE');
-  const [messageErreur, setMessageErreur] = useState<string | null>(null);
+  const {
+    estSupporte,
+    enEcoute,
+    transcription,
+    setTranscription,
+    actionDetectee,
+    setActionDetectee,
+    messageErreur,
+    demarrerEcoute,
+    arreterEcoute,
+  } = useSurgaSpeechRecognition(isOpen)
 
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const [texteSaisiManuel, setTexteSaisiManuel] = useState('')
+  const [statutSauvegarde, setStatutSauvegarde] = useState<'IDLE' | 'EN_COURS' | 'VALIDE' | 'ERREUR'>('IDLE')
 
-  const demarrerEcoute = useCallback(() => {
-    setMessageErreur(null);
-    setActionDetectee(null);
-    setStatutSauvegarde('IDLE');
-    setTranscription('');
-
-    if (typeof window === 'undefined') return;
-    const win = window as unknown as {
-      SpeechRecognition?: new () => SpeechRecognitionInstance;
-      webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
-    };
-
-    const SpeechRecClass = win.SpeechRecognition || win.webkitSpeechRecognition;
-    if (!SpeechRecClass) {
-      setEstSupporte(false);
-      return;
-    }
-
-    try {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch {}
-      }
-
-      const instance = new SpeechRecClass();
-      instance.continuous = false;
-      instance.interimResults = true;
-      instance.lang = 'fr-FR';
-
-      instance.onstart = () => {
-        setEnEcoute(true);
-      };
-
-      instance.onresult = (event: SpeechRecognitionEvent) => {
-        let texteComplet = '';
-        for (let i = 0; i < event.results.length; i++) {
-          texteComplet += event.results[i][0].transcript;
-        }
-        setTranscription(texteComplet);
-
-        const dernierResultat = event.results[event.results.length - 1];
-        if (dernierResultat.isFinal) {
-          const action = interpreterCommandeVocale(texteComplet);
-          setActionDetectee(action);
-        }
-      };
-
-      instance.onerror = (err: SpeechRecognitionErrorEvent) => {
-        setEnEcoute(false);
-        if (err.error === 'not-allowed') {
-          setMessageErreur("L'accès au microphone a été refusé. Veuillez l'autoriser ou saisir votre consigne au clavier.");
-        } else if (err.error !== 'no-speech') {
-          setMessageErreur(`Erreur de reconnaissance (${err.error}). Vous pouvez réessayer.`);
-        }
-      };
-
-      instance.onend = () => {
-        setEnEcoute(false);
-      };
-
-      recognitionRef.current = instance;
-      instance.start();
-    } catch {
-      setEnEcoute(false);
-      setEstSupporte(false);
-    }
-  }, []);
-
-  const arreterEcoute = useCallback(() => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
-    }
-    setEnEcoute(false);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      const supporte = estReconnaissanceVocaleSupportee();
-      setEstSupporte(supporte);
-      if (supporte) {
-        demarrerEcoute();
-      }
-    } else {
-      arreterEcoute();
-      setActionDetectee(null);
-      setTranscription('');
-      setTexteSaisiManuel('');
-      setStatutSauvegarde('IDLE');
-    }
-  }, [isOpen, demarrerEcoute, arreterEcoute]);
-
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const handleValidationManuel = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!texteSaisiManuel.trim()) return;
-    const action = interpreterCommandeVocale(texteSaisiManuel);
-    setActionDetectee(action);
-    setTranscription(texteSaisiManuel);
-  };
+    e.preventDefault()
+    if (!texteSaisiManuel.trim()) return
+    const action = interpreterCommandeVocale(texteSaisiManuel)
+    setActionDetectee(action)
+    setTranscription(texteSaisiManuel)
+  }
 
   const handleConfirmerAction = async () => {
-    if (!actionDetectee) return;
-    setStatutSauvegarde('EN_COURS');
+    if (!actionDetectee) return
+    setStatutSauvegarde('EN_COURS')
 
     try {
       if (actionDetectee.intention === 'ADD_EXPENSE' && actionDetectee.depenseData && onConfirmerDepense) {
-        await onConfirmerDepense(actionDetectee.depenseData);
+        await onConfirmerDepense(actionDetectee.depenseData)
       } else if (actionDetectee.intention === 'ADD_NOTE' && actionDetectee.noteData && onConfirmerNote) {
-        await onConfirmerNote(actionDetectee.noteData);
+        await onConfirmerNote(actionDetectee.noteData)
       } else if (actionDetectee.intention === 'ADD_REMINDER' && actionDetectee.rappelData && onConfirmerRappel) {
-        await onConfirmerRappel(actionDetectee.rappelData);
+        await onConfirmerRappel(actionDetectee.rappelData)
       }
-      setStatutSauvegarde('VALIDE');
+      setStatutSauvegarde('VALIDE')
       setTimeout(() => {
-        onClose();
-      }, 1400);
+        onClose()
+      }, 1400)
     } catch {
-      setStatutSauvegarde('ERREUR');
+      setStatutSauvegarde('ERREUR')
     }
-  };
+  }
 
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(28, 43, 74, 0.65)',
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
         backdropFilter: 'blur(4px)',
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: 16,
       }}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
       <div
         style={{
           width: '100%',
-          maxWidth: '440px',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '16px',
-          boxShadow: '0 20px 40px rgba(28, 43, 74, 0.2)',
-          padding: '24px',
+          maxWidth: 440,
+          backgroundColor: 'var(--surga-surface, #FFFFFF)',
+          borderRadius: 16,
+          boxShadow: '0 20px 40px rgba(15, 23, 42, 0.25)',
+          padding: 24,
           position: 'relative',
+          border: '1px solid var(--surga-border, #E2E8F0)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* En-tête */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(199, 91, 0, 0.1)',
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: 'var(--surga-accent-soft, rgba(217, 119, 6, 0.1))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent)',
+                color: 'var(--surga-accent, #D97706)',
               }}
             >
-              <Mic size={18} />
+              <Mic size={20} strokeWidth={2.4} />
             </div>
-            <h2 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--navy)', margin: 0 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--surga-primary, #0F172A)', margin: 0 }}>
               Commande Vocale Surga
             </h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label="Fermer la boîte vocale"
             style={{
               border: 'none',
               background: 'transparent',
-              color: '#8A94A6',
+              color: 'var(--surga-text3, #94A3B8)',
               cursor: 'pointer',
-              padding: '4px',
-              borderRadius: '6px',
+              padding: 6,
+              borderRadius: 8,
+              minWidth: 36,
+              minHeight: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <X size={20} />
@@ -312,17 +185,21 @@ export default function SurgaVoiceModal({
         {estSupporte ? (
           <div style={{ textAlign: 'center', margin: '20px 0' }}>
             <button
+              type="button"
               onClick={enEcoute ? arreterEcoute : demarrerEcoute}
+              className={enEcoute ? 'surga-voice-listening' : ''}
               style={{
-                width: '76px',
-                height: '76px',
+                width: 80,
+                height: 80,
                 borderRadius: '50%',
-                backgroundColor: enEcoute ? 'var(--accent)' : 'var(--navy)',
-                color: '#FFFFFF',
+                background: enEcoute
+                  ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                  : 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+                color: enEcoute ? '#0F172A' : '#FFFFFF',
                 border: 'none',
                 boxShadow: enEcoute
-                  ? '0 0 0 10px rgba(199, 91, 0, 0.2), 0 0 0 20px rgba(199, 91, 0, 0.1)'
-                  : '0 4px 12px rgba(28, 43, 74, 0.15)',
+                  ? '0 0 0 12px rgba(217, 119, 6, 0.25), 0 8px 24px rgba(217, 119, 6, 0.4)'
+                  : '0 6px 18px rgba(15, 23, 42, 0.2)',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 display: 'inline-flex',
@@ -331,9 +208,9 @@ export default function SurgaVoiceModal({
               }}
               title={enEcoute ? "Arrêter l'écoute" : 'Parler à Surga'}
             >
-              {enEcoute ? <Mic size={32} /> : <MicOff size={32} />}
+              <Mic size={34} strokeWidth={2.4} />
             </button>
-            <p style={{ fontSize: '0.85rem', color: '#6A7282', marginTop: '14px', marginBottom: 0 }}>
+            <p style={{ fontSize: 14, color: 'var(--surga-text2, #475569)', marginTop: 14, marginBottom: 0, fontWeight: 500 }}>
               {enEcoute ? "Surga vous écoute... Parlez naturellement." : "Appuyez sur le micro pour parler."}
             </p>
           </div>
@@ -341,17 +218,17 @@ export default function SurgaVoiceModal({
           <div
             style={{
               padding: '12px 14px',
-              borderRadius: '8px',
-              backgroundColor: 'rgba(199, 91, 0, 0.08)',
-              color: 'var(--navy)',
-              fontSize: '0.85rem',
+              borderRadius: 10,
+              backgroundColor: 'var(--surga-accent-soft, rgba(217, 119, 6, 0.08))',
+              color: 'var(--surga-primary, #0F172A)',
+              fontSize: 13,
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '10px',
-              marginBottom: '16px',
+              gap: 10,
+              marginBottom: 16,
             }}
           >
-            <AlertCircle size={18} color="var(--accent)" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <AlertCircle size={18} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               Reconnaissance vocale non disponible sur ce navigateur. Vous pouvez saisir votre commande ci-dessous.
             </div>
@@ -362,11 +239,11 @@ export default function SurgaVoiceModal({
           <div
             style={{
               padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: 'rgba(217, 83, 79, 0.1)',
-              color: '#C0392B',
-              fontSize: '0.82rem',
-              marginBottom: '14px',
+              borderRadius: 8,
+              backgroundColor: 'var(--surga-danger-soft, rgba(220, 38, 38, 0.09))',
+              color: 'var(--surga-danger, #DC2626)',
+              fontSize: 13,
+              marginBottom: 14,
             }}
           >
             {messageErreur}
@@ -378,12 +255,13 @@ export default function SurgaVoiceModal({
           <div
             style={{
               padding: '12px 14px',
-              backgroundColor: 'var(--bg)',
-              borderRadius: '10px',
-              border: '1px solid var(--border)',
-              marginBottom: '16px',
-              fontSize: '0.9rem',
-              color: 'var(--navy)',
+              backgroundColor: 'var(--surga-bg, #F8FAFC)',
+              borderRadius: 10,
+              border: '1px solid var(--surga-border, #E2E8F0)',
+              marginBottom: 16,
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--surga-primary, #0F172A)',
               fontStyle: enEcoute ? 'italic' : 'normal',
             }}
           >
@@ -393,7 +271,7 @@ export default function SurgaVoiceModal({
 
         {/* Zone de saisie manuelle de repli */}
         {!enEcoute && !actionDetectee && (
-          <form onSubmit={handleValidationManuel} style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <form onSubmit={handleValidationManuel} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <div style={{ position: 'relative', flex: 1 }}>
               <input
                 type="text"
@@ -402,146 +280,87 @@ export default function SurgaVoiceModal({
                 onChange={(e) => setTexteSaisiManuel(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '9px 12px 9px 34px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border)',
-                  fontSize: '0.85rem',
+                  padding: '10px 12px 10px 36px',
+                  borderRadius: 10,
+                  border: '1px solid var(--surga-border, #E2E8F0)',
+                  fontSize: 14,
                   outline: 'none',
+                  boxSizing: 'border-box',
                 }}
               />
-              <Keyboard size={15} color="#8A94A6" style={{ position: 'absolute', left: '10px', top: '11px' }} />
+              <Keyboard size={16} color="var(--surga-text3, #94A3B8)" style={{ position: 'absolute', left: 12, top: 12 }} />
             </div>
             <button
               type="submit"
-              className="btn-npl"
-              style={{ padding: '0 12px', height: '36px', fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}
+              style={{
+                padding: '0 16px',
+                height: 42,
+                borderRadius: 10,
+                border: 'none',
+                backgroundColor: 'var(--surga-primary, #0F172A)',
+                color: '#FFFFFF',
+                fontSize: 14,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <ArrowRight size={16} />
+              <ArrowRight size={18} />
             </button>
           </form>
         )}
 
-        {/* Pastilles de suggestions cliquables pour guider l'utilisateur */}
+        {/* Pastilles de suggestions modulaires */}
         {!enEcoute && !actionDetectee && (
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '0.78rem', color: '#8A94A6', marginBottom: '8px', fontWeight: 600 }}>
-              Exemples de commandes vocales :
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {PASTILLES_EXEMPLES.map((ex) => (
-                <button
-                  key={ex.label}
-                  type="button"
-                  onClick={() => {
-                    setTranscription(ex.texte);
-                    const action = interpreterCommandeVocale(ex.texte);
-                    setActionDetectee(action);
-                  }}
-                  style={{
-                    padding: '4px 9px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: 'var(--bg)',
-                    fontSize: '0.76rem',
-                    color: 'var(--navy)',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                  }}
-                >
-                  {ex.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <SurgaVoicePillsList
+            onSelect={(texte, action) => {
+              setTranscription(texte)
+              setActionDetectee(action)
+            }}
+          />
         )}
 
-        {/* ── Chaîne de confirmation pour Dépense, Note, Rappel ou Consultation ── */}
+        {/* Chaîne de confirmation pour Dépense, Note, Rappel ou Navigation */}
         {actionDetectee && actionDetectee.intention !== 'INCONNU' && (
-          <SurgaVoiceConfirmation
+          <SurgaVoiceConfirmationBridge
             actionDetectee={actionDetectee}
             statutSauvegarde={statutSauvegarde}
             onConfirmer={handleConfirmerAction}
             onAnnuler={() => {
-              setActionDetectee(null);
-              setTranscription('');
+              setActionDetectee(null)
+              setTranscription('')
             }}
-            onOpenConcours={(q) => {
-              onClose();
-              if (onOpenConcours) onOpenConcours(q);
-            }}
-            onOpenPlaces={(q) => {
-              onClose();
-              if (onOpenPlaces) onOpenPlaces(q);
-            }}
-            onOpenTrafic={(axe) => {
-              onClose();
-              if (onOpenTrafic) onOpenTrafic(axe);
-            }}
-            onOpenDemarches={(q) => {
-              onClose();
-              if (onOpenDemarches) onOpenDemarches(q);
-            }}
-            onOpenImmo={(q) => {
-              onClose();
-              if (onOpenImmo) onOpenImmo(q);
-            }}
-            onOpenMeteo={() => {
-              onClose();
-              if (onOpenMeteo) onOpenMeteo();
-            }}
-            onOpenSport={() => {
-              onClose();
-              if (onOpenSport) onOpenSport();
-            }}
-            onOpenPresse={() => {
-              onClose();
-              if (onOpenPresse) onOpenPresse();
-            }}
-            onOpenRadio={(st) => {
-              onClose();
-              if (onOpenRadio) onOpenRadio(st);
-            }}
-            onOpenEmploi={() => {
-              onClose();
-              if (onOpenEmploi) onOpenEmploi();
-            }}
-            onOpenVideos={() => {
-              onClose();
-              if (onOpenVideos) onOpenVideos();
-            }}
-            onOpenCalc={() => {
-              onClose();
-              if (onOpenCalc) onOpenCalc();
-            }}
-            onOpenCompte={() => {
-              onClose();
-              if (onOpenCompte) onOpenCompte();
-            }}
-            onOpenPremium={() => {
-              onClose();
-              if (onOpenPremium) onOpenPremium();
-            }}
-            onOpenPro={() => {
-              onClose();
-              if (onOpenPro) onOpenPro();
-            }}
-            onNavigateTab={(tab) => {
-              onClose();
-              if (onNavigateTab) onNavigateTab(tab);
-            }}
+            onClose={onClose}
+            onOpenConcours={onOpenConcours}
+            onOpenPlaces={onOpenPlaces}
+            onOpenTrafic={onOpenTrafic}
+            onOpenDemarches={onOpenDemarches}
+            onOpenImmo={onOpenImmo}
+            onOpenMeteo={onOpenMeteo}
+            onOpenSport={onOpenSport}
+            onOpenPresse={onOpenPresse}
+            onOpenRadio={onOpenRadio}
+            onOpenEmploi={onOpenEmploi}
+            onOpenVideos={onOpenVideos}
+            onOpenCalc={onOpenCalc}
+            onOpenCompte={onOpenCompte}
+            onOpenPremium={onOpenPremium}
+            onOpenPro={onOpenPro}
+            onNavigateTab={onNavigateTab}
           />
         )}
 
         {actionDetectee && actionDetectee.intention === 'INCONNU' && (
           <div
             style={{
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--bg)',
-              border: '1px solid var(--border)',
-              color: '#6A7282',
-              fontSize: '0.82rem',
-              marginBottom: '14px',
+              padding: '10px 14px',
+              borderRadius: 10,
+              backgroundColor: 'var(--surga-bg, #F8FAFC)',
+              border: '1px solid var(--surga-border, #E2E8F0)',
+              color: 'var(--surga-text2, #475569)',
+              fontSize: 13,
+              marginBottom: 14,
             }}
           >
             Commande non reconnue. Exemples : <em>"cherche concours douanes"</em>, <em>"note 2500 taxi"</em>, <em>"rappel demain 14h"</em>, <em>"trafic VDN"</em>.
@@ -549,15 +368,17 @@ export default function SurgaVoiceModal({
         )}
 
         {/* Pied de dialogue */}
-        <div style={{ textAlign: 'center', marginTop: '10px' }}>
+        <div style={{ textAlign: 'center', marginTop: 10 }}>
           <button
+            type="button"
             onClick={onClose}
             style={{
               border: 'none',
               background: 'transparent',
-              color: '#8A94A6',
-              fontSize: '0.82rem',
+              color: 'var(--surga-text3, #94A3B8)',
+              fontSize: 13,
               cursor: 'pointer',
+              padding: 6,
             }}
           >
             Fermer
@@ -565,5 +386,5 @@ export default function SurgaVoiceModal({
         </div>
       </div>
     </div>
-  );
+  )
 }

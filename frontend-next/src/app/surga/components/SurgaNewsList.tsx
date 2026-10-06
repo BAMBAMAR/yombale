@@ -70,7 +70,7 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
           style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6, padding: '12px 14px' }}
         >
           {/* Ligne 1 : Titre complet */}
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text1, #1A1612)', lineHeight: 1.35 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--surga-text1, #0F172A)', lineHeight: 1.35 }}>
             <a
               href={item.url}
               target="_blank"
@@ -84,7 +84,7 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
 
           {/* Résumé court sourcé (Règle d'or Low-Data) */}
           {item.resume && item.resume !== item.titre && (
-            <p style={{ fontSize: 13, color: 'var(--text2, #5A4E42)', margin: 0, lineHeight: 1.4 }}>
+            <p style={{ fontSize: 13, color: 'var(--surga-text2, #475569)', margin: 0, lineHeight: 1.4 }}>
               {item.resume}
             </p>
           )}
@@ -96,19 +96,19 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
               alignItems: 'center',
               justifyContent: 'space-between',
               marginTop: 4,
-              paddingTop: 6,
-              borderTop: '1px solid #F1EBE4',
+              paddingTop: 8,
+              borderTop: '1px solid var(--surga-border, #E2E8F0)',
               fontSize: 12,
-              color: 'var(--text3, #73675E)',
+              color: 'var(--surga-text3, #94A3B8)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>{item.source_nom}</span>
+              <span style={{ fontWeight: 700, color: 'var(--surga-primary, #0F172A)' }}>{item.source_nom}</span>
               <span>•</span>
               <span>{formatRelativeTime(item.published_at)}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {(() => {
                 const itemKey = item.url || item.titre
                 const estEnNote = articlesEnNote.includes(itemKey)
@@ -124,21 +124,22 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 3,
-                      padding: '4px 7px',
-                      borderRadius: 6,
+                      gap: 4,
+                      padding: '6px 10px',
+                      borderRadius: 8,
                       border: '1px solid',
-                      borderColor: estEnNote ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
-                      backgroundColor: estEnNote ? 'rgba(28, 43, 74, 0.1)' : '#FFFFFF',
-                      color: 'var(--navy, #1C2B4A)',
-                      fontSize: 11,
+                      borderColor: estEnNote ? 'var(--surga-primary, #0F172A)' : 'var(--surga-border, #E2E8F0)',
+                      backgroundColor: estEnNote ? 'rgba(15, 23, 42, 0.08)' : 'var(--surga-surface, #FFFFFF)',
+                      color: 'var(--surga-primary, #0F172A)',
+                      fontSize: 12,
                       fontWeight: estEnNote ? 700 : 600,
                       cursor: 'pointer',
+                      minHeight: 34,
                       transition: 'all 0.15s ease',
                     }}
                     title={estEnNote ? "Brève présente dans vos Notes — Cliquer pour retirer" : "Épingler cette brève dans mes Notes"}
                   >
-                    <Bookmark size={11} color="var(--navy, #1C2B4A)" />
+                    <Bookmark size={12} color="var(--surga-primary, #0F172A)" />
                     <span>{estEnNote ? 'Épinglé ✓' : 'En Note'}</span>
                   </button>
                 )
@@ -168,11 +169,14 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 3,
-                  color: 'var(--accent, #C75B00)',
+                  gap: 4,
+                  color: 'var(--surga-accent, #D97706)',
                   fontWeight: 700,
                   textDecoration: 'none',
                   fontSize: 12,
+                  padding: '6px 8px',
+                  borderRadius: 6,
+                  minHeight: 34,
                 }}
               >
                 <span>Lire</span>

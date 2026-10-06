@@ -88,13 +88,13 @@ export default function SurgaHeader({
             <ChevronLeft size={18} strokeWidth={2.5} />
           </div>
         )}
-        <div className="surga-header-logo-wrap" title="Surga — Assistant de poche" aria-hidden="true" style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="surga-header-logo-wrap" title="Surga — Assistant de poche" aria-hidden="true">
           <img
-            src="/surga/surga-symbol.png"
+            src="/surga/icons/surga-symbol-white.svg"
             alt="Surga"
-            width={34}
-            height={34}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            width={26}
+            height={26}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
           />
         </div>
         <div>
@@ -130,7 +130,7 @@ export default function SurgaHeader({
           )}
         </span>
 
-        {/* Bouton Compte / Connexion */}
+        {/* Bouton Compte / Connexion (Taille tactile confortable >= 38px) */}
         {(onOpenAuth || onOpenCompte) && (
           <button
             type="button"
@@ -138,30 +138,33 @@ export default function SurgaHeader({
             className="surga-header-badge"
             style={{
               cursor: 'pointer',
-              border: user ? '1px solid rgba(10, 92, 54, 0.3)' : '1px solid var(--border, #E8DDD2)',
-              backgroundColor: user ? 'rgba(10, 92, 54, 0.08)' : 'var(--bg, #F8F5F0)',
-              color: user ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
+              border: user ? '1px solid rgba(5, 150, 105, 0.35)' : '1px solid var(--surga-border, #E2E8F0)',
+              backgroundColor: user ? 'var(--surga-emerald-soft, rgba(5, 150, 105, 0.08))' : 'var(--surga-surface, #FFFFFF)',
+              color: user ? 'var(--surga-emerald, #059669)' : 'var(--surga-primary, #0F172A)',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 5,
+              gap: 6,
               fontWeight: 700,
-              padding: '4px 9px',
+              padding: '6px 12px',
               borderRadius: 20,
-              fontSize: 11,
+              fontSize: 12,
+              minHeight: 38,
+              boxSizing: 'border-box',
+              transition: 'all 0.15s ease',
             }}
             title={user ? `Gérer mon compte : ${user.nom || user.telephone || 'Connecté'}` : 'Se connecter / Compte'}
           >
             {user ? (
               <>
-                <UserCheck size={13} strokeWidth={2.5} />
-                <span style={{ maxWidth: 85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <UserCheck size={14} strokeWidth={2.5} />
+                <span style={{ maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {user.nom ? user.nom.split(' ')[0] : 'Compte'}
                 </span>
-                <ChevronDown size={11} strokeWidth={2.5} style={{ opacity: 0.7 }} />
+                <ChevronDown size={12} strokeWidth={2.5} style={{ opacity: 0.7 }} />
               </>
             ) : (
               <>
-                <User size={13} strokeWidth={2} />
+                <User size={14} strokeWidth={2} />
                 <span>Connexion</span>
               </>
             )}

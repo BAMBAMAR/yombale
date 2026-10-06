@@ -4,6 +4,7 @@ import React from 'react'
 import { Sun, Newspaper, Headphones } from 'lucide-react'
 import SurgaBriefingActions from './SurgaBriefingActions'
 import SurgaAudioPlayer from './SurgaAudioPlayer'
+import SurgaBriefingSkeleton from './SurgaBriefingSkeleton'
 import SurgaMeteoCard, { type MeteoData } from './SurgaMeteoCard'
 import SurgaNewsList, { type BriefingNewsItem } from './SurgaNewsList'
 import SurgaSportCard, { type SportEventItem } from './SurgaSportCard'
@@ -76,76 +77,85 @@ export default function SurgaAujourdhuiTab({
 
   return (
     <>
-      {/* Carte Briefing du jour */}
-      <div className="surga-card" style={{ borderLeft: '4px solid var(--accent, #C75B00)' }}>
-        <div className="surga-card-header">
-          <span className="surga-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Sun size={18} color="var(--accent, #C75B00)" />
-            <span>Briefing du Matin</span>
-          </span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3, #73675E)' }}>
-            Prévu à {heureBriefing}
-          </span>
-        </div>
-
-        <p style={{ fontSize: 14, color: 'var(--text1, #1A1612)', margin: '0 0 10px 0', lineHeight: 1.45 }}>
-          {briefingData?.message_synthese || (
-            <>
-              Bonjour. Votre Surga est configuré pour <strong>{quartier}</strong>. Vos briques actives préparent votre premier briefing complet.
-            </>
-          )}
-        </p>
-
-        <SurgaBriefingActions
-          heureBriefing={heureBriefing}
-          titrePremierItem={briefingData?.items?.[0]?.titre}
-          onRefresh={chargerBriefing}
-        />
-
-        {preferences?.audio_actif && audioScript ? (
-          <SurgaAudioPlayer
-            script={audioScript}
-            onOpenPodcastModal={onOpenPodcastModal}
-            onOpenRadiosModal={openRadioModal}
-          />
-        ) : (
-          <div
-            style={{
-              marginTop: 10,
-              padding: '8px 12px',
-              backgroundColor: 'var(--bg, #F8F5F0)',
-              borderRadius: 8,
-              border: '1px dashed var(--border, #E8DDD2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--navy, #1C2B4A)' }}>
-              <Headphones size={15} color="var(--accent, #C75B00)" />
-              <span>Écouter le briefing à la voix <strong>(0 Mo de données)</strong></span>
-            </div>
-            {onToggleAudio && (
-              <button
-                type="button"
-                onClick={onToggleAudio}
-                className="btn-npl"
-                style={{
-                  padding: '3px 8px',
-                  fontSize: 11,
-                  display: 'flex',
-                  alignItems: 'center',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                }}
-              >
-                Activer
-              </button>
-            )}
+      {/* Squelette de chargement anti-CLS si pas encore de briefing chargé */}
+      {!briefingData ? (
+        <SurgaBriefingSkeleton />
+      ) : (
+        /* Carte Briefing du jour */
+        <div className="surga-card" style={{ borderLeft: '4px solid var(--surga-accent, #D97706)' }}>
+          <div className="surga-card-header">
+            <span className="surga-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Sun size={18} color="var(--surga-accent, #D97706)" />
+              <span>Briefing du Matin</span>
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-text3, #94A3B8)' }}>
+              Prévu à {heureBriefing}
+            </span>
           </div>
-        )}
-      </div>
+
+          <p style={{ fontSize: 14, color: 'var(--surga-text1, #0F172A)', margin: '0 0 10px 0', lineHeight: 1.45 }}>
+            {briefingData?.message_synthese || (
+              <>
+                Bonjour. Votre Surga est configuré pour <strong>{quartier}</strong>. Vos briques actives préparent votre premier briefing complet.
+              </>
+            )}
+          </p>
+
+          <SurgaBriefingActions
+            heureBriefing={heureBriefing}
+            titrePremierItem={briefingData?.items?.[0]?.titre}
+            onRefresh={chargerBriefing}
+          />
+
+          {preferences?.audio_actif && audioScript ? (
+            <SurgaAudioPlayer
+              script={audioScript}
+              onOpenPodcastModal={onOpenPodcastModal}
+              onOpenRadiosModal={openRadioModal}
+            />
+          ) : (
+            <div
+              style={{
+                marginTop: 10,
+                padding: '8px 12px',
+                backgroundColor: 'var(--surga-bg, #F8FAFC)',
+                borderRadius: 8,
+                border: '1px dashed var(--surga-border, #E2E8F0)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--surga-primary, #0F172A)' }}>
+                <Headphones size={15} color="var(--surga-accent, #D97706)" />
+                <span>Écouter le briefing à la voix <strong>(0 Mo de données)</strong></span>
+              </div>
+              {onToggleAudio && (
+                <button
+                  type="button"
+                  onClick={onToggleAudio}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: 6,
+                    border: 'none',
+                    backgroundColor: 'var(--surga-accent, #D97706)',
+                    color: '#0F172A',
+                    cursor: 'pointer',
+                    minHeight: 28,
+                  }}
+                >
+                  Activer
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Section Briques : Météo & Marées Dakar */}
       {(!preferences?.modules_actifs || preferences.modules_actifs.includes('meteo') || !preferences.modules_actifs.includes('sans_meteo')) && (
@@ -156,12 +166,12 @@ export default function SurgaAujourdhuiTab({
         />
       )}
 
-      {/* Section Briques : Actualités & Presse */}
+      {/* Section Briques : Actualités & Presse (Plafonné à 3 brèves majeures pour l'ergonomie mobile) */}
       {(preferences?.modules_actifs?.includes('actualites') || !preferences?.modules_actifs) && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Newspaper size={17} color="var(--accent, #C75B00)" />
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--surga-primary, #0F172A)', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Newspaper size={17} color="var(--surga-accent, #D97706)" />
               <span>Actualités &amp; Revue de presse</span>
             </h2>
             <button
@@ -170,19 +180,20 @@ export default function SurgaAujourdhuiTab({
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent, #D97706)',
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
-                padding: '2px 6px',
+                padding: '4px 8px',
+                minHeight: 32,
               }}
             >
-              Explorer
+              Explorer ({briefingData?.items?.length || 0})
             </button>
           </div>
 
           <SurgaNewsList
-            items={briefingData?.items || []}
+            items={(briefingData?.items || []).slice(0, 3)}
             onVoirPlus={onOpenPresse}
           />
         </div>

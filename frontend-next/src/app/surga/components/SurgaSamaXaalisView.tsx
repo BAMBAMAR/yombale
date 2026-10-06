@@ -5,8 +5,6 @@ import {
   Wallet,
   ArrowDownLeft,
   ArrowUpRight,
-  Users,
-  PiggyBank,
   Calculator,
   ChevronLeft,
   ChevronRight,
@@ -28,6 +26,7 @@ import SurgaKalpeDettesTab from './SurgaKalpeDettesTab'
 import SurgaKalpeEpargneTab from './SurgaKalpeEpargneTab'
 import SurgaKalpeSaisieModal, { type SaisieMode } from './SurgaKalpeSaisieModal'
 import SurgaCalculatorModal from './SurgaCalculatorModal'
+import SurgaKalpeQuickActions from './SurgaKalpeQuickActions'
 
 export default function SurgaSamaXaalisView() {
   const [moisSelectionne, setMoisSelectionne] = useState<string>(() =>
@@ -97,11 +96,11 @@ export default function SurgaSamaXaalisView() {
             top: 20,
             right: 20,
             zIndex: 100000,
-            backgroundColor: 'var(--navy, #1C2B4A)',
+            backgroundColor: 'var(--surga-primary, #0F172A)',
             color: '#FFFFFF',
             padding: '10px 16px',
             borderRadius: 8,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.25)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -109,7 +108,7 @@ export default function SurgaSamaXaalisView() {
             fontWeight: 700,
           }}
         >
-          <CheckCircle2 size={16} color="var(--price, #0A5C36)" />
+          <CheckCircle2 size={16} color="var(--surga-emerald, #059669)" />
           <span>{notification}</span>
         </div>
       )}
@@ -130,17 +129,18 @@ export default function SurgaSamaXaalisView() {
             aria-label="Mois précédent"
             style={{
               background: '#FFFFFF',
-              border: '1px solid var(--border, #E8DDD2)',
-              borderRadius: 6,
-              padding: '4px 6px',
+              border: '1px solid var(--surga-border, #E2E8F0)',
+              borderRadius: 8,
+              padding: '6px 8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              minHeight: 34,
             }}
           >
             <ChevronLeft size={16} />
           </button>
-          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--surga-primary, #0F172A)' }}>
             {libelleMois}
           </span>
           <button
@@ -149,12 +149,13 @@ export default function SurgaSamaXaalisView() {
             aria-label="Mois suivant"
             style={{
               background: '#FFFFFF',
-              border: '1px solid var(--border, #E8DDD2)',
-              borderRadius: 6,
-              padding: '4px 6px',
+              border: '1px solid var(--surga-border, #E2E8F0)',
+              borderRadius: 8,
+              padding: '6px 8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              minHeight: 34,
             }}
           >
             <ChevronRight size={16} />
@@ -168,17 +169,18 @@ export default function SurgaSamaXaalisView() {
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            padding: '6px 10px',
+            padding: '6px 12px',
             borderRadius: 8,
             backgroundColor: '#FFFFFF',
-            border: '1px solid var(--border, #E8DDD2)',
-            fontSize: 12,
+            border: '1px solid var(--surga-border, #E2E8F0)',
+            fontSize: 12.5,
             fontWeight: 700,
-            color: 'var(--navy, #1C2B4A)',
+            color: 'var(--surga-primary, #0F172A)',
             cursor: 'pointer',
+            minHeight: 34,
           }}
         >
-          <Calculator size={14} color="var(--accent, #C75B00)" />
+          <Calculator size={15} color="var(--surga-accent, #D97706)" />
           <span>Calculatrice</span>
         </button>
       </div>
@@ -196,22 +198,23 @@ export default function SurgaSamaXaalisView() {
         <div
           style={{
             gridColumn: '1 / -1',
-            padding: '14px 16px',
-            borderRadius: 12,
-            backgroundColor: 'var(--navy, #1C2B4A)',
+            padding: '16px 18px',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
             color: '#FFFFFF',
+            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.85, textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.85, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               Solde Kalpé Disponible
             </span>
-            <Wallet size={18} color="var(--accent, #C75B00)" />
+            <Wallet size={18} color="var(--surga-accent-glow, #F59E0B)" />
           </div>
-          <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: -0.5 }}>
+          <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: -0.5 }}>
             {(synthese?.solde_disponible || 0).toLocaleString('fr-FR')} FCFA
           </div>
-          <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>
+          <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
             Total épargne cumulée : {(synthese?.total_epargne || 0).toLocaleString('fr-FR')} FCFA
           </div>
         </div>
@@ -219,19 +222,19 @@ export default function SurgaSamaXaalisView() {
         {/* Entrées du mois */}
         <div
           style={{
-            padding: '10px 12px',
+            padding: '12px 14px',
             borderRadius: 10,
             backgroundColor: '#FFFFFF',
-            border: '1px solid var(--border, #E8DDD2)',
+            border: '1px solid var(--surga-border, #E2E8F0)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-            <ArrowDownLeft size={14} color="var(--price, #0A5C36)" />
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--price, #0A5C36)' }}>
+            <ArrowDownLeft size={14} color="var(--surga-emerald, #059669)" />
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-emerald, #059669)' }}>
               Entrées du mois
             </span>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text1, #1A1612)' }}>
+          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--surga-text1, #0F172A)' }}>
             +{(synthese?.total_entrees_mois || 0).toLocaleString('fr-FR')} F
           </div>
         </div>
@@ -239,127 +242,32 @@ export default function SurgaSamaXaalisView() {
         {/* Dépenses du mois */}
         <div
           style={{
-            padding: '10px 12px',
+            padding: '12px 14px',
             borderRadius: 10,
             backgroundColor: '#FFFFFF',
-            border: '1px solid var(--border, #E8DDD2)',
+            border: '1px solid var(--surga-border, #E2E8F0)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-            <ArrowUpRight size={14} color="var(--accent, #C75B00)" />
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent, #C75B00)' }}>
+            <ArrowUpRight size={14} color="var(--surga-accent, #D97706)" />
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-accent, #D97706)' }}>
               Dépenses du mois
             </span>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text1, #1A1612)' }}>
+          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--surga-text1, #0F172A)' }}>
             -{(synthese?.total_depenses_mois || 0).toLocaleString('fr-FR')} F
           </div>
         </div>
       </div>
 
-      {/* 4 Boutons d'Action Rapide */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 6,
-          marginBottom: 16,
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => handleOuvrirSaisie('entree')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px 4px',
-            borderRadius: 8,
-            border: '1px solid var(--border, #E8DDD2)',
-            backgroundColor: '#FFFFFF',
-            cursor: 'pointer',
-            gap: 4,
-          }}
-        >
-          <div style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: 'rgba(10,92,54,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ArrowDownLeft size={16} color="var(--price, #0A5C36)" />
-          </div>
-          <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text1, #1A1612)' }}>+ Entrée</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleOuvrirSaisie('depense')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px 4px',
-            borderRadius: 8,
-            border: '1px solid var(--border, #E8DDD2)',
-            backgroundColor: '#FFFFFF',
-            cursor: 'pointer',
-            gap: 4,
-          }}
-        >
-          <div style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: 'rgba(28,43,74,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ArrowUpRight size={16} color="var(--navy, #1C2B4A)" />
-          </div>
-          <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text1, #1A1612)' }}>- Dépense</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleOuvrirSaisie('dette')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px 4px',
-            borderRadius: 8,
-            border: '1px solid var(--border, #E8DDD2)',
-            backgroundColor: '#FFFFFF',
-            cursor: 'pointer',
-            gap: 4,
-          }}
-        >
-          <div style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: 'rgba(199,91,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Users size={16} color="var(--accent, #C75B00)" />
-          </div>
-          <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text1, #1A1612)' }}>Dette</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleOuvrirSaisie('epargne')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px 4px',
-            borderRadius: 8,
-            border: '1px solid var(--border, #E8DDD2)',
-            backgroundColor: '#FFFFFF',
-            cursor: 'pointer',
-            gap: 4,
-          }}
-        >
-          <div style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: 'rgba(37,99,235,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <PiggyBank size={16} color="#2563EB" />
-          </div>
-          <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text1, #1A1612)' }}>Épargne</span>
-        </button>
-      </div>
+      {/* 4 Boutons d'Action Rapide (Composant modulaire) */}
+      <SurgaKalpeQuickActions onOpenSaisie={handleOuvrirSaisie} />
 
       {/* Navigation des Sous-Onglets */}
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid var(--border, #E8DDD2)',
+          borderBottom: '1px solid var(--surga-border, #E2E8F0)',
           marginBottom: 14,
         }}
       >
@@ -377,15 +285,16 @@ export default function SurgaSamaXaalisView() {
               onClick={() => setActiveSubTab(tab.id as any)}
               style={{
                 flex: 1,
-                padding: '8px 4px',
+                padding: '10px 4px',
                 border: 'none',
                 background: 'none',
-                borderBottom: isActive ? '3px solid var(--accent, #C75B00)' : '3px solid transparent',
-                color: isActive ? 'var(--navy, #1C2B4A)' : 'var(--text3, #73675E)',
-                fontSize: 12,
+                borderBottom: isActive ? '3px solid var(--surga-accent, #D97706)' : '3px solid transparent',
+                color: isActive ? 'var(--surga-primary, #0F172A)' : 'var(--surga-text3, #94A3B8)',
+                fontSize: 13,
                 fontWeight: isActive ? 800 : 600,
                 cursor: 'pointer',
                 textAlign: 'center',
+                minHeight: 38,
               }}
             >
               {tab.label}
@@ -402,15 +311,15 @@ export default function SurgaSamaXaalisView() {
             style={{
               padding: '12px 14px',
               borderRadius: 10,
-              backgroundColor: 'rgba(28,43,74,0.04)',
-              border: '1px solid var(--border, #E8DDD2)',
+              backgroundColor: 'rgba(15, 23, 42, 0.04)',
+              border: '1px solid var(--surga-border, #E2E8F0)',
               display: 'flex',
               alignItems: 'flex-start',
               gap: 8,
             }}
           >
-            <TrendingUp size={16} color="var(--accent, #C75B00)" style={{ marginTop: 2, flexShrink: 0 }} />
-            <div style={{ fontSize: 12, color: 'var(--text1, #1A1612)', lineHeight: 1.4 }}>
+            <TrendingUp size={16} color="var(--surga-accent, #D97706)" style={{ marginTop: 2, flexShrink: 0 }} />
+            <div style={{ fontSize: 13, color: 'var(--surga-text1, #0F172A)', lineHeight: 1.4 }}>
               <strong>Point Sama Xaalis :</strong> Votre solde net actuel est de{' '}
               <strong>{(synthese?.solde_disponible || 0).toLocaleString('fr-FR')} FCFA</strong>. Pensez à relancer vos{' '}
               <strong>{(synthese?.total_a_recevoir || 0).toLocaleString('fr-FR')} FCFA</strong> de créances en attente.
@@ -420,7 +329,7 @@ export default function SurgaSamaXaalisView() {
           {/* 4 Dernières opérations */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--surga-primary, #0F172A)' }}>
                 Dernières Opérations
               </span>
               <button
@@ -429,10 +338,11 @@ export default function SurgaSamaXaalisView() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 700,
-                  color: 'var(--accent, #C75B00)',
+                  color: 'var(--surga-accent, #D97706)',
                   cursor: 'pointer',
+                  padding: 4,
                 }}
               >
                 Voir tout le journal
@@ -472,7 +382,7 @@ export default function SurgaSamaXaalisView() {
       <SurgaCalculatorModal
         isOpen={isCalcOpen}
         onClose={() => setIsCalcOpen(false)}
-        onInjectMontant={(val) => {
+        onInjectMontant={() => {
           setIsCalcOpen(false)
           handleOuvrirSaisie('depense')
         }}

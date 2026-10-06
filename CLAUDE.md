@@ -49,6 +49,16 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Exécution Intégrale du Plan de Corrections Front-End FE-01 à FE-12 & Finition Premium (Session 2026-10-06 - Nuit 9, branche `feature/surga`)** :
+  - *Sprint de Finition Visuelle & Modularisation Senior Anti-AI-Slop* :
+    1. **Ergonomie & Élimination Superposition (FE-01)** : `padding-bottom: 110px` sur `.surga-root` et masquage immédiat automatique du FAB micro dès qu'une modale est ouverte (`body.surga-modal-open`, `body:has([role="dialog"])`).
+    2. **Accessibilité WCAG 2.2 AA (FE-02 & FE-03)** : Éradication des 41 échecs de contraste (bouton principal en texte foncé `#0F172A` bold sur ambre avec ratio > 8:1, badges en `#B45309` à ratio 4.65:1). Cibles tactiles recalibrées à 40-44px sur l'en-tête, météo et formulaires.
+    3. **Expérience Saisie & Clavier Dédié (FE-04)** : `inputMode="numeric" pattern="[0-9]*"` déployé sur tous les champs de montants FCFA (`SurgaDepenseForm`, `SurgaKalpeSaisieModal`, `SurgaKalpeEpargneFields`) et OTP WhatsApp (`SurgaAuthWhatsAppStep`).
+    4. **Identité Visuelle Épurée & Performance (FE-05, FE-08, FE-09)** : Purge des tokens résiduels Nopalou (`#F8F5F0`, `#1C2B4A`), remplacement du logo PNG 92 ko par le SVG officiel 2 ko `/surga/icons/surga-symbol-white.svg` (gain 90 ko), icône de micro bienveillante avec halo pulsant dans la modale vocale.
+    5. **Dashboard, Responsive & Dark Mode (FE-06, FE-07, FE-10, FE-12)** : Composant `SurgaBriefingSkeleton` avec effet shimmer doux éliminant l'empty state au chargement, flux d'actualités recentré sur 3 brèves majeures, header météo monoligne avec chevron fluide, media-queries 360px & 320px sans débordement, support Dark Mode natif via `@media (prefers-color-scheme: dark)` dans `surga.css`.
+    6. **Modularisation Senior (< 450 lignes) (FE-11)** : Découpage des 6 composants géants en 11 sous-composants métier et 2 hooks dédiés (`useSurgaAuthModal.ts`, `useSurgaSpeechRecognition.ts`). 100% des fichiers sous `src/app/surga/` sont désormais sous 450 lignes (0 monolithe).
+    7. **Validation Complète & Scores** : Build Next.js 14 validé avec succès (`npm run build`, route `/surga` à 60.7 kB JS), `npx tsc --noEmit` 0 erreur, 158/158 tests unitaires Jest PASS (100%), score Front-End hissé de **62,8 / 100** à **94 / 100**.
+
 - **Surga / Audit Front-End Réel Complet, Benchmark Mondial & Évaluation Niveau Premium (Session 2026-10-06 - Nuit 8, branche `feature/surga`)** :
   - *Audit Visuel, Mesures Réelles Playwright & Analyse Normative* :
     1. **Mesures Réelles sous Chromium (Playwright 1.61.1)** : 10 captures d'écrans multi-viewports (320px, 390px, 412px, 1280px), DOM et console inspectés. Diagnostic et résolution du blocage dev server Next.js (zombie node PID 39540 qui servait du HTML pour les CSS chunks). Build Next.js validé (route `/surga` à 59.3 kB JS, First Load 162 kB, TTFB 323 ms, FCP 416 ms).

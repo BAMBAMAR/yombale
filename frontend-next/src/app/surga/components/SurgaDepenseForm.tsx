@@ -61,7 +61,7 @@ export default function SurgaDepenseForm({
         backgroundColor: '#FFFFFF',
         borderRadius: 14,
         padding: 16,
-        border: '1px solid var(--border, #E8DDD2)',
+        border: '1px solid var(--surga-border, #E2E8F0)',
         boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
         display: 'flex',
         flexDirection: 'column',
@@ -69,49 +69,63 @@ export default function SurgaDepenseForm({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+        <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--surga-primary, #0F172A)' }}>
           Nouvelle dépense
         </span>
         <button
           type="button"
           onClick={onClose}
           aria-label="Fermer le formulaire"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 8,
+            minWidth: 40,
+            minHeight: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 8,
+          }}
         >
-          <X size={18} color="var(--text2, #5A4E42)" />
+          <X size={20} color="var(--surga-text2, #475569)" />
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
-          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', display: 'block', marginBottom: 4 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', display: 'block', marginBottom: 6 }}>
             Montant en FCFA *
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             placeholder="Ex : 2500"
             value={montant}
-            onChange={(e) => setMontant(e.target.value)}
+            onChange={(e) => setMontant(e.target.value.replace(/[^0-9]/g, ''))}
             required
-            min="1"
+            autoComplete="off"
             style={{
               width: '100%',
-              padding: '10px 12px',
-              borderRadius: 8,
-              border: '1px solid var(--border, #E8DDD2)',
-              fontSize: 16,
-              fontWeight: 700,
-              color: 'var(--price, #0A5C36)',
+              padding: '12px 14px',
+              borderRadius: 10,
+              border: '1px solid var(--surga-border, #E2E8F0)',
+              fontSize: 18,
+              fontWeight: 800,
+              color: 'var(--surga-emerald, #059669)',
               outline: 'none',
+              boxSizing: 'border-box',
             }}
           />
         </div>
 
         <div>
-          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', display: 'block', marginBottom: 4 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', display: 'block', marginBottom: 6 }}>
             Catégorie
           </label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {CATEGORIES_DEPENSES.map((c) => (
               <button
                 key={c}
@@ -119,14 +133,16 @@ export default function SurgaDepenseForm({
                 onClick={() => setCategorie(c)}
                 style={{
                   border: '1px solid',
-                  borderColor: categorie === c ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
-                  backgroundColor: categorie === c ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-                  color: categorie === c ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-                  padding: '6px 10px',
-                  borderRadius: 6,
-                  fontSize: 12,
+                  borderColor: categorie === c ? 'var(--surga-primary, #0F172A)' : 'var(--surga-border, #E2E8F0)',
+                  backgroundColor: categorie === c ? 'var(--surga-primary, #0F172A)' : '#FFFFFF',
+                  color: categorie === c ? '#FFFFFF' : 'var(--surga-primary, #0F172A)',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',
+                  minHeight: 38,
+                  transition: 'all 0.15s ease',
                 }}
               >
                 {c}
@@ -135,9 +151,9 @@ export default function SurgaDepenseForm({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', display: 'block', marginBottom: 4 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', display: 'block', marginBottom: 6 }}>
               Date
             </label>
             <input
@@ -147,17 +163,18 @@ export default function SurgaDepenseForm({
               required
               style={{
                 width: '100%',
-                padding: '8px 10px',
+                padding: '10px 12px',
                 borderRadius: 8,
-                border: '1px solid var(--border, #E8DDD2)',
-                fontSize: 13,
+                border: '1px solid var(--surga-border, #E2E8F0)',
+                fontSize: 14,
                 outline: 'none',
+                boxSizing: 'border-box',
               }}
             />
           </div>
 
           <div style={{ flex: 2 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', display: 'block', marginBottom: 4 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-text2, #475569)', display: 'block', marginBottom: 6 }}>
               Note / Détail (optionnel)
             </label>
             <input
@@ -167,45 +184,49 @@ export default function SurgaDepenseForm({
               onChange={(e) => setNote(e.target.value)}
               style={{
                 width: '100%',
-                padding: '8px 10px',
+                padding: '10px 12px',
                 borderRadius: 8,
-                border: '1px solid var(--border, #E8DDD2)',
-                fontSize: 13,
+                border: '1px solid var(--surga-border, #E2E8F0)',
+                fontSize: 14,
                 outline: 'none',
+                boxSizing: 'border-box',
               }}
             />
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
           <button
             type="button"
             onClick={onClose}
             style={{
-              padding: '8px 14px',
-              borderRadius: 8,
-              border: '1px solid var(--border, #E8DDD2)',
+              padding: '10px 16px',
+              borderRadius: 10,
+              border: '1px solid var(--surga-border, #E2E8F0)',
               backgroundColor: '#FFFFFF',
-              color: 'var(--text2, #5A4E42)',
-              fontSize: 13,
+              color: 'var(--surga-text2, #475569)',
+              fontSize: 14,
               fontWeight: 600,
               cursor: 'pointer',
+              minHeight: 44,
             }}
           >
             Annuler
           </button>
           <button
             type="submit"
-            className="btn-npl"
             style={{
-              padding: '8px 16px',
-              borderRadius: 8,
+              padding: '10px 20px',
+              borderRadius: 10,
               border: 'none',
-              backgroundColor: 'var(--price, #0A5C36)',
+              backgroundColor: 'var(--surga-emerald, #059669)',
               color: '#FFFFFF',
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 700,
               cursor: 'pointer',
+              minHeight: 44,
+              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+              transition: 'all 0.15s ease',
             }}
           >
             Valider la dépense

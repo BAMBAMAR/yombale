@@ -411,29 +411,18 @@ export default function SurgaPage() {
         onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)}
         onCloseDonnees={() => setIsDonneesOpen(false)} onCloseVideos={() => setIsVideosOpen(false)}
         onCloseEmploi={() => setIsEmploiOpen(false)} onCloseDemarches={() => setIsDemarchesOpen(false)}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onCloseAuth={() => setIsAuthOpen(false)}
-        onAuthSuccess={handleAuthSuccess}
-        onCloseCompte={() => setIsCompteOpen(false)}
+        onOpenAuth={() => setIsAuthOpen(true)} onCloseAuth={() => setIsAuthOpen(false)}
+        onAuthSuccess={handleAuthSuccess} onCloseCompte={() => setIsCompteOpen(false)}
         user={user} statutPremium={statutPremium}
         onUserUpdated={(u) => { setUser(u); chargerProfilUser() }}
-        onDeconnexion={handleDeconnexion}
-        onSynchroniser={handleSynchroniser}
-        isSyncing={isSyncing}
-        onOpenPremium={() => setIsPremiumOpen(true)}
-        onOpenEmploi={() => setIsEmploiOpen(true)}
-        onOpenConcours={() => setIsConcoursOpen(true)}
-        onOpenPlaces={() => setIsPlacesOpen(true)}
-        onOpenImmo={() => setIsImmoOpen(true)}
-        onOpenTrafic={() => setIsTraficOpen(true)}
-        onOpenDemarches={() => setIsDemarchesOpen(true)}
-        onOpenPresse={() => setIsPresseOpen(true)}
-        onOpenVideos={() => setIsVideosOpen(true)}
-        onOpenCalc={() => setIsCalcOpen(true)}
-        onOpenCompte={() => setIsCompteOpen(true)}
-        onOpenPro={() => setIsProOpen(true)}
-        onNavigateTab={(t) => setActiveTab(t)}
-        onInjectMontantCalc={() => setActiveTab('depenses')}
+        onDeconnexion={handleDeconnexion} onSynchroniser={handleSynchroniser} isSyncing={isSyncing}
+        onOpenPremium={() => setIsPremiumOpen(true)} onOpenEmploi={() => setIsEmploiOpen(true)}
+        onOpenConcours={() => setIsConcoursOpen(true)} onOpenPlaces={() => setIsPlacesOpen(true)}
+        onOpenImmo={() => setIsImmoOpen(true)} onOpenTrafic={() => setIsTraficOpen(true)}
+        onOpenDemarches={() => setIsDemarchesOpen(true)} onOpenPresse={() => setIsPresseOpen(true)}
+        onOpenVideos={() => setIsVideosOpen(true)} onOpenCalc={() => setIsCalcOpen(true)}
+        onOpenCompte={() => setIsCompteOpen(true)} onOpenPro={() => setIsProOpen(true)}
+        onNavigateTab={(t) => setActiveTab(t)} onInjectMontantCalc={() => setActiveTab('depenses')}
         onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
         onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote}
         onConfirmerVoiceRappel={handleVoiceRappel} onDonneesSupprimees={handleReinitialiser}

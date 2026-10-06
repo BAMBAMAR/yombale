@@ -207,43 +207,56 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
   return (
     <div className="surga-card" style={{ marginBottom: 16 }}>
       {/* En-tête de carte avec bouton sélecteur de localité & GPS */}
-      <div className="surga-card-header" style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
-          {renderMeteoIcon(meteo?.condition_code || 'soleil', 18)}
-          <button
-            type="button"
-            onClick={() => setIsLocaliteModalOpen(true)}
-            title="Modifier la localité ou utiliser la position GPS"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              textAlign: 'left',
-              color: 'var(--navy, #1C2B4A)',
-            }}
-          >
-            <span className="surga-card-title" style={{ textDecoration: 'underline dotted', textUnderlineOffset: 3 }}>
-              Météo &amp; Marées ({villeAffichee})
+      <div className="surga-card-header" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <button
+          type="button"
+          onClick={() => setIsLocaliteModalOpen(true)}
+          title="Modifier la localité ou utiliser la position GPS"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            textAlign: 'left',
+            color: 'var(--surga-primary, #0F172A)',
+            minHeight: 38,
+            minWidth: 0,
+            flex: 1,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+            {renderMeteoIcon(meteo?.condition_code || 'soleil', 18)}
+            <span
+              className="surga-card-title"
+              style={{
+                fontSize: 15,
+                fontWeight: 800,
+                color: 'var(--surga-primary, #0F172A)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              Météo &amp; Marées • {villeAffichee}
             </span>
-            <ChevronDown size={14} color="var(--accent, #C75B00)" />
-          </button>
+            <ChevronDown size={14} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
+          </div>
 
           {estGpsActif && (
             <span
               style={{
-                fontSize: 9,
+                fontSize: 10,
                 fontWeight: 700,
-                color: 'var(--price, #0A5C36)',
-                backgroundColor: 'rgba(10, 92, 54, 0.1)',
-                padding: '1px 5px',
-                borderRadius: 4,
+                color: 'var(--surga-emerald, #059669)',
+                backgroundColor: 'var(--surga-emerald-soft, rgba(5, 150, 105, 0.1))',
+                padding: '2px 6px',
+                borderRadius: 6,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 2,
+                gap: 3,
                 flexShrink: 0,
               }}
             >
@@ -251,58 +264,9 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
               GPS
             </span>
           )}
-        </div>
+        </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          {/* Bouton explicite Changer de Ville */}
-          <button
-            type="button"
-            onClick={() => setIsLocaliteModalOpen(true)}
-            title="Changer de ville ou quartier"
-            aria-label="Changer de localité"
-            style={{
-              background: 'var(--bg, #F8F5F0)',
-              border: '1px solid var(--border, #E8DDD2)',
-              padding: '4px 7px',
-              borderRadius: 6,
-              cursor: 'pointer',
-              color: 'var(--navy, #1C2B4A)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 3,
-              fontSize: 10,
-              fontWeight: 700,
-            }}
-          >
-            <MapPin size={11} color="var(--accent, #C75B00)" />
-            <span>Changer</span>
-          </button>
-
-          {/* Raccourci GPS 1 clic */}
-          <button
-            type="button"
-            onClick={detecterGps}
-            disabled={gpsEnCours}
-            title="Me géolocaliser par GPS"
-            aria-label="Me géolocaliser par GPS"
-            style={{
-              background: estGpsActif ? 'rgba(10, 92, 54, 0.1)' : 'var(--bg, #F8F5F0)',
-              border: '1px solid var(--border, #E8DDD2)',
-              padding: '4px 6px',
-              borderRadius: 6,
-              cursor: gpsEnCours ? 'wait' : 'pointer',
-              color: estGpsActif ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 3,
-              fontSize: 10,
-              fontWeight: 700,
-            }}
-          >
-            <LocateFixed size={12} className={gpsEnCours ? 'animate-spin' : ''} />
-            <span className="surga-hide-mobile">GPS</span>
-          </button>
-
           <button
             type="button"
             onClick={() => chargerMeteo()}
@@ -310,20 +274,25 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
             aria-label="Actualiser la météo"
             title="Actualiser les données"
             style={{
-              background: 'none',
-              border: 'none',
-              padding: 4,
+              background: 'var(--surga-bg, #F8FAFC)',
+              border: '1px solid var(--surga-border, #E2E8F0)',
+              borderRadius: 8,
+              padding: '6px 10px',
               cursor: loading ? 'wait' : 'pointer',
-              color: 'var(--text3, #73675E)',
+              color: 'var(--surga-text2, #475569)',
               display: 'flex',
               alignItems: 'center',
+              gap: 4,
+              fontSize: 11,
+              fontWeight: 700,
+              minHeight: 36,
             }}
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+            <span style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {meteo?.condition_texte || 'Actualiser'}
+            </span>
           </button>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3, #73675E)' }}>
-            {meteo?.condition_texte || 'En direct'}
-          </span>
         </div>
       </div>
 
@@ -335,30 +304,30 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
           gap: 16,
           alignItems: 'center',
           padding: '12px 14px',
-          backgroundColor: 'var(--bg, #F8F5F0)',
+          backgroundColor: 'var(--surga-bg, #F8FAFC)',
           borderRadius: 10,
-          border: '1px solid var(--border, #E8DDD2)',
+          border: '1px solid var(--surga-border, #E2E8F0)',
           marginBottom: 10,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-          <span style={{ fontSize: 32, fontWeight: 900, color: 'var(--navy, #1C2B4A)', lineHeight: 1 }}>
+          <span style={{ fontSize: 32, fontWeight: 900, color: 'var(--surga-primary, #0F172A)', lineHeight: 1 }}>
             {meteo?.temperature ?? '--'}°
           </span>
-          <span style={{ fontSize: 13, color: 'var(--text3, #73675E)', fontWeight: 600 }}>C</span>
+          <span style={{ fontSize: 13, color: 'var(--surga-text3, #94A3B8)', fontWeight: 600 }}>C</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text1, #1A1612)' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-text1, #0F172A)' }}>
             Ressenti {meteo?.ressenti ?? '--'}°C • Min {meteo?.temp_min ?? '--'}° / Max {meteo?.temp_max ?? '--'}°
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Wind size={12} color="var(--accent, #C75B00)" />
+              <Wind size={12} color="var(--surga-accent, #D97706)" />
               {meteo?.vent_vitesse_kmh ?? 0} km/h ({meteo?.vent_direction || 'Alizé'})
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Droplets size={12} color="var(--navy, #1C2B4A)" />
+              <Droplets size={12} color="var(--surga-primary, #0F172A)" />
               {meteo?.humidite ?? '--'}%
             </span>
           </div>
@@ -372,17 +341,17 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
             style={{
               padding: '8px 10px',
               borderRadius: 8,
-              backgroundColor: '#FFFFFF',
-              border: '1px solid var(--border, #E8DDD2)',
+              backgroundColor: 'var(--surga-surface, #FFFFFF)',
+              border: '1px solid var(--surga-border, #E2E8F0)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-              <Waves size={13} color="var(--navy, #1C2B4A)" />
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+              <Waves size={13} color="var(--surga-primary, #0F172A)" />
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-primary, #0F172A)' }}>
                 {meteo.maree.etat}
               </span>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)' }}>
+            <div style={{ fontSize: 11, color: 'var(--surga-text2, #475569)' }}>
               Prochaine : {meteo.maree.prochaine_heure} ({meteo.maree.spot_reference})
             </div>
           </div>
@@ -393,17 +362,17 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
             style={{
               padding: '8px 10px',
               borderRadius: 8,
-              backgroundColor: '#FFFFFF',
-              border: '1px solid var(--border, #E8DDD2)',
+              backgroundColor: 'var(--surga-surface, #FFFFFF)',
+              border: '1px solid var(--surga-border, #E2E8F0)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-              <ShieldAlert size={13} color={meteo.qualite_air.aqi > 70 ? 'var(--accent, #C75B00)' : 'var(--price, #0A5C36)'} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text1, #1A1612)' }}>
+              <ShieldAlert size={13} color={meteo.qualite_air.aqi > 70 ? 'var(--surga-accent, #D97706)' : 'var(--surga-emerald, #059669)'} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-text1, #0F172A)' }}>
                 Air : {meteo.qualite_air.niveau}
               </span>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               AQI {meteo.qualite_air.aqi} • {meteo.qualite_air.particules}
             </div>
           </div>
