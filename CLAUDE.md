@@ -49,6 +49,24 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Hub Services : Intégration des Icônes Dédiées & Composant SurgaServiceRow (Session 2026-10-06 - Matin 10, branche `feature/surga`)** :
+  - *Correction Visuelle Demandée par l'Utilisateur* : Les rangées de services dans l'onglet Services s'affichaient sous forme de texte brut sans aucune icône visuelle.
+  - *Nouveau Composant Modulaire (`SurgaServiceRow.tsx`, 65 l.)* :
+    - Vignette SVG stylisée 38x38px à coins arrondis (10px) avec palette harmonieuse du design system Nopalou (`rgba(accent/navy/price/text3, 0.08)`).
+    - Alignement parfait avec titre, description à deux niveaux de lecture, et bouton d'action calé à droite sans débordement.
+  - *Attribution des 10 Icônes Officielles (`SurgaParametresTab.tsx`, 256 l.)* :
+    - Audio : `Volume2` (accent)
+    - Radios : `Radio` (navy)
+    - Trafic : `Navigation` (accent)
+    - Immobilier : `Building` (vert prix)
+    - Concours : `GraduationCap` (navy)
+    - Démarches : `ShieldCheck` (vert prix)
+    - Bons Plans : `Sparkles` (accent)
+    - Séries & Lutte : `Tv` (navy)
+    - Emploi & CV : `Briefcase` (navy)
+    - Données perso : `Shield` (text3)
+  - *Validation & Qualité* : 127/127 tests Jest, 97/97 tests Vitest, 0 erreur TypeScript, respect strict des plafonds < 450 lignes.
+
 - **Surga — Navigation & Header : Harmonisation de l'Onglet en « Services » (Session 2026-10-06 - Matin 9, branche `feature/surga`)** :
   - *Option 2 (Plus Valorisante) Appliquée* : Remplacement du libellé ambigu « Plus » et du titre réducteur « Paramètres » par **« Services »** dans toute l'interface.
   - *Nouvelle Icône Vectorielle SVG* : Utilisation de `LayoutGrid` de `lucide-react` au lieu de `SlidersHorizontal` dans `SurgaBottomNav.tsx`.

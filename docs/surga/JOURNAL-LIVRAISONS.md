@@ -3,6 +3,24 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 10] — Hub Services : Intégration des Icônes Dédiées & Composant SurgaServiceRow
+- **Demande Utilisateur :**
+  - Signalement de l'absence totale d'icônes dans l'écran des services (« pas d'icone »).
+- **Modifications Appliquées :**
+  - **Nouveau composant modulaire (`SurgaServiceRow.tsx`, 65 l.)** :
+    - Vignette SVG vectorielle carrée arrondie 38x38px avec fond pastel calibré selon les tokens Nopalou (`rgba(accent/navy/price/text3, 0.08)`).
+    - Double niveau de lecture (titre en gras `var(--navy)` et description en `var(--text3)`).
+    - Bouton d'action calé à droite sans débordement.
+  - **Mise à jour de `SurgaParametresTab.tsx` (256 l.)** :
+    - Intégration des 10 icônes : `Volume2` (Audio), `Radio` (Radios locales FM), `Navigation` (Trafic Dakar), `Building` (Immobilier), `GraduationCap` (Concours nationaux), `ShieldCheck` (Démarches e-senegal.sn), `Sparkles` (Bons plans), `Tv` (Séries TV & Lutte), `Briefcase` (Emploi & CV), `Shield` (Protection des données).
+  - **Modularité & Anti-AI-Slop** :
+    - `SurgaParametresTab.tsx` allégé de 442 à 256 lignes (bien inférieur au plafond de 450 l.).
+    - Zéro émoji, pleine largeur, aucun espace vide non maîtrisé.
+- **Validation :**
+  - 127/127 tests backend Jest validés (100%).
+  - 97/97 tests frontend Vitest validés (100%).
+  - 0 erreur TypeScript (`tsc --noEmit`).
+
 ### [2026-10-06 — Matin 9] — Navigation & En-tête : Harmonisation de l'Onglet en « Services »
 - **Demande Utilisateur & Décision UX :**
   - Validation de l'Option 2 (Plus Valorisante) pour corriger la discordance sémantique entre l'onglet « Plus » en bas et le titre « Paramètres » en haut.

@@ -9,11 +9,13 @@ import {
   Building,
   Crown,
   Briefcase,
-  CheckCircle2,
   Sparkles,
   Shield,
-  BookOpen,
+  ShieldCheck,
+  GraduationCap,
+  Tv,
 } from 'lucide-react'
+import SurgaServiceRow from './SurgaServiceRow'
 
 interface SurgaParametresTabProps {
   preferences: any
@@ -88,8 +90,8 @@ export default function SurgaParametresTab({
               </div>
               <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
                 {estPremium
-                  ? `Expiration dans ${joursRestants} jour(s) &bull; Vocal & alertes illimités`
-                  : 'Plafond de 20 commandes/jour &bull; Alertes standards'}
+                  ? `Expiration dans ${joursRestants} jour(s) • Vocal & alertes illimités`
+                  : 'Plafond de 20 commandes/jour • Alertes standards'}
               </div>
             </div>
           </div>
@@ -140,298 +142,129 @@ export default function SurgaParametresTab({
         )}
       </div>
 
-      {/* Option Audio */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Option Audio du briefing
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Synthèse vocale et flux podcast privé (0 Mo)
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onToggleAudio}
-          className={preferences?.audio_actif ? 'surga-btn-primary' : 'surga-btn-secondary'}
-          style={{ fontSize: 11, padding: '5px 12px' }}
-        >
-          {preferences?.audio_actif ? 'Activée' : 'Désactivée'}
-        </button>
-      </div>
+      {/* 1. Option Audio */}
+      <SurgaServiceRow
+        icon={Volume2}
+        iconColor="var(--accent, #C75B00)"
+        iconBg="rgba(199, 91, 0, 0.08)"
+        titre="Option Audio du briefing"
+        description="Synthèse vocale et flux podcast privé (0 Mo)"
+        actionLabel={preferences?.audio_actif ? 'Activée' : 'Désactivée'}
+        actionVariant={preferences?.audio_actif ? 'primary' : 'secondary'}
+        onAction={onToggleAudio}
+      />
 
-      {/* Radios locales */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Radios Locales du Sénégal
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Directs FM &amp; revues de presse matinales
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenRadio}
-          className="surga-btn-secondary"
-          style={{ fontSize: 11, padding: '5px 12px' }}
-        >
-          Écouter
-        </button>
-      </div>
+      {/* 2. Radios locales */}
+      <SurgaServiceRow
+        icon={Radio}
+        iconColor="var(--navy, #1C2B4A)"
+        iconBg="rgba(28, 43, 74, 0.08)"
+        titre="Radios Locales du Sénégal"
+        description="Directs FM & revues de presse matinales"
+        actionLabel="Écouter"
+        onAction={onOpenRadio}
+      />
 
-      {/* Trafic Dakar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Trafic &amp; Corridors Dakar
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            État A1, VDN, Corniche, TER &amp; BRT
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenTrafic}
-          className="surga-btn-secondary"
-          style={{ fontSize: 11, padding: '5px 12px' }}
-        >
-          Consulter
-        </button>
-      </div>
+      {/* 3. Trafic Dakar */}
+      <SurgaServiceRow
+        icon={Navigation}
+        iconColor="var(--accent, #C75B00)"
+        iconBg="rgba(199, 91, 0, 0.08)"
+        titre="Trafic & Corridors Dakar"
+        description="État A1, VDN, Corniche, TER & BRT"
+        actionLabel="Consulter"
+        onAction={onOpenTrafic}
+      />
 
-      {/* Immobilier Dakar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Immobilier &amp; Alertes Logement
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Recherche de biens et notifications d alertes
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenImmo}
-          className="surga-btn-secondary"
-          style={{ fontSize: 11, padding: '5px 12px' }}
-        >
-          Ouvrir
-        </button>
-      </div>
+      {/* 4. Immobilier Dakar */}
+      <SurgaServiceRow
+        icon={Building}
+        iconColor="var(--price, #0A5C36)"
+        iconBg="rgba(10, 92, 54, 0.08)"
+        titre="Immobilier & Alertes Logement"
+        description="Recherche de biens et notifications d alertes"
+        actionLabel="Ouvrir"
+        onAction={onOpenImmo}
+      />
 
-      {/* Concours & Examens du Sénégal */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Concours &amp; Examens Nationaux
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Suivi des dossiers et rappels J-30 / J-7 / J-1
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenConcours}
-          className="surga-btn-secondary"
-          style={{ fontSize: 11, padding: '5px 12px' }}
-        >
-          Consulter
-        </button>
-      </div>
+      {/* 5. Concours & Examens du Sénégal */}
+      <SurgaServiceRow
+        icon={GraduationCap}
+        iconColor="var(--navy, #1C2B4A)"
+        iconBg="rgba(28, 43, 74, 0.08)"
+        titre="Concours & Examens Nationaux"
+        description="Suivi des dossiers et rappels J-30 / J-7 / J-1"
+        actionLabel="Consulter"
+        onAction={onOpenConcours}
+      />
 
-      {/* Démarches Administratives Vérifiées */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Démarches Administratives Vérifiées
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Fiches officielles de l État, pièces, coûts &amp; délais
-          </div>
-        </div>
-        {onOpenDemarches && (
-          <button
-            type="button"
-            onClick={onOpenDemarches}
-            className="surga-btn-secondary"
-            style={{ fontSize: 11, padding: '5px 12px' }}
-          >
-            Consulter
-          </button>
-        )}
-      </div>
+      {/* 6. Démarches Administratives Vérifiées */}
+      {onOpenDemarches && (
+        <SurgaServiceRow
+          icon={ShieldCheck}
+          iconColor="var(--price, #0A5C36)"
+          iconBg="rgba(10, 92, 54, 0.08)"
+          titre="Démarches Administratives Vérifiées"
+          description="Fiches officielles de l État, pièces, coûts & délais"
+          actionLabel="Consulter"
+          onAction={onOpenDemarches}
+        />
+      )}
 
-      {/* Bons Plans & Bonnes Adresses Dakar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Bons Plans &amp; Bonnes Adresses
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Restaurants, dibiteries, cafés coworking &amp; avis vérifiés
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenPlaces}
-          className="surga-btn-secondary"
-          style={{ fontSize: 11, padding: '5px 12px' }}
-        >
-          Explorer
-        </button>
-      </div>
+      {/* 7. Bons Plans & Bonnes Adresses Dakar */}
+      <SurgaServiceRow
+        icon={Sparkles}
+        iconColor="var(--accent, #C75B00)"
+        iconBg="rgba(199, 91, 0, 0.08)"
+        titre="Bons Plans & Bonnes Adresses"
+        description="Restaurants, dibiteries, cafés coworking & avis vérifiés"
+        actionLabel="Explorer"
+        onAction={onOpenPlaces}
+      />
 
-      {/* Séries TV & Lutte du Sénégal */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Séries TV &amp; Lutte Sénégalaise
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Alertes sorties d épisodes et vidéos officielles Low-Data
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenVideos}
-          className="surga-btn-secondary"
-          style={{ fontSize: 11, padding: '5px 12px' }}
-        >
-          Consulter
-        </button>
-      </div>
+      {/* 8. Séries TV & Lutte du Sénégal */}
+      <SurgaServiceRow
+        icon={Tv}
+        iconColor="var(--navy, #1C2B4A)"
+        iconBg="rgba(28, 43, 74, 0.08)"
+        titre="Séries TV & Lutte Sénégalaise"
+        description="Alertes sorties d épisodes et vidéos officielles Low-Data"
+        actionLabel="Consulter"
+        onAction={onOpenVideos}
+      />
 
-      {/* Emploi & CV Professionnel */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Emploi, CV PDF &amp; Lettres
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Profil professionnel, CV A4 sobre &amp; lettres de motivation
-          </div>
-        </div>
-        {onOpenEmploi && (
-          <button
-            type="button"
-            onClick={onOpenEmploi}
-            className="surga-btn-secondary"
-            style={{ fontSize: 11, padding: '5px 12px' }}
-          >
-            Ouvrir
-          </button>
-        )}
-      </div>
+      {/* 9. Emploi & CV Professionnel */}
+      {onOpenEmploi && (
+        <SurgaServiceRow
+          icon={Briefcase}
+          iconColor="var(--navy, #1C2B4A)"
+          iconBg="rgba(28, 43, 74, 0.08)"
+          titre="Emploi, CV PDF & Lettres"
+          description="Profil professionnel, CV A4 sobre & lettres de motivation"
+          actionLabel="Ouvrir"
+          onAction={onOpenEmploi}
+        />
+      )}
 
-      {/* Données personnelles & Droit à l'oubli */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 10,
-          borderTop: '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            Protection &amp; Données personnelles
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-            Export JSON de vos données &amp; droit à l oubli définitif
-          </div>
-        </div>
-        {onOpenDonnees && (
-          <button
-            type="button"
-            onClick={onOpenDonnees}
-            className="surga-btn-secondary"
-            style={{ fontSize: 11, padding: '5px 12px' }}
-          >
-            Gérer
-          </button>
-        )}
-      </div>
+      {/* 10. Données personnelles & Droit à l'oubli */}
+      {onOpenDonnees && (
+        <SurgaServiceRow
+          icon={Shield}
+          iconColor="var(--text3, #73675E)"
+          iconBg="rgba(115, 103, 94, 0.08)"
+          titre="Protection & Données personnelles"
+          description="Export JSON de vos données & droit à l oubli définitif"
+          actionLabel="Gérer"
+          onAction={onOpenDonnees}
+        />
+      )}
 
       {/* Bouton de réinitialisation */}
       <button
         type="button"
         onClick={onReinitialiser}
         className="surga-btn-secondary"
-        style={{ fontSize: 13, padding: '8px 14px', alignSelf: 'flex-start', marginTop: 4 }}
+        style={{ fontSize: 13, padding: '8px 14px', alignSelf: 'flex-start', marginTop: 6 }}
       >
         <RotateCcw size={14} />
         <span>Modifier mes préférences</span>

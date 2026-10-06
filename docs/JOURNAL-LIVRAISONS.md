@@ -1,5 +1,16 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Hub Services : Intégration des Icônes Dédiées & Composant SurgaServiceRow (Session 2026-10-06 - Matin 10, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Prise en compte immédiate du retour visuel utilisateur : ajout d'icônes distinctives pour chaque ligne de service dans l'onglet Services.
+    - Création du sous-composant modulaire `SurgaServiceRow.tsx` (65 lignes) avec vignette SVG 38x38px, typographie soignée et bouton d'action calé à droite.
+    - Intégration dans `SurgaParametresTab.tsx` (256 lignes) des 10 icônes vectorielles : `Volume2` (Audio), `Radio` (Radios FM), `Navigation` (Trafic Dakar), `Building` (Immobilier), `GraduationCap` (Concours), `ShieldCheck` (Démarches), `Sparkles` (Bons Plans), `Tv` (Séries & Lutte), `Briefcase` (Emploi & CV), `Shield` (Protection données).
+    - Respect strict des 5 règles d'or (modularité < 450 l., zéro émoji, tokens du design system).
+  * **Validation & Qualité** :
+    - Tests backend Jest : **127/127 validés (100%)**.
+    - Tests frontend Vitest : **97/97 validés (100%)**.
+    - TypeScript : 0 erreur. Anti-AI-Slop : 100% conforme.
+
 - **Surga — Navigation & Header : Harmonisation de l'Onglet en « Services » (Session 2026-10-06 - Matin 9, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Application du choix utilisateur (Option 2 Plus Valorisante) : l'onglet « Plus » et son en-tête « Paramètres » sont harmonisés en **« Services »**.
