@@ -1,4 +1,35 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Audit Front-End Réel Complet, Benchmark Mondial & Évaluation Niveau Premium (Session 2026-10-06 - Nuit 8, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Audit Front-End complet et impitoyable de l'application réelle Surga sous conditions de production et de développement locales.
+    - Évaluation du niveau de finition perçu : déterminer si un usager habitué aux meilleures applications mobiles (Revolut, Linear, ChatGPT) considère Surga comme "un produit d'exception" ou comme "un projet foisonnant mais artisanal".
+    - Mesures réelles sous Chromium Playwright : DOM, responsive (320px, 390px, 412px, 1280px), Core Web Vitals, analyse colorimétrique de contraste WCAG, audit des cibles tactiles, et détection des bugs visuels.
+  * **Chantiers Clés Livrés & Constats Établis** :
+    1. **Diagnostic & Résolution du Blocage Serveur Next.js** :
+       - Identification et neutralisation d'un processus zombie Node (PID 39540, 3.4 GB RAM) qui interceptait les chunks CSS `/static/css/app/surga/layout.css` et renvoyait du HTML, bloquant tout le rendu CSS réel sous Chromium. Relance propre du serveur dev Next.js 14 et validation du build de production (`/surga` à 59.3 kB JS, First Load 162 kB).
+    2. **Accessibilité Réelle WCAG 2.2 AA — Mesures Formelles** :
+       - *41 échecs de contraste sur 123 textes analysés (33 %)* : Le texte blanc sur fond ambre `--surga-accent: #D97706` présente un ratio réel de **3.19:1** (seuil requis : 4.5:1), et le texte ambre sur pastille douce présente **1.05:1**.
+       - *27 cibles tactiles sous 32 px sur 51 contrôles (53 %)* : Bouton rafraîchissement météo à **22×22 px** (échec formel SC 2.5.8), bouton connexion à 25 px de haut, lien lire à 18 px.
+       - *0 % de formulaires avec pavé numérique dédié* : Omission totale de `inputMode="numeric"` forçant le clavier texte complet lors de la saisie des montants en FCFA.
+    3. **Ergonomie Mobile & Fautes de Finition Visuelle** :
+       - Superposition parasite du FAB micro flottant masquant les titres d'articles sur l'accueil, les montants sur Sama Xaalis et les boutons sur les Services.
+       - Surcharge verticale du Dashboard : 6 articles complets s'étirant sur 1 500 px repoussant le trafic et les outils personnels tout en bas.
+       - Titre météo brisé sur 4 lignes soulignées de pointillés avec 4 micro-boutons tassés.
+       - Bouton vocal central affichant une icône anxiogène de micro barré `MicOff`.
+       - Rupture de layout sur écran compact 320 px (bouton connexion débordant hors de l'écran).
+       - Absence totale de support Dark Mode (0 %).
+    4. **Dépassement du Plafond Senior des 450 Lignes** :
+       - 6 composants identifiés hors limites : `SurgaAuthModal` (724 l.), `SurgaKalpeSaisieModal` (648 l.), `SurgaVoiceModal` (570 l.), `SurgaProfilProTab` (487 l.), `SurgaSamaXaalisView` (483 l.), `app/surga/page.tsx` (451 l.).
+       - Prolifération de plus de 1 200 déclarations inline `style={{ ... }}` et contamination par 4 tokens Nopalou (`#F8F5F0`, `#1C2B4A`, `#C75B00`, `#0A5C36`).
+  * **Score Réel & Verdict** :
+    - **Score Global Pondéré : 62,8 / 100** (Design 68, Cohérence 62, Mobile 65, Responsive 64, Interaction 68, Performance 88, Accessibilité 52, PWA 80, États UI 54, Code 60, Perception Premium 58).
+    - **Verdict** : *FRONT-END SOLIDE MAIS DES ÉCARTS MAJEURS EMPÊCHENT ENCORE L'EFFET PREMIUM*.
+  * **5 Livrables Stratégiques Créés sous `docs/surga/`** :
+    1. `AUDIT_FRONTEND_PREMIUM.md` : Rapport d'audit exhaustif en 13 chapitres.
+    2. `MATRICE_ETATS_UI_SURGA.md` : Évaluation des 20 briques sur les 7 états fondamentaux.
+    3. `BENCHMARK_UI_SURGA.md` : Comparatif face à Linear, Revolut, Lydia, Raycast et ChatGPT Mobile.
+    4. `PLAN_CORRECTIONS_FRONTEND.md` : Feuille de route technique en 12 fiches détaillées (P0, P1, P2).
+    5. `HANDOVER_FRONTEND_SURGA.md` : Document de passation et de reprise de travail.
  
 - **Surga / Reconnaissance Vocale Exhaustive Zéro-Rejet (Mots Uniques, Synonymes & Couverture 100% des 20 Services Surga) (Session 2026-10-06 - Nuit 7 bis, branche `feature/surga`)** :
   * **Mission Réalisée** :

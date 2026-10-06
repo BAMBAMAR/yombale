@@ -49,6 +49,14 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Audit Front-End Réel Complet, Benchmark Mondial & Évaluation Niveau Premium (Session 2026-10-06 - Nuit 8, branche `feature/surga`)** :
+  - *Audit Visuel, Mesures Réelles Playwright & Analyse Normative* :
+    1. **Mesures Réelles sous Chromium (Playwright 1.61.1)** : 10 captures d'écrans multi-viewports (320px, 390px, 412px, 1280px), DOM et console inspectés. Diagnostic et résolution du blocage dev server Next.js (zombie node PID 39540 qui servait du HTML pour les CSS chunks). Build Next.js validé (route `/surga` à 59.3 kB JS, First Load 162 kB, TTFB 323 ms, FCP 416 ms).
+    2. **Accessibilité WCAG 2.2 AA Réelle** : Révélation de 41 échecs de contraste sur 123 textes analysés (ratio 3.19:1 pour le texte blanc sur fond ambre `#D97706` et 1.05:1 pour le texte ambre sur pastille). Révélation de 27 cibles tactiles sous 32 px (bouton actualiser météo à 22×22 px, violant le critère minimal de 24×24 px). Absence totale de `inputMode="numeric"` sur les montants financiers FCFA.
+    3. **Ergonomie & Hiérarchie Visuelle** : Détection de la superposition critique du bouton FAB micro sur les textes et montants à 3 endroits. Surcharge de 6 articles de presse sur 1500 px de hauteur étirant le Dashboard. Titre météo brisé sur 4 lignes. Icône anxiogène `MicOff` barrée à l'accueil vocal. Flash d'empty state au chargement. Absence de Dark Mode (0%).
+    4. **Modularisation Senior (< 450 lignes)** : Recensement de 6 composants hors limites (`SurgaAuthModal` 724 l., `SurgaKalpeSaisieModal` 648 l., `SurgaVoiceModal` 570 l., `SurgaProfilProTab` 487 l., `SurgaSamaXaalisView` 483 l., `page.tsx` 451 l.) et plus de 1 200 déclarations inline `style={{ ... }}`.
+    5. **Scores & 5 Nouveaux Livrables Dédiés** : Score global mesuré à **62,8 / 100** (Cible plan : 94 / 100). Création de `docs/surga/AUDIT_FRONTEND_PREMIUM.md`, `docs/surga/MATRICE_ETATS_UI_SURGA.md`, `docs/surga/BENCHMARK_UI_SURGA.md`, `docs/surga/PLAN_CORRECTIONS_FRONTEND.md` (12 fiches détaillées) et `docs/surga/HANDOVER_FRONTEND_SURGA.md`.
+
 - **Surga / Reconnaissance Vocale Exhaustive Zéro-Rejet (Mots Uniques, Synonymes & Couverture 100% des 20 Services Surga) (Session 2026-10-06 - Nuit 7 bis, branche `feature/surga`)** :
   - *Lacunes Corrigées & Évolutions Majeures* :
     1. **Élimination du Rejet sur Mots Uniques & Shorthand** : Correction de la faille de parsing sur les mots uniques (« concours », « examen », « bon coin ») qui étaient rejetés en "Commande non reconnue" car l'expression régulière exigeait des mots supplémentaires. Le parser gère désormais les mots seuls et les syntagmes courts sans exiger de phrase complexe.

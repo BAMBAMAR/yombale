@@ -3,6 +3,34 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Nuit 8] — Audit Front-End Réel Complet, Benchmark Mondial & Évaluation Niveau Premium
+- **Objectif Atteint :**
+  - Réaliser un audit Front-End approfondi et sans complaisance sous Chromium Playwright et Next.js 14 pour déterminer si Surga est réellement au niveau des meilleures applications de classe mondiale (Linear, Revolut, ChatGPT).
+  - Identifier tous les freins visuels, ergonomiques, d'accessibilité et de code empêchant encore Surga de donner une impression de produit premium, mature et technologiquement avancé.
+  - Livrer une matrice des états complète sur les 20 briques, un benchmark comparatif, et un plan de corrections en 12 fiches détaillées.
+- **Réalisations & Mesures Formelles :**
+  1. *Diagnostic Technique Résolu & Build Next.js* :
+     - Neutralisation d'un processus zombie Node (PID 39540, 3.4 GB) qui bloquait les CSS chunks et servait du HTML, rétablissant le rendu visuel complet.
+     - Validation du build de production (`/surga` à 59.3 kB JS, First Load 162 kB, TTFB 323 ms, FCP 416 ms).
+  2. *Accessibilité Réelle WCAG 2.2 AA* :
+     - 41 échecs de contraste mesurés sur 123 textes (texte ambre `#D97706` sur fond blanc avec un ratio de **3.19:1** au lieu de 4.5:1).
+     - 27 cibles tactiles sous 32 px sur 51 éléments (bouton actualiser météo à 22×22 px en violation directe du critère SC 2.5.8).
+     - 0 % de champs montants en FCFA équipés de `inputMode="numeric"`.
+  3. *Ergonomie Visuelle & Superposition Parasite* :
+     - Bouton FAB micro masquant physiquement des textes et montants à 3 endroits clés.
+     - Dashboard étiré sur 1500 px par 6 articles d'actualités reléguant les outils personnels tout en bas.
+     - Titre météo brisé sur 4 lignes avec 4 boutons entassés.
+     - Icône anxiogène `MicOff` barrée à l'accueil de la boîte vocale.
+     - Débordement horizontal sur smartphone 320 px et étirement disproportionné de la barre basse sur desktop 1280 px.
+     - Zéro support du Dark Mode (0 %).
+  4. *Qualité de Code & Règle des 450 Lignes* :
+     - 6 composants identifiés au-delà de 450 lignes : `SurgaAuthModal` (724 l.), `SurgaKalpeSaisieModal` (648 l.), `SurgaVoiceModal` (570 l.), `SurgaProfilProTab` (487 l.), `SurgaSamaXaalisView` (483 l.), `app/surga/page.tsx` (451 l.).
+     - Plus de 1 200 déclarations inline `style={{ ... }}` et résidus des tokens Nopalou (`#F8F5F0`, `#1C2B4A`).
+- **Validation & Scores :**
+  - **Score Global Pondéré : 62,8 / 100** (Design 68, Cohérence 62, Mobile 65, Responsive 64, Interaction 68, Performance 88, Accessibilité 52, PWA 80, États UI 54, Code 60, Perception Premium 58).
+  - **Verdict** : *FRONT-END SOLIDE MAIS DES ÉCARTS MAJEURS EMPÊCHENT ENCORE L'EFFET PREMIUM*.
+  - 5 livrables stratégiques créés : `AUDIT_FRONTEND_PREMIUM.md`, `MATRICE_ETATS_UI_SURGA.md`, `BENCHMARK_UI_SURGA.md`, `PLAN_CORRECTIONS_FRONTEND.md` et `HANDOVER_FRONTEND_SURGA.md`.
+
 ### [2026-10-06 — Nuit 7 bis] — Reconnaissance Vocale Exhaustive Zéro-Rejet (Mots Uniques, Synonymes & Couverture 100% des 20 Services Surga)
 - **Objectif Atteint :**
   - Éliminer le problème de rejet des commandes courtes ou mots uniques (« concours », « douane », « examen », « bon coin ») qui provoquaient une erreur "Commande non reconnue".
