@@ -365,16 +365,19 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Rectification déterministe du quota WhatsApp à 2 requêtes gratuites/jour (`CORR-P1-06`) dans `AdminConfigTab.tsx` et `AdminComptesTab.tsx`.
 - [x] `DONE` Validation & Zéro Régression : 105/105 tests Jest backend validés, 97/97 tests frontend validés, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
 
-### Tranche 18 (Extension Emploi) — Profil Professionnel, CV PDF & Lettres de Motivation (Modèle Mixte & Anti-Hallucination)
-- [ ] `PROPOSED` Schéma SQL (`surga_profil_pro`, `surga_documents_emploi`, `surga_usages`) avec index et contraintes Anti-IDOR.
-- [ ] `PROPOSED` Service des droits & quotas (`surga-usages-service.js`) : application stricte côté serveur des règles gratuites (1 CV sobre avec mention discrète, 1 lettre/mois) et déblocage Premium ou à l'acte (500 FCFA pour un CV sans mention, couvrant le document et ses retouches).
-- [ ] `PROPOSED` Moteur de génération PDF via `pdfkit` (stream direct, format A4, modèles `sobre_moderne` et `classique_pro`, sans photo par défaut, langue française exclusive au lancement).
-- [ ] `PROPOSED` Règle stricte Zéro-Hallucination : structuration exclusive des données réelles de l'utilisateur sans aucune invention de diplôme, date ni employeur.
-- [ ] `PROPOSED` Case à cocher obligatoire : « J'ai relu et je confirme l'exactitude » avant téléchargement.
-- [ ] `PROPOSED` Générateur de lettres de motivation : adaptation formelle et vouvoiement strict (D19) au texte de l'offre d'emploi collée.
-- [ ] `PROPOSED` Routes REST sécurisées sous `/api/surga/emploi` (`/profil`, `/documents/cv`, `/documents/lettre`, `/documents/:id/pdf`).
-- [ ] `PROPOSED` Interface PWA modulaire (< 450 l.) sous `SurgaEmploiModal.tsx` avec formulaires guidés et prévisualisation.
-- [ ] `PROPOSED` Conformité RGPD intégrale : export et purge de `surga_profil_pro` et `surga_documents_emploi` dans `donnees-service.js`.
+### Tranche 18 (Extension Emploi) — Profil Professionnel, CV PDF & Lettres de Motivation (Modèle Mixte & Anti-Hallucination) (06 Octobre 2026 - Matin 3)
+- [x] `DONE` Schéma SQL (`surga_profil_pro`, `surga_documents_emploi`, `surga_usages`) avec index et contraintes Anti-IDOR (`backend/migrate-inline.js`).
+- [x] `DONE` Service des droits & quotas (`backend/services/surga/emploi-service.js`) : application stricte côté serveur des règles gratuites (1 CV sobre avec mention discrète, 1 lettre/mois) et déblocage Premium ou à l'acte (500 FCFA pour un CV sans mention, Option A validée).
+- [x] `DONE` Moteur de génération PDF via `pdfkit` (stream direct, format A4, modèles `sobre_moderne` et `classique_pro`, sans photo par défaut, langue française exclusive au lancement D28).
+- [x] `DONE` Règle stricte Zéro-Hallucination : structuration exclusive des données réelles de l'utilisateur sans aucune invention de diplôme, date ni employeur.
+- [x] `DONE` Case à cocher obligatoire : « J'ai relu et je confirme l'exactitude » avant téléchargement.
+- [x] `DONE` Générateur de lettres de motivation : adaptation formelle et vouvoiement strict (D19) au texte de l'offre d'emploi collée.
+- [x] `DONE` Routes REST sécurisées sous `/api/surga/emploi` (`/profil`, `/droits`, `/cv/generer`, `/lettre/generer`, `/documents`, `/documents/:id/pdf`, `/documents/:id`).
+- [x] `DONE` Interface PWA modulaire (< 450 l.) avec `SurgaProfilProTab.tsx` (360 l.), `SurgaCvTab.tsx` (260 l.), `SurgaLettreTab.tsx` (274 l.) et `SurgaEmploiModal.tsx` (387 l.).
+- [x] `DONE` Maintien de la page principale `surga/page.tsx` à 447 lignes (< 450 l.).
+- [x] `DONE` Conformité RGPD intégrale : export et purge de `surga_profil_pro`, `surga_documents_emploi` et `surga_usages` dans `donnees-service.js` et `SurgaDonneesModal.tsx`.
+- [x] `DONE` Tests unitaires Jest portés à **113/113 passés (100%)**, `npx tsc --noEmit` 0 erreur, Anti-AI-Slop 100% conforme.
+- **Démonstration** : l'utilisateur remplit son profil professionnel, choisit son modèle (Sobre & Moderne ou Classique Épuré), coche la validation d'exactitude et télécharge son CV en PDF haute fidélité ; il colle une annonce pour générer une lettre de motivation au vouvoiement formel et retrouve ses documents générés dans son historique.
 
 ### Tranche 19 (Extension Emploi) — Préparation à l'Entretien d'Embauche (Simulateur In-App & Fiches de Révision)
 - [ ] `PROPOSED` Banque de questions types sectorielles gratuites (sans IA, coût nul).

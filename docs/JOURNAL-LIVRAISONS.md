@@ -1,5 +1,30 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga — Tranche 18 : Emploi, Profil Professionnel, CV PDF & Lettres de Motivation (Session 2026-10-06 - Matin 3, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Mise en œuvre complète de la Tranche 18 (Pôle Emploi & Carrière) selon les spécifications de `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md` et les décisions D26 à D29.
+    - Base de données SQL : création idempotente des tables `surga_profil_pro`, `surga_documents_emploi` et `surga_usages` dans `backend/migrate-inline.js`.
+    - Moteur PDF natif `pdfkit` dans `backend/services/surga/emploi-service.js` :
+      - Modèles A4 haute fidélité : `sobre_moderne` (bandeau ambre/indigo élégant) et `classique_pro` (noir & blanc épuré pour banques et concours).
+      - Règle Zéro-Hallucination : structuration exclusive des données fournies sans extrapolation d'IA.
+      - Générateur déterministe de lettre de motivation respectant le vouvoiement strict D19 et personnalisable.
+      - Modèle de droits & quotas (Section 1 bis & D27) : 1 CV gratuit avec mention discrète en pied de page, puis blocage pour paiement à l'acte à 500 FCFA (Option A retenue) ou accès illimité Surga Premium (1 500 F/mois) ; 1 lettre/mois incluse sans frais puis Premium.
+      - Sécurité Anti-IDOR stricte (`verifierToken`, `req.user.id`).
+    - Conformité RGPD & Purge Définitive : `backend/services/surga/donnees-service.js` et `SurgaDonneesModal.tsx` intègrent l'export JSON complet et la suppression irrévocable de `surga_profil_pro`, `surga_documents_emploi` et `surga_usages`.
+    - Routes REST API : `backend/routes/surga/emploi.js` monté sur `/api/surga/emploi`.
+  * **Composants Frontend PWA (Modularisation stricte < 450 lignes & Zéro Émoji)** :
+    - `SurgaProfilProTab.tsx` (360 l.) : gestion complète du profil pro (expériences, formations, compétences dynamiques).
+    - `SurgaCvTab.tsx` (260 l.) : choix du modèle, récapitulatif, case à cocher obligatoire d'exactitude et téléchargement PDF.
+    - `SurgaLettreTab.tsx` (274 l.) : offre ciblée, génération déterministe D19, édition libre et case d'exactitude.
+    - `SurgaEmploiModal.tsx` (387 l.) : tiroir principal à 4 onglets avec historique des documents et téléchargement instantané Blob.
+    - Raccordement dans `SurgaParametresTab.tsx`, `SurgaModalsContainer.tsx` et maintien de `surga/page.tsx` à 447 lignes (< 450 l.).
+  * **Validation & Tests** :
+    - Tests backend Jest : 113/113 tests validés (100% de réussite sur `tests/unit/surga.test.js`, incluant 8 nouveaux tests unitaires Tranche 18).
+    - Tests frontend : 97/97 tests validés (100% de réussite sur `frontend-next`).
+    - Compilation TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme (`npm run lint:slop`).
+    - Tous les composants React < 450 lignes.
+
 - **Surga — Tranche 17 : Séries TV & Lutte Sénégalaise (Alertes Vidéos, Cron Atom YouTube, Modularisation & Alignement Quotas) (Session 2026-10-06 - Matin 2, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Mise en œuvre complète de la Tranche 17 (Alertes vidéos Séries TV et Lutte sénégalaise) selon les spécifications de `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md`.

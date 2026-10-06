@@ -1548,6 +1548,169 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(Array.isArray(exportRes.video_abonnements)).toBe(true);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TRANCHE 18 (EXTENSION) : EMPLOI, PROFIL PRO, CV PDF & LETTRES DE MOTIVATION
+  // ─────────────────────────────────────────────────────────────────────────────
+  describe('Tranche 18 : Emploi, Profil Pro, CV PDF & Lettres de Motivation', () => {
+    const emploiService = require('../../backend/services/surga/emploi-service');
+
+    const profilMock = {
+      nom_complet: 'Moussa Diop',
+      telephone: '+221 77 123 45 67',
+      email: 'moussa.diop@example.com',
+      adresse: 'Mermoz, Dakar',
+      titre_poste: 'Comptable Général SYSCOHADA',
+      resume: 'Comptable rigoureux avec 5 années d expérience dans la gestion de trésorerie et clôtures mensuelles.',
+      experiences: [
+        {
+          poste: 'Comptable Junior',
+          entreprise: 'Cabinet Teranga Audit',
+          date_debut: '2022',
+          date_fin: '2025',
+          description: 'Saisie comptable, rapprochements bancaires et déclarations fiscales.',
+        },
+      ],
+      formations: [
+        {
+          diplome: 'Licence en Sciences de Gestion',
+          etablissement: 'Université Cheikh Anta Diop (UCAD)',
+          annee: '2021',
+        },
+      ],
+      competences: ['SYSCOHADA', 'Déclarations fiscales', 'Excel avancé', 'Sage Saari'],
+      langues: ['Français (Courant)', 'Wolof (Langue maternelle)'],
+    };
+
+    test('Création et récupération déterministe du profil professionnel', async () => {
+      const userId = 'user-pro-test-uuid-1';
+      const profil = await emploiService.upsertProfilPro(userId, profilMock);
+      expect(profil).toBeDefined();
+      expect(profil.user_id).toBe(userId);
+      expect(profil.nom_complet).toBe('Moussa Diop');
+      expect(profil.titre_poste).toBe('Comptable Général SYSCOHADA');
+      expect(profil.experiences.length).toBe(1);
+
+      const lu = await emploiService.getProfilPro(userId);
+      expect(lu).toBeDefined();
+      expect(lu.email).toBe('moussa.diop@example.com');
+    });
+
+    test('Règle Zéro-Hallucination : la structuration du CV reflète uniquement les données déclarées', async () => {
+      const userId = 'user-pro-test-uuid-2';
+      const profil = await emploiService.upsertProfilPro(userId, profilMock);
+
+      // Le profil généré ne contient aucun diplôme ou employeur fictif
+      expect(profil.formations.some((f) => f.etablissement.includes('Harvard'))).toBe(false);
+      expect(profil.experiences.some((e) => e.entreprise.includes('Google'))).toBe(false);
+      expect(profil.nom_complet).toBe('Moussa Diop');
+    });
+
+    test('Générateur déterministe de lettre de motivation (Vouvoiement D19 & Personnalisation)', () => {
+      const proposition = emploiService.genererPropositionLettre({
+        profil: profilMock,
+        titrePosteOffre: 'Chef Comptable',
+        entrepriseOffre: 'Société Dakaroise des Eaux',
+        offreTexte: 'Recherche un chef comptable maîtrisant le SYSCOHADA et les déclarations fiscales.',
+      });
+
+      expect(proposition).toBeDefined();
+      expect(proposition.objet).toContain('Chef Comptable');
+      expect(proposition.salutation).toBe('Madame, Monsieur,');
+      // Vouvoiement strict D19
+      expect(proposition.paragrapheIntroduction).toContain('vous');
+      expect(proposition.paragrapheConclusion).toContain('votre entière disposition');
+      expect(proposition.formulePolitesse).toContain('Je vous prie d agréer');
+      // Intégration des compétences réelles sans hallucination
+      expect(proposition.paragrapheParcours).toContain('Cabinet Teranga Audit');
+    });
+
+    test('Génération PDF native via pdfkit (A4, Header %PDF-1.)', async () => {
+      const pdfBuffer = await emploiService.genererPdfBuffer('CV', profilMock, {
+        modele: 'sobre_moderne',
+        avecMention: true,
+      });
+
+      expect(Buffer.isBuffer(pdfBuffer)).toBe(true);
+      expect(pdfBuffer.length).toBeGreaterThan(1000);
+      // Vérification du Header magique PDF
+      const pdfHeader = pdfBuffer.slice(0, 5).toString('ascii');
+      expect(pdfHeader).toBe('%PDF-');
+    });
+
+    test('Modèle de droits & quotas : 1 CV gratuit avec mention, puis blocage pour passage Premium / 500 FCFA', async () => {
+      const userId = 'user-droits-cv-test-99';
+
+      // 1. Premier CV : droit gratuit débloqué avec mention
+      const droit1 = await emploiService.verifierDroitCv(userId);
+      expect(droit1.autorise).toBe(true);
+      expect(droit1.avecMention).toBe(true);
+      expect(droit1.motif).toBe('gratuit_decouverte');
+
+      // Enregistrement du premier usage
+      await emploiService.incrementerUsage(userId, 'cv_generation', 'global');
+
+      // 2. Deuxième tentative : bloqué avec message explicite de passage Premium ou achat 500 FCFA
+      const droit2 = await emploiService.verifierDroitCv(userId);
+      expect(droit2.autorise).toBe(false);
+      expect(droit2.motif).toBe('limite_atteinte');
+      expect(droit2.message).toContain('500 FCFA');
+    });
+
+    test('Sécurité Anti-IDOR stricte sur les documents professionnels', async () => {
+      const userProprietaire = 'user-id-owner-100';
+      const userIntrus = 'user-id-hacker-666';
+
+      const doc = await emploiService.sauvegarderDocumentEmploi({
+        userId: userProprietaire,
+        type: 'CV',
+        titre: 'CV Moussa Diop 2026',
+        contenu: profilMock,
+      });
+
+      // Le propriétaire peut consulter son document
+      const docOk = await emploiService.getDocumentEmploi(doc.id, userProprietaire);
+      expect(docOk).toBeDefined();
+
+      // L'intrus ne peut pas accéder au document d'un autre utilisateur
+      const docFraude = await emploiService.getDocumentEmploi(doc.id, userIntrus);
+      expect(docFraude).toBeNull();
+
+      // L'intrus ne peut pas supprimer le document d'un autre
+      const supprimeFraude = await emploiService.supprimerDocumentEmploi(doc.id, userIntrus);
+      expect(supprimeFraude).toBe(false);
+
+      // Le propriétaire peut supprimer son propre document
+      const supprimeOk = await emploiService.supprimerDocumentEmploi(doc.id, userProprietaire);
+      expect(supprimeOk).toBe(true);
+    });
+
+    test('Les routes REST emploi se chargent sans erreur dans Express', () => {
+      const routerEmploi = require('../../backend/routes/surga/emploi');
+      expect(routerEmploi).toBeDefined();
+
+      const routes = routerEmploi.stack
+        .filter((r) => r.route)
+        .map((r) => `${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`);
+
+      expect(routes).toContain('GET /emploi/profil');
+      expect(routes).toContain('PUT /emploi/profil');
+      expect(routes).toContain('GET /emploi/droits');
+      expect(routes).toContain('POST /emploi/cv/generer');
+      expect(routes).toContain('POST /emploi/lettre/generer');
+      expect(routes).toContain('GET /emploi/documents');
+      expect(routes).toContain('GET /emploi/documents/:id/pdf');
+      expect(routes).toContain('DELETE /emploi/documents/:id');
+    });
+
+    test('Portabilité RGPD : l export intègre le profil pro, les documents emploi et les usages', async () => {
+      const donneesService = require('../../backend/services/surga/donnees-service');
+      const exportRes = await donneesService.exporterDonneesUtilisateur({ userId: '00000000-0000-0000-0000-000000000000' });
+      expect(exportRes).toHaveProperty('profil_pro');
+      expect(exportRes).toHaveProperty('documents_emploi');
+      expect(exportRes).toHaveProperty('usages');
+    });
+  });
 });
 
 

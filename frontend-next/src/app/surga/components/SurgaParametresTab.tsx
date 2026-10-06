@@ -28,6 +28,7 @@ interface SurgaParametresTabProps {
   onOpenConcours: () => void
   onOpenPlaces?: () => void
   onOpenVideos?: () => void
+  onOpenEmploi?: () => void
   onOpenPremium?: () => void
   onOpenPro?: () => void
   onOpenDonnees?: () => void
@@ -44,6 +45,7 @@ export default function SurgaParametresTab({
   onOpenConcours,
   onOpenPlaces,
   onOpenVideos,
+  onOpenEmploi,
   onOpenPremium,
   onOpenPro,
   onOpenDonnees,
@@ -329,6 +331,36 @@ export default function SurgaParametresTab({
         >
           Consulter
         </button>
+      </div>
+
+      {/* Emploi & CV Professionnel */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: 10,
+          borderTop: '1px solid var(--border, #E8DDD2)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            Emploi, CV PDF &amp; Lettres
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            Profil professionnel, CV A4 sobre &amp; lettres de motivation
+          </div>
+        </div>
+        {onOpenEmploi && (
+          <button
+            type="button"
+            onClick={onOpenEmploi}
+            className="surga-btn-secondary"
+            style={{ fontSize: 11, padding: '5px 12px' }}
+          >
+            Ouvrir
+          </button>
+        )}
       </div>
 
       {/* Données personnelles & Droit à l'oubli */}

@@ -49,6 +49,26 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Tranche 18 : Emploi, Profil Professionnel, CV PDF & Lettres de Motivation (Session 2026-10-06, branche `feature/surga`)** :
+  - *Extension Emploi & Carrière (D26 à D29 & Spécifications validées)* :
+    - Tables SQL créées avec index et contraintes idempotentes : `surga_profil_pro`, `surga_documents_emploi`, `surga_usages`.
+    - Service métier `backend/services/surga/emploi-service.js` :
+      - Gestion du profil complet (coordonnées, titre, résumé, compétences, expériences, formations, langues).
+      - Règle Zéro-Hallucination : structuration fidèle des données réelles sans extrapolation d'IA.
+      - Générateur déterministe de lettre de motivation respectant le vouvoiement strict D19 et personnalisable.
+      - Moteur PDF natif `pdfkit` (stream HTTP direct et export Buffer, formats A4 `sobre_moderne` et `classique_pro`, mention conditionnelle).
+      - Modèle de droits & quotas (Section 1 bis & D27) : 1 CV gratuit avec mention, puis blocage pour passage à 500 FCFA à l'acte (Option A) ou Surga Premium ; 1 lettre/mois gratuit puis Premium.
+      - Sécurité Anti-IDOR stricte (`verifierToken`, `req.user.id`).
+    - Conformité RGPD & Purge Définitive : `donnees-service.js` et `SurgaDonneesModal.tsx` intègrent l'export JSON complet et la purge en cascade des tables de profil, documents emploi et usages.
+    - Routes REST client `backend/routes/surga/emploi.js` montées sous `/api/surga/emploi`.
+    - Composants Frontend PWA modulaires < 450 lignes et zéro émoji :
+      - `SurgaProfilProTab.tsx` : formulaire complet du profil avec ajout dynamique d'expériences, formations et compétences.
+      - `SurgaCvTab.tsx` : choix du modèle visuel, récapitulatif, case à cocher obligatoire d'exactitude et téléchargement PDF.
+      - `SurgaLettreTab.tsx` : offre ciblée, génération proposition D19, personnalisation libre et case de relecture obligatoire.
+      - `SurgaEmploiModal.tsx` : tiroir principal à 4 onglets intégrant l'historique et la suppression de documents.
+      - Raccordement dans `SurgaParametresTab.tsx`, `SurgaModalsContainer.tsx` et maintien de `surga/page.tsx` à 447 lignes (< 450 l.).
+    - Tests & Qualité : 113/113 tests unitaires Jest backend passés avec succès (+8 nouveaux tests Tranche 18), 97/97 tests frontend passés, `tsc --noEmit` à 0 erreur, `lint:slop` conforme.
+
 - **Surga — Tranche 17 : Séries TV & Lutte Sénégalaise (Alertes Vidéos, Cron Atom YouTube, Modularisation & Alignement Quotas) (Session 2026-10-06 - Matin 2, branche `feature/surga`)** :
   - *Extension Séries & Lutte* :
     - Ingestion officielle des flux Atom YouTube sans API payante via `cheerio` (mode XML).

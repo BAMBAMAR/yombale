@@ -127,6 +127,8 @@ export default function SurgaDonneesModal({
         localStorage.removeItem('surga_kalpe_dettes')
         localStorage.removeItem('surga_kalpe_objectifs')
         localStorage.removeItem('surga_video_abonnements')
+        localStorage.removeItem('surga_profil_pro')
+        localStorage.removeItem('surga_documents_emploi')
         window.dispatchEvent(new CustomEvent('surga-kalpe-change'))
         window.dispatchEvent(new CustomEvent('surga-data-change'))
       } catch {}

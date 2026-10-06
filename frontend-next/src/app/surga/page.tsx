@@ -50,12 +50,13 @@ export default function SurgaPage() {
   const [preferences, setPreferences] = useState<SurgaPreferencesData | null>(null)
   const [briefingData, setBriefingData] = useState<BriefingApiResponse | null>(null)
   const [loadingBriefing, setLoadingBriefing] = useState<boolean>(false)
-  const [isCalcOpen, setIsCalcOpen] = useState<boolean>(false), [isVoiceOpen, setIsVoiceOpen] = useState<boolean>(false)
-  const [isPresseOpen, setIsPresseOpen] = useState<boolean>(false), [isPodcastOpen, setIsPodcastOpen] = useState<boolean>(false)
-  const [isTraficOpen, setIsTraficOpen] = useState<boolean>(false), [isImmoOpen, setIsImmoOpen] = useState<boolean>(false)
-  const [isConcoursOpen, setIsConcoursOpen] = useState<boolean>(false), [isPlacesOpen, setIsPlacesOpen] = useState<boolean>(false)
-  const [isPremiumOpen, setIsPremiumOpen] = useState<boolean>(false), [isProOpen, setIsProOpen] = useState<boolean>(false)
-  const [isDonneesOpen, setIsDonneesOpen] = useState<boolean>(false), [isVideosOpen, setIsVideosOpen] = useState<boolean>(false)
+  const [isCalcOpen, setIsCalcOpen] = useState(false), [isVoiceOpen, setIsVoiceOpen] = useState(false)
+  const [isPresseOpen, setIsPresseOpen] = useState(false), [isPodcastOpen, setIsPodcastOpen] = useState(false)
+  const [isTraficOpen, setIsTraficOpen] = useState(false), [isImmoOpen, setIsImmoOpen] = useState(false)
+  const [isConcoursOpen, setIsConcoursOpen] = useState(false), [isPlacesOpen, setIsPlacesOpen] = useState(false)
+  const [isPremiumOpen, setIsPremiumOpen] = useState(false), [isProOpen, setIsProOpen] = useState(false)
+  const [isDonneesOpen, setIsDonneesOpen] = useState(false), [isVideosOpen, setIsVideosOpen] = useState(false)
+  const [isEmploiOpen, setIsEmploiOpen] = useState(false)
   const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; plan?: string | null; joursRestants?: number }>({ estPremium: false })
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
@@ -396,19 +397,13 @@ export default function SurgaPage() {
         {/* Onglet 5 : Plus / Paramètres */}
         {activeTab === 'plus' && (
           <SurgaParametresTab
-            preferences={preferences}
-            statutPremium={statutPremium}
-            onToggleAudio={handleToggleAudio}
-            onOpenRadio={openRadioModal}
-            onOpenTrafic={() => setIsTraficOpen(true)}
-            onOpenImmo={() => setIsImmoOpen(true)}
-            onOpenConcours={() => setIsConcoursOpen(true)}
-            onOpenPlaces={() => setIsPlacesOpen(true)}
-            onOpenVideos={() => setIsVideosOpen(true)}
-            onOpenPremium={() => setIsPremiumOpen(true)}
-            onOpenPro={() => setIsProOpen(true)}
-            onOpenDonnees={() => setIsDonneesOpen(true)}
-            onReinitialiser={handleReinitialiser}
+            preferences={preferences} statutPremium={statutPremium}
+            onToggleAudio={handleToggleAudio} onOpenRadio={openRadioModal}
+            onOpenTrafic={() => setIsTraficOpen(true)} onOpenImmo={() => setIsImmoOpen(true)}
+            onOpenConcours={() => setIsConcoursOpen(true)} onOpenPlaces={() => setIsPlacesOpen(true)}
+            onOpenVideos={() => setIsVideosOpen(true)} onOpenEmploi={() => setIsEmploiOpen(true)}
+            onOpenPremium={() => setIsPremiumOpen(true)} onOpenPro={() => setIsProOpen(true)}
+            onOpenDonnees={() => setIsDonneesOpen(true)} onReinitialiser={handleReinitialiser}
           />
         )}
       </div>
@@ -427,15 +422,16 @@ export default function SurgaPage() {
       {/* Modales globales de Surga */}
       <SurgaModalsContainer
         isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
-        isPodcastOpen={isPodcastOpen} isTraficOpen={isTraficOpen}
-        isImmoOpen={isImmoOpen} isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen}
-        isPremiumOpen={isPremiumOpen} isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen}
+        isPodcastOpen={isPodcastOpen} isTraficOpen={isTraficOpen} isImmoOpen={isImmoOpen}
+        isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isPremiumOpen={isPremiumOpen}
+        isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen} isEmploiOpen={isEmploiOpen}
         onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)}
         onClosePresse={() => setIsPresseOpen(false)} onClosePodcast={() => setIsPodcastOpen(false)}
         onCloseTrafic={() => setIsTraficOpen(false)} onCloseImmo={() => setIsImmoOpen(false)}
         onCloseConcours={() => setIsConcoursOpen(false)} onClosePlaces={() => setIsPlacesOpen(false)}
         onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)}
         onCloseDonnees={() => setIsDonneesOpen(false)} onCloseVideos={() => setIsVideosOpen(false)}
+        onCloseEmploi={() => setIsEmploiOpen(false)}
         onInjectMontantCalc={() => setActiveTab('depenses')}
         onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
         onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote}

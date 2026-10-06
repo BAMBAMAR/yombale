@@ -1,15 +1,27 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 2)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Matin 3)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 17 : Séries TV & Lutte Sénégalaise, Alertes Vidéos Atom YouTube, Quota WhatsApp 2 req/j, Logo Officiel Caftan S, Zéro Or, Orange Micro Calibré & Pack PWA, En-tête Cliquable & Navigation Retour, Résolution Incohérence Sama Xaalis, Raccordement Kiosque ProjetBI, Météo 14 Régions, Passerelles Transversales, Console Pro 12 Modules)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Tranche 18 : Emploi, Profil Pro, CV PDF & Lettres de Motivation, Tranche 17 : Séries TV & Lutte Sénégalaise, Alertes Vidéos Atom YouTube, Quota WhatsApp 2 req/j, Logo Officiel Caftan S, Zéro Or, Orange Micro Calibré & Pack PWA, En-tête Cliquable & Navigation Retour, Résolution Incohérence Sama Xaalis, Raccordement Kiosque ProjetBI, Météo 14 Régions, Passerelles Transversales, Console Pro 12 Modules)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** s'enrichit des alertes vidéos de sorties pour les Séries TV et la Lutte sénégalaise (Tranche 17), propulsé par l'ingestion officielle des flux Atom YouTube sans quota API payant, un dédoublonnage strict en base, un cycle cron périodique de 30 minutes sans nouveau processus, et une conformité architecturale totale (< 450 lignes par composant, zéro émoji, vouvoiement strict D19).
+L'assistant personnel de poche **Surga** intègre désormais le pôle complet **Emploi & Carrière (Tranche 18)** : profil professionnel exhaustif, générateur de CV PDF natif `pdfkit` avec choix de modèles (`sobre_moderne` et `classique_pro`), générateur déterministe de lettres de motivation, respect strict de la règle Zéro-Hallucination avec case à cocher obligatoire d'exactitude, et modèle de droits & quotas équilibré (1 CV gratuit avec mention, puis 500 FCFA à l'acte selon Option A ou Surga Premium ; 1 lettre/mois puis Premium).
+
+0. **Emploi, Profil Pro, CV PDF & Lettres de Motivation (Tranche 18 — 100% DONE)** :
+   - **Base de Données & Migrations Idempotentes** : Tables `surga_profil_pro` (unique user_id), `surga_documents_emploi` (index user_id), `surga_usages` (unique `user_id, type_action, mois_cle`) dans `backend/migrate-inline.js`.
+   - **Service Métier & Générateur PDF Natif** : `backend/services/surga/emploi-service.js` avec moteur direct `pdfkit` (stream HTTP direct, header `%PDF-1.3`, modèles A4 `sobre_moderne` et `classique_pro`), assainissement des retours chariots (`cleanPdfText`), proposition déterministe de lettre (vouvoiement D19, zéro extrapolation).
+   - **Modèle de Droits & Quotas (Section 1 bis & D27)** : 1er CV gratuit avec mention discrète en pied de page, puis blocage pour paiement à l'acte à 500 FCFA (Option A validée) ou Surga Premium (1 500 F/mois) ; 1 lettre/mois gratuit puis Premium.
+   - **Sécurité Anti-IDOR & Portabilité RGPD** : Vérification stricte du token et de l'appartenance `req.user.id`, export JSON complet et suppression en cascade dans `donnees-service.js` et `SurgaDonneesModal.tsx`.
+   - **Composants Frontend PWA (< 450 lignes & Zéro Émoji)** :
+     - `SurgaProfilProTab.tsx` (360 l.) : Saisie complète du profil, expériences, formations, compétences et coordonnées.
+     - `SurgaCvTab.tsx` (260 l.) : Choix du modèle de mise en page, affichage des quotas, case d'exactitude obligatoire et téléchargement PDF.
+     - `SurgaLettreTab.tsx` (274 l.) : Rapprochement avec l'offre d'emploi, rédaction libre, case de relecture obligatoire et export PDF.
+     - `SurgaEmploiModal.tsx` (387 l.) : Tiroir principal à 4 onglets avec historique des documents et téléchargement instantané Blob.
+     - Raccordement dans `SurgaParametresTab.tsx`, `SurgaModalsContainer.tsx` et maintien de `surga/page.tsx` à 447 lignes (< 450 l.).
 
 0. **Séries TV & Lutte Sénégalaise (Alertes Vidéos, Cron Atom & Modularisation) (Tranche 17 — 100% DONE)** :
    - **Ingestion Officielle Atom/RSS YouTube** : Décodage XML via `cheerio` des chaînes de production de fictions dakaroises (Marodi TV, EvenProd, Leuz Média) et des promoteurs d'arène de lutte (Lutte TV, Albourakh Events, Gaston Productions).
@@ -137,6 +149,7 @@ L'assistant personnel de poche **Surga** s'enrichit des alertes vidéos de sorti
 | Passerelles Transversales & Toasts | `src/lib/surga-cross-actions.ts` (368 l.), `src/app/surga/components/SurgaToastContainer.tsx` (65 l.) |
 | Navigation & En-tête | `src/app/surga/components/SurgaHeader.tsx`, `SurgaBottomNav.tsx` |
 | Sama Xaalis (Finances) | `src/app/surga/components/SurgaSamaXaalisView.tsx`, `src/lib/surga-kalpe.ts` |
+| Emploi, Profil Pro & CV PDF | `src/app/surga/components/SurgaEmploiModal.tsx` (387 l.), `SurgaProfilProTab.tsx` (360 l.), `SurgaCvTab.tsx` (260 l.), `SurgaLettreTab.tsx` (274 l.) |
 | Alertes Vidéos (Séries & Lutte) | `src/app/surga/components/SurgaVideosModal.tsx` (393 l.), `SurgaVideoCard.tsx` (96 l.) |
 | Météo & Marées Live | `src/app/surga/components/SurgaMeteoCard.tsx` (412 l.), `SurgaMeteoLocaliteModal.tsx` (382 l.), `SurgaMeteoPrevisions.tsx` (101 l.), `src/lib/surga-meteo.ts` (198 l.), `src/app/api/surga/meteo/route.ts` (166 l.) |
 | Sport Live & Customisation | `src/app/surga/components/SurgaSportCard.tsx`, `SurgaSportCustomModal.tsx` |
@@ -150,11 +163,11 @@ L'assistant personnel de poche **Surga** s'enrichit des alertes vidéos de sorti
 | Rôle | Emplacement |
 |---|---|
 | Routeur maître Surga | `routes/surga/index.js` (monté sur `/api/surga`) |
-| Sous-routeurs REST | `routes/surga/` (`briefing.js`, `preferences.js`, `notes.js`, `depenses.js`, `agenda.js`, `presse.js`, `kiosque.js`, `audio.js`, `podcast.js`, `radios.js`, `trafic.js`, `immo.js`, `concours.js`, `places.js`, `abonnements.js`, `donnees.js`, `meteo.js`, `videos.js`) |
+| Sous-routeurs REST | `routes/surga/` (`briefing.js`, `preferences.js`, `notes.js`, `depenses.js`, `agenda.js`, `presse.js`, `kiosque.js`, `audio.js`, `podcast.js`, `radios.js`, `trafic.js`, `immo.js`, `concours.js`, `places.js`, `abonnements.js`, `donnees.js`, `meteo.js`, `videos.js`, `emploi.js`) |
 | Routeur Administration Pro | `routes/admin-surga.js` (`/plans`, `/utilisateurs`, `/canaux`, `/abonnements`, `/videos/sources`, etc.) |
-| Services Métier Surga | `services/surga/` (`video-service.js`, `abonnement-service.js`, `meteo-service.js`, `calculator.js`, `whatsapp-handler.js`, `trafic-service.js`, `immo-service.js`, `concours-service.js`, `places-service.js`, `donnees-service.js`) |
+| Services Métier Surga | `services/surga/` (`emploi-service.js`, `video-service.js`, `abonnement-service.js`, `meteo-service.js`, `calculator.js`, `whatsapp-handler.js`, `trafic-service.js`, `immo-service.js`, `concours-service.js`, `places-service.js`, `donnees-service.js`) |
 | Synchronisation Cron | `services/cron-surga-rss.js` (cycle 30 min Presse & Vidéos Atom) |
-| Migrations SQL Idempotentes | `migrate-inline.js` (tables `surga_*` dont `surga_video_sources`, `surga_video_items`, `surga_video_abonnements`) |
+| Migrations SQL Idempotentes | `migrate-inline.js` (tables `surga_*` dont `surga_profil_pro`, `surga_documents_emploi`, `surga_usages`, `surga_video_sources`, `surga_video_items`, `surga_video_abonnements`) |
 
 ---
 
@@ -180,6 +193,7 @@ npm run dev
 - **Surga (Application Web 100% Autonome)** : [http://localhost:3001/surga](http://localhost:3001/surga)
 - **Console d'Administration Surga** : [http://localhost:3001/admin/surga](http://localhost:3001/admin/surga)
 - **API Briefing Backend** : [http://localhost:3000/api/surga/briefing](http://localhost:3000/api/surga/briefing)
+- **API Emploi & Profil Pro** : [http://localhost:3000/api/surga/emploi/profil](http://localhost:3000/api/surga/emploi/profil)
 - **API Météo & Localités** : [http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau](http://localhost:3000/api/surga/meteo?ville=Dakar+Plateau)
 - **API Bonnes Adresses & Bons Plans** : [http://localhost:3000/api/surga/places](http://localhost:3000/api/surga/places)
 - **API Alertes Vidéos (Séries & Lutte)** : [http://localhost:3000/api/surga/videos/sources](http://localhost:3000/api/surga/videos/sources)
@@ -191,7 +205,7 @@ npm run dev
 
 Toutes les suites de tests sont actuellement au vert à 100% :
 ```powershell
-# 1. Tests Jest Surga (Backend) : 105/105 passés (100%)
+# 1. Tests Jest Surga (Backend) : 113/113 passés (100%)
 npx jest tests/unit/surga.test.js
 
 # 2. Tests Unitaires Frontend / Vitest CSP : 97/97 passés (100%)

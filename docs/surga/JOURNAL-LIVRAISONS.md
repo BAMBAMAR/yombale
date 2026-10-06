@@ -3,6 +3,61 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Matin 3] — Tranche 18 : Emploi, Profil Professionnel, CV PDF & Lettres de Motivation
+- **Demande Utilisateur :**
+  - Mise en œuvre complète de la Tranche 18 (Pôle Emploi & Carrière) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md` et les décisions D26 à D29.
+  - Règle Zéro-Hallucination : structuration exclusive des données réelles sans extrapolation d'IA, case à cocher obligatoire d'exactitude.
+  - Modèle de droits (Section 1 bis & D27) : 1 CV gratuit avec mention discrète en pied de page, puis blocage pour 500 FCFA à l'acte (Option A) ou Surga Premium ; 1 lettre/mois gratuit puis Premium.
+  - Moteur PDF natif `pdfkit` (stream HTTP direct, formats A4 `sobre_moderne` et `classique_pro`).
+  - Modularité stricte < 450 lignes par composant, zéro émoji, vouvoiement D19, sécurité Anti-IDOR et portabilité RGPD.
+- **Tâches complétées :**
+  - **Schéma SQL & Migrations Idempotentes** :
+    - `backend/migrate-inline.js` : Ajout des tables `surga_profil_pro` (unique user_id), `surga_documents_emploi` (index user_id), `surga_usages` (unique user_id + type_action + mois_cle) et de leurs index de recherche.
+  - **Service Backend Emploi & Moteur PDF** :
+    - `backend/services/surga/emploi-service.js` :
+      - CRUD profil pro avec sanitization des retours chariots (`cleanPdfText`) et repli mémoire transparent si DB indisponible.
+      - Contrôle déterministe des droits et quotas (`verifierDroitCv`, `verifierDroitLettre`, `incrementerUsage`).
+      - Générateur déterministe de lettre de motivation (vouvoiement D19, sans calcul ni hallucination d'IA).
+      - Générateur PDF natif `pdfkit` en A4 avec header `%PDF-1.3` (modèle `sobre_moderne` avec bandeau et `classique_pro` épuré, mention conditionnelle en pied de page).
+      - Sécurité Anti-IDOR stricte (`getDocumentEmploi`, `supprimerDocumentEmploi`).
+  - **Conformité RGPD & Purge Définitive** :
+    - `backend/services/surga/donnees-service.js` : Export JSON et suppression en cascade de `profil_pro`, `documents_emploi` et `usages`.
+    - `frontend-next/src/app/surga/components/SurgaDonneesModal.tsx` : Nettoyage local de `surga_profil_pro` et `surga_documents_emploi`.
+  - **Routes REST API Client** :
+    - `backend/routes/surga/emploi.js` : Endpoints `GET /emploi/profil`, `PUT /emploi/profil`, `GET /emploi/droits`, `POST /emploi/cv/generer`, `POST /emploi/lettre/generer`, `GET /emploi/documents`, `GET /emploi/documents/:id/pdf`, `DELETE /emploi/documents/:id`.
+    - Monté sur `/api/surga/emploi` dans `backend/routes/surga/index.js`.
+  - **Composants Frontend PWA (Modularisation < 450 l. & Zéro Émoji)** :
+    - `SurgaProfilProTab.tsx` (360 l.) : Saisie complète du profil (expériences, formations, compétences, coordonnées).
+    - `SurgaCvTab.tsx` (260 l.) : Choix du modèle, statut des droits & quotas, case d'exactitude obligatoire et téléchargement PDF.
+    - `SurgaLettreTab.tsx` (274 l.) : Offre ciblée, proposition déterministe D19, édition libre et case d'exactitude.
+    - `SurgaEmploiModal.tsx` (387 l.) : Tiroir principal à 4 onglets avec historique des documents et téléchargement instantané Blob.
+    - Raccordement dans `SurgaParametresTab.tsx`, `SurgaModalsContainer.tsx` et maintien de `surga/page.tsx` à 447 lignes (< 450 l.).
+  - **Validation & Tests** :
+    - Backend : 113/113 tests unitaires Jest validés (+8 nouveaux tests Tranche 18 sur `tests/unit/surga.test.js`).
+    - Frontend : 97/97 tests unitaires validés (`npm test`).
+    - Typage : 0 erreur TypeScript (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 100% conforme (`npm run lint:slop`).
+- **Fichiers modifiés :**
+  - `backend/migrate-inline.js`
+  - `backend/services/surga/emploi-service.js` (nouveau)
+  - `backend/routes/surga/emploi.js` (nouveau)
+  - `backend/routes/surga/index.js`
+  - `backend/services/surga/donnees-service.js`
+  - `tests/unit/surga.test.js`
+  - `frontend-next/src/app/surga/components/SurgaProfilProTab.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaCvTab.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaLettreTab.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaEmploiModal.tsx` (nouveau)
+  - `frontend-next/src/app/surga/components/SurgaParametresTab.tsx`
+  - `frontend-next/src/app/surga/components/SurgaModalsContainer.tsx`
+  - `frontend-next/src/app/surga/components/SurgaDonneesModal.tsx`
+  - `frontend-next/src/app/surga/page.tsx`
+  - `CLAUDE.md`
+  - `docs/JOURNAL-LIVRAISONS.md`
+  - `docs/surga/JOURNAL-LIVRAISONS.md`
+  - `docs/surga/HANDOVER.md`
+  - `docs/surga/PLAN.md`
+
 ### [2026-10-06 — Matin 2] — Tranche 17 : Séries TV & Lutte Sénégalaise (Alertes Vidéos, Flux Atom YouTube, Modularisation & Alignement Quotas)
 - **Demande Utilisateur :**
   - Mise en œuvre de la Tranche 17 (Alertes vidéos Séries et Lutte) selon `docs/surga/EXTENSION_EMPLOI_DEMARCHES_VIDEOS.md` avec respect de l'audit préalable, zéro émoji, vouvoiement D19, composants < 450 lignes, et rectification du quota WhatsApp à 2 requêtes gratuites/jour.

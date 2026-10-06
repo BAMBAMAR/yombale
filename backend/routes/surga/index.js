@@ -23,6 +23,7 @@ router.use('/', require('./donnees'));
 router.use('/', require('./meteo'));
 router.use('/', require('./sport'));
 router.use('/', require('./videos'));
+router.use('/', require('./emploi'));
 
 module.exports = router;
 

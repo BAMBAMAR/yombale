@@ -3321,6 +3321,45 @@ module.exports = async function migrateInline(customConnStr = null) {
      )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_video_abonnements ON surga_video_abonnements(user_id, source_id)`,
     `CREATE INDEX IF NOT EXISTS idx_surga_video_abonnements_user ON surga_video_abonnements(user_id)`,
+    // Tranche 18 : Emploi, Profil Pro, CV PDF, Lettres de Motivation & Droits d'usage
+    `CREATE TABLE IF NOT EXISTS surga_profil_pro (
+       user_id UUID PRIMARY KEY REFERENCES utilisateurs(id) ON DELETE CASCADE,
+       nom_complet VARCHAR(150),
+       telephone VARCHAR(40),
+       email VARCHAR(150),
+       adresse VARCHAR(255),
+       titre_poste VARCHAR(150),
+       resume TEXT,
+       experiences JSONB DEFAULT '[]'::jsonb,
+       formations JSONB DEFAULT '[]'::jsonb,
+       competences JSONB DEFAULT '[]'::jsonb,
+       langues JSONB DEFAULT '[]'::jsonb,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE TABLE IF NOT EXISTS surga_documents_emploi (
+       id VARCHAR(64) PRIMARY KEY,
+       user_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+       type VARCHAR(20) NOT NULL,
+       titre VARCHAR(200) NOT NULL,
+       contenu JSONB NOT NULL DEFAULT '{}'::jsonb,
+       modele VARCHAR(50) DEFAULT 'sobre_moderne',
+       offre_texte TEXT,
+       est_achete BOOLEAN DEFAULT FALSE,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_docs_user ON surga_documents_emploi(user_id, type, created_at DESC)`,
+    `CREATE TABLE IF NOT EXISTS surga_usages (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+       service VARCHAR(50) NOT NULL,
+       periode VARCHAR(20) NOT NULL,
+       quantite INT NOT NULL DEFAULT 1,
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_usages_user_svc_periode ON surga_usages(user_id, service, periode)`,
+    `CREATE INDEX IF NOT EXISTS idx_surga_usages_user ON surga_usages(user_id)`,
   ];
   for (const sql of schemaCollecte) {
     try { await pool.query(sql); }

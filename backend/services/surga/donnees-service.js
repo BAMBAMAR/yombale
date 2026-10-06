@@ -37,6 +37,9 @@ async function exporterDonneesUtilisateur({ userId }) {
     favoris_places: [],
     abonnements: [],
     video_abonnements: [],
+    profil_pro: null,
+    documents_emploi: [],
+    usages: [],
   };
 
   if (!pool) {
@@ -144,6 +147,27 @@ async function exporterDonneesUtilisateur({ userId }) {
       );
       exportGlobal.video_abonnements = vidAbosRes.rows;
     }
+
+    // 10. Profil Professionnel & Documents Emploi (Tranche 18)
+    if (userId) {
+      const profilRes = await pool.query(
+        'SELECT * FROM surga_profil_pro WHERE user_id = $1',
+        [userId]
+      );
+      if (profilRes.rows.length > 0) exportGlobal.profil_pro = profilRes.rows[0];
+
+      const docsRes = await pool.query(
+        'SELECT id, type, titre, modele, offre_texte, est_achete, created_at FROM surga_documents_emploi WHERE user_id = $1 ORDER BY created_at DESC',
+        [userId]
+      );
+      exportGlobal.documents_emploi = docsRes.rows;
+
+      const usagesRes = await pool.query(
+        'SELECT service, periode, quantite, updated_at FROM surga_usages WHERE user_id = $1',
+        [userId]
+      );
+      exportGlobal.usages = usagesRes.rows;
+    }
   } catch (err) {
     console.warn('[SURGA EXPORT ERREUR]:', err.message);
   }
@@ -215,6 +239,15 @@ async function supprimerDonneesUtilisateur({ userId }) {
       // Abonnements vidéos
       const resVid = await client.query('DELETE FROM surga_video_abonnements WHERE user_id = $1', [userId]);
       resultats.video_abonnements_supprimes = resVid.rowCount;
+
+      // Documents emploi et profil pro (Tranche 18)
+      const resDocs = await client.query('DELETE FROM surga_documents_emploi WHERE user_id = $1', [userId]);
+      resultats.documents_emploi_supprimes = resDocs.rowCount;
+
+      const resProf = await client.query('DELETE FROM surga_profil_pro WHERE user_id = $1', [userId]);
+      resultats.profil_pro_supprime = resProf.rowCount > 0;
+
+      await client.query('DELETE FROM surga_usages WHERE user_id = $1', [userId]);
 
       // Préférences
       await client.query('DELETE FROM surga_preferences WHERE user_id = $1', [userId]);
