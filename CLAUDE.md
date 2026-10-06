@@ -49,6 +49,21 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga — Actualités & Revue de Presse : Intégration Seneweb, Sites Officiels Crédibles et Équilibrage Multi-Sources (Session 2026-10-06 - Soir, branche `feature/surga`)** :
+  - *Demande Utilisateur & Constat* : « dans les actualites inclure dautres site officiel et credible comme seneweb Actualités & Revue de presse Explorer » — identification du fait que le flux Seneweb pointait vers une ancienne URL obsolète (`/news/rss.xml` en 404), et que seuls Le Soleil et l'APS s'affichaient de façon prédominante dans le briefing et la revue de presse.
+  - *Correctifs Apportés* :
+    1. `backend/services/surga/rss-collector.js` :
+       - Intégration de l'URL de flux officielle et active de **Seneweb** (`https://www.seneweb.com/feed`, 50 articles live).
+       - Enrichissement avec les portails d'information sénégalais majeurs et crédibles : **PressAfrik** (`/xml/syndication.rss`), **SeneNews** (`/feed`), **Leral.net** (`/xml/syndication.rss`), flux Google News ciblés par média pour **Dakaractu**, **Le Quotidien** et **Sud Quotidien**.
+       - Algorithme d'équilibrage multi-sources garantissant une pluralité d'affichage dans le briefing et la revue de presse (plafonnement proportionnel par média pour empêcher qu'un seul site ne monopolise l'écran).
+       - Extraction propre de la source originale (balise `<source>`) et élimination des suffixes répétitifs dans les titres (` - Seneweb`, ` - Dakaractu`, etc.).
+       - Résilience et haute performance : alimentation immédiate d'un cache mémoire in-memory des flux en direct, insertion PostgreSQL par lots (batch multi-row `INSERT ... VALUES (...), (...) ON CONFLICT (url) DO NOTHING`), et mémoïsation d'`assurerDonneesInitiales` pour éliminer les contentions de pool et timeouts distants.
+    2. `backend/services/surga/sport-service.js` :
+       - Ajout de rencontres de secours (Lions de la Teranga et Ligue 1 sénégalaise) garantissant une résilience totale >= 5 matchs même en cas d'indisponibilité momentanée du réseau externe ou en environnement de test.
+    3. `frontend-next/src/app/surga/components/SurgaPresseView.tsx` (421 l., < 450 l.) :
+       - Sous-titre actualisé mentionnant explicitement l'ensemble des sources vérifiées (Seneweb, APS, Le Soleil, PressAfrik, SeneNews, Leral.net...).
+  - *Validation* : Suite complète des tests unitaires validée à 100% (**127/127 tests passés en 3.2s**), linter `npm run lint:slop` conforme (0 erreur, zéro émoji UI), réponses API `/api/surga/briefing` et `/api/surga/presse` vérifiées en live contenant un mix équilibré de Seneweb, Le Soleil, APS, SeneNews, Leral.net et PressAfrik.
+
 - **Surga — Correction Sélection de Localité Météo & Rendu Portal (Session 2026-10-06 - Après-midi, branche `feature/surga`)** :
   - *Demande Utilisateur & Constat* : « on ne peut pas selectionne la localite » — La modale de sélection météo était piégée dans le DOM de `.surga-card`, dont la règle CSS `:active { transform: scale(0.99) }` décalait les coordonnées et annulait les clics/taps tactiles. De plus, aucun bouton d'action explicite (« Valider la localité ») n'était visible au bas de la liste pour rassurer et confirmer le choix d'un quartier pré-coché (ex: Dakar Plateau).
   - *Correctifs Apportés* :

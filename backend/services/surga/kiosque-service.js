@@ -116,7 +116,7 @@ async function synchroniserUnesProjetBi() {
 
   if (!pressData || !Array.isArray(pressData.press) || pressData.press.length === 0) {
     try {
-      const res = await fetch(REMOTE_PROJETBI_JSON);
+      const res = await fetch(REMOTE_PROJETBI_JSON, { signal: AbortSignal.timeout(5000) });
       if (res.ok) {
         pressData = await res.json();
       }

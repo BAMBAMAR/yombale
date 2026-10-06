@@ -188,7 +188,7 @@ export default function SurgaPresseView({
                 Presse &amp; Kiosque Sénégal
               </h2>
               <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-                Sources officielles et quotidiens certifiés
+                Sources vérifiées : Seneweb, APS, Le Soleil, PressAfrik, SeneNews...
               </div>
             </div>
           </div>

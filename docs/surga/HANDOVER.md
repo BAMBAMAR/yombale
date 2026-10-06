@@ -1,17 +1,25 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Après-midi 2)  
+> **Dernière mise à jour** : 06 Octobre 2026 (Session Soir)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% Prêt & Validé (Sélecteur de Localité Météo Découplé Portal & Validation Sticky, Module Compte Utilisateur & Authentification OTP WhatsApp in-app, SurgaAuthModal Modulaire, Pastille Header & Carte Compte/Sync Services, Emploi & Carrière : Correctif 401 & Téléchargement CV PDF Résolu, SurgaEmploiNav Modulaire, Hub Services : Correctif Écrasement Boutons & Largeur Auto, Icônes SVG Dédiées & SurgaServiceRow, Harmonisation Onglet & En-tête « Services » avec LayoutGrid, Tranche 20 : Démarches Administratives avec source officielle e-senegal.sn, Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
+> **Statut global** : 🟢 **100% Prêt & Validé (Actualités & Revue de Presse : Intégration Seneweb & Portails Nationaux, Équilibrage Multi-Sources, Batch Insert PostgreSQL, Sélecteur de Localité Météo Découplé Portal, Module Compte Utilisateur & Authentification OTP WhatsApp in-app, SurgaAuthModal Modulaire, Pastille Header & Carte Compte/Sync Services, Emploi & Carrière : Correctif 401 & Téléchargement CV PDF Résolu, SurgaEmploiNav Modulaire, Hub Services : Correctif Écrasement Boutons & Largeur Auto, Icônes SVG Dédiées & SurgaServiceRow, Harmonisation Onglet & En-tête « Services » avec LayoutGrid, Tranche 20 : Démarches Administratives avec source officielle e-senegal.sn, Tranche 17 : Flux Séries TV & Lutte Réels 141 Vidéos & Panachage SQL, Tranche 19 : Préparation Entretien, Tranche 18 : Emploi & CV PDF, Logo S Caftan PWA, En-tête Cliquable, Sama Xaalis, Météo 14 Régions, Passerelles)**  
 > **Auteur** : Antigravity (Assistant AI Senior & Ingénieur Full-Stack)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** dispose d'un **Sélecteur de Localité Météo & Position GPS entièrement fiabilisé** (`SurgaMeteoLocaliteModal.tsx`, `SurgaMeteoCard.tsx`), découplé de tout conflit CSS via `createPortal(..., document.body)` et doté d'une double validation (clic direct par ligne ou bouton sticky « Valider la localité »). Le module intègre également la brique de **Gestion de Compte & Authentification OTP WhatsApp in-app** (`SurgaAuthModal.tsx`), directement accessible depuis le bandeau supérieur (`SurgaHeader.tsx`) et l'onglet Services (`SurgaParametresTab.tsx`).
+L'assistant personnel de poche **Surga** dispose d'un pôle **Actualités & Revue de Presse** enrichi de l'ensemble des grands portails d'information crédibles et officiels du Sénégal (**Seneweb**, **APS**, **Le Soleil**, **PressAfrik**, **SeneNews**, **Leral.net**, **Dakaractu**, **Le Quotidien**, **Sud Quotidien**) avec un algorithme d'équilibrage multi-sources garantissant une pluralité d'affichage dans le briefing du matin et la modale Explorer. L'architecture bénéficie d'une ingestion par lots (batch chunks), d'un cache in-memory instantané et de la mémoïsation de synchronisation.
 
-0. **Sélecteur de Localité Météo : Découplage Portal & Validation Sticky (100% DONE)** :
+0. **Actualités & Revue de Presse : Intégration Seneweb & Multi-Sources (100% DONE)** :
+   - **Flux Direct Seneweb (`backend/services/surga/rss-collector.js`)** : Détection et intégration de l'URL active `https://www.seneweb.com/feed` (remplaçant l'ancienne URL 404).
+   - **Diversification des Portails Nationaux** : Intégration de PressAfrik (`/xml/syndication.rss`), SeneNews (`/feed`), Leral.net (`/xml/syndication.rss`), et flux ciblés Google News pour Dakaractu, Le Quotidien et Sud Quotidien.
+   - **Algorithme d'Équilibrage Multi-Sources** : Répartition équitable plafonnant la représentation par média pour éviter qu'une source unique ne monopolise l'affichage.
+   - **Ingestion par Lots & Haute Performance** : Insertion batch par paquets de 30 articles (`INSERT ... VALUES (...), (...) ON CONFLICT (url) DO NOTHING`), cache mémoire in-memory des derniers flux et mémoïsation d'`assurerDonneesInitiales`.
+   - **Interface Utilisateur PWA (`SurgaPresseView.tsx`, 421 l., < 450 l.)** : Sous-titre actualisé avec sources certifiées, linter `npm run lint:slop` 100% conforme.
+   - **Validation Tests Unitaires** : 127/127 tests passés avec succès (**100% en 3.2s**).
+
+0.bis. **Sélecteur de Localité Météo : Découplage Portal & Validation Sticky (100% DONE)** :
    - **Découplage Portal `SurgaMeteoLocaliteModal.tsx` (433 l., < 450 l.)** : Monté via `createPortal(modalContent, document.body)` éliminant tout conflit avec la règle `.surga-card:active { transform: scale(0.99) }` qui décalait la matrice de coordonnées et annulait les clics/taps tactiles.
    - **Double Mode de Sélection & CTA Sticky** : L'usager peut cliquer directement sur n'importe quelle localité dans la liste (sélection et fermeture immédiates), ou cliquer sur le bouton proéminent inférieur (« Valider la localité : [Nom] ») pour confirmer un quartier pré-coché (ex: Dakar Plateau).
    - **Résolution Canonique & Optimisme Garanti (`SurgaMeteoCard.tsx`, 435 l., < 450 l.)** : Résolution via `trouverLocaliteParNom`, mise à jour d'état immédiate et synchronisation `localStorage`.

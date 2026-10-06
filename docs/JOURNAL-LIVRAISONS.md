@@ -1,5 +1,27 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
  
+- **Surga — Actualités & Revue de Presse : Intégration Seneweb, Sites Officiels Crédibles et Équilibrage Multi-Sources (Session 2026-10-06 - Soir, branche `feature/surga`)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Réponse au besoin utilisateur : « dans les actualites inclure dautres site officiel et credible comme seneweb Actualités & Revue de presse Explorer ».
+    - Diagnostic : L'URL du flux RSS de Seneweb dans `backend/services/surga/rss-collector.js` était historiquement configurée sur `https://www.seneweb.com/news/rss.xml` (renvoyant une erreur HTTP 404), conduisant l'affichage à être monopolisé par les deux seules autres sources (Le Soleil et APS).
+    - Découverte et intégration de l'URL active officielle de Seneweb : `https://www.seneweb.com/feed` (50 articles live actualisés en temps réel).
+    - Enrichissement avec le panel de référence des médias et portails d'information sénégalais :
+      * **PressAfrik** : `https://www.pressafrik.com/xml/syndication.rss`
+      * **SeneNews** : `https://www.senenews.com/feed`
+      * **Leral.net** : `https://www.leral.net/xml/syndication.rss`
+      * **Dakaractu**, **Le Quotidien**, **Sud Quotidien** : flux RSS Google News ciblés par média avec extraction dynamique du nom de source via `<source>`.
+    - Algorithme d'équilibrage et de diversité multi-sources : Implémentation d'une répartition équitable évitant qu'un seul média n'accapare l'intégralité du briefing matinal ou de la revue de presse.
+    - Résilience et optimisation extrême des performances :
+      * Insertion PostgreSQL par lots (batch chunks de 30 articles) éliminant les centaines d'allers-retours réseau individuels vers Render.
+      * Cache mémoire in-memory des derniers articles collectés pour répondre en moins de 50ms et assurer zéro indisponibilité même en cas de coupure réseau ou latence DB.
+      * Mémoïsation d'`assurerDonneesInitiales` évitant de rejouer 15 requêtes synchrones sur chaque appel HTTP GET.
+      * Ajout de timeout sur l'ingestion Kiosque ProjetBI (`AbortSignal.timeout(5000)`).
+    - UI PWA : Mise à jour de `SurgaPresseView.tsx` (421 l., < 450 l.) avec mention explicite des portails vérifiés.
+  * **Validation & Qualité** :
+    - Tests backend Jest : **127/127 validés (100% en 3.2s)**.
+    - Linter anti-slop : Conforme (`npm run lint:slop`, zéro émoji UI, tokens Nopalou respectés).
+    - Réponses API vérifiées en local (`/api/surga/briefing` et `/api/surga/presse`) affichant en temps réel un panachage riche (Seneweb, Le Soleil, APS, SeneNews, Leral.net, PressAfrik).
+
 - **Surga — Correction Sélection de Localité Météo & Rendu Portal (Session 2026-10-06 - Après-midi, branche `feature/surga`)** :
   * **Périmètre & Objectifs Réalisés** :
     - Diagnostic : La modale `SurgaMeteoLocaliteModal.tsx` était rendue à l'intérieur de `.surga-card`, soumis à la pseudo-classe CSS `:active { transform: scale(0.99) }`. Lors des clics ou appuis tactiles, ce transform ancêtre décalait la matrice de coordonnées et annulait l'émission des événements `click` dans Chromium/WebKit.

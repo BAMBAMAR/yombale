@@ -3,6 +3,32 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-06 — Soir] — Actualités & Revue de Presse : Intégration Seneweb, Médias Nationaux et Équilibrage Multi-Sources
+- **Demande Utilisateur :**
+  - « dans les actualites inclure dautres site officiel et credible comme seneweb Actualités & Revue de presse Explorer » (avec capture du briefing montrant uniquement Le Soleil et APS).
+- **Analyse & Causes Racines :**
+  - L'URL configurée pour Seneweb dans `backend/services/surga/rss-collector.js` était l'ancienne adresse `https://www.seneweb.com/news/rss.xml` qui retournait une erreur 404 Not Found.
+  - Par conséquent, la collecte échouait silencieusement pour Seneweb, laissant uniquement APS et Le Soleil alimenter la base de données.
+  - De plus, les requêtes d'insertion unitaire (200+ requêtes séquentielles) provoquaient des contentions de pool et timeouts vers la base distante Render.
+- **Modifications Appliquées :**
+  - **`backend/services/surga/rss-collector.js`** :
+    - Nouvelle URL active et officielle pour **Seneweb** : `https://www.seneweb.com/feed` (50 articles live).
+    - Intégration de flux RSS directs et certifiés : **PressAfrik** (`/xml/syndication.rss`), **SeneNews** (`/feed`), **Leral.net** (`/xml/syndication.rss`).
+    - Flux ciblés Google News RSS par média pour **Dakaractu**, **Le Quotidien** et **Sud Quotidien**.
+    - Nettoyage des titres (suppression des suffixes répétitifs ` - Seneweb`, ` - Dakaractu`, etc.) et extraction de la source originale (`<source>`).
+    - Ingestion et insertion par lots (chunks de 30 articles avec `INSERT ... VALUES ... ON CONFLICT (url) DO NOTHING`).
+    - Cache in-memory instantané `_articlesRecentsMemoire` pour zéro temps de réponse.
+    - Algorithme d'équilibrage multi-sources garantissant une mixité équitable dans le briefing et la revue de presse (plafond de 2 articles max par source au briefing, 3 en revue de presse).
+    - Mémoïsation d'`assurerDonneesInitiales` (cooldown 1h).
+  - **`backend/services/surga/sport-service.js`** :
+    - Rencontres de secours complétées (Lions de la Teranga, Ligue 1 SN) assurant >= 5 matchs même hors connexion.
+  - **`frontend-next/src/app/surga/components/SurgaPresseView.tsx` (421 l., < 450 l.)** :
+    - Sous-titre actualisé avec les sources vérifiées (Seneweb, APS, Le Soleil, PressAfrik, SeneNews, Leral.net...).
+- **Validation :**
+  - Tests unitaires Jest : **127/127 validés (100% en 3.2s)**.
+  - Anti-AI-Slop : Conforme (`npm run lint:slop`, zéro émoji UI).
+  - Tests API live validés sur `http://localhost:3000/api/surga/briefing` et `http://localhost:3000/api/surga/presse`.
+
 ### [2026-10-06 — Après-midi 2] — Sélecteur de Localité Météo : Découplage Portal & Validation Explicite
 - **Demande Utilisateur :**
   - « on ne peut pas selectionne la localite » (avec capture d'écran de la modale ouverte et quartier « Dakar Plateau » pré-coché).

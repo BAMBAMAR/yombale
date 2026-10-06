@@ -39,7 +39,7 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - **Démonstration** : un testeur installe l'app, choisit ses briques et son heure de briefing en moins de 2 minutes, se connecte avec son numéro WhatsApp et retrouve ses choix et ses données synchronisées.
 
 ### Tranche 2 — "Je reçois mon briefing du matin"
-- [x] `DONE` Ingestion de sources (flux RSS d'actualité APS/Le Soleil/Seneweb, programme/scores sportifs).
+- [x] `DONE` Ingestion de sources multi-médias (flux RSS d'actualité Seneweb, APS, Le Soleil, PressAfrik, SeneNews, Leral.net, Dakaractu, Le Quotidien, Sud Quotidien, équilibrage multi-sources et programme/scores sportifs).
 - [x] `DONE` Génération du briefing texte personnalisé (résumés courts, liens vers les sources).
 - [x] `DONE` Écran "Aujourd'hui" et notification à l'heure choisie (push web & notification API).
 - **Démonstration** : à l'heure choisie, le testeur reçoit une notification et ouvre un briefing correspondant à ses briques.
