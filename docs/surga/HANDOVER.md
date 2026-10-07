@@ -1,17 +1,38 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 06 Octobre 2026 (Session Nuit 9 suite - 5 — Refonte Hiérarchie Premier Écran & Digest Actif)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 6 — Architecture Desktop 3 Colonnes, Services Éclatés & Omnibar Ctrl+K)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Premier Écran Digest Actif — 2 Titres à la Une, Rappel Agenda et Match Phare visibles en 2 secondes, Audio Épuré (0 Mo, vitesses conditionnelles), Météo Glanceable en 1 Ligne repliable (`SurgaMeteoDetailBloc.tsx`), 100% Composants < 450 l. — Build & 158 Tests Unitaires Validés (Zéro Régression)**  
+> **Statut global** : 🟢 **Architecture Desktop 3 Colonnes Active (Sidebar Gauche 240px avec Services Dakar Éclatés, Flux Central avec Omnibar Ctrl+K & Digest Actif, Rail Droit Contextuel 300px avec 5 Widgets Glanceables) — Vue Mobile 1 Colonne 100% Intacte sans Régression — 100% Composants < 450 l. — TypeScript 0 Erreur, 158/158 Tests Unitaires PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** a fait l'objet d'un sprint ciblé d'optimisation ergonomique mobile-first, résolvant l'ensemble des défauts d'affichage et de navigation identifiés sur écrans réels (360px - 390px) suite aux retours utilisateurs :
+L'assistant personnel de poche **Surga** a franchi une étape majeure avec le déploiement d'une véritable **Architecture Desktop 3 Colonnes** répondant directement aux retours d'ergonomie (« remplir les espaces vides à gauche et à droite avec d'autres infos ; Services éclatés à gauche ») tout en maintenant une expérience mobile 1 colonne d'une fluidité exemplaire :
 
-0. **Refonte de la Hiérarchie du Premier Écran (100% DONE — Nuit 9 suite - 5)** :
+0. **Architecture Desktop 3 Colonnes & Éclatement des Services (100% DONE — Nuit 9 suite - 6)** :
+   - **Sidebar Gauche Dédiée (240px, `SurgaDesktopSidebar.tsx`, 225 l.)** :
+     - Éclatement complet des fonctionnalités de Surga pour exploiter l'espace latéral :
+       - Section **Quotidien** : Aujourd'hui (actif ambre), Notes & Listes (avec compteur de notes), Sama Xaalis, Agenda & Rappels (avec badge de rendez-vous du jour).
+       - Section **Services Dakar Éclatés** : Trafic Dakar direct (badge vert Live), Kiosque des Unes, Radios FM direct, Concours & ENA (badge J-7), Pôle Immobilier certifié, Bonnes Adresses.
+       - Footer : Raccourcis Réglages et profil Compte avec quartier actif.
+   - **Omnibar Universelle Desktop (`SurgaDesktopCommandBar.tsx`, 69 l.)** :
+     - Barre de commande flottante / stickée au bas du flux central avec écouteur global `Ctrl+K` / `Cmd+K`.
+     - Champ de saisie instantané pour dicter ou taper une dépense, une note ou un rappel sans quitter le clavier.
+   - **Rail Contextuel Droit Utile (300px, `SurgaDesktopRightRail.tsx`, 151 l.)** :
+     - 5 widgets glanceables interactifs au clic :
+       1. *Votre journée* : Prochain événement ou badge "Journée libre" sans bloquant.
+       2. *Sama Xaalis (Mois)* : Total des dépenses FCFA du mois + Solde Kalpé restant disponible.
+       3. *Trafic Dakar direct* : Temps de parcours en direct VDN (14 min) et Corniche Ouest (28 min) avec pastilles de congestion vertes et ambre.
+       4. *Météo Dakar* : Température (28°C), marée haute (17h45), qualité de l'air (Bonne AQI 45).
+       5. *Mémo épinglé* : Dernière note ou liste de courses en cours de consultation.
+   - **Shell de Disposition Responsif (`SurgaLayoutShell.tsx`, 138 l. & `surga.css`)** :
+     - Grille Desktop 3 colonnes à partir de 1024px (`display: grid; grid-template-columns: 240px minmax(0, 1fr) 300px; max-width: 1360px;`).
+     - Isolation CSS pure : masquage de la bottom-nav et du FAB mic sur desktop, masquage de la sidebar/rail/omnibar sur mobile (< 1024px).
+     - Modularisation stricte : `page.tsx` passe de 442 à 438 lignes (100% des fichiers sous `app/surga/` < 450 l.).
+
+0.bis. **Refonte de la Hiérarchie du Premier Écran (100% DONE — Nuit 9 suite - 5)** :
    - **Digest Actif Immédiat (`SurgaAujourdhuiTab.tsx`, 317 l.)** : Fini l'effet "sommaire vide qui annonce 6 brèves sans rien montrer". La première carte affiche directement les 2 titres majeurs d'actualité du jour, le prochain rappel d'agenda (ou badge "Journée libre"), et le prochain match de sport phare.
    - **Audio Épuré & Conditionnel (`SurgaAudioPlayer.tsx`, 220 l.)** : Un seul bouton « Écouter », vitesses conditionnelles à l'écoute, élimination des boutons "Radios FM" et "Podcast" qui débordaient sur mobile.
    - **Météo Glanceable en 1 Ligne (`SurgaMeteoCard.tsx`, 380 l., `SurgaMeteoDetailBloc.tsx`, 112 l.)** : Ligne glanceable immédiate (`28°C Ensoleillé • Marée 17h45 • Air : Bonne (AQI 45)`) avec détails repliables à la demande, éliminant -150 px de hauteur sur le premier écran.

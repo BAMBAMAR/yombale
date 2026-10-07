@@ -3,6 +3,35 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 6] — Architecture Desktop 3 Colonnes (Services Éclatés, Omnibar Ctrl+K & Rail Droit Contextuel)
+- **Objectif Atteint :**
+  - Répondre directement à la demande utilisateur : « voir comment remplir les espaces vides à gauche et à droite avec d'autres infos. Services peut être éclaté pour mettre ses fonctionnalités directement à gauche ».
+  - Déployer une architecture 3 colonnes sur grands écrans (≥ 1024px) avec exploitation intégrale de l'espace sans aucun blanc béant.
+  - Conserver rigoureusement l'expérience mobile 1 colonne sans aucune régression ergonomique ni dédoublement de code logique.
+  - Respecter le plafond strict de 450 lignes par composant sur 100% des fichiers du projet.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Sidebar Gauche Dédiée (`frontend-next/src/app/surga/components/SurgaDesktopSidebar.tsx`, 225 l.)* :
+     - Logo Surga ambre & nuit avec symbole vectoriel.
+     - Bloc Quotidien : Aujourd'hui, Notes & Listes, Sama Xaalis, Agenda & Rappels avec badges de décompte en direct.
+     - Bloc Services Dakar Éclatés : Trafic direct (Live), Kiosque des Unes, Radios FM direct, Concours (J-7), Pôle Immobilier, Bonnes Adresses.
+     - Footer : Raccourcis Réglages et profil Compte avec quartier courant.
+  2. *Omnibar Desktop Centrale (`frontend-next/src/app/surga/components/SurgaDesktopCommandBar.tsx`, 69 l.)* :
+     - Barre de commande flottante / sticky en bas de l'écran avec écouteur global `Ctrl+K` / `Cmd+K`.
+     - Champ de saisie instantané et bouton micro ouvrant la reconnaissance vocale Surga.
+  3. *Rail Droit Contextuel Glanceable (`frontend-next/src/app/surga/components/SurgaDesktopRightRail.tsx`, 151 l.)* :
+     - 5 widgets glanceables interactifs au clic : Votre journée (agenda), Sama Xaalis (montant mensuel FCFA et Kalpé disponible), Trafic Dakar direct (VDN 14 min vert, Corniche 28 min orange), Météo & Marée Dakar (28°C, marée 17h45, AQI 45), Mémo épinglé (dernière note).
+  4. *Shell de Disposition Responsif (`frontend-next/src/app/surga/components/SurgaLayoutShell.tsx`, 138 l.)* :
+     - Encapsulation propre de la grille desktop et du shell mobile.
+     - `page.tsx` maintenu à 438 lignes (< 450 l.).
+  5. *Feuille de Styles Dédiée (`frontend-next/src/styles/surga.css`)* :
+     - Grille 3 colonnes `240px minmax(0, 1fr) 300px` max-width 1360px avec fond crème `#EDE7E0`.
+     - Media queries strictes : masquage des éléments desktop sur mobile (< 1024px) et masquage de la bottom-nav/FAB sur desktop (≥ 1024px).
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests unitaires Jest : 158/158 tests PASS (100%).
+  - Linter Anti-AI-Slop : 100% fichiers < 450 l., zéro composant monolithique, zéro béquille emoji.
+  - Captures Playwright Retina 2x Desktop et Mobile validées sans régression.
+
 ### [2026-10-06 — Nuit 9 suite - 5] — Refonte de la Hiérarchie du Premier Écran (Digest Actif Immédiat, Audio Épuré & Météo Compacte)
 - **Objectif Atteint :**
   - Corriger la hiérarchie du premier écran : faire voir à l'utilisateur ce qu'il cherche dès l'ouverture de l'application sans défilement nécessaire.

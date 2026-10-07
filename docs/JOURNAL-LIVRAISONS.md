@@ -1,4 +1,31 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Architecture Desktop 3 Colonnes — Services Dakar Éclatés, Omnibar Ctrl+K & Rail Contextuel Droit (Session 2026-10-07 - Nuit 9 suite - 6, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse intégrale à la directive utilisateur : « voir comment remplir les espaces vides à gauche et à droite avec d'autres infos. Services peut être éclaté pour mettre ses fonctionnalités directement à gauche ».
+    - Déploiement d'une véritable architecture Desktop 3 colonnes pour écrans larges (≥ 1024px) avec zéro dédoublement de code et zéro régression sur l'expérience mobile 1 colonne.
+    - Éclatement des fonctionnalités phares de Surga dans la sidebar de gauche : Trafic Dakar en direct, Kiosque des Unes, Radios FM directes, Concours nationaux & ENA, Pôle Immobilier, Bonnes Adresses.
+    - Ajout d'une Omnibar centrale interactive façon Raycast / Linear avec raccourci global `Ctrl K` / `Cmd K`, saisie texte et micro intégré.
+    - Création d'un rail contextuel droit glanceable avec 5 widgets interactifs (Votre journée, Sama Xaalis FCFA + solde Kalpé, Trafic direct VDN/Corniche avec sondes couleur, Météo/Marée Dakar, Mémo épinglé).
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Sidebar Gauche avec Services Éclatés (`SurgaDesktopSidebar.tsx`, 225 l.)** :
+       - Logo Surga ambre & nuit avec emblème vectoriel.
+       - Bloc Quotidien : Aujourd'hui, Notes & Listes (avec compteur dynamique), Sama Xaalis, Agenda & Rappels (avec badge événements).
+       - Bloc Services Dakar : Trafic Live, Kiosque, Radios FM, Concours (J-7), Pôle Immobilier, Bonnes Adresses.
+       - Footer : Raccourcis Réglages et profil Compte avec quartier courant.
+    2. **Omnibar Desktop Universelle (`SurgaDesktopCommandBar.tsx`, 69 l.)** :
+       - Input de saisie direct avec écoute d'événement `Ctrl+K` global.
+       - Bouton micro avec ouverture instantanée de la reconnaissance vocale Surga.
+    3. **Rail Contextuel Droit Glanceable (`SurgaDesktopRightRail.tsx`, 151 l.)** :
+       - 5 widgets cliquables pour naviguer vers les sections ou modales correspondantes sans changer de contexte.
+    4. **Layout Shell Responsif (`SurgaLayoutShell.tsx`, 138 l. & `surga.css`)** :
+       - Découpage pur en CSS : grille 3 colonnes au-delà de 1024px, 1 colonne fluide avec barre basse et FAB en dessous de 1024px.
+       - `page.tsx` maintenu sous le plafond strict avec 438 lignes.
+  * **Validation Technique** :
+    - `npx tsc --noEmit` : 0 erreur de typage.
+    - `npm run lint:slop` : 0 composant monolithique.
+    - 158/158 tests unitaires Jest PASS.
+    - Captures réelles Playwright Retina (1280×860 et 390×844) validées.
+
 - **Surga / Refonte de la Hiérarchie du Premier Écran — Digest Actif Immédiat, Audio Épuré & Météo Compacte (Session 2026-10-06 - Nuit 9 suite - 5, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse intégrale et immédiate à l'audit de hiérarchie visuelle : faire voir à l'utilisateur ce qu'il cherche dès la première seconde sans devoir faire défiler la page.

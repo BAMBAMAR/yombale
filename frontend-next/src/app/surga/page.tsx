@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import SurgaHeader from './components/SurgaHeader'
-import SurgaBottomNav, { type SurgaTab } from './components/SurgaBottomNav'
+import type { SurgaTab } from './components/SurgaBottomNav'
+import SurgaLayoutShell from './components/SurgaLayoutShell'
 import SurgaOnboarding, { type SurgaPreferencesData } from './components/SurgaOnboarding'
 import SurgaAujourdhuiTab from './components/SurgaAujourdhuiTab'
 import SurgaNotesView from './components/SurgaNotesView'
@@ -21,7 +22,6 @@ import {
 } from '@/lib/surga-offline-sync'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
 import { useFabAutoHide } from '@/lib/useFabAutoHide'
-import { Mic } from 'lucide-react'
 
 export interface SurgaUser {
   id: string
@@ -310,17 +310,27 @@ export default function SurgaPage() {
 
   return (
     <>
-      <SurgaHeader
-        titre={activeTab === 'notes' ? 'Mes Notes' : activeTab === 'depenses' ? 'Sama Xaalis' : activeTab === 'agenda' ? 'Mon Agenda' : (activeTab === 'services' || activeTab === 'plus') ? 'Services' : 'Surga'}
-        sousTitre={activeTab === 'aujourdhui' ? briefingData?.date : undefined}
-        afficherRetour={activeTab !== 'aujourdhui'}
-        onRetour={() => setActiveTab('aujourdhui')}
+      <SurgaLayoutShell
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         user={user}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        briefingDate={briefingData?.date}
+        nbNotes={nbNotes}
+        nbAgenda={nbAgenda}
+        statsApercu={statsApercu}
+        soldeKalpeFormate={soldeKalpeFormate}
+        quartier={preferences?.quartiers?.[0] || 'Dakar'}
+        isFabHidden={isFabHidden}
+        onOpenVoice={() => setIsVoiceOpen(true)}
+        onOpenTrafic={() => setIsTraficOpen(true)}
+        onOpenPresse={() => setIsPresseOpen(true)}
+        onOpenRadios={openRadioModal}
+        onOpenConcours={() => setIsConcoursOpen(true)}
+        onOpenImmo={() => setIsImmoOpen(true)}
+        onOpenPlaces={() => setIsPlacesOpen(true)}
         onOpenCompte={() => setIsCompteOpen(true)}
-      />
-
-      <div className="surga-container">
+        onOpenAuth={() => setIsAuthOpen(true)}
+      >
         {/* Onglet 1 : Aujourd'hui */}
         {activeTab === 'aujourdhui' && (
           <SurgaAujourdhuiTab
@@ -385,18 +395,7 @@ export default function SurgaPage() {
             onReinitialiser={handleReinitialiser}
           />
         )}
-      </div>
-
-      {/* Bouton micro flottant (FAB) avec auto-hide intelligent au scroll */}
-      <button
-        type="button"
-        className={`surga-fab-mic${isFabHidden ? ' surga-fab-hidden' : ''}`}
-        aria-label="Commande vocale Surga"
-        title="Parler à Surga"
-        onClick={() => setIsVoiceOpen(true)}
-      >
-        <Mic size={22} />
-      </button>
+      </SurgaLayoutShell>
 
       {/* Modales globales de Surga */}
       <SurgaModalsContainer
@@ -433,9 +432,6 @@ export default function SurgaPage() {
         onAjouterDepenseDemarche={(m, d) => { saveLocalDepense({ montant_xof: m, categorie: 'autre', note: d, date_depense: new Date().toISOString() }); rafraichirApercus() }}
         onAjouterAgendaDemarche={(t, date) => { saveLocalEvenement({ titre: t, date_evenement: date, heure_evenement: '09:00', categorie: 'demarche' }); rafraichirApercus() }}
       />
-
-      {/* Navigation basse */}
-      <SurgaBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </>
   )
 }

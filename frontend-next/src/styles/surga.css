@@ -617,5 +617,375 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   }
 }
 
+/* ==========================================================================
+   LAYOUT RESPONSIVE : BUREAU 3 COLONNES vs MOBILE 1 COLONNE
+   ========================================================================== */
+
+/* 1. Écrans Mobiles & Tablettes (< 1024px) */
+@media (max-width: 1023px) {
+  .surga-desktop-sidebar,
+  .surga-desktop-right-rail,
+  .surga-desktop-command-wrapper {
+    display: none !important;
+  }
+  .surga-mobile-header-wrap {
+    display: block !important;
+  }
+}
+
+/* 2. Écrans Desktop (>= 1024px) */
+@media (min-width: 1024px) {
+  body:has(.surga-root) {
+    background-color: #EDE7E0 !important;
+  }
+
+  .surga-root {
+    padding-bottom: 0 !important;
+    background-color: #EDE7E0;
+  }
+
+  .surga-mobile-header-wrap,
+  .surga-bottom-nav,
+  .surga-fab-mic {
+    display: none !important;
+  }
+
+  .surga-app-shell {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .surga-main-grid {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr) 300px;
+    max-width: 1360px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 100vh;
+    background: #FFFFFF;
+    border-left: 1px solid var(--surga-border, #E2E8F0);
+    border-right: 1px solid var(--surga-border, #E2E8F0);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  }
+
+  .surga-desktop-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: #FAFAF8;
+    border-right: 1px solid #ECE4DA;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 14px;
+    box-sizing: border-box;
+  }
+
+  .surga-center-feed {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100vh;
+    background: #FFFFFF;
+    position: relative;
+    overflow-y: auto;
+  }
+
+  .surga-center-feed .surga-container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 28px 28px 24px 28px !important;
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .surga-desktop-command-wrapper {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 25%, #FFFFFF 100%);
+    padding: 12px 28px 24px 28px;
+    z-index: 20;
+  }
+
+  .surga-desktop-right-rail {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: #FAFAF8;
+    border-left: 1px solid #ECE4DA;
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+  }
+}
+
+/* ==========================================================================
+   COMPOSANTS DE NAVIGATION DESKTOP (SIDEBAR, RAIL DROIT, OMNIBAR)
+   ========================================================================== */
+
+/* Titres de section dans la sidebar */
+.surga-sidebar-section-title {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 12px 10px 6px 10px;
+}
+
+/* Boutons de la sidebar */
+.surga-sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.surga-sidebar-btn:hover {
+  background: #F1EAE2;
+  color: #0F172A;
+}
+
+.surga-sidebar-btn.active {
+  background: #FEF3C7;
+  color: #92400E;
+  font-weight: 700;
+}
+
+.surga-sidebar-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #E2E8F0;
+  color: #475569;
+}
+
+.surga-sidebar-badge.live {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.surga-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 14px;
+  border-top: 1px solid #ECE4DA;
+  margin-top: 14px;
+}
+
+/* Widgets du rail droit */
+.surga-desktop-widget {
+  background: #FFFFFF;
+  border: 1px solid #ECE4DA;
+  border-radius: 12px;
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+.surga-desktop-widget:hover {
+  border-color: #D97706;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.08);
+}
+
+.surga-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.surga-widget-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.surga-widget-icon {
+  color: #94A3B8;
+}
+
+.surga-widget-highlight {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.surga-widget-value-strong {
+  font-size: 19px;
+  font-weight: 900;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.surga-widget-desc {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+.surga-note-memo {
+  font-size: 12px;
+  color: #334155;
+  font-style: italic;
+  line-height: 1.4;
+  background: #F8F5F0;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* Indicateurs de trafic du rail droit */
+.surga-trafic-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.surga-trafic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.surga-trafic-axis {
+  color: #334155;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.surga-trafic-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.surga-trafic-dot.green {
+  background: #16A34A;
+}
+
+.surga-trafic-dot.orange {
+  background: #D97706;
+}
+
+.surga-trafic-time {
+  font-weight: 700;
+  color: #64748B;
+}
+
+/* Barre de commande centrale (Omnibar / Ctrl+K) */
+.surga-desktop-command-bar {
+  background: #FFFFFF;
+  border: 1.5px solid #DFD5C8;
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.surga-desktop-command-bar:hover,
+.surga-desktop-command-bar:focus-within {
+  border-color: #D97706;
+  box-shadow: 0 4px 22px rgba(217, 119, 6, 0.14);
+}
+
+.surga-command-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.surga-command-search-icon {
+  color: #94A3B8;
+  flex-shrink: 0;
+}
+
+.surga-command-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13.5px;
+  color: #0F172A;
+  width: 100%;
+  font-family: inherit;
+}
+
+.surga-command-input::placeholder {
+  color: #94A3B8;
+}
+
+.surga-command-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.surga-kbd-shortcut {
+  background: #F1ECE6;
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid #DFD5C8;
+  letter-spacing: 0.02em;
+  font-family: inherit;
+}
+
+.surga-command-mic-btn {
+  background: #F8F5F0;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0F172A;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.surga-command-mic-btn:hover {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+
 
 

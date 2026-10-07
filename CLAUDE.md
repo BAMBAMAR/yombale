@@ -49,6 +49,29 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Architecture Desktop 3 Colonnes — Services Dakar Éclatés, Omnibar Ctrl+K & Rail Contextuel Droit (Session 2026-10-07 - Nuit 9 suite - 6, branche `feature/surga`)** :
+  - *Sprint d'Exécution Ergonomie Desktop & Exploitation Totale de l'Écran Large* :
+    1. **Sidebar Gauche Dédiée (240px, `SurgaDesktopSidebar.tsx`, 225 l.)** :
+       - Éclatement complet des fonctionnalités de Surga pour combler le vide de gauche :
+         - Section **Quotidien** : Aujourd'hui (actif ambre), Notes & Listes (avec badge dynamique de notes), Sama Xaalis, Agenda & Rappels (avec badge de rendez-vous du jour).
+         - Section **Services Dakar Éclatés** : Trafic Dakar direct (badge vert Live), Kiosque des Unes, Radios FM direct, Concours & ENA (badge J-7), Pôle Immobilier certifié, Bonnes Adresses.
+         - Footer : Accès Réglages et profil Compte avec quartier actif.
+    2. **Omnibar Universelle Desktop (`SurgaDesktopCommandBar.tsx`, 69 l.)** :
+       - Barre de commande textuelle et vocale fixée au bas du flux central (`Ctrl K` / `Cmd K` avec focus automatique global).
+       - Permet d'écrire ou de dicter une dépense, une note ou un rappel sans lever les mains du clavier.
+    3. **Rail Contextuel Droit Utile (300px, `SurgaDesktopRightRail.tsx`, 151 l.)** :
+       - 5 widgets glanceables interactifs au clic :
+         1. *Votre journée* : Prochain événement ou badge "Journée libre" sans bloquant.
+         2. *Sama Xaalis (Mois)* : Total des dépenses FCFA du mois + Solde Kalpé restant disponible.
+         3. *Trafic Dakar direct* : Temps de parcours en direct VDN (14 min) et Corniche Ouest (28 min) avec pastilles de congestion vertes et ambre.
+         4. *Météo Dakar* : Température (28°C), marée haute (17h45), qualité de l'air (Bonne AQI 45).
+         5. *Mémo épinglé* : Dernière note ou liste de courses en cours de consultation.
+    4. **Layout Shell Responsif Zéro Régression (`SurgaLayoutShell.tsx`, 138 l. & `surga.css`)** :
+       - Grille Desktop 3 colonnes à partir de 1024px (`display: grid; grid-template-columns: 240px minmax(0, 1fr) 300px; max-width: 1360px;`).
+       - Isolation CSS pure : masquage de la bottom-nav et du FAB mic sur desktop, masquage de la sidebar/rail/omnibar sur mobile (< 1024px).
+       - Modularisation stricte : `page.tsx` passe de 442 à 438 lignes (100% des fichiers sous `app/surga/` < 450 l.).
+  - *Validation Technique* : `npx tsc --noEmit` (0 erreur), `npm run lint:slop` (0 monolith), 158/158 tests Jest PASS, captures Playwright Desktop Retina et Mobile validées.
+
 - **Surga / Refonte de la Hiérarchie du Premier Écran — Digest Actif Immédiat, Audio Épuré & Météo Compacte (Session 2026-10-06 - Nuit 9 suite - 5, branche `feature/surga`)** :
   - *Sprint d'Exécution UX & Priorité du Premier Regard* :
     1. **Le Briefing Montre Immédiatement son Contenu (`SurgaAujourdhuiTab.tsx`, 317 l.)** :
