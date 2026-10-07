@@ -700,6 +700,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     position: sticky;
     top: 0;
     height: 100vh;
+    max-height: 100vh;
     overflow-y: auto;
     overflow-y: overlay;
     background: #FAFAF8;
@@ -707,7 +708,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 20px 14px;
+    padding: 14px 12px;
     box-sizing: border-box;
     scrollbar-width: none; /* Firefox : invisible */
     -ms-overflow-style: none; /* IE / Edge : invisible */
@@ -864,6 +865,20 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   background: #FEF3C7;
   color: #92400E;
   font-weight: 700;
+}
+
+.surga-sidebar-btn-more {
+  margin-top: 4px;
+  background: #F7F3EE;
+  border: 1px dashed #D9CFC4;
+  color: #1C2B4A;
+  font-weight: 600;
+}
+
+.surga-sidebar-btn-more:hover {
+  background: #EFE8DF;
+  border-color: #C75B00;
+  color: #C75B00;
 }
 
 .surga-sidebar-badge {

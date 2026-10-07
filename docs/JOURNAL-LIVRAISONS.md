@@ -1,4 +1,35 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Limitation Menu Gauche, Zéro Défilement & Bouton « Plus de services » Hub (Session 2026-10-07 - Nuit 9 suite - 12, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse directe, précise et rigoureuse à la directive utilisateur : « jai pas demande de pettre tous les service dans le menu gauche mais en bas ajouter un boutons plus de service qui renvoie vers les autres service.il faut limiter le menu gauche/eviter le defilement du menu ».
+    - Élimination radicale de tout défilement (scroll) dans la colonne latérale gauche en réduisant la hauteur naturelle à ~535px pour qu'elle s'intègre parfaitement et reste 100% visible sur tous les écrans desktop (même petits écrans d'ordinateurs portables 1366x768).
+    - Maintien exclusif des 5 services prioritaires dans la navigation latérale : Trafic Dakar, Kiosque des Unes, Pôle Immobilier, Shopping Nopalou (en haut de Bonnes Adresses), et Bonnes Adresses.
+    - Ajout sous « Bonnes Adresses » d'un bouton d'action dédié **« Plus de services »** (+7) renvoyant vers une modale hub ergonomique centralisant l'accès à tous les autres services sénégalais.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Restructuration & Allègement de la Sidebar (`SurgaDesktopSidebar.tsx`, 215 l.)** :
+       - Réduction à 12 boutons fixes (4 Quotidien + 6 Services Dakar + 2 Footer Réglages/Compte).
+       - Suppression des boutons redondants encombrants (Radios, Concours, Démarches, Emploi, Séries) directement dans la colonne.
+       - Bouton `.surga-sidebar-btn-more` stylisé avec bordure pointillée, icône `LayoutGrid` et pastille ambre `+7`.
+       - Ajustement CSS (`surga.css`, padding 14px 12px, `max-height: 100vh`) garantissant zéro débordement.
+    2. **Composant Modale Hub Dédié (`SurgaPlusServicesModal.tsx`, 245 l.)** :
+       - Modale accessible et centrée (backdrop blur, overlay zIndex 1050, touche Échap, bouton Fermer).
+       - Grille interactive de 7 services complémentaires :
+         - *Radios FM direct* (RTS, RFM, Zik FM, Sud FM, live stream).
+         - *Concours & ENA* (Calendrier officiel, dossiers, alertes J-7).
+         - *Démarches État* (Passeport, CNI biométrique, permis, casier judiciaire).
+         - *Emploi & Stages* (Recrutements, offres et opportunités à Dakar).
+         - *Séries & Vidéos* (Productions sénégalaises, Marodi, EvenProd).
+         - *Podcast Privé* (Briefing matinal et flash info en audio MP3).
+         - *Calculatrice FCFA* (Outil de conversion et calculs de poche déterministe).
+       - Ouverture immédiate du service choisi au clic avec transition fluide.
+    3. **Intégration & Câblage Shell (`SurgaLayoutShell.tsx`, `SurgaModalsContainer.tsx`, `page.tsx`)** :
+       - Câblage de l'état `isPlusServicesOpen` et transmission transparente des déclencheurs.
+    4. **Contrôles Qualité & Validation Playwright** :
+       - Diagnostic Playwright live : `totalButtons: 12, isScrollable: false, scrollHeight: 900, clientHeight: 900`.
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests Jest : 158/158 PASS. Test sémantique HTML AUD-157 : PASS.
+       - 100% des fichiers sous `app/surga/` strictement < 450 lignes.
+
 - **Surga / Service Shopping & Boutiques Nopalou (Positionné au-dessus de Bonnes Adresses) (Session 2026-10-07 - Nuit 9 suite - 11, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe et fidèle à la directive utilisateur : « je veux ajouter dans les service shopping qui montre les boutique nopalou et leur produit .le mettre en haut de bonne affaire ».

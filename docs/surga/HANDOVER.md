@@ -1,15 +1,31 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 11 — Service Shopping & Boutiques Nopalou au-dessus de Bonnes Adresses)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 12 — Limitation Menu Gauche, Zéro Défilement & Bouton Hub « Plus de services »)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Service Shopping Nopalou Intégré (au-dessus de Bonnes Adresses dans la Sidebar & le Dashboard), Modale Dédiée Boutiques & Produits avec Filtres & Recherche, Services Dakar Éclatés, Écran Réglages Épuré Zéro Redondance, Assistant IA Omnibar Opérationnel, Scrollbars Windows Éradiquées, Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests PASS**  
+> **Statut global** : 🟢 **Sidebar Desktop Compacte & Zéro Défilement (12 boutons, scrollable: false), Bouton « Plus de services » (+7) Déployé sous Bonnes Adresses, Modale Hub `<SurgaPlusServicesModal />` Opérationnelle, Service Shopping Nopalou Intégré, Écran Réglages Épuré, Assistant IA Omnibar Opérationnel, Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-0. **Service Shopping & Boutiques Nopalou Déployé au-dessus de Bonnes Adresses (100% DONE — Nuit 9 suite - 11)** :
+0. **Limitation du Menu Gauche, Zéro Défilement & Bouton Hub « Plus de services » (100% DONE — Nuit 9 suite - 12)** :
+   - Traitement rigoureux de la consigne utilisateur : « jai pas demande de pettre tous les service dans le menu gauche mais en bas ajouter un boutons plus de service qui renvoie vers les autres service.il faut limiter le menu gauche/eviter le defilement du menu ».
+   - **Élimination Définitive du Défilement (Scroll) dans la Sidebar** :
+     - Restructuration de `SurgaDesktopSidebar.tsx` (215 l.) : exactement 12 boutons calibrés (4 Quotidien, 6 Services Dakar, 2 Footer Réglages/Compte).
+     - Hauteur naturelle ~535px s'adaptant à toutes les résolutions d'écran sans ascenseur ni débordement (`isScrollable: false`).
+     - Les 5 services prioritaires sont conservés dans la colonne : *Trafic Dakar* (Live), *Kiosque des Unes*, *Pôle Immobilier*, *Shopping Nopalou* (Boutiques), *Bonnes Adresses*.
+   - **Bouton d'Action « Plus de services » (+7)** :
+     - Positionné immédiatement sous « Bonnes Adresses » avec style pointillé subtil (`.surga-sidebar-btn-more`), icône `LayoutGrid` et pastille ambre `+7`.
+   - **Modale Hub Dédiée (`SurgaPlusServicesModal.tsx`, 245 l.)** :
+     - Regroupe en 1 clic les 7 services complémentaires : *Radios FM direct*, *Concours & ENA*, *Démarches État*, *Emploi & Stages*, *Séries & Vidéos*, *Podcast Privé*, *Calculatrice FCFA*.
+     - Lancement direct sans rupture au clic sur un service.
+   - **Validation & Métriques** :
+     - Playwright : `isScrollable: false`, `totalButtons: 12`.
+     - 100% des fichiers sous `app/surga/` < 450 lignes.
+     - TypeScript : 0 erreur. Jest : 158/158 tests PASS. Test sémantique AUD-157 : PASS.
+
+0.bis. **Service Shopping & Boutiques Nopalou Déployé au-dessus de Bonnes Adresses (100% DONE — Nuit 9 suite - 11)** :
    - Traitement direct de la directive utilisateur : « je veux ajouter dans les service shopping qui montre les boutique nopalou et leur produit .le mettre en haut de bonne affaire ».
    - **Positionnement Hiérarchique Respecté** :
      - Sidebar Desktop (`SurgaDesktopSidebar.tsx`, 256 l.) : Raccourci « Shopping Nopalou » (`ShoppingBag`, badge ambre *Boutiques*) positionné immédiatement au-dessus de « Bonnes Adresses ». Ordre garanti : Pôle Immo -> Shopping Nopalou -> Bonnes Adresses -> Démarches État -> Emploi -> Séries.

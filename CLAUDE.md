@@ -50,6 +50,23 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Limitation Menu Gauche, Zéro Défilement & Bouton « Plus de services » Hub (Session 2026-10-07 - Nuit 9 suite - 12, branche `feature/surga`)** :
+  - *Élimination du Défilement & Centralisation des Services Complémentaires* :
+    1. **Menu Gauche Compact & Zéro Défilement Garanti** :
+       - Réponse exacte à la directive utilisateur : « jai pas demande de pettre tous les service dans le menu gauche mais en bas ajouter un boutons plus de service qui renvoie vers les autres service.il faut limiter le menu gauche/eviter le defilement du menu ».
+       - La Sidebar Desktop (`SurgaDesktopSidebar.tsx`, 215 l.) est ramenée à une hauteur naturelle compacte (~535px) avec 12 boutons au total (Quotidien: 4, Services: 6, Footer: 2).
+       - Vérification Playwright sous viewport 1440x900 : `scrollHeight: 900, clientHeight: 900, isScrollable: false` (zéro débordement, zéro ascenseur).
+    2. **Bouton « Plus de services » (+7) sous Bonnes Adresses** :
+       - Bouton d'action à bordure pointillée discrète (`.surga-sidebar-btn-more`) avec icône `LayoutGrid` et badge ambre `+7`.
+       - Ouvre instantanément la modale hub `<SurgaPlusServicesModal />` (245 l.).
+    3. **Modale Hub Dédiée (`SurgaPlusServicesModal.tsx`)** :
+       - Centralise l'accès en 1 clic aux 7 services et outils complémentaires : *Radios FM direct*, *Concours & ENA*, *Démarches État*, *Emploi & Stages*, *Séries & Vidéos*, *Podcast Privé*, *Calculatrice FCFA*.
+       - Au clic sur un service, la modale hub se ferme et active immédiatement la modale métier correspondante sans friction.
+    4. **Standards & Qualité** :
+       - 100% des fichiers sous `app/surga/` < 450 lignes.
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests unitaires Jest : 158/158 PASS. Test sémantique HTML AUD-157 PASS.
+
 - **Surga / Service Shopping & Boutiques Nopalou (Positionné au-dessus de Bonnes Adresses) (Session 2026-10-07 - Nuit 9 suite - 11, branche `feature/surga`)** :
   - *Intégration du Commerce Local Nopalou dans Surga* :
     1. **Positionnement au-dessus de « Bonnes Adresses »** :

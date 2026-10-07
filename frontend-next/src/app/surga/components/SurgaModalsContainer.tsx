@@ -21,6 +21,7 @@ const SurgaDonneesModal = dynamic(() => import('./SurgaDonneesModal'), { ssr: fa
 const SurgaVideosModal = dynamic(() => import('./SurgaVideosModal'), { ssr: false })
 const SurgaEmploiModal = dynamic(() => import('./SurgaEmploiModal'), { ssr: false })
 const SurgaDemarchesModal = dynamic(() => import('./SurgaDemarchesModal'), { ssr: false })
+const SurgaPlusServicesModal = dynamic(() => import('./SurgaPlusServicesModal'), { ssr: false })
 const SurgaAuthModal = dynamic(() => import('./SurgaAuthModal'), { ssr: false })
 const SurgaCompteModal = dynamic(() => import('./SurgaCompteModal'), { ssr: false })
 
@@ -35,6 +36,7 @@ interface SurgaModalsContainerProps {
   isConcoursOpen: boolean
   isPlacesOpen: boolean
   isShoppingOpen?: boolean
+  isPlusServicesOpen?: boolean
   isPremiumOpen: boolean
   isProOpen: boolean
   isDonneesOpen?: boolean
@@ -54,12 +56,14 @@ interface SurgaModalsContainerProps {
   onCloseConcours: () => void
   onClosePlaces: () => void
   onCloseShopping?: () => void
+  onClosePlusServices?: () => void
   onClosePremium: () => void
   onClosePro: () => void
   onCloseDonnees?: () => void
   onCloseVideos?: () => void
   onCloseEmploi?: () => void
   onCloseDemarches?: () => void
+  onOpenPodcastModal?: () => void
   onOpenAuth?: () => void
   onCloseAuth?: () => void
   onAuthSuccess?: (user: any) => void
@@ -108,6 +112,7 @@ export default function SurgaModalsContainer({
   isConcoursOpen,
   isPlacesOpen,
   isShoppingOpen = false,
+  isPlusServicesOpen = false,
   isPremiumOpen,
   isProOpen,
   isDonneesOpen = false,
@@ -127,12 +132,14 @@ export default function SurgaModalsContainer({
   onCloseConcours,
   onClosePlaces,
   onCloseShopping = () => {},
+  onClosePlusServices = () => {},
   onClosePremium,
   onClosePro,
   onCloseDonnees = () => {},
   onCloseVideos = () => {},
   onCloseEmploi = () => {},
   onCloseDemarches = () => {},
+  onOpenPodcastModal,
   onOpenAuth,
   onCloseAuth = () => {},
   onAuthSuccess = () => {},
@@ -355,6 +362,19 @@ export default function SurgaModalsContainer({
           onCreerNoteChecklist={onCreerNoteChecklist}
           onAjouterDepense={onAjouterDepenseDemarche}
           onAjouterAgenda={onAjouterAgendaDemarche}
+        />
+      )}
+      {isPlusServicesOpen && (
+        <SurgaPlusServicesModal
+          isOpen={isPlusServicesOpen}
+          onClose={onClosePlusServices || (() => {})}
+          onOpenRadios={openRadioModal}
+          onOpenConcours={onOpenConcours}
+          onOpenDemarches={onOpenDemarches}
+          onOpenEmploi={onOpenEmploi}
+          onOpenVideos={onOpenVideos}
+          onOpenPodcast={onOpenPodcastModal}
+          onOpenCalc={onOpenCalc}
         />
       )}
       {isAuthOpen && (

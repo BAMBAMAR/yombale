@@ -31,6 +31,7 @@ interface SurgaLayoutShellProps {
   onOpenImmo: () => void
   onOpenShopping?: () => void
   onOpenPlaces: () => void
+  onOpenPlusServices?: () => void
   onOpenDemarches?: () => void
   onOpenEmploi?: () => void
   onOpenVideos?: () => void
@@ -61,6 +62,7 @@ export default function SurgaLayoutShell({
   onOpenImmo,
   onOpenShopping,
   onOpenPlaces,
+  onOpenPlusServices,
   onOpenDemarches,
   onOpenEmploi,
   onOpenVideos,
@@ -198,6 +200,7 @@ export default function SurgaLayoutShell({
           onOpenImmo={onOpenImmo}
           onOpenShopping={onOpenShopping}
           onOpenPlaces={onOpenPlaces}
+          onOpenPlusServices={onOpenPlusServices}
           onOpenDemarches={onOpenDemarches}
           onOpenEmploi={onOpenEmploi}
           onOpenVideos={onOpenVideos}

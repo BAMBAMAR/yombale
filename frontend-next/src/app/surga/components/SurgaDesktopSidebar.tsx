@@ -8,14 +8,10 @@ import {
   Calendar,
   Navigation,
   Newspaper,
-  Radio,
-  GraduationCap,
   Home,
   MapPin,
   ShoppingBag,
-  ShieldCheck,
-  Briefcase,
-  Tv,
+  LayoutGrid,
   Settings,
   User,
 } from 'lucide-react'
@@ -30,15 +26,16 @@ interface SurgaDesktopSidebarProps {
   quartier?: string
   onOpenTrafic: () => void
   onOpenPresse: () => void
-  onOpenRadios: () => void
-  onOpenConcours: () => void
   onOpenImmo: () => void
   onOpenShopping?: () => void
   onOpenPlaces: () => void
+  onOpenPlusServices?: () => void
+  onOpenCompte: () => void
+  onOpenRadios?: () => void
+  onOpenConcours?: () => void
   onOpenDemarches?: () => void
   onOpenEmploi?: () => void
   onOpenVideos?: () => void
-  onOpenCompte: () => void
 }
 
 export default function SurgaDesktopSidebar({
@@ -49,14 +46,10 @@ export default function SurgaDesktopSidebar({
   quartier = 'Dakar Plateau',
   onOpenTrafic,
   onOpenPresse,
-  onOpenRadios,
-  onOpenConcours,
   onOpenImmo,
   onOpenShopping,
   onOpenPlaces,
-  onOpenDemarches,
-  onOpenEmploi,
-  onOpenVideos,
+  onOpenPlusServices,
   onOpenCompte,
 }: SurgaDesktopSidebarProps) {
   return (
@@ -145,29 +138,6 @@ export default function SurgaDesktopSidebar({
 
           <button
             type="button"
-            onClick={onOpenRadios}
-            className="surga-sidebar-btn"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Radio size={17} />
-              <span>Radios FM direct</span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenConcours}
-            className="surga-sidebar-btn"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <GraduationCap size={17} />
-              <span>Concours &amp; ENA</span>
-            </div>
-            <span className="surga-sidebar-badge">J-7</span>
-          </button>
-
-          <button
-            type="button"
             onClick={onOpenImmo}
             className="surga-sidebar-btn"
           >
@@ -203,44 +173,35 @@ export default function SurgaDesktopSidebar({
             </div>
           </button>
 
-          {/* NOUVEAUX SERVICES ÉCLATÉS SOUS BONNES ADRESSES */}
-          {onOpenDemarches && (
+          {/* BOUTON PLUS DE SERVICES (CENTRALISE LES AUTRES SERVICES SANS DÉFILEMENT DU MENU) */}
+          {onOpenPlusServices && (
             <button
               type="button"
-              onClick={onOpenDemarches}
-              className="surga-sidebar-btn"
+              onClick={onOpenPlusServices}
+              className="surga-sidebar-btn surga-sidebar-btn-more"
+              title="Accéder aux autres services sénégalais"
+              style={{
+                marginTop: 4,
+                border: '1px dashed #D9CFC4',
+                backgroundColor: '#F7F3EE',
+                color: '#1C2B4A',
+                fontWeight: 600,
+              }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <ShieldCheck size={17} />
-                <span>Démarches État</span>
+                <LayoutGrid size={17} style={{ color: '#C75B00' }} />
+                <span>Plus de services</span>
               </div>
-              <span className="surga-sidebar-badge">Guide</span>
-            </button>
-          )}
-
-          {onOpenEmploi && (
-            <button
-              type="button"
-              onClick={onOpenEmploi}
-              className="surga-sidebar-btn"
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Briefcase size={17} />
-                <span>Emploi &amp; Stages</span>
-              </div>
-            </button>
-          )}
-
-          {onOpenVideos && (
-            <button
-              type="button"
-              onClick={onOpenVideos}
-              className="surga-sidebar-btn"
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Tv size={17} />
-                <span>Séries &amp; Vidéos</span>
-              </div>
+              <span
+                className="surga-sidebar-badge"
+                style={{
+                  backgroundColor: 'rgba(199, 91, 0, 0.12)',
+                  color: '#C75B00',
+                  fontWeight: 700,
+                }}
+              >
+                +7
+              </span>
             </button>
           )}
         </nav>

@@ -3,6 +3,29 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 12] — Limitation du Menu Gauche, Zéro Défilement & Bouton Hub « Plus de services »
+- **Objectif Atteint :**
+  - Répondre directement à la directive : « jai pas demande de pettre tous les service dans le menu gauche mais en bas ajouter un boutons plus de service qui renvoie vers les autres service.il faut limiter le menu gauche/eviter le defilement du menu ».
+  - Alléger drastiquement la sidebar desktop gauche pour qu'elle tienne parfaitement en 1 seul écran sans aucun défilement vertical (`isScrollable: false`).
+  - Conserver dans le menu gauche les 5 services clés essentiels : Trafic Dakar, Kiosque des Unes, Pôle Immobilier, Shopping Nopalou, Bonnes Adresses.
+  - Positionner sous « Bonnes Adresses » un bouton distinct **« Plus de services »** (`LayoutGrid`, badge `+7`) ouvrant une modale hub fluide `<SurgaPlusServicesModal />`.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Sidebar Desktop Compacte (`SurgaDesktopSidebar.tsx`, 215 l.)* :
+     - 12 boutons fixes (Quotidien: 4, Services: 6, Footer: 2). Hauteur naturelle ~535px.
+     - Suppression de l'affichage direct des services redondants (Radios, Concours, Démarches, Emploi, Séries).
+     - Bouton dédié `.surga-sidebar-btn-more` ouvrant la modale hub.
+  2. *Modale Hub Dédiée (`SurgaPlusServicesModal.tsx`, 245 l.)* :
+     - Présentation claire des 7 services et outils complémentaires : Radios FM, Concours & ENA, Démarches État, Emploi & Stages, Séries & Vidéos, Podcast Privé, Calculatrice FCFA.
+     - Lancement direct du service souhaité en un clic.
+  3. *Styles & Shell (`surga.css`, `SurgaLayoutShell.tsx`, `SurgaModalsContainer.tsx`, `page.tsx`)* :
+     - `max-height: 100vh`, padding 14px 12px, zero scroll.
+- **Validation Technique :**
+  - Diagnostic Playwright : `isScrollable: false`, `totalButtons: 12`, captures visuelles générées (`surga_desktop_sidebar_compact.png`, `surga_plus_services_modal.png`).
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests unitaires Surga : 158/158 PASS.
+  - Test sémantique AUD-157 : PASS.
+  - 100% composants < 450 lignes.
+
 ### [2026-10-07 — Nuit 9 suite - 11] — Service Shopping & Boutiques Nopalou (Positionné au-dessus de Bonnes Adresses)
 - **Objectif Atteint :**
   - Répondre fidèlement et intégralement à la demande utilisateur : « je veux ajouter dans les service shopping qui montre les boutique nopalou et leur produit .le mettre en haut de bonne affaire ».

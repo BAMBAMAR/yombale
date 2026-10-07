@@ -44,7 +44,7 @@ export default function SurgaPage() {
   const [isCalcOpen, setIsCalcOpen] = useState(false), [isVoiceOpen, setIsVoiceOpen] = useState(false)
   const [isPresseOpen, setIsPresseOpen] = useState(false), [isPodcastOpen, setIsPodcastOpen] = useState(false)
   const [isTraficOpen, setIsTraficOpen] = useState(false), [isImmoOpen, setIsImmoOpen] = useState(false)
-  const [isConcoursOpen, setIsConcoursOpen] = useState(false), [isPlacesOpen, setIsPlacesOpen] = useState(false), [isShoppingOpen, setIsShoppingOpen] = useState(false)
+  const [isConcoursOpen, setIsConcoursOpen] = useState(false), [isPlacesOpen, setIsPlacesOpen] = useState(false), [isShoppingOpen, setIsShoppingOpen] = useState(false), [isPlusServicesOpen, setIsPlusServicesOpen] = useState(false)
   const [isPremiumOpen, setIsPremiumOpen] = useState(false), [isProOpen, setIsProOpen] = useState(false)
   const [isDonneesOpen, setIsDonneesOpen] = useState(false), [isVideosOpen, setIsVideosOpen] = useState(false)
   const [isEmploiOpen, setIsEmploiOpen] = useState(false), [isDemarchesOpen, setIsDemarchesOpen] = useState(false)
@@ -329,6 +329,7 @@ export default function SurgaPage() {
         onOpenImmo={() => setIsImmoOpen(true)}
         onOpenShopping={() => setIsShoppingOpen(true)}
         onOpenPlaces={() => setIsPlacesOpen(true)}
+        onOpenPlusServices={() => setIsPlusServicesOpen(true)}
         onOpenDemarches={() => setIsDemarchesOpen(true)}
         onOpenEmploi={() => setIsEmploiOpen(true)}
         onOpenVideos={() => setIsVideosOpen(true)}
@@ -401,7 +402,7 @@ export default function SurgaPage() {
       <SurgaModalsContainer
         isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
         isPodcastOpen={isPodcastOpen} isTraficOpen={isTraficOpen} isImmoOpen={isImmoOpen}
-        isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isShoppingOpen={isShoppingOpen} isPremiumOpen={isPremiumOpen}
+        isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isShoppingOpen={isShoppingOpen} isPlusServicesOpen={isPlusServicesOpen} isPremiumOpen={isPremiumOpen}
         isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen}
         isEmploiOpen={isEmploiOpen} isDemarchesOpen={isDemarchesOpen}
         isAuthOpen={isAuthOpen} isCompteOpen={isCompteOpen}
@@ -409,6 +410,8 @@ export default function SurgaPage() {
         onClosePresse={() => setIsPresseOpen(false)} onClosePodcast={() => setIsPodcastOpen(false)}
         onCloseTrafic={() => setIsTraficOpen(false)} onCloseImmo={() => setIsImmoOpen(false)}
         onCloseConcours={() => setIsConcoursOpen(false)} onClosePlaces={() => setIsPlacesOpen(false)} onCloseShopping={() => setIsShoppingOpen(false)}
+        onClosePlusServices={() => setIsPlusServicesOpen(false)}
+        onOpenPodcastModal={() => setIsPodcastOpen(true)}
         onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)}
         onCloseDonnees={() => setIsDonneesOpen(false)} onCloseVideos={() => setIsVideosOpen(false)}
         onCloseEmploi={() => setIsEmploiOpen(false)} onCloseDemarches={() => setIsDemarchesOpen(false)}
