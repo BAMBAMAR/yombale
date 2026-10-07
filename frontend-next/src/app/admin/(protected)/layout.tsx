@@ -5,6 +5,7 @@ import { adminLogout, getAdminSession } from '@/app/actions/admin'
 import AdminSidebarClient from './AdminSidebarClient'
 import AdminOmnisearch from './AdminOmnisearch'
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs'
+import AdminBottomNav from '@/components/admin/AdminBottomNav'
 
 export const metadata = { title: 'Administration - Nopalou Control Center', robots: 'noindex, nofollow' }
 
@@ -22,6 +23,7 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
         <AdminOmnisearch secret={secret} />
         <AdminBreadcrumbs />
         {children}
+        <AdminBottomNav />
       </main>
     </div>
   )

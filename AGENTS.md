@@ -4,8 +4,19 @@
 - **Bannissement du Push Automatique** : L'assistant ne doit **JAMAIS** exécuter de `git push` de sa propre initiative.
 - **Attente Ordre Utilisateur** : Les modifications de code peuvent être testées et préparées localement, mais un `git push` vers `origin main` ne doit être exécuté **QUE SI et SEULEMENT SI** l'utilisateur le demande explicitement (ex: *"push"*, *"pousse sur github"*, *"déploie"*).
 
-## 📌 Règle Obligatoire de Documentation
-- **Mise à Jour Systématique de `CLAUDE.md`** : À la fin de chaque session ou dès qu'un déploiement/push git (`origin main`) est validé et demandé par l'utilisateur, l'assistant DOIT **systématiquement mettre à jour le fichier `CLAUDE.md`** avec le résumé précis des nouveautés, fonctionnalités ajoutées, migrations SQL et corrections effectuées.
+## 🌿 Règle Absolue de Gestion des Branches Git : NOPALOU vs SURGA
+- **Branche `main` Obligatoire pour NOPALOU** : Toute modification relative à **NOPALOU** (marketplace, panel d'administration global `/admin`, logiciel de caisse POS, boutiques, comparateur de prix, CRM / prospection, routes API générales) DOIT IMPÉRATIVEMENT être effectuée sur la branche **`main`**. L'assistant a interdiction formelle de travailler sur ces périmètres dans la branche `feature/surga`.
+- **Branche `feature/surga` Exclusivement pour SURGA** : La branche `feature/surga` est STRICTEMENT réservée aux développements exclusifs de l'assistant personnel **SURGA** (`/surga`, `/admin/surga`, `backend/services/surga/`). Ne JAMAIS travailler sur `feature/surga` pour des tâches Nopalou ou l'administration générale Nopalou.
+- **Vérification Systématique** : Avant de débuter toute tâche relative à Nopalou ou à l'administration générale, TOUJOURS vérifier que la branche active est `main` (`git branch --show-current`) et basculer sur `main` si nécessaire.
+
+## 📌 Règle Obligatoire de Documentation Exhaustive pour les Prochaines Sessions
+- **Mise à Jour Systématique de TOUS les Documents** : À la fin de chaque session de travail, après chaque livraison ou tâche majeure (et obligatoirement avant tout déploiement / `git push`), l'assistant DOIT **systématiquement et sans exception mettre à jour l'ensemble des documents de documentation et de passation** pour garantir une reprise parfaite et sans perte de contexte lors des prochaines sessions :
+  1. **`CLAUDE.md`** : Résumé précis des nouveautés, fonctionnalités ajoutées, migrations SQL et corrections effectuées en tête du journal des versions.
+  2. **`docs/JOURNAL-LIVRAISONS.md`** : Compte-rendu des livraisons et correctifs en tête du journal racine du projet.
+  3. **`docs/surga/JOURNAL-LIVRAISONS.md`** (si module Surga) ou le journal du module concerné : Entrée détaillée horodatée en tête du fichier avec la liste des tâches et fichiers modifiés.
+  4. **`docs/surga/HANDOVER.md`** (ou document de passation actif) : Actualisation de la date, du statut global, du résumé exécutif, de la cartographie des composants clés, des commandes de test et des scores de validation.
+  5. **`docs/surga/PLAN.md`** (ou plan d'action actif) : Marquage strict `[x] DONE` des tranches et jalons réalisés.
+- **Commit Local Systématique** : Ces mises à jour documentaires doivent être commitées localement avec le code (sans aucun `git push` sans demande explicite de l'utilisateur).
 
 ## 🚫 Interdiction Absolue : Chargement Dynamique & Fetch Externe de Polices (Global Site & Images)
 - **Bannissement Strict du `fetch` / Téléchargement de Polices Externes sur Tout le Projet** : Il est STRICTEMENT INTERDIT de télécharger, `fetch`, `@import` ou injecter des polices d'écriture dynamiquement depuis des CDN externes (ex: fichiers TTF/WOFF/WOFF2 depuis `cdn.jsdelivr.net`, Google Fonts CDN, unpkg, fontsource CDN, ou tout autre serveur tiers) sur L'ENSEMBLE DU SITE et de l'application (`frontend-next`, routes d'images `ImageResponse` / `@vercel/og` / Satori, API, styles, scripts).
@@ -45,4 +56,26 @@
    - **Alignement Monoligne Prioritaire** : Verrouiller les contrôles d'en-tête (vocal, scan, onglets) sur une seule et même ligne tant que l'espace le permet via `flexWrap: 'nowrap'` et `flexShrink: 0`.
    - **Lisibilité Produit sans Troncature Sauvage** : Pour les listes d'articles, découper en 2 sous-lignes calibrées (Ligne 1 : Nom complet lisible sans troncature agressive ; Ligne 2 : Prix FCFA et badge stock en `whiteSpace: 'nowrap'`), avec le bouton d'action calé à droite sans tronquer le texte ni déborder de la carte.
 
+## 🏷️ Règle Fondamentale de Démarcation : NOPALOU vs SURGA
 
+Le projet héberge **deux produits distincts et étanches** qui partagent la même infrastructure mais possèdent des identités, URLs et interfaces 100% séparées :
+
+### 1. 🤖 SURGA (Assistant Personnel de Poche & Services Locaux)
+- **URL & Périmètre** : `surga.nopalou.com` ou route `/surga` (PWA dédiée) et administration `/admin/surga`.
+- **Fonctionnalités** : Briefing matinal sourcé, notes & dépenses perso FCFA, calculatrice déterministe, agenda & rappels, commandes WhatsApp structurées, reconnaissance vocale, revue de presse & kiosque des Unes, audio podcast privé, radios FM directes, trafic TomTom Live Dakar, pôle immobilier certifié, concours nationaux (J-30/J-7/J-1), bonnes adresses dakaroises, abonnement Surga Premium.
+- **Répertoires Code** : `frontend-next/src/app/surga/`, `frontend-next/src/styles/surga.css`, `frontend-next/src/app/admin/(protected)/surga/`, `backend/services/surga/`, `backend/routes/surga/`, `backend/routes/admin-surga.js`, tables SQL `surga_*`.
+- **Règle d'Or UI** : **Détachement Total et Zéro Élément Marketplace**. Aucun composant Nopalou (navbar, footer, tiroir panier, chatbot, barre d'onglets e-commerce) ne doit apparaître dans Surga (omission SSR dans `layout.tsx` et isolation CSS `:has(.surga-root)`).
+
+### 2. 🏪 NOPALOU (Plateforme E-Commerce, Comparateur & Caisse POS)
+- **URL & Périmètre** : `nopalou.com` (accueil `/`, `/boutiques`, `/annonces`, `/immo`, `/caisse`, `/marchands`, `/compte`).
+- **Fonctionnalités** : Comparateur de prix multi-vendeurs, boutiques en ligne marchandes, logiciel de caisse tactile POS offline-first, gestion de stock, carnet de dettes & crédits clients, baux & agences immo, vente WhatsApp marketplace.
+- **Répertoires Code** : `frontend-next/src/app/(vitrine)/`, `app/boutiques/`, `app/caisse/`, `backend/routes/boutiques.js`, `produits.js`, `commandes.js`, etc.
+
+### 🛑 Interdiction Transverse
+- Ne JAMAIS modifier ni impacter la caisse POS ni le comparateur de prix lors des travaux sur Surga.
+- Inversement, les évolutions du design ou des composants de Nopalou ne doivent JAMAIS réinjecter d'éléments visuels e-commerce dans Surga.
+
+## 🎨 Sanctuarisation Absolue de l'Emblème & Logo Surga (/surga/surga-symbol.png)
+- **Bannissement des Placeholders et Fausses Icônes** : L'assistant ne doit **JAMAIS** réinventer, bricoler ou substituer l'icône de Surga par un carré noir avec la lettre "S", un emoji, une icône vectorielle Lucide aléatoire ou du code HTML générique ad-hoc.
+- **Source de Vérité Unique Obligatoire** : Tout affichage du logo ou de l'emblème de Surga (Desktop Sidebar, Mobile Header, modales, landing page, profil) DOIT IMPÉRATIVEMENT utiliser le composant sanctuarisé `<SurgaBrandLogo />` (`frontend-next/src/app/surga/components/SurgaBrandLogo.tsx`) ou charger directement le fichier image officiel `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre).
+- **Interdiction de Transfert de Mockup Statique vers Prod** : Lors du prototypage rapide de maquettes HTML/CSS, l'assistant a interdiction absolue de transférer des éléments placeholders (tels que `<div>S</div>`) dans les composants React de production.

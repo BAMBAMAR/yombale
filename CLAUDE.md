@@ -4,6 +4,7 @@
 
 ## 🛑 1. Déploiement & Git
 - **Bannissement du Push Automatique** : Ne **JAMAIS** exécuter de `git push` de sa propre initiative. Attendre un ordre explicite de l'utilisateur (ex: *"push"*, *"déploie"*).
+- **Gestion des Branches Git (main pour NOPALOU, feature/surga pour SURGA)** : Tout travail sur Nopalou (marketplace, panneau `/admin`, POS caisse, boutiques, CRM, routes API générales) doit IMPÉRATIVEMENT être effectué sur la branche **`main`**. La branche `feature/surga` est STRICTEMENT réservée à Surga. Toujours vérifier la branche active avant de démarrer (`git branch --show-current`).
 - **Documentation Systématique** : Ajouter le compte-rendu précis de chaque livraison/push en tête de `docs/JOURNAL-LIVRAISONS.md` (pas dans `CLAUDE.md`, chargé automatiquement dans chaque session).
 - **Authentification Git** : jamais de jeton dans l'URL du remote (AUD-136). Le gestionnaire d'identifiants (`credential.helper manager` / `gh auth git-credential`) suffit ; à défaut, passer `GITHUB_TOKEN` (`.env`) par variable d'environnement : `git -c http.extraheader="AUTHORIZATION: bearer $env:GITHUB_TOKEN" push`.
 
@@ -33,6 +34,29 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
+
+- **Nopalou Control Center — Audit d'Architecture, Réorganisation des Menus (7 Domaines) & Expérience Mobile Native (Session 2026-10-07)** :
+  - *Demande Utilisateur & Constat* : « faire un audit de admin reorganiser les menu pour le rendre plus coherent.aussi son affichage en version mobile »
+  - *Audit d'Architecture & Incohérences identifiées* :
+    1. Dispersion chaotique de la modération : produits et avis dans « Commerce », annonces et signalements dans « Contenu », support dans « Identités », qualité des données dans « Système ».
+    2. Incohérences catégorielles : arborescence des catégories catalogue reléguée dans « Contenu », Sama Xaalis dans « Finances » alors que le carnet de dettes était dans « Commerce », forfaits télécom perdus dans « Contenu ».
+    3. Affichage mobile dégradé : sur petit écran (<= 900px), un accordéon in-flow (75vh max) poussait tout le contenu vers le bas et provoquait des sauts de layout lors de la navigation. Absence de barre de navigation basse rapide, et 40+ liens nécessitaient un défilement fastidieux sans filtre.
+  - *Remédiations & Réalisations* :
+    1. **Architecture en 7 Domaines Unifiés** (`adminNavConfig.tsx`) :
+       - `direction` (Dashboard Métier, Santé Système & Exports)
+       - `commerce` (Réseau Boutiques, Commandes Web, Produits & Stocks, Catégories, POS & Caisses, Carnet Dettes & Sama Xaalis, Migration Marchands)
+       - `immo` (Vue d'ensemble Immo, Agences & Comptes Pro, Biens, Baux & Loyers)
+       - `moderation` (Signalements d'Abus [Urgent], Annonces Classifiées, Avis Boutiques, Support Client & Litiges, Qualité Données & Santé)
+       - `finances` (Reversements Wave 1-Clic, Flux Wave/OM & Journal, Paiements Manuels, Abonnements, Plans & Grille Tarifaire, Compte d'Exploitation P&L)
+       - `croissance` (Prospection & Leads, Intelligence Marché, Force de Vente Terrain, Partenaires B2B, Affiliation & Apporteurs, WhatsApp Bot, Réseaux Sociaux Meta)
+       - `systeme` (Comptes Utilisateurs, Équipe & Droits RBAC, Forfaits Télécom, Connecteurs & Pixels, SEO, Feature Flags, Kit Communication, Audit Logs, Portail Développeur API, Mon Profil Administrateur)
+    2. **Filtrage Instantané In-Sidebar** : Champ de recherche dynamique (`admin-sidebar-search-box`) filtrant en temps réel tous les liens avec auto-dépliage des domaines correspondants et bouton d'effacement rapide.
+    3. **Tiroir Coulissant Off-Canvas Mobile** (`admin-sidebar--mobile-open` + `admin-sidebar-backdrop`) : Animation fluide en slide-over, fond flou, fermeture au clic extérieur / touche Échap / clic sur lien, blocage du défilement d'arrière-plan.
+    4. **Barre de Navigation Basse Mobile (Mobile Bottom Nav)** (`AdminBottomNav.tsx`) : 5 onglets ergonomiques au pouce sur smartphones (<= 768px) : Accueil, Boutiques, Commandes, Modération, Tout le Menu.
+    5. **Sécurité RBAC Préservée à 100%** : Filtrage strict des 5 rôles (`super_admin`, `admin_operationnel`, `finance`, `moderateur`, `support_client`).
+    6. **Règle Absolue de Branche Git** : Consignation formelle dans `AGENTS.md` et `.agents/AGENTS.md` de l'obligation de travailler sur `main` pour Nopalou et l'admin.
+  - *Validation & Tests* : 97/97 tests unitaires passés (100%), compilation TypeScript `tsc --noEmit` validée sans erreur (0 erreur), conformité anti-slop, composants modulaires (< 450 lignes).
+
 
 - **Nopalou — Résolution Complète du Filtre Catégorie Marketplace & Caisse POS (Session 2026-10-06 - Après-midi)** :
   - *Demande Utilisateur & Constat* : « le filtre catgorie ne fonctionne pas dans nopalou » — Plusieurs causes racines identifiées :

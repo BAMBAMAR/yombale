@@ -1,6 +1,28 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
-- **Nopalou — Résolution Complète du Filtre Catégorie Marketplace & Caisse POS (Session 2026-10-06 - Après-midi)** :
+- **Nopalou Control Center — Audit d'Architecture, Réorganisation des Menus (7 Domaines) & Expérience Mobile Native (Session 2026-10-07)** :
+  * **Périmètre & Objectifs Réalisés** :
+    - Diagnostic : Constat « faire un audit de admin reorganiser les menu pour le rendre plus coherent.aussi son affichage en version mobile ».
+    - Audit d'architecture et incohérences résolues :
+      1. Modération éparpillée sur 4 menus différents (produits dans commerce, avis dans commerce, annonces dans contenu, signalements dans contenu, litiges dans support) regroupée dans un domaine unifié **Modération & Confiance**.
+      2. Incohérences de catalogue et de gestion : Catégories transférées de « Contenu » vers **Commerce & Marchands** ; Carnet de Dettes et Sama Xaalis centralisés ; Forfaits Télécom placés dans **Configuration & Équipe**.
+      3. Expérience mobile modernisée : Suppression de l'accordéon in-flow 75vh qui écrasait la page et décalait le scroll. Remplacement par un tiroir off-canvas moderne avec fond flou, déclenchable au pouce ou au header.
+      4. Navigation mobile rapide : Ajout de la barre de navigation inférieure `AdminBottomNav.tsx` (5 raccourcis : Accueil, Boutiques, Commandes, Modération, Tout le Menu) active sur écrans <= 768px.
+      5. Recherche instantanée dans la sidebar : Filtrage instantané des 40+ modules avec saisie en temps réel et dépliage automatique des accordéons pertinents.
+    - Fichiers créés / modifiés :
+      1. `frontend-next/src/app/admin/(protected)/adminNavConfig.tsx` : Source de vérité typée et centralisée des 7 domaines et 40 modules.
+      2. `frontend-next/src/app/admin/(protected)/AdminSidebarClient.tsx` : Sidebar modulaire (329 lignes < 450 max) avec tiroir coulissant, gestion des événements de menu et recherche instantanée.
+      3. `frontend-next/src/components/admin/AdminBottomNav.tsx` : Composant de navigation basse mobile (84 lignes < 450 max).
+      4. `frontend-next/src/app/admin/(protected)/layout.tsx` : Intégration de la barre mobile basse dans le layout protégé.
+      5. `frontend-next/src/styles/admin.css` : Styles du tiroir off-canvas, des badges de statut, de la recherche interne et des vues mobiles.
+      6. `AGENTS.md` & `.agents/AGENTS.md` : Formalisation de la règle absolue de gestion des branches Git (obligation de travailler sur `main` pour Nopalou et l'admin).
+  * **Validation & Qualité** :
+    - Tests unitaires Vitest : **97/97 validés avec succès (100%)**.
+    - Vérification TypeScript : **0 erreur (`tsc --noEmit`)**.
+    - Linter anti-slop : Validé, zéro émoji dans l'interface, dimensionnement SVG vectoriel strict.
+    - Modularisation : Tous les composants créés ou modifiés sont strictement inférieurs au plafond de 450 lignes.
+
+
   * **Périmètre & Objectifs Réalisés** :
     - Diagnostic : Constat « le filtre catgorie ne fonctionne pas dans nopalou ». Quatre points de blocage majeurs résolus :
       1. Redirection parasite sur la page d'accueil (`frontend-next/src/app/page.tsx`) : Les pastilles de catégorie du ruban d'accueil pointaient vers `/categorie/[slug]` au lieu de filtrer la grille produit sur place. Cela vidait la recherche en cours `q` et les filtres de budget/tri.
