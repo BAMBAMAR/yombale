@@ -3,6 +3,22 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 8] — Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées
+- **Objectif Atteint :**
+  - Traiter immédiatement le retour utilisateur sur les barres de défilement (« les barres de défilement ne sont pas problématiques » / capture montrant la barre Windows de 17px avec flèches triangulaires coupant l'interface).
+  - Éradiquer l'apparition de toute barre visible sur les colonnes latérales (`SurgaDesktopSidebar` et `SurgaDesktopRightRail`) via `scrollbar-width: none` et `display: none` sur WebKit, tout en maintenant 100% de la capacité de défilement à la molette.
+  - Supprimer définitivement les boutons et flèches de défilement de Windows (`▲`, `▼`) sur l'ensemble de l'application via `::-webkit-scrollbar-button { display: none !important; }`.
+  - Normaliser un ascenseur ultra-fin (6px), transparent et arrondi sur `.surga-center-feed`, `html` et `body` avec `overflow-y: overlay`.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Styles Globaux (`frontend-next/src/styles/surga.css`)* :
+     - Ajout des règles de masquage de scrollbar sur la sidebar et le rail droit.
+     - Suppression universelle des flèches triangulaires Windows.
+     - Stylisation ultra-fine du flux central.
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS.
+  - Capture Playwright en direct de l'onglet Services confirmant l'absence totale de barre grise parasite.
+
 ### [2026-10-07 — Nuit 9 suite - 7] — Sanctuarisation Définitive de l'Emblème & Logo Officiel (`SurgaBrandLogo.tsx`)
 - **Objectif Atteint :**
   - Répondre et corriger immédiatement le défaut d'affichage d'icône signalé par l'utilisateur (« l'icône a encore été changée, voir la cause et s'assurer de l'éviter pour les prochaines sessions, c'est la deuxième fois »).

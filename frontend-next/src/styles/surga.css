@@ -20,6 +20,32 @@ body:has(.surga-root) {
   background-color: #F8FAFC !important;
   margin: 0 !important;
   padding: 0 !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+html:has(.surga-root)::-webkit-scrollbar,
+body:has(.surga-root)::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html:has(.surga-root)::-webkit-scrollbar-track,
+body:has(.surga-root)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html:has(.surga-root)::-webkit-scrollbar-thumb,
+body:has(.surga-root)::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.28);
+  border-radius: 9999px;
+}
+
+html:has(.surga-root)::-webkit-scrollbar-button,
+body:has(.surga-root)::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 body:has(.surga-root) #app-main {
@@ -675,6 +701,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    overflow-y: overlay;
     background: #FAFAF8;
     border-right: 1px solid #ECE4DA;
     display: flex;
@@ -682,6 +709,14 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     justify-content: space-between;
     padding: 20px 14px;
     box-sizing: border-box;
+    scrollbar-width: none; /* Firefox : invisible */
+    -ms-overflow-style: none; /* IE / Edge : invisible */
+  }
+
+  .surga-desktop-sidebar::-webkit-scrollbar {
+    display: none; /* WebKit : Chrome/Edge/Safari invisible */
+    width: 0;
+    height: 0;
   }
 
   .surga-center-feed {
@@ -692,6 +727,33 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     background: #FFFFFF;
     position: relative;
     overflow-y: auto;
+    overflow-y: overlay;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+  }
+
+  .surga-center-feed::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .surga-center-feed::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .surga-center-feed::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.3);
+    border-radius: 9999px;
+  }
+
+  .surga-center-feed::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.55);
+  }
+
+  .surga-center-feed::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
   }
 
   .surga-center-feed .surga-container {
@@ -716,6 +778,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    overflow-y: overlay;
     background: #FAFAF8;
     border-left: 1px solid #ECE4DA;
     padding: 24px 18px;
@@ -723,7 +786,40 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     flex-direction: column;
     gap: 16px;
     box-sizing: border-box;
+    scrollbar-width: none; /* Firefox : invisible */
+    -ms-overflow-style: none; /* IE / Edge : invisible */
   }
+
+  .surga-desktop-right-rail::-webkit-scrollbar {
+    display: none; /* WebKit : Chrome/Edge/Safari invisible */
+    width: 0;
+    height: 0;
+  }
+}
+
+/* Éradication globale des boutons/flèches de défilement Windows dans tout Surga */
+.surga-root *::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.surga-root *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.surga-root *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.surga-root *::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.28);
+  border-radius: 9999px;
+}
+
+.surga-root *::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(217, 119, 6, 0.45);
 }
 
 /* ==========================================================================

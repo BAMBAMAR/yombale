@@ -50,6 +50,12 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées (Session 2026-10-07 - Nuit 9 suite - 8, branche `feature/surga`)** :
+  - *Perfectionnement Visuel Desktop & Finition Haut de Gamme* :
+    1. **Suppression des Barres Latérales Natives** : Masquage total de l'ascenseur sur `.surga-desktop-sidebar` et `.surga-desktop-right-rail` (`scrollbar-width: none; -ms-overflow-style: none; ::-webkit-scrollbar { display: none; }`). Les colonnes restent 100% défilables à la molette mais sans aucun artefact visuel.
+    2. **Éradication des Flèches Triangulaires Windows** : Application universelle de `::-webkit-scrollbar-button { display: none !important; }` sur tout le scope Surga, éliminant les flèches `▲` et `▼` grises des années 90.
+    3. **Ascenseur Central Minimaliste & Flottant** : Stylisation sur `.surga-center-feed` en 6px avec bords arrondis, fond transparent et `overflow-y: overlay`, évitant tout décalage de layout au défilement.
+
 - **Surga / Sanctuarisation Définitive de l'Emblème & Logo Officiel (`SurgaBrandLogo.tsx`) (Session 2026-10-07 - Nuit 9 suite - 7, branche `feature/surga`)** :
   - *Éradication Définitive des Placeholders de Logo & Règle d'Or d'Identité* :
     1. **Cause Racine Identifiée** :

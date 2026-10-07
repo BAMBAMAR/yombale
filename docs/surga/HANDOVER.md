@@ -1,19 +1,25 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 7 — Sanctuarisation Définitive Emblème SurgaBrandLogo & Architecture Desktop 3 Colonnes)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 8 — Éradication Scrollbars Windows & Finition Visuelle Haut de Gamme)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Emblème Officiel Surga Sanctuarisé (`SurgaBrandLogo.tsx` / `surga-symbol.png`), Règle Absolue Anti-Placeholder gravée dans AGENTS.md — Architecture Desktop 3 Colonnes Active (Sidebar Gauche avec Services Dakar Éclatés, Flux Central avec Omnibar Ctrl+K, Rail Droit Contextuel 300px avec 5 Widgets Glanceables) — Vue Mobile 1 Colonne 100% Intacte sans Régression — 100% Composants < 450 l. — TypeScript 0 Erreur, 158/158 Tests Unitaires PASS**  
+> **Statut global** : 🟢 **Éradication Définitive des Scrollbars Natives Windows (Barres Latérales Invisibles, Ascenseur Central 6px Arrondi & Flèches ▲ ▼ Supprimées), Emblème Officiel Sanctuarisé (`SurgaBrandLogo.tsx`), Architecture Desktop 3 Colonnes Active — Vue Mobile 1 Colonne 100% Intacte — 100% Composants < 450 l. — TypeScript 0 Erreur, 158/158 Tests Unitaires PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-0. **Sanctuarisation Définitive de l'Emblème & Logo Surga (100% DONE — Nuit 9 suite - 7)** :
+0. **Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées (100% DONE — Nuit 9 suite - 8)** :
+   - Éradication de la grosse barre de défilement grise de 17px avec flèches triangulaires Windows `▲` et `▼` qui coupait les cartes.
+   - Masquage des ascenseurs latéraux sur la sidebar (240px) et le rail droit (300px) tout en préservant le défilement fluide à la molette.
+   - Suppression universelle des flèches triangulaires Windows (`::-webkit-scrollbar-button { display: none !important; }`).
+   - Normalisation d'un ascenseur ultra-fin (6px), transparent et arrondi sur le flux central et l'ensemble de l'application.
+
+0.bis. **Sanctuarisation Définitive de l'Emblème & Logo Surga (100% DONE — Nuit 9 suite - 7)** :
    - **Éradication de la Cause Racine** : Fin du placeholder `<div>S</div>` hérité d'un mockup HTML. Création du composant source de vérité unique `<SurgaBrandLogo />` (`frontend-next/src/app/surga/components/SurgaBrandLogo.tsx`, 65 l.) important de manière immuable `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre).
    - **Intégration Systématique** : Utilisé dans `SurgaDesktopSidebar.tsx` et sanctuarisé dans `AGENTS.md` (racine), `.agents/AGENTS.md` et `CLAUDE.md`. Interdiction formelle de substituer l'icône dans les futures sessions.
 
-0.bis. **Architecture Desktop 3 Colonnes & Éclatement des Services (100% DONE — Nuit 9 suite - 6)** :
+0.ter. **Architecture Desktop 3 Colonnes & Éclatement des Services (100% DONE — Nuit 9 suite - 6)** :
    - **Sidebar Gauche Dédiée (240px, `SurgaDesktopSidebar.tsx`, 207 l.)** :
      - Éclatement complet des fonctionnalités de Surga pour exploiter l'espace latéral :
        - Section **Quotidien** : Aujourd'hui (actif ambre), Notes & Listes (avec compteur de notes), Sama Xaalis, Agenda & Rappels (avec badge de rendez-vous du jour).

@@ -1,4 +1,14 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées (Session 2026-10-07 - Nuit 9 suite - 8, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Traitement immédiat de la capture d'écran utilisateur montrant l'ascenseur gris Windows de 17px avec flèches triangulaires `▲` et `▼` coupant l'interface.
+    - Éradication complète des barres latérales visibles sur `.surga-desktop-sidebar` et `.surga-desktop-right-rail` via `scrollbar-width: none` et `display: none` sur les pseudo-éléments Webkit.
+    - Suppression universelle des flèches triangulaires Windows via `::-webkit-scrollbar-button { display: none !important; }`.
+    - Normalisation d'un ascenseur ultra-fin (6px), transparent et arrondi sur `.surga-center-feed`, `html` et `body` avec défilement overlay fluide.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Feuille de Styles (`surga.css`)** : Règles de scrollbar discrète appliquées sur tout le scope Surga.
+    2. **Validation Visuelle** : Capture live sous Chromium Playwright confirmant la disparition totale de toute barre grise parasite.
+
 - **Surga / Sanctuarisation Définitive de l'Emblème & Logo Officiel (`SurgaBrandLogo.tsx`) (Session 2026-10-07 - Nuit 9 suite - 7, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Traitement immédiat du retour utilisateur : « l'icône a encore été changée, voir la cause et s'assurer de l'éviter pour les prochaines sessions, c'est la deuxième fois ».
