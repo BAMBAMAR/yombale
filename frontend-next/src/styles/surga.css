@@ -95,7 +95,7 @@ body:has(.surga-root) #app-main {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding-bottom: 110px; /* Espace confortable pour la bottom nav et le FAB */
+  padding-bottom: 152px; /* Dégagement de sécurité garanti au-dessus du bouton FAB 56px + bottom 80px + 16px */
 }
 
 /* En-tête Surga */
@@ -817,8 +817,9 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 
   .surga-main-grid {
     display: grid !important;
-    grid-template-columns: 240px minmax(0, 1fr) 300px !important;
-    max-width: 1360px;
+    grid-template-columns: 240px minmax(0, 740px) 300px !important;
+    justify-content: center;
+    max-width: 1280px;
     margin: 0 auto;
     width: 100%;
     min-height: 100vh;
@@ -828,10 +829,10 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
   }
 
-  @media (min-width: 1600px) {
+  @media (min-width: 1920px) {
     .surga-main-grid {
-      grid-template-columns: 240px minmax(0, 1fr) 360px !important;
-      max-width: 1480px;
+      grid-template-columns: 240px minmax(0, 740px) 360px !important;
+      max-width: 1360px;
     }
   }
 
@@ -976,13 +977,12 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
    COMPOSANTS DE NAVIGATION DESKTOP (SIDEBAR, RAIL DROIT, OMNIBAR)
    ========================================================================== */
 
-/* Titres de section dans la sidebar */
+/* Titres de section dans la sidebar (SRG-UI-13 : étiquettes calmes, majuscule initiale, gris lisible) */
 .surga-sidebar-section-title {
-  font-size: 10.5px;
-  font-weight: 800;
-  color: #94A3B8;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--surga-text2, #64748B);
+  letter-spacing: 0.02em;
   padding: 12px 10px 6px 10px;
 }
 
@@ -1242,7 +1242,29 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 
 .surga-command-mic-btn:hover {
   background: #FEF3C7;
-  color: #D97706;
+  color: var(--surga-accent-text, #92400E);
+}
+
+/* Bouton d'action unique par titre (SRG-UI-23 : un seul bouton, survol sur desktop, visible sur mobile) */
+.surga-share-btn {
+  opacity: 1;
+  transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (min-width: 1024px) {
+  .surga-article-row .surga-share-btn,
+  .surga-item-row .surga-share-btn,
+  .surga-news-item .surga-share-btn {
+    opacity: 0.35;
+  }
+  .surga-article-row:hover .surga-share-btn,
+  .surga-item-row:hover .surga-share-btn,
+  .surga-news-item:hover .surga-share-btn,
+  .surga-share-btn:hover,
+  .surga-share-btn:focus,
+  .surga-share-btn:focus-visible {
+    opacity: 1;
+  }
 }
 
 /* ==========================================================================

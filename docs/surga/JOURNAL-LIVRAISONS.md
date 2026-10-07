@@ -3,7 +3,46 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
-### [2026-10-07 — Audio & Layout] — Zapping Stations Suivant/Précédent & Zéro Superposition Radio Desktop
+### [2026-10-07 — Résolution des 25 Tickets UI V2] — Écran « Aujourd'hui » Mobile & Desktop (SRG-UI-01 à SRG-UI-25)
+- **Objectif Atteint :**
+  - Traitement exhaustif des 25 tickets UI V2 consécutifs aux revues d'interface du 7 octobre 2026 : P0 (cohérence et fiabilité des données), P1 (briefing, actualités, mise en page), P2 (colonne de droite, typographie et détails).
+  - Validation complète des critères d'acceptation sans régression fonctionnelle ni architecturale.
+- **Réalisations & Fichiers Modifiés :**
+  1. *SRG-UI-01 & SRG-UI-02 (Localisation & Marées)* :
+     - Séparation nette entre Ville de référence (`preferences.quartiers[0]`, profile unique) et Ville consultée ponctuelle (session météo).
+     - La consultation d'une ville (ex: Saint-Louis) n'écrase plus le profil utilisateur ni le briefing (`page.tsx`, `SurgaMeteoCard.tsx`).
+     - Carte météo affichant toujours `Météo · [ville]` ou `Météo et marées · [ville]`.
+     - Marées masquées pour les localités de l'intérieur (Kaffrine, Kaolack, etc.) et réservées aux zones maritimes (`lib/surga-meteo.ts`).
+  2. *SRG-UI-03 & SRG-UI-04 (Heure réelle de publication & Fraîcheur des actualités)* :
+     - Élimination de la date aléatoire artificielle dans le collecteur RSS (`backend/services/surga/rss-collector.js`).
+     - Lecture stricte des horodatages `pubDate`/`isoDate` ; articles sans date fiable ou > 24 h exclus du briefing matinal.
+     - Affichage de l'heure relative ou absolue (`hier, 18 h 20`) via `formaterHeurePublication` (`lib/surga-formatting.ts`). Clic sur le titre ouvrant directement l'article source.
+  3. *SRG-UI-05 (Zéro Doublon Ordinateur)* :
+     - La section « Actualités et revue de presse » commence strictement là où le briefing s'arrête (`items.slice(brevesPhares.length)` dans `SurgaAujourdhuiTab.tsx`). Zéro titre répété.
+  4. *SRG-UI-09, SRG-UI-10 & SRG-UI-20 (Sport, Synthèse Matinale & Cohérence Agenda)* :
+     - Tri prioritaire des matches par équipes suivies, puis compétitions nationales (`backend/services/surga/sport-service.js`).
+     - Mention explicite `Vous suivez [équipe/joueur]` et horaires formatés (`à 13 h 50`, score si terminé).
+     - Phrase d'accueil exacte dans `SurgaAujourdhuiTab.tsx` et `backend/routes/surga/briefing.js` sans répétition de la date : « Bonjour. Pour Dakar ce matin : X brèves, Y actualités sportives et 1 rappel à 14 h. »
+     - Synchronisation de « Votre journée » dans `SurgaDesktopRightRail.tsx` avec `agendaToday` : suppression des contradictions (« Journée libre » vs rappel actif) ; affichage harmonisé (« 1 rappel au planning · Aucun rendez-vous »).
+  5. *SRG-UI-11 & SRG-UI-12 (Mise en page Desktop & Dégagement Bas Mobile)* :
+     - Contenu central strictement borné à 720 px max et centré (`.surga-center-feed .surga-container`).
+     - Grille desktop `.surga-main-grid` : colonne centrale `minmax(0, 740px)` et rail droit s'élargissant à 360 px à partir de 1 920 px.
+     - Sur mobile : `padding-bottom: 152px` garantissant qu'aucune carte ne passe sous le bouton micro FAB flottant (56 px + marge 16 px).
+  6. *SRG-UI-13, SRG-UI-18, SRG-UI-19, SRG-UI-23 & SRG-UI-24 (Design apaisé, Accessibilité & Typographie)* :
+     - Titres de section de la barre latérale passés en gris `#64748B`, majuscule initiale uniquement (`.surga-sidebar-section-title`).
+     - Ratio de contraste WCAG AA >= 4.5:1 garanti pour les accents ambre via `--surga-accent-text` (`#92400E`) et `#B45309`.
+     - Icône Wi-Fi du header masquée en condition normale, affichée uniquement en mode hors ligne avec libellé explicite.
+     - Bouton d'action unique par titre (`<SurgaShareButton />`) proposant partage natif ou copie avec retour temporaire « Copié » ; visible au survol sur desktop et accessible en continu sur mobile.
+     - Module universel `lib/surga-formatting.ts` pour la typographie française (espaces insécables avant ponctuations doubles) et `formaterFCFA` (`Intl.NumberFormat('fr-FR')` avec espace insécable fine).
+  7. *SRG-UI-25 (Radios FM)* :
+     - Retrait du lecteur radio de la colonne de contexte par défaut ; accessible dans Services. Dock persistant n'apparaît qu'en cas d'écoute active. Décisions de droits inscrites dans `docs/surga/DECISIONS.md`.
+- **Validation & Tests :**
+  - Jest Backend : **129/129 tests réussis** (`tests/unit/surga.test.js`).
+  - Jest Phases 1-3 & 4 : **29/29 tests réussis** (`tests/unit/surga-phases-1-3.test.js`). Total : **158 tests unitaires validés**.
+  - Linter Anti-AI-Slop : **0 infraction bloquante**.
+  - Respect strict du plafond de modularisation : 100% des composants < 450 lignes (`page.tsx` : 448 l., `SurgaDesktopRightRail.tsx` : 327 l., `SurgaAujourdhuiTab.tsx` : 350 l., `SurgaMeteoCard.tsx` : 384 l.).
+  - Documentation consolidée dans `docs/surga/TICKETS_UI_V2.md` et `docs/surga/DECISIONS.md` (D30 à D35).
+
 - **Objectif Atteint :**
   - Réponse directe aux retours de test visuel :
     1. « voir la position ca se superpose . » (barre radio chevauchant l'Omnibar et le texte du flux)

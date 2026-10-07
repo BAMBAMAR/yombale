@@ -53,33 +53,11 @@ interface SurgaAujourdhuiTabProps {
   onToggleAudio?: () => void
 }
 
-function formatHeureRelative(dateStr?: string): string {
-  if (!dateStr) return 'Aujourd’hui'
-  try {
-    const diffMs = Date.now() - new Date(dateStr).getTime()
-    const diffMin = Math.floor(diffMs / (60 * 1000))
-    if (diffMin < 60) return `il y a ${Math.max(1, diffMin)} min`
-    const diffHours = Math.floor(diffMin / 60)
-    if (diffHours < 24) return `il y a ${diffHours} h`
-    return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(new Date(dateStr))
-  } catch {
-    return 'Récent'
-  }
-}
-
-function formatMatchHeureBriefing(match?: SportEventItem | null): string {
-  if (!match) return ''
-  if (match.score_domicile !== null && match.score_exterieur !== null) {
-    return `${match.score_domicile} - ${match.score_exterieur}`
-  }
-  if (match.statut === 'TERMINE') return 'Terminé'
-  try {
-    const d = new Date(match.date_debut)
-    return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(d)
-  } catch {
-    return 'À venir'
-  }
-}
+import {
+  formaterHeurePublication,
+  formaterHoraireMatch,
+  normaliserTypographieFrancaise,
+} from '@/lib/surga-formatting'
 
 export default function SurgaAujourdhuiTab({
   preferences,
@@ -123,7 +101,7 @@ export default function SurgaAujourdhuiTab({
           <div className="surga-card-header">
             <span className="surga-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Sun size={18} color="var(--surga-accent, #D97706)" />
-              <span>Briefing du Matin</span>
+              <span>Briefing du matin</span>
             </span>
             <button
               type="button"
@@ -149,7 +127,7 @@ export default function SurgaAujourdhuiTab({
           <p style={{ fontSize: 14, color: 'var(--surga-text1, #0F172A)', margin: '0 0 10px 0', lineHeight: 1.45 }}>
             {briefingData?.message_synthese || (
               <>
-                Bonjour. Pour {quartier} ce matin : {(briefingData?.items || []).length} brève{(briefingData?.items || []).length > 1 ? 's' : ''} et {(briefingData?.sports || []).length} actualité{(briefingData?.sports || []).length > 1 ? 's' : ''} sportive{(briefingData?.sports || []).length > 1 ? 's' : ''}.
+                Bonjour. Pour {quartier} ce matin : {(briefingData?.items || []).length} brève{(briefingData?.items || []).length > 1 ? 's' : ''}, {(briefingData?.sports || []).length} actualité{(briefingData?.sports || []).length > 1 ? 's' : ''} sportive{(briefingData?.sports || []).length > 1 ? 's' : ''}{nbAgenda === 1 ? (prochainRdv?.heure_evenement ? ` et 1 rappel à ${prochainRdv.heure_evenement.replace(':', ' h ')}` : ' et 1 rappel') : nbAgenda > 1 ? ` et ${nbAgenda} rappels` : ''}.
               </>
             )}
           </p>
@@ -207,7 +185,7 @@ export default function SurgaAujourdhuiTab({
                           {it.titre}
                         </a>
                         <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginTop: 2, paddingLeft: 10 }}>
-                          {it.source_nom} · {formatHeureRelative(it.published_at)}
+                          {it.source_nom} · {formaterHeurePublication(it.published_at)}
                         </div>
                       </div>
 
@@ -231,7 +209,7 @@ export default function SurgaAujourdhuiTab({
                   <Calendar size={13} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
                   {prochainRdv ? (
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <strong>{prochainRdv.heure_evenement ? `${prochainRdv.heure_evenement} : ` : ''}</strong>
+                      <strong>{prochainRdv.heure_evenement ? `${prochainRdv.heure_evenement.replace(':', ' h ')} : ` : ''}</strong>
                       {prochainRdv.titre}
                     </span>
                   ) : (
@@ -242,15 +220,20 @@ export default function SurgaAujourdhuiTab({
                 </div>
               )}
 
-              {/* Match phare du jour avec heure ou score */}
+              {/* Match phare du jour avec heure ou score (SRG-UI-09) */}
               {prochainMatch && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--surga-primary, #0F172A)' }}>
                   <Trophy size={13} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <strong>{prochainMatch.competition} :</strong> {prochainMatch.equipe_domicile} vs {prochainMatch.equipe_exterieur}{' '}
                     <span style={{ fontWeight: 700, color: 'var(--surga-text2, #475569)' }}>
-                      ({formatMatchHeureBriefing(prochainMatch)})
+                      ({formaterHoraireMatch(prochainMatch)})
                     </span>
+                    {prochainMatch.raison_presence && (
+                      <span style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginLeft: 6 }}>
+                        ({prochainMatch.raison_presence})
+                      </span>
+                    )}
                   </span>
                 </div>
               )}
@@ -280,13 +263,13 @@ export default function SurgaAujourdhuiTab({
         </div>
       )}
 
-      {/* Section Briques : Actualités & Revue de presse (Plafonné à 3 brèves majeures pour l'ergonomie mobile) */}
+      {/* Section Briques : Actualités & Revue de presse (SRG-UI-05, SRG-UI-24 : sans doublon, typographie épurée) */}
       {(preferences?.modules_actifs?.includes('actualites') || !preferences?.modules_actifs) && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--surga-primary, #0F172A)', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Newspaper size={17} color="var(--surga-accent, #D97706)" />
-              <span>Actualités &amp; Revue de presse</span>
+              <span>Actualités et revue de presse</span>
             </h2>
             <button
               type="button"
@@ -307,7 +290,7 @@ export default function SurgaAujourdhuiTab({
           </div>
 
           <SurgaNewsList
-            items={(briefingData?.items || []).slice(0, 3)}
+            items={(briefingData?.items || []).slice(brevesPhares.length, brevesPhares.length + 3)}
             onVoirPlus={onOpenPresse}
           />
         </div>

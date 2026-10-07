@@ -59,6 +59,7 @@ export default function SurgaPage() {
   const [soldeKalpeFormate, setSoldeKalpeFormate] = useState<string>('0 FCFA')
   const [nbNotes, setNbNotes] = useState<number>(0)
   const [nbAgenda, setNbAgenda] = useState<number>(0)
+  const [prochainRdvTitre, setProchainRdvTitre] = useState<string | undefined>(undefined)
 
   // Surveillance des rappels en tâche de fond
   useEffect(() => {
@@ -93,6 +94,7 @@ export default function SurgaPage() {
       const todayStr = new Date().toISOString().slice(0, 10)
       const agendaToday = getLocalAgenda().filter((e) => e.date_evenement === todayStr && !e.termine)
       setNbAgenda(agendaToday.length)
+      setProchainRdvTitre(agendaToday[0] ? (agendaToday[0].heure ? `${agendaToday[0].heure} : ${agendaToday[0].titre}` : agendaToday[0].titre) : undefined)
     } catch {}
   }, [])
 
@@ -330,7 +332,8 @@ export default function SurgaPage() {
         user={user}
         briefingDate={briefingData?.date}
         nbNotes={nbNotes}
-        nbAgenda={nbAgenda}
+        nbAgenda={nbAgenda > 0 ? nbAgenda : (briefingData?.agenda_du_jour?.length || 0)}
+        prochainRdvTitre={prochainRdvTitre || (briefingData?.agenda_du_jour?.[0] ? `${briefingData.agenda_du_jour[0].heure ? briefingData.agenda_du_jour[0].heure + ' : ' : ''}${briefingData.agenda_du_jour[0].titre}` : undefined)}
         statsApercu={statsApercu}
         soldeKalpeFormate={soldeKalpeFormate}
         quartier={preferences?.quartiers?.[0] || 'Dakar'}
@@ -369,12 +372,8 @@ export default function SurgaPage() {
             chargerBriefing={chargerBriefing}
             onOpenPodcastModal={() => setIsPodcastOpen(true)}
             openRadioModal={openRadioModal}
-            onVilleChange={(nv) => {
-              setPreferences((prev: any) => {
-                const maj = { ...(prev || {}), quartiers: [nv] }
-                try { localStorage.setItem('surga_preferences', JSON.stringify(maj)) } catch {}
-                return maj
-              })
+            onVilleChange={() => {
+              // SRG-UI-01 : Consulter une autre ville ponctuellement ne modifie pas la ville de référence du profil
             }}
             onOpenPresse={() => setIsPresseOpen(true)}
             onOpenTrafic={() => setIsTraficOpen(true)}

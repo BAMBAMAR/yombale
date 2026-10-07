@@ -78,11 +78,21 @@ router.get('/briefing', tokenOptional, async (req, res) => {
     }).format(new Date());
     const dateFormatted = today.charAt(0).toUpperCase() + today.slice(1);
 
-    // Phrase d'accueil courte et directe (SRG-UI-10)
+    // Phrase d'accueil courte et directe (SRG-UI-10 & SRG-UI-20)
     const nbBreves = items.length;
     const nbSports = sports.length;
+    const nbAgenda = agendaDuJour.length;
 
-    const messageSynthese = `Bonjour. Pour ${quartierPrincipal} ce matin : ${nbBreves} brève${nbBreves > 1 ? 's' : ''}${nbSports > 0 ? ` et ${nbSports} actualité${nbSports > 1 ? 's' : ''} sportive${nbSports > 1 ? 's' : ''}` : ''}.`;
+    let segmentAgenda = '';
+    if (nbAgenda === 1) {
+      const rdv = agendaDuJour[0];
+      const hStr = rdv.heure_evenement ? ` à ${rdv.heure_evenement.replace(':', ' h ')}` : '';
+      segmentAgenda = ` et 1 rappel${hStr}`;
+    } else if (nbAgenda > 1) {
+      segmentAgenda = ` et ${nbAgenda} rappels`;
+    }
+
+    const messageSynthese = `Bonjour. Pour ${quartierPrincipal} ce matin\u202F: ${nbBreves} brève${nbBreves > 1 ? 's' : ''}${nbSports > 0 ? `, ${nbSports} actualité${nbSports > 1 ? 's' : ''} sportive${nbSports > 1 ? 's' : ''}` : ''}${segmentAgenda}.`;
 
     res.json({
       success: true,

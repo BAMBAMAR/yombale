@@ -206,7 +206,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
 
       {!couvreTrafic ? (
         <div style={{ fontSize: 13, color: 'var(--surga-text2, #475569)', padding: '6px 0', lineHeight: 1.4 }}>
-          Trafic disponible pour Dakar uniquement
+          Trafic indisponible pour {ville}. Disponible pour Dakar.
         </div>
       ) : (
         <>

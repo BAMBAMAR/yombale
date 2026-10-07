@@ -18,7 +18,7 @@ import {
 import { useSurgaRadio } from '@/lib/surga-radio-context'
 import SurgaXaalisPinModal from './SurgaXaalisPinModal'
 
-export const DEFAUT_RAIL_WIDGETS = ['agenda', 'depenses', 'trafic', 'meteo', 'notes', 'radios']
+export const DEFAUT_RAIL_WIDGETS = ['agenda', 'depenses', 'trafic', 'meteo', 'notes']
 
 interface SurgaDesktopRightRailProps {
   statsApercu: SurgaDepensesStats | null
@@ -39,12 +39,12 @@ interface SurgaDesktopRightRailProps {
 export default function SurgaDesktopRightRail({
   statsApercu, soldeKalpeFormate, nbNotes, nbAgenda,
   derniereNoteTitre, prochainRdvTitre, meteoTemp = '28°C',
-  meteoMaree = '17h45', ville = 'Dakar', widgetsActifs,
+  meteoMaree = '17h45', ville = 'Dakar Plateau', widgetsActifs,
   onNavigateTab, onOpenTrafic, onOpenRadios,
 }: SurgaDesktopRightRailProps) {
   const moisActuelNom = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
   const moisCapitalise = moisActuelNom.charAt(0).toUpperCase() + moisActuelNom.slice(1)
-  const totalMoisFormate = statsApercu?.total_formate || '0 FCFA'
+  const totalMoisFormate = statsApercu?.total_formate || '0\u202FFCFA'
 
   // Contexte Radio FM
   const {
@@ -141,13 +141,13 @@ export default function SurgaDesktopRightRail({
     else openRadioModal()
   }
 
-  const valeurMoisAffichee = masque ? '•••••• FCFA' : totalMoisFormate
-  const valeurSoldeAffichee = masque ? '•••••• FCFA' : soldeKalpeFormate
+  const valeurMoisAffichee = masque ? '••••••\u202FFCFA' : totalMoisFormate
+  const valeurSoldeAffichee = masque ? '••••••\u202FFCFA' : soldeKalpeFormate
 
   return (
     <>
       <aside className="surga-desktop-right-rail" aria-label="Aperçus et contexte quotidien">
-        {/* 1. Votre journée & Agenda */}
+        {/* 1. Votre journée & Agenda (SRG-UI-20 : cohérence absolue, zéro contradiction) */}
         {estActif('agenda') && (
           <div
             className="surga-desktop-widget"
@@ -162,10 +162,12 @@ export default function SurgaDesktopRightRail({
               <Calendar size={14} className="surga-widget-icon" />
             </div>
             <div className="surga-widget-highlight">
-              {prochainRdvTitre || (nbAgenda > 0 ? `${nbAgenda} rappel${nbAgenda > 1 ? 's' : ''} au planning` : 'Journée libre')}
+              {prochainRdvTitre || (nbAgenda > 0 ? (nbAgenda === 1 ? '1 rappel au planning' : `${nbAgenda} rappels au planning`) : 'Journée libre')}
             </div>
             <div className="surga-widget-desc">
-              {nbAgenda > 0 ? `${nbAgenda} événement${nbAgenda > 1 ? 's' : ''} aujourd'hui` : 'Aucun rendez-vous bloquant'}
+              {nbAgenda > 0
+                ? (nbAgenda === 1 ? 'Aucun rendez-vous · 1 rappel' : `Aucun rendez-vous · ${nbAgenda} rappels`)
+                : 'Aucun rendez-vous ni rappel'}
             </div>
           </div>
         )}
@@ -212,7 +214,7 @@ export default function SurgaDesktopRightRail({
           </div>
         )}
 
-        {/* 3. Trafic en direct */}
+        {/* 3. Trafic en direct (SRG-UI-01 & SRG-UI-15) */}
         {estActif('trafic') && (
           <div
             className="surga-desktop-widget"
@@ -220,7 +222,7 @@ export default function SurgaDesktopRightRail({
             tabIndex={0}
             onClick={onOpenTrafic}
             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpenTrafic()}
-            title={couvreTrafic ? "Ouvrir le suivi du trafic" : "Trafic disponible pour Dakar uniquement"}
+            title={couvreTrafic ? "Ouvrir le suivi du trafic" : `Trafic indisponible pour ${ville}. Disponible pour Dakar.`}
           >
             <div className="surga-widget-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -255,13 +257,13 @@ export default function SurgaDesktopRightRail({
               </>
             ) : (
               <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', padding: '4px 0', lineHeight: 1.4 }}>
-                Trafic disponible pour Dakar uniquement
+                Trafic indisponible pour {ville}. Disponible pour Dakar.
               </div>
             )}
           </div>
         )}
 
-        {/* 4. Météo & Marées (ou Météo seule si intérieur) */}
+        {/* 4. Météo (SRG-UI-01 & SRG-UI-02 : nom de ville toujours affiché, marées seulement si maritime) */}
         {estActif('meteo') && (
           <div
             className="surga-desktop-widget"
@@ -272,7 +274,9 @@ export default function SurgaDesktopRightRail({
             title="Voir les détails météo"
           >
             <div className="surga-widget-header">
-              <span className="surga-widget-label">{estMaritime ? 'Météo et marées' : 'Météo'}</span>
+              <span className="surga-widget-label">
+                {estMaritime ? `Météo et marées · ${ville}` : `Météo · ${ville}`}
+              </span>
               <Sun size={14} className="surga-widget-icon" />
             </div>
             <div className="surga-widget-highlight">{meteoTemp} • Ensoleillé</div>
@@ -305,131 +309,6 @@ export default function SurgaDesktopRightRail({
               {nbNotes > 0
                 ? `${nbNotes} note${nbNotes > 1 ? 's' : ''} active${nbNotes > 1 ? 's' : ''}`
                 : 'Aucune note active'}
-            </div>
-          </div>
-        )}
-
-        {/* 6. Radios FM direct (Comble le vide en bas de Mémo épinglé) */}
-        {estActif('radios') && (
-          <div
-            className="surga-desktop-widget"
-            role="button"
-            tabIndex={0}
-            onClick={handleClicWidgetRadio}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClicWidgetRadio()}
-            title={stationActive ? `Radio active : ${stationActive.nom} (Cliquer pour ouvrir le bouquet)` : 'Ouvrir les radios FM'}
-          >
-            <div className="surga-widget-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="surga-widget-label">Radios FM direct</span>
-                {isPlaying && (
-                  <span
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: '50%',
-                      backgroundColor: '#10B981',
-                      display: 'inline-block',
-                      boxShadow: '0 0 6px rgba(16, 185, 129, 0.7)',
-                    }}
-                    title="En direct"
-                  />
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    passerPrecedente()
-                  }}
-                  title="Station précédente"
-                  aria-label="Station précédente"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--navy, #1C2B4A)',
-                    cursor: 'pointer',
-                    padding: 2,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    opacity: 0.8,
-                  }}
-                >
-                  <SkipBack size={12} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToggleRadio}
-                  title={isPlaying ? 'Mettre en pause' : 'Lancer la radio'}
-                  aria-label={isPlaying ? 'Mettre en pause' : 'Lancer la radio'}
-                  style={{
-                    background: isPlaying ? 'rgba(10, 92, 54, 0.12)' : 'rgba(28, 43, 74, 0.08)',
-                    border: 'none',
-                    color: isPlaying ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
-                    cursor: 'pointer',
-                    padding: '3px 6px',
-                    borderRadius: 5,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                  }}
-                >
-                  {isPlaying ? <Pause size={10} /> : <Play size={10} />}
-                  <span>{isPlaying ? 'Pause' : 'Écouter'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    passerSuivante()
-                  }}
-                  title="Station suivante"
-                  aria-label="Station suivante"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--navy, #1C2B4A)',
-                    cursor: 'pointer',
-                    padding: 2,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    opacity: 0.8,
-                  }}
-                >
-                  <SkipForward size={12} />
-                </button>
-                <Radio size={13} className="surga-widget-icon" style={{ marginLeft: 2 }} />
-              </div>
-            </div>
-
-            <div className="surga-widget-highlight" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {stationActive ? stationActive.nom : 'Bouquet national FM'}
-              </span>
-              {stationActive?.frequence && (
-                <span
-                  style={{
-                    fontSize: 10.5,
-                    fontWeight: 800,
-                    padding: '1px 5px',
-                    borderRadius: 4,
-                    backgroundColor: 'rgba(28, 43, 74, 0.08)',
-                    color: 'var(--navy, #1C2B4A)',
-                    flexShrink: 0,
-                  }}
-                >
-                  {stationActive.frequence}
-                </span>
-              )}
-            </div>
-
-            <div className="surga-widget-desc">
-              {isPlaying
-                ? (stationActive?.slogan || 'Diffusion en direct • Zéro décalage')
-                : 'Zik FM, RFM, Sud FM, RFI Dakar, RTS...'}
             </div>
           </div>
         )}

@@ -21,19 +21,7 @@ interface SurgaNewsListProps {
   onVoirPlus?: () => void
 }
 
-function formatRelativeTime(dateStr?: string): string {
-  if (!dateStr) return 'Aujourd’hui'
-  try {
-    const diffMs = Date.now() - new Date(dateStr).getTime()
-    const diffMin = Math.floor(diffMs / (60 * 1000))
-    if (diffMin < 60) return `Il y a ${Math.max(1, diffMin)} min`
-    const diffHours = Math.floor(diffMin / 60)
-    if (diffHours < 24) return `Il y a ${diffHours} h`
-    return 'Hier'
-  } catch {
-    return 'Récent'
-  }
-}
+import { formaterHeurePublication } from '@/lib/surga-formatting'
 
 function assainirResume(resume?: string): string {
   if (!resume) return ''
@@ -138,7 +126,7 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
               </span>
               <span>•</span>
               <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                {formatRelativeTime(item.published_at)}
+                {formaterHeurePublication(item.published_at)}
               </span>
             </div>
 

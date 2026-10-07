@@ -295,15 +295,34 @@ async function filtrerMatchsSport({ equipesSuivies = [], categorie = 'tous', lim
     );
   };
 
+  const trouverRaisonPresence = (m) => {
+    if (termesMinuscules.length === 0) return null;
+    const dom = (m.equipe_domicile || '').toLowerCase();
+    const ext = (m.equipe_exterieur || '').toLowerCase();
+    const but = (m.buteurs || '').toLowerCase();
+    const terme = termesMinuscules.find((t) => dom.includes(t) || ext.includes(t) || but.includes(t) || t.includes(dom) || t.includes(ext));
+    if (!terme) return null;
+    const eqDef = LISTE_EQUIPES_DISPONIBLES.find((e) => e.id === terme || e.nom.toLowerCase().includes(terme));
+    return eqDef ? eqDef.nom : terme.charAt(0).toUpperCase() + terme.slice(1);
+  };
+
+  const enrichirMatch = (m) => {
+    const raison = trouverRaisonPresence(m);
+    return {
+      ...m,
+      raison_presence: raison ? `Vous suivez ${raison}` : null,
+    };
+  };
+
   if (categorie === 'mes_equipes') {
-    const correspondants = tous.filter(estFavori);
+    const correspondants = tous.filter(estFavori).map(enrichirMatch);
     if (correspondants.length > 0) {
       resultats = correspondants;
     }
   } else {
-    const favoris = resultats.filter(estFavori);
-    const snL1 = resultats.filter((m) => !estFavori(m) && estSnOuL1(m));
-    const autres = resultats.filter((m) => !estFavori(m) && !estSnOuL1(m));
+    const favoris = resultats.filter(estFavori).map(enrichirMatch);
+    const snL1 = resultats.filter((m) => !estFavori(m) && estSnOuL1(m)).map((m) => ({ ...m, raison_presence: null }));
+    const autres = resultats.filter((m) => !estFavori(m) && !estSnOuL1(m)).map((m) => ({ ...m, raison_presence: null }));
     resultats = [...favoris, ...snL1, ...autres];
   }
 

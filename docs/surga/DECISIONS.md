@@ -44,7 +44,17 @@ consulte ce fichier avant de remettre en question un point.
 | D28 | CV et lettres de motivation rédigés en français uniquement au lancement. | L'anglais est hors périmètre pour le lancement sénégalais et constitue une évolution future |
 | D29 | Aucune fiche réelle de démarche administrative n'est publiée tant qu'un responsable éditorial n'est pas formellement désigné. La Tranche 20 est livrée « techniquement terminée, contenu en attente » avec des fiches de test marquées `BROUILLON`. | Empêcher toute diffusion de consignes administratives ou coûts erronés préjudiciables aux usagers |
 
-## Points ouverts (à trancher en Phase 0, puis à déplacer ci-dessus)
+## Décisions de l'Audit UI V2 — Écran Aujourd'hui (enregistrées le 2026-10-07)
+| # | Décision | Raison |
+|---|---|---|
+| D30 | Ville de référence unique vs Ville consultée libre (SRG-UI-01) : La ville du profil (`surga_preferences.quartiers[0]`) est la seule référence globale. Consulter une localité dans une brique (météo Saint-Louis) est local à la session et ne modifie ni le profil ni les autres briques. À la réouverture, retour à la ville de référence. | Évite les incohérences de lieu et respecte le profil utilisateur |
+| D31 | Fraîcheur des actualités (SRG-UI-04) : Fenêtre maximale de 24 h pour le briefing. L'horodatage provient exclusivement du flux RSS (`pubDate`, `isoDate`) ou des métadonnées éditeurs. Les articles sans date valide ou > 24 h sont exclus du digest matinal. | Zéro tromperie sur la fraîcheur de l'information |
+| D32 | Zéro doublon éditorial (SRG-UI-05) : La section « Actualités et revue de presse » débute là où le briefing s'arrête (`items.slice(brevesPhares.length)`). Aucun article n'est présenté deux fois dans la même vue. | Respect du temps de lecture et clarté visuelle |
+| D33 | Terme « Kalpé » (SRG-UI-17) : Le mot « Kalpé » est maintenu avec le sous-titre explicatif `(portefeuille)` et une infobulle d'accessibilité. | Ancrage culturel fort tout en restant accessible aux nouveaux usagers |
+| D34 | Format unique des montants (SRG-UI-22) : Standardisation via `formaterFCFA` (`Intl.NumberFormat('fr-FR')` avec espace insécable fine `\u202F` + `FCFA`). Zéro concaténation manuelle. | Cohérence typographique et financière |
+| D35 | Radios FM et gestion des flux (SRG-UI-25) : Le widget quitte la colonne de contexte par défaut ; la sélection des stations vit dans Services. Le dock lecteur n'apparaît que lors d'une lecture active. Estimation de débit (30-60 Mo/h) indiquée. | Low-data, respect des ressources et clarté de la colonne de contexte |
+
+## Points ouverts (à trancher en Phase 0 et UI V2, puis à déplacer ci-dessus)
 | # | Point | Comment le trancher |
 |---|---|---|
 | O1 | Cadre WhatsApp autorisé pour Surga | Confirmation de Meta ou du fournisseur d'accès à l'API |
@@ -52,8 +62,8 @@ consulte ce fichier avant de remettre en question un point.
 | O3 | Fournisseur de transcription vocale | Spike : test avec enregistrements réalistes, en français puis en wolof |
 | O4 | Comportement de la PWA sur iPhone (push, audio en arrière-plan) | Test sur appareils réels ; part d'iPhone parmi les utilisateurs |
 | O5 | Budget de poids de l'app connectée | À fixer en Tranche 1 (point de départ proposé : JS initial < 120 Ko) |
-| O6 | Droits d'usage des sources de presse | Lecture des conditions de chaque site, flux RSS retenus |
+| O6 | Droits de diffusion des flux audio Radio FM (SRG-UI-25) | Accords de rediffusion à valider avec les directions techniques des stations sénégalaises (RFM, Zik FM, Sud FM, etc.) avant passage en production publique |
 | O8 | Calendrier réel | Estimation indicative : noyau en environ 3 mois, puis briques par 3 à 4 semaines ; à recalibrer après l'audit |
 | O9 | Forfaits data "réseaux sociaux" des opérateurs | Vérification auprès des opérateurs ; impact sur le coût d'usage de la PWA |
-| O10 | Fenêtre de fraîcheur du briefing matinal (SRG-UI-04) | Valeur par défaut : 24h. Les actualités >24h ou sans date RSS/meta vérifiée sont exclues du briefing. À arbitrer par le responsable produit si extension souhaitée (ex: 36h le weekend). |
-| O11 | Désignation du module dépenses / budget : terme « Kalpé » (SRG-UI-17) | « Kalpé » (portefeuille en wolof) : option 1 = infobulle d'explication au premier affichage (« Kalpé : votre carnet de budget et dépenses »), option 2 = nom personnalisable dans les réglages. À trancher par le responsable produit. |
+| O10 | Persistance de la ville consultée en météo | Par défaut : réinitialisation à la ville de référence à chaque nouvelle session. Option proposée : enregistrement d'une liste de lieux favoris (travail, famille) activable en 1 clic. |
+

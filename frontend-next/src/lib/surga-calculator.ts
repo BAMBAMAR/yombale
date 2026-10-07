@@ -18,11 +18,7 @@ export function normaliserExpression(expr: string): string {
     .replace(/\s+/g, '')
 }
 
-export function formaterFCFA(montant: number | null | undefined): string {
-  if (montant === null || montant === undefined || Number.isNaN(montant)) return '0 FCFA'
-  const arrondi = Math.round(montant)
-  return arrondi.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA'
-}
+export { formaterFCFA } from './surga-formatting'
 
 export function evaluerCalcul(expr: string): CalculResultat {
   const propre = normaliserExpression(expr)

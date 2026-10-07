@@ -242,7 +242,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
                 textOverflow: 'ellipsis',
               }}
             >
-              {estMaritime ? 'Météo et marées' : 'Météo'}
+              {estMaritime ? `Météo et marées · ${villeAffichee}` : `Météo · ${villeAffichee}`}
             </span>
             <ChevronDown size={14} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
           </div>

@@ -1,4 +1,42 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Résolution des 25 Tickets UI V2 — Écran « Aujourd'hui » (Session 2026-10-07, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Traitement intégral des 25 tickets UI V2 (SRG-UI-01 à SRG-UI-25) définis suite aux revues d'interface du 7 octobre 2026 : P0 (données et cohérence), P1 (briefing, sports, mise en page), P2 (accessibilité, typographie et détails).
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Localisation et Marées (SRG-UI-01 & SRG-UI-02)** :
+       - Séparation étanche de la Ville de référence (`preferences.quartiers[0]`, profile source unique) et de la Ville consultée (session locale météo).
+       - Consulter la météo d'une autre ville n'écrase plus le profil ni le briefing (`page.tsx`, `SurgaMeteoCard.tsx`).
+       - Carte météo avec libellé explicite `Météo · [ville]` ou `Météo et marées · [ville]`.
+       - Marées masquées pour les localités intérieures (Kaffrine, Kaolack, etc.) et réservées aux zones maritimes (`lib/surga-meteo.ts`).
+    2. **Heure Réelle et Fraîcheur des Actualités (SRG-UI-03 & SRG-UI-04)** :
+       - Élimination des dates artificielles dans `backend/services/surga/rss-collector.js`. Lecture rigoureuse de `pubDate`/`isoDate`.
+       - Fenêtre de fraîcheur du briefing de 24h ; articles obsolètes ou sans date exclus du digest matinal.
+       - Affichage de l'horodatage relatif ou absolu via `formaterHeurePublication` (`lib/surga-formatting.ts`). Clic sur le titre ouvrant directement l'article source.
+    3. **Zéro Doublon sur Ordinateur (SRG-UI-05)** :
+       - La section « Actualités et revue de presse » commence strictement là où le briefing s'arrête (`items.slice(brevesPhares.length)` dans `SurgaAujourdhuiTab.tsx`).
+    4. **Sport, Phrase d'Accueil et Cohérence Agenda (SRG-UI-09, SRG-UI-10 & SRG-UI-20)** :
+       - Priorisation des matches par équipes suivies, puis compétitions nationales (`backend/services/surga/sport-service.js`).
+       - Mention `Vous suivez [équipe/joueur]` et format d'heure `à 13 h 50`.
+       - Phrase d'accueil exacte sans répétition de date : « Bonjour. Pour Dakar ce matin : X brèves, Y actualités sportives et 1 rappel à 14 h. »
+       - Cohérence Agenda dans « Votre journée » (`SurgaDesktopRightRail.tsx`) : suppression des contradictions, affichage harmonisé avec `agendaToday`.
+    5. **Mise en Page et Dégagement Mobile (SRG-UI-11 & SRG-UI-12)** :
+       - Contenu central borné à 720 px max et centré (`.surga-center-feed .surga-container`).
+       - Grille desktop `.surga-main-grid` : colonne centrale `minmax(0, 740px)` et rail droit s'élargissant à 360 px à partir de 1 920 px.
+       - Sur mobile : `padding-bottom: 152px` garantissant qu'aucune carte ne passe sous le bouton micro FAB flottant (56 px + marge 16 px).
+    6. **Design Apaisé, Accessibilité & Typographie (SRG-UI-13, SRG-UI-18, SRG-UI-19, SRG-UI-22, SRG-UI-23 & SRG-UI-24)** :
+       - Titres de section de la sidebar en gris `#64748B`, majuscule initiale uniquement.
+       - Contraste WCAG AA >= 4.5:1 garanti pour les textes d'accent via `--surga-accent-text` (`#92400E`) et `#B45309`.
+       - Icône Wi-Fi masquée en ligne, affichée uniquement hors-ligne avec badge « Hors ligne ».
+       - Bouton d'action unique par titre (`<SurgaShareButton />`) visible au survol sur desktop et accessible en continu sur mobile.
+       - Module universel `lib/surga-formatting.ts` pour la typographie française et `formaterFCFA` (`Intl.NumberFormat('fr-FR')` avec espace insécable fine).
+    7. **Radios FM et Droits (SRG-UI-25)** :
+       - Retrait de la radio de la colonne de contexte ; accessible dans Services. Dock persistant n'apparaît qu'en cas d'écoute active. Décisions de droits inscrites dans `docs/surga/DECISIONS.md`.
+  * **Validation & Tests** :
+    - 158 tests unitaires Jest PASS (129 `surga.test.js` + 29 `surga-phases-1-3.test.js`).
+    - Linter Anti-AI-Slop : 0 infraction bloquante.
+    - Modularisation : 100% des fichiers sous le plafond strict de 450 lignes.
+    - Spécifications consolidées dans `docs/surga/TICKETS_UI_V2.md` et `docs/surga/DECISIONS.md` (D30 à D35).
+
 - **Surga / Dock Radio & Rail Droit : Zapping Suivant/Précédent & Zéro Superposition (Session 2026-10-07, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe aux retours de test utilisateur :

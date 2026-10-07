@@ -452,11 +452,20 @@ async function getBriefingItems({ categories = ['actualites', 'trafic'], limit =
     return (maintenant - t) <= FENETRE_FRAICHEUR_MS && (t - maintenant) <= 2 * 3600 * 1000;
   });
 
+  // SRG-UI-21 : Filtrage des articles non factuels (top 10, galeries, quiz, classements sans lien d'actualité directe)
+  candidats = candidats.filter((it) => {
+    const t = (it.titre || '').trim();
+    if (!t) return false;
+    if (/^(top\s*\d+|les\s*\d+\s*(plus|meilleurs)|classement\s*des|galerie\s*photo|quiz\s*:|rétrospective\s*:)/i.test(t)) {
+      return false;
+    }
+    return true;
+  });
+
+  // SRG-UI-04 : Un article sans date de publication fiable est exclu du briefing.
+  // Zéro fabrication de fausses heures de fraîcheur. En absence de candidats récents, conserver la date source authentique.
   if (candidats.length === 0) {
-    candidats = ITEMS_SECOURS.map((it, idx) => ({
-      ...it,
-      published_at: new Date(maintenant - (idx + 1) * 45 * 60 * 1000).toISOString(),
-    }));
+    candidats = ITEMS_SECOURS.filter((it) => Boolean(it.published_at));
   }
 
   // Algorithme d'équilibrage des sources sénégalaises

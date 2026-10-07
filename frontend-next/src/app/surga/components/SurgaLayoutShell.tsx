@@ -18,6 +18,7 @@ interface SurgaLayoutShellProps {
   briefingDate?: string
   nbNotes: number
   nbAgenda: number
+  prochainRdvTitre?: string
   statsApercu: SurgaDepensesStats | null
   soldeKalpeFormate: string
   quartier?: string
@@ -51,6 +52,7 @@ export default function SurgaLayoutShell({
   briefingDate,
   nbNotes,
   nbAgenda,
+  prochainRdvTitre,
   statsApercu,
   soldeKalpeFormate,
   quartier,
@@ -233,6 +235,7 @@ export default function SurgaLayoutShell({
           soldeKalpeFormate={soldeKalpeFormate}
           nbNotes={nbNotes}
           nbAgenda={nbAgenda}
+          prochainRdvTitre={prochainRdvTitre}
           ville={quartier}
           widgetsActifs={railWidgets}
           onNavigateTab={onTabChange}

@@ -50,6 +50,35 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Résolution Intégrale des 25 Tickets UI V2 — Écran « Aujourd'hui » (Session 2026-10-07, branche `feature/surga`)** :
+  - *Mission & Périmètre : Traitement des 25 tickets UI V2 issus des revues d'interface du 7 octobre 2026 (`docs/surga/TICKETS_UI_V2.md`)* :
+    1. **Localisation Unique & Respect du Profil (SRG-UI-01, SRG-UI-02)** :
+       - Séparation stricte de la Ville de référence (`preferences.quartiers[0]`, source unique de vérité) et de la Ville consultée (session locale météo). Consulter une ville (ex. Saint-Louis) n'écrase jamais le profil ni le briefing.
+       - Marées masquées pour les localités continentales (Kaffrine, Kaolack, etc.) et réservées aux zones maritimes (`lib/surga-meteo.ts`).
+    2. **Actualités Sourcées, Heure Réelle & Zéro Doublon (SRG-UI-03, SRG-UI-04, SRG-UI-05, SRG-UI-21)** :
+       - Bannissement des dates artificielles dans `backend/services/surga/rss-collector.js`. Lecture stricte des balises `pubDate` / `isoDate` du flux RSS ; fenêtre de fraîcheur de 24h.
+       - La section « Actualités et revue de presse » commence strictement après le briefing (`items.slice(brevesPhares.length)`) : zéro titre dupliqué entre le briefing et la liste d'articles.
+       - Priorité au fait d'actualité avec lien sortant direct vers la source originale (`formaterHeurePublication`).
+    3. **Sport Utile, Phrase d'Accueil & Cohérence Agenda (SRG-UI-09, SRG-UI-10, SRG-UI-20)** :
+       - Priorisation des matches par équipes suivies de l'usager (`backend/services/surga/sport-service.js`), mention `Vous suivez [équipe/joueur]`, horaires au format `à 13 h 50`.
+       - Phrase d'accueil calibrée sans date répétée : « Bonjour. Pour Dakar ce matin : X brèves, Y actualités sportives et 1 rappel à 14 h. »
+       - Cohérence parfaite entre le briefing et le widget « Votre journée » dans le rail droit (`agendaToday`) : fin des contradictions (« Journée libre » vs rappel présent).
+    4. **Mise en Page Responsive & Espacements (SRG-UI-11, SRG-UI-12)** :
+       - Largeur centrale bornée à 720 px max et centrée dans son espace (`.surga-center-feed .surga-container`).
+       - Rail droit jusqu'à 360 px sur écran large (1 920 px) via `.surga-main-grid`.
+       - Sur mobile : `padding-bottom: 152px` garantissant qu'aucune carte ne passe sous le bouton micro FAB flottant (56 px + marge 16 px).
+    5. **Accessibilité, Typographie & Ergonomie (SRG-UI-13, SRG-UI-18, SRG-UI-19, SRG-UI-22, SRG-UI-23, SRG-UI-24)** :
+       - Titres de section de la barre latérale passés en gris `#64748B`, majuscule initiale seule (`.surga-sidebar-section-title`).
+       - Contraste WCAG AA >= 4.5:1 sécurisé avec `--surga-accent-text` (`#92400E`) et `#B45309`.
+       - Icône Wi-Fi masquée en ligne, affichée uniquement hors-ligne avec badge « Hors ligne ».
+       - Bouton d'action unique par titre (`<SurgaShareButton />`) visible au survol sur desktop et accessible en continu sur mobile.
+       - Module canonique `lib/surga-formatting.ts` pour la typographie française (espaces insécables) et `formaterFCFA` (`Intl.NumberFormat('fr-FR')` avec espace insécable fine).
+    6. **Radios FM & Décisions Produit (SRG-UI-25)** :
+       - Retrait de la radio de la colonne de contexte par défaut ; mini-lecteur persistant affiché uniquement après déclenchement volontaire. Décisions D30 à D35 inscrites dans `docs/surga/DECISIONS.md`.
+  - *Validation & Qualité* :
+    - 158 tests unitaires Jest validés avec succès (129 backend + 29 phases 1-4).
+    - Zéro émoji Unicode, 100% icônes Lucide SVG, composants strictement sous 450 lignes.
+
 - **Surga / Dock Radio & Rail Droit : Zapping Suivant/Précédent & Zéro Superposition (Session 2026-10-07, branche `feature/surga`)** :
   - *Réponse Directe à la Directive Utilisateur : « voir la position ca se superpose .ajouter des bouton suivant et precedent;revoir aussi sa position qui secrase en bas »* :
     1. **Éradication de la Superposition sur l'Omnibar (`SurgaPersistentRadioBar.tsx`, 218 l. & `surga.css`)** :
