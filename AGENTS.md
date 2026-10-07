@@ -4,6 +4,11 @@
 - **Bannissement du Push Automatique** : L'assistant ne doit **JAMAIS** exécuter de `git push` de sa propre initiative.
 - **Attente Ordre Utilisateur** : Les modifications de code peuvent être testées et préparées localement, mais un `git push` vers `origin main` ne doit être exécuté **QUE SI et SEULEMENT SI** l'utilisateur le demande explicitement (ex: *"push"*, *"pousse sur github"*, *"déploie"*).
 
+## 🌿 Règle Absolue de Gestion des Branches Git : NOPALOU vs SURGA
+- **Branche `main` Obligatoire pour NOPALOU** : Toute modification relative à **NOPALOU** (marketplace, panel d'administration global `/admin`, caisse POS, boutiques, comparateur, CRM/prospection, routes API générales) DOIT IMPÉRATIVEMENT être effectuée sur la branche **`main`**. L'assistant a interdiction formelle de travailler sur ces périmètres dans la branche `feature/surga`.
+- **Branche `feature/surga` Exclusivement pour SURGA** : La branche `feature/surga` est STRICTEMENT réservée aux développements exclusifs de l'assistant personnel **SURGA** (`/surga`, `/admin/surga`, `backend/services/surga/`).
+- **Vérification Systématique** : Avant de démarrer ou poursuivre toute tâche relative à Nopalou ou à l'administration générale, vérifier systématiquement la branche active avec `git branch --show-current` et basculer sur `main`.
+
 ## 📌 Règle Obligatoire de Documentation Exhaustive pour les Prochaines Sessions
 - **Mise à Jour Systématique de TOUS les Documents** : À la fin de chaque session de travail, après chaque livraison ou tâche majeure (et obligatoirement avant tout déploiement / `git push`), l'assistant DOIT **systématiquement et sans exception mettre à jour l'ensemble des documents de documentation et de passation** pour garantir une reprise parfaite et sans perte de contexte lors des prochaines sessions :
   1. **`CLAUDE.md`** : Résumé précis des nouveautés, fonctionnalités ajoutées, migrations SQL et corrections effectuées en tête du journal des versions.

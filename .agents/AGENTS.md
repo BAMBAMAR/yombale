@@ -1,5 +1,10 @@
 # Directives et Règles Agentic AI (Nopalou)
 
+## 🌿 Règle Absolue de Gestion des Branches Git : NOPALOU vs SURGA
+- **Branche `main` Obligatoire pour NOPALOU** : Toute modification relative à **NOPALOU** (marketplace, panel d'administration global `/admin`, caisse POS, boutiques, comparateur, CRM/prospection, routes API générales) DOIT IMPÉRATIVEMENT être effectuée sur la branche **`main`**. L'assistant a interdiction formelle de travailler sur ces périmètres dans la branche `feature/surga`.
+- **Branche `feature/surga` Exclusivement pour SURGA** : La branche `feature/surga` est STRICTEMENT réservée aux développements exclusifs de l'assistant personnel **SURGA** (`/surga`, `/admin/surga`, `backend/services/surga/`).
+- **Vérification Systématique** : Avant de démarrer ou poursuivre toute tâche relative à Nopalou ou à l'administration générale, vérifier systématiquement la branche active avec `git branch --show-current` et basculer sur `main`.
+
 ## 📌 Règle Obligatoire de Documentation Exhaustive pour les Prochaines Sessions
 - **Mise à Jour Systématique de TOUS les Documents** : À la fin de chaque session de travail, après chaque livraison ou tâche majeure (et obligatoirement avant tout déploiement / `git push`), l'assistant DOIT **systématiquement et sans exception mettre à jour l'ensemble des documents de documentation et de passation** pour garantir une reprise parfaite lors des prochaines sessions :
   1. `CLAUDE.md` (résumé des nouveautés, migrations SQL et corrections en tête du journal des versions).
