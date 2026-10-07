@@ -1,4 +1,34 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Personnalisation de l'Affichage (Sidebar & Right Rail) & Widget Radios FM Direct (Session 2026-10-07, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse directe et exhaustive aux directives utilisateur :
+      1. « dans reglage on doit pouvoir personnaliser le menu et la bande lateral droite selon ses choix »
+      2. « en bas de memo ajouter radio pour combler ce vide »
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Widget Radios FM Direct dans le Rail Droit (`SurgaDesktopRightRail.tsx`, 436 l.)** :
+       - Ajout du 6ème widget contextuel placé directement sous le widget « Mémo épinglé », comblant élégamment le vide vertical de la colonne droite sur grand écran.
+       - Connexion au contexte audio `useSurgaRadio()` (`@/lib/surga-radio-context`) : détection en temps réel du statut de diffusion (`isPlaying`), indicateur vert pulsant, bouton de contrôle rapide « Écouter » / « Pause » avec isolation de clic (`e.stopPropagation()`).
+       - Affichage de la station active ou du bouquet national (`Zik FM, RFM, Sud FM, RFI Dakar, RTS...`) et badge de fréquence (`93.0 FM`).
+       - Clic sur l'ensemble de la carte ouvrant le bouquet complet de plus de 15 stations via `openRadioModal()`.
+       - Affichage conditionné par le tableau des widgets actifs (`widgetsActifs`).
+    2. **Section de Personnalisation dans Réglages (`SurgaPersonnalisationSection.tsx`, 413 l. & `SurgaParametresTab.tsx`, 356 l.)** :
+       - Création d'un sous-composant modulaire autonome sous le plafond de 450 lignes, intégré dans l'onglet Réglages (`SurgaParametresTab.tsx`).
+       - **Personnalisation du Menu Gauche (Sidebar Desktop)** : sélecteur interactif par cartes et cases à cocher avec icônes Lucide SVG dédiées pour choisir parmi les 10 services (Trafic Dakar, Kiosque des Unes, Pôle Immobilier, Shopping Nopalou, Bonnes Adresses, Radios FM direct, Concours nationaux, Démarches administratives, Emploi & Stages, Séries & Vidéos).
+       - **Personnalisation de la Bande Droite (Right Rail Desktop)** : sélecteur interactif permettant d'afficher ou masquer parmi les 6 widgets contextuels (Votre journée/Agenda, Sama Xaalis/Finances perso, Trafic direct, Météo & marées, Mémo épinglé, Radios FM direct).
+       - Bouton « Rétablir l'affichage par défaut » réinitialisant en un clic aux dispositions optimales.
+       - Sauvegarde immédiate dans le stockage local `localStorage` (`surga_preferences`), notification globale par l'événement `surga-data-change` et synchronisation API `POST/PUT /api/surga/preferences`.
+    3. **Rendu Dynamique de la Barre Latérale Gauche (`SurgaDesktopSidebar.tsx`, 219 l.)** :
+       - Filtrage dynamique des boutons de services selon `servicesActifs` avec prise en charge complète des 10 services et conservation de l'accès neutre « Plus de services ».
+    4. **Persistance Backend & Base de Données (`migrate-inline.js`, `preferences.js`)** :
+       - Ajout des colonnes `sidebar_services JSONB` et `rail_widgets JSONB` dans la table `surga_preferences`.
+       - Support des requêtes PUT et POST sur `/api/surga/preferences` avec validation et valeurs par défaut robustes.
+  * **Validation & Tests** :
+    - Tests Unitaires Backend : 129/129 PASS (`npx jest tests/unit/surga.test.js`).
+    - Linter Anti-AI-Slop : 0 infraction bloquante (`npm run lint:slop`).
+    - Compilation TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Captures Playwright Retina : 3 captures validées (`surga_desktop_radio_widget.png`, `surga_reglages_personnalisation.png`, `surga_reglages_bande_droite.png`).
+    - Modularisation : 100% des fichiers sous le plafond strict de 450 lignes.
+
 - **Surga / Authentification & Compte — Réactivité du Bouton « Compte » en Mode Invité (Session 2026-10-07, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe à l'anomalie signalée : « compte ne repon pas QUAND ON est pas connecte ».

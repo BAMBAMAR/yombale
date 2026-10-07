@@ -17,6 +17,8 @@ const DEFAUTS_PREFERENCES = {
   audio_actif: false,
   onboarding_termine: false,
   consentement_voix: false,
+  sidebar_services: ['trafic', 'presse', 'immo', 'shopping', 'places'],
+  rail_widgets: ['agenda', 'depenses', 'trafic', 'meteo', 'notes', 'radios'],
 };
 
 // GET /api/surga/preferences
@@ -75,9 +77,8 @@ router.get('/preferences', tokenOptional, async (req, res) => {
   }
 });
 
-// PUT /api/surga/preferences
-// Mise à jour complète ou partielle des préférences
-router.put('/preferences', verifierToken, async (req, res) => {
+// Handler commun pour la mise à jour des préférences (PUT ou POST)
+const handleSauvegarderPreferences = async (req, res) => {
   try {
     const userId = req.user.userId;
     const {
@@ -89,6 +90,8 @@ router.put('/preferences', verifierToken, async (req, res) => {
       sources_presse,
       audio_actif,
       consentement_voix,
+      sidebar_services,
+      rail_widgets,
     } = req.body;
 
     const { rows: currentRows } = await pool.query(
@@ -109,11 +112,13 @@ router.put('/preferences', verifierToken, async (req, res) => {
     const nextSources = Array.isArray(sources_presse) ? sources_presse : existing.sources_presse;
     const nextAudio = typeof audio_actif === 'boolean' ? audio_actif : Boolean(existing.audio_actif);
     const nextConsentVoix = typeof consentement_voix === 'boolean' ? consentement_voix : Boolean(existing.consentement_voix);
+    const nextSidebar = Array.isArray(sidebar_services) ? sidebar_services : (existing.sidebar_services || DEFAUTS_PREFERENCES.sidebar_services);
+    const nextRail = Array.isArray(rail_widgets) ? rail_widgets : (existing.rail_widgets || DEFAUTS_PREFERENCES.rail_widgets);
 
     const { rows } = await pool.query(
       `INSERT INTO surga_preferences (
-        user_id, modules_actifs, heure_briefing, langue, quartiers, equipes_suivies, sources_presse, audio_actif, consentement_voix, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+        user_id, modules_actifs, heure_briefing, langue, quartiers, equipes_suivies, sources_presse, audio_actif, consentement_voix, sidebar_services, rail_widgets, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
       ON CONFLICT (user_id) DO UPDATE SET
         modules_actifs = EXCLUDED.modules_actifs,
         heure_briefing = EXCLUDED.heure_briefing,
@@ -123,6 +128,8 @@ router.put('/preferences', verifierToken, async (req, res) => {
         sources_presse = EXCLUDED.sources_presse,
         audio_actif = EXCLUDED.audio_actif,
         consentement_voix = EXCLUDED.consentement_voix,
+        sidebar_services = EXCLUDED.sidebar_services,
+        rail_widgets = EXCLUDED.rail_widgets,
         updated_at = NOW()
       RETURNING *`,
       [
@@ -135,6 +142,8 @@ router.put('/preferences', verifierToken, async (req, res) => {
         JSON.stringify(nextSources),
         nextAudio,
         nextConsentVoix,
+        JSON.stringify(nextSidebar),
+        JSON.stringify(nextRail),
       ]
     );
 
@@ -144,10 +153,16 @@ router.put('/preferences', verifierToken, async (req, res) => {
       preferences: rows[0],
     });
   } catch (err) {
-    console.error('[SURGA PREFERENCES PUT ERROR]:', err.message);
+    console.error('[SURGA PREFERENCES UPDATE ERROR]:', err.message);
     res.status(500).json({ success: false, error: 'Erreur lors de la mise à jour des préférences Surga' });
   }
-});
+};
+
+// PUT /api/surga/preferences
+router.put('/preferences', verifierToken, handleSauvegarderPreferences);
+
+// POST /api/surga/preferences (alias)
+router.post('/preferences', verifierToken, handleSauvegarderPreferences);
 
 // POST /api/surga/onboarding
 // Finalise l'onboarding en marquant onboarding_termine = true

@@ -23,6 +23,8 @@ interface SurgaLayoutShellProps {
   quartier?: string
   isFabHidden: boolean
   children: React.ReactNode
+  sidebarServices?: string[]
+  railWidgets?: string[]
   onOpenVoice: () => void
   onOpenTrafic: () => void
   onOpenPresse: () => void
@@ -54,6 +56,8 @@ export default function SurgaLayoutShell({
   quartier,
   isFabHidden,
   children,
+  sidebarServices,
+  railWidgets,
   onOpenVoice,
   onOpenTrafic,
   onOpenPresse,
@@ -206,6 +210,7 @@ export default function SurgaLayoutShell({
           onOpenEmploi={onOpenEmploi}
           onOpenVideos={onOpenVideos}
           onOpenCompte={onOpenCompte}
+          servicesActifs={sidebarServices}
         />
 
         {/* Colonne 2 : Flux Central (Onglet actif + Command Bar) */}
@@ -229,8 +234,10 @@ export default function SurgaLayoutShell({
           nbNotes={nbNotes}
           nbAgenda={nbAgenda}
           ville={quartier}
+          widgetsActifs={railWidgets}
           onNavigateTab={onTabChange}
           onOpenTrafic={onOpenTrafic}
+          onOpenRadios={onOpenRadios}
         />
       </div>
 

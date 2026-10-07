@@ -15,9 +15,17 @@ import {
   Settings,
   User,
   UserCheck,
+  Radio,
+  Award,
+  FileCheck,
+  Briefcase,
+  Tv,
+  type LucideIcon,
 } from 'lucide-react'
 import SurgaBrandLogo from './SurgaBrandLogo'
 import type { SurgaTab } from './SurgaBottomNav'
+
+export const DEFAUT_SIDEBAR_SERVICES = ['trafic', 'presse', 'immo', 'shopping', 'places']
 
 interface SurgaDesktopSidebarProps {
   activeTab: SurgaTab
@@ -31,6 +39,7 @@ interface SurgaDesktopSidebarProps {
   nbNotes?: number
   nbAgenda?: number
   quartier?: string
+  servicesActifs?: string[]
   onOpenTrafic: () => void
   onOpenPresse: () => void
   onOpenImmo: () => void
@@ -52,6 +61,7 @@ export default function SurgaDesktopSidebar({
   nbNotes = 0,
   nbAgenda = 0,
   quartier = 'Dakar Plateau',
+  servicesActifs,
   onOpenTrafic,
   onOpenPresse,
   onOpenImmo,
@@ -59,7 +69,28 @@ export default function SurgaDesktopSidebar({
   onOpenPlaces,
   onOpenPlusServices,
   onOpenCompte,
+  onOpenRadios,
+  onOpenConcours,
+  onOpenDemarches,
+  onOpenEmploi,
+  onOpenVideos,
 }: SurgaDesktopSidebarProps) {
+  const listeServices = Array.isArray(servicesActifs) && servicesActifs.length > 0
+    ? servicesActifs
+    : DEFAUT_SIDEBAR_SERVICES
+
+  const tableServices: Record<string, { titre: string; icone: LucideIcon; action?: () => void }> = {
+    trafic: { titre: 'Trafic', icone: Navigation, action: onOpenTrafic },
+    presse: { titre: 'Kiosque des Unes', icone: Newspaper, action: onOpenPresse },
+    immo: { titre: 'Pôle Immobilier', icone: Home, action: onOpenImmo },
+    shopping: { titre: 'Shopping Nopalou', icone: ShoppingBag, action: onOpenShopping },
+    places: { titre: 'Bonnes Adresses', icone: MapPin, action: onOpenPlaces },
+    radios: { titre: 'Radios FM', icone: Radio, action: onOpenRadios },
+    concours: { titre: 'Concours', icone: Award, action: onOpenConcours },
+    demarches: { titre: 'Démarches', icone: FileCheck, action: onOpenDemarches },
+    emploi: { titre: 'Emploi & Stages', icone: Briefcase, action: onOpenEmploi },
+    videos: { titre: 'Séries & Vidéos', icone: Tv, action: onOpenVideos },
+  }
   return (
     <aside className="surga-desktop-sidebar">
       <div>
@@ -117,66 +148,28 @@ export default function SurgaDesktopSidebar({
           </button>
         </nav>
 
-        {/* GROUPE 2 : SERVICES DAKAR ÉCLATÉS */}
+        {/* GROUPE 2 : SERVICES DAKAR ÉCLATÉS (PERSONNALISABLES) */}
         <div className="surga-sidebar-section-title" style={{ marginTop: 14 }}>Services Dakar</div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <button
-            type="button"
-            onClick={onOpenTrafic}
-            className="surga-sidebar-btn"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Navigation size={17} />
-              <span>Trafic</span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenPresse}
-            className="surga-sidebar-btn"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Newspaper size={17} />
-              <span>Kiosque des Unes</span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenImmo}
-            className="surga-sidebar-btn"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Home size={17} />
-              <span>Pôle Immobilier</span>
-            </div>
-          </button>
-
-          {/* SERVICE SHOPPING NOPALOU (AU-DESSUS DE BONNES ADRESSES, MONOLIGNE SANS BADGE) */}
-          {onOpenShopping && (
-            <button
-              type="button"
-              onClick={onOpenShopping}
-              className="surga-sidebar-btn"
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <ShoppingBag size={17} />
-                <span>Shopping Nopalou</span>
-              </div>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={onOpenPlaces}
-            className="surga-sidebar-btn"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <MapPin size={17} />
-              <span>Bonnes Adresses</span>
-            </div>
-          </button>
+          {listeServices.map((idService) => {
+            const def = tableServices[idService]
+            if (!def || !def.action) return null
+            const Icon = def.icone
+            return (
+              <button
+                key={idService}
+                type="button"
+                onClick={def.action}
+                className="surga-sidebar-btn"
+                title={`Ouvrir ${def.titre}`}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Icon size={17} />
+                  <span>{def.titre}</span>
+                </div>
+              </button>
+            )
+          })}
 
           {/* BOUTON PLUS DE SERVICES (STYLE NEUTRE SANS BADGE AGRESSIF) */}
           {onOpenPlusServices && (

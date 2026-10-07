@@ -3,6 +3,41 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Personnalisation & Audio] — Personnalisation Menu & Rail Droit + Widget Radios FM Direct
+- **Objectif Atteint :**
+  - Réponse directe et intégrale aux deux demandes de l'utilisateur :
+    1. « dans reglage on doit pouvoir personnaliser le menu et la bande lateral droite selon ses choix »
+    2. « en bas de memo ajouter radio pour combler ce vide »
+  - Implémentation d'un système complet de personnalisation des composants d'affichage sur grand écran (Desktop).
+  - Ajout du widget Radios FM Direct dans la colonne droite pour combler le vide vertical en bas du mémo épinglé.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composant SurgaDesktopRightRail (`frontend-next/src/app/surga/components/SurgaDesktopRightRail.tsx`, 436 l.)* :
+     - Ajout du 6ème widget contextuel placé directement sous le widget « Mémo épinglé », comblant élégamment le vide vertical de la colonne droite.
+     - Connexion au contexte audio `useSurgaRadio()` (`@/lib/surga-radio-context`) : détection en temps réel du statut de diffusion (`isPlaying`), indicateur vert pulsant, bouton de contrôle rapide « Écouter » / « Pause » avec isolation de clic (`e.stopPropagation()`).
+     - Affichage de la station active ou du bouquet national (`Zik FM, RFM, Sud FM, RFI Dakar, RTS...`) et badge de fréquence (`93.0 FM`).
+     - Clic sur l'ensemble de la carte ouvrant le bouquet complet de plus de 15 stations via `openRadioModal()`.
+     - Conditionnement dynamique de chaque widget à `widgetsActifs` (`Array.includes(...)`).
+  2. *Composant SurgaPersonnalisationSection (`frontend-next/src/app/surga/components/SurgaPersonnalisationSection.tsx`, 413 l.)* :
+     - Nouveau sous-composant modulaire autonome sous le plafond de 450 lignes, intégré dans l'onglet Réglages (`SurgaParametresTab.tsx`, 356 l.).
+     - **Personnalisation du Menu Gauche (Sidebar Desktop)** : sélecteur interactif par cartes et cases à cocher avec icônes Lucide SVG dédiées pour choisir parmi les 10 services (Trafic Dakar, Kiosque des Unes, Pôle Immobilier, Shopping Nopalou, Bonnes Adresses, Radios FM direct, Concours nationaux, Démarches administratives, Emploi & Stages, Séries & Vidéos).
+     - **Personnalisation de la Bande Droite (Right Rail Desktop)** : sélecteur interactif permettant d'afficher ou masquer parmi les 6 widgets contextuels (Votre journée/Agenda, Sama Xaalis/Finances perso, Trafic direct, Météo & marées, Mémo épinglé, Radios FM direct).
+     - Bouton « Rétablir l'affichage par défaut » réinitialisant en un clic aux dispositions optimales.
+     - Sauvegarde immédiate dans le stockage local `localStorage` (`surga_preferences`), notification globale par l'événement `surga-data-change` et synchronisation API `POST/PUT /api/surga/preferences`.
+  3. *Composant SurgaDesktopSidebar (`frontend-next/src/app/surga/components/SurgaDesktopSidebar.tsx`, 219 l.)* :
+     - Filtrage dynamique des boutons de services selon `servicesActifs` avec prise en charge complète des 10 services et conservation de l'accès neutre « Plus de services ».
+  4. *Shell et Page Principale (`SurgaLayoutShell.tsx`, 275 l. & `page.tsx`, 449 l.)* :
+     - Transmission des préférences `sidebarServices` et `railWidgets` depuis l'état central réactif vers la sidebar et le rail droit.
+     - Prise en charge de `onSavePreferences` / `handleUpdatePreferences` dans `SurgaParametresTab`.
+  5. *Persistance Backend & Base de Données (`backend/migrate-inline.js`, `backend/routes/surga/preferences.js`)* :
+     - Ajout des colonnes `sidebar_services JSONB` et `rail_widgets JSONB` dans la table `surga_preferences`.
+     - Support des requêtes PUT et POST sur `/api/surga/preferences` avec validation et valeurs par défaut robustes.
+- **Validation & Tests :**
+  - Backend Jest : 129/129 tests réussis (`npx jest tests/unit/surga.test.js`).
+  - Linter Slop : 0 infraction bloquante (`npm run lint:slop`).
+  - TypeScript : 0 erreur de typage (`npx tsc --noEmit`).
+  - Playwright : 3 captures d'écran validées (`surga_desktop_radio_widget.png`, `surga_reglages_personnalisation.png`, `surga_reglages_bande_droite.png`).
+  - 100% des fichiers sous le plafond strict de 450 lignes.
+
 ### [2026-10-07 — Compte & Auth] — Réactivité du Bouton « Compte » en Mode Invité (Non-Connecté)
 - **Objectif Atteint :**
   - Réponse directe à l'anomalie signalée (« compte ne repon pas QUAND ON est pas connecte »).

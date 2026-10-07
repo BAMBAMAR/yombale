@@ -24,6 +24,8 @@ export interface SurgaPreferencesData {
   equipes_suivies: string[]
   audio_actif?: boolean
   onboarding_termine?: boolean
+  sidebar_services?: string[]
+  rail_widgets?: string[]
 }
 
 interface SurgaOnboardingProps {

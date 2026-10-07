@@ -3062,6 +3062,8 @@ module.exports = async function migrateInline(customConnStr = null) {
      )`,
     `CREATE INDEX IF NOT EXISTS idx_surga_preferences_briefing ON surga_preferences(heure_briefing, onboarding_termine)`,
     `ALTER TABLE surga_preferences ADD COLUMN IF NOT EXISTS podcast_token UUID DEFAULT gen_random_uuid()`,
+    `ALTER TABLE surga_preferences ADD COLUMN IF NOT EXISTS sidebar_services JSONB DEFAULT '["trafic", "presse", "immo", "shopping", "places"]'::jsonb`,
+    `ALTER TABLE surga_preferences ADD COLUMN IF NOT EXISTS rail_widgets JSONB DEFAULT '["agenda", "depenses", "trafic", "meteo", "notes", "radios"]'::jsonb`,
     `CREATE UNIQUE INDEX IF NOT EXISTS uidx_surga_preferences_podcast_token ON surga_preferences(podcast_token) WHERE podcast_token IS NOT NULL`,
     `CREATE TABLE IF NOT EXISTS surga_sources (
        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

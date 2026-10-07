@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import SurgaServiceRow from './SurgaServiceRow'
+import SurgaPersonnalisationSection from './SurgaPersonnalisationSection'
 
 interface SurgaParametresTabProps {
   preferences: any
@@ -37,6 +38,7 @@ interface SurgaParametresTabProps {
   onOpenPro?: () => void
   onOpenDonnees?: () => void
   onReinitialiser: () => void
+  onSavePreferences?: (nouveauxParametres: { sidebar_services?: string[]; rail_widgets?: string[] }) => void
 }
 
 export default function SurgaParametresTab({
@@ -53,6 +55,7 @@ export default function SurgaParametresTab({
   onOpenPro,
   onOpenDonnees,
   onReinitialiser,
+  onSavePreferences,
 }: SurgaParametresTabProps) {
   const estPremium = statutPremium?.estPremium ?? false
   const joursRestants = statutPremium?.joursRestants ?? 0
@@ -306,7 +309,13 @@ export default function SurgaParametresTab({
         )}
       </div>
 
-      {/* 3. Option Audio du briefing */}
+      {/* 3. Personnalisation de l'affichage (Desktop) : Menu gauche & Bande droite */}
+      <SurgaPersonnalisationSection
+        preferences={preferences}
+        onSavePreferences={onSavePreferences || (() => {})}
+      />
+
+      {/* 4. Option Audio du briefing */}
       <SurgaServiceRow
         icon={Volume2}
         iconColor="var(--accent, #C75B00)"

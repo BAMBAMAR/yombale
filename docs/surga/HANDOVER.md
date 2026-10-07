@@ -1,13 +1,24 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Compte & Mode Invité — Résolution de la Réactivité du Bouton « Compte » pour les Utilisateurs Non-Connectés)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Personnalisation de l'Affichage & Widget Radios FM Direct)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Bouton Compte actif en Mode Invité (`SurgaCompteModal` & `SurgaAuthModal`), Bouton Commander relié à la Fiche Produit (`ProduitCard`), 19/19 Tickets UI V2 Résolus (SRG-UI-01 à 19), Localisation Unique, Zéro Marée Intérieur, Source & Heure Actualités, Filtre 24h, Zéro Doublon Desktop, 3 Breakpoints (<600px, 600-1023px, >=1024px), Sport 3 Paliers, Command Bar Opaque, Contrastes Vérifiés, 100% Tests Jest PASS (129/129), Linter Slop OK**  
+> **Statut global** : 🟢 **Personnalisation Menu Gauche (10 services) & Rail Droit (6 widgets) dans Réglages (`SurgaPersonnalisationSection`), Widget Radios FM Direct dans le Rail Droit comblant le vide (`SurgaDesktopRightRail`), Persistance LocalStorage & Backend (`surga_preferences`), Bouton Compte actif en Mode Invité, Bouton Commander relié à la Fiche Produit, 19/19 Tickets UI V2 Résolus, 100% Tests Jest PASS (129/129), Linter Slop OK, TypeScript OK (0 erreur)**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
+
+-7. **Personnalisation de l'Affichage & Widget Radios FM Direct (100% DONE — 7 Octobre 2026)** :
+   - Traitement direct des demandes utilisateur :
+     1. « dans reglage on doit pouvoir personnaliser le menu et la bande lateral droite selon ses choix »
+     2. « en bas de memo ajouter radio pour combler ce vide »
+   - Réalisations majeures :
+     - **Widget Radios FM Direct (`SurgaDesktopRightRail.tsx`, 436 l.)** : Ajout du 6ème widget contextuel placé directement sous le widget « Mémo épinglé », comblant intégralement le vide vertical de la colonne droite sur écran ordinateur. Connecté à `useSurgaRadio()` avec statut en direct (`isPlaying`), bouton interactif « Écouter » / « Pause », nom de station ou bouquet national, fréquence et ouverture de la modale complète au clic.
+     - **Section de Personnalisation dans Réglages (`SurgaPersonnalisationSection.tsx`, 413 l. & `SurgaParametresTab.tsx`, 356 l.)** : Création d'un sous-composant modulaire autonome permettant à l'utilisateur de cocher/décocher les services du menu gauche (10 services) et les widgets du rail droit (6 widgets), avec bouton de restauration par défaut et sauvegarde immédiate.
+     - **Rendu Dynamique de la Sidebar (`SurgaDesktopSidebar.tsx`, 219 l.)** : Affichage dynamique des services configurés selon `servicesActifs`.
+     - **Persistance DB & Backend (`backend/migrate-inline.js`, `backend/routes/surga/preferences.js`)** : Ajout des colonnes `sidebar_services JSONB` et `rail_widgets JSONB` dans la table `surga_preferences` et handler PUT/POST.
+     - **Validation & Scores** : 129/129 tests Jest PASS, tsc 0 erreur, linter slop 0 erreur, 3 captures Playwright validées.
 
 -6. **Authentification & Compte — Réactivité du Bouton « Compte » en Mode Invité (100% DONE — 7 Octobre 2026)** :
    - Traitement direct de l'anomalie signalée : « compte ne repon pas QUAND ON est pas connecte ».

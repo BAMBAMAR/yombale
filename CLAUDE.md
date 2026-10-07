@@ -50,6 +50,28 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Personnalisation de l'Affichage & Widget Radio FM (Session 2026-10-07, branche `feature/surga`)** :
+  - *Réponse Directe à la Directive Utilisateur : « dans reglage on doit pouvoir personnaliser le menu et la bande lateral droite selon ses choix.en bas de memo ajouter radio pour combler ce vide »* :
+    1. **Widget Radios FM Direct dans le Rail Droit (`SurgaDesktopRightRail.tsx`, 436 l.)** :
+       - Ajout du 6ème widget contextuel placé directement sous le widget « Mémo épinglé », comblant intégralement le vide vertical de la colonne droite.
+       - Connexion au contexte audio `useSurgaRadio()` (`@/lib/surga-radio-context`) : détection de l'état en direct (`isPlaying`), pastille verte pulsante, bouton interactif « Écouter » / « Pause » (`e.stopPropagation()`).
+       - Affichage de la station en cours ou du bouquet national (`Zik FM, RFM, Sud FM, RFI Dakar, RTS...`), avec badge de fréquence (`93.0 FM`).
+       - Clic sur la carte ouvrant le bouquet complet via `openRadioModal()`.
+    2. **Section de Personnalisation dans Réglages (`SurgaPersonnalisationSection.tsx`, 413 l. & `SurgaParametresTab.tsx`, 356 l.)** :
+       - Création d'un sous-composant modulaire sous le plafond de 450 lignes, intégré dans l'onglet Réglages.
+       - **Personnalisation du Menu Gauche (Sidebar Desktop)** : sélecteur interactif permettant d'épingler ou masquer parmi les 10 services (Trafic, Kiosque Presse, Pôle Immo, Shopping Nopalou, Bonnes Adresses, Radios FM, Concours nationaux, Démarches administratives, Emploi & Stages, Séries & Vidéos).
+       - **Personnalisation de la Bande Droite (Right Rail Desktop)** : sélecteur interactif permettant d'afficher ou masquer parmi les 6 widgets contextuels (Agenda, Sama Xaalis, Trafic direct, Météo & marées, Mémo épinglé, Radios FM direct).
+       - Bouton « Rétablir l'affichage par défaut », sauvegarde immédiate dans `localStorage` (`surga_preferences`), émission de l'événement `surga-data-change` et synchronisation API `POST/PUT /api/surga/preferences`.
+    3. **Rendu Dynamique dans la Barre Latérale Gauche (`SurgaDesktopSidebar.tsx`, 219 l.)** :
+       - Filtrage dynamique des boutons de services selon `servicesActifs` avec prise en charge complète des 10 services et conservation de l'accès « Plus de services ».
+    4. **Persistance Backend & Base de Données (`migrate-inline.js`, `preferences.js`)** :
+       - Colonnes `sidebar_services JSONB` et `rail_widgets JSONB` ajoutées à la table `surga_preferences`.
+       - Handler commun PUT & POST sur `/api/surga/preferences` pour la synchronisation fluide sans erreur de méthode.
+    5. **Conformité Senior & Anti-IA-Slop** :
+       - 100% des composants React < 450 lignes (`SurgaDesktopRightRail`: 436 l., `SurgaDesktopSidebar`: 219 l., `SurgaPersonnalisationSection`: 413 l., `SurgaParametresTab`: 356 l., `SurgaLayoutShell`: 275 l., `page.tsx`: 449 l.).
+       - Zéro émoji Unicode dans l'UI (icônes Lucide SVG exclusives, typées `LucideIcon`).
+       - Tests Jest : 129/129 PASS, TypeScript : 0 erreur, linter slop : 0 erreur bloquante, 3 captures Playwright validées.
+
 - **Surga / Authentification & Compte — Réactivité du Bouton « Compte » en Mode Invité (Session 2026-10-07, branche `feature/surga`)** :
   - *Correction UX & Blocage Non-Connecté* : Réponse à l'anomalie signalée (« compte ne repon pas QUAND ON est pas connecte »).
   - Suppression du verrou bloquant `{isCompteOpen && user && (` dans `SurgaModalsContainer.tsx` et assouplissement de la garde `if (!isOpen || !user) return null` dans `SurgaCompteModal.tsx`.
