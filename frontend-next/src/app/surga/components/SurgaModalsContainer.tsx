@@ -384,7 +384,7 @@ export default function SurgaModalsContainer({
           onSuccess={onAuthSuccess || (() => {})}
         />
       )}
-      {isCompteOpen && user && (
+      {isCompteOpen && (
         <SurgaCompteModal
           isOpen={isCompteOpen}
           onClose={onCloseCompte || (() => {})}
@@ -398,6 +398,7 @@ export default function SurgaModalsContainer({
           onOpenEmploi={onOpenEmploi}
           onOpenConcours={onOpenConcours}
           onOpenImmo={onOpenImmo}
+          onOpenAuth={onOpenAuth}
         />
       )}
     </>

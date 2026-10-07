@@ -1,13 +1,22 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Shopping — Redirection du Bouton « Commander » vers la Fiche Produit Marketplace Nopalou)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Compte & Mode Invité — Résolution de la Réactivité du Bouton « Compte » pour les Utilisateurs Non-Connectés)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Bouton Commander relié à la Fiche Produit (`ProduitCard`), 19/19 Tickets UI V2 Résolus (SRG-UI-01 à 19), Localisation Unique, Zéro Marée Intérieur, Source & Heure Actualités, Filtre 24h, Zéro Doublon Desktop, 3 Breakpoints (<600px, 600-1023px, >=1024px), Sport 3 Paliers, Command Bar Opaque, Contrastes Vérifiés, 100% Tests Jest PASS (129/129), Linter Slop OK**  
+> **Statut global** : 🟢 **Bouton Compte actif en Mode Invité (`SurgaCompteModal` & `SurgaAuthModal`), Bouton Commander relié à la Fiche Produit (`ProduitCard`), 19/19 Tickets UI V2 Résolus (SRG-UI-01 à 19), Localisation Unique, Zéro Marée Intérieur, Source & Heure Actualités, Filtre 24h, Zéro Doublon Desktop, 3 Breakpoints (<600px, 600-1023px, >=1024px), Sport 3 Paliers, Command Bar Opaque, Contrastes Vérifiés, 100% Tests Jest PASS (129/129), Linter Slop OK**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
+
+-6. **Authentification & Compte — Réactivité du Bouton « Compte » en Mode Invité (100% DONE — 7 Octobre 2026)** :
+   - Traitement direct de l'anomalie signalée : « compte ne repon pas QUAND ON est pas connecte ».
+   - Problématique : Le verrou `{isCompteOpen && user && (` dans `SurgaModalsContainer.tsx` et `if (!isOpen || !user) return null` dans `SurgaCompteModal.tsx` empêchaient tout affichage lorsque l'utilisateur n'avait pas de session active.
+   - Solution appliquée :
+     - Levée du verrou `user &&` dans `SurgaModalsContainer.tsx` et transmission de `onOpenAuth`.
+     - Intégration d'une vue dédiée « Mode invité (Stockage local) » dans `SurgaCompteModal.tsx` avec statut non connecté, pédagogie sur la conservation des données sur l'appareil et bouton d'action principal « Se connecter ou créer un compte ».
+     - Transmission de `user` à la sidebar desktop et icône dynamique `UserCheck`/`User`.
+     - Validation : 129/129 tests Jest PASS, linter slop validé.
 
 -5. **Module Shopping — Redirection du Bouton « Commander » vers la Fiche Produit (100% DONE — 7 Octobre 2026)** :
    - Traitement direct de la demande utilisateur : « Commander doit renvoyer vers le produit au lieu de whatsapp ».

@@ -1,4 +1,24 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Authentification & Compte — Réactivité du Bouton « Compte » en Mode Invité (Session 2026-10-07, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse directe à l'anomalie signalée : « compte ne repon pas QUAND ON est pas connecte ».
+    - Problématique : Lorsque l'utilisateur n'était pas connecté (`user === null`), le clic sur le bouton « Compte » dans la barre latérale desktop ou via le système d'actions passait `isCompteOpen` à `true`. Cependant, `SurgaModalsContainer.tsx` conditionnait l'affichage par `{isCompteOpen && user && (` et `SurgaCompteModal.tsx` contenait `if (!isOpen || !user) return null`. Par conséquent, aucun composant n'était rendu et l'interface ne réagissait pas.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    - `frontend-next/src/app/surga/components/SurgaModalsContainer.tsx` :
+      - Suppression du verrou `user &&` pour monter `SurgaCompteModal` dès que `isCompteOpen === true`.
+      - Transmission de `onOpenAuth` à `SurgaCompteModal` pour permettre la bascule vers la modale d'authentification.
+    - `frontend-next/src/app/surga/components/SurgaCompteModal.tsx` :
+      - Assouplissement de la garde d'ouverture (`if (!isOpen) return null`).
+      - Création d'une vue dédiée **« Mode invité (Stockage local) »** affichant clairement l'état non connecté, l'explication sur la conservation locale des données, et un bouton d'action principal « Se connecter ou créer un compte » ouvrant instantanément `SurgaAuthModal`.
+      - Maintien des raccourcis de services accessibles et isolation des contrôles connectés (édition profil, synchronisation cloud, déconnexion) sous condition `user`.
+    - `frontend-next/src/app/surga/components/SurgaDesktopSidebar.tsx` & `SurgaLayoutShell.tsx` :
+      - Transmission de l'état `user` à la sidebar.
+      - Affichage dynamique de l'icône (`UserCheck` si connecté, `User` en mode invité) et infobulle contextuelle.
+  * **Validation & Tests** :
+    - Tests Unitaires Backend : 129/129 PASS (`npx jest tests/unit/surga.test.js`).
+    - Linter Anti-AI-Slop : 0 infraction bloquante (`npm run lint:slop`).
+    - Modularisation : Tous les composants < 450 lignes (SurgaCompteModal : 341 l., SurgaModalsContainer : 407 l.).
+
 - **Surga / Module Shopping — Redirection du Bouton « Commander » vers la Fiche Produit (Session 2026-10-07, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe à la demande utilisateur : « Commander doit renvoyer vers le produit au lieu de whatsapp ».

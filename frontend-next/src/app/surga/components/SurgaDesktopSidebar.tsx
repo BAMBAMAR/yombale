@@ -14,6 +14,7 @@ import {
   LayoutGrid,
   Settings,
   User,
+  UserCheck,
 } from 'lucide-react'
 import SurgaBrandLogo from './SurgaBrandLogo'
 import type { SurgaTab } from './SurgaBottomNav'
@@ -21,6 +22,12 @@ import type { SurgaTab } from './SurgaBottomNav'
 interface SurgaDesktopSidebarProps {
   activeTab: SurgaTab
   onTabChange: (tab: SurgaTab) => void
+  user?: {
+    id: string
+    nom?: string
+    telephone?: string
+    email?: string
+  } | null
   nbNotes?: number
   nbAgenda?: number
   quartier?: string
@@ -41,6 +48,7 @@ interface SurgaDesktopSidebarProps {
 export default function SurgaDesktopSidebar({
   activeTab,
   onTabChange,
+  user,
   nbNotes = 0,
   nbAgenda = 0,
   quartier = 'Dakar Plateau',
@@ -204,9 +212,10 @@ export default function SurgaDesktopSidebar({
           type="button"
           onClick={onOpenCompte}
           className="surga-sidebar-btn"
+          title={user ? (user.nom ? `Mon Compte (${user.nom})` : 'Mon Compte (Connecté)') : 'Mon Compte (Mode invité)'}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <User size={16} />
+            {user ? <UserCheck size={16} /> : <User size={16} />}
             <span>Compte</span>
           </div>
         </button>

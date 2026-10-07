@@ -50,6 +50,13 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Authentification & Compte — Réactivité du Bouton « Compte » en Mode Invité (Session 2026-10-07, branche `feature/surga`)** :
+  - *Correction UX & Blocage Non-Connecté* : Réponse à l'anomalie signalée (« compte ne repon pas QUAND ON est pas connecte »).
+  - Suppression du verrou bloquant `{isCompteOpen && user && (` dans `SurgaModalsContainer.tsx` et assouplissement de la garde `if (!isOpen || !user) return null` dans `SurgaCompteModal.tsx`.
+  - Intégration d'un écran dédié **« Mode invité (Stockage local) »** dans `SurgaCompteModal.tsx` informant clairement l'utilisateur non connecté que ses données sont locales et lui proposant un bouton d'action principal « Se connecter ou créer un compte » (déclenchant `SurgaAuthModal`) ainsi que les accès rapides aux services.
+  - Mise à jour de `SurgaDesktopSidebar.tsx` et `SurgaLayoutShell.tsx` pour refléter l'état de l'utilisateur (`UserCheck` si connecté, `User` en mode invité) avec infobulle contextuelle.
+  - Validation : 129/129 tests Jest PASS, linter slop 0 infraction bloquante.
+
 - **Surga / Module Shopping — Redirection du Bouton « Commander » vers la Fiche Produit (Session 2026-10-07, branche `feature/surga`)** :
   - *Correction UX & Parcours d'Achat Produit* : Réponse à la demande utilisateur (« Commander doit renvoyer vers le produit au lieu de whatsapp »).
   - Dans `frontend-next/src/app/surga/components/SurgaShoppingCards.tsx` (`ProduitCard`), le clic sur « Commander » redirige désormais vers la fiche produit officielle Nopalou (`/boutiques/${boutique_slug || boutique_id}/produits/${produit.id}` ou `/produit/${produit.id}`) au lieu d'ouvrir directement WhatsApp.

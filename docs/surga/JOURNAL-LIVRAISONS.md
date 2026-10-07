@@ -3,6 +3,27 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Compte & Auth] — Réactivité du Bouton « Compte » en Mode Invité (Non-Connecté)
+- **Objectif Atteint :**
+  - Réponse directe à l'anomalie signalée (« compte ne repon pas QUAND ON est pas connecte »).
+  - Élimination du blocage silencieux sur l'ouverture de la modale compte lorsque l'utilisateur n'est pas encore identifié (`user === null`).
+  - Affichage d'un état complet et soigné « Mode invité (Stockage local) » offrant une passerelle directe vers la connexion WhatsApp/Email tout en maintenant l'accès aux raccourcis clés.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composant SurgaModalsContainer (`frontend-next/src/app/surga/components/SurgaModalsContainer.tsx`)* :
+     - Suppression de la condition restrictive `user &&` sur `{isCompteOpen && (`.
+     - Transmission de `onOpenAuth` à `SurgaCompteModal`.
+  2. *Composant SurgaCompteModal (`frontend-next/src/app/surga/components/SurgaCompteModal.tsx`)* :
+     - Remplacement du court-circuit `if (!isOpen || !user) return null` par `if (!isOpen) return null`.
+     - Intégration de la carte « Mode invité (Stockage local) » avec badge « Non connecté », explication pédagogique sur la rétention des données sur le navigateur et bouton d'action principal « Se connecter ou créer un compte » (ouvrant `SurgaAuthModal`).
+     - Conditionnement des formulaires d'édition de profil, de synchronisation et de déconnexion au statut connecté (`user`).
+     - Taille maîtrisée : 341 lignes (< 450 l.).
+  3. *Composants Sidebar & Shell (`SurgaDesktopSidebar.tsx`, `SurgaLayoutShell.tsx`)* :
+     - Passage de la prop `user` à la barre latérale desktop.
+     - Affichage de l'icône `<UserCheck />` quand connecté ou `<User />` en mode invité, avec infobulle contextuelle.
+- **Validation & Tests :**
+  - Backend Jest : 129/129 tests réussis (`npx jest tests/unit/surga.test.js`).
+  - Linter Slop : 0 infraction bloquante (`npm run lint:slop`).
+
 ### [2026-10-07 — Shopping] — Redirection du Bouton « Commander » vers la Fiche Produit
 - **Objectif Atteint :**
   - Réponse directe à la demande utilisateur (« Commander doit renvoyer vers le produit au lieu de whatsapp »).

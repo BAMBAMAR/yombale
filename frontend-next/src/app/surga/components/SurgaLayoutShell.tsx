@@ -190,6 +190,7 @@ export default function SurgaLayoutShell({
         <SurgaDesktopSidebar
           activeTab={activeTab}
           onTabChange={onTabChange}
+          user={user}
           nbNotes={nbNotes}
           nbAgenda={nbAgenda}
           quartier={quartier}
