@@ -44,7 +44,7 @@ export default function SurgaPage() {
   const [isCalcOpen, setIsCalcOpen] = useState(false), [isVoiceOpen, setIsVoiceOpen] = useState(false)
   const [isPresseOpen, setIsPresseOpen] = useState(false), [isPodcastOpen, setIsPodcastOpen] = useState(false)
   const [isTraficOpen, setIsTraficOpen] = useState(false), [isImmoOpen, setIsImmoOpen] = useState(false)
-  const [isConcoursOpen, setIsConcoursOpen] = useState(false), [isPlacesOpen, setIsPlacesOpen] = useState(false)
+  const [isConcoursOpen, setIsConcoursOpen] = useState(false), [isPlacesOpen, setIsPlacesOpen] = useState(false), [isShoppingOpen, setIsShoppingOpen] = useState(false)
   const [isPremiumOpen, setIsPremiumOpen] = useState(false), [isProOpen, setIsProOpen] = useState(false)
   const [isDonneesOpen, setIsDonneesOpen] = useState(false), [isVideosOpen, setIsVideosOpen] = useState(false)
   const [isEmploiOpen, setIsEmploiOpen] = useState(false), [isDemarchesOpen, setIsDemarchesOpen] = useState(false)
@@ -327,6 +327,7 @@ export default function SurgaPage() {
         onOpenRadios={openRadioModal}
         onOpenConcours={() => setIsConcoursOpen(true)}
         onOpenImmo={() => setIsImmoOpen(true)}
+        onOpenShopping={() => setIsShoppingOpen(true)}
         onOpenPlaces={() => setIsPlacesOpen(true)}
         onOpenDemarches={() => setIsDemarchesOpen(true)}
         onOpenEmploi={() => setIsEmploiOpen(true)}
@@ -362,6 +363,7 @@ export default function SurgaPage() {
             onOpenTrafic={() => setIsTraficOpen(true)}
             onOpenImmo={() => setIsImmoOpen(true)}
             onOpenConcours={() => setIsConcoursOpen(true)}
+            onOpenShopping={() => setIsShoppingOpen(true)}
             onOpenPlaces={() => setIsPlacesOpen(true)}
             onNavigateTab={setActiveTab}
             onOpenCalc={() => setIsCalcOpen(true)}
@@ -399,14 +401,14 @@ export default function SurgaPage() {
       <SurgaModalsContainer
         isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
         isPodcastOpen={isPodcastOpen} isTraficOpen={isTraficOpen} isImmoOpen={isImmoOpen}
-        isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isPremiumOpen={isPremiumOpen}
+        isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isShoppingOpen={isShoppingOpen} isPremiumOpen={isPremiumOpen}
         isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen}
         isEmploiOpen={isEmploiOpen} isDemarchesOpen={isDemarchesOpen}
         isAuthOpen={isAuthOpen} isCompteOpen={isCompteOpen}
         onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)}
         onClosePresse={() => setIsPresseOpen(false)} onClosePodcast={() => setIsPodcastOpen(false)}
         onCloseTrafic={() => setIsTraficOpen(false)} onCloseImmo={() => setIsImmoOpen(false)}
-        onCloseConcours={() => setIsConcoursOpen(false)} onClosePlaces={() => setIsPlacesOpen(false)}
+        onCloseConcours={() => setIsConcoursOpen(false)} onClosePlaces={() => setIsPlacesOpen(false)} onCloseShopping={() => setIsShoppingOpen(false)}
         onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)}
         onCloseDonnees={() => setIsDonneesOpen(false)} onCloseVideos={() => setIsVideosOpen(false)}
         onCloseEmploi={() => setIsEmploiOpen(false)} onCloseDemarches={() => setIsDemarchesOpen(false)}
@@ -416,7 +418,7 @@ export default function SurgaPage() {
         onUserUpdated={(u) => { setUser(u); chargerProfilUser() }}
         onDeconnexion={handleDeconnexion} onSynchroniser={handleSynchroniser} isSyncing={isSyncing}
         onOpenPremium={() => setIsPremiumOpen(true)} onOpenEmploi={() => setIsEmploiOpen(true)}
-        onOpenConcours={() => setIsConcoursOpen(true)} onOpenPlaces={() => setIsPlacesOpen(true)}
+        onOpenConcours={() => setIsConcoursOpen(true)} onOpenPlaces={() => setIsPlacesOpen(true)} onOpenShopping={() => setIsShoppingOpen(true)}
         onOpenImmo={() => setIsImmoOpen(true)} onOpenTrafic={() => setIsTraficOpen(true)}
         onOpenDemarches={() => setIsDemarchesOpen(true)} onOpenPresse={() => setIsPresseOpen(true)}
         onOpenVideos={() => setIsVideosOpen(true)} onOpenCalc={() => setIsCalcOpen(true)}

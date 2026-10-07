@@ -1,15 +1,34 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 10 — Déploiement des Services sous Bonnes Adresses & Épuration des Réglages)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 11 — Service Shopping & Boutiques Nopalou au-dessus de Bonnes Adresses)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Services Dakar Éclatés sous Bonnes Adresses (Sidebar 240px complète), Écran Réglages Épuré Zéro Redondance, Assistant IA Omnibar Opérationnel (LLM Rédaction & Actions Locales), Scrollbars Windows Éradiquées, Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests PASS**  
+> **Statut global** : 🟢 **Service Shopping Nopalou Intégré (au-dessus de Bonnes Adresses dans la Sidebar & le Dashboard), Modale Dédiée Boutiques & Produits avec Filtres & Recherche, Services Dakar Éclatés, Écran Réglages Épuré Zéro Redondance, Assistant IA Omnibar Opérationnel, Scrollbars Windows Éradiquées, Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-0. **Services Déployés sous Bonnes Adresses & Épuration des Réglages (100% DONE — Nuit 9 suite - 10)** :
+0. **Service Shopping & Boutiques Nopalou Déployé au-dessus de Bonnes Adresses (100% DONE — Nuit 9 suite - 11)** :
+   - Traitement direct de la directive utilisateur : « je veux ajouter dans les service shopping qui montre les boutique nopalou et leur produit .le mettre en haut de bonne affaire ».
+   - **Positionnement Hiérarchique Respecté** :
+     - Sidebar Desktop (`SurgaDesktopSidebar.tsx`, 256 l.) : Raccourci « Shopping Nopalou » (`ShoppingBag`, badge ambre *Boutiques*) positionné immédiatement au-dessus de « Bonnes Adresses ». Ordre garanti : Pôle Immo -> Shopping Nopalou -> Bonnes Adresses -> Démarches État -> Emploi -> Séries.
+     - Dashboard d'Accueil (`SurgaAujourdhuiTab.tsx`, 303 l.) : Carte glanceable `<SurgaShoppingDashboardCard />` (141 l.) insérée au-dessus de `SurgaPlacesDashboardCard`.
+   - **Modale Dédiée & Ergonomique (`SurgaShoppingModal.tsx`, 282 l. & `SurgaShoppingCards.tsx`, 267 l.)** :
+     - Deux onglets dynamiques : *Boutiques (N)* et *Produits & Articles (N)* avec badge de décompte en temps réel.
+     - Recherche textuelle instantanée multi-champs (nom boutique, titre produit, quartier, catégorie).
+     - Pilules de filtres par rayon : *Mode & Caftans*, *High-Tech*, *Beauté & Parfums*, *Alimentation & Épicerie*, *Maison & Déco*.
+     - Boutons d'action clairs : *Visiter la boutique* (`/boutiques/[slug]`), *WhatsApp marchand*, *Commander* produit.
+   - **Backend SQL & Route Dédiée** :
+     - `backend/services/surga/shopping-service.js` (194 l.) : Requêtes SQL jointes sur `boutiques` et `boutique_produits` avec filtre `en_stock` et fallback résilient marchands/produits locaux.
+     - `backend/routes/surga/shopping.js` (33 l.) : Route `GET /api/surga/shopping`.
+     - Intention shopping intégrée dans `assistant-llm.js`.
+   - **Conformité & Architecture Senior** :
+     - 100% des fichiers sous `app/surga/` restent < 450 lignes.
+     - `npx tsc --noEmit` : 0 erreur.
+     - Tests Jest : 158/158 tests unitaires Surga PASS. Test d'audit HTML AUD-157 PASS.
+
+0.bis. **Services Déployés sous Bonnes Adresses & Épuration des Réglages (100% DONE — Nuit 9 suite - 10)** :
    - Traitement direct de la demande utilisateur : « sous bonne adresse il faut mettre plus de service et les enlever les service dans reglage ».
    - **Sidebar Desktop Élargie (`SurgaDesktopSidebar.tsx`, 239 l.)** : Intégration sous « Bonnes Adresses » des services locaux sénégalais essentiels : Démarches État (`ShieldCheck`), Emploi & Stages (`Briefcase`), Séries & Vidéos (`Tv`). Câblage direct avec les modales correspondantes dans `SurgaLayoutShell.tsx` (240 l.).
    - **Écran Réglages Réellement Épuré (`SurgaParametresTab.tsx`, 334 l.)** : Suppression de toutes les cartes d'accès aux services redondants (Radios, Trafic, Immo, Concours, Démarches, Places, Séries, Emploi). Recentrage strict sur les vrais paramètres : Profil WhatsApp & déconnexion, Formule d'abonnement active, Synthèse vocale du briefing, Confidentialité & droit à l'oubli, Modification des préférences.

@@ -1,4 +1,28 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Service Shopping & Boutiques Nopalou (Positionné au-dessus de Bonnes Adresses) (Session 2026-10-07 - Nuit 9 suite - 11, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse directe et fidèle à la directive utilisateur : « je veux ajouter dans les service shopping qui montre les boutique nopalou et leur produit .le mettre en haut de bonne affaire ».
+    - Intégration du shopping marchand Nopalou au sein de Surga, en mettant en valeur les boutiques locales dakaroises et leurs articles disponibles en stock avec prix en FCFA, commandes directes WhatsApp et accès vitrine `/boutiques/[slug]`.
+    - Positionnement rigoureux du service :
+      - Dans la sidebar desktop : « Shopping Nopalou » (`ShoppingBag`, badge *Boutiques*) placé **immédiatement au-dessus** de « Bonnes Adresses ».
+      - Sur le Dashboard d'accueil (`SurgaAujourdhuiTab.tsx`) : carte « Shopping Nopalou » avec aperçu glanceable des boutiques et produits récents insérée **immédiatement au-dessus** de « Bonnes Adresses & Bons Plans ».
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Composants Frontend Modulaires (< 450 l.)** :
+       - `SurgaShoppingCards.tsx` (267 l.) : Cartes dédiées `<BoutiqueCard />` (logo, badge certifié, quartier, nombre d'articles, boutons *Visiter* et contact direct WhatsApp vendeur) et `<ProduitCard />` (photo HD, titre complet sans troncature, prix FCFA en vert ambre, nom de la boutique, bouton *Commander*).
+       - `SurgaShoppingModal.tsx` (282 l.) : Modale interactive avec overlay centré (`zIndex: 1050`), barre de recherche instantanée par nom/quartier/mot-clé, deux onglets *Boutiques (N)* et *Produits & Articles (N)*, et pilules de filtrage par catégorie (Mode & Caftans, High-Tech, Beauté & Parfums, Alimentation & Épicerie, Maison & Déco).
+       - `SurgaShoppingDashboardCard.tsx` (141 l.) : Carte glanceable sur le Dashboard d'accueil avec badges et accès rapide en 1 clic.
+       - `SurgaDesktopSidebar.tsx` (256 l.) : Ajout du bouton dans la section Services Dakar exactement au-dessus de Bonnes Adresses.
+       - `SurgaModalsContainer.tsx` (375 l.) & `page.tsx` (406 l.) : Montage dynamique et câblage sans surcharger le code.
+    2. **Backend Service & Route Dédiée** :
+       - `backend/services/surga/shopping-service.js` (194 l.) : Requêtes SQL optimisées interrogeant les tables `boutiques` et `boutique_produits` avec jointures et filtre `en_stock`, enrichi d'un fallback sénégalais réaliste pour garantir une expérience fluide même hors-ligne ou sur base de test.
+       - `backend/routes/surga/shopping.js` (33 l.) : Route `GET /api/surga/shopping` connectée à `backend/routes/surga/index.js`.
+       - `backend/services/surga/assistant-llm.js` : Détection automatique des intentions d'achats (« shopping », « boutique », « acheter »).
+    3. **Validation & Tests** :
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests Jest : 158/158 PASS.
+       - Playwright E2E : Position vérifiée par script (`shoppingIdx < placesIdx: true`), captures d'écran validées (`surga_desktop_shopping_sidebar.png`, `surga_shopping_boutiques_modal.png`, `surga_shopping_produits_modal.png`).
+       - Plafond de lignes respecté : 100% des fichiers < 450 lignes.
+
 - **Surga / Déploiement des Services sous Bonnes Adresses & Épuration des Réglages (Session 2026-10-07 - Nuit 9 suite - 10, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe à la directive utilisateur : « sous bonne adresse il faut mettre plus de service et les enlever les service dans reglage ».

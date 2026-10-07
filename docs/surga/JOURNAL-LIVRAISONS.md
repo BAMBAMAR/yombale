@@ -3,6 +3,30 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 11] — Service Shopping & Boutiques Nopalou (Positionné au-dessus de Bonnes Adresses)
+- **Objectif Atteint :**
+  - Répondre fidèlement et intégralement à la demande utilisateur : « je veux ajouter dans les service shopping qui montre les boutique nopalou et leur produit .le mettre en haut de bonne affaire ».
+  - Intégrer les marchands et produits de la plateforme Nopalou directement dans Surga avec une ergonomie senior, des visuels soignés et des interactions fluides.
+  - Positionner rigoureusement ce service **immédiatement au-dessus de Bonnes Adresses** dans la sidebar desktop et sur le dashboard d'accueil.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composants Frontend Modulaires (< 450 l.)* :
+     - `SurgaShoppingCards.tsx` (267 l.) : Sous-composants modulaires `<BoutiqueCard />` (logo, badge certifié, quartier, nombre de produits, lien vitrine `/boutiques/[slug]`, contact WhatsApp marchand) et `<ProduitCard />` (photo HD, nom complet, prix FCFA en vert ambre, nom de la boutique, bouton commande directe).
+     - `SurgaShoppingModal.tsx` (282 l.) : Modale interactive avec overlay centré, barre de recherche instantanée, deux onglets *Boutiques (N)* et *Produits & Articles (N)*, et pilules de filtres thématiques (Mode & Caftans, High-Tech, Beauté & Parfums, Alimentation & Épicerie, Maison & Déco).
+     - `SurgaShoppingDashboardCard.tsx` (141 l.) : Carte glanceable sur le Dashboard d'accueil au-dessus de `SurgaPlacesDashboardCard`.
+     - `SurgaDesktopSidebar.tsx` (256 l.) : Raccourci « Shopping Nopalou » (`ShoppingBag`, badge *Boutiques*) positionné immédiatement au-dessus de « Bonnes Adresses ».
+     - `SurgaLayoutShell.tsx` (246 l.) : Câblage du déclencheur et adaptation sémantique HTML (`<div className="surga-center-feed" role="region">`).
+     - `SurgaModalsContainer.tsx` (375 l.) & `page.tsx` (406 l.) : Injection et gestion d'état réactif.
+  2. *Backend Service & Route Dédiée* :
+     - `backend/services/surga/shopping-service.js` (194 l.) : Requêtes SQL sur `boutiques` et `boutique_produits` en stock avec fallback résilient sénégalais.
+     - `backend/routes/surga/shopping.js` (33 l.) : Route `GET /api/surga/shopping` acceptant `?categorie=...&q=...`.
+     - `backend/services/surga/assistant-llm.js` : Détection d'intention d'achat / shopping pour orienter l'utilisateur.
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests unitaires Surga : 158/158 tests unitaires PASS.
+  - Test d'audit HTML AUD-157 : PASS.
+  - Playwright live : Ordre validé (`shoppingIdx < placesIdx: true`), captures d'écran générées (`surga_desktop_shopping_sidebar.png`, `surga_shopping_boutiques_modal.png`, `surga_shopping_produits_modal.png`).
+  - 100% des fichiers sous `app/surga/` < 450 lignes.
+
 ### [2026-10-07 — Nuit 9 suite - 10] — Déploiement des Services sous Bonnes Adresses & Épuration des Réglages
 - **Objectif Atteint :**
   - Répondre directement à la demande : « sous bonne adresse il faut mettre plus de service et les enlever les service dans reglage ».

@@ -14,6 +14,7 @@ const SurgaTraficModal = dynamic(() => import('./SurgaTraficModal'), { ssr: fals
 const SurgaImmoModal = dynamic(() => import('./SurgaImmoModal'), { ssr: false })
 const SurgaConcoursModal = dynamic(() => import('./SurgaConcoursModal'), { ssr: false })
 const SurgaPlacesModal = dynamic(() => import('./SurgaPlacesModal'), { ssr: false })
+const SurgaShoppingModal = dynamic(() => import('./SurgaShoppingModal'), { ssr: false })
 const SurgaPremiumModal = dynamic(() => import('./SurgaPremiumModal'), { ssr: false })
 const SurgaProModal = dynamic(() => import('./SurgaProModal'), { ssr: false })
 const SurgaDonneesModal = dynamic(() => import('./SurgaDonneesModal'), { ssr: false })
@@ -33,6 +34,7 @@ interface SurgaModalsContainerProps {
   isImmoOpen: boolean
   isConcoursOpen: boolean
   isPlacesOpen: boolean
+  isShoppingOpen?: boolean
   isPremiumOpen: boolean
   isProOpen: boolean
   isDonneesOpen?: boolean
@@ -51,6 +53,7 @@ interface SurgaModalsContainerProps {
   onCloseImmo: () => void
   onCloseConcours: () => void
   onClosePlaces: () => void
+  onCloseShopping?: () => void
   onClosePremium: () => void
   onClosePro: () => void
   onCloseDonnees?: () => void
@@ -72,6 +75,7 @@ interface SurgaModalsContainerProps {
   onOpenEmploi?: () => void
   onOpenConcours?: () => void
   onOpenPlaces?: () => void
+  onOpenShopping?: () => void
   onOpenImmo?: () => void
   onOpenTrafic?: () => void
   onOpenDemarches?: () => void
@@ -103,6 +107,7 @@ export default function SurgaModalsContainer({
   isImmoOpen,
   isConcoursOpen,
   isPlacesOpen,
+  isShoppingOpen = false,
   isPremiumOpen,
   isProOpen,
   isDonneesOpen = false,
@@ -121,6 +126,7 @@ export default function SurgaModalsContainer({
   onCloseImmo,
   onCloseConcours,
   onClosePlaces,
+  onCloseShopping = () => {},
   onClosePremium,
   onClosePro,
   onCloseDonnees = () => {},
@@ -296,6 +302,12 @@ export default function SurgaModalsContainer({
         <SurgaPlacesModal
           isOpen={isPlacesOpen}
           onClose={onClosePlaces}
+        />
+      )}
+      {isShoppingOpen && (
+        <SurgaShoppingModal
+          isOpen={isShoppingOpen}
+          onClose={onCloseShopping}
         />
       )}
       {isPremiumOpen && (

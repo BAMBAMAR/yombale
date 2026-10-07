@@ -50,6 +50,27 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Service Shopping & Boutiques Nopalou (Positionné au-dessus de Bonnes Adresses) (Session 2026-10-07 - Nuit 9 suite - 11, branche `feature/surga`)** :
+  - *Intégration du Commerce Local Nopalou dans Surga* :
+    1. **Positionnement au-dessus de « Bonnes Adresses »** :
+       - Réponse exacte à la demande utilisateur (« ajouter dans les service shopping qui montre les boutique nopalou et leur produit .le mettre en haut de bonne affaire »).
+       - Dans `SurgaDesktopSidebar.tsx` (256 l.) : bouton « Shopping Nopalou » (`ShoppingBag`, badge *Boutiques*) positionné immédiatement au-dessus de « Bonnes Adresses ».
+       - Sur le Dashboard d'accueil `SurgaAujourdhuiTab.tsx` (303 l.) : carte `SurgaShoppingDashboardCard` (141 l.) insérée immédiatement au-dessus de `SurgaPlacesDashboardCard` ("Bonnes Adresses & Bons Plans").
+    2. **Modale Shopping & Boutiques Interactive (`SurgaShoppingModal.tsx`, 282 l. & `SurgaShoppingCards.tsx`, 267 l.)** :
+       - Deux onglets réactifs : *Boutiques (N)* et *Produits & Articles (N)*.
+       - Filtres thématiques par pilules (Mode & Caftans, High-Tech, Beauté & Parfums, Alimentation & Épicerie, Maison & Déco).
+       - Barre de recherche instantanée par nom, mot-clé ou quartier.
+       - Cartes de boutiques avec logo, badge certifié, quartier, nombre d'articles, boutons *Visiter* (`/boutiques/[slug]`) et contact direct WhatsApp.
+       - Cartes de produits avec photo HD, prix FCFA en vert ambre, nom du marchand vendeur et bouton direct *Commander*.
+    3. **Backend Service & Route Dédiée** :
+       - `backend/services/surga/shopping-service.js` (194 l.) : Requêtes SQL sur `boutiques` et `boutique_produits` en stock avec fallback résilient sénégalais (produits locaux phares).
+       - `backend/routes/surga/shopping.js` (33 l.) : Route `GET /api/surga/shopping` acceptant `?categorie=...&q=...`.
+       - `backend/services/surga/assistant-llm.js` : Détection d'intention d'achat / shopping pour orienter automatiquement l'utilisateur.
+    4. **Standards & Qualité Senior** :
+       - 100% des composants < 450 lignes.
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests unitaires Jest : 158/158 PASS.
+
 - **Surga / Déploiement des Services sous Bonnes Adresses & Épuration des Réglages (Session 2026-10-07 - Nuit 9 suite - 10, branche `feature/surga`)** :
   - *Alignement Ergonomique & Zéro Redondance* :
     1. **Enrichissement de la Sidebar Gauche (« Services Dakar »)** :

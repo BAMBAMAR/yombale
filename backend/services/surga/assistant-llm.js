@@ -242,6 +242,9 @@ async function traiterRequeteSurgaAssistant({ query, userId }) {
     if (actionVocale.intention === 'SEARCH_IMMO') return { type: 'NAVIGATION', tab: 'services', modal: 'immo', message: 'Recherche immobilière.' };
     if (actionVocale.intention === 'SEARCH_DEMARCHES') return { type: 'NAVIGATION', tab: 'services', modal: 'demarches', message: 'Démarches administratives.' };
     if (actionVocale.intention === 'SEARCH_PLACES') return { type: 'NAVIGATION', tab: 'services', modal: 'places', message: 'Bonnes adresses & bons plans.' };
+    if (/shopping|boutique|produit|magasin|achat|acheter/i.test(texte)) {
+      return { type: 'NAVIGATION', tab: 'services', modal: 'shopping', message: 'Ouverture du Shopping & Boutiques Nopalou.' };
+    }
   }
 
   // ── CAS 3 : GÉNÉRATION LLM (DISCOURS, REFORMULATION, RÉDACTION, QUESTIONS) ─

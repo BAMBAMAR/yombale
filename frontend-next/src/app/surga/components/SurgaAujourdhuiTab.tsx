@@ -12,6 +12,7 @@ import SurgaTraficCard from './SurgaTraficCard'
 import SurgaImmoDashboardCard from './SurgaImmoDashboardCard'
 import SurgaConcoursDashboardCard from './SurgaConcoursDashboardCard'
 import SurgaPlacesDashboardCard from './SurgaPlacesDashboardCard'
+import SurgaShoppingDashboardCard from './SurgaShoppingDashboardCard'
 import SurgaDashboardTools from './SurgaDashboardTools'
 import type { SurgaTab } from './SurgaBottomNav'
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync'
@@ -42,6 +43,7 @@ interface SurgaAujourdhuiTabProps {
   onOpenTrafic: () => void
   onOpenImmo: () => void
   onOpenConcours: () => void
+  onOpenShopping?: () => void
   onOpenPlaces: () => void
   onNavigateTab: (tab: SurgaTab) => void
   onOpenCalc: () => void
@@ -66,6 +68,7 @@ export default function SurgaAujourdhuiTab({
   onOpenTrafic,
   onOpenImmo,
   onOpenConcours,
+  onOpenShopping,
   onOpenPlaces,
   onNavigateTab,
   onOpenCalc,
@@ -293,6 +296,11 @@ export default function SurgaAujourdhuiTab({
       {/* Section Briques : Concours & Examens du Sénégal */}
       {(preferences?.modules_actifs?.includes('concours') || !preferences?.modules_actifs) && (
         <SurgaConcoursDashboardCard onOuvrirModal={onOpenConcours} />
+      )}
+
+      {/* Section Briques : Shopping & Boutiques Nopalou (au-dessus de Bonnes Adresses) */}
+      {onOpenShopping && (
+        <SurgaShoppingDashboardCard onOuvrirModal={onOpenShopping} />
       )}
 
       {/* Section Briques : Bons Plans & Bonnes Adresses à Dakar */}

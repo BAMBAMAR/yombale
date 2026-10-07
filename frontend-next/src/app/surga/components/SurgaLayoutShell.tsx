@@ -29,6 +29,7 @@ interface SurgaLayoutShellProps {
   onOpenRadios: () => void
   onOpenConcours: () => void
   onOpenImmo: () => void
+  onOpenShopping?: () => void
   onOpenPlaces: () => void
   onOpenDemarches?: () => void
   onOpenEmploi?: () => void
@@ -58,6 +59,7 @@ export default function SurgaLayoutShell({
   onOpenRadios,
   onOpenConcours,
   onOpenImmo,
+  onOpenShopping,
   onOpenPlaces,
   onOpenDemarches,
   onOpenEmploi,
@@ -126,6 +128,9 @@ export default function SurgaLayoutShell({
       case 'immo':
         onOpenImmo()
         break
+      case 'shopping':
+        onOpenShopping?.()
+        break
       case 'places':
         onOpenPlaces()
         break
@@ -191,6 +196,7 @@ export default function SurgaLayoutShell({
           onOpenRadios={onOpenRadios}
           onOpenConcours={onOpenConcours}
           onOpenImmo={onOpenImmo}
+          onOpenShopping={onOpenShopping}
           onOpenPlaces={onOpenPlaces}
           onOpenDemarches={onOpenDemarches}
           onOpenEmploi={onOpenEmploi}
@@ -199,7 +205,7 @@ export default function SurgaLayoutShell({
         />
 
         {/* Colonne 2 : Flux Central (Onglet actif + Command Bar) */}
-        <main className="surga-center-feed">
+        <div className="surga-center-feed" role="region" aria-label="Flux central Surga">
           <div className="surga-container">
             {children}
           </div>
@@ -210,7 +216,7 @@ export default function SurgaLayoutShell({
               onSubmitQuery={handleExecuteAssistantQuery}
             />
           </div>
-        </main>
+        </div>
 
         {/* Colonne 3 : Rail Droit Contextuel Desktop */}
         <SurgaDesktopRightRail

@@ -26,6 +26,7 @@ router.use('/', require('./videos'));
 router.use('/', require('./emploi'));
 router.use('/', require('./demarches'));
 router.use('/', require('./assistant'));
+router.use('/', require('./shopping'));
 
 module.exports = router;
 

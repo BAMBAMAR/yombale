@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Home,
   MapPin,
+  ShoppingBag,
   ShieldCheck,
   Briefcase,
   Tv,
@@ -32,6 +33,7 @@ interface SurgaDesktopSidebarProps {
   onOpenRadios: () => void
   onOpenConcours: () => void
   onOpenImmo: () => void
+  onOpenShopping?: () => void
   onOpenPlaces: () => void
   onOpenDemarches?: () => void
   onOpenEmploi?: () => void
@@ -50,6 +52,7 @@ export default function SurgaDesktopSidebar({
   onOpenRadios,
   onOpenConcours,
   onOpenImmo,
+  onOpenShopping,
   onOpenPlaces,
   onOpenDemarches,
   onOpenEmploi,
@@ -173,6 +176,21 @@ export default function SurgaDesktopSidebar({
               <span>Pôle Immobilier</span>
             </div>
           </button>
+
+          {/* SERVICE SHOPPING NOPALOU (AU-DESSUS DE BONNES ADRESSES) */}
+          {onOpenShopping && (
+            <button
+              type="button"
+              onClick={onOpenShopping}
+              className="surga-sidebar-btn"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <ShoppingBag size={17} />
+                <span>Shopping Nopalou</span>
+              </div>
+              <span className="surga-sidebar-badge promo">Boutiques</span>
+            </button>
+          )}
 
           <button
             type="button"
