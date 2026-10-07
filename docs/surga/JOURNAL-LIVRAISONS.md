@@ -3,6 +3,25 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 7] — Sanctuarisation Définitive de l'Emblème & Logo Officiel (`SurgaBrandLogo.tsx`)
+- **Objectif Atteint :**
+  - Répondre et corriger immédiatement le défaut d'affichage d'icône signalé par l'utilisateur (« l'icône a encore été changée, voir la cause et s'assurer de l'éviter pour les prochaines sessions, c'est la deuxième fois »).
+  - Éradiquer définitivement la cause racine : lors du prototypage rapide de maquettes HTML (`render-future-desktop-design.html`), l'usage d'un carré noir avec la lettre `S` comme placeholder a été par mégarde copié dans le composant `SurgaDesktopSidebar.tsx`.
+  - Créer le composant source de vérité unique `<SurgaBrandLogo />` (`SurgaBrandLogo.tsx`) chargeant exclusivement l'emblème officiel `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre).
+  - Remplacer immédiatement le logo dans `SurgaDesktopSidebar.tsx` par `<SurgaBrandLogo />`.
+  - Inscrire une règle d'or d'interdiction absolue de placeholders dans `AGENTS.md`, `.agents/AGENTS.md` et `CLAUDE.md`.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composant Unique (`frontend-next/src/app/surga/components/SurgaBrandLogo.tsx`, 65 l.)* :
+     - Import immuable de `/surga/surga-symbol.png` avec wordmark `SURGA`.
+  2. *Sidebar Desktop (`frontend-next/src/app/surga/components/SurgaDesktopSidebar.tsx`, 207 l.)* :
+     - Utilisation de `SurgaBrandLogo` et suppression définitive du placeholder `<div>S</div>`.
+  3. *Directives Agentic AI (`AGENTS.md`, `.agents/AGENTS.md`, `CLAUDE.md`)* :
+     - Règle stricte interdisant tout placeholder de logo.
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS.
+  - Capture Playwright live confirmant l'emblème officiel en tête de sidebar.
+
 ### [2026-10-07 — Nuit 9 suite - 6] — Architecture Desktop 3 Colonnes (Services Éclatés, Omnibar Ctrl+K & Rail Droit Contextuel)
 - **Objectif Atteint :**
   - Répondre directement à la demande utilisateur : « voir comment remplir les espaces vides à gauche et à droite avec d'autres infos. Services peut être éclaté pour mettre ses fonctionnalités directement à gauche ».

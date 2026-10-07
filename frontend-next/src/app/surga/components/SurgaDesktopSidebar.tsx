@@ -15,6 +15,7 @@ import {
   Settings,
   User,
 } from 'lucide-react'
+import SurgaBrandLogo from './SurgaBrandLogo'
 import type { SurgaTab } from './SurgaBottomNav'
 
 interface SurgaDesktopSidebarProps {
@@ -49,27 +50,9 @@ export default function SurgaDesktopSidebar({
   return (
     <aside className="surga-desktop-sidebar">
       <div>
-        {/* En-tête Logo SURGA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px 18px 8px' }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              backgroundColor: 'var(--surga-primary, #0F172A)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              fontWeight: 900,
-              fontSize: 16,
-            }}
-          >
-            S
-          </div>
-          <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--surga-primary, #0F172A)' }}>
-            SUR<span style={{ color: 'var(--surga-accent, #D97706)' }}>GA</span>
-          </div>
+        {/* En-tête Logo Officiel SURGA */}
+        <div style={{ padding: '4px 8px 18px 8px' }}>
+          <SurgaBrandLogo taille={34} afficherTexte={true} onClick={() => onTabChange('aujourdhui')} />
         </div>
 
         {/* GROUPE 1 : QUOTIDIEN */}

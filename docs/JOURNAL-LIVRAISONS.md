@@ -1,4 +1,16 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Sanctuarisation Définitive de l'Emblème & Logo Officiel (`SurgaBrandLogo.tsx`) (Session 2026-10-07 - Nuit 9 suite - 7, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Traitement immédiat du retour utilisateur : « l'icône a encore été changée, voir la cause et s'assurer de l'éviter pour les prochaines sessions, c'est la deuxième fois ».
+    - Identification formelle de la cause racine : l'utilisation d'un placeholder `<div class="logo-symbol">S</div>` dans une maquette HTML statique transposé par mégarde dans le composant React `SurgaDesktopSidebar.tsx`.
+    - Création du composant source de vérité unique `<SurgaBrandLogo />` (`SurgaBrandLogo.tsx`) chargeant exclusivement l'emblème officiel `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre).
+    - Remplacement immédiat dans `SurgaDesktopSidebar.tsx` et élimination complète de tout carré `S` noir générique.
+    - Sanctuarisation de la règle d'interdiction absolue de placeholders de logo dans `AGENTS.md` (racine), `.agents/AGENTS.md` et `CLAUDE.md`.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Composant Unique Sanctuarisé (`SurgaBrandLogo.tsx`, 65 l.)** : Immuable, charge `/surga/surga-symbol.png`.
+    2. **Intégration Sidebar (`SurgaDesktopSidebar.tsx`, 207 l.)** : Utilisation exclusive de `<SurgaBrandLogo />`.
+    3. **Règles Permanentes** : Inscription de la règle d'or dans tous les documents directeurs pour bloquer toute régression future.
+
 - **Surga / Architecture Desktop 3 Colonnes — Services Dakar Éclatés, Omnibar Ctrl+K & Rail Contextuel Droit (Session 2026-10-07 - Nuit 9 suite - 6, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse intégrale à la directive utilisateur : « voir comment remplir les espaces vides à gauche et à droite avec d'autres infos. Services peut être éclaté pour mettre ses fonctionnalités directement à gauche ».

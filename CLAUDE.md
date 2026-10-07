@@ -40,6 +40,7 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 - **Low-data** : texte par défaut, audio en option désactivée, hors ligne minimal (notes, dépenses, calculatrice, dernier briefing).
 - **Intégration** : stack, auth (OTP WhatsApp), paiement (Wave / Orange Money) et design system Nopalou réutilisés ; base 16px limitée aux écrans Surga. Tables `surga_*` liées à `utilisateurs.id`, anti-IDOR sur chaque ressource.
 - **Périmètre** : ne jamais toucher au comparateur d'achats ni à la Caisse PRO. Branche `feature/surga`. Journal des livraisons dans `docs/surga/JOURNAL-LIVRAISONS.md`.
+- **Sanctuarisation de l'Emblème & Logo Surga** : l'icône officielle est EXCLUSIVEMENT `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre). Utiliser OBLIGATOIREMENT le composant unique `<SurgaBrandLogo />` (`SurgaBrandLogo.tsx`). Interdiction formelle de tout carré noir avec la lettre "S" ou de tout placeholder ad-hoc dans le code ou les mockups.
 
 ---
 
@@ -48,6 +49,17 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+
+- **Surga / Sanctuarisation Définitive de l'Emblème & Logo Officiel (`SurgaBrandLogo.tsx`) (Session 2026-10-07 - Nuit 9 suite - 7, branche `feature/surga`)** :
+  - *Éradication Définitive des Placeholders de Logo & Règle d'Or d'Identité* :
+    1. **Cause Racine Identifiée** :
+       - Lors du prototypage HTML (`render-future-desktop-design.html`), un placeholder textuel `<div class="logo-symbol">S</div>` a été utilisé temporairement pour tester la grille sans serveur statique.
+       - Ce placeholder a été transposé par erreur dans `SurgaDesktopSidebar.tsx`, écrasant visuellement l'emblème officiel.
+    2. **Composant Unique Sanctuarisé (`SurgaBrandLogo.tsx`, 65 l.)** :
+       - Centralisation stricte de l'affichage du logo Surga : charge de façon immuable `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre).
+       - Intégration immédiate dans `SurgaDesktopSidebar.tsx` et exclusion de toute recréation manuelle.
+    3. **Règle Permanente Gravée dans `AGENTS.md`, `.agents/AGENTS.md` et `CLAUDE.md`** :
+       - Interdiction formelle et absolue de réinventer le logo, d'utiliser des carrés "S" ou des icônes de substitution dans le code et les futures sessions.
 
 - **Surga / Architecture Desktop 3 Colonnes — Services Dakar Éclatés, Omnibar Ctrl+K & Rail Contextuel Droit (Session 2026-10-07 - Nuit 9 suite - 6, branche `feature/surga`)** :
   - *Sprint d'Exécution Ergonomie Desktop & Exploitation Totale de l'Écran Large* :

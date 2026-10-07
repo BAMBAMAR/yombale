@@ -70,5 +70,7 @@ Le projet héberge **deux produits distincts et étanches** qui partagent la mê
 - Ne JAMAIS modifier ni impacter la caisse POS ni le comparateur de prix lors des travaux sur Surga.
 - Inversement, les évolutions du design ou des composants de Nopalou ne doivent JAMAIS réinjecter d'éléments visuels e-commerce dans Surga.
 
-
-
+## 🎨 Sanctuarisation Absolue de l'Emblème & Logo Surga (/surga/surga-symbol.png)
+- **Bannissement des Placeholders et Fausses Icônes** : L'assistant ne doit **JAMAIS** réinventer, bricoler ou substituer l'icône de Surga par un carré noir avec la lettre "S", un emoji, une icône vectorielle Lucide aléatoire ou du code HTML générique ad-hoc.
+- **Source de Vérité Unique Obligatoire** : Tout affichage du logo ou de l'emblème de Surga (Desktop Sidebar, Mobile Header, modales, landing page, profil) DOIT IMPÉRATIVEMENT utiliser le composant sanctuarisé `<SurgaBrandLogo />` (`frontend-next/src/app/surga/components/SurgaBrandLogo.tsx`) ou charger directement le fichier image officiel `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre).
+- **Interdiction de Transfert de Mockup Statique vers Prod** : Lors du prototypage rapide de maquettes HTML/CSS, l'assistant a interdiction absolue de transférer des éléments placeholders (tels que `<div>S</div>`) dans les composants React de production.

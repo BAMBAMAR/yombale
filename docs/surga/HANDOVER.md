@@ -1,18 +1,20 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 6 — Architecture Desktop 3 Colonnes, Services Éclatés & Omnibar Ctrl+K)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 7 — Sanctuarisation Définitive Emblème SurgaBrandLogo & Architecture Desktop 3 Colonnes)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Architecture Desktop 3 Colonnes Active (Sidebar Gauche 240px avec Services Dakar Éclatés, Flux Central avec Omnibar Ctrl+K & Digest Actif, Rail Droit Contextuel 300px avec 5 Widgets Glanceables) — Vue Mobile 1 Colonne 100% Intacte sans Régression — 100% Composants < 450 l. — TypeScript 0 Erreur, 158/158 Tests Unitaires PASS**  
+> **Statut global** : 🟢 **Emblème Officiel Surga Sanctuarisé (`SurgaBrandLogo.tsx` / `surga-symbol.png`), Règle Absolue Anti-Placeholder gravée dans AGENTS.md — Architecture Desktop 3 Colonnes Active (Sidebar Gauche avec Services Dakar Éclatés, Flux Central avec Omnibar Ctrl+K, Rail Droit Contextuel 300px avec 5 Widgets Glanceables) — Vue Mobile 1 Colonne 100% Intacte sans Régression — 100% Composants < 450 l. — TypeScript 0 Erreur, 158/158 Tests Unitaires PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-L'assistant personnel de poche **Surga** a franchi une étape majeure avec le déploiement d'une véritable **Architecture Desktop 3 Colonnes** répondant directement aux retours d'ergonomie (« remplir les espaces vides à gauche et à droite avec d'autres infos ; Services éclatés à gauche ») tout en maintenant une expérience mobile 1 colonne d'une fluidité exemplaire :
+0. **Sanctuarisation Définitive de l'Emblème & Logo Surga (100% DONE — Nuit 9 suite - 7)** :
+   - **Éradication de la Cause Racine** : Fin du placeholder `<div>S</div>` hérité d'un mockup HTML. Création du composant source de vérité unique `<SurgaBrandLogo />` (`frontend-next/src/app/surga/components/SurgaBrandLogo.tsx`, 65 l.) important de manière immuable `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre).
+   - **Intégration Systématique** : Utilisé dans `SurgaDesktopSidebar.tsx` et sanctuarisé dans `AGENTS.md` (racine), `.agents/AGENTS.md` et `CLAUDE.md`. Interdiction formelle de substituer l'icône dans les futures sessions.
 
-0. **Architecture Desktop 3 Colonnes & Éclatement des Services (100% DONE — Nuit 9 suite - 6)** :
-   - **Sidebar Gauche Dédiée (240px, `SurgaDesktopSidebar.tsx`, 225 l.)** :
+0.bis. **Architecture Desktop 3 Colonnes & Éclatement des Services (100% DONE — Nuit 9 suite - 6)** :
+   - **Sidebar Gauche Dédiée (240px, `SurgaDesktopSidebar.tsx`, 207 l.)** :
      - Éclatement complet des fonctionnalités de Surga pour exploiter l'espace latéral :
        - Section **Quotidien** : Aujourd'hui (actif ambre), Notes & Listes (avec compteur de notes), Sama Xaalis, Agenda & Rappels (avec badge de rendez-vous du jour).
        - Section **Services Dakar Éclatés** : Trafic Dakar direct (badge vert Live), Kiosque des Unes, Radios FM direct, Concours & ENA (badge J-7), Pôle Immobilier certifié, Bonnes Adresses.
