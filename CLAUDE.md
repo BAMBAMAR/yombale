@@ -50,6 +50,21 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Assistant IA Omnibar Unifié — LLM (Discours, Reformulation, Rédaction) & Actions/Navigation Surga (Session 2026-10-07 - Nuit 9 suite - 9, branche `feature/surga`)** :
+  - *Transformation de l'Omnibar Ctrl+K en Interface IA Complète* :
+    1. **Capacité LLM & Rédaction Instantanée** :
+       - Rédaction de discours, mots de bienvenue, messages WhatsApp de félicitations/remerciements, et reformulation stylistique (professionnelle, chaleureuse, directe).
+       - Moteur hybride : Gemini 1.5 Flash si clé présente + Smart Templates locaux (0 Mo de data, zéro latence).
+       - Modale contextuelle avec boutons immédiats : *[Copier le texte]*, *[Enregistrer dans mes Notes]*, *[Partager sur WhatsApp]*.
+    2. **Actions & Données Locales Instantanées (façon Assistant Nopalou)** :
+       - Dépenses FCFA (« note 4500 FCFA pour le marché ») -> carte de validation en 1 clic.
+       - Rappels agenda (« rappelle rdv demain 10h ») -> ajout à l'agenda.
+       - Calculs déterministes (« 50000 / 4 ») -> résultat immédiat en FCFA.
+       - Trafic, Concours, Météo -> consultation et ouverture directe de la vue.
+    3. **Architecture Senior Découplée (< 450 l.)** :
+       - Backend : `backend/services/surga/assistant-llm.js` (240 l.), `backend/routes/surga/assistant.js` (44 l.).
+       - Frontend : `SurgaAssistantModal.tsx` (395 l.), `SurgaLayoutShell.tsx` (222 l.), `page.tsx` préservé à 441 l.
+
 - **Surga / Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées (Session 2026-10-07 - Nuit 9 suite - 8, branche `feature/surga`)** :
   - *Perfectionnement Visuel Desktop & Finition Haut de Gamme* :
     1. **Suppression des Barres Latérales Natives** : Masquage total de l'ascenseur sur `.surga-desktop-sidebar` et `.surga-desktop-right-rail` (`scrollbar-width: none; -ms-overflow-style: none; ::-webkit-scrollbar { display: none; }`). Les colonnes restent 100% défilables à la molette mais sans aucun artefact visuel.

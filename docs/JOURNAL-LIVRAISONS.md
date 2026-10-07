@@ -1,4 +1,24 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Assistant IA Omnibar Unifié — LLM (Discours, Reformulation, Rédaction) & Actions/Navigation Surga (Session 2026-10-07 - Nuit 9 suite - 9, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse directe et ambitieuse à la directive utilisateur : « LA BARRE de recherche doit fonctionner comme un LLM lié à une IA on doit pouvoir écrire poser des questions par exemple reformuler, fais-moi un message ou discours de bienvenue etc. mais aussi il doit comme l'audio pouvoir naviguer dans Surga et de faire ressortir les bonnes infos comme le fait l'assistant de Nopalou ».
+    - Transformation de l'Omnibar desktop et de sa commande en véritable copilote IA multimodal (texte et voix) combinant puissance de rédaction LLM et automatisation locale déterministe.
+    - Création du flux unifié : soumission textuelle ou vocale -> modal Spotlight contextuelle interactive avec actions en 1 clic.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Service Backend Hybride (`backend/services/surga/assistant-llm.js`, 240 l.)** :
+       - Moteur d'interprétation couplé Gemini 1.5 Flash + Smart Templates locaux (modèles de discours de bienvenue cérémonies/mariages/réunions, reformulations de textes en 3 variantes, remerciements Teranga).
+       - Exécution instantanée des calculs arithmétiques déterministes.
+       - Interprétation des actions de dépenses, rappels, notes et requêtes de trafic, météo, concours.
+    2. **Route Express Dédiée (`backend/routes/surga/assistant.js`, 44 l.)** :
+       - Endpoint `POST /api/surga/assistant` branché dans `backend/routes/surga/index.js`.
+    3. **Composant Frontend Modale Interactif (`SurgaAssistantModal.tsx`, 395 l.)** :
+       - Restitution soignée avec badges de catégorie et typographie aérée.
+       - Boutons immédiats pour les textes générés : *[Copier le texte]*, *[Enregistrer dans mes Notes]*, *[Partager sur WhatsApp]*.
+       - Cartes de confirmation d'action : bouton *[Confirmer et enregistrer la dépense]* (avec montant FCFA et note).
+    4. **Intégration Modulaire & Plafond Strict (< 450 l.)** :
+       - Intégration dans `SurgaLayoutShell.tsx` (222 l.) et `page.tsx` maintenu à 441 l.
+       - Validation 100% de la chaîne : `npx tsc --noEmit` 0 erreur, 158/158 tests Jest PASS, captures Playwright de bout en bout validées.
+
 - **Surga / Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées (Session 2026-10-07 - Nuit 9 suite - 8, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Traitement immédiat de la capture d'écran utilisateur montrant l'ascenseur gris Windows de 17px avec flèches triangulaires `▲` et `▼` coupant l'interface.

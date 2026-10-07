@@ -1,11 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import SurgaHeader from './SurgaHeader'
 import SurgaBottomNav, { type SurgaTab } from './SurgaBottomNav'
 import SurgaDesktopSidebar from './SurgaDesktopSidebar'
 import SurgaDesktopRightRail from './SurgaDesktopRightRail'
 import SurgaDesktopCommandBar from './SurgaDesktopCommandBar'
+import SurgaAssistantModal, { type SurgaAssistantResultat } from './SurgaAssistantModal'
 import type { SurgaUser } from '../page'
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync'
 import { Mic } from 'lucide-react'
@@ -31,6 +32,9 @@ interface SurgaLayoutShellProps {
   onOpenPlaces: () => void
   onOpenCompte: () => void
   onOpenAuth: () => void
+  onConfirmerDepense?: (depense: { montant: number; categorie: string; note: string }) => Promise<void>
+  onConfirmerNote?: (note: { titre: string; contenu: string }) => Promise<void>
+  onConfirmerRappel?: (rappel: { titre: string; date: string; heure: string }) => Promise<void>
 }
 
 export default function SurgaLayoutShell({
@@ -54,7 +58,79 @@ export default function SurgaLayoutShell({
   onOpenPlaces,
   onOpenCompte,
   onOpenAuth,
+  onConfirmerDepense,
+  onConfirmerNote,
+  onConfirmerRappel,
 }: SurgaLayoutShellProps) {
+  // État de l'Assistant IA Unifié (Omnibar LLM & Actions)
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false)
+  const [assistantQuery, setAssistantQuery] = useState('')
+  const [assistantResultat, setAssistantResultat] = useState<SurgaAssistantResultat | null>(null)
+  const [isAssistantLoading, setIsAssistantLoading] = useState(false)
+
+  const handleExecuteAssistantQuery = async (queryText: string): Promise<SurgaAssistantResultat | null> => {
+    setIsAssistantOpen(true)
+    setAssistantQuery(queryText)
+    setIsAssistantLoading(true)
+
+    try {
+      const res = await fetch('/api/surga/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: queryText, userId: user?.id }),
+      })
+
+      const data = await res.json()
+      if (data?.success && data?.resultat) {
+        setAssistantResultat(data.resultat)
+        return data.resultat
+      }
+      const replFallback: SurgaAssistantResultat = {
+        type: 'LLM_REPLY',
+        texte: 'Désolé, une erreur est survenue lors du traitement de votre demande.',
+      }
+      setAssistantResultat(replFallback)
+      return replFallback
+    } catch (err) {
+      const replFallback: SurgaAssistantResultat = {
+        type: 'LLM_REPLY',
+        texte: 'Service temporairement indisponible. Vérifiez votre connexion internet.',
+      }
+      setAssistantResultat(replFallback)
+      return replFallback
+    } finally {
+      setIsAssistantLoading(false)
+    }
+  }
+
+  const handleOpenModal = (modalName: string) => {
+    switch (modalName) {
+      case 'trafic':
+        onOpenTrafic()
+        break
+      case 'kiosque':
+        onOpenPresse()
+        break
+      case 'radio':
+        onOpenRadios()
+        break
+      case 'concours':
+        onOpenConcours()
+        break
+      case 'immo':
+        onOpenImmo()
+        break
+      case 'places':
+        onOpenPlaces()
+        break
+      case 'compte':
+        onOpenCompte()
+        break
+      default:
+        break
+    }
+  }
+
   const getTitreMobile = () => {
     switch (activeTab) {
       case 'notes':
@@ -111,7 +187,10 @@ export default function SurgaLayoutShell({
           </div>
 
           <div className="surga-desktop-command-wrapper">
-            <SurgaDesktopCommandBar onOpenVoice={onOpenVoice} />
+            <SurgaDesktopCommandBar
+              onOpenVoice={onOpenVoice}
+              onSubmitQuery={handleExecuteAssistantQuery}
+            />
           </div>
         </main>
 
@@ -139,6 +218,21 @@ export default function SurgaLayoutShell({
 
       {/* Navigation basse (mobile uniquement) */}
       <SurgaBottomNav activeTab={activeTab} onTabChange={onTabChange} />
+
+      {/* Modale d'interaction de l'Assistant IA Unifié Surga */}
+      <SurgaAssistantModal
+        isOpen={isAssistantOpen}
+        onClose={() => setIsAssistantOpen(false)}
+        initialQuery={assistantQuery}
+        initialResultat={assistantResultat}
+        isLoading={isAssistantLoading}
+        onExecuterQuery={handleExecuteAssistantQuery}
+        onConfirmerDepense={onConfirmerDepense}
+        onConfirmerNote={onConfirmerNote}
+        onConfirmerRappel={onConfirmerRappel}
+        onNavigateTab={onTabChange}
+        onOpenModal={handleOpenModal}
+      />
     </div>
   )
 }

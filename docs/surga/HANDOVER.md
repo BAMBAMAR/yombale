@@ -1,21 +1,28 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 8 — Éradication Scrollbars Windows & Finition Visuelle Haut de Gamme)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 9 — Assistant IA Omnibar Unifié LLM & Actions Locales Surga)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Éradication Définitive des Scrollbars Natives Windows (Barres Latérales Invisibles, Ascenseur Central 6px Arrondi & Flèches ▲ ▼ Supprimées), Emblème Officiel Sanctuarisé (`SurgaBrandLogo.tsx`), Architecture Desktop 3 Colonnes Active — Vue Mobile 1 Colonne 100% Intacte — 100% Composants < 450 l. — TypeScript 0 Erreur, 158/158 Tests Unitaires PASS**  
+> **Statut global** : 🟢 **Assistant IA Omnibar Opérationnel (LLM Rédaction Discours & Reformulation, Actions Dépenses/Notes/Rappels, Navigation Surga, Calculs), Éradication des Scrollbars Windows, Emblème Officiel Sanctuarisé (`SurgaBrandLogo.tsx`), Architecture Desktop 3 Colonnes — Vue Mobile 1 Colonne 100% Intacte — 100% Composants < 450 l. — TypeScript 0 Erreur, 158/158 Tests Unitaires PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-0. **Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées (100% DONE — Nuit 9 suite - 8)** :
+0. **Assistant IA Omnibar Unifié (100% DONE — Nuit 9 suite - 9)** :
+   - Réponse directe au besoin de coupler l'Omnibar à une IA conversationnelle (LLM) et à l'automatisation locale.
+   - Support complet de la rédaction de discours de bienvenue, des reformulations de texte en plusieurs styles (professionnel, teranga, direct), et des messages de courtoisie.
+   - Déclenchement automatique des actions de Surga : Dépenses FCFA (« note 4500 FCFA »), Rappels d'agenda, Notes libres, Calculs déterministes.
+   - Fenêtre contextuelle interactive (`SurgaAssistantModal.tsx`, 395 l.) avec actions immédiates (*Copier*, *Enregistrer dans mes Notes*, *Partager sur WhatsApp*, *Confirmer la dépense*).
+   - Backend hybride haute performance (`backend/services/surga/assistant-llm.js`, 240 l. & `backend/routes/surga/assistant.js`, 44 l.).
+
+0.bis. **Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées (100% DONE — Nuit 9 suite - 8)** :
    - Éradication de la grosse barre de défilement grise de 17px avec flèches triangulaires Windows `▲` et `▼` qui coupait les cartes.
    - Masquage des ascenseurs latéraux sur la sidebar (240px) et le rail droit (300px) tout en préservant le défilement fluide à la molette.
    - Suppression universelle des flèches triangulaires Windows (`::-webkit-scrollbar-button { display: none !important; }`).
    - Normalisation d'un ascenseur ultra-fin (6px), transparent et arrondi sur le flux central et l'ensemble de l'application.
 
-0.bis. **Sanctuarisation Définitive de l'Emblème & Logo Surga (100% DONE — Nuit 9 suite - 7)** :
+0.ter. **Sanctuarisation Définitive de l'Emblème & Logo Surga (100% DONE — Nuit 9 suite - 7)** :
    - **Éradication de la Cause Racine** : Fin du placeholder `<div>S</div>` hérité d'un mockup HTML. Création du composant source de vérité unique `<SurgaBrandLogo />` (`frontend-next/src/app/surga/components/SurgaBrandLogo.tsx`, 65 l.) important de manière immuable `/surga/surga-symbol.png` (personnage en caftan stylisé en rubans S avec ceinture ambre).
    - **Intégration Systématique** : Utilisé dans `SurgaDesktopSidebar.tsx` et sanctuarisé dans `AGENTS.md` (racine), `.agents/AGENTS.md` et `CLAUDE.md`. Interdiction formelle de substituer l'icône dans les futures sessions.
 

@@ -3,6 +3,26 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 9] — Assistant IA Omnibar Unifié (LLM Rédaction, Navigation & Actions Locales Surga)
+- **Objectif Atteint :**
+  - Répondre directement à la consigne : « LA BARRE de recherche doit fonctionner comme un LLM lié à une IA on doit pouvoir écrire poser des questions par exemple reformuler, fais-moi un message ou discours de bienvenue etc. mais aussi il doit comme l'audio pouvoir naviguer dans Surga et de faire ressortir les bonnes infos comme le fait l'assistant de Nopalou ».
+  - Transformer l'Omnibar <kbd>Ctrl K</kbd> en centre névralgique intelligent de Surga.
+  - Offrir une modale d'interaction instantanée façon Spotlight / Linear avec boutons d'actions en 1 clic (*[Copier le texte]*, *[Enregistrer dans mes Notes]*, *[Partager sur WhatsApp]*, *[Confirmer la dépense]*).
+- **Réalisations & Fichiers Modifiés :**
+  1. *Service Backend Hybride (`backend/services/surga/assistant-llm.js`, 240 l.)* :
+     - Pipeline dual Gemini Flash LLM + Modèles locaux intelligents (discours de bienvenue, reformulation de texte, remerciements/félicitations Teranga, questions culturelles/pratiques).
+     - Détection des actions locales : Dépenses FCFA, Rappels d'agenda, Notes, Calculs déterministes, Trafic Dakar direct, Concours, Météo.
+  2. *Route Express Dédiée (`backend/routes/surga/assistant.js`, 44 l.)* :
+     - Route `POST /api/surga/assistant` montée dans `backend/routes/surga/index.js`.
+  3. *Composant Frontend Modale Interactif (`SurgaAssistantModal.tsx`, 395 l.)* :
+     - Interface de réponse riche avec badges, affichage typographique aéré, cartes d'action et boutons immédiats.
+  4. *Shell & Page Principale (`SurgaLayoutShell.tsx`, 222 l. & `page.tsx`, 441 l.)* :
+     - Câblage direct de l'Omnibar à la modale assistant et transmission des callbacks métier (dépenses, notes, agenda).
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS.
+  - Validations Playwright e2e : Discours de bienvenue généré avec succès + Action de dépense 4 500 FCFA validée en direct.
+
 ### [2026-10-07 — Nuit 9 suite - 8] — Éradication des Barres de Défilement Disgracieuses Windows & Scrollbars Raffinées
 - **Objectif Atteint :**
   - Traiter immédiatement le retour utilisateur sur les barres de défilement (« les barres de défilement ne sont pas problématiques » / capture montrant la barre Windows de 17px avec flèches triangulaires coupant l'interface).

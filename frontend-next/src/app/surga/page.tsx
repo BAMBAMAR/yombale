@@ -330,6 +330,9 @@ export default function SurgaPage() {
         onOpenPlaces={() => setIsPlacesOpen(true)}
         onOpenCompte={() => setIsCompteOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onConfirmerDepense={handleVoiceDepense}
+        onConfirmerNote={handleVoiceNote}
+        onConfirmerRappel={handleVoiceRappel}
       >
         {/* Onglet 1 : Aujourd'hui */}
         {activeTab === 'aujourdhui' && (

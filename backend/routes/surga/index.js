@@ -25,6 +25,7 @@ router.use('/', require('./sport'));
 router.use('/', require('./videos'));
 router.use('/', require('./emploi'));
 router.use('/', require('./demarches'));
+router.use('/', require('./assistant'));
 
 module.exports = router;
 
