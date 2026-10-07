@@ -1,13 +1,35 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 14 — Déploiement Intégral de Toutes les Boutiques Réelles & Éradication du 404)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 15 — Confidentialité Renforcée Sama Xaalis : Verrouillage par Code PIN à 4 Chiffres & Masquage Montants)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **100% des 99 Boutiques Réelles Nopalou et 172 Produits en Stock Visibles dans Surga Shopping, Zéro 404 sur les Vitrines Marchandes, Assistant IA Omnibar Entièrement Corrigé, Sidebar Desktop Compacte & Zéro Défilement (12 boutons, scrollable: false), Bouton « Plus de services » (+7) Déployé, Modale Hub Opérationnelle, Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests PASS**  
+> **Statut global** : 🟢 **Confidentialité Totale Sama Xaalis (Boutons Œil Afficher/Masquer, Code PIN 4 Chiffres avec Pavé Tactile & Clavier, Écran de Verrouillage, Sync Temps Réel), 100% des 99 Boutiques Réelles & 172 Produits Nopalou Intégrés sans 404, Assistant IA Omnibar Corrigé (Reformulation & Dettes), Sidebar Desktop Compacte Zéro Défilement (12 boutons, scrollable: false), Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests Jest PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
+
+-3. **Confidentialité Renforcée Sama Xaalis : Code PIN & Masquage des Montants (100% DONE — Nuit 9 suite - 15)** :
+   - Traitement direct de la directive : « plus de confidentialite pour sama xaalis avoir meme un code pin pour acceder et bouton afficher masquer ».
+   - **Bouton Afficher/Masquer Instantané (`Eye` / `EyeOff`)** :
+     - Présent sur l'en-tête du widget Sama Xaalis dans le rail droit desktop, sur l'en-tête de la vue Sama Xaalis et synchronisé sur le Dashboard et le Journal Kalpé.
+     - Bascule en 1 clic remplaçant les soldes et dépenses par `•••••• FCFA` (`•••••• F`).
+   - **Code PIN Sécurisé à 4 Chiffres & Pavé Numérique (`SurgaXaalisPinModal.tsx`, 295 l.)** :
+     - Clavier tactile virtuel 3×4 ergonomique avec touches d'effacement et validation automatique.
+     - Support complet des touches physiques du clavier (0 à 9, Backspace, Échap).
+     - 4 indicateurs visuels à bulles avec animation de vibration (shake) en cas de code erroné.
+     - Prise en charge des modes : Déverrouillage, Définition initiale avec confirmation, Modification du PIN et Désactivation.
+   - **Écran de Protection et Verrouillage (`SurgaXaalisLockedScreen.tsx`, 54 l.)** :
+     - Écran sobre avec cadenas ambre protégeant l'accès à Sama Xaalis tant que le PIN n'est pas saisi.
+   - **Architecture Temps Réel & Découpage Senior (< 450 lignes)** :
+     - `frontend-next/src/lib/surga-xaalis-security.ts` (147 l.) : gestionnaire autonome avec stockage salé local et événement `surga-xaalis-privacy-change`.
+     - `SurgaSamaXaalisView.tsx` allégé de 589 à 288 lignes (< 450 l.).
+     - `SurgaXaalisHeaderBar.tsx` (160 l.) et `SurgaXaalisSummaryCards.tsx` (95 l.) extraits proprement.
+     - `SurgaDesktopRightRail.tsx` (217 l.) : intégration native du bouton œil et du clic de déverrouillage PIN.
+   - **Validation & Scores** :
+     - TypeScript : 0 erreur (`npx tsc --noEmit`).
+     - Tests Unitaires Jest : 158/158 PASS. AUD-157 : PASS.
+     - Validation Playwright complète avec 5 captures d'écran de preuve.
 
 -2. **Déploiement Intégral de Toutes les Boutiques Réelles (99 Boutiques & 172 Produits) & Éradication du 404 (100% DONE — Nuit 9 suite - 14)** :
    - Traitement direct de la demande : « ON DOIT voir toutes les boutique » et de la 404 rencontrée sur `/boutiques/beaute-almadies`.

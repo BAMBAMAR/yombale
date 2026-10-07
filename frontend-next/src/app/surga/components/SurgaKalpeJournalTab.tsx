@@ -6,6 +6,7 @@ import {
   type KalpeOperationLocal,
   deleteKalpeOperation,
 } from '@/lib/surga-kalpe'
+import { isXaalisMasque } from '@/lib/surga-xaalis-security'
 
 interface SurgaKalpeJournalTabProps {
   operations: KalpeOperationLocal[]
@@ -43,6 +44,14 @@ export default function SurgaKalpeJournalTab({
 }: SurgaKalpeJournalTabProps) {
   const [filtreType, setFiltreType] = useState<'all' | 'entree' | 'sortie'>('all')
   const [recherche, setRecherche] = useState('')
+  const [masque, setMasque] = useState(false)
+
+  React.useEffect(() => {
+    setMasque(isXaalisMasque())
+    const handlePrivacy = () => setMasque(isXaalisMasque())
+    window.addEventListener('surga-xaalis-privacy-change', handlePrivacy)
+    return () => window.removeEventListener('surga-xaalis-privacy-change', handlePrivacy)
+  }, [])
 
   const handleSupprimer = (id: string) => {
     if (confirm('Supprimer cette opération ?')) {
@@ -212,7 +221,7 @@ export default function SurgaKalpeJournalTab({
                       textAlign: 'right',
                     }}
                   >
-                    {isEntree ? '+' : '-'} {op.montant.toLocaleString('fr-FR')} F
+                    {isEntree ? '+' : '-'} {masque ? '•••••• F' : `${op.montant.toLocaleString('fr-FR')} F`}
                   </div>
 
                   <button

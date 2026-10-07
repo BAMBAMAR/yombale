@@ -3,6 +3,34 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 15] — Confidentialité Renforcée Sama Xaalis (Code PIN 4 Chiffres & Bouton Afficher/Masquer)
+- **Objectif Atteint :**
+  - Répondre directement à la directive : « plus de confidentialite pour sama xaalis avoir meme un code pin pour acceder et bouton afficher masquer ».
+  - Permettre le masquage immédiat des montants en FCFA (`Eye` / `EyeOff`) sur le widget desktop, le dashboard, le journal de caisse et la vue financière.
+  - Protéger l'accès aux finances personnelles par un Code PIN à 4 chiffres sécurisé (chiffrement salé local, pavé numérique 3×4 + support clavier physique).
+  - Verrouiller automatiquement ou manuellement la session avec écran de protection bloquant toute indiscrétion.
+- **Réalisations & Fichiers Déployés :**
+  1. *Module Sécurité & Événements Client (`surga-xaalis-security.ts`, 147 l.)* :
+     - Fonctions déterministes d'état : `isXaalisMasque`, `setXaalisMasque`, `toggleXaalisMasque`, `formaterMontantConfidentiel`.
+     - Gestion du code PIN : `hasXaalisPin`, `verifierXaalisPin`, `definirXaalisPin`, `supprimerXaalisPin`.
+     - Gestion de session : `isXaalisVerrouille`, `verrouillerXaalisSession`, `deverrouillerXaalisSession`.
+     - Synchronisation temps réel via événement `surga-xaalis-privacy-change`.
+  2. *Modale Clavier PIN & Écran Verrouillé (`SurgaXaalisPinModal.tsx`, 295 l. & `SurgaXaalisLockedScreen.tsx`, 54 l.)* :
+     - 4 bulles indicatrices animées, clavier tactile 3×4, écoute native touches physiques.
+     - Écran de garde protecteur avec cadenas ambre empêchant la lecture des données tant que le PIN n'est pas saisi.
+  3. *En-Tête & Cartes Financières Modulaires (`SurgaXaalisHeaderBar.tsx`, 160 l. & `SurgaXaalisSummaryCards.tsx`, 95 l.)* :
+     - Bouton œil (Afficher/Masquer) et bouton cadenas (PIN / Verrouiller) intégrés.
+     - Remplacement dynamique des montants par `•••••• FCFA` en mode masqué.
+  4. *Modularisation Vue Sama Xaalis (`SurgaSamaXaalisView.tsx`, 288 l.)* :
+     - Allégement de 589 à 288 lignes (< 450 l.).
+  5. *Rail Contextuel Droit Desktop & Journal Kalpé (`SurgaDesktopRightRail.tsx`, 217 l., `SurgaKalpeJournalTab.tsx`, 250 l., `SurgaDashboardTools.tsx`, 202 l.)* :
+     - Bouton œil interactif directement dans l'en-tête du widget Sama Xaalis.
+     - Masquage des flux et soldes. Déverrouillage par clic direct vers la modale PIN.
+  6. *Preuves Playwright & Validations* :
+     - 5 captures produites par `scripts/test-xaalis-privacy-pin.js`.
+     - TypeScript : 0 erreur. Jest : 158/158 PASS. AUD-157 : PASS.
+     - 100% des fichiers < 450 lignes. Zéro emoji UI.
+
 ### [2026-10-07 — Nuit 9 suite - 14] — Déploiement Intégral de Toutes les Boutiques Réelles (99 Boutiques & 172 Produits) & Éradication du 404
 - **Objectif Atteint :**
   - Répondre directement à la directive : « ON DOIT voir toutes les boutique » et à la capture montrant une 404 sur `/boutiques/beaute-almadies`.

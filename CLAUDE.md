@@ -50,6 +50,38 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Confidentialité Renforcée Sama Xaalis : Verrouillage par Code PIN à 4 Chiffres & Bouton Afficher/Masquer les Montants (Session 2026-10-07 - Nuit 9 suite - 15, branche `feature/surga`)** :
+  - *Réponse Directe à la Directive Utilisateur : « plus de confidentialite pour sama xaalis avoir meme un code pin pour acceder et bouton afficher masquer »* :
+    1. **Module de Sécurité & Confidentialité Client (`frontend-next/src/lib/surga-xaalis-security.ts`, 147 l.)** :
+       - Gestion de l'état de masquage global (`isXaalisMasque`, `setXaalisMasque`, `toggleXaalisMasque`).
+       - Formatage confidentiel déterministe (`formaterMontantConfidentiel`) remplaçant les valeurs chiffrées par des pastilles protégées (`•••••• FCFA` / `•••••• F`).
+       - Mécanisme de Code PIN sécurisé 4 chiffres (`hasXaalisPin`, `verifierXaalisPin`, `definirXaalisPin`, `supprimerXaalisPin`, stockage sécurisé avec sel et hachage).
+       - Gestion du verrouillage de session (`isXaalisVerrouille`, `verrouillerXaalisSession`, `deverrouillerXaalisSession`).
+       - Bus d'événements personnalisé `surga-xaalis-privacy-change` sur `window` synchronisant instantanément toute l'UI (Dashboard, rail contextuel desktop, vue principale Sama Xaalis, journal Kalpé).
+    2. **Pavé Numérique Tactile & Clavier Physique (`SurgaXaalisPinModal.tsx`, 295 l.)** :
+       - Clavier virtuel 3×4 ergonomique optimisé pour mobile et bureau + écoute des touches physiques (`0`-`9`, `Backspace`, `Escape`).
+       - 4 indicateurs visuels à bulles avec animation de secousse (*shake*) en cas de code erroné.
+       - Modes complets : Déverrouillage (`unlock`), Configuration initiale (`setup` avec confirmation), Changement (`change`), Désactivation (`disable`).
+    3. **Écran de Protection & Verrouillage (`SurgaXaalisLockedScreen.tsx`, 54 l.)** :
+       - Écran de substitution centré masquant intégralement les chiffres et formulaires lorsque la session Sama Xaalis est verrouillée.
+       - Cadenas ambre, message d'explication et bouton direct pour déverrouiller via la modale PIN.
+    4. **En-Tête & Résumé Financier Modulaires (`SurgaXaalisHeaderBar.tsx`, 160 l. & `SurgaXaalisSummaryCards.tsx`, 95 l.)** :
+       - Bouton œil interactif (`Eye`/`EyeOff`) permettant d'afficher ou masquer immédiatement les soldes et dépenses.
+       - Bouton cadenas interactif pour verrouiller la session en 1 clic ou configurer/modifier le code PIN.
+       - Cartes de situation (Solde disponible, Entrées du mois, Dépenses du mois) masquant les montants en mode confidentiel.
+    5. **Intégration du Rail Contextuel Droit Desktop (`SurgaDesktopRightRail.tsx`, 217 l.)** :
+       - Bouton œil intégré directement dans l'en-tête du widget Sama Xaalis (`SAMA XAALIS (OCTOBRE)`).
+       - Affichage masqué : `•••••• FCFA` pour les dépenses du mois et le solde Kalpé restant.
+       - Détection du verrouillage PIN : le clic sur l'œil ou le widget ouvre la modale de déverrouillage si un PIN est actif.
+    6. **Modularisation Senior (< 450 lignes)** :
+       - `SurgaSamaXaalisView.tsx` allégé de 589 à 288 lignes (-301 lignes) en déléguant l'en-tête, les cartes de synthèse, l'écran verrouillé et la modale PIN.
+       - Masquage des montants dans le journal Kalpé (`SurgaKalpeJournalTab.tsx`, 250 l.) et dans les outils glanceables (`SurgaDashboardTools.tsx`, 202 l.).
+    7. **Preuves Playwright & Tests de Non-Régression** :
+       - Test de validation complet (`scripts/test-xaalis-privacy-pin.js`) avec 5 captures validées : widget clair, widget masqué, vue masquée, écran verrouillé, vue déverrouillée.
+       - TypeScript : 0 erreur (`npx tsc --noEmit`).
+       - Tests Unitaires Jest : 158/158 PASS. AUD-157 : PASS.
+       - 0 emoji UI (icônes Lucide), 0 code couleur arbitraire hors tokens.
+
 - **Surga / Déploiement Intégral de Toutes les Boutiques Réelles (99 Boutiques & 172 Produits) & Éradication de l'Erreur 404 (Session 2026-10-07 - Nuit 9 suite - 14, branche `feature/surga`)** :
   - *Affichage de l'Intégralité du Parc Marchand Nopalou & Navigation Réelle Garantie* :
     1. **Correction Requête SQL du Service Shopping (`backend/services/surga/shopping-service.js`)** :

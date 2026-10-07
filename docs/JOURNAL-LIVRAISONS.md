@@ -1,4 +1,36 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Confidentialité Renforcée Sama Xaalis : Verrouillage par Code PIN & Bouton Afficher/Masquer les Montants (Session 2026-10-07 - Nuit 9 suite - 15, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse directe, immédiate et soignée à la demande utilisateur : « plus de confidentialite pour sama xaalis avoir meme un code pin pour acceder et bouton afficher masquer ».
+    - Problématique : Les montants financiers (solde Kalpé, dépenses mensuelles) étaient toujours affichés en clair sur l'écran et dans le rail droit desktop, posant un problème de discrétion dans les espaces publics ou partagés, sans possibilité de restreindre l'accès à Sama Xaalis.
+    - Solution déployée : Un système complet de confidentialité à double niveau :
+      1. Masquage/Démasquage instantané en 1 clic via des boutons œil (`Eye`/`EyeOff`) remplaçant les valeurs réelles par `•••••• FCFA` sur l'ensemble de l'interface (Widget desktop, Dashboard, Vue Xaalis, Journal Kalpé).
+      2. Système de verrouillage par **Code PIN à 4 chiffres** avec pavé numérique virtuel 3×4 + support clavier physique, indicateurs à bulles, animation shake, écran de verrouillage protecteur et déverrouillage sécurisé.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Architecture & Sécurité Client (`surga-xaalis-security.ts`, 147 l.)** :
+       - Hachage salé du Code PIN stocké localement, persistance de la préférence de masquage.
+       - Gestion du verrouillage de session : si un PIN est configuré, la session se verrouille par défaut ou à la demande.
+       - Bus d'événements `surga-xaalis-privacy-change` : synchronisation en temps réel sans rechargement de page entre tous les composants montés.
+    2. **Composant Pavé Numérique & Modale PIN (`SurgaXaalisPinModal.tsx`, 295 l.)** :
+       - Modale responsive avec 4 bulles de progression.
+       - Clavier tactile 3×4 avec touches de correction et validation automatique à 4 chiffres.
+       - Écoute complète des événements claviers (`keydown` 0-9, Backspace, Escape).
+       - Modes : Déverrouillage (`unlock`), Configuration initiale (`setup` avec double saisie de confirmation), Modification (`change`), Suppression (`disable`).
+    3. **Écran de Protection Sama Xaalis (`SurgaXaalisLockedScreen.tsx`, 54 l.)** :
+       - Écran protecteur sobre et élégant avec grand cadenas ambre et bouton de déverrouillage immédiat.
+    4. **Découpage & Modularisation Senior (< 450 lignes)** :
+       - `SurgaSamaXaalisView.tsx` allégé de 589 à 288 lignes (< 450 l.).
+       - `SurgaXaalisHeaderBar.tsx` (160 l.) : sélecteur de mois, bouton Afficher/Masquer, bouton PIN/Sécurité, Calculatrice.
+       - `SurgaXaalisSummaryCards.tsx` (95 l.) : cartes glanceables avec masquage automatique des montants.
+    5. **Intégration du Rail Droit Desktop & Journal Kalpé** :
+       - `SurgaDesktopRightRail.tsx` (217 l.) : bouton œil discret dans l'en-tête du widget Sama Xaalis, masquage des montants (`•••••• FCFA`), déclenchement de la modale PIN si verrouillé.
+       - `SurgaKalpeJournalTab.tsx` (250 l.) & `SurgaDashboardTools.tsx` (202 l.) : masquage des flux d'argent en mode confidentiel.
+    6. **Tests & Validation Playwright** :
+       - Script de validation Playwright `scripts/test-xaalis-privacy-pin.js` exécuté avec succès.
+       - Captures d'écran produites : widget en clair, widget masqué, vue masquée, écran verrouillé par PIN, vue déverrouillée.
+       - TypeScript : 0 erreur (`npx tsc --noEmit`).
+       - Tests Unitaires Jest : 158/158 PASS. AUD-157 : PASS.
+
 - **Surga / Déploiement Intégral de Toutes les Boutiques Réelles (99 Boutiques & 172 Produits) & Éradication de l'Erreur 404 (Session 2026-10-07 - Nuit 9 suite - 14, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe, immédiate et catégorique à l'exigence de l'utilisateur : « ON DOIT voir toutes les boutique » accompagnée d'une capture d'écran d'erreur 404 lors du clic sur « Visiter la boutique » vers `beaute-almadies`.

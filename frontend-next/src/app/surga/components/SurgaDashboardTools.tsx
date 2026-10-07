@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { SurgaTab } from './SurgaBottomNav';
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync';
+import { isXaalisMasque } from '@/lib/surga-xaalis-security';
 
 interface SurgaDashboardToolsProps {
   soldeKalpeFormate?: string;
@@ -37,6 +38,14 @@ export default function SurgaDashboardTools({
   onOpenVoice,
   onReinitialiser,
 }: SurgaDashboardToolsProps) {
+  const [masque, setMasque] = React.useState(false);
+
+  React.useEffect(() => {
+    setMasque(isXaalisMasque());
+    const handlePrivacy = () => setMasque(isXaalisMasque());
+    window.addEventListener('surga-xaalis-privacy-change', handlePrivacy);
+    return () => window.removeEventListener('surga-xaalis-privacy-change', handlePrivacy);
+  }, []);
   return (
     <div style={{ margin: '20px 0 10px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -89,7 +98,9 @@ export default function SurgaDashboardTools({
         <div className="surga-item-content">
           <div className="surga-item-line1">Sama Xaalis (Portefeuille)</div>
           <div className="surga-item-line2">
-            <span className="surga-price-tag">{soldeKalpeFormate || statsApercu?.total_formate || '0 FCFA'}</span>
+            <span className="surga-price-tag">
+              {masque ? '•••••• FCFA' : (soldeKalpeFormate || statsApercu?.total_formate || '0 FCFA')}
+            </span>
             <span>• Suivi entrées &amp; dépenses</span>
           </div>
         </div>
