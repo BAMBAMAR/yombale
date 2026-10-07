@@ -31,6 +31,8 @@ export interface SurgaRadioContextType {
   lancerStation: (station: StationRadio) => void
   togglePlay: () => void
   toggleMute: () => void
+  passerSuivante: () => void
+  passerPrecedente: () => void
   arreter: () => void
 }
 
@@ -225,6 +227,20 @@ export function SurgaRadioProvider({ children }: { children: React.ReactNode }) 
     }
   }, [isMuted])
 
+  const passerSuivante = useCallback(() => {
+    if (!stations.length) return
+    const currentIndex = stationActive ? stations.findIndex((s) => s.id === stationActive.id) : -1
+    const nextIndex = (currentIndex + 1) % stations.length
+    lancerStation(stations[nextIndex])
+  }, [stations, stationActive, lancerStation])
+
+  const passerPrecedente = useCallback(() => {
+    if (!stations.length) return
+    const currentIndex = stationActive ? stations.findIndex((s) => s.id === stationActive.id) : 0
+    const prevIndex = (currentIndex - 1 + stations.length) % stations.length
+    lancerStation(stations[prevIndex])
+  }, [stations, stationActive, lancerStation])
+
   return (
     <SurgaRadioContext.Provider
       value={{
@@ -241,6 +257,8 @@ export function SurgaRadioProvider({ children }: { children: React.ReactNode }) 
         lancerStation,
         togglePlay,
         toggleMute,
+        passerSuivante,
+        passerPrecedente,
         arreter,
       }}
     >

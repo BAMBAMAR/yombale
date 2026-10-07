@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Play, Pause, Volume2, VolumeX, X, Radio, ChevronUp } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, Radio, ChevronUp } from 'lucide-react'
 import { useSurgaRadio } from '@/lib/surga-radio-context'
 
 export default function SurgaPersistentRadioBar() {
@@ -14,6 +14,8 @@ export default function SurgaPersistentRadioBar() {
     openRadioModal,
     togglePlay,
     toggleMute,
+    passerSuivante,
+    passerPrecedente,
     arreter,
   } = useSurgaRadio()
 
@@ -27,39 +29,13 @@ export default function SurgaPersistentRadioBar() {
       className="surga-persistent-radio-bar"
       role="region"
       aria-label={`Lecteur radio en direct : ${stationActive.nom}`}
-      style={{
-        position: 'fixed',
-        bottom: 64,
-        left: 0,
-        right: 0,
-        zIndex: 48,
-        display: 'flex',
-        justifyContent: 'center',
-        pointerEvents: 'none',
-      }}
     >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 480,
-          height: 52,
-          backgroundColor: 'var(--navy, #1C2B4A)',
-          color: '#FFFFFF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 12px',
-          boxShadow: '0 -4px 18px rgba(0, 0, 0, 0.22)',
-          borderTop: '2px solid var(--accent, #C75B00)',
-          pointerEvents: 'auto',
-          boxSizing: 'border-box',
-        }}
-      >
-        {/* Zone cliquable ouvrant la modale complète */}
+      <div className="surga-persistent-radio-inner">
+        {/* Zone cliquable ouvrant le catalogue complet des radios */}
         <button
           type="button"
           onClick={openRadioModal}
-          title="Ouvrir la liste des radios sénégalaises"
+          title="Ouvrir la liste complète des radios sénégalaises"
           aria-label={`Radio ${stationActive.nom}, cliquer pour ouvrir le catalogue`}
           style={{
             flex: 1,
@@ -79,8 +55,8 @@ export default function SurgaPersistentRadioBar() {
           {/* Égaliseur animé / Icône Radio */}
           <div
             style={{
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               borderRadius: '50%',
               backgroundColor: isPlaying ? 'rgba(199, 91, 0, 0.25)' : 'rgba(255, 255, 255, 0.1)',
               display: 'flex',
@@ -97,8 +73,8 @@ export default function SurgaPersistentRadioBar() {
                   alignItems: 'flex-end',
                   justifyContent: 'center',
                   gap: 2,
-                  height: 14,
-                  width: 14,
+                  height: 13,
+                  width: 13,
                 }}
               >
                 <span className="surga-eq-bar surga-eq-1" />
@@ -106,14 +82,15 @@ export default function SurgaPersistentRadioBar() {
                 <span className="surga-eq-bar surga-eq-3" />
               </div>
             ) : (
-              <Radio size={16} color={isPlaying ? 'var(--accent, #C75B00)' : '#FFFFFF'} />
+              <Radio size={15} color={isPlaying ? 'var(--accent, #C75B00)' : '#FFFFFF'} />
             )}
           </div>
 
-          {/* Informations station & statut */}
+          {/* Informations station & statut en direct */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span
+                className="surga-radio-station-nom"
                 style={{
                   fontSize: 12,
                   fontWeight: 700,
@@ -164,16 +141,28 @@ export default function SurgaPersistentRadioBar() {
           </div>
         </button>
 
-        {/* Contrôles de lecture rapides */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 }}>
+        {/* Contrôles de lecture complets avec Zapping Précédent & Suivant */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 6 }}>
+          {/* Station précédente */}
+          <button
+            type="button"
+            onClick={passerPrecedente}
+            title="Station précédente"
+            aria-label="Passer à la station radio précédente"
+            className="surga-radio-ctrl-btn"
+          >
+            <SkipBack size={15} />
+          </button>
+
           {/* Lecture / Pause */}
           <button
             type="button"
             onClick={togglePlay}
+            title={isPlaying ? 'Mettre en pause' : 'Reprendre la lecture'}
             aria-label={isPlaying ? 'Mettre en pause' : 'Reprendre la lecture'}
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               borderRadius: '50%',
               backgroundColor: 'var(--accent, #C75B00)',
               color: '#FFFFFF',
@@ -183,48 +172,44 @@ export default function SurgaPersistentRadioBar() {
               justifyContent: 'center',
               cursor: 'pointer',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
+              flexShrink: 0,
             }}
           >
-            {isPlaying ? <Pause size={14} /> : <Play size={14} style={{ marginLeft: 2 }} />}
+            {isPlaying ? <Pause size={13} /> : <Play size={13} style={{ marginLeft: 2 }} />}
           </button>
 
-          {/* Sourdine */}
+          {/* Station suivante */}
+          <button
+            type="button"
+            onClick={passerSuivante}
+            title="Station suivante"
+            aria-label="Passer à la station radio suivante"
+            className="surga-radio-ctrl-btn"
+          >
+            <SkipForward size={15} />
+          </button>
+
+          {/* Sourdine / Volume */}
           <button
             type="button"
             onClick={toggleMute}
+            title={isMuted ? 'Rétablir le son' : 'Couper le son'}
             aria-label={isMuted ? 'Rétablir le son' : 'Couper le son'}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#FFFFFF',
-              cursor: 'pointer',
-              padding: 4,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="surga-radio-ctrl-btn"
           >
-            {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
           </button>
 
           {/* Arrêter définitivement la radio */}
           <button
             type="button"
             onClick={arreter}
-            title="Arrêter et fermer la radio"
+            title="Arrêter et fermer le lecteur"
             aria-label="Arrêter la radio"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'rgba(255, 255, 255, 0.6)',
-              cursor: 'pointer',
-              padding: 4,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="surga-radio-ctrl-btn"
+            style={{ color: 'rgba(255, 255, 255, 0.6)' }}
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
       </div>

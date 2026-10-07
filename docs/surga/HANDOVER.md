@@ -1,13 +1,24 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Personnalisation de l'Affichage & Widget Radios FM Direct)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Zapping Radio Suivant/Précédent & Zéro Superposition Desktop)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Personnalisation Menu Gauche (10 services) & Rail Droit (6 widgets) dans Réglages (`SurgaPersonnalisationSection`), Widget Radios FM Direct dans le Rail Droit comblant le vide (`SurgaDesktopRightRail`), Persistance LocalStorage & Backend (`surga_preferences`), Bouton Compte actif en Mode Invité, Bouton Commander relié à la Fiche Produit, 19/19 Tickets UI V2 Résolus, 100% Tests Jest PASS (129/129), Linter Slop OK, TypeScript OK (0 erreur)**  
+> **Statut global** : 🟢 **Dock Radio Persistant Responsive (Zéro superposition sur l'Omnibar desktop, centrage strict colonne centrale, padding bas 120px), Zapping Circulaire Stations (Boutons Suivant/Précédent Lucide SkipBack/SkipForward dans dock et rail droit), Rail Droit aéré (Padding 110px de sécurité, élimination de tout écrasement contre le bord), Personnalisation Menu Gauche (10 services) & Rail Droit (6 widgets) dans Réglages (`SurgaPersonnalisationSection`), Persistance LocalStorage & Backend (`surga_preferences`), Bouton Compte actif en Mode Invité, Bouton Commander vers Fiche Produit, 100% Tests Jest PASS (129/129), Linter Slop OK, TypeScript OK (0 erreur)**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
+
+-8. **Dock Radio Persistant & Zapping Stations Suivant / Précédent (100% DONE — 7 Octobre 2026)** :
+   - Traitement direct des retours utilisateur :
+     1. « voir la position ca se superpose . » (barre radio chevauchant l'Omnibar et le texte)
+     2. « ajouter des bouton suivant et precedent; » (zapping de stations)
+     3. « revoir aussi sa position qui secrase en bas » (widget radio écrasé en bas du rail droit)
+   - Réalisations majeures :
+     - **Éradication de la Superposition sur l'Omnibar (`SurgaPersistentRadioBar.tsx`, 218 l. & `surga.css`)** : Remplacement des styles inline rigides par les classes CSS responsive `.surga-persistent-radio-bar` et `.surga-persistent-radio-inner`. Sur Desktop (>= 1024px) : centré sur la colonne centrale (`left: 240px; right: 320px; bottom: 94px;`), laissant 14px d'espace libre au-dessus de la command bar (hauteur 80px). Padding inférieur de `.surga-center-feed .surga-container` à `120px` pour un défilement complet sans masquer le texte.
+     - **Zapping Stations Suivante & Précédente (`surga-radio-context.tsx`, 310 l.)** : Implémentation des méthodes `passerSuivante()` et `passerPrecedente()` avec bouclage circulaire dans le catalogue des stations nationales sénégalaises. Intégration des boutons vectoriels `SkipBack` (15px) et `SkipForward` (15px) dans `SurgaPersistentRadioBar.tsx` et dans le widget du rail droit. Support natif des touches média et casques Bluetooth via `navigator.mediaSession`.
+     - **Dégagement Inférieur du Rail Droit (`SurgaDesktopRightRail.tsx`, 448 l. & `surga.css`)** : `.surga-desktop-right-rail` dispose désormais d'un `padding-bottom: 110px` de sécurité et d'un gap compacté à 10px. Les 6 widgets s'affichent confortablement sans jamais toucher le bas de l'écran.
+     - **Validation & Scores** : Test Playwright validé (RFM 94.0 -> Zik FM 89.7 -> RFM 94.0), 129/129 tests Jest PASS, tsc 0 erreur, linter anti-slop 0 erreur, plafonds de 450 lignes respectés.
 
 -7. **Personnalisation de l'Affichage & Widget Radios FM Direct (100% DONE — 7 Octobre 2026)** :
    - Traitement direct des demandes utilisateur :

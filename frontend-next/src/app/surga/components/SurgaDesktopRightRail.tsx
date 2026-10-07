@@ -2,17 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  Calendar,
-  Wallet,
-  Navigation,
-  Sun,
-  Bookmark,
-  Eye,
-  EyeOff,
-  Lock,
-  Radio,
-  Play,
-  Pause,
+  Calendar, Wallet, Navigation, Sun, Bookmark,
+  Eye, EyeOff, Lock, Radio, Play, Pause, SkipBack, SkipForward,
 } from 'lucide-react'
 import type { SurgaTab } from './SurgaBottomNav'
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync'
@@ -46,19 +37,10 @@ interface SurgaDesktopRightRailProps {
 }
 
 export default function SurgaDesktopRightRail({
-  statsApercu,
-  soldeKalpeFormate,
-  nbNotes,
-  nbAgenda,
-  derniereNoteTitre,
-  prochainRdvTitre,
-  meteoTemp = '28°C',
-  meteoMaree = '17h45',
-  ville = 'Dakar',
-  widgetsActifs,
-  onNavigateTab,
-  onOpenTrafic,
-  onOpenRadios,
+  statsApercu, soldeKalpeFormate, nbNotes, nbAgenda,
+  derniereNoteTitre, prochainRdvTitre, meteoTemp = '28°C',
+  meteoMaree = '17h45', ville = 'Dakar', widgetsActifs,
+  onNavigateTab, onOpenTrafic, onOpenRadios,
 }: SurgaDesktopRightRailProps) {
   const moisActuelNom = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
   const moisCapitalise = moisActuelNom.charAt(0).toUpperCase() + moisActuelNom.slice(1)
@@ -66,12 +48,8 @@ export default function SurgaDesktopRightRail({
 
   // Contexte Radio FM
   const {
-    stationActive,
-    isPlaying,
-    togglePlay,
-    openRadioModal,
-    stations,
-    lancerStation,
+    stationActive, isPlaying, togglePlay, passerSuivante, passerPrecedente,
+    openRadioModal, stations, lancerStation,
   } = useSurgaRadio()
 
   // États de confidentialité & sécurité
@@ -83,9 +61,7 @@ export default function SurgaDesktopRightRail({
   const estMaritime = estLocaliteMaritime(ville)
   const couvreTrafic = estZoneCouverteParTrafic(ville)
 
-  const widgetsVisibles = Array.isArray(widgetsActifs) && widgetsActifs.length > 0
-    ? widgetsActifs
-    : DEFAUT_RAIL_WIDGETS
+  const widgetsVisibles = Array.isArray(widgetsActifs) && widgetsActifs.length > 0 ? widgetsActifs : DEFAUT_RAIL_WIDGETS
   const estActif = (id: string) => widgetsVisibles.includes(id)
 
   const actualiserNote = useCallback(() => {
@@ -149,9 +125,7 @@ export default function SurgaDesktopRightRail({
   // Contrôles Radio FM
   const handleToggleRadio = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (isPlaying) {
-      togglePlay()
-    } else if (stationActive) {
+    if (isPlaying || stationActive) {
       togglePlay()
     } else if (stations && stations.length > 0) {
       lancerStation(stations[0])
@@ -180,7 +154,7 @@ export default function SurgaDesktopRightRail({
             role="button"
             tabIndex={0}
             onClick={() => onNavigateTab('agenda')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('agenda') }}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onNavigateTab('agenda')}
             title="Ouvrir l'agenda Surga"
           >
             <div className="surga-widget-header">
@@ -203,7 +177,7 @@ export default function SurgaDesktopRightRail({
             role="button"
             tabIndex={0}
             onClick={handleClicWidgetXaalis}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClicWidgetXaalis() }}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClicWidgetXaalis()}
             title="Consulter Sama Xaalis"
           >
             <div className="surga-widget-header">
@@ -245,7 +219,7 @@ export default function SurgaDesktopRightRail({
             role="button"
             tabIndex={0}
             onClick={onOpenTrafic}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpenTrafic() }}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpenTrafic()}
             title={couvreTrafic ? "Ouvrir le suivi du trafic" : "Trafic disponible pour Dakar uniquement"}
           >
             <div className="surga-widget-header">
@@ -294,7 +268,7 @@ export default function SurgaDesktopRightRail({
             role="button"
             tabIndex={0}
             onClick={() => onNavigateTab('aujourdhui')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('aujourdhui') }}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onNavigateTab('aujourdhui')}
             title="Voir les détails météo"
           >
             <div className="surga-widget-header">
@@ -317,7 +291,7 @@ export default function SurgaDesktopRightRail({
             role="button"
             tabIndex={0}
             onClick={() => onNavigateTab('notes')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('notes') }}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onNavigateTab('notes')}
             title="Ouvrir mes notes"
           >
             <div className="surga-widget-header">
@@ -342,7 +316,7 @@ export default function SurgaDesktopRightRail({
             role="button"
             tabIndex={0}
             onClick={handleClicWidgetRadio}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClicWidgetRadio() }}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClicWidgetRadio()}
             title={stationActive ? `Radio active : ${stationActive.nom} (Cliquer pour ouvrir le bouquet)` : 'Ouvrir les radios FM'}
           >
             <div className="surga-widget-header">
@@ -362,7 +336,28 @@ export default function SurgaDesktopRightRail({
                   />
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    passerPrecedente()
+                  }}
+                  title="Station précédente"
+                  aria-label="Station précédente"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--navy, #1C2B4A)',
+                    cursor: 'pointer',
+                    padding: 2,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    opacity: 0.8,
+                  }}
+                >
+                  <SkipBack size={12} />
+                </button>
                 <button
                   type="button"
                   onClick={handleToggleRadio}
@@ -373,19 +368,40 @@ export default function SurgaDesktopRightRail({
                     border: 'none',
                     color: isPlaying ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
                     cursor: 'pointer',
-                    padding: '3px 7px',
-                    borderRadius: 6,
+                    padding: '3px 6px',
+                    borderRadius: 5,
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 4,
-                    fontSize: 11,
+                    gap: 3,
+                    fontSize: 10.5,
                     fontWeight: 700,
                   }}
                 >
-                  {isPlaying ? <Pause size={11} /> : <Play size={11} />}
+                  {isPlaying ? <Pause size={10} /> : <Play size={10} />}
                   <span>{isPlaying ? 'Pause' : 'Écouter'}</span>
                 </button>
-                <Radio size={14} className="surga-widget-icon" />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    passerSuivante()
+                  }}
+                  title="Station suivante"
+                  aria-label="Station suivante"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--navy, #1C2B4A)',
+                    cursor: 'pointer',
+                    padding: 2,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    opacity: 0.8,
+                  }}
+                >
+                  <SkipForward size={12} />
+                </button>
+                <Radio size={13} className="surga-widget-icon" style={{ marginLeft: 2 }} />
               </div>
             </div>
 
@@ -424,11 +440,7 @@ export default function SurgaDesktopRightRail({
         isOpen={isPinModalOpen}
         mode="unlock"
         onClose={() => setIsPinModalOpen(false)}
-        onSuccess={() => {
-          setIsPinModalOpen(false)
-          setMasque(false)
-          onNavigateTab('depenses')
-        }}
+        onSuccess={() => { setIsPinModalOpen(false); setMasque(false); onNavigateTab('depenses'); }}
       />
     </>
   )

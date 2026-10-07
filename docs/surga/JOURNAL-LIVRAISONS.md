@@ -3,6 +3,32 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Audio & Layout] — Zapping Stations Suivant/Précédent & Zéro Superposition Radio Desktop
+- **Objectif Atteint :**
+  - Réponse directe aux retours de test visuel :
+    1. « voir la position ca se superpose . » (barre radio chevauchant l'Omnibar et le texte du flux)
+    2. « ajouter des bouton suivant et precedent; » (zapping direct de stations)
+    3. « revoir aussi sa position qui secrase en bas » (widget radio écrasé en bas du rail droit)
+- **Réalisations & Fichiers Modifiés :**
+  1. *Éradication de la Superposition sur l'Omnibar (`frontend-next/src/app/surga/components/SurgaPersistentRadioBar.tsx`, 218 l. & `frontend-next/src/styles/surga.css`)* :
+     - Remplacement des styles inline rigides (`bottom: 64px`) par les classes CSS responsive `.surga-persistent-radio-bar` et `.surga-persistent-radio-inner`.
+     - Sur Desktop (>= 1024px) : alignement et centrage sur la colonne centrale (`left: 240px; right: 320px; bottom: 94px;`), laissant un espace franc de 14px au-dessus de l'Omnibar blanc (hauteur 80px).
+     - Augmentation du padding inférieur du flux central (`.surga-center-feed .surga-container`) à `120px` pour que tout contenu scrollable défile au-dessus sans obstruction.
+  2. *Zapping Circulaire : Méthodes & Boutons Suivant / Précédent (`frontend-next/src/lib/surga-radio-context.tsx`, 310 l.)* :
+     - Ajout des méthodes `passerSuivante()` et `passerPrecedente()` dans `SurgaRadioContextType` et `SurgaRadioProvider`.
+     - Intégration des boutons Lucide vectoriels `SkipBack` (15px) et `SkipForward` (15px) dans le dock `SurgaPersistentRadioBar.tsx` encadrant le bouton central Play/Pause.
+     - Prise en charge des raccourcis multimédia physiques et Bluetooth via `navigator.mediaSession` (`previoustrack`, `nexttrack`).
+  3. *Correction de l'Écrasement en Bas du Rail Droit (`frontend-next/src/app/surga/components/SurgaDesktopRightRail.tsx`, 448 l. & `frontend-next/src/styles/surga.css`)* :
+     - Réglage de `.surga-desktop-right-rail` avec `padding: 16px 14px 110px 14px` (110px de padding inférieur de sécurité !) et gap compacté de 16px à 10px pour que le 6ème widget respire sans toucher le bord d'écran.
+     - Compactage proportionné des widgets (`padding: 10px 13px`, typo adaptée) permettant à l'ensemble des 6 widgets d'entrer harmonieusement sur les écrans standards.
+     - Intégration des mini-boutons de zapping `SkipBack` et `SkipForward` directement dans le widget radio du rail droit.
+- **Validation & Tests :**
+  - Test de zapping Playwright validé avec succès (RFM 94.0 -> Zik FM 89.7 -> RFM 94.0).
+  - Backend Jest : 129/129 tests réussis (`npx jest tests/unit/surga.test.js`).
+  - Linter Anti-AI-Slop : 0 infraction bloquante (`npm run lint:slop`).
+  - TypeScript : 0 erreur (`npx tsc --noEmit`).
+  - Modularisation : 100% des fichiers sous le plafond strict de 450 lignes (`SurgaDesktopRightRail.tsx` : 448 l., `SurgaPersistentRadioBar.tsx` : 218 l.).
+
 ### [2026-10-07 — Personnalisation & Audio] — Personnalisation Menu & Rail Droit + Widget Radios FM Direct
 - **Objectif Atteint :**
   - Réponse directe et intégrale aux deux demandes de l'utilisateur :

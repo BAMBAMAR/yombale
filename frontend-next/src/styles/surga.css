@@ -899,7 +899,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   .surga-center-feed .surga-container {
     max-width: 720px;
     margin: 0 auto;
-    padding: 24px 28px 40px 28px !important;
+    padding: 24px 28px 120px 28px !important;
     flex: 1;
     width: 100%;
     box-sizing: border-box;
@@ -925,18 +925,25 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     overflow-y: overlay;
     background: #FAFAF8;
     border-left: 1px solid #ECE4DA;
-    padding: 24px 18px;
+    padding: 16px 14px 110px 14px;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
     box-sizing: border-box;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
   }
 
   .surga-desktop-right-rail::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
+    width: 4px;
+  }
+
+  .surga-desktop-right-rail::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .surga-desktop-right-rail::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.25);
+    border-radius: 9999px;
   }
 }
 
@@ -1046,15 +1053,15 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   margin-top: 14px;
 }
 
-/* Widgets du rail droit */
+/* Widgets du rail droit (haute lisibilité et proportions glanceable) */
 .surga-desktop-widget {
   background: #FFFFFF;
   border: 1px solid #ECE4DA;
-  border-radius: 12px;
-  padding: 13px 15px;
+  border-radius: 11px;
+  padding: 10px 13px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
@@ -1072,7 +1079,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-widget-label {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #64748B;
   letter-spacing: 0.01em;
@@ -1083,13 +1090,13 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-widget-highlight {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   color: #0F172A;
 }
 
 .surga-widget-value-strong {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 900;
   color: #0F172A;
   letter-spacing: -0.02em;
@@ -1097,18 +1104,18 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-widget-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: #64748B;
   line-height: 1.35;
 }
 
 .surga-note-memo {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #334155;
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.35;
   background: #F8F5F0;
-  padding: 6px 10px;
+  padding: 5px 8px;
   border-radius: 6px;
 }
 
@@ -1238,6 +1245,72 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   color: #D97706;
 }
 
+/* ==========================================================================
+   Dock Lecteur Radio Persistant (Zéro Superposition & Contrôles Rapides)
+   ========================================================================== */
+.surga-persistent-radio-bar {
+  position: fixed;
+  bottom: 64px;
+  left: 12px;
+  right: 12px;
+  z-index: 48;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition: bottom 0.2s ease, left 0.2s ease, right 0.2s ease;
+}
 
+.surga-persistent-radio-inner {
+  width: 100%;
+  max-width: 520px;
+  height: 52px;
+  background-color: var(--navy, #1C2B4A);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.32), 0 2px 6px rgba(0, 0, 0, 0.18);
+  border-top: 2px solid var(--accent, #C75B00);
+  border-radius: 14px;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
 
+.surga-radio-ctrl-btn {
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  cursor: pointer;
+  padding: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  opacity: 0.88;
+  transition: opacity 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
 
+.surga-radio-ctrl-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.surga-radio-ctrl-btn:active {
+  transform: scale(0.94);
+}
+
+@media (min-width: 1024px) {
+  .surga-persistent-radio-bar {
+    /* Alignement parfait sur la colonne centrale : délimité par sidebar (240px) et rail droit (320px) */
+    left: 240px;
+    right: 320px;
+    bottom: 94px; /* Dégagement de 14px au-dessus de l'Omnibar (hauteur 80px) -> ZÉRO superposition */
+    justify-content: center;
+  }
+
+  .surga-persistent-radio-inner {
+    max-width: 500px;
+    border-radius: 12px;
+  }
+}
