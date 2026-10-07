@@ -100,14 +100,17 @@ export default async function AdminProspectionPage() {
       fetch(`${BACKEND}/api/prospection/leads?limit=100`, {
         headers,
         cache: 'no-store',
+        signal: AbortSignal.timeout(6000),
       }),
       fetch(`${BACKEND}/api/prospection/templates`, {
         headers,
         cache: 'no-store',
+        signal: AbortSignal.timeout(6000),
       }),
       fetch(`${BACKEND}/api/prospection/dorking`, {
         headers,
         cache: 'no-store',
+        signal: AbortSignal.timeout(6000),
       }),
     ])
 

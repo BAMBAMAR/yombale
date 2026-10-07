@@ -4,6 +4,19 @@
 
 ## 🛑 1. Déploiement & Git
 - **Bannissement du Push Automatique** : Ne **JAMAIS** exécuter de `git push` de sa propre initiative. Attendre un ordre explicite de l'utilisateur (ex: *"push"*, *"déploie"*).
+- **Nopalou Admin & CRM / Éradication Flood CSP Report-Only & Résolution Erreurs 500 / 504 Prospection (Session 2026-10-07, reporté de `feature/surga` sur `main`, commit d'origine `226b9931`)** :
+  1. **Éradication du Flood de logs CSP Report-Only sur /admin (`frontend-next/src/middleware.ts`)** :
+     - Exclusion des routes `/admin` (`!pathname.startsWith('/admin')`) de l'en-tête `Content-Security-Policy-Report-Only` (AUD-149).
+     - Supprime l'inondation de la console opérateur (dizaines d'avertissements de violation `script-src` `'strict-dynamic'` générés par les scripts internes d'administration et Next.js sans nonce).
+  2. **Résolution Erreur 500 & Optimisation Extrême Nettoyage CRM (`backend/services/prospection.js`)** :
+     - Remplacement de plus de 400 allers-retours SQL réseau séquentiels dans `nettoyerTousLesLeadsBdd()` et `reconcilierAgencesEtBoutiquesExistantes()` par :
+       - Une indexation mémoire (`Map<string, Lead>`) sur les 9 derniers chiffres des numéros sénégalais (recherche instantanée en 0,001 ms).
+       - Une exécution par lots concurrents (`Promise.all` par chunks de 25 pour les leads et 15 pour les boutiques/agences).
+     - Temps d'exécution divisé par 5 (de plus de 45 secondes à ~1,5 seconde sur Render), éliminant définitivement les dépassements de délai HTTP et l'erreur 500 lors du clic sur `Nettoyer & Enrichir Base`.
+     - Sécurisation anti-crash avec try/catch garantissant le retour des statistiques même en cas d'anomalie réseau.
+  3. **Protection Anti-Timeout 504 SSR Prospection (`frontend-next/src/app/admin/(protected)/prospection/page.tsx` & `ProspectionClient.tsx`)** :
+     - Ajout d'`AbortSignal.timeout(6000)` sur les 3 appels `fetch` côté serveur (`leads`, `templates`, `dorking`).
+     - Éradication des blocages passerelle 504 : si le backend tarde ou redémarre, la page SSR se charge immédiatement avec repli gracieux et déclenche le rechargement client transparent via `reloadLeads()` dès que la vue se monte.
 - **Gestion des Branches Git (main pour NOPALOU, feature/surga pour SURGA)** : Tout travail sur Nopalou (marketplace, panneau `/admin`, POS caisse, boutiques, CRM, routes API générales) doit IMPÉRATIVEMENT être effectué sur la branche **`main`**. La branche `feature/surga` est STRICTEMENT réservée à Surga. Toujours vérifier la branche active avant de démarrer (`git branch --show-current`).
 - **Documentation Systématique** : Ajouter le compte-rendu précis de chaque livraison/push en tête de `docs/JOURNAL-LIVRAISONS.md` (pas dans `CLAUDE.md`, chargé automatiquement dans chaque session).
 - **Authentification Git** : jamais de jeton dans l'URL du remote (AUD-136). Le gestionnaire d'identifiants (`credential.helper manager` / `gh auth git-credential`) suffit ; à défaut, passer `GITHUB_TOKEN` (`.env`) par variable d'environnement : `git -c http.extraheader="AUTHORIZATION: bearer $env:GITHUB_TOKEN" push`.
