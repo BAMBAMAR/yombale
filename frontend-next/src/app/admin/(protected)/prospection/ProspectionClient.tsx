@@ -136,6 +136,9 @@ export default function ProspectionClient({
 
   React.useEffect(() => {
     autoOps.fetchAuditQualite()
+    if (initialLeads.length === 0) {
+      leadOps.reloadLeads()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

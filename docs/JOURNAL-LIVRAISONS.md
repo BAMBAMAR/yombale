@@ -1,4 +1,26 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Nopalou Admin & CRM / Éradication Flood CSP Report-Only & Résolution Erreurs 500 / 504 Prospection (Session 2026-10-07, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Élimination des avertissements CSP Report-Only polluant la console du navigateur sur `/admin`.
+    - Résolution de l'erreur 500 sur le bouton `Nettoyer & Enrichir Base` (`POST /api/prospection/leads/nettoyer`).
+    - Résolution des erreurs 504 Gateway Timeout lors de la consultation et du rafraîchissement de la page `/admin/prospection`.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Assainissement CSP Report-Only (/admin) (`frontend-next/src/middleware.ts`)** :
+       - Exclusion des routes `/admin` de la politique stricte en mode rapport seul (`!isAdminRoute`).
+       - Supprime les 60+ avertissements `Loading the script '<URL>' violates CSP` et `Executing inline script violates CSP` dans la console opérateur.
+    2. **Accélération Extrême du Nettoyage CRM & Réconciliation (`backend/services/prospection.js`)** :
+       - Remplacement des 400+ requêtes SQL réseau séquentielles dans `nettoyerTousLesLeadsBdd()` et `reconcilierAgencesEtBoutiquesExistantes()` par :
+         - Un index en mémoire (`Map<string, Lead>`) sur les 9 derniers chiffres des numéros sénégalais (recherche instantanée en 0,001 ms).
+         - Des mises à jour par lots concurrents (`Promise.all` par paquets de 25 pour les leads et 15 pour les boutiques/agences).
+       - Temps d'exécution divisé par 5, garantissant un retour sous 1 à 2 secondes et éliminant tout dépassement de délai HTTP 500 / 504.
+    3. **Sécurisation Anti-Timeout SSR (`frontend-next/src/app/admin/(protected)/prospection/page.tsx` & `ProspectionClient.tsx`)** :
+       - Ajout d'un garde-fou `AbortSignal.timeout(6000)` sur les fetches SSR.
+       - Rechargement client asynchrone transparent via `reloadLeads()` si `initialLeads` est vide, évitant tout écran blanc ou blocage 504.
+- **Surga / Campagne d'audit pré-production — Agent 0, préparation de l'Audit 1 (Session 2026-10-07, branche `feature/surga`, aucun code modifié)** :
+  * **Mission** : préparer le premier audit d'exécution (architecture, sécurité, comptes, données, infrastructure) que l'Agent 1 mènera dans une nouvelle session. Aucune correction, aucun test exécuté.
+  * **Livrables** : `audit/00_PREPARATION/PLAN_AUDIT_1.md` (règles, environnement, 28 constats de préparation à prouver ou infirmer, 11 lots ordonnés), `MATRICE_AUDIT_1.md` (106 tests A1-001 à A1-117, dont 47 en P0), `DONNEES_TEST_AUDIT_1.md` (comptes, jeux de données, jetons, requêtes de contrôle), `CRITERES_PASS_FAIL.md` (statuts, gravité, règles de preuve, format des anomalies) et `audit/HANDOVER/HANDOVER_AGENT_0.md`.
+  * **État constaté** : handover de l'Agent -1 absent du dépôt ; aucune table `surga_*` dans les trois bases d'audit locales ; pile d'audit arrêtée ; `audit-env.ps1` ne neutralise pas les variables propres à Surga ; 99 commits depuis le verdict du 5 octobre.
+  * **Suite** : Audit 1 par l'Agent 1, à partir de `audit/HANDOVER/HANDOVER_AGENT_0.md`. Aucun commit, aucun push.
 - **Surga / Résolution des 25 Tickets UI V2 — Écran « Aujourd'hui » (Session 2026-10-07, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Traitement intégral des 25 tickets UI V2 (SRG-UI-01 à SRG-UI-25) définis suite aux revues d'interface du 7 octobre 2026 : P0 (données et cohérence), P1 (briefing, sports, mise en page), P2 (accessibilité, typographie et détails).

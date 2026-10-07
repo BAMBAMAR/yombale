@@ -464,6 +464,17 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 
 ---
 
+## Campagne d'audit pré-production (ouverte le 07 Octobre 2026)
+Cinq audits successifs, chacun dans une nouvelle session, chacun fondé sur des preuves produites
+pendant l'audit. Dossier : `audit/`. Les statuts `DONE` des tranches ci-dessus n'ont pas été
+audités par cette campagne.
+- [x] `DONE` Agent 0 — Préparation de l'Audit 1 : `audit/00_PREPARATION/` (plan, matrice de 106 tests, données de test, critères) et `audit/HANDOVER/HANDOVER_AGENT_0.md`. Aucun code modifié, aucun test exécuté.
+- [ ] `PROPOSED` Agent 1 — Audit 1 : architecture, sécurité, comptes, données, infrastructure.
+- [ ] `PROPOSED` Agent 2 — Audit 2 : fonctionnel et parcours de bout en bout.
+- [ ] `PROPOSED` Agent 3 — Audit 3 : front, ergonomie, mobile, PWA, accessibilité, performance perçue.
+- [ ] `PROPOSED` Agent 4 — Audit 4 : IA, données, sources, voix, WhatsApp, résilience.
+- [ ] `PROPOSED` Agent 5 — Audit 5 : validation production, performance, observabilité, coûts, décision.
+
 ## Évolutions futures (hors plan actuel)
 - Application native si la part d'iPhone ou l'usage l'exigent.
 - Appel téléphonique pour écouter le briefing (coût par minute à étudier).

@@ -5,6 +5,8 @@
 > **Statut global** : 🟢 **25/25 Tickets UI V2 Traités & Validés (SRG-UI-01 à SRG-UI-25) — Séparation Ville de référence / Ville consultée, Zéro doublon sur ordinateur, Fraîcheur réelle RSS 24h, Sport personnalisé & Ligue 1 sénégalaise, Cohérence Agenda/Votre journée sans contradiction, Contenu central max 720px & Rail droit 360px à 1920px, Dégagement bas mobile 152px sous le FAB, Typographie française & Montants FCFA uniques via `formaterFCFA`, Contraste WCAG AA >= 4.5:1, Bouton Partager unique avec retour visuel, 158/158 Tests Jest PASS (129 Backend + 29 Phases 1-4), Linter Slop OK, Modularisation < 450 lignes**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
+> **Campagne d'audit pré-production (ouverte le 07 Octobre 2026)** : une campagne en cinq audits repart de zéro pour établir par la preuve si Surga peut aller en production. Le statut global ci-dessus reflète les sessions de développement et n'a pas été audité. Préparation de l'Audit 1 terminée (Agent 0) : reprise par `audit/HANDOVER/HANDOVER_AGENT_0.md`, matrice de 106 tests dans `audit/00_PREPARATION/MATRICE_AUDIT_1.md`. Aucun test exécuté à ce stade. Préalable relevé : les bases d'audit locales ne contiennent aucune table `surga_*` et doivent être migrées avant tout test.
+
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé

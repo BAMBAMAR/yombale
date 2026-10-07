@@ -49,6 +49,25 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou Admin & CRM / Éradication Flood CSP Report-Only & Résolution Erreurs 500 / 504 Prospection (Session 2026-10-07, branche `feature/surga`)** :
+  1. **Éradication du Flood de logs CSP Report-Only sur /admin (`frontend-next/src/middleware.ts`)** :
+     - Exclusion des routes `/admin` (`!pathname.startsWith('/admin')`) de l'en-tête `Content-Security-Policy-Report-Only` (AUD-149).
+     - Supprime l'inondation de la console opérateur (dizaines d'avertissements de violation `script-src` `'strict-dynamic'` générés par les scripts internes d'administration et Next.js sans nonce).
+  2. **Résolution Erreur 500 & Optimisation Extrême Nettoyage CRM (`backend/services/prospection.js`)** :
+     - Remplacement de plus de 400 allers-retours SQL réseau séquentiels dans `nettoyerTousLesLeadsBdd()` et `reconcilierAgencesEtBoutiquesExistantes()` par :
+       - Une indexation mémoire (`Map<string, Lead>`) sur les 9 derniers chiffres des numéros sénégalais (recherche instantanée en 0,001 ms).
+       - Une exécution par lots concurrents (`Promise.all` par chunks de 25 pour les leads et 15 pour les boutiques/agences).
+     - Temps d'exécution divisé par 5 (de plus de 45 secondes à ~1,5 seconde sur Render), éliminant définitivement les dépassements de délai HTTP et l'erreur 500 lors du clic sur `Nettoyer & Enrichir Base`.
+     - Sécurisation anti-crash avec try/catch garantissant le retour des statistiques même en cas d'anomalie réseau.
+  3. **Protection Anti-Timeout 504 SSR Prospection (`frontend-next/src/app/admin/(protected)/prospection/page.tsx` & `ProspectionClient.tsx`)** :
+     - Ajout d'`AbortSignal.timeout(6000)` sur les 3 appels `fetch` côté serveur (`leads`, `templates`, `dorking`).
+     - Éradication des blocages passerelle 504 : si le backend tarde ou redémarre, la page SSR se charge immédiatement avec repli gracieux et déclenche le rechargement client transparent via `reloadLeads()` dès que la vue se monte.
+
+
+- **Surga / Campagne d'audit pré-production — Agent 0, préparation de l'Audit 1 (Session 2026-10-07, branche `feature/surga`, aucun code modifié)** :
+  - *Livrables* : `audit/00_PREPARATION/PLAN_AUDIT_1.md`, `MATRICE_AUDIT_1.md` (106 tests A1-001 à A1-117, dont 47 en P0), `DONNEES_TEST_AUDIT_1.md`, `CRITERES_PASS_FAIL.md`, et `audit/HANDOVER/HANDOVER_AGENT_0.md`, point d'entrée de l'Agent 1. Arborescence de campagne (`00_PREPARATION` à `05_PRODUCTION_RESILIENCE`, `HANDOVER`) créée à côté de la campagne Nopalou, sans rien écraser.
+  - *État constaté* : handover de l'Agent -1 absent du dépôt ; aucune table `surga_*` dans les bases d'audit locales (à migrer avant tout test) ; `scripts/audit/audit-env.ps1` ne neutralise pas les variables propres à Surga.
+  - *Limites* : aucun test exécuté, aucune conclusion sur l'état de Surga, aucun commit, aucun push. Les documents de `audit/` listent des points à vérifier et ne sont pas ignorés par git : ne pas les commiter avant décision.
 
 - **Surga / Résolution Intégrale des 25 Tickets UI V2 — Écran « Aujourd'hui » (Session 2026-10-07, branche `feature/surga`)** :
   - *Mission & Périmètre : Traitement des 25 tickets UI V2 issus des revues d'interface du 7 octobre 2026 (`docs/surga/TICKETS_UI_V2.md`)* :

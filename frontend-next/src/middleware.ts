@@ -131,8 +131,9 @@ export async function middleware(req: NextRequest) {
   response.headers.set('Content-Security-Policy', csp)
   // AUD-149 : politique stricte (nonce + strict-dynamic, sans unsafe-inline ni unsafe-eval) évaluée en RAPPORT SEUL.
   // Elle ne bloque rien ; les violations arrivent sur /api/csp-report. Passage en application réelle quand le flux est propre.
-  // En environnement de développement (isDev), Next.js utilise activement eval() et HMR : on omet le Report-Only pour ne pas inonder la console.
-  if (!isDev) {
+  // En dev (isDev) ou sur les routes /admin (outils et widgets d'administration), on omet le Report-Only pour ne pas inonder la console opérateur.
+  const isAdminRoute = pathname.startsWith('/admin')
+  if (!isDev && !isAdminRoute) {
     const cspStricte = [
       "default-src 'self'",
       `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:`,

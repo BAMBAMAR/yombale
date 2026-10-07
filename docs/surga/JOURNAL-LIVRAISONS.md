@@ -3,6 +3,16 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Campagne d'audit pré-production, Agent 0] — Préparation de l'Audit 1 (aucun code modifié)
+- **Objet :** préparer l'audit d'exécution « Architecture, sécurité, comptes, données, infrastructure ». Ni correction ni test : seulement le périmètre, la matrice, les données de test et les critères.
+- **Livrables :**
+  - `audit/00_PREPARATION/PLAN_AUDIT_1.md` : cinq questions à trancher, règles, mise en route de l'environnement isolé, 28 constats de préparation (lectures de code à prouver ou infirmer), 11 lots ordonnés.
+  - `audit/00_PREPARATION/MATRICE_AUDIT_1.md` : 106 tests (A1-001 à A1-117), dont 47 en P0, répartis en comptes, autorisation, données et persistance, API, secrets et configuration, infrastructure et PWA, suppression et export, rejeu des anomalies historiques.
+  - `audit/00_PREPARATION/DONNEES_TEST_AUDIT_1.md` et `CRITERES_PASS_FAIL.md`.
+  - `audit/HANDOVER/HANDOVER_AGENT_0.md` : point d'entrée de l'Agent 1.
+- **État constaté le 7 octobre :** `audit/00_PREPARATION/HANDOVER_AGENT_-1.md` absent ; aucune table `surga_*` dans `nopalou_audit`, `nopalou_audit_data` ni `nopalou_fresh` ; backend et frontend d'audit arrêtés ; 102 routes sous `/api/surga` relevées (10 sous `verifierToken`, 10 sous `identifierSurgaUser`, 40 sous `tokenOptional`, 42 sans authentification) ; 99 commits depuis `VALIDATION_FINALE_SURGA.md`.
+- **Ce qui n'est pas fait :** aucun test exécuté, aucune conclusion sur l'état de Surga. Aucun commit, aucun push.
+
 ### [2026-10-07 — Résolution des 25 Tickets UI V2] — Écran « Aujourd'hui » Mobile & Desktop (SRG-UI-01 à SRG-UI-25)
 - **Objectif Atteint :**
   - Traitement exhaustif des 25 tickets UI V2 consécutifs aux revues d'interface du 7 octobre 2026 : P0 (cohérence et fiabilité des données), P1 (briefing, actualités, mise en page), P2 (colonne de droite, typographie et détails).
