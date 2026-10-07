@@ -1,4 +1,29 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Correction de la Reformulation Contextuelle & Prise en Compte Immédiate des Dettes dans l'Assistant IA (Session 2026-10-07 - Nuit 9 suite - 13, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse immédiate au retour d'expérience utilisateur : requêtes « reformule :c'est avec une grande tristesse que je quitte ce service » et « dette 3000 » renvoyant des réponses génériques déconnectées (« faire le point sur ce dossier » ou message d'accueil vide).
+    - Diagnostic : absence de clé API LLM externe en local basculant sur le mode dégradé, dont le template statique n'exploitait pas le texte à reformuler ; et omission du mot « dette » dans les filtres financiers d'intention vocale/texte.
+    - Résolution intégrale : moteur sémantique contextuel à 3 registres pour toute demande de reformulation + détection immédiate des dettes et créances dans Sama Xaalis avec montants FCFA déterministes.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Moteur de Reformulation Sémantique (`backend/services/surga/assistant-llm.js`)** :
+       - Extraction du texte net via `extraireTexteAReformuler(requete)` (gérant les variantes `reformule :`, `ameliore :`, etc.).
+       - Générateur `genererReformulationsIntelligentes(texteSource)` à 3 variantes adaptées au thème exact :
+         - Thème Départ / Quitter un service / Tristesse : formulations poignantes, professionnelles et chaleureuses (Teranga avec vœux « Dal leen ak jamm ! »).
+         - Thèmes Absence/Retard, Relance/Dossier, Remerciements, Excuses, Félicitations, Négociation financière.
+         - Interpolateur universel adaptatif pour toute phrase arbitraire.
+    2. **Prise en Compte des Dettes & Créances (`backend/services/surga/voice-interpreter.js`)** :
+       - Mots-clés `dette`, `crédit`, `créance`, `prêt`, `emprunt`, `avance` intégrés dans `devinerCategorieVocale` (catégorie `Dette / Crédit`).
+       - Intention financière `ADD_EXPENSE` activée pour `dette 3000`, `crédit 5000 Moussa`, etc.
+       - Message dédié dans l'assistant : `Dette détectée : 3 000 FCFA (Dette). Confirmer l'enregistrement dans Sama Xaalis ?`.
+    3. **Interface Utilisateur Adaptée (`SurgaAssistantContent.tsx`, 276 l.)** :
+       - Détection de la catégorie `Dette / Crédit` avec badge et icône ambre.
+       - Libellé du bouton adapté : « Confirmer l'enregistrement de la dette » et message de confirmation « Dette enregistrée dans Sama Xaalis ! ».
+    4. **Tests & Validation Playwright** :
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests Jest unitaires : 158/158 PASS.
+       - Playwright E2E live : captures d'écran validées (`surga_assistant_reformulation_tristesse.png` et `surga_assistant_action_dette_3000.png`).
+       - Modularité : tous les fichiers < 450 lignes.
+
 - **Surga / Limitation Menu Gauche, Zéro Défilement & Bouton « Plus de services » Hub (Session 2026-10-07 - Nuit 9 suite - 12, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe, précise et rigoureuse à la directive utilisateur : « jai pas demande de pettre tous les service dans le menu gauche mais en bas ajouter un boutons plus de service qui renvoie vers les autres service.il faut limiter le menu gauche/eviter le defilement du menu ».

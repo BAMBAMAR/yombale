@@ -11,18 +11,20 @@ const { traiterRequeteSurgaAssistant } = require('../../services/surga/assistant
  */
 router.post('/assistant', async (req, res) => {
   try {
-    const { query } = req.body || {};
+    const rawQuery = req.body?.query || req.body?.requete;
     const userId = req.user?.id || req.body?.userId || null;
 
-    if (!query || typeof query !== 'string' || !query.trim()) {
+    if (!rawQuery || typeof rawQuery !== 'string' || !rawQuery.trim()) {
       return res.status(400).json({
         success: false,
         error: 'Requête vide',
       });
     }
 
+    const query = rawQuery.trim();
+
     const resultat = await traiterRequeteSurgaAssistant({
-      query: query.trim(),
+      query,
       userId,
     });
 

@@ -1,13 +1,27 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 12 — Limitation Menu Gauche, Zéro Défilement & Bouton Hub « Plus de services »)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 13 — Correction de la Reformulation Contextuelle & Prise en Compte Immédiate des Dettes dans l'Assistant IA)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Sidebar Desktop Compacte & Zéro Défilement (12 boutons, scrollable: false), Bouton « Plus de services » (+7) Déployé sous Bonnes Adresses, Modale Hub `<SurgaPlusServicesModal />` Opérationnelle, Service Shopping Nopalou Intégré, Écran Réglages Épuré, Assistant IA Omnibar Opérationnel, Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests PASS**  
+> **Statut global** : 🟢 **Assistant IA Omnibar Entièrement Corrigé (Reformulation Contextuelle Multi-Thèmes Parfaite, Détection Directe des Dettes/Créances Sama Xaalis), Sidebar Desktop Compacte & Zéro Défilement (12 boutons, scrollable: false), Bouton « Plus de services » (+7) Déployé sous Bonnes Adresses, Modale Hub `<SurgaPlusServicesModal />` Opérationnelle, Service Shopping Nopalou Intégré, Écran Réglages Épuré, Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
+
+-1. **Correction de la Reformulation Contextuelle & Prise en Compte Immédiate des Dettes dans l'Assistant IA (100% DONE — Nuit 9 suite - 13)** :
+   - Traitement des retours d'expérience utilisateur : « reformule :c'est avec une grande tristesse que je quitte ce service » et « dette 3000 ».
+   - **Moteur Sémantique de Reformulation Contextuelle (`backend/services/surga/assistant-llm.js`)** :
+     - Élimination des réponses préfabriquées statiques en mode dégradé local.
+     - Extraction rigoureuse du texte à retravailler via `extraireTexteAReformuler(requete)`.
+     - Génération de 3 versions soignées et fidèles au thème réel (Professionnelle & Formelle, Chaleureuse & Teranga, Directe & Synthétique). Testé et validé avec succès sur le thème Départ/Tristesse, Absence, Relance, Remerciement, Excuse, Négociation et texte libre.
+   - **Prise en Compte Déterministe des Dettes & Créances (`backend/services/surga/voice-interpreter.js`)** :
+     - Ajout de « dette », « crédit », « créance », « prêt », « emprunt », « avance » dans les motifs financiers de `interpreterCommandeVocale`.
+     - Déclenchement de l'action `ACTION_DEPENSE` avec montant FCFA extrait et catégorie `Dette / Crédit`.
+   - **Affichage & Actions Adaptés dans l'UI (`SurgaAssistantContent.tsx`, 276 l.)** :
+     - Bouton dédié « Confirmer l'enregistrement de la dette » avec badge d'accent ambre.
+   - **Validation & Scores** :
+     - TypeScript : 0 erreur. Jest : 158/158 tests PASS. Playwright : captures de preuve validées.
 
 0. **Limitation du Menu Gauche, Zéro Défilement & Bouton Hub « Plus de services » (100% DONE — Nuit 9 suite - 12)** :
    - Traitement rigoureux de la consigne utilisateur : « jai pas demande de pettre tous les service dans le menu gauche mais en bas ajouter un boutons plus de service qui renvoie vers les autres service.il faut limiter le menu gauche/eviter le defilement du menu ».

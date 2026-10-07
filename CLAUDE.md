@@ -50,6 +50,24 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Correction de la Reformulation Contextuelle & Prise en Compte Immédiate des Dettes dans l'Assistant IA (Session 2026-10-07 - Nuit 9 suite - 13, branche `feature/surga`)** :
+  - *Résolution Intégrale des Réponses Hors-Sujet Signalées par l'Utilisateur* :
+    1. **Moteur Sémantique de Reformulation Contextuelle (`backend/services/surga/assistant-llm.js`)** :
+       - Extraction propre du texte à reformuler après les préfixes `reformule :`, `reformuler :`, `ameliore :`, `peaufine :`, etc.
+       - Remplacement du fallback générique statique par un moteur contextuel à 3 registres (Professionnelle & Formelle, Chaleureuse & Teranga avec salutations locales, Directe & Synthétique) couvrant avec précision tous les thèmes (Départ/Quitter un service/Tristesse, Absence/Retard, Relance/Dossier, Remerciements, Excuses, Félicitations, Négociation) ainsi qu'un interpolateur universel adaptatif pour toute phrase arbitraire.
+       - Validé en direct sur « c'est avec une grande tristesse que je quitte ce service » avec capture de preuve.
+    2. **Prise en Compte Directe des Dettes & Créances dans Sama Xaalis (`backend/services/surga/voice-interpreter.js`, `backend/services/surga/assistant-llm.js`)** :
+       - Intégration immédiate des intentions « dette », « crédit », « créance », « prêt », « emprunt », « avance » (ex: « dette 3000 », « crédit 5000 Moussa »).
+       - Catégorisation automatique sous `Dette / Crédit` avec note dédiée et montant FCFA extrait de manière déterministe.
+       - Déclenchement de l'action `ACTION_DEPENSE` avec confirmation directe dans Sama Xaalis.
+    3. **Ergonomie UI Adaptée (`frontend-next/src/app/surga/components/SurgaAssistantContent.tsx`)** :
+       - Adaptation des libellés et des boutons lorsque la catégorie est `Dette / Crédit` (« Confirmer l'enregistrement de la dette », « Dette enregistrée dans Sama Xaalis ! », icône ambre dédiée).
+    4. **Validation Complète & Tests** :
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests Jest : 158/158 PASS (dont non-régression sur « note deux mille cinq cents de taxi »).
+       - Tests Playwright réels sur `http://localhost:3001/surga` validés avec captures d'écran de preuve (`surga_assistant_reformulation_tristesse.png` et `surga_assistant_action_dette_3000.png`).
+       - Tous les composants respectent le plafond strict de 450 lignes.
+
 - **Surga / Limitation Menu Gauche, Zéro Défilement & Bouton « Plus de services » Hub (Session 2026-10-07 - Nuit 9 suite - 12, branche `feature/surga`)** :
   - *Élimination du Défilement & Centralisation des Services Complémentaires* :
     1. **Menu Gauche Compact & Zéro Défilement Garanti** :

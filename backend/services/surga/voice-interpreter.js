@@ -80,11 +80,12 @@ function normaliserNombresVocaux(texte) {
 function devinerCategorieVocale(texte) {
   if (!texte) return 'Autre';
   const t = texte.toLowerCase();
+  if (/dette|cr[ée]dit|cr[ée]ance|pr[êe]t|emprunt|avance/i.test(t)) return 'Dette / Crédit';
   if (/manger|resto|restaurant|dejeuner|diner|repas|pain|lait|riz|thieb|courses|marche|supermarche|alimentation/i.test(t)) return 'Alimentation';
   if (/taxi|\bcar\b|car rapide|\bbus\b|essence|gasoil|transport|peage|\bcourse\b|\bmoto\b|tiak-tiak|tiak/i.test(t)) return 'Transport';
   if (/loyer|maison|chambre|appartement|electricite|senelec|woyofal|eau|sde|sen'eau/i.test(t)) return 'Logement';
   if (/docteur|medecin|pharmacie|medicament|hopital|sante|clinique/i.test(t)) return 'Santé';
-  if (/facture|wifi|internet|orange|wave|forfait|credit|abonnement/i.test(t)) return 'Factures';
+  if (/facture|wifi|internet|orange|wave|forfait|abonnement/i.test(t)) return 'Factures';
   if (/cinema|sortir|cadeau|plage|loisir|sport/i.test(t)) return 'Loisirs';
   return 'Autre';
 }
@@ -157,25 +158,32 @@ function interpreterCommandeVocale(transcription) {
     };
   }
 
-  // 3. Dépense financière (ex: "note 2500 de taxi", "dépense 5000 courses", "j'ai payé 1500 repas")
+  // 3. Dépense financière & Dettes (ex: "dette 3000", "note 2500 de taxi", "dépense 5000 courses", "crédit 2000", "j'ai payé 1500 repas")
   const matchMontant = texteNorm.match(/\b(\d+)(?!\s*h(?:eures?)?)\s*(?:fcfa|cfa|f|frs)?\b/i);
-  if (matchMontant && (/^(note|depense|dépense|j'ai payé|j'ai paye|achat)/i.test(texteNorm) || /(cfa|fcfa)/i.test(texteNorm))) {
+  const estMotFinancier =
+    /^(?:note\b|depense|dépense|dette|credit|crédit|creance|créance|pret|prêt|emprunt|avance|remboursement|loyer|facture|achat|j'ai payé|j'ai paye|paiement|payer)\b/i.test(texteNorm) ||
+    /\b(?:fcfa|cfa|f|frs|dette|credit|crédit|creance|créance|pret|prêt|emprunt|remboursement)\b/i.test(texteNorm) ||
+    /^(?:taxi|car|bus|repas|resto|pain|riz|thieb|courses|woyofal|senelec|loyer)\s+\d+/i.test(texteNorm);
+
+  if (matchMontant && estMotFinancier) {
     const montant = parseInt(matchMontant[1], 10);
     if (montant > 0) {
       let libelle = texteBrut
-        .replace(/^(note|depense|dépense|j'ai payé|j'ai paye|achat)\s*/i, '')
+        .replace(/^(?:note\s+)?(?:depense|dépense|dette|credit|crédit|creance|créance|pret|prêt|emprunt|avance|remboursement|loyer|facture|achat|j'ai payé|j'ai paye|paiement|payer)\s*/i, '')
+        .replace(/^note\s+/i, '')
         .replace(new RegExp(`\\b${matchMontant[1]}\\b`, 'i'), '')
-        .replace(/\b(?:fcfa|cfa|f|frs|de|pour)\b/gi, '')
+        .replace(/\b(?:fcfa|cfa|f|frs|de|pour|à|a)\b/gi, '')
         .trim();
 
       const categorie = devinerCategorieVocale(libelle || texteBrut);
+      const estDette = /dette|cr[ée]dit|cr[ée]ance|pr[êe]t|emprunt/i.test(texteBrut);
       return {
         intention: 'ADD_EXPENSE',
         texteBrut,
         depenseData: {
           montant,
           categorie,
-          note: libelle || categorie,
+          note: libelle || (estDette ? 'Dette' : categorie),
         },
       };
     }

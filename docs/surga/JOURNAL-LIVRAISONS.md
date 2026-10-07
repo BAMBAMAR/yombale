@@ -3,6 +3,30 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 13] — Correction de la Reformulation Contextuelle & Prise en Compte Immédiate des Dettes dans l'Assistant IA
+- **Objectif Atteint :**
+  - Répondre directement aux anomalies signalées par l'utilisateur lors de l'utilisation de l'assistant unifié Surga AI :
+    1. Requête `reformule :c'est avec une grande tristesse que je quitte ce service` : l'assistant générait un modèle statique hors-sujet sur un "point de dossier".
+    2. Requête `dette 3000` : l'assistant renvoyait une note vide par défaut au lieu d'interpréter l'opération financière.
+  - Corriger la cause racine : le repli local hors-ligne en l'absence de clé API LLM externe utilisait un texte générique fixe ; et l'intention financière ignorait le mot-clé « dette ».
+- **Réalisations & Fichiers Modifiés :**
+  1. *Interpréteur Sémantique et LLM (`backend/services/surga/assistant-llm.js`)* :
+     - Implémentation de `extraireTexteAReformuler(requete)` pour extraire le texte après `reformule :`, `ameliore :`, etc.
+     - Implémentation du moteur contextuel `genererReformulationsIntelligentes(texteSource)` avec 3 déclinaisons sur-mesure (Professionnelle & Formelle, Chaleureuse & Teranga avec salutations dakaroises, Directe & Synthétique) adaptées aux thèmes Départ/Tristesse, Absence/Retard, Relance, Remerciements, Excuses, Félicitations, Dettes/Négociations ou toute formulation libre.
+     - Personnalisation du message pour les dettes dans les actions locales financières.
+  2. *Interpréteur de Commandes Vocales & Texte (`backend/services/surga/voice-interpreter.js`)* :
+     - Ajout des termes `dette`, `crédit`, `créance`, `prêt`, `emprunt`, `avance` dans `devinerCategorieVocale` et dans le filtre d'intentions financières.
+     - Maintien rigoureux de la détection de dépenses historiques (ex: `note deux mille cinq cents de taxi`).
+  3. *Interface Utilisateur de l'Assistant (`SurgaAssistantContent.tsx`, 276 l.)* :
+     - Détection de `categorie === 'Dette / Crédit'` dans le bloc `ACTION_DEPENSE` avec thème ambre distinctif et libellés adaptés (« Confirmer l'enregistrement de la dette » et « Dette enregistrée dans Sama Xaalis ! »).
+  4. *Route API Backend (`backend/routes/surga/assistant.js`)* :
+     - Support flexible de `req.body.query` ou `req.body.requete`.
+- **Validation & Scores :**
+  - TypeScript : 0 erreur (`npx tsc --noEmit`).
+  - Tests Unitaires Jest : 158/158 PASS (dont non-régression sur « note deux mille cinq cents de taxi » et fast-path L0).
+  - Tests E2E Playwright réels : captures d'écran validées (`surga_assistant_reformulation_tristesse.png` et `surga_assistant_action_dette_3000.png`).
+  - Plafond de taille : tous les composants < 450 lignes.
+
 ### [2026-10-07 — Nuit 9 suite - 12] — Limitation du Menu Gauche, Zéro Défilement & Bouton Hub « Plus de services »
 - **Objectif Atteint :**
   - Répondre directement à la directive : « jai pas demande de pettre tous les service dans le menu gauche mais en bas ajouter un boutons plus de service qui renvoie vers les autres service.il faut limiter le menu gauche/eviter le defilement du menu ».

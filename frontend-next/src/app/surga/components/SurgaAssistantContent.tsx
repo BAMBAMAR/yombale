@@ -147,37 +147,53 @@ export default function SurgaAssistantContent({
         </div>
       )}
 
-      {/* 2. ACTION LOCALE DÉPENSE */}
-      {resultat.type === 'ACTION_DEPENSE' && (
-        <div style={{ textAlign: 'center', padding: '10px 0' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(5, 150, 105, 0.1)', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}>
-            <Wallet size={22} />
+      {/* 2. ACTION LOCALE DÉPENSE & DETTES */}
+      {resultat.type === 'ACTION_DEPENSE' && (() => {
+        const isDette = resultat.data?.categorie === 'Dette / Crédit'
+        return (
+          <div style={{ textAlign: 'center', padding: '10px 0' }}>
+            <div style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              backgroundColor: isDette ? 'rgba(217, 119, 6, 0.12)' : 'rgba(5, 150, 105, 0.1)',
+              color: isDette ? '#D97706' : '#059669',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 12px auto'
+            }}>
+              <Wallet size={22} />
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: isDette ? '#D97706' : '#059669', marginBottom: 4 }}>
+              {resultat.data?.montant?.toLocaleString('fr-FR')} FCFA
+            </div>
+            <div style={{ fontSize: 14, color: '#64748B', marginBottom: 18 }}>
+              {isDette ? 'Type : ' : 'Catégorie : '}
+              <strong>{resultat.data?.categorie}</strong> {resultat.data?.note && `• Note : ${resultat.data.note}`}
+            </div>
+            <button
+              type="button"
+              onClick={onValiderAction}
+              disabled={actionValidee}
+              style={{
+                backgroundColor: actionValidee ? '#16A34A' : (isDette ? '#D97706' : '#059669'),
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 10,
+                padding: '12px 24px',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: actionValidee ? 'default' : 'pointer',
+              }}
+            >
+              {actionValidee
+                ? (isDette ? 'Dette enregistrée dans Sama Xaalis !' : 'Dépense enregistrée avec succès !')
+                : (isDette ? 'Confirmer l\'enregistrement de la dette' : 'Confirmer et enregistrer la dépense')}
+            </button>
           </div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: '#059669', marginBottom: 4 }}>
-            {resultat.data?.montant?.toLocaleString('fr-FR')} FCFA
-          </div>
-          <div style={{ fontSize: 14, color: '#64748B', marginBottom: 18 }}>
-            Catégorie : <strong>{resultat.data?.categorie}</strong> {resultat.data?.note && `• Note : ${resultat.data.note}`}
-          </div>
-          <button
-            type="button"
-            onClick={onValiderAction}
-            disabled={actionValidee}
-            style={{
-              backgroundColor: actionValidee ? '#16A34A' : '#059669',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: 10,
-              padding: '12px 24px',
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: actionValidee ? 'default' : 'pointer',
-            }}
-          >
-            {actionValidee ? 'Dépense enregistrée avec succès !' : 'Confirmer et enregistrer la dépense'}
-          </button>
-        </div>
-      )}
+        )
+      })()}
 
       {/* 3. ACTION LOCALE RAPPEL */}
       {resultat.type === 'ACTION_RAPPEL' && (
