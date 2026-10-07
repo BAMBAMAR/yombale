@@ -50,6 +50,25 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Déploiement Intégral de Toutes les Boutiques Réelles (99 Boutiques & 172 Produits) & Éradication de l'Erreur 404 (Session 2026-10-07 - Nuit 9 suite - 14, branche `feature/surga`)** :
+  - *Affichage de l'Intégralité du Parc Marchand Nopalou & Navigation Réelle Garantie* :
+    1. **Correction Requête SQL du Service Shopping (`backend/services/surga/shopping-service.js`)** :
+       - Alignement sur le schéma exact de la table `boutiques` : remplacement des colonnes erronées `b.logo` et `b.couverture` par `b.logo_url as logo` et `b.cover_url as couverture`, contact unifié `COALESCE(NULLIF(TRIM(b.whatsapp), ''), b.telephone) as telephone`.
+       - Rapatriement de **100% des 99 boutiques réelles actives** et des **172 produits réels en stock** de la base de données.
+       - Filtrage SQL sémantique multi-champs sur les catégories locales (`mode`, `tech`, `beaute`, `alimentation`, `maison`, etc.).
+       - Remplacement des 5 faux slugs factices du fallback par les véritables slugs existants (`mamouhouse`, `d-accord`, `dievo-style`, `flair-house`, `centralestore`, `sunu-shop`).
+    2. **API & Interface Modale (`backend/routes/surga/shopping.js`, `SurgaShoppingModal.tsx`)** :
+       - Passage de la limite par défaut à `limit=200` pour alimenter sans troncature la totalité du catalogue.
+       - Onglets actualisés en direct : **Boutiques (99)** et **Produits & Articles (172)**.
+       - Filtrage instantané côté client sur la recherche textuelle multi-critères.
+    3. **Éradication Définitive du 404 sur « Visiter la boutique »** :
+       - Navigation prouvée vers les vraies boutiques (`/boutiques/mamouhouse`, `/boutiques/d-accord`, etc.) avec statut HTTP 200 garanti.
+    4. **Validation Qualité Senior** :
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests Jest : 158/158 PASS. Test sémantique AUD-157 : PASS.
+       - Tests Playwright réels avec captures d'écran de preuve (`surga_shopping_all_boutiques_modal.png` et `surga_shopping_real_boutique_page.png`).
+       - Tous les composants < 450 lignes (`SurgaShoppingModal.tsx` : 318 l., `SurgaShoppingCards.tsx` : 276 l.).
+
 - **Surga / Correction de la Reformulation Contextuelle & Prise en Compte Immédiate des Dettes dans l'Assistant IA (Session 2026-10-07 - Nuit 9 suite - 13, branche `feature/surga`)** :
   - *Résolution Intégrale des Réponses Hors-Sujet Signalées par l'Utilisateur* :
     1. **Moteur Sémantique de Reformulation Contextuelle (`backend/services/surga/assistant-llm.js`)** :

@@ -11,11 +11,11 @@ const { listerShopping } = require('../../services/surga/shopping-service');
  */
 router.get('/shopping', async (req, res) => {
   try {
-    const { categorie = 'tous', q = '', limit = 50 } = req.query;
+    const { categorie = 'tous', q = '', limit = 200 } = req.query;
     const resultat = await listerShopping({
       categorie,
       q,
-      limit: parseInt(limit, 10) || 50,
+      limit: parseInt(limit, 10) || 200,
     });
 
     return res.json({

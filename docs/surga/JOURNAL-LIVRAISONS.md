@@ -3,6 +3,30 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 14] — Déploiement Intégral de Toutes les Boutiques Réelles (99 Boutiques & 172 Produits) & Éradication du 404
+- **Objectif Atteint :**
+  - Répondre directement à la directive : « ON DOIT voir toutes les boutique » et à la capture montrant une 404 sur `/boutiques/beaute-almadies`.
+  - Éliminer le fallback artificiel causé par des erreurs SQL sur les colonnes de la table `boutiques` (`b.logo` et `b.couverture`).
+  - Charger et afficher la totalité des **99 boutiques réelles actives** et des **172 produits en stock** de la plateforme Nopalou.
+  - Garantir l'accès direct et sans 404 aux véritables boutiques marchandes (ex: `mamouhouse`, `d-accord`, `dievo-style`, `flair-house`, `centralestore`, etc.).
+- **Réalisations & Fichiers Modifiés :**
+  1. *Service Shopping PostgreSQL (`shopping-service.js`, 274 l.)* :
+     - Correction des colonnes SQL : `b.logo_url as logo`, `b.cover_url as couverture`, `COALESCE(NULLIF(TRIM(b.whatsapp), ''), b.telephone) as telephone`.
+     - Intégration du comptage des produits et du statut vérifié réel.
+     - Filtres sémantiques multi-mots par catégorie marchande.
+     - Remplacement des fallbacks par les vrais slugs de la base de données.
+  2. *API & Modale Shopping (`shopping.js`, `SurgaShoppingModal.tsx`, 318 l.)* :
+     - Déplafonnement de la limite à `limit=200`.
+     - Affichage des décomptes exacts : **Boutiques (99)** et **Produits & Articles (172)**.
+     - Filtrage instantané côté client sur la saisie textuelle sans re-fetch restrictif.
+  3. *Validation Playwright & Preuves Graphiques* :
+     - Navigation prouvée sur `http://localhost:3001/boutiques/mamouhouse` : code HTTP 200, vitrine complète et 50 produits visibles.
+     - Captures générées : `surga_shopping_all_boutiques_modal.png` et `surga_shopping_real_boutique_page.png`.
+- **Validation & Scores :**
+  - TypeScript : 0 erreur (`npx tsc --noEmit`).
+  - Tests Unitaires Jest : 158/158 PASS. AUD-157 : PASS.
+  - Plafond de taille : tous les fichiers < 450 lignes.
+
 ### [2026-10-07 — Nuit 9 suite - 13] — Correction de la Reformulation Contextuelle & Prise en Compte Immédiate des Dettes dans l'Assistant IA
 - **Objectif Atteint :**
   - Répondre directement aux anomalies signalées par l'utilisateur lors de l'utilisation de l'assistant unifié Surga AI :

@@ -45,6 +45,7 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
     const params = new URLSearchParams()
     if (categorieActive !== 'tous') params.append('categorie', categorieActive)
     if (recherche.trim()) params.append('q', recherche.trim())
+    params.append('limit', '200')
 
     fetch(`/api/surga/shopping?${params.toString()}`)
       .then((res) => res.json())
@@ -66,30 +67,26 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
   }, [isOpen, categorieActive, recherche])
 
   const boutiquesFiltrees = useMemo(() => {
-    return boutiques.filter((b) => {
-      if (categorieActive !== 'tous' && !b.categorie?.toLowerCase().includes(categorieActive.toLowerCase())) {
-        return false
-      }
-      if (recherche.trim()) {
-        const q = recherche.toLowerCase()
-        return b.nom.toLowerCase().includes(q) || b.description?.toLowerCase().includes(q) || b.ville?.toLowerCase().includes(q)
-      }
-      return true
-    })
-  }, [boutiques, categorieActive, recherche])
+    if (!recherche.trim()) return boutiques
+    const q = recherche.toLowerCase()
+    return boutiques.filter((b) => (
+      b.nom.toLowerCase().includes(q) ||
+      b.description?.toLowerCase().includes(q) ||
+      b.ville?.toLowerCase().includes(q) ||
+      b.categorie?.toLowerCase().includes(q)
+    ))
+  }, [boutiques, recherche])
 
   const produitsFiltres = useMemo(() => {
-    return produits.filter((p) => {
-      if (categorieActive !== 'tous' && !p.categorie?.toLowerCase().includes(categorieActive.toLowerCase())) {
-        return false
-      }
-      if (recherche.trim()) {
-        const q = recherche.toLowerCase()
-        return p.nom.toLowerCase().includes(q) || p.boutique_nom?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
-      }
-      return true
-    })
-  }, [produits, categorieActive, recherche])
+    if (!recherche.trim()) return produits
+    const q = recherche.toLowerCase()
+    return produits.filter((p) => (
+      p.nom.toLowerCase().includes(q) ||
+      p.boutique_nom?.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q) ||
+      p.categorie?.toLowerCase().includes(q)
+    ))
+  }, [produits, recherche])
 
   if (!isOpen) return null
 
