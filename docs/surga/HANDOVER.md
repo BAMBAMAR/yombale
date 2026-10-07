@@ -1,13 +1,43 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 15 — Confidentialité Renforcée Sama Xaalis : Verrouillage par Code PIN à 4 Chiffres & Masquage Montants)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Revue UI V2 — Tickets SRG-UI-01 à SRG-UI-19 : Cohérence Données, Filtre 24h, Suppression Doublons Desktop, Grille 3 Breakpoints, Sport 3 Paliers)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Confidentialité Totale Sama Xaalis (Boutons Œil Afficher/Masquer, Code PIN 4 Chiffres avec Pavé Tactile & Clavier, Écran de Verrouillage, Sync Temps Réel), 100% des 99 Boutiques Réelles & 172 Produits Nopalou Intégrés sans 404, Assistant IA Omnibar Corrigé (Reformulation & Dettes), Sidebar Desktop Compacte Zéro Défilement (12 boutons, scrollable: false), Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests Jest PASS**  
+> **Statut global** : 🟢 **19/19 Tickets UI V2 Résolus (SRG-UI-01 à 19), Localisation Unique, Zéro Marée Intérieur, Source & Heure Actualités, Filtre 24h, Zéro Doublon Desktop, 3 Breakpoints (<600px, 600-1023px, >=1024px), Sport 3 Paliers, Command Bar Opaque, Contrastes Vérifiés, 100% Tests Jest PASS (129/129), Linter Slop OK**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
+
+-4. **Tickets UI V2 — Écran « Aujourd'hui » Mobile & Ordinateur (100% DONE — Revue UI du 7 Octobre 2026)** :
+   - Mise en conformité stricte avec les 19 tickets de `docs/surga/TICKETS_UI_V2.md` :
+     - **P0 — Fiabilité des Données & Doublons** :
+       - *SRG-UI-01 (Localisation Unique)* : `preferences.quartiers[0]` est l'unique source de vérité. Météo, Trafic et Rail Droit synchronisés sans rechargement. Affichage de la ville uniquement en tête du briefing. Brique Trafic affiche « Trafic disponible pour Dakar uniquement » pour les autres villes.
+       - *SRG-UI-02 (Localités Intérieures sans Marées)* : Création du catalogue `frontend-next/src/lib/coastal-locations.ts`. Météo sobre sans marée pour Kaffrine, Kaolack, Thiès, Tambacounda. Marées actives pour Dakar, Saint-Louis, Mbour, Ziguinchor.
+       - *SRG-UI-03 (Actualités Sourcées & Horodatées)* : Sous chaque titre du digest matinal : « Nom du média · heure/date ». Titres cliquables ouvrant la source, bouton Partager WhatsApp (`SurgaShareButton`) par titre.
+       - *SRG-UI-04 (Filtre Fraîcheur 24h)* : Filtre SQL strict `published_at >= NOW() - INTERVAL '24 hours'` dans `rss-collector.js`. Rejet des articles sans date de publication fiable. Décision O10 inscrite dans `DECISIONS.md`.
+       - *SRG-UI-05 (Suppression des Doublons Desktop)* : Blocs de contexte (journée, météo, Sama Xaalis, trafic, mémo) réservés exclusivement au rail droit à partir de 1 024 px via `.surga-context-only-mobile` (masqué en CSS). Suppression du doublon « Journée libre » dans la carte briefing.
+     - **P1 — Briefing & Ergonomie** :
+       - *SRG-UI-06 (Titres Non Tronqués)* : Clamping à 2 lignes maximum (`-webkit-line-clamp: 2`).
+       - *SRG-UI-07 (Bandeau Alerte Matinale Remplacé)* : Suppression du bandeau orange avec croix. Clic sur « Prévu à {heure} » ouvre les réglages du briefing.
+       - *SRG-UI-08 (Audio Discret)* : Bloc audio masqué par défaut si option désactivée. Lorsque activé : ligne sobre « Écouter (durée) », bouton discret sans fond orange plein, libellé « Lecture sans connexion ».
+       - *SRG-UI-09 (Sport Personnalisé & Utile)* : Tri en 3 paliers (favoris suivis > Ligue 1 sénégalaise & sélection nationale > reste). Badge « Vous suivez [nom] » sur les matches étrangers. Affichage systématique de l'heure (à venir) ou du score (terminé).
+       - *SRG-UI-10 (Phrase d'Accueil Concise)* : « Bonjour. Pour {quartier} ce matin : X brèves et Y actualités sportives. » sans répétition de la date.
+     - **P1 — Grille Responsive & CSS** :
+       - *SRG-UI-11 (Largeur Maximale 720px)* : Conteneur central plafonné à 720px centré. Rail droit extensible à 360px pour les écrans 1 920px.
+       - *SRG-UI-12 (Défilement Libre sous la Barre de Commande)* : Fond 100% opaque `#FFFFFF` derrière la barre de commande sticky avec bordure fine. Marges basses confortables (+36px mobile, +40px desktop).
+       - *SRG-UI-13 (Étiquettes Calmes)* : Suppression de `text-transform: uppercase`, police 11.5px en gris `#64748B`.
+       - *SRG-UI-14 (Menu Latéral Harmonisé)* : « Plus de services » en style neutre, suppression des badges superflus, alignement d'ordre et de libellés sur la barre d'onglets mobile.
+     - **P2 — Rail Droit & Détails** :
+       - *SRG-UI-15 (Trafic Honnête)* : Statut textuel visible (« fluide », « dense », « bouché ») et horodatage « Mis à jour il y a 4 min ». Notice hors Dakar.
+       - *SRG-UI-16 (Mémo Épinglé Réel)* : Affichage des deux premières lignes de la note épinglée réelle ou invitation à épingler.
+       - *SRG-UI-17 (Terme « Kalpé »)* : Infobulle explicative `(portefeuille)` ajoutée. Décision O11 enregistrée dans `DECISIONS.md`.
+       - *SRG-UI-18 (Contraste Orange)* : Token `--surga-accent-text: #92400E` (ratio 7.2:1) pour une lisibilité optimale.
+       - *SRG-UI-19 (Icône Wi-Fi Mobile)* : Masquée en ligne, visible uniquement hors ligne avec `WifiOff`.
+   - **Validation & Scores** :
+     - Tests Jest : 129/129 PASS (`npx jest tests/unit/surga.test.js`).
+     - Linter Slop : 0 infraction bloquante (`npm run lint:slop`).
+     - Tous les composants React < 450 lignes.
 
 -3. **Confidentialité Renforcée Sama Xaalis : Code PIN & Masquage des Montants (100% DONE — Nuit 9 suite - 15)** :
    - Traitement direct de la directive : « plus de confidentialite pour sama xaalis avoir meme un code pin pour acceder et bouton afficher masquer ».

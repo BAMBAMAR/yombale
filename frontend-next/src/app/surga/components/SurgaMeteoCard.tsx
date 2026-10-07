@@ -16,6 +16,7 @@ import { renderMeteoIcon } from './SurgaMeteoPrevisions'
 import {
   LOCALITES_SENEGAL_LIST,
   trouverLocaliteParNom,
+  estLocaliteMaritime,
   type LocaliteItem,
   type PrevisionItem,
   type MeteoData,
@@ -203,6 +204,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
   }
 
   const villeAffichee = meteo?.ville || ville
+  const estMaritime = estLocaliteMaritime(villeAffichee)
 
   return (
     <div className="surga-card" style={{ marginBottom: 16 }}>
@@ -240,7 +242,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
                 textOverflow: 'ellipsis',
               }}
             >
-              Météo &amp; Marées • {villeAffichee}
+              {estMaritime ? 'Météo et marées' : 'Météo'}
             </span>
             <ChevronDown size={14} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
           </div>
@@ -317,7 +319,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
             </span>
           </div>
 
-          {meteo?.maree && (
+          {estMaritime && meteo?.maree && (
             <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <Waves size={12} color="var(--surga-primary, #0F172A)" />
               {meteo.maree.etat} {meteo.maree.prochaine_heure}
@@ -359,6 +361,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
       {estDeplie && meteo && (
         <SurgaMeteoDetailBloc
           meteo={meteo}
+          estMaritime={estMaritime}
           showPrevisions={showPrevisions}
           onTogglePrevisions={() => setShowPrevisions(!showPrevisions)}
         />

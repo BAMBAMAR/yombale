@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Navigation, ChevronRight, Activity, ExternalLink } from 'lucide-react'
+import { estZoneCouverteParTrafic } from '@/lib/surga-meteo'
 
 export interface AxeTraficItem {
   id: string
@@ -21,13 +22,15 @@ export interface AxeTraficItem {
 
 interface SurgaTraficCardProps {
   onOuvrirDetail: () => void
+  ville?: string
 }
 
-export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps) {
+export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: SurgaTraficCardProps) {
   const [axes, setAxes] = useState<AxeTraficItem[]>([])
   const [synthese, setSynthese] = useState<string>('')
   const [source, setSource] = useState<string>('previsionnel')
   const [loading, setLoading] = useState<boolean>(true)
+  const couvreTrafic = estZoneCouverteParTrafic(ville)
 
   useEffect(() => {
     let isMounted = true
@@ -201,95 +204,106 @@ export default function SurgaTraficCard({ onOuvrirDetail }: SurgaTraficCardProps
         </div>
       </div>
 
-      {/* Synthèse textuelle */}
-      {synthese && (
-        <div
-          style={{
-            fontSize: 12,
-            color: 'var(--surga-text2, #475569)',
-            lineHeight: 1.4,
-            padding: '8px 10px',
-            backgroundColor: 'var(--surga-bg, #F8FAFC)',
-            borderRadius: 8,
-            border: '1px solid var(--surga-border, #E2E8F0)',
-          }}
-        >
-          {synthese}
-        </div>
-      )}
-
-      {/* Aperçu des 3 axes clés */}
-      {loading ? (
-        <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', padding: '6px 0' }}>
-          Évaluation du trafic en cours...
+      {!couvreTrafic ? (
+        <div style={{ fontSize: 13, color: 'var(--surga-text2, #475569)', padding: '6px 0', lineHeight: 1.4 }}>
+          Trafic disponible pour Dakar uniquement
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {axesPertinents.map((axe) => {
-            const couleur = getCouleurNiveau(axe.niveau)
-            return (
-              <div
-                key={axe.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
-                  borderRadius: 6,
-                  backgroundColor: 'var(--surga-surface, #FFFFFF)',
-                  border: '1px solid var(--surga-border, #E2E8F0)',
-                  fontSize: 11,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: couleur,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      color: 'var(--surga-primary, #0F172A)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {axe.nom.split('(')[0].trim()}
-                  </span>
-                </div>
+        <>
+          {/* Synthèse textuelle */}
+          {synthese && (
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--surga-text2, #475569)',
+                lineHeight: 1.4,
+                padding: '8px 10px',
+                backgroundColor: 'var(--surga-bg, #F8FAFC)',
+                borderRadius: 8,
+                border: '1px solid var(--surga-border, #E2E8F0)',
+              }}
+            >
+              {synthese}
+            </div>
+          )}
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                  {axe.vitesseReelleKmH ? (
-                    <span style={{ fontSize: 10, color: 'var(--surga-text3, #94A3B8)' }}>
-                      {axe.vitesseReelleKmH} km/h
-                    </span>
-                  ) : null}
-                  <span
+          {/* Aperçu des 3 axes clés */}
+          {loading ? (
+            <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', padding: '6px 0' }}>
+              Évaluation du trafic en cours...
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {axesPertinents.map((axe) => {
+                const couleur = getCouleurNiveau(axe.niveau)
+                return (
+                  <div
+                    key={axe.id}
                     style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: couleur,
-                      padding: '1px 5px',
-                      borderRadius: 4,
-                      backgroundColor: 'var(--surga-bg, #F8FAFC)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '6px 8px',
+                      borderRadius: 6,
+                      backgroundColor: 'var(--surga-surface, #FFFFFF)',
+                      border: '1px solid var(--surga-border, #E2E8F0)',
+                      fontSize: 11,
                     }}
                   >
-                    {getLibelleNiveau(axe.niveau)}
-                  </span>
-                  <span style={{ fontSize: 10, color: 'var(--surga-text3, #94A3B8)', fontWeight: 600 }}>
-                    {axe.tempsEstimeMin} min
-                  </span>
-                </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          backgroundColor: couleur,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontWeight: 600,
+                          color: 'var(--surga-primary, #0F172A)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {axe.nom.split('(')[0].trim()}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      {axe.vitesseReelleKmH ? (
+                        <span style={{ fontSize: 10, color: 'var(--surga-text3, #94A3B8)' }}>
+                          {axe.vitesseReelleKmH} km/h
+                        </span>
+                      ) : null}
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: couleur,
+                          padding: '1px 5px',
+                          borderRadius: 4,
+                          backgroundColor: 'var(--surga-bg, #F8FAFC)',
+                        }}
+                      >
+                        {getLibelleNiveau(axe.niveau)}
+                      </span>
+                      <span style={{ fontSize: 10, color: 'var(--surga-text3, #94A3B8)', fontWeight: 600 }}>
+                        {axe.tempsEstimeMin} min
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+              <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginTop: 4 }}>
+                Mis à jour il y a 4 min
               </div>
-            )
-          })}
-        </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

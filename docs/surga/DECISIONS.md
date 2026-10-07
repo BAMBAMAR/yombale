@@ -55,3 +55,5 @@ consulte ce fichier avant de remettre en question un point.
 | O6 | Droits d'usage des sources de presse | Lecture des conditions de chaque site, flux RSS retenus |
 | O8 | Calendrier réel | Estimation indicative : noyau en environ 3 mois, puis briques par 3 à 4 semaines ; à recalibrer après l'audit |
 | O9 | Forfaits data "réseaux sociaux" des opérateurs | Vérification auprès des opérateurs ; impact sur le coût d'usage de la PWA |
+| O10 | Fenêtre de fraîcheur du briefing matinal (SRG-UI-04) | Valeur par défaut : 24h. Les actualités >24h ou sans date RSS/meta vérifiée sont exclues du briefing. À arbitrer par le responsable produit si extension souhaitée (ex: 36h le weekend). |
+| O11 | Désignation du module dépenses / budget : terme « Kalpé » (SRG-UI-17) | « Kalpé » (portefeuille en wolof) : option 1 = infobulle d'explication au premier affichage (« Kalpé : votre carnet de budget et dépenses »), option 2 = nom personnalisable dans les réglages. À trancher par le responsable produit. |

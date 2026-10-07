@@ -7,15 +7,19 @@ import type { MeteoData } from '@/lib/surga-meteo'
 
 interface SurgaMeteoDetailBlocProps {
   meteo: MeteoData
+  estMaritime?: boolean
   showPrevisions: boolean
   onTogglePrevisions: () => void
 }
 
 export default function SurgaMeteoDetailBloc({
   meteo,
+  estMaritime = true,
   showPrevisions,
   onTogglePrevisions,
 }: SurgaMeteoDetailBlocProps) {
+  const afficherMaree = estMaritime && Boolean(meteo.maree)
+
   return (
     <>
       <div
@@ -55,8 +59,8 @@ export default function SurgaMeteoDetailBloc({
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-        {meteo.maree && (
+      <div style={{ display: 'grid', gridTemplateColumns: afficherMaree ? '1fr 1fr' : '1fr', gap: 8, marginBottom: 10 }}>
+        {afficherMaree && meteo.maree && (
           <div
             style={{
               padding: '8px 10px',

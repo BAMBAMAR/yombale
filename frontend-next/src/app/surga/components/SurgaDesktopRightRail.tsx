@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import type { SurgaTab } from './SurgaBottomNav'
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync'
+import { getLocalNotes } from '@/lib/surga-offline-sync'
+import { estLocaliteMaritime, estZoneCouverteParTrafic } from '@/lib/surga-meteo'
 import {
   isXaalisMasque,
   toggleXaalisMasque,
@@ -30,6 +32,7 @@ interface SurgaDesktopRightRailProps {
   prochainRdvTitre?: string
   meteoTemp?: string
   meteoMaree?: string
+  ville?: string
   onNavigateTab: (tab: SurgaTab) => void
   onOpenTrafic: () => void
 }
@@ -43,6 +46,7 @@ export default function SurgaDesktopRightRail({
   prochainRdvTitre,
   meteoTemp = '28°C',
   meteoMaree = '17h45',
+  ville = 'Dakar',
   onNavigateTab,
   onOpenTrafic,
 }: SurgaDesktopRightRailProps) {
@@ -54,6 +58,37 @@ export default function SurgaDesktopRightRail({
   const [masque, setMasque] = useState(false)
   const [protegeParPin, setProtegeParPin] = useState(false)
   const [isPinModalOpen, setIsPinModalOpen] = useState(false)
+  const [noteEpingleeTexte, setNoteEpingleeTexte] = useState<string>('')
+
+  const estMaritime = estLocaliteMaritime(ville)
+  const couvreTrafic = estZoneCouverteParTrafic(ville)
+
+  const actualiserNote = useCallback(() => {
+    try {
+      const notes = getLocalNotes()
+      const ep = notes.find((n) => n.epingle)
+      if (ep) {
+        const brut = ep.contenu || ep.titre || ''
+        const deuxLignes = brut.split('\n').filter(Boolean).slice(0, 2).join('\n')
+        setNoteEpingleeTexte(deuxLignes || ep.titre)
+      } else {
+        setNoteEpingleeTexte('')
+      }
+    } catch {
+      setNoteEpingleeTexte('')
+    }
+  }, [])
+
+  useEffect(() => {
+    actualiserNote()
+    const handleDataChange = () => actualiserNote()
+    window.addEventListener('surga-data-change', handleDataChange)
+    window.addEventListener('storage', handleDataChange)
+    return () => {
+      window.removeEventListener('surga-data-change', handleDataChange)
+      window.removeEventListener('storage', handleDataChange)
+    }
+  }, [actualiserNote])
 
   const synchroniserSecurite = useCallback(() => {
     setMasque(isXaalisMasque())
@@ -70,7 +105,6 @@ export default function SurgaDesktopRightRail({
   // Bascule afficher / masquer
   const handleToggleMasque = (e: React.MouseEvent) => {
     e.stopPropagation()
-    // Si masqué et protégé par PIN actuellement verrouillé, demander le PIN pour afficher
     if (masque && isXaalisVerrouille()) {
       setIsPinModalOpen(true)
       return
@@ -155,42 +189,64 @@ export default function SurgaDesktopRightRail({
           </div>
           <div className="surga-widget-value-strong">{valeurMoisAffichee}</div>
           <div className="surga-widget-desc">
-            Solde Kalpé restant : <strong>{valeurSoldeAffichee}</strong>
+            Solde Kalpé : <strong>{valeurSoldeAffichee}</strong>
+            <span
+              title="Kalpé : votre portefeuille et budget personnel en FCFA"
+              style={{ marginLeft: 4, cursor: 'help', fontSize: 11, color: 'var(--surga-text3, #94A3B8)' }}
+            >
+              (portefeuille)
+            </span>
           </div>
         </div>
 
-        {/* 3. Trafic Dakar direct */}
+        {/* 3. Trafic en direct */}
         <div
           className="surga-desktop-widget"
           role="button"
           tabIndex={0}
           onClick={onOpenTrafic}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpenTrafic() }}
-          title="Ouvrir le suivi du trafic de Dakar"
+          title={couvreTrafic ? "Ouvrir le suivi du trafic" : "Trafic disponible pour Dakar uniquement"}
         >
           <div className="surga-widget-header">
-            <span className="surga-widget-label">Trafic Dakar direct</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="surga-widget-label">Trafic en direct</span>
+            </div>
             <Navigation size={14} className="surga-widget-icon" />
           </div>
-          <div className="surga-trafic-indicators">
-            <div className="surga-trafic-row">
-              <span className="surga-trafic-axis">
-                <span className="surga-trafic-dot green" />
-                <span>VDN Dégagement</span>
-              </span>
-              <span className="surga-trafic-time">14 min</span>
+
+          {couvreTrafic ? (
+            <>
+              <div className="surga-trafic-indicators">
+                <div className="surga-trafic-row">
+                  <span className="surga-trafic-axis">
+                    <span className="surga-trafic-dot green" />
+                    <span>VDN Dégagement</span>
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-emerald, #059669)' }}>fluide</span>
+                  <span className="surga-trafic-time">14 min</span>
+                </div>
+                <div className="surga-trafic-row">
+                  <span className="surga-trafic-axis">
+                    <span className="surga-trafic-dot orange" />
+                    <span>Corniche Ouest</span>
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#B45309' }}>dense</span>
+                  <span className="surga-trafic-time">28 min</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginTop: 4 }}>
+                Mis à jour il y a 4 min
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', padding: '4px 0', lineHeight: 1.4 }}>
+              Trafic disponible pour Dakar uniquement
             </div>
-            <div className="surga-trafic-row">
-              <span className="surga-trafic-axis">
-                <span className="surga-trafic-dot orange" />
-                <span>Corniche Ouest</span>
-              </span>
-              <span className="surga-trafic-time">28 min</span>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* 4. Météo & Marée Dakar */}
+        {/* 4. Météo & Marées (ou Météo seule si intérieur) */}
         <div
           className="surga-desktop-widget"
           role="button"
@@ -200,12 +256,14 @@ export default function SurgaDesktopRightRail({
           title="Voir les détails météo"
         >
           <div className="surga-widget-header">
-            <span className="surga-widget-label">Météo Dakar</span>
+            <span className="surga-widget-label">{estMaritime ? 'Météo et marées' : 'Météo'}</span>
             <Sun size={14} className="surga-widget-icon" />
           </div>
           <div className="surga-widget-highlight">{meteoTemp} • Ensoleillé</div>
           <div className="surga-widget-desc">
-            Marée haute : {meteoMaree} • Air : Bonne (AQI 45)
+            {estMaritime
+              ? `Marée haute : ${meteoMaree} • Air : Bonne (AQI 45)`
+              : 'Air : Bonne (AQI 45) • Vent modéré'}
           </div>
         </div>
 
@@ -222,8 +280,13 @@ export default function SurgaDesktopRightRail({
             <span className="surga-widget-label">Mémo épinglé</span>
             <Bookmark size={14} className="surga-widget-icon" />
           </div>
-          <div className="surga-note-memo">
-            {derniereNoteTitre || (nbNotes > 0 ? `Consulter vos ${nbNotes} note${nbNotes > 1 ? 's' : ''} et listes actives` : 'Noter une idée ou une course urgente')}
+          <div className="surga-note-memo" style={{ whiteSpace: 'pre-line' }}>
+            {noteEpingleeTexte || derniereNoteTitre || 'Épinglez une note pour la garder ici'}
+          </div>
+          <div className="surga-widget-desc">
+            {nbNotes > 0
+              ? `${nbNotes} note${nbNotes > 1 ? 's' : ''} active${nbNotes > 1 ? 's' : ''}`
+              : 'Aucune note active'}
           </div>
         </div>
       </aside>

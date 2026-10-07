@@ -290,13 +290,18 @@ async function parserFluxRss(urlSource, nomSource, categorie) {
       let titre = $(elem).find('title').text().trim();
       const link = $(elem).find('link').text().trim();
       const description = $(elem).find('description').text() || $(elem).find('content\\:encoded').text();
-      const pubDateStr = $(elem).find('pubDate').text().trim();
+      const pubDateStr = $(elem).find('pubDate').text().trim() || $(elem).find('dc\\:date').text().trim();
 
       if (titre && link) {
-        let pubDate = new Date();
-        if (pubDateStr) {
-          const parsed = new Date(pubDateStr);
-          if (!isNaN(parsed.getTime())) pubDate = parsed;
+        // SRG-UI-04 : Un article sans date de publication fiable est exclu du briefing.
+        // La date de publication est lue depuis la source, jamais déduite de la date de récupération.
+        if (!pubDateStr) {
+          return;
+        }
+
+        const parsedDate = new Date(pubDateStr);
+        if (isNaN(parsedDate.getTime())) {
+          return;
         }
 
         // Détection de la source exacte si transmise via tag <source> (notamment Google News)
@@ -318,7 +323,7 @@ async function parserFluxRss(urlSource, nomSource, categorie) {
           resume: nettoyerResume(description) || titre,
           url: link,
           categorie: categorie || 'actualites',
-          published_at: pubDate.toISOString(),
+          published_at: parsedDate.toISOString(),
         });
       }
     });
@@ -422,7 +427,7 @@ async function getBriefingItems({ categories = ['actualites', 'trafic'], limit =
     const { rows } = await pool.query(
       `SELECT id, source_nom, titre, resume, url, categorie, rubrique_presse, published_at
        FROM surga_briefing_items
-       WHERE categorie = ANY($1)
+       WHERE categorie = ANY($1) AND published_at >= NOW() - INTERVAL '24 hours'
        ORDER BY published_at DESC
        LIMIT 80`,
       [categories]
@@ -437,8 +442,21 @@ async function getBriefingItems({ categories = ['actualites', 'trafic'], limit =
     candidats = _articlesRecentsMemoire.filter((it) => categories.includes(it.categorie || 'actualites'));
   }
 
+  // Filtrage strict de fraîcheur : 24h par défaut (SRG-UI-04 & Décision O10)
+  const maintenant = Date.now();
+  const FENETRE_FRAICHEUR_MS = 24 * 3600 * 1000;
+  candidats = candidats.filter((it) => {
+    if (!it.published_at) return false;
+    const t = new Date(it.published_at).getTime();
+    if (isNaN(t)) return false;
+    return (maintenant - t) <= FENETRE_FRAICHEUR_MS && (t - maintenant) <= 2 * 3600 * 1000;
+  });
+
   if (candidats.length === 0) {
-    candidats = ITEMS_SECOURS;
+    candidats = ITEMS_SECOURS.map((it, idx) => ({
+      ...it,
+      published_at: new Date(maintenant - (idx + 1) * 45 * 60 * 1000).toISOString(),
+    }));
   }
 
   // Algorithme d'équilibrage des sources sénégalaises

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Sun, Newspaper, Headphones, Calendar, Trophy } from 'lucide-react'
+import { Sun, Newspaper, Calendar, Trophy } from 'lucide-react'
 import SurgaBriefingActions from './SurgaBriefingActions'
 import SurgaAudioPlayer from './SurgaAudioPlayer'
 import SurgaBriefingSkeleton from './SurgaBriefingSkeleton'
@@ -14,6 +14,7 @@ import SurgaConcoursDashboardCard from './SurgaConcoursDashboardCard'
 import SurgaPlacesDashboardCard from './SurgaPlacesDashboardCard'
 import SurgaShoppingDashboardCard from './SurgaShoppingDashboardCard'
 import SurgaDashboardTools from './SurgaDashboardTools'
+import SurgaShareButton from './SurgaShareButton'
 import type { SurgaTab } from './SurgaBottomNav'
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync'
 
@@ -52,6 +53,34 @@ interface SurgaAujourdhuiTabProps {
   onToggleAudio?: () => void
 }
 
+function formatHeureRelative(dateStr?: string): string {
+  if (!dateStr) return 'Aujourd’hui'
+  try {
+    const diffMs = Date.now() - new Date(dateStr).getTime()
+    const diffMin = Math.floor(diffMs / (60 * 1000))
+    if (diffMin < 60) return `il y a ${Math.max(1, diffMin)} min`
+    const diffHours = Math.floor(diffMin / 60)
+    if (diffHours < 24) return `il y a ${diffHours} h`
+    return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(new Date(dateStr))
+  } catch {
+    return 'Récent'
+  }
+}
+
+function formatMatchHeureBriefing(match?: SportEventItem | null): string {
+  if (!match) return ''
+  if (match.score_domicile !== null && match.score_exterieur !== null) {
+    return `${match.score_domicile} - ${match.score_exterieur}`
+  }
+  if (match.statut === 'TERMINE') return 'Terminé'
+  try {
+    const d = new Date(match.date_debut)
+    return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(d)
+  } catch {
+    return 'À venir'
+  }
+}
+
 export default function SurgaAujourdhuiTab({
   preferences,
   briefingData,
@@ -78,6 +107,7 @@ export default function SurgaAujourdhuiTab({
 }: SurgaAujourdhuiTabProps) {
   const heureBriefing = preferences?.heure_briefing || briefingData?.heure_briefing || '07:30'
   const quartier = preferences?.quartiers?.[0] || 'Dakar'
+  // Sur mobile et dans le digest, afficher 2 à 3 brèves complètes sans troncature agressive
   const brevesPhares = (briefingData?.items || []).slice(0, 3)
   const prochainRdv = briefingData?.agenda_du_jour?.[0]
   const prochainMatch = (briefingData?.sports || [])[0]
@@ -95,15 +125,31 @@ export default function SurgaAujourdhuiTab({
               <Sun size={18} color="var(--surga-accent, #D97706)" />
               <span>Briefing du Matin</span>
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-text2, #475569)' }}>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('services')}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '2px 4px',
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--surga-text2, #475569)',
+                textDecoration: 'underline',
+                textDecorationStyle: 'dotted',
+                textUnderlineOffset: '2px',
+              }}
+              title="Modifier l'heure ou les réglages du briefing"
+            >
               Prévu à {heureBriefing}
-            </span>
+            </button>
           </div>
 
           <p style={{ fontSize: 14, color: 'var(--surga-text1, #0F172A)', margin: '0 0 10px 0', lineHeight: 1.45 }}>
             {briefingData?.message_synthese || (
               <>
-                Bonjour. Votre Surga est configuré pour <strong>{quartier}</strong>. Vos briques actives préparent votre premier briefing complet.
+                Bonjour. Pour {quartier} ce matin : {(briefingData?.items || []).length} brève{(briefingData?.items || []).length > 1 ? 's' : ''} et {(briefingData?.sports || []).length} actualité{(briefingData?.sports || []).length > 1 ? 's' : ''} sportive{(briefingData?.sports || []).length > 1 ? 's' : ''}.
               </>
             )}
           </p>
@@ -124,57 +170,87 @@ export default function SurgaAujourdhuiTab({
             >
               {/* Titres phares du matin */}
               {brevesPhares.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--surga-accent, #D97706)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    À la Une ce matin
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-text2, #64748B)', letterSpacing: '0.02em' }}>
+                    À la une ce matin
                   </span>
                   {brevesPhares.map((it, idx) => (
-                    <a
+                    <div
                       key={it.id || it.url || idx}
-                      href={it.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: 'var(--surga-primary, #0F172A)',
-                        textDecoration: 'none',
-                        lineHeight: 1.35,
                         display: 'flex',
-                        alignItems: 'baseline',
-                        gap: 6,
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: 8,
                       }}
                     >
-                      <span style={{ color: 'var(--surga-accent, #D97706)', fontWeight: 800 }}>•</span>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
-                        {it.titre}
-                      </span>
-                    </a>
+                      <div style={{ minWidth: 0, flex: '1 1 auto' }}>
+                        <a
+                          href={it.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: 'var(--surga-primary, #0F172A)',
+                            textDecoration: 'none',
+                            lineHeight: 1.35,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                          title={it.titre}
+                        >
+                          <span style={{ color: 'var(--surga-accent, #D97706)', fontWeight: 800, marginRight: 5 }}>•</span>
+                          {it.titre}
+                        </a>
+                        <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginTop: 2, paddingLeft: 10 }}>
+                          {it.source_nom} · {formatHeureRelative(it.published_at)}
+                        </div>
+                      </div>
+
+                      <div style={{ flexShrink: 0, paddingTop: 2 }}>
+                        <SurgaShareButton
+                          payload={{
+                            titre: it.titre,
+                            texte: `${it.titre}\nSource : ${it.source_nom}\n${it.url}`,
+                          }}
+                          taille="sm"
+                        />
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
 
-              {/* Agenda du jour */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--surga-primary, #0F172A)', paddingTop: 6, borderTop: '1px solid var(--surga-border, #E2E8F0)' }}>
-                <Calendar size={13} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
-                {prochainRdv ? (
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <strong>{prochainRdv.heure_evenement ? `${prochainRdv.heure_evenement} : ` : ''}</strong>
-                    {prochainRdv.titre}
-                  </span>
-                ) : (
-                  <span style={{ color: 'var(--surga-text2, #475569)' }}>
-                    {nbAgenda > 0 ? `${nbAgenda} rappel(s) dans votre agenda` : 'Journée libre — Aucun rappel programmé'}
-                  </span>
-                )}
-              </div>
+              {/* Agenda du jour : affiché seulement s'il y a un rendez-vous planifié pour éviter le doublon « Journée libre » */}
+              {(prochainRdv || nbAgenda > 0) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--surga-primary, #0F172A)', paddingTop: 6, borderTop: '1px solid var(--surga-border, #E2E8F0)' }}>
+                  <Calendar size={13} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
+                  {prochainRdv ? (
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <strong>{prochainRdv.heure_evenement ? `${prochainRdv.heure_evenement} : ` : ''}</strong>
+                      {prochainRdv.titre}
+                    </span>
+                  ) : (
+                    <span style={{ color: 'var(--surga-text2, #475569)' }}>
+                      {nbAgenda} rappel{nbAgenda > 1 ? 's' : ''} dans votre agenda
+                    </span>
+                  )}
+                </div>
+              )}
 
-              {/* Match phare du jour */}
+              {/* Match phare du jour avec heure ou score */}
               {prochainMatch && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--surga-primary, #0F172A)' }}>
                   <Trophy size={13} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <strong>{prochainMatch.competition} :</strong> {prochainMatch.equipe_domicile} vs {prochainMatch.equipe_exterieur}
+                    <strong>{prochainMatch.competition} :</strong> {prochainMatch.equipe_domicile} vs {prochainMatch.equipe_exterieur}{' '}
+                    <span style={{ fontWeight: 700, color: 'var(--surga-text2, #475569)' }}>
+                      ({formatMatchHeureBriefing(prochainMatch)})
+                    </span>
                   </span>
                 </div>
               )}
@@ -189,60 +265,22 @@ export default function SurgaAujourdhuiTab({
 
           {preferences?.audio_actif && audioScript ? (
             <SurgaAudioPlayer script={audioScript} />
-          ) : (
-            <div
-              style={{
-                marginTop: 10,
-                padding: '8px 12px',
-                backgroundColor: 'var(--surga-bg, #F8FAFC)',
-                borderRadius: 8,
-                border: '1px dashed var(--surga-border, #E2E8F0)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--surga-primary, #0F172A)' }}>
-                <Headphones size={15} color="var(--surga-accent, #D97706)" />
-                <span>Écouter le briefing à la voix <strong>(0 Mo de données)</strong></span>
-              </div>
-              {onToggleAudio && (
-                <button
-                  type="button"
-                  onClick={onToggleAudio}
-                  style={{
-                    padding: '4px 10px',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: 6,
-                    border: 'none',
-                    backgroundColor: 'var(--surga-accent, #D97706)',
-                    color: '#0F172A',
-                    cursor: 'pointer',
-                    minHeight: 28,
-                  }}
-                >
-                  Activer
-                </button>
-              )}
-            </div>
-          )}
+          ) : null}
         </div>
       )}
 
-      {/* Section Briques : Météo & Marées Dakar */}
+      {/* Section Briques : Météo (mobile uniquement sous 1024px car présente dans le rail droit sur desktop) */}
       {(!preferences?.modules_actifs || preferences.modules_actifs.includes('meteo') || !preferences.modules_actifs.includes('sans_meteo')) && (
-        <SurgaMeteoCard
-          initialMeteo={briefingData?.meteo}
-          ville={quartier}
-          onVilleChange={onVilleChange}
-        />
+        <div className="surga-context-only-mobile">
+          <SurgaMeteoCard
+            initialMeteo={briefingData?.meteo}
+            ville={quartier}
+            onVilleChange={onVilleChange}
+          />
+        </div>
       )}
 
-      {/* Section Briques : Actualités & Presse (Plafonné à 3 brèves majeures pour l'ergonomie mobile) */}
+      {/* Section Briques : Actualités & Revue de presse (Plafonné à 3 brèves majeures pour l'ergonomie mobile) */}
       {(preferences?.modules_actifs?.includes('actualites') || !preferences?.modules_actifs) && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -283,9 +321,11 @@ export default function SurgaAujourdhuiTab({
         />
       )}
 
-      {/* Section Briques : Trafic Dakar */}
+      {/* Section Briques : Trafic Dakar (mobile uniquement sous 1024px car présent dans le rail droit sur desktop) */}
       {(preferences?.modules_actifs?.includes('trafic') || !preferences?.modules_actifs) && (
-        <SurgaTraficCard onOuvrirDetail={onOpenTrafic} />
+        <div className="surga-context-only-mobile">
+          <SurgaTraficCard ville={quartier} onOuvrirDetail={onOpenTrafic} />
+        </div>
       )}
 
       {/* Section Briques : Immobilier & Alertes Dakar */}
@@ -308,17 +348,19 @@ export default function SurgaAujourdhuiTab({
         <SurgaPlacesDashboardCard onOuvrirModal={onOpenPlaces} />
       )}
 
-      {/* Section Noyau : Raccourcis Dépenses, Notes, Calculs & Micro */}
-      <SurgaDashboardTools
-        soldeKalpeFormate={soldeKalpeFormate}
-        statsApercu={statsApercu}
-        nbNotes={nbNotes}
-        nbAgenda={nbAgenda}
-        onNavigateTab={onNavigateTab}
-        onOpenCalc={onOpenCalc}
-        onOpenVoice={onOpenVoice}
-        onReinitialiser={onReinitialiser}
-      />
+      {/* Section Noyau : Raccourcis Dépenses, Notes, Calculs & Micro (mobile uniquement sous 1024px car présents dans le rail droit sur desktop) */}
+      <div className="surga-context-only-mobile">
+        <SurgaDashboardTools
+          soldeKalpeFormate={soldeKalpeFormate}
+          statsApercu={statsApercu}
+          nbNotes={nbNotes}
+          nbAgenda={nbAgenda}
+          onNavigateTab={onNavigateTab}
+          onOpenCalc={onOpenCalc}
+          onOpenVoice={onOpenVoice}
+          onReinitialiser={onReinitialiser}
+        />
+      </div>
     </>
   )
 }

@@ -195,3 +195,5 @@ export function estimerQualiteAirDakar(mois = new Date().getMonth()) {
     conseil: 'Qualité de l’air idéale pour les activités extérieures.',
   }
 }
+
+export { estLocaliteMaritime, estZoneCouverteParTrafic, LOCALITES_COTIERES_SENEGAL } from './coastal-locations'

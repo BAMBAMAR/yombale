@@ -62,6 +62,7 @@ body:has(.surga-root) #app-main {
   --surga-primary-light: #1E293B;  /* Indigo Nuit secondaire (cartes sombres, survols) */
   --surga-accent: #D97706;         /* Ambre Sahélien (bouton micro FAB, CTA, focus) */
   --surga-accent-hover: #B45309;   /* Ambre Sahélien assombri au survol */
+  --surga-accent-text: #92400E;    /* Ambre Sahélien Sombre (texte et badges, contraste 7.2:1 vérifié) */
   --surga-accent-glow: #F59E0B;    /* Or Solaire (reflets, badges actifs, lueur) */
   --surga-accent-soft: rgba(217, 119, 6, 0.08); /* Fond pastille ambre */
   --surga-emerald: #059669;        /* Émeraude Teranga (dépenses en FCFA, validations) */
@@ -644,22 +645,152 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 /* ==========================================================================
-   LAYOUT RESPONSIVE : BUREAU 3 COLONNES vs MOBILE 1 COLONNE
+   LAYOUT RESPONSIVE : 3 POINTS DE RUPTURE STRICTS (<600px, 600-1023px, >=1024px)
    ========================================================================== */
 
-/* 1. Écrans Mobiles & Tablettes (< 1024px) */
-@media (max-width: 1023px) {
+/* 1. Mobile (< 600px) : Barre d'onglets en bas, FAB micro, header mobile */
+@media (max-width: 599px) {
   .surga-desktop-sidebar,
   .surga-desktop-right-rail,
   .surga-desktop-command-wrapper {
     display: none !important;
   }
+
   .surga-mobile-header-wrap {
     display: block !important;
   }
+
+  .surga-bottom-nav {
+    display: flex !important;
+  }
+
+  .surga-fab-mic {
+    display: flex !important;
+  }
+
+  .surga-main-grid {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .surga-center-feed {
+    display: block !important;
+    width: 100% !important;
+    padding-bottom: calc(var(--surga-nav-height, 64px) + 36px) !important;
+  }
+
+  .surga-center-feed .surga-container {
+    padding-bottom: 24px !important;
+  }
 }
 
-/* 2. Écrans Desktop (>= 1024px) */
+/* 2. Tablette (600px à 1023px) : Rail d'icônes à gauche (68px), zéro barre basse */
+@media (min-width: 600px) and (max-width: 1023px) {
+  body:has(.surga-root) {
+    background-color: #EDE7E0 !important;
+  }
+
+  .surga-mobile-header-wrap,
+  .surga-bottom-nav,
+  .surga-fab-mic,
+  .surga-desktop-right-rail {
+    display: none !important;
+  }
+
+  .surga-app-shell {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .surga-main-grid {
+    display: grid !important;
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+    width: 100%;
+    min-height: 100vh;
+    background: #FFFFFF;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  }
+
+  .surga-desktop-sidebar {
+    display: flex !important;
+    width: 68px !important;
+    padding: 12px 6px !important;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    background: #FAFAF8;
+    border-right: 1px solid #ECE4DA;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .surga-desktop-sidebar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .surga-desktop-sidebar .surga-sidebar-section-title {
+    display: none !important;
+  }
+
+  .surga-desktop-sidebar .surga-sidebar-btn {
+    justify-content: center !important;
+    padding: 10px 0 !important;
+    width: 100% !important;
+  }
+
+  .surga-desktop-sidebar .surga-sidebar-btn span:not(.surga-sidebar-badge) {
+    display: none !important;
+  }
+
+  .surga-desktop-sidebar .surga-sidebar-btn div {
+    justify-content: center !important;
+  }
+
+  .surga-desktop-sidebar .surga-brand-text {
+    display: none !important;
+  }
+
+  .surga-center-feed {
+    display: flex !important;
+    flex-direction: column;
+    min-width: 0;
+    height: 100vh;
+    background: #FFFFFF;
+    position: relative;
+    overflow-y: auto;
+    overflow-y: overlay;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+  }
+
+  .surga-center-feed .surga-container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 20px 40px 20px !important;
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .surga-desktop-command-wrapper {
+    display: block !important;
+    position: sticky;
+    bottom: 0;
+    background: #FFFFFF !important;
+    border-top: 1px solid var(--surga-border, #E2E8F0);
+    padding: 12px 20px 20px 20px;
+    z-index: 20;
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04);
+  }
+}
+
+/* 3. Ordinateur (>= 1024px) : Menu latéral 240px, flux central max 720px, rail droit 300px (360px à 1920px) */
 @media (min-width: 1024px) {
   body:has(.surga-root) {
     background-color: #EDE7E0 !important;
@@ -672,7 +803,8 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 
   .surga-mobile-header-wrap,
   .surga-bottom-nav,
-  .surga-fab-mic {
+  .surga-fab-mic,
+  .surga-context-only-mobile {
     display: none !important;
   }
 
@@ -684,8 +816,8 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   }
 
   .surga-main-grid {
-    display: grid;
-    grid-template-columns: 240px minmax(0, 1fr) 300px;
+    display: grid !important;
+    grid-template-columns: 240px minmax(0, 1fr) 300px !important;
     max-width: 1360px;
     margin: 0 auto;
     width: 100%;
@@ -696,7 +828,15 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
   }
 
+  @media (min-width: 1600px) {
+    .surga-main-grid {
+      grid-template-columns: 240px minmax(0, 1fr) 360px !important;
+      max-width: 1480px;
+    }
+  }
+
   .surga-desktop-sidebar {
+    display: flex !important;
     position: sticky;
     top: 0;
     height: 100vh;
@@ -705,23 +845,22 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     overflow-y: overlay;
     background: #FAFAF8;
     border-right: 1px solid #ECE4DA;
-    display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 14px 12px;
     box-sizing: border-box;
-    scrollbar-width: none; /* Firefox : invisible */
-    -ms-overflow-style: none; /* IE / Edge : invisible */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .surga-desktop-sidebar::-webkit-scrollbar {
-    display: none; /* WebKit : Chrome/Edge/Safari invisible */
+    display: none;
     width: 0;
     height: 0;
   }
 
   .surga-center-feed {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     min-width: 0;
     height: 100vh;
@@ -758,23 +897,27 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   }
 
   .surga-center-feed .surga-container {
-    max-width: 760px;
+    max-width: 720px;
     margin: 0 auto;
-    padding: 28px 28px 24px 28px !important;
+    padding: 24px 28px 40px 28px !important;
     flex: 1;
     width: 100%;
     box-sizing: border-box;
   }
 
   .surga-desktop-command-wrapper {
+    display: block !important;
     position: sticky;
     bottom: 0;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 25%, #FFFFFF 100%);
+    background: #FFFFFF !important;
+    border-top: 1px solid var(--surga-border, #E2E8F0);
     padding: 12px 28px 24px 28px;
     z-index: 20;
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04);
   }
 
   .surga-desktop-right-rail {
+    display: flex !important;
     position: sticky;
     top: 0;
     height: 100vh;
@@ -783,16 +926,15 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     background: #FAFAF8;
     border-left: 1px solid #ECE4DA;
     padding: 24px 18px;
-    display: flex;
     flex-direction: column;
     gap: 16px;
     box-sizing: border-box;
-    scrollbar-width: none; /* Firefox : invisible */
-    -ms-overflow-style: none; /* IE / Edge : invisible */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .surga-desktop-right-rail::-webkit-scrollbar {
-    display: none; /* WebKit : Chrome/Edge/Safari invisible */
+    display: none;
     width: 0;
     height: 0;
   }
@@ -930,11 +1072,10 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-widget-label {
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 11.5px;
+  font-weight: 700;
   color: #64748B;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.01em;
 }
 
 .surga-widget-icon {

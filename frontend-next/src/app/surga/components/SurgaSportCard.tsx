@@ -52,27 +52,54 @@ export function estMatchEquipeFavorite(match: SportEventItem, favorites: string[
   })
 }
 
+export function getFavoriMatch(match: SportEventItem, favorites: string[]): string | null {
+  if (!favorites || favorites.length === 0) return null
+  const dom = (match.equipe_domicile || '').toLowerCase().trim()
+  const ext = (match.equipe_exterieur || '').toLowerCase().trim()
+  const but = (match.buteurs || '').toLowerCase().trim()
+  for (const fav of favorites) {
+    const f = fav.toLowerCase().trim()
+    if (!f) continue
+    if (dom.includes(f) || ext.includes(f) || f.includes(dom) || f.includes(ext) || but.includes(f)) {
+      return fav
+    }
+  }
+  return null
+}
+
+export function estMatchSenegalOuLigue1(match: SportEventItem): boolean {
+  if (match.categorie === 'ligue1_sn' || match.categorie === 'nationale') return true
+  const texte = `${match.competition} ${match.equipe_domicile} ${match.equipe_exterieur}`.toLowerCase()
+  return /sénégal|senegal|jaraaf|teungueth|génération foot|generation foot|casa sports|guédiawaye|guediawaye|pikine|dakar sacré|gorée|goree|linguere|sonacos/i.test(texte)
+}
+
 export function trierMatchsParPriorite(liste: SportEventItem[], favorites: string[]): SportEventItem[] {
   return [...liste].sort((a, b) => {
     const aFav = estMatchEquipeFavorite(a, favorites)
     const bFav = estMatchEquipeFavorite(b, favorites)
 
-    // 1. En priorité absolue : les équipes favorites du compte
+    // 1. En priorité absolue : les équipes ou joueurs suivis par l'utilisateur
     if (aFav && !bFav) return -1
     if (!aFav && bFav) return 1
 
-    // 2. Les matchs EN DIRECT
+    // 2. Ligue 1 sénégalaise et équipes nationales
+    const aSn = estMatchSenegalOuLigue1(a)
+    const bSn = estMatchSenegalOuLigue1(b)
+    if (aSn && !bSn) return -1
+    if (!aSn && bSn) return 1
+
+    // 3. Les matchs EN DIRECT
     if (a.statut === 'EN_DIRECT' && b.statut !== 'EN_DIRECT') return -1
     if (b.statut === 'EN_DIRECT' && a.statut !== 'EN_DIRECT') return 1
 
-    // 3. Les matchs A_VENIR par ordre chronologique
+    // 4. Les matchs A_VENIR par ordre chronologique
     if (a.statut === 'A_VENIR' && b.statut === 'A_VENIR') {
       return new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime()
     }
     if (a.statut === 'A_VENIR' && b.statut === 'TERMINE') return -1
     if (a.statut === 'TERMINE' && b.statut === 'A_VENIR') return 1
 
-    // 4. Les matchs TERMINE par ordre antéchronologique
+    // 5. Les matchs TERMINE par ordre antéchronologique
     return new Date(b.date_debut).getTime() - new Date(a.date_debut).getTime()
   })
 }
@@ -344,6 +371,8 @@ export default function SurgaSportCard({
             const isRappele = matchsRappeles.includes(matchKey)
             const isBudgete = matchsBudgetes.includes(matchKey)
 
+            const raison = !estMatchSenegalOuLigue1(match) && estFavori ? (getFavoriMatch(match, equipesFavorites) || undefined) : undefined
+
             return (
               <SurgaSportMatchItem
                 key={match.id || idx}
@@ -352,6 +381,7 @@ export default function SurgaSportCard({
                 estFavori={estFavori}
                 isRappele={isRappele}
                 isBudgete={isBudgete}
+                raisonPresence={raison}
                 onToggleRappel={handleToggleRappel}
                 onToggleBudget={handleToggleBudget}
               />

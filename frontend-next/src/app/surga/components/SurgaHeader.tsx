@@ -127,22 +127,20 @@ export default function SurgaHeader({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span
-          className="surga-header-badge"
-          title={isOnline ? 'Connecté au réseau' : 'Mode hors-ligne actif'}
-        >
-          {isOnline ? (
-            <>
-              <Wifi size={13} strokeWidth={2.5} />
-              <span className="surga-header-badge-text">En ligne</span>
-            </>
-          ) : (
-            <>
-              <WifiOff size={13} strokeWidth={2.5} />
-              <span className="surga-header-badge-text">Hors-ligne</span>
-            </>
-          )}
-        </span>
+        {!isOnline && (
+          <span
+            className="surga-header-badge"
+            title="Mode hors-ligne actif — Les données locales restent synchronisées"
+            style={{
+              backgroundColor: 'rgba(100, 116, 139, 0.1)',
+              color: 'var(--surga-text2, #475569)',
+              border: '1px solid var(--surga-border, #E2E8F0)',
+            }}
+          >
+            <WifiOff size={13} strokeWidth={2.5} />
+            <span className="surga-header-badge-text">Hors ligne</span>
+          </span>
+        )}
 
         {/* Bouton Compte / Connexion (Taille tactile confortable >= 38px) */}
         {(onOpenAuth || onOpenCompte) && (

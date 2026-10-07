@@ -78,15 +78,11 @@ router.get('/briefing', tokenOptional, async (req, res) => {
     }).format(new Date());
     const dateFormatted = today.charAt(0).toUpperCase() + today.slice(1);
 
-    // Synthèse personnalisée au vouvoiement (Règle d'or D19)
+    // Phrase d'accueil courte et directe (SRG-UI-10)
     const nbBreves = items.length;
     const nbSports = sports.length;
-    const nbAgenda = agendaDuJour.length;
 
-    let messageSynthese = `Bonjour. Voici votre briefing de ce ${today.toLowerCase()} pour ${quartierPrincipal} : ${nbBreves} brève${nbBreves > 1 ? 's' : ''} d’actualité sourcée${nbBreves > 1 ? 's' : ''}${nbSports > 0 ? ` et ${nbSports} actualité${nbSports > 1 ? 's' : ''} sportive${nbSports > 1 ? 's' : ''}` : ''}.`;
-    if (nbAgenda > 0) {
-      messageSynthese += ` Vous avez ${nbAgenda} rendez-vous ou rappel${nbAgenda > 1 ? 's' : ''} programmé${nbAgenda > 1 ? 's' : ''} aujourd’hui.`;
-    }
+    const messageSynthese = `Bonjour. Pour ${quartierPrincipal} ce matin : ${nbBreves} brève${nbBreves > 1 ? 's' : ''}${nbSports > 0 ? ` et ${nbSports} actualité${nbSports > 1 ? 's' : ''} sportive${nbSports > 1 ? 's' : ''}` : ''}.`;
 
     res.json({
       success: true,

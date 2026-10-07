@@ -77,43 +77,47 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
 
   const enLecture = playerState.statut !== 'arrete'
 
+  const nbMots = script ? script.trim().split(/\s+/).length : 0
+  const dureeEstimeeSec = Math.max(30, Math.round((nbMots / 130) * 60))
+  const dureeTexte = dureeEstimeeSec >= 60 ? `${Math.round(dureeEstimeeSec / 60)} min` : `${dureeEstimeeSec} s`
+
   return (
     <div
       style={{
-        marginTop: 10,
-        padding: enLecture ? '10px 12px' : '8px 12px',
-        backgroundColor: 'var(--surga-surface, #FFFFFF)',
-        borderRadius: 10,
+        marginTop: 8,
+        padding: enLecture ? '8px 12px' : '6px 10px',
+        backgroundColor: 'var(--surga-bg, #F8FAFC)',
+        borderRadius: 8,
         border: '1px solid var(--surga-border, #E2E8F0)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 6,
       }}
     >
-      {/* Ligne principale : Action d'écoute contextuelle */}
+      {/* Ligne discrète d'écoute (SRG-UI-08) */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-          {/* Bouton Play / Pause compact */}
+          {/* Bouton Play / Pause discret (neutre, sans bouton orange plein) */}
           <button
             type="button"
             onClick={handleTogglePlay}
-            aria-label={playerState.statut === 'lecture' ? 'Mettre en pause' : 'Écouter le briefing'}
+            aria-label={playerState.statut === 'lecture' ? 'Mettre en pause' : `Écouter le briefing (${dureeTexte})`}
             style={{
-              width: 34,
-              height: 34,
+              width: 30,
+              height: 30,
               borderRadius: '50%',
-              backgroundColor: 'var(--surga-accent, #D97706)',
-              color: '#0F172A',
-              border: 'none',
+              backgroundColor: enLecture ? 'var(--surga-primary, #0F172A)' : '#FFFFFF',
+              color: enLecture ? '#FFFFFF' : 'var(--surga-primary, #0F172A)',
+              border: '1px solid var(--surga-border, #E2E8F0)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               flexShrink: 0,
-              transition: 'transform 0.15s ease',
+              transition: 'background 0.15s ease',
             }}
           >
-            {playerState.statut === 'lecture' ? <Pause size={15} /> : <Play size={15} style={{ marginLeft: 2 }} />}
+            {playerState.statut === 'lecture' ? <Pause size={13} /> : <Play size={13} style={{ marginLeft: 2 }} />}
           </button>
 
           {/* Bouton Stop conditionnel (seulement en cours de lecture) */}
@@ -123,8 +127,8 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
               onClick={handleStop}
               aria-label="Arrêter la lecture"
               style={{
-                width: 28,
-                height: 28,
+                width: 26,
+                height: 26,
                 borderRadius: '50%',
                 backgroundColor: 'var(--surga-bg, #F8FAFC)',
                 border: '1px solid var(--surga-border, #E2E8F0)',
@@ -136,34 +140,28 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
                 flexShrink: 0,
               }}
             >
-              <Square size={11} />
+              <Square size={10} />
             </button>
           )}
 
-          <div style={{ minWidth: 0 }}>
-            <div
+          <div style={{ minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span
               style={{
-                fontSize: 13,
-                fontWeight: 700,
+                fontSize: 12,
+                fontWeight: 600,
                 color: 'var(--surga-primary, #0F172A)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
                 whiteSpace: 'nowrap',
               }}
             >
-              <Volume2 size={13} color="var(--surga-accent, #D97706)" />
-              <span>
-                {playerState.statut === 'lecture'
-                  ? 'Lecture en cours...'
-                  : playerState.statut === 'pause'
-                  ? 'En pause'
-                  : 'Écouter le briefing'}
-              </span>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text2, #475569)', fontWeight: 500 }}>
-              Synthèse vocale locale (0 Mo)
-            </div>
+              {playerState.statut === 'lecture'
+                ? 'Lecture en cours...'
+                : playerState.statut === 'pause'
+                ? 'En pause'
+                : `Écouter (${dureeTexte})`}
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--surga-text2, #475569)', fontWeight: 500 }}>
+              · Lecture sans connexion
+            </span>
           </div>
         </div>
 

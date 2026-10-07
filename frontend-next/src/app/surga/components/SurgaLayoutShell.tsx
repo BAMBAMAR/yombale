@@ -227,6 +227,7 @@ export default function SurgaLayoutShell({
           soldeKalpeFormate={soldeKalpeFormate}
           nbNotes={nbNotes}
           nbAgenda={nbAgenda}
+          ville={quartier}
           onNavigateTab={onTabChange}
           onOpenTrafic={onOpenTrafic}
         />

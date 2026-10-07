@@ -12,8 +12,21 @@ interface SurgaSportMatchItemProps {
   estFavori: boolean
   isRappele: boolean
   isBudgete: boolean
+  raisonPresence?: string
   onToggleRappel: (match: SportEventItem, e: React.MouseEvent) => void
   onToggleBudget: (match: SportEventItem, e: React.MouseEvent) => void
+}
+
+function formatMatchHeureSeule(dateStr: string): string {
+  try {
+    const d = new Date(dateStr)
+    return new Intl.DateTimeFormat('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(d)
+  } catch {
+    return 'À venir'
+  }
 }
 
 function formatMatchDate(dateStr: string): string {
@@ -39,6 +52,7 @@ export default function SurgaSportMatchItem({
   estFavori,
   isRappele,
   isBudgete,
+  raisonPresence,
   onToggleRappel,
   onToggleBudget,
 }: SurgaSportMatchItemProps) {
@@ -98,7 +112,26 @@ export default function SurgaSportMatchItem({
             {match.competition}
           </span>
 
-          {estFavori && (
+          {raisonPresence && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 3,
+                fontSize: 10,
+                fontWeight: 700,
+                color: '#92400E',
+                backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                border: '1px solid rgba(217, 119, 6, 0.25)',
+                padding: '1px 6px',
+                borderRadius: 4,
+              }}
+            >
+              Vous suivez {raisonPresence}
+            </span>
+          )}
+
+          {estFavori && !raisonPresence && (
             <span
               style={{
                 display: 'inline-flex',
@@ -173,8 +206,8 @@ export default function SurgaSportMatchItem({
         ) : (
           <span
             style={{
-              fontSize: 11,
-              fontWeight: 700,
+              fontSize: 12,
+              fontWeight: 800,
               padding: '2px 8px',
               borderRadius: 6,
               backgroundColor: 'rgba(15, 23, 42, 0.06)',
@@ -182,7 +215,7 @@ export default function SurgaSportMatchItem({
               flexShrink: 0,
             }}
           >
-            À venir
+            {formatMatchHeureSeule(match.date_debut)}
           </span>
         )}
       </div>

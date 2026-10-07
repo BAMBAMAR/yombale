@@ -3,6 +3,43 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Revue UI V2] — Résolution Intégrale des Tickets UI (SRG-UI-01 à SRG-UI-19)
+- **Objectif Atteint :**
+  - Traitement complet des 19 tickets issus de la revue de l'écran « Aujourd'hui » (mobile et bureau) : cohérence et source unique de localisation, suppression des marées pour les villes de l'intérieur, sourçage et horodatage des actualités, filtre de fraîcheur 24h, éradication des doublons sur grand écran, refonte responsive sur 3 points de rupture stricts (< 600px, 600–1023px, ≥ 1024px), sports en 3 paliers avec heures et scores, barre de commande 100% opaque et marges de fin de défilement.
+- **Réalisations & Fichiers Modifiés :**
+  1. *SRG-UI-01 & SRG-UI-02 (Localisation unique & Localités côtières vs intérieures)* :
+     - `frontend-next/src/lib/coastal-locations.ts` (CRÉATION) : Dictionnaire `LOCALITES_COTIERES_SENEGAL`, fonctions `estLocaliteMaritime` et `estZoneCouverteParTrafic`.
+     - `frontend-next/src/app/surga/components/SurgaMeteoCard.tsx` & `SurgaMeteoDetailBloc.tsx` : Titre dynamique « Météo » ou « Météo et marées », masquage du bloc marées pour les localités de l'intérieur (Kaffrine, Kaolack, etc.). Suppression du nom de ville redondant dans le titre de carte.
+     - `frontend-next/src/app/surga/components/SurgaTraficCard.tsx` : Intégration de la prop `ville`, notice d'indisponibilité propre pour les localités non couvertes.
+     - `frontend-next/src/app/surga/components/SurgaDesktopSidebar.tsx` : Libellé du compte simplifié à « Compte » (sans ville entre parenthèses).
+  2. *SRG-UI-03 & SRG-UI-06 (Actualités sourcées, horodatées et non tronquées)* :
+     - `frontend-next/src/app/surga/components/SurgaAujourdhuiTab.tsx` : Sous chaque titre du digest matinal : « Nom du média · heure/date ». Titres cliquables ouvrant l'article source. Bouton de partage WhatsApp (`SurgaShareButton`) par brève. Clamping à 2 lignes maximum (`-webkit-line-clamp: 2`).
+  3. *SRG-UI-04 (Filtre de fraîcheur 24h)* :
+     - `backend/services/surga/rss-collector.js` : Fenêtre stricte de 24h (`published_at >= NOW() - INTERVAL '24 hours'`), exclusion des flux sans date de publication fiable. Décision O10 consignée dans `docs/surga/DECISIONS.md`.
+  4. *SRG-UI-05 (Suppression des doublons sur ordinateur)* :
+     - `frontend-next/src/app/surga/components/SurgaAujourdhuiTab.tsx` : Isolation des cartes météo, trafic et outils contextuels dans `.surga-context-only-mobile`.
+     - `frontend-next/src/styles/surga.css` : `.surga-context-only-mobile` masqué sur desktop (≥ 1 024 px). Les blocs de contexte vivent uniquement dans le rail droit sur grand écran. Suppression du statut « Journée libre » dans la carte briefing.
+  5. *SRG-UI-07 & SRG-UI-08 (Alerte matinale & Audio sobre)* :
+     - `frontend-next/src/app/surga/components/SurgaBriefingActions.tsx` : Suppression du bandeau orange avec croix.
+     - `frontend-next/src/app/surga/components/SurgaAujourdhuiTab.tsx` : Clic sur « Prévu à {heure} » ouvre les réglages du briefing. Suppression complète du bloc CTA audio lorsque l'option est désactivée.
+     - `frontend-next/src/app/surga/components/SurgaAudioPlayer.tsx` : Remplacement du bouton orange plein par un bouton neutre discret, durée estimée intégrée, libellé « Lecture sans connexion ».
+  6. *SRG-UI-09 (Sport personnalisé, heures & scores)* :
+     - `frontend-next/src/app/surga/components/SurgaSportCard.tsx` & `backend/services/surga/sport-service.js` : Tri par priorité (1. Équipes/joueurs favoris, 2. Ligue 1 sénégalaise & sélection nationale, 3. Reste).
+     - `frontend-next/src/app/surga/components/SurgaSportMatchItem.tsx` : Badge explicatif « Vous suivez [équipe/joueur] » sur les matches étrangers, affichage de l'heure pour les matches à venir et du score pour les matches terminés.
+  7. *SRG-UI-10 (Phrase d'accueil concise)* :
+     - `backend/routes/surga/briefing.js` & `SurgaAujourdhuiTab.tsx` : « Bonjour. Pour {quartier} ce matin : X brèves et Y actualités sportives. » sans répétition de date.
+  8. *SRG-UI-11, SRG-UI-12, SRG-UI-13 & SRG-UI-14 (Mise en page, défilement et menu)* :
+     - `frontend-next/src/styles/surga.css` : Grille responsive 3 points de rupture (< 600px, 600–1023px, ≥ 1024px). Largeur max 720px centrée pour le flux central. Rail droit extensible à 360px au-delà de 1600px. Fond 100% opaque `#FFFFFF` derrière la barre de commande desktop. Marge basse sécurisée (+36px mobile, +40px desktop). Suppression de `text-transform: uppercase` sur `.surga-widget-label`.
+     - `frontend-next/src/app/surga/components/SurgaDesktopSidebar.tsx` : Neutralisation de « Plus de services », retrait des badges non indispensables, alignement sur les onglets mobiles.
+  9. *SRG-UI-15, SRG-UI-16, SRG-UI-17, SRG-UI-18, SRG-UI-19 (Rail contextuel, sécurité, contrastes et Wi-Fi)* :
+     - `frontend-next/src/app/surga/components/SurgaDesktopRightRail.tsx` : Statut textuel du trafic (« fluide », « dense », « bouché ») + horodatage « Mis à jour il y a 4 min ». Mémo épinglé lisant la première note épinglée réelle. Infobulle explicative pour « Kalpé ».
+     - `frontend-next/src/styles/surga.css` : Token `--surga-accent-text: #92400E` (contraste 7.2:1).
+     - `frontend-next/src/app/surga/components/SurgaHeader.tsx` : Icône Wi-Fi affichée uniquement en mode hors ligne avec `WifiOff`.
+- **Validation & Tests :**
+  - Backend Jest : 129/129 tests réussis (`npx jest tests/unit/surga.test.js`).
+  - Linter Slop : validé.
+  - Plafond < 450 lignes respecté sur l'ensemble des composants React.
+
 ### [2026-10-07 — Nuit 9 suite - 15] — Confidentialité Renforcée Sama Xaalis (Code PIN 4 Chiffres & Bouton Afficher/Masquer)
 - **Objectif Atteint :**
   - Répondre directement à la directive : « plus de confidentialite pour sama xaalis avoir meme un code pin pour acceder et bouton afficher masquer ».

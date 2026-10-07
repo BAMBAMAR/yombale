@@ -1,4 +1,35 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Tickets UI V2 — Écran « Aujourd'hui » Mobile & Ordinateur (SRG-UI-01 à SRG-UI-19) (Session 2026-10-07 - Revue UI, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Traitement exhaustif et méthodique des 19 tickets UI issus de la revue du 7 octobre 2026 (`docs/surga/TICKETS_UI_V2.md`) couvrant la cohérence des données, le briefing du matin, la grille responsive (< 600px, 600-1023px, ≥ 1024px) et le rail droit contextuel.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **P0 — Cohérence et Fiabilité des Données** :
+       - **SRG-UI-01 (Une seule localisation)** : `preferences.quartiers[0]` érigé en source de vérité unique. Synchronisation sans rechargement de la météo, du trafic et du rail droit. Affichage de la ville une seule fois en tête du briefing. Libellé « Compte » épuré sans parenthèse de ville. Brique trafic affiche « Trafic disponible pour Dakar uniquement » pour les localités non couvertes.
+       - **SRG-UI-02 (Pas de marées pour l'intérieur)** : Création du référentiel `frontend-next/src/lib/coastal-locations.ts`. Localités côtières (Dakar, Saint-Louis, Mbour, Ziguinchor...) avec « Météo et marées », villes intérieures (Kaffrine, Kaolack, Thiès, Tambacounda...) avec titre sobre « Météo » et exclusion des prédictions de marée.
+       - **SRG-UI-03 (Source & heure sous chaque titre)** : Chaque titre du briefing matinal affiche sous lui « Nom du média · heure/date de publication » en gris clair. Liens directs cliquables vers la source et bouton « Partager » WhatsApp (`SurgaShareButton`) par brève.
+       - **SRG-UI-04 (Filtre de fraîcheur 24h)** : Filtre strict dans `backend/services/surga/rss-collector.js` : `published_at >= NOW() - INTERVAL '24 hours'`. Rejet automatique des articles dépourvus de date de publication source fiable. Enregistrement du point O10 dans `DECISIONS.md`.
+       - **SRG-UI-05 (Suppression des doublons desktop)** : Blocs de contexte (journée, météo, Sama Xaalis, trafic, mémo) réservés exclusivement au rail droit sur desktop (≥ 1 024 px) et réintégrés sous le briefing sous 1 024 px via la classe d'isolation `.surga-context-only-mobile`. Élimination du doublon « Journée libre » dans la carte briefing.
+    2. **P1 — Briefing & Ergonomie** :
+       - **SRG-UI-06 (Titres non tronqués)** : Plafond à 2 lignes (`-webkit-line-clamp: 2`) évitant la coupure agressive à 1 ligne.
+       - **SRG-UI-07 (Bandeau alerte matinale remplacé)** : Suppression du bandeau orange avec croix. L'heure « Prévu à {heure} » dans l'en-tête de carte devient un bouton cliquable ouvrant directement les réglages du briefing.
+       - **SRG-UI-08 (Audio discret)** : Bloc audio CTA masqué par défaut si l'option est désactivée. Lorsque activé, affichage d'une ligne sobre « Écouter (durée) » sans bouton orange plein, avec libellé « Lecture sans connexion ».
+       - **SRG-UI-09 (Sport personnalisé & utile)** : Priorisation à 3 niveaux (équipes/joueurs suivis > Ligue 1 sénégalaise & sélection nationale > autres championnats). Matches étrangers accompagnés du badge « Vous suivez [nom] ». Affichage systématique de l'heure (à venir) ou du score (terminé).
+       - **SRG-UI-10 (Phrase d'accueil concise)** : « Bonjour. Pour {quartier} ce matin : X brèves et Y actualités sportives. » sans redondance de la date.
+    3. **P1 — Grille Responsive & Mise en page** :
+       - **SRG-UI-11 (Largeur maximale 720px)** : Conteneur central limité à 720px centré. Rail droit extensible à 360px pour les grands écrans 1 920px (`min-width: 1600px`).
+       - **SRG-UI-12 (Défilement libre sous la barre de commande)** : Fond 100% opaque `#FFFFFF` derrière la barre de commande desktop avec bordure fine. Marges basses de dégagement (+36px mobile, +40px desktop) garantissant que la dernière carte est entièrement visible.
+       - **SRG-UI-13 (Étiquettes calmes)** : Suppression de `text-transform: uppercase` sur `.surga-widget-label`, police 11.5px en gris `#64748B`.
+       - **SRG-UI-14 (Menu latéral harmonisé)** : « Plus de services » en style neutre, suppression des badges parasites, alignement strict sur les onglets mobiles (Aujourd'hui, Notes, Sama Xaalis, Agenda).
+    4. **P2 — Rail Droit & Détails** :
+       - **SRG-UI-15 (Trafic honnête)** : Affichage du statut textuel (« fluide », « dense », « bouché ») et horodatage « Mis à jour il y a 4 min ». Notice explicite hors Dakar.
+       - **SRG-UI-16 (Mémo épinglé réel)** : Affichage des deux premières lignes de la note épinglée réelle ou invitation à épingler. Accords singulier/pluriel validés.
+       - **SRG-UI-17 (Terme « Kalpé »)** : Infobulle explicative `(portefeuille)` ajoutée. Point O11 consigné dans `DECISIONS.md`.
+       - **SRG-UI-18 (Contraste de l'orange)** : Nouveau token `--surga-accent-text: #92400E` (ratio 7.2:1) assurant une lisibilité optimale sur fond blanc et ambre clair.
+       - **SRG-UI-19 (Icône Wi-Fi mobile)** : Masquée par défaut en ligne, visible uniquement lors d'une déconnexion réseau avec `WifiOff`.
+  * **Validation & Tests** :
+    - Tests Unitaires Backend : 129/129 PASS (`npx jest tests/unit/surga.test.js`).
+    - Audit Anti-AI-Slop : 0 infraction bloquante (`npm run lint:slop`).
+
 - **Surga / Confidentialité Renforcée Sama Xaalis : Verrouillage par Code PIN & Bouton Afficher/Masquer les Montants (Session 2026-10-07 - Nuit 9 suite - 15, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe, immédiate et soignée à la demande utilisateur : « plus de confidentialite pour sama xaalis avoir meme un code pin pour acceder et bouton afficher masquer ».

@@ -60,7 +60,7 @@ export default function SurgaDesktopSidebar({
           <SurgaBrandLogo taille={34} afficherTexte={true} onClick={() => onTabChange('aujourdhui')} />
         </div>
 
-        {/* GROUPE 1 : QUOTIDIEN */}
+        {/* GROUPE 1 : NAVIGATION COMMUNE (Même ordre et noms que barre mobile) */}
         <div className="surga-sidebar-section-title">Quotidien</div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <button
@@ -81,7 +81,7 @@ export default function SurgaDesktopSidebar({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <FileText size={17} />
-              <span>Notes &amp; Listes</span>
+              <span>Notes</span>
             </div>
             {nbNotes > 0 && <span className="surga-sidebar-badge">{nbNotes}</span>}
           </button>
@@ -104,9 +104,8 @@ export default function SurgaDesktopSidebar({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Calendar size={17} />
-              <span>Agenda &amp; Rappels</span>
+              <span>Agenda</span>
             </div>
-            {nbAgenda > 0 && <span className="surga-sidebar-badge">{nbAgenda} rdv</span>}
           </button>
         </nav>
 
@@ -120,9 +119,8 @@ export default function SurgaDesktopSidebar({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Navigation size={17} />
-              <span>Trafic Dakar</span>
+              <span>Trafic</span>
             </div>
-            <span className="surga-sidebar-badge live">Live</span>
           </button>
 
           <button
@@ -147,7 +145,7 @@ export default function SurgaDesktopSidebar({
             </div>
           </button>
 
-          {/* SERVICE SHOPPING NOPALOU (AU-DESSUS DE BONNES ADRESSES) */}
+          {/* SERVICE SHOPPING NOPALOU (AU-DESSUS DE BONNES ADRESSES, MONOLIGNE SANS BADGE) */}
           {onOpenShopping && (
             <button
               type="button"
@@ -158,7 +156,6 @@ export default function SurgaDesktopSidebar({
                 <ShoppingBag size={17} />
                 <span>Shopping Nopalou</span>
               </div>
-              <span className="surga-sidebar-badge promo">Boutiques</span>
             </button>
           )}
 
@@ -173,35 +170,18 @@ export default function SurgaDesktopSidebar({
             </div>
           </button>
 
-          {/* BOUTON PLUS DE SERVICES (CENTRALISE LES AUTRES SERVICES SANS DÉFILEMENT DU MENU) */}
+          {/* BOUTON PLUS DE SERVICES (STYLE NEUTRE SANS BADGE AGRESSIF) */}
           {onOpenPlusServices && (
             <button
               type="button"
               onClick={onOpenPlusServices}
-              className="surga-sidebar-btn surga-sidebar-btn-more"
-              title="Accéder aux autres services sénégalais"
-              style={{
-                marginTop: 4,
-                border: '1px dashed #D9CFC4',
-                backgroundColor: '#F7F3EE',
-                color: '#1C2B4A',
-                fontWeight: 600,
-              }}
+              className="surga-sidebar-btn"
+              title="Accéder aux autres services"
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <LayoutGrid size={17} style={{ color: '#C75B00' }} />
+                <LayoutGrid size={17} />
                 <span>Plus de services</span>
               </div>
-              <span
-                className="surga-sidebar-badge"
-                style={{
-                  backgroundColor: 'rgba(199, 91, 0, 0.12)',
-                  color: '#C75B00',
-                  fontWeight: 700,
-                }}
-              >
-                +7
-              </span>
             </button>
           )}
         </nav>
@@ -227,7 +207,7 @@ export default function SurgaDesktopSidebar({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <User size={16} />
-            <span>Compte ({quartier})</span>
+            <span>Compte</span>
           </div>
         </button>
       </div>

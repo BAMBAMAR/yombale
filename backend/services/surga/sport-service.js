@@ -271,29 +271,40 @@ async function filtrerMatchsSport({ equipesSuivies = [], categorie = 'tous', lim
     resultats = resultats.filter((m) => m.categorie === categorie);
   }
 
-  // Filtre et priorisation par équipes suivies du compte
-  if (Array.isArray(equipesSuivies) && equipesSuivies.length > 0) {
-    const termesMinuscules = equipesSuivies.map((eq) => eq.toLowerCase().trim());
-    const estFavori = (m) => {
-      const dom = (m.equipe_domicile || '').toLowerCase();
-      const ext = (m.equipe_exterieur || '').toLowerCase();
-      const but = (m.buteurs || '').toLowerCase();
-      return termesMinuscules.some((terme) =>
-        dom.includes(terme) || ext.includes(terme) || but.includes(terme) || terme.includes(dom) || terme.includes(ext)
-      );
-    };
+  // Priorisation globale :
+  // 1. Équipes / Joueurs suivis du compte
+  // 2. Ligue 1 sénégalaise et Équipes nationales
+  // 3. Reste des rencontres
+  const estSnOuL1 = (m) => {
+    if (m.categorie === 'ligue1_sn' || m.categorie === 'nationale') return true;
+    const txt = `${m.competition} ${m.equipe_domicile} ${m.equipe_exterieur}`.toLowerCase();
+    return /sénégal|senegal|jaraaf|teungueth|génération foot|casa sports|guédiawaye|pikine|dakar sacré|gorée/i.test(txt);
+  };
 
-    if (categorie === 'mes_equipes') {
-      const correspondants = tous.filter(estFavori);
-      if (correspondants.length > 0) {
-        resultats = correspondants;
-      }
-    } else {
-      // Priorité aux équipes favorites du compte au sommet de la liste
-      const favoris = resultats.filter(estFavori);
-      const autres = resultats.filter((m) => !estFavori(m));
-      resultats = [...favoris, ...autres];
+  const termesMinuscules = Array.isArray(equipesSuivies) && equipesSuivies.length > 0
+    ? equipesSuivies.map((eq) => eq.toLowerCase().trim())
+    : [];
+
+  const estFavori = (m) => {
+    if (termesMinuscules.length === 0) return false;
+    const dom = (m.equipe_domicile || '').toLowerCase();
+    const ext = (m.equipe_exterieur || '').toLowerCase();
+    const but = (m.buteurs || '').toLowerCase();
+    return termesMinuscules.some((terme) =>
+      dom.includes(terme) || ext.includes(terme) || but.includes(terme) || terme.includes(dom) || terme.includes(ext)
+    );
+  };
+
+  if (categorie === 'mes_equipes') {
+    const correspondants = tous.filter(estFavori);
+    if (correspondants.length > 0) {
+      resultats = correspondants;
     }
+  } else {
+    const favoris = resultats.filter(estFavori);
+    const snL1 = resultats.filter((m) => !estFavori(m) && estSnOuL1(m));
+    const autres = resultats.filter((m) => !estFavori(m) && !estSnOuL1(m));
+    resultats = [...favoris, ...snL1, ...autres];
   }
 
   return resultats.slice(0, limit);
