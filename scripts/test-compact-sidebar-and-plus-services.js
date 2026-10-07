@@ -42,7 +42,7 @@ const path = require('path');
   });
   console.log('Diagnostic Sidebar :', JSON.stringify(sidebarCheck, null, 2));
 
-  const artifactDir = 'C:\\Users\\HP\\.gemini\antigravity-ide\\brain\\11306b31-29a6-43fa-a4f1-80ce61e44cfb';
+  const artifactDir = 'C:/Users/HP/.gemini/antigravity-ide/brain/11306b31-29a6-43fa-a4f1-80ce61e44cfb';
 
   // 2. Capture de la Sidebar compacte sans défilement
   await page.screenshot({ path: path.join(artifactDir, 'surga_desktop_sidebar_compact.png') });
