@@ -181,8 +181,12 @@ export function ProduitCard({
   onWhatsApp,
 }: {
   produit: ProduitItem
-  onWhatsApp: (p: ProduitItem) => void
+  onWhatsApp?: (p: ProduitItem) => void
 }) {
+  const productUrl = produit.boutique_slug || produit.boutique_id
+    ? `/boutiques/${produit.boutique_slug || produit.boutique_id}/produits/${produit.id}`
+    : `/produit/${produit.id}`
+
   return (
     <div
       style={{
@@ -193,14 +197,21 @@ export function ProduitCard({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
+        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
       }}
     >
-      <div>
+      <a
+        href={productUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+        title="Voir le produit"
+      >
         {produit.images && produit.images[0] ? (
           <img
             src={produit.images[0]}
             alt={produit.nom}
-            style={{ width: '100%', height: 140, objectFit: 'cover' }}
+            style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }}
           />
         ) : (
           <div
@@ -244,31 +255,56 @@ export function ProduitCard({
             {produit.prix.toLocaleString('fr-FR')} FCFA
           </div>
         </div>
-      </div>
+      </a>
 
       <div style={{ padding: '0 12px 12px 12px', display: 'flex', gap: 6 }}>
-        <button
-          type="button"
-          onClick={() => onWhatsApp(produit)}
+        <a
+          href={productUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Voir la fiche produit complète et commander"
           style={{
             flex: 1,
             padding: '7px 10px',
             borderRadius: 6,
             backgroundColor: 'var(--navy, #1C2B4A)',
             color: '#FFFFFF',
-            border: 'none',
+            textDecoration: 'none',
             fontSize: 11,
             fontWeight: 700,
-            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 4,
+            gap: 5,
           }}
         >
-          <MessageCircle size={13} color="#25D366" />
+          <ShoppingBag size={13} />
           <span>Commander</span>
-        </button>
+        </a>
+        {onWhatsApp && produit.boutique_tel && (
+          <button
+            type="button"
+            onClick={() => onWhatsApp(produit)}
+            title="Poser une question sur WhatsApp"
+            aria-label="Contacter le vendeur sur WhatsApp"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 6,
+              backgroundColor: 'rgba(37, 211, 102, 0.1)',
+              border: '1px solid rgba(37, 211, 102, 0.25)',
+              color: '#25D366',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              padding: 0,
+            }}
+          >
+            <MessageCircle size={14} />
+          </button>
+        )}
       </div>
     </div>
   )

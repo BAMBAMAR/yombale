@@ -1,13 +1,23 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Revue UI V2 — Tickets SRG-UI-01 à SRG-UI-19 : Cohérence Données, Filtre 24h, Suppression Doublons Desktop, Grille 3 Breakpoints, Sport 3 Paliers)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Shopping — Redirection du Bouton « Commander » vers la Fiche Produit Marketplace Nopalou)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **19/19 Tickets UI V2 Résolus (SRG-UI-01 à 19), Localisation Unique, Zéro Marée Intérieur, Source & Heure Actualités, Filtre 24h, Zéro Doublon Desktop, 3 Breakpoints (<600px, 600-1023px, >=1024px), Sport 3 Paliers, Command Bar Opaque, Contrastes Vérifiés, 100% Tests Jest PASS (129/129), Linter Slop OK**  
+> **Statut global** : 🟢 **Bouton Commander relié à la Fiche Produit (`ProduitCard`), 19/19 Tickets UI V2 Résolus (SRG-UI-01 à 19), Localisation Unique, Zéro Marée Intérieur, Source & Heure Actualités, Filtre 24h, Zéro Doublon Desktop, 3 Breakpoints (<600px, 600-1023px, >=1024px), Sport 3 Paliers, Command Bar Opaque, Contrastes Vérifiés, 100% Tests Jest PASS (129/129), Linter Slop OK**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
+
+-5. **Module Shopping — Redirection du Bouton « Commander » vers la Fiche Produit (100% DONE — 7 Octobre 2026)** :
+   - Traitement direct de la demande utilisateur : « Commander doit renvoyer vers le produit au lieu de whatsapp ».
+   - Problématique : Dans la modale Shopping de Surga (`SurgaShoppingCards.tsx` / `ProduitCard`), le clic sur « Commander » ouvrait directement un message WhatsApp (`wa.me`) sans passer par la page produit. L'utilisateur était privé de la sélection des variantes (tailles, pointures, coloris) et des options d'achat en ligne (Wave / Orange Money).
+   - Solution appliquée :
+     - Construction de l'URL canonique produit (`/boutiques/${boutique_slug || boutique_id}/produits/${produit.id}` ou `/produit/${produit.id}`).
+     - Le bouton principal « Commander » est désormais un lien direct `<a>` vers la fiche produit officielle avec l'icône vectorielle `<ShoppingBag size={13} />`.
+     - L'ensemble de la carte produit (image, nom, prix FCFA) est cliquable vers la fiche produit.
+     - Un bouton secondaire discret 32×32px avec `<MessageCircle size={14} />` permet de contacter le commerçant sur WhatsApp si besoin.
+     - Validation : 129/129 tests Jest PASS, linter slop validé, page produit HTTP 200 OK.
 
 -4. **Tickets UI V2 — Écran « Aujourd'hui » Mobile & Ordinateur (100% DONE — Revue UI du 7 Octobre 2026)** :
    - Mise en conformité stricte avec les 19 tickets de `docs/surga/TICKETS_UI_V2.md` :

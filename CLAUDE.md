@@ -50,6 +50,13 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Module Shopping — Redirection du Bouton « Commander » vers la Fiche Produit (Session 2026-10-07, branche `feature/surga`)** :
+  - *Correction UX & Parcours d'Achat Produit* : Réponse à la demande utilisateur (« Commander doit renvoyer vers le produit au lieu de whatsapp »).
+  - Dans `frontend-next/src/app/surga/components/SurgaShoppingCards.tsx` (`ProduitCard`), le clic sur « Commander » redirige désormais vers la fiche produit officielle Nopalou (`/boutiques/${boutique_slug || boutique_id}/produits/${produit.id}` ou `/produit/${produit.id}`) au lieu d'ouvrir directement WhatsApp.
+  - La fiche produit permet à l'acheteur de consulter les variantes (tailles/pointures, couleurs), le stock, d'ajouter au panier et de commander via Wave/Orange Money ou WhatsApp.
+  - La carte produit complète (image, nom, prix) est également cliquable vers la fiche produit, et un bouton d'action secondaire discret 32×32px avec `<MessageCircle />` permet de contacter le marchand sur WhatsApp sans bloquer le parcours d'achat.
+  - Validation : 129/129 tests Jest PASS, linter slop 0 erreur bloquante.
+
 - **Surga / Tickets UI V2 — Écran « Aujourd'hui » Mobile & Ordinateur (SRG-UI-01 à SRG-UI-19) (Session 2026-10-07 - Revue UI, branche `feature/surga`)** :
   - *Mise en œuvre intégrale des 19 tickets UI issue de la revue du 7 octobre 2026 (`docs/surga/TICKETS_UI_V2.md`)* :
     1. **P0 — Cohérence et Fiabilité des Données** :

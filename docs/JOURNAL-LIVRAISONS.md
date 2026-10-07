@@ -1,4 +1,20 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Module Shopping — Redirection du Bouton « Commander » vers la Fiche Produit (Session 2026-10-07, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse directe à la demande utilisateur : « Commander doit renvoyer vers le produit au lieu de whatsapp ».
+    - Problématique : Sur les cartes de produits de la modale Shopping de Surga (`ProduitCard`), le clic sur le bouton principal « Commander » déclenchait l'ouverture de WhatsApp (`wa.me`) au lieu de mener à la page complète du produit sur la marketplace Nopalou. Cela empêchait l'acheteur de consulter les variantes (pointures/tailles, coloris), de vérifier les options ou de payer en ligne par Wave / Orange Money.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    - `frontend-next/src/app/surga/components/SurgaShoppingCards.tsx` :
+      - Construction de l'URL canonique produit : `/boutiques/${produit.boutique_slug || produit.boutique_id}/produits/${produit.id}` (ou `/produit/${produit.id}` en repli).
+      - Enveloppement du bloc supérieur de la carte (image, catégorie, nom, prix FCFA) dans un lien cliquable `<a>` ouvrant la fiche produit.
+      - Transformation du bouton principal « Commander » en lien direct `<a href={productUrl} target="_blank" rel="noopener noreferrer">` avec l'icône vectorielle `<ShoppingBag size={13} />`.
+      - Ajout d'un bouton d'action secondaire compact 32×32px avec `<MessageCircle size={14} />` permettant aux acheteurs qui le souhaitent de poser une question au marchand sur WhatsApp sans court-circuiter le panier ou la commande en ligne.
+      - Respect strict des 5 règles d'or : composant sous 315 lignes, zéro émoji, tokens CSS Nopalou.
+  * **Validation & Tests** :
+    - Tests Unitaires Backend : 129/129 PASS (`npx jest tests/unit/surga.test.js`).
+    - Linter Anti-AI-Slop : 0 infraction bloquante (`npm run lint:slop`).
+    - Test de route Next.js : HTTP 200 OK sur la page produit cible.
+
 - **Surga / Tickets UI V2 — Écran « Aujourd'hui » Mobile & Ordinateur (SRG-UI-01 à SRG-UI-19) (Session 2026-10-07 - Revue UI, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Traitement exhaustif et méthodique des 19 tickets UI issus de la revue du 7 octobre 2026 (`docs/surga/TICKETS_UI_V2.md`) couvrant la cohérence des données, le briefing du matin, la grille responsive (< 600px, 600-1023px, ≥ 1024px) et le rail droit contextuel.

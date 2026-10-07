@@ -3,6 +3,23 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Shopping] — Redirection du Bouton « Commander » vers la Fiche Produit
+- **Objectif Atteint :**
+  - Réponse directe à la demande utilisateur (« Commander doit renvoyer vers le produit au lieu de whatsapp »).
+  - Suppression du déclenchement automatique de WhatsApp sur le bouton principal « Commander » des cartes produits de la modale Shopping.
+  - Redirection de l'utilisateur vers la page produit complète (`/boutiques/:slug/produits/:id` ou `/produit/:id`) pour lui permettre de choisir ses options (tailles, couleurs), voir les visuels haute définition et commander par Wave / Orange Money ou WhatsApp.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Composant ProduitCard (`frontend-next/src/app/surga/components/SurgaShoppingCards.tsx`)* :
+     - Calcul automatique de l'URL canonique : `productUrl = /boutiques/${produit.boutique_slug || produit.boutique_id}/produits/${produit.id}` (ou `/produit/${produit.id}`).
+     - Enveloppement du corps de la carte (image, catégorie, titre, boutique, prix FCFA) dans un lien cliquable `<a>` ouvrant le produit.
+     - Transformation du bouton d'action principal « Commander » en lien direct `<a href={productUrl}>` avec icône `<ShoppingBag size={13} />`.
+     - Intégration d'un bouton WhatsApp secondaire compact (32×32px avec `<MessageCircle size={14} />`) à droite pour les échanges directs avec le commerçant.
+     - Taille du composant : 312 lignes (< 450 l.), zéro émoji, 100% tokens Nopalou.
+- **Validation & Tests :**
+  - Backend Jest : 129/129 tests réussis (`npx jest tests/unit/surga.test.js`).
+  - Linter Slop : 0 infraction bloquante (`npm run lint:slop`).
+  - Requête HTTP sur la page produit : HTTP 200 OK.
+
 ### [2026-10-07 — Revue UI V2] — Résolution Intégrale des Tickets UI (SRG-UI-01 à SRG-UI-19)
 - **Objectif Atteint :**
   - Traitement complet des 19 tickets issus de la revue de l'écran « Aujourd'hui » (mobile et bureau) : cohérence et source unique de localisation, suppression des marées pour les villes de l'intérieur, sourçage et horodatage des actualités, filtre de fraîcheur 24h, éradication des doublons sur grand écran, refonte responsive sur 3 points de rupture stricts (< 600px, 600–1023px, ≥ 1024px), sports en 3 paliers avec heures et scores, barre de commande 100% opaque et marges de fin de défilement.
