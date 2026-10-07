@@ -30,6 +30,9 @@ interface SurgaLayoutShellProps {
   onOpenConcours: () => void
   onOpenImmo: () => void
   onOpenPlaces: () => void
+  onOpenDemarches?: () => void
+  onOpenEmploi?: () => void
+  onOpenVideos?: () => void
   onOpenCompte: () => void
   onOpenAuth: () => void
   onConfirmerDepense?: (depense: { montant: number; categorie: string; note: string }) => Promise<void>
@@ -56,6 +59,9 @@ export default function SurgaLayoutShell({
   onOpenConcours,
   onOpenImmo,
   onOpenPlaces,
+  onOpenDemarches,
+  onOpenEmploi,
+  onOpenVideos,
   onOpenCompte,
   onOpenAuth,
   onConfirmerDepense,
@@ -123,6 +129,15 @@ export default function SurgaLayoutShell({
       case 'places':
         onOpenPlaces()
         break
+      case 'demarches':
+        onOpenDemarches?.()
+        break
+      case 'emploi':
+        onOpenEmploi?.()
+        break
+      case 'videos':
+        onOpenVideos?.()
+        break
       case 'compte':
         onOpenCompte()
         break
@@ -177,6 +192,9 @@ export default function SurgaLayoutShell({
           onOpenConcours={onOpenConcours}
           onOpenImmo={onOpenImmo}
           onOpenPlaces={onOpenPlaces}
+          onOpenDemarches={onOpenDemarches}
+          onOpenEmploi={onOpenEmploi}
+          onOpenVideos={onOpenVideos}
           onOpenCompte={onOpenCompte}
         />
 

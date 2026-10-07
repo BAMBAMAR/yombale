@@ -1,4 +1,21 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+- **Surga / Déploiement des Services sous Bonnes Adresses & Épuration des Réglages (Session 2026-10-07 - Nuit 9 suite - 10, branche `feature/surga`)** :
+  * **Mission Réalisée** :
+    - Réponse directe à la directive utilisateur : « sous bonne adresse il faut mettre plus de service et les enlever les service dans reglage ».
+    - Élimination de la redondance entre la navigation latérale et l'écran des Réglages : les services ne sont plus dupliqués dans les paramètres, et la sidebar gauche sous « Bonnes Adresses » regroupe l'ensemble des services utiles du quotidien sénégalais.
+  * **Chantiers Clés Livrés & Correctifs Déployés** :
+    1. **Sidebar Desktop Élargie (`SurgaDesktopSidebar.tsx`, 239 l.)** :
+       - Ajout de Démarches État (`ShieldCheck`), Emploi & Stages (`Briefcase`) et Séries & Vidéos (`Tv`) dans la section Services Dakar sous Bonnes Adresses.
+       - Câblage direct avec les modales correspondantes dans `SurgaLayoutShell.tsx` (240 l.).
+    2. **Épuration Totale de l'Écran « Réglages » (`SurgaParametresTab.tsx`, 334 l.)** :
+       - Retrait de toutes les cartes d'accès direct aux services (Radios, Trafic, Immo, Concours, Démarches, Places, Séries, Emploi).
+       - Conservation exclusive des véritables paramètres : Compte WhatsApp & déconnexion, Formule active & abonnement, Synthèse vocale du briefing, Confidentialité & droit à l'oubli, Personnalisation de l'expérience (briques, heure, quartier).
+    3. **Architecture Senior & Respect Strict des Règles** :
+       - 100% des composants restent strictement sous 450 lignes (`SurgaDesktopSidebar` 239 l., `SurgaLayoutShell` 240 l., `SurgaParametresTab` 334 l., `page.tsx` 404 l.).
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests Jest : 158/158 PASS.
+       - Captures Playwright validées confirmant la sidebar dense et équilibrée et l'onglet Réglages épuré.
+
 - **Surga / Assistant IA Omnibar Unifié — LLM (Discours, Reformulation, Rédaction) & Actions/Navigation Surga (Session 2026-10-07 - Nuit 9 suite - 9, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Réponse directe et ambitieuse à la directive utilisateur : « LA BARRE de recherche doit fonctionner comme un LLM lié à une IA on doit pouvoir écrire poser des questions par exemple reformuler, fais-moi un message ou discours de bienvenue etc. mais aussi il doit comme l'audio pouvoir naviguer dans Surga et de faire ressortir les bonnes infos comme le fait l'assistant de Nopalou ».

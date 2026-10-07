@@ -4,16 +4,9 @@ import React from 'react'
 import {
   RotateCcw,
   Volume2,
-  Radio,
-  Navigation,
-  Building,
   Crown,
   Briefcase,
-  Sparkles,
   Shield,
-  ShieldCheck,
-  GraduationCap,
-  Tv,
   User,
   UserCheck,
   LogOut,
@@ -40,14 +33,6 @@ interface SurgaParametresTabProps {
   onSynchroniser?: () => void
   isSyncing?: boolean
   onToggleAudio: () => void
-  onOpenRadio: () => void
-  onOpenTrafic: () => void
-  onOpenImmo: () => void
-  onOpenConcours: () => void
-  onOpenDemarches?: () => void
-  onOpenPlaces?: () => void
-  onOpenVideos?: () => void
-  onOpenEmploi?: () => void
   onOpenPremium?: () => void
   onOpenPro?: () => void
   onOpenDonnees?: () => void
@@ -64,86 +49,100 @@ export default function SurgaParametresTab({
   onSynchroniser,
   isSyncing = false,
   onToggleAudio,
-  onOpenRadio,
-  onOpenTrafic,
-  onOpenImmo,
-  onOpenConcours,
-  onOpenDemarches,
-  onOpenPlaces,
-  onOpenVideos,
-  onOpenEmploi,
   onOpenPremium,
   onOpenPro,
   onOpenDonnees,
   onReinitialiser,
 }: SurgaParametresTabProps) {
-  const estPremium = Boolean(statutPremium?.estPremium)
-  const joursRestants = statutPremium?.joursRestants || 0
+  const estPremium = statutPremium?.estPremium ?? false
+  const joursRestants = statutPremium?.joursRestants ?? 0
 
   return (
-    <div className="surga-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-        Services &amp; Formule Surga
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        paddingBottom: 24,
+      }}
+    >
+      {/* En-tête de section */}
+      <div>
+        <h2
+          style={{
+            fontSize: 18,
+            fontWeight: 800,
+            color: 'var(--navy, #1C2B4A)',
+            margin: 0,
+            lineHeight: 1.3,
+          }}
+        >
+          Réglages &amp; Préférences
+        </h2>
+        <p
+          style={{
+            fontSize: 12,
+            color: 'var(--text3, #73675E)',
+            margin: '4px 0 0',
+          }}
+        >
+          Heure du briefing : <strong>{preferences?.heure_briefing || '07:30'}</strong>
+          {' • '}
+          Quartier : <strong>{preferences?.quartiers?.[0] || 'Dakar'}</strong>
+        </p>
       </div>
-      <p style={{ fontSize: 13, color: 'var(--text2, #5A4E42)', margin: 0 }}>
-        Heure du briefing : <strong>{preferences?.heure_briefing || '07:30'}</strong> &bull; Quartier :{' '}
-        <strong>{preferences?.quartiers?.[0] || 'Dakar'}</strong>
-      </p>
 
-      {/* Carte Compte Utilisateur & Synchronisation */}
+      {/* 1. Carte Compte & Authentification */}
       <div
         style={{
           padding: '14px 16px',
           borderRadius: 12,
           backgroundColor: user ? 'rgba(28, 43, 74, 0.04)' : 'var(--bg, #F8F5F0)',
-          border: user ? '1.5px solid rgba(28, 43, 74, 0.2)' : '1px solid var(--border, #E8DDD2)',
+          border: '1px solid var(--border, #E8DDD2)',
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
                 width: 36,
                 height: 36,
-                borderRadius: 10,
-                backgroundColor: user ? 'rgba(10, 92, 54, 0.1)' : 'rgba(28, 43, 74, 0.08)',
+                borderRadius: '50%',
+                backgroundColor: user ? 'rgba(10, 92, 54, 0.12)' : 'rgba(28, 43, 74, 0.08)',
+                color: user ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}
             >
-              {user ? (
-                <UserCheck size={18} color="var(--price, #0A5C36)" />
-              ) : (
-                <User size={18} color="var(--navy, #1C2B4A)" />
-              )}
+              {user ? <UserCheck size={18} /> : <User size={18} />}
             </div>
-            <div style={{ minWidth: 0 }}>
+            <div>
               <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {user ? (user.nom || 'Compte Surga') : 'Mode invité (Stockage local)'}
+                {user ? (user.nom || user.telephone || 'Compte Surga actif') : 'Mode invité (Stockage local)'}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
                 {user
-                  ? (user.telephone || user.email || 'Connecté • Synchronisation active')
+                  ? `WhatsApp : ${user.telephone || 'Connecté'} • Synchronisé`
                   : 'Données enregistrées uniquement sur cet appareil'}
               </div>
             </div>
           </div>
 
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
               {onOpenCompte && (
                 <button
                   type="button"
                   onClick={onOpenCompte}
-                  className="surga-btn-primary"
+                  className="surga-btn-secondary"
                   style={{
                     fontSize: 11,
-                    padding: '6px 11px',
+                    padding: '6px 10px',
                     fontWeight: 700,
                     width: 'auto',
                     display: 'flex',
@@ -227,9 +226,6 @@ export default function SurgaParametresTab({
               borderTop: '1px dashed var(--border, #E8DDD2)',
               fontSize: 11,
               color: 'var(--text2, #5A4E42)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
             }}
           >
             <span>Connectez-vous avec WhatsApp pour sauvegarder et synchroniser vos données.</span>
@@ -237,7 +233,7 @@ export default function SurgaParametresTab({
         )}
       </div>
 
-      {/* Carte Statut Abonnement */}
+      {/* 2. Carte Statut Abonnement */}
       <div
         style={{
           padding: '14px 16px',
@@ -310,111 +306,19 @@ export default function SurgaParametresTab({
         )}
       </div>
 
-      {/* 1. Option Audio */}
+      {/* 3. Option Audio du briefing */}
       <SurgaServiceRow
         icon={Volume2}
         iconColor="var(--accent, #C75B00)"
         iconBg="rgba(199, 91, 0, 0.08)"
         titre="Option Audio du briefing"
-        description="Synthèse vocale et flux podcast privé (0 Mo)"
+        description="Synthèse vocale locale et flux podcast privé (0 Mo)"
         actionLabel={preferences?.audio_actif ? 'Activée' : 'Désactivée'}
         actionVariant={preferences?.audio_actif ? 'primary' : 'secondary'}
         onAction={onToggleAudio}
       />
 
-      {/* 2. Radios locales */}
-      <SurgaServiceRow
-        icon={Radio}
-        iconColor="var(--navy, #1C2B4A)"
-        iconBg="rgba(28, 43, 74, 0.08)"
-        titre="Radios Locales du Sénégal"
-        description="Directs FM & revues de presse matinales"
-        actionLabel="Écouter"
-        onAction={onOpenRadio}
-      />
-
-      {/* 3. Trafic Dakar */}
-      <SurgaServiceRow
-        icon={Navigation}
-        iconColor="var(--accent, #C75B00)"
-        iconBg="rgba(199, 91, 0, 0.08)"
-        titre="Trafic & Corridors Dakar"
-        description="État A1, VDN, Corniche, TER & BRT"
-        actionLabel="Consulter"
-        onAction={onOpenTrafic}
-      />
-
-      {/* 4. Immobilier Dakar */}
-      <SurgaServiceRow
-        icon={Building}
-        iconColor="var(--price, #0A5C36)"
-        iconBg="rgba(10, 92, 54, 0.08)"
-        titre="Immobilier & Alertes Logement"
-        description="Recherche de biens et notifications d alertes"
-        actionLabel="Ouvrir"
-        onAction={onOpenImmo}
-      />
-
-      {/* 5. Concours & Examens du Sénégal */}
-      <SurgaServiceRow
-        icon={GraduationCap}
-        iconColor="var(--navy, #1C2B4A)"
-        iconBg="rgba(28, 43, 74, 0.08)"
-        titre="Concours & Examens Nationaux"
-        description="Suivi des dossiers et rappels J-30 / J-7 / J-1"
-        actionLabel="Consulter"
-        onAction={onOpenConcours}
-      />
-
-      {/* 6. Démarches Administratives Vérifiées */}
-      {onOpenDemarches && (
-        <SurgaServiceRow
-          icon={ShieldCheck}
-          iconColor="var(--price, #0A5C36)"
-          iconBg="rgba(10, 92, 54, 0.08)"
-          titre="Démarches Administratives Vérifiées"
-          description="Fiches officielles de l État, pièces, coûts & délais"
-          actionLabel="Consulter"
-          onAction={onOpenDemarches}
-        />
-      )}
-
-      {/* 7. Bons Plans & Bonnes Adresses Dakar */}
-      <SurgaServiceRow
-        icon={Sparkles}
-        iconColor="var(--accent, #C75B00)"
-        iconBg="rgba(199, 91, 0, 0.08)"
-        titre="Bons Plans & Bonnes Adresses"
-        description="Restaurants, dibiteries, cafés coworking & avis vérifiés"
-        actionLabel="Explorer"
-        onAction={onOpenPlaces}
-      />
-
-      {/* 8. Séries TV & Lutte du Sénégal */}
-      <SurgaServiceRow
-        icon={Tv}
-        iconColor="var(--navy, #1C2B4A)"
-        iconBg="rgba(28, 43, 74, 0.08)"
-        titre="Séries TV & Lutte Sénégalaise"
-        description="Alertes sorties d épisodes et vidéos officielles Low-Data"
-        actionLabel="Consulter"
-        onAction={onOpenVideos}
-      />
-
-      {/* 9. Emploi & CV Professionnel */}
-      {onOpenEmploi && (
-        <SurgaServiceRow
-          icon={Briefcase}
-          iconColor="var(--navy, #1C2B4A)"
-          iconBg="rgba(28, 43, 74, 0.08)"
-          titre="Emploi, CV PDF & Lettres"
-          description="Profil professionnel, CV A4 sobre & lettres de motivation"
-          actionLabel="Ouvrir"
-          onAction={onOpenEmploi}
-        />
-      )}
-
-      {/* 10. Données personnelles & Droit à l'oubli */}
+      {/* 4. Données personnelles & Droit à l'oubli */}
       {onOpenDonnees && (
         <SurgaServiceRow
           icon={Shield}
@@ -427,7 +331,7 @@ export default function SurgaParametresTab({
         />
       )}
 
-      {/* Bouton de réinitialisation */}
+      {/* 5. Bouton de réinitialisation des préférences de briefing */}
       <button
         type="button"
         onClick={onReinitialiser}
@@ -435,7 +339,7 @@ export default function SurgaParametresTab({
         style={{ fontSize: 13, padding: '8px 14px', alignSelf: 'flex-start', marginTop: 6 }}
       >
         <RotateCcw size={14} />
-        <span>Modifier mes préférences</span>
+        <span>Modifier mes préférences de briefing</span>
       </button>
     </div>
   )

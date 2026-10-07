@@ -50,6 +50,27 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
 
+- **Surga / Déploiement des Services sous Bonnes Adresses & Épuration des Réglages (Session 2026-10-07 - Nuit 9 suite - 10, branche `feature/surga`)** :
+  - *Alignement Ergonomique & Zéro Redondance* :
+    1. **Enrichissement de la Sidebar Gauche (« Services Dakar »)** :
+       - Ajout des services sénégalais sous « Bonnes Adresses » dans `SurgaDesktopSidebar.tsx` (239 l.) :
+         - *Démarches État* (icône `ShieldCheck`, démarches administratives sénégalaises directes).
+         - *Emploi & Stages* (icône `Briefcase`, opportunités et offres locales).
+         - *Séries & Vidéos* (icône `Tv`, productions sénégalaises et divertissement).
+       - Câblage des déclencheurs de modales associés dans `SurgaLayoutShell.tsx` (240 l.).
+    2. **Épuration Totale de l'Écran « Réglages » (`SurgaParametresTab.tsx`, 334 l.)** :
+       - Suppression radicale de toutes les cartes et raccourcis de services redondants (Radios, Trafic, Immo, Concours, Démarches, Places, Séries, Emploi).
+       - Conservation exclusive des véritables paramètres du compte et du briefing :
+         - Profil & Synchronisation WhatsApp (nom, numéro, bouton déconnexion).
+         - Formule active & abonnement Surga (Pass Gratuit / Surga Pro).
+         - Audio du briefing (synthèse vocale activée/désactivée).
+         - Confidentialité, données & droit à l'oubli (export JSON, suppression des données).
+         - Personnalisation de l'expérience (briques actives, heure du briefing, quartier favori).
+    3. **Architecture Senior & Standards Respectés** :
+       - 100% des fichiers sous `app/surga/` < 450 lignes (`SurgaDesktopSidebar` 239 l., `SurgaLayoutShell` 240 l., `SurgaParametresTab` 334 l., `page.tsx` 404 l.).
+       - TypeScript `npx tsc --noEmit` : 0 erreur.
+       - Tests unitaires Jest : 158/158 PASS.
+
 - **Surga / Assistant IA Omnibar Unifié — LLM (Discours, Reformulation, Rédaction) & Actions/Navigation Surga (Session 2026-10-07 - Nuit 9 suite - 9, branche `feature/surga`)** :
   - *Transformation de l'Omnibar Ctrl+K en Interface IA Complète* :
     1. **Capacité LLM & Rédaction Instantanée** :

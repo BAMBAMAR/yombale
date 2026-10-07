@@ -328,6 +328,9 @@ export default function SurgaPage() {
         onOpenConcours={() => setIsConcoursOpen(true)}
         onOpenImmo={() => setIsImmoOpen(true)}
         onOpenPlaces={() => setIsPlacesOpen(true)}
+        onOpenDemarches={() => setIsDemarchesOpen(true)}
+        onOpenEmploi={() => setIsEmploiOpen(true)}
+        onOpenVideos={() => setIsVideosOpen(true)}
         onOpenCompte={() => setIsCompteOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onConfirmerDepense={handleVoiceDepense}
@@ -384,14 +387,6 @@ export default function SurgaPage() {
             onSynchroniser={handleSynchroniser}
             isSyncing={isSyncing}
             onToggleAudio={handleToggleAudio}
-            onOpenRadio={openRadioModal}
-            onOpenTrafic={() => setIsTraficOpen(true)}
-            onOpenImmo={() => setIsImmoOpen(true)}
-            onOpenConcours={() => setIsConcoursOpen(true)}
-            onOpenDemarches={() => setIsDemarchesOpen(true)}
-            onOpenPlaces={() => setIsPlacesOpen(true)}
-            onOpenVideos={() => setIsVideosOpen(true)}
-            onOpenEmploi={() => setIsEmploiOpen(true)}
             onOpenPremium={() => setIsPremiumOpen(true)}
             onOpenPro={() => setIsProOpen(true)}
             onOpenDonnees={() => setIsDonneesOpen(true)}

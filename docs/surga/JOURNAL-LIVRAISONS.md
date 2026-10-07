@@ -3,6 +3,25 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-07 — Nuit 9 suite - 10] — Déploiement des Services sous Bonnes Adresses & Épuration des Réglages
+- **Objectif Atteint :**
+  - Répondre directement à la demande : « sous bonne adresse il faut mettre plus de service et les enlever les service dans reglage ».
+  - Supprimer toute redondance : l'onglet « Réglages » devient un vrai écran de paramétrage (profil, abonnement, audio, confidentialité, préférences) sans cartes de services superflues.
+  - Enrichir la section « Services Dakar » de la sidebar desktop sous « Bonnes Adresses » avec les services sénégalais : Démarches État, Emploi & Stages, Séries & Vidéos.
+- **Réalisations & Fichiers Modifiés :**
+  1. *Sidebar Desktop (`SurgaDesktopSidebar.tsx`, 239 l.)* :
+     - Ajout de Démarches État (`ShieldCheck`), Emploi & Stages (`Briefcase`) et Séries & Vidéos (`Tv`) sous Bonnes Adresses.
+  2. *Épuration Réglages (`SurgaParametresTab.tsx`, 334 l.)* :
+     - Élimination des cartes Radios, Trafic, Immo, Concours, Démarches, Places, Séries, Emploi.
+     - Recentrage sur Profil, Formule, Audio, Données personnelles, Modification des préférences.
+  3. *Câblage Shell & Props (`SurgaLayoutShell.tsx`, 240 l. & `page.tsx`, 404 l.)* :
+     - Câblage des callbacks de modales vers la sidebar desktop.
+- **Validation Technique :**
+  - TypeScript : `npx tsc --noEmit` 0 erreur.
+  - Tests Jest : 158/158 tests unitaires PASS.
+  - 100% des fichiers sous `app/surga/` < 450 lignes.
+  - Captures Playwright live : `surga_sidebar_plus_services.png` et `surga_reglages_epures.png`.
+
 ### [2026-10-07 — Nuit 9 suite - 9] — Assistant IA Omnibar Unifié (LLM Rédaction, Navigation & Actions Locales Surga)
 - **Objectif Atteint :**
   - Répondre directement à la consigne : « LA BARRE de recherche doit fonctionner comme un LLM lié à une IA on doit pouvoir écrire poser des questions par exemple reformuler, fais-moi un message ou discours de bienvenue etc. mais aussi il doit comme l'audio pouvoir naviguer dans Surga et de faire ressortir les bonnes infos comme le fait l'assistant de Nopalou ».

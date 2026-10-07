@@ -1,15 +1,21 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 9 — Assistant IA Omnibar Unifié LLM & Actions Locales Surga)  
+> **Dernière mise à jour** : 07 Octobre 2026 (Session Nuit 9 suite - 10 — Déploiement des Services sous Bonnes Adresses & Épuration des Réglages)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Assistant IA Omnibar Opérationnel (LLM Rédaction Discours & Reformulation, Actions Dépenses/Notes/Rappels, Navigation Surga, Calculs), Éradication des Scrollbars Windows, Emblème Officiel Sanctuarisé (`SurgaBrandLogo.tsx`), Architecture Desktop 3 Colonnes — Vue Mobile 1 Colonne 100% Intacte — 100% Composants < 450 l. — TypeScript 0 Erreur, 158/158 Tests Unitaires PASS**  
+> **Statut global** : 🟢 **Services Dakar Éclatés sous Bonnes Adresses (Sidebar 240px complète), Écran Réglages Épuré Zéro Redondance, Assistant IA Omnibar Opérationnel (LLM Rédaction & Actions Locales), Scrollbars Windows Éradiquées, Emblème Sanctuarisé (`SurgaBrandLogo.tsx`), 100% Composants < 450 l., TypeScript 0 Erreur, 158/158 Tests PASS**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Benchmark Cloud)
 
 ---
 
 ## 1. 🎯 Résumé Exécutif & Ce qui a été Réalisé
 
-0. **Assistant IA Omnibar Unifié (100% DONE — Nuit 9 suite - 9)** :
+0. **Services Déployés sous Bonnes Adresses & Épuration des Réglages (100% DONE — Nuit 9 suite - 10)** :
+   - Traitement direct de la demande utilisateur : « sous bonne adresse il faut mettre plus de service et les enlever les service dans reglage ».
+   - **Sidebar Desktop Élargie (`SurgaDesktopSidebar.tsx`, 239 l.)** : Intégration sous « Bonnes Adresses » des services locaux sénégalais essentiels : Démarches État (`ShieldCheck`), Emploi & Stages (`Briefcase`), Séries & Vidéos (`Tv`). Câblage direct avec les modales correspondantes dans `SurgaLayoutShell.tsx` (240 l.).
+   - **Écran Réglages Réellement Épuré (`SurgaParametresTab.tsx`, 334 l.)** : Suppression de toutes les cartes d'accès aux services redondants (Radios, Trafic, Immo, Concours, Démarches, Places, Séries, Emploi). Recentrage strict sur les vrais paramètres : Profil WhatsApp & déconnexion, Formule d'abonnement active, Synthèse vocale du briefing, Confidentialité & droit à l'oubli, Modification des préférences.
+   - **Architecture Senior** : 100% des fichiers < 450 lignes (`page.tsx` à 404 l.), 0 erreur TypeScript, 158 tests Jest validés.
+
+0.bis. **Assistant IA Omnibar Unifié (100% DONE — Nuit 9 suite - 9)** :
    - Réponse directe au besoin de coupler l'Omnibar à une IA conversationnelle (LLM) et à l'automatisation locale.
    - Support complet de la rédaction de discours de bienvenue, des reformulations de texte en plusieurs styles (professionnel, teranga, direct), et des messages de courtoisie.
    - Déclenchement automatique des actions de Surga : Dépenses FCFA (« note 4500 FCFA »), Rappels d'agenda, Notes libres, Calculs déterministes.

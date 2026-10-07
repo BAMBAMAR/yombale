@@ -12,6 +12,9 @@ import {
   GraduationCap,
   Home,
   MapPin,
+  ShieldCheck,
+  Briefcase,
+  Tv,
   Settings,
   User,
 } from 'lucide-react'
@@ -30,6 +33,9 @@ interface SurgaDesktopSidebarProps {
   onOpenConcours: () => void
   onOpenImmo: () => void
   onOpenPlaces: () => void
+  onOpenDemarches?: () => void
+  onOpenEmploi?: () => void
+  onOpenVideos?: () => void
   onOpenCompte: () => void
 }
 
@@ -45,6 +51,9 @@ export default function SurgaDesktopSidebar({
   onOpenConcours,
   onOpenImmo,
   onOpenPlaces,
+  onOpenDemarches,
+  onOpenEmploi,
+  onOpenVideos,
   onOpenCompte,
 }: SurgaDesktopSidebarProps) {
   return (
@@ -175,6 +184,47 @@ export default function SurgaDesktopSidebar({
               <span>Bonnes Adresses</span>
             </div>
           </button>
+
+          {/* NOUVEAUX SERVICES ÉCLATÉS SOUS BONNES ADRESSES */}
+          {onOpenDemarches && (
+            <button
+              type="button"
+              onClick={onOpenDemarches}
+              className="surga-sidebar-btn"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <ShieldCheck size={17} />
+                <span>Démarches État</span>
+              </div>
+              <span className="surga-sidebar-badge">Guide</span>
+            </button>
+          )}
+
+          {onOpenEmploi && (
+            <button
+              type="button"
+              onClick={onOpenEmploi}
+              className="surga-sidebar-btn"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Briefcase size={17} />
+                <span>Emploi &amp; Stages</span>
+              </div>
+            </button>
+          )}
+
+          {onOpenVideos && (
+            <button
+              type="button"
+              onClick={onOpenVideos}
+              className="surga-sidebar-btn"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Tv size={17} />
+                <span>Séries &amp; Vidéos</span>
+              </div>
+            </button>
+          )}
         </nav>
       </div>
 
