@@ -1,5 +1,6 @@
 'use client'
 
+import { SURGA_BASE_URL } from '@/lib/surga-share'
 import React, { useEffect, useCallback, useState, useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import SurgaKiosqueHeader from './SurgaKiosqueHeader'
@@ -103,7 +104,7 @@ export default function SurgaKiosqueLightbox({
   const handleCopierLien = async () => {
     if (!selectedUne) return
     try {
-      const url = selectedUne.image_url || 'https://surga.nopalou.com'
+      const url = selectedUne.image_url || SURGA_BASE_URL
       await navigator.clipboard.writeText(url)
       setLienCopie(true)
       setTimeout(() => setLienCopie(false), 2000)

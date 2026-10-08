@@ -184,7 +184,7 @@ async function traiterRappelsEchus(options = {}) {
           const msgWa = `Surga Rappel : ${rappel.titre}\n` +
             (rappel.heure_evenement ? `Heure prévue : ${rappel.heure_evenement}\n` : '') +
             (rappel.description ? `Note : ${rappel.description}\n` : '') +
-            `Pour ouvrir votre agenda : https://surga.nopalou.com/?tab=agenda`;
+            `Pour ouvrir votre agenda : https://nopalou.com/surga?tab=agenda`;
 
           // SRG-A1-025 : le canal est noté avant l'appel. Une exception du fournisseur était journalisée
           // « in_app succes » alors que rien n'était parti.

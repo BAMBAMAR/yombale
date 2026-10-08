@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 import { TEMOIN_CONFIGURE, CLASSE_CONFIGURE } from '@/lib/surga-demarrage'
 import React from 'react'
+import { ADRESSE_SURGA } from '@/lib/surga-adresse'
 import '@/styles/surga.css'
 import SurgaSwRegister from './components/SurgaSwRegister'
 import SurgaRadioProvider from './components/SurgaRadioProvider'
@@ -11,18 +12,18 @@ export const metadata: Metadata = {
   description: 'Votre assistant personnel au quotidien au Sénégal : briefing du matin, gestion des dépenses en FCFA, notes, agenda et services locaux.',
   manifest: '/surga/manifest.json',
   alternates: {
-    canonical: 'https://surga.nopalou.com',
+    canonical: ADRESSE_SURGA,
   },
   openGraph: {
     title: 'Surga — Assistant Personnel de Poche',
     description: 'Votre assistant quotidien au Sénégal : briefing du matin, gestion des dépenses en FCFA, notes, agenda et veille locale.',
-    url: 'https://surga.nopalou.com',
+    url: ADRESSE_SURGA,
     siteName: 'Surga',
     locale: 'fr_FR',
     type: 'website',
     images: [
       {
-        url: 'https://surga.nopalou.com/surga/icons/icon-512.png',
+        url: `${ADRESSE_SURGA}/icons/icon-512.png`,
         width: 512,
         height: 512,
         alt: 'Surga — Assistant Personnel de Poche',
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'Surga — Assistant Personnel de Poche',
     description: 'Votre assistant quotidien au Sénégal : briefing, dépenses FCFA, notes et agenda.',
-    images: ['https://surga.nopalou.com/surga/icons/icon-512.png'],
+    images: [`${ADRESSE_SURGA}/icons/icon-512.png`],
   },
   icons: {
     icon: '/surga/icons/favicon.svg',
@@ -60,7 +61,7 @@ const surgaJsonLd = {
   operatingSystem: 'All',
   applicationCategory: 'UtilitiesApplication',
   description: 'Assistant personnel de poche au quotidien au Sénégal : briefing du matin, dépenses FCFA, notes, agenda et services locaux.',
-  url: 'https://surga.nopalou.com',
+  url: ADRESSE_SURGA,
   offers: {
     '@type': 'Offer',
     price: '0',

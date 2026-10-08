@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isI18nScopedRoute } from './i18n/config'
 import { verifierJetonSession } from './lib/session-verify'
+import { adresseDepuisSousDomaineSurga } from './lib/surga-adresse'
 
 const COOKIE_NAME = 'nopalou_session'
 
@@ -16,6 +17,16 @@ const verifyToken = verifierJetonSession
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const isDev = process.env.NODE_ENV === 'development'
+
+  // D77 : « surga.nopalou.com » renvoie vers « nopalou.com/surga », seule adresse où l'application est servie.
+  // Renvoi temporaire (307) : un renvoi permanent resterait dans les navigateurs si l'adresse principale changeait.
+  const versDomainePrincipal = adresseDepuisSousDomaineSurga(
+    req.headers.get('host') || req.nextUrl.host || '',
+    pathname,
+    req.nextUrl.search,
+    req.headers.get('x-forwarded-proto')?.split(',')[0].trim() || req.nextUrl.protocol,
+  )
+  if (versDomainePrincipal) return NextResponse.redirect(versDomainePrincipal, 307)
 
   // ── 1. Vérification session & Langue ─────────────────────────
   const token = req.cookies.get(COOKIE_NAME)?.value
@@ -108,26 +119,18 @@ export async function middleware(req: NextRequest) {
   const isScoped = isI18nScopedRoute(pathname)
   const effectiveLocale = isScoped ? locale : 'fr'
 
-  const host = req.headers.get('host') || req.nextUrl.host || ''
-  const isSurgaHost = host.startsWith('surga.')
-  const isSurga = isSurgaHost || pathname === '/surga' || pathname.startsWith('/surga/')
-  const effectivePathname = (isSurgaHost && pathname === '/') ? '/surga' : pathname
+  const isSurga = pathname === '/surga' || pathname.startsWith('/surga/')
 
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
-  requestHeaders.set('x-pathname', effectivePathname)
+  requestHeaders.set('x-pathname', pathname)
   requestHeaders.set('x-locale', effectiveLocale)
   requestHeaders.set('Content-Security-Policy', csp)
   if (isSurga) {
     requestHeaders.set('x-is-surga', 'true')
   }
 
-  let response: NextResponse
-  if (isSurgaHost && pathname === '/') {
-    response = NextResponse.rewrite(new URL('/surga', req.url), { request: { headers: requestHeaders } })
-  } else {
-    response = NextResponse.next({ request: { headers: requestHeaders } })
-  }
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
   response.headers.set('Content-Security-Policy', csp)
   // AUD-149 : politique stricte (nonce + strict-dynamic, sans unsafe-inline ni unsafe-eval) évaluée en RAPPORT SEUL.
   // Elle ne bloque rien ; les violations arrivent sur /api/csp-report. Passage en application réelle quand le flux est propre.

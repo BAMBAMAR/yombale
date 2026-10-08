@@ -444,7 +444,7 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
   if (!quotaValide) {
     const msgPlafond =
       `Surga : Vous avez atteint votre quota découverte de ${QUOTA_JOURNALIER_GRATUIT} commandes gratuites pour aujourd'hui sur WhatsApp.\n\n` +
-      `Pour profiter de commandes WhatsApp illimitées, activez Surga Premium (1 500 FCFA/mois) : https://surga.nopalou.com/premium.\n` +
+      `Pour profiter de commandes WhatsApp illimitées, activez Surga Premium (1 500 FCFA/mois) : https://surga.nopalou.com.\n` +
       `Votre application Web & PWA reste quant à elle 100% gratuite et sans limite : https://surga.nopalou.com`;
     await sendWhatsAppText(normPh, msgPlafond);
     return true;
@@ -848,7 +848,7 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
     await sendWhatsAppText(
       normPh,
       `Surga : Surga Premium (1 500 FCFA/mois) :\n\n` +
-      `Débloquez les commandes WhatsApp illimitées et les fonctionnalités prioritaires sur : https://surga.nopalou.com/premium`
+      `Débloquez les commandes WhatsApp illimitées et les fonctionnalités prioritaires sur : https://surga.nopalou.com`
     );
     return true;
   }

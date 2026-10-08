@@ -2,7 +2,11 @@
 // Moteur de partage et génération des liens WhatsApp pour Surga
 // Web Share API, liens WhatsApp directs, zéro émoji, vouvoiement strict
 
-export const SURGA_BASE_URL = process.env.NEXT_PUBLIC_SURGA_URL || 'https://surga.nopalou.com';
+import { ADRESSE_SURGA } from './surga-adresse';
+
+// Adresse mise dans les messages partagés. « NEXT_PUBLIC_SURGA_URL » permet d'y mettre l'adresse courte
+// « https://surga.nopalou.com » une fois le sous-domaine créé : il renvoie vers l'application (D77).
+export const SURGA_BASE_URL = process.env.NEXT_PUBLIC_SURGA_URL || ADRESSE_SURGA;
 
 export interface PartagePayload {
   titre: string;

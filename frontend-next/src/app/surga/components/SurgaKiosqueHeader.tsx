@@ -8,6 +8,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
+import { SURGA_BASE_URL } from '@/lib/surga-share'
 import SurgaShareButton from './SurgaShareButton'
 import SurgaKiosqueZoomControls from './SurgaKiosqueZoomControls'
 import type { UneItem } from './SurgaKiosqueLightbox'
@@ -165,7 +166,7 @@ export default function SurgaKiosqueHeader({
           payload={{
             titre: `Une de ${selectedUne.nom_journal}`,
             texte: `*Surga — Kiosque de la Presse Sénégalaise*\n• Journal : ${selectedUne.nom_journal}\n• Date : ${selectedUne.date_parution || 'Aujourd’hui'}\nConsulter la revue de presse sur Surga : https://surga.nopalou.com`,
-            url: 'https://surga.nopalou.com',
+            url: SURGA_BASE_URL,
           }}
           libelle="Partager"
           taille="sm"
