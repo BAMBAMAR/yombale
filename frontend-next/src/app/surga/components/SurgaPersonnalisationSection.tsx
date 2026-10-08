@@ -35,7 +35,7 @@ interface ServiceConfigItem {
 }
 
 const CATALOGUE_SERVICES: ServiceConfigItem[] = [
-  { id: 'trafic', label: 'Trafic Dakar', desc: 'Corridors en temps réel, alertes TomTom', icon: Navigation, color: '#059669' },
+  { id: 'trafic', label: 'Trafic Dakar', desc: 'Mesures et signalements des usagers', icon: Navigation, color: '#059669' },
   { id: 'presse', label: 'Kiosque des Unes', desc: 'Revues de presse & premières pages', icon: Newspaper, color: '#1C2B4A' },
   { id: 'immo', label: 'Pôle Immobilier', desc: 'Maisons, appartements & terrains vérifiés', icon: Home, color: '#2563EB' },
   { id: 'shopping', label: 'Shopping Nopalou', desc: 'Boutiques locales, produits & prix', icon: ShoppingBag, color: '#C75B00' },
@@ -58,8 +58,8 @@ interface WidgetConfigItem {
 const CATALOGUE_WIDGETS: WidgetConfigItem[] = [
   { id: 'agenda', label: 'Votre journée (Agenda)', desc: 'Rappels et rendez-vous du planning', icon: Calendar, color: '#2563EB' },
   { id: 'depenses', label: 'Sama Xaalis (Finances)', desc: 'Dépenses du mois & solde Kalpé en FCFA', icon: Wallet, color: '#0A5C36' },
-  { id: 'trafic', label: 'Trafic en direct', desc: 'Axes VDN, Corniche Ouest & temps de trajet', icon: Navigation, color: '#059669' },
-  { id: 'meteo', label: 'Météo et marées', desc: 'Température, marées de Dakar & indice air', icon: Sun, color: '#D97706' },
+  { id: 'trafic', label: 'Trafic', desc: 'Mesures et signalements des usagers', icon: Navigation, color: '#059669' },
+  { id: 'meteo', label: 'Météo et marées', desc: 'Température, ciel et vent', icon: Sun, color: '#D97706' },
   { id: 'notes', label: 'Mémo épinglé', desc: 'Aperçu instantané de votre note prioritaire', icon: Bookmark, color: '#7C3AED' },
   { id: 'radios', label: 'Radios FM direct', desc: 'Lecteur direct et contrôle de la station', icon: Radio, color: '#C75B00' },
 ]

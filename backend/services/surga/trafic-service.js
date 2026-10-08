@@ -4,6 +4,7 @@
 // Conforme philosophie Surga / Nopalou : Low-Data, Zéro Emoji, Vouvoiement strict D19
 
 const axios = require('axios');
+const { traficSourceMesureeActive } = require('./interrupteurs');
 
 let pool = null;
 try {
@@ -293,6 +294,7 @@ async function actualiserDonneesTomTomSiNecessaire(apiKey) {
  * @param {Date} [dateRef]
  * @returns {{ niveau: 'fluide'|'dense'|'bouche', tempsEstimeMin: number, vitesseReelleKmH: number, cause: string }}
  */
+// D53 : ce modèle n'est plus servi par getEtatTraficComplet. Il reste ici pour l'étalonnage d'une future source.
 function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
   const heures = dateRef.getUTCHours();
   const minutes = dateRef.getUTCMinutes();
@@ -531,100 +533,107 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
  * @param {Object} [options]
  * @param {Date} [options.dateRef]
  * @param {string} [options.apiKey]
- * @returns {Promise<{ axes: Array, incidents: Array, source: 'tomtom_live'|'previsionnel', derniereMiseAJour: string }>}
+ * @returns {Promise<{ axes: Array, incidents: Array, source: 'tomtom_live'|'signalements'|'aucune', disponible: boolean, derniereMiseAJour: string|null }>}
  */
 async function getEtatTraficComplet(options = {}) {
-  const apiKey = options.apiKey || process.env.TOMTOM_API_KEY || null;
-  const dateRef = options.dateRef || new Date();
+  // SRG-A4-016 / D53 : une valeur n'est rendue que si elle vient d'une mesure du fournisseur ou d'un signalement daté.
+  // Le modèle horaire (evaluerEtatTheoriqueAxe) n'est plus servi : il donnait chaque jour les mêmes durées à la même
+  // heure, datées de l'instant de l'appel. Le fournisseur n'est interrogé que si la source a été vérifiée à Dakar.
+  const apiKey = traficSourceMesureeActive() ? (options.apiKey || process.env.TOMTOM_API_KEY || null) : null;
 
-  // 1. Tenter le chargement TomTom Live si la clé est fournie
   let tomtomData = null;
   if (apiKey) {
     try {
       tomtomData = await actualiserDonneesTomTomSiNecessaire(apiKey);
     } catch (e) {
-      // TomTom hors ligne -> bascule automatique
+      // Fournisseur injoignable : aucune mesure.
     }
   }
 
-  // 2. Charger les signalements communautaires récents (< 45 minutes)
+  // Signalements des usagers de moins de 45 minutes
   const signalementsRecents = new Map();
-  if (pool) {
-    try {
-      const resSig = await pool.query(`
-        SELECT axe_id, type_signalement, commentaire, created_at
-        FROM surga_trafic_signalements
-        WHERE created_at >= NOW() - INTERVAL '45 minutes'
-        ORDER BY created_at DESC
-      `);
-      for (const row of resSig.rows) {
-        if (!signalementsRecents.has(row.axe_id)) {
-          signalementsRecents.set(row.axe_id, row);
-        }
+  try {
+    const resSig = await pool.query(`
+      SELECT axe_id, type_signalement, commentaire, created_at
+      FROM surga_trafic_signalements
+      WHERE created_at >= NOW() - INTERVAL '45 minutes'
+      ORDER BY created_at DESC
+    `);
+    for (const row of resSig.rows) {
+      if (!signalementsRecents.has(row.axe_id)) {
+        signalementsRecents.set(row.axe_id, row);
       }
-    } catch (e) {
-      // Tolérance offline / fallback
     }
+  } catch (e) {
+    console.warn('[SurgaTrafic] Signalements illisibles :', e.message);
   }
 
-  let nbAxesLive = 0;
+  let nbMesures = 0;
+  let nbSignales = 0;
+  let dernierReleve = null;
 
   const axes = AXES_ROUTIERS_DAKAR.map((axe) => {
-    const theorique = evaluerEtatTheoriqueAxe(axe, dateRef);
     const signalement = signalementsRecents.get(axe.id);
     const liveCorridor = tomtomData?.axesData?.get(axe.id);
+    // Le fournisseur rend « aucun retard » là où il n'a pas de capteurs : seule une congestion mesurée est retenue.
+    const mesure = liveCorridor && (liveCorridor.retardMin >= 3 || liveCorridor.trafficLengthMeters > 400) ? liveCorridor : null;
 
-    let niveauFinal = theorique.niveau;
-    let tempsFinal = theorique.tempsEstimeMin;
-    let causeFinale = theorique.cause;
+    let niveau = 'indisponible';
+    let tempsEstimeMin = null;
+    let cause = null;
     let incident = null;
-    let source = 'previsionnel';
-    let vitesseReelleKmH = theorique.vitesseReelleKmH || Math.round(axe.distanceKm / (tempsFinal / 60));
-    let vitesseNormaleKmH = Math.round(axe.distanceKm / (axe.tempsHabituelMin / 60));
-    let distanceFinale = axe.distanceKm;
+    let source = 'aucune';
+    let releveLe = null;
+    let vitesseReelleKmH = null;
+    let vitesseNormaleKmH = null;
+    let distanceKm = axe.distanceKm;
 
-    // Prise en compte du flux TomTom Live UNIQUEMENT si TomTom possède de réelles sondes FCD (retard mesuré > 2 min ou longueur de bouchon)
-    // En effet, au Sénégal, TomTom n'a pas de capteurs FCD sur la majorité des axes et renvoie par défaut 0 retard et la vitesse limite théorique.
-    const tomtomADesDonneesReelles = liveCorridor && (liveCorridor.retardMin >= 3 || liveCorridor.trafficLengthMeters > 400);
-
-    if (tomtomADesDonneesReelles) {
-      nbAxesLive++;
+    if (mesure) {
+      nbMesures++;
       source = 'tomtom_live';
-      tempsFinal = liveCorridor.tempsEstimeMin;
-      distanceFinale = liveCorridor.distanceKm;
-      vitesseReelleKmH = liveCorridor.vitesseReelleKmH;
-      vitesseNormaleKmH = liveCorridor.vitesseNormaleKmH;
-
-      if (liveCorridor.retardMin >= 15 || (vitesseNormaleKmH > 0 && vitesseReelleKmH / vitesseNormaleKmH <= 0.45)) {
-        niveauFinal = 'bouche';
-        causeFinale = `Bouchon mesuré par capteurs : +${liveCorridor.retardMin} min de retard (${vitesseReelleKmH} km/h)`;
-      } else if (liveCorridor.retardMin >= 5 || (vitesseNormaleKmH > 0 && vitesseReelleKmH / vitesseNormaleKmH <= 0.75)) {
-        niveauFinal = 'dense';
-        causeFinale = `Ralentissement direct : +${liveCorridor.retardMin} min (${vitesseReelleKmH} km/h)`;
+      releveLe = new Date(tomtomData.timestamp).toISOString();
+      tempsEstimeMin = mesure.tempsEstimeMin;
+      distanceKm = mesure.distanceKm;
+      vitesseReelleKmH = mesure.vitesseReelleKmH;
+      vitesseNormaleKmH = mesure.vitesseNormaleKmH;
+      const ratio = vitesseNormaleKmH > 0 ? vitesseReelleKmH / vitesseNormaleKmH : 1;
+      if (mesure.retardMin >= 15 || ratio <= 0.45) {
+        niveau = 'bouche';
+        cause = `Bouchon mesuré : ${mesure.retardMin} min de retard (${vitesseReelleKmH} km/h)`;
+      } else if (mesure.retardMin >= 5 || ratio <= 0.75) {
+        niveau = 'dense';
+        cause = `Ralentissement mesuré : ${mesure.retardMin} min de retard (${vitesseReelleKmH} km/h)`;
       } else {
-        niveauFinal = 'fluide';
-        causeFinale = `Circulation fluide (${vitesseReelleKmH} km/h mesurés)`;
+        niveau = 'fluide';
+        cause = `Circulation fluide (${vitesseReelleKmH} km/h mesurés)`;
       }
     }
 
-    // Les signalements communautaires récents d'accidents restent prioritaires pour alerter
     if (signalement) {
-      if (signalement.type_signalement === 'accident' || signalement.type_signalement === 'bloque') {
-        niveauFinal = 'bouche';
-        tempsFinal = Math.max(tempsFinal, Math.round(axe.tempsHabituelMin * 2.8));
-        causeFinale = signalement.commentaire || 'Accident ou blocage signalé';
+      nbSignales++;
+      const type = signalement.type_signalement;
+      if (type === 'accident' || type === 'bloque') {
+        niveau = 'bouche';
+        cause = signalement.commentaire || 'Accident ou blocage signalé par un usager';
         incident = 'accident';
-      } else if (signalement.type_signalement === 'dense') {
-        if (niveauFinal === 'fluide') niveauFinal = 'dense';
-        tempsFinal = Math.max(tempsFinal, Math.round(axe.tempsHabituelMin * 1.6));
-        causeFinale = signalement.commentaire || 'Ralentissement signalé par les usagers';
+      } else if (type === 'dense') {
+        if (niveau !== 'bouche') niveau = 'dense';
+        cause = signalement.commentaire || 'Ralentissement signalé par un usager';
         incident = 'ralentissement';
-      } else if (signalement.type_signalement === 'fluide' && !tomtomADesDonneesReelles) {
-        niveauFinal = 'fluide';
-        tempsFinal = axe.tempsHabituelMin;
-        causeFinale = 'Axe signalé fluide récemment par les usagers';
+      } else if (type === 'travaux') {
+        cause = signalement.commentaire || 'Travaux signalés par un usager';
+        incident = 'travaux';
+      } else if (type === 'fluide' && !mesure) {
+        niveau = 'fluide';
+        cause = 'Axe signalé fluide par un usager';
+      }
+      if (!mesure) {
+        source = 'signalement';
+        releveLe = new Date(signalement.created_at).toISOString();
       }
     }
+
+    if (releveLe && (!dernierReleve || releveLe > dernierReleve)) dernierReleve = releveLe;
 
     return {
       id: axe.id,
@@ -633,13 +642,13 @@ async function getEtatTraficComplet(options = {}) {
       destination: axe.destination,
       type: axe.type,
       sens: axe.sens,
-      niveau: niveauFinal,
-      tempsEstimeMin: tempsFinal,
+      niveau,
+      tempsEstimeMin,
       tempsHabituelMin: axe.tempsHabituelMin,
-      distanceKm: distanceFinale,
+      distanceKm,
       pointsChauds: axe.pointsChauds,
       incident,
-      cause: causeFinale,
+      cause,
       source,
       vitesseReelleKmH,
       vitesseNormaleKmH,
@@ -650,18 +659,16 @@ async function getEtatTraficComplet(options = {}) {
             date: signalement.created_at,
           }
         : null,
-      updatedAt: new Date().toISOString(),
+      updatedAt: releveLe,
     };
   });
 
-  const sourceGlobale = nbAxesLive > 0 ? 'tomtom_live' : 'previsionnel';
-  const incidents = tomtomData?.incidents || [];
-
   return {
     axes,
-    incidents,
-    source: sourceGlobale,
-    derniereMiseAJour: new Date().toISOString(),
+    incidents: tomtomData?.incidents || [],
+    source: nbMesures > 0 ? 'tomtom_live' : nbSignales > 0 ? 'signalements' : 'aucune',
+    disponible: nbMesures + nbSignales > 0,
+    derniereMiseAJour: dernierReleve,
   };
 }
 
@@ -673,36 +680,28 @@ async function getEtatTraficComplet(options = {}) {
  * @returns {string}
  */
 function genererSyntheseBriefingTrafic(etatAxes, quartier = 'Dakar') {
-  if (!Array.isArray(etatAxes)) return 'Circulation normale à Dakar.';
-
-  const axesBouchés = etatAxes.filter((a) => a.niveau === 'bouche');
-  const axesDenses = etatAxes.filter((a) => a.niveau === 'dense');
-  const ter = etatAxes.find((a) => a.id === 'ter-dakar');
-  const brt = etatAxes.find((a) => a.id === 'brt-dakar');
-
-  if (axesBouchés.length === 0 && axesDenses.length === 0) {
-    return 'Circulation globale fluide ce matin sur les principaux axes de Dakar. Le TER et le BRT fonctionnent normalement.';
-  }
+  // Sans mesure ni signalement, il n'y a rien à dire : l'ancienne phrase « Circulation globale fluide » était fixe.
+  if (!Array.isArray(etatAxes)) return '';
+  const nomCourt = (a) => a.nom.split('(')[0].trim();
+  const bouches = etatAxes.filter((a) => a.niveau === 'bouche');
+  const denses = etatAxes.filter((a) => a.niveau === 'dense');
+  const fluides = etatAxes.filter((a) => a.niveau === 'fluide');
 
   const morceaux = [];
-  if (axesBouchés.length > 0) {
-    const premier = axesBouchés[0];
-    const nomAxe = premier.nom.split('(')[0].trim();
+  if (bouches.length > 0) {
+    const premier = bouches[0];
     morceaux.push(
-      `Forte affluence sur ${nomAxe} avec environ ${premier.tempsEstimeMin} minutes de trajet (contre ${premier.tempsHabituelMin} minutes habituellement).`
+      premier.tempsEstimeMin
+        ? `Forte affluence sur ${nomCourt(premier)} avec environ ${premier.tempsEstimeMin} minutes de trajet.`
+        : `Blocage signalé sur ${nomCourt(premier)}.`
     );
   }
-
-  if (axesDenses.length > 0) {
-    const premierDense = axesDenses[0];
-    const nomAxe = premierDense.nom.split('(')[0].trim();
-    morceaux.push(`Ralentissements habituels constatés sur ${nomAxe}.`);
+  if (denses.length > 0) {
+    morceaux.push(`Ralentissements constatés sur ${nomCourt(denses[0])}.`);
   }
-
-  if (ter && ter.niveau === 'fluide' && brt && brt.niveau === 'fluide') {
-    morceaux.push('Les lignes TER et BRT restent recommandées pour vos déplacements rapides.');
+  if (morceaux.length === 0 && fluides.length > 0) {
+    morceaux.push(`Circulation signalée fluide sur ${nomCourt(fluides[0])}.`);
   }
-
   return morceaux.join(' ');
 }
 

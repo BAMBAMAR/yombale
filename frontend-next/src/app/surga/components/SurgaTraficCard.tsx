@@ -3,22 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import { Navigation, ChevronRight, Activity, ExternalLink } from 'lucide-react'
 import { estZoneCouverteParTrafic } from '@/lib/surga-meteo'
+import { axeRenseigne, libelleNiveau, origineAxe, MESSAGE_TRAFIC_INDISPONIBLE, CARTE_TRAFIC_EXTERNE } from '@/lib/surga-trafic'
+import type { AxeTrafic } from '@/lib/surga-trafic'
 
-export interface AxeTraficItem {
-  id: string
-  nom: string
-  origine: string
-  destination: string
-  type: string
-  sens: string
-  niveau: 'fluide' | 'dense' | 'bouche'
-  tempsEstimeMin: number
-  tempsHabituelMin: number
-  cause: string
-  source?: 'tomtom_live' | 'previsionnel'
-  vitesseReelleKmH?: number | null
-  vitesseNormaleKmH?: number | null
-}
+export type AxeTraficItem = AxeTrafic
 
 interface SurgaTraficCardProps {
   onOuvrirDetail: () => void
@@ -28,7 +16,7 @@ interface SurgaTraficCardProps {
 export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: SurgaTraficCardProps) {
   const [axes, setAxes] = useState<AxeTraficItem[]>([])
   const [synthese, setSynthese] = useState<string>('')
-  const [source, setSource] = useState<string>('previsionnel')
+  const [source, setSource] = useState<string>('aucune')
   const [loading, setLoading] = useState<boolean>(true)
   const couvreTrafic = estZoneCouverteParTrafic(ville)
 
@@ -41,7 +29,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
         if (isMounted && data.success && Array.isArray(data.axes)) {
           setAxes(data.axes)
           setSynthese(data.synthese || '')
-          setSource(data.source || 'previsionnel')
+          setSource(data.source || 'aucune')
         }
       } catch (err) {
         console.error('Erreur chargement trafic card:', err)
@@ -55,27 +43,19 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
     }
   }, [])
 
-  const axesPertinents = axes.slice(0, 3)
+  // Seuls les axes portant une mesure ou un signalement daté sont montrés.
+  const axesPertinents = axes.filter(axeRenseigne).slice(0, 3)
 
   const getCouleurNiveau = (niveau: string) => {
     switch (niveau) {
       case 'bouche':
         return '#DC2626'
       case 'dense':
-        return 'var(--surga-accent, #D97706)'
-      default:
+        return 'var(--surga-accent-text, #92400E)'
+      case 'fluide':
         return 'var(--surga-emerald, #059669)'
-    }
-  }
-
-  const getLibelleNiveau = (niveau: string) => {
-    switch (niveau) {
-      case 'bouche':
-        return 'Bouché'
-      case 'dense':
-        return 'Dense'
       default:
-        return 'Fluide'
+        return 'var(--surga-text2, #475569)'
     }
   }
 
@@ -136,7 +116,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
                   }}
                 >
                   <Activity size={10} />
-                  DIRECT
+                  MESURÉ
                 </span>
               )}
             </div>
@@ -149,19 +129,17 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
                 textOverflow: 'ellipsis',
               }}
             >
-              {source === 'tomtom_live'
-                ? 'Sondes TomTom en direct • TER & BRT'
-                : 'Dakar • TER & BRT'}
+              Dakar • mesures et signalements
             </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           <a
-            href="https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1"
+            href={CARTE_TRAFIC_EXTERNE}
             target="_blank"
             rel="noopener noreferrer"
-            title="Carte Google Maps Trafic en temps réel"
+            title="Ouvrir la carte du trafic de Google Maps"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -176,7 +154,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
               whiteSpace: 'nowrap',
             }}
           >
-            <span>Carte Live</span>
+            <span>Google Maps</span>
             <ExternalLink size={11} />
           </a>
 
@@ -230,7 +208,11 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
           {/* Aperçu des 3 axes clés */}
           {loading ? (
             <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', padding: '6px 0' }}>
-              Évaluation du trafic en cours...
+              Chargement du trafic…
+            </div>
+          ) : axesPertinents.length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', padding: '6px 0', lineHeight: 1.4 }}>
+              {MESSAGE_TRAFIC_INDISPONIBLE}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -289,17 +271,19 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
                           backgroundColor: 'var(--surga-bg, #F8FAFC)',
                         }}
                       >
-                        {getLibelleNiveau(axe.niveau)}
+                        {libelleNiveau(axe)}
                       </span>
-                      <span style={{ fontSize: 10, color: 'var(--surga-text3, #94A3B8)', fontWeight: 600 }}>
-                        {axe.tempsEstimeMin} min
-                      </span>
+                      {axe.tempsEstimeMin !== null && (
+                        <span style={{ fontSize: 10, color: 'var(--surga-text2, #475569)', fontWeight: 600 }}>
+                          {axe.tempsEstimeMin} min
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
               })}
-              <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginTop: 4 }}>
-                Mis à jour il y a 4 min
+              <div style={{ fontSize: 11, color: 'var(--surga-text3, #64748B)', marginTop: 4 }}>
+                {origineAxe(axesPertinents[0])}
               </div>
             </div>
           )}

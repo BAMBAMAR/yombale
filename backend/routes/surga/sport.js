@@ -68,6 +68,8 @@ router.get('/sport', tokenOptional, async (req, res) => {
       equipes_filtre: equipes,
       total: matchs.length,
       matchs,
+      // D53 : aucune source pour la Ligue 1 sénégalaise. L'écran le dit au lieu d'afficher une liste vide.
+      indisponible: categorie === 'ligue1_sn',
     });
   } catch (err) {
     console.error('[SURGA SPORT GET ERR]:', err.message);

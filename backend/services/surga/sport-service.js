@@ -1,7 +1,7 @@
 // backend/services/surga/sport-service.js
 // Service Sport Universel en Temps Réel pour Surga :
 // Données réelles ESPN Live Scoreboards : Ligue des Champions, Premier League, LaLiga, Ligue 1, Serie A, Saudi Pro League,
-// Calendrier officiel FIFA des Lions du Sénégal, et Ligue 1 sénégalaise.
+// Calendrier officiel FIFA des Lions du Sénégal. La Ligue 1 sénégalaise n'a pas de source (D53).
 
 const axios = require('axios');
 
@@ -170,61 +170,9 @@ async function chargerDonneesSportEnDirect(force = false) {
     return t > Date.now() - unAnMs;
   });
 
-  // Ajout des rencontres réelles de Ligue 1 Sénégalaise (avec horaires de l'après-midi au Sénégal : 16h30 / 17h00 GMT)
-  const matchsLigue1SN = [
-    {
-      id: 'sn-l1-real-1',
-      competition: 'Ligue 1 Sénégal',
-      categorie: 'ligue1_sn',
-      equipe_domicile: 'ASC Jaraaf de Dakar',
-      equipe_exterieur: 'Teungueth FC',
-      score_domicile: 1,
-      score_exterieur: 0,
-      statut: 'TERMINE',
-      minute_jeu: 'Fin',
-      date_debut: new Date(Date.now() - 24 * 3600 * 1000).toISOString().replace(/T.*/, 'T16:30:00Z'),
-      diffuseur: 'RTS 2 / Stade Iba Mar Diop (Dakar)',
-    },
-    {
-      id: 'sn-l1-real-2',
-      competition: 'Ligue 1 Sénégal',
-      categorie: 'ligue1_sn',
-      equipe_domicile: 'Génération Foot',
-      equipe_exterieur: 'Guédiawaye FC',
-      score_domicile: null,
-      score_exterieur: null,
-      statut: 'A_VENIR',
-      date_debut: new Date(Date.now() + 48 * 3600 * 1000).toISOString().replace(/T.*/, 'T17:00:00Z'),
-      diffuseur: 'Stade Djibril Diagne (Déni Biram Ndao)',
-    },
-    {
-      id: 'sn-l1-real-3',
-      competition: 'Ligue 1 Sénégal',
-      categorie: 'ligue1_sn',
-      equipe_domicile: 'Casa Sports',
-      equipe_exterieur: 'AS Pikine',
-      score_domicile: null,
-      score_exterieur: null,
-      statut: 'A_VENIR',
-      date_debut: new Date(Date.now() + 72 * 3600 * 1000).toISOString().replace(/T.*/, 'T16:30:00Z'),
-      diffuseur: 'Stade Aline Sitoé Diatta (Ziguinchor)',
-    },
-    {
-      id: 'sn-l1-real-4',
-      competition: 'Ligue 1 Sénégal',
-      categorie: 'ligue1_sn',
-      equipe_domicile: 'Dakar Sacré-Cœur',
-      equipe_exterieur: 'US Gorée',
-      score_domicile: 2,
-      score_exterieur: 1,
-      statut: 'TERMINE',
-      minute_jeu: 'Fin',
-      date_debut: new Date(Date.now() - 48 * 3600 * 1000).toISOString().replace(/T.*/, 'T16:30:00Z'),
-      diffuseur: 'Stade Alassane Djigo (Pikine)',
-    },
-  ];
-
-  matchsLigue1SN.forEach((m) => resultats.push(m));
+  // SRG-A4-014 / D53 : quatre rencontres de Ligue 1 sénégalaise étaient ajoutées ici, écrites dans le code et datées
+  // du jour de l'appel. Aucune source ne les fournit : la catégorie « ligue1_sn » reste vide et l'écran affiche
+  // « indisponible » tant qu'une source n'est pas branchée.
 
   // Dédoublonnage strict par identifiant ou par paire d'équipes + date
   const vus = new Set();

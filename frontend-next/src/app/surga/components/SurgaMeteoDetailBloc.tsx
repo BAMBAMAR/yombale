@@ -3,6 +3,7 @@
 import React from 'react'
 import { Wind, Droplets, Waves, ShieldAlert } from 'lucide-react'
 import SurgaMeteoPrevisions from './SurgaMeteoPrevisions'
+import { libelleReleveMeteo } from '@/lib/surga-meteo'
 import type { MeteoData } from '@/lib/surga-meteo'
 
 interface SurgaMeteoDetailBlocProps {
@@ -49,7 +50,7 @@ export default function SurgaMeteoDetailBloc({
           <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <Wind size={12} color="var(--surga-accent, #D97706)" />
-              {meteo.vent_vitesse_kmh ?? 0} km/h ({meteo.vent_direction || 'Alizé'})
+              {meteo.vent_vitesse_kmh ?? '--'} km/h{meteo.vent_direction ? ` (${meteo.vent_direction})` : ''}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <Droplets size={12} color="var(--surga-primary, #0F172A)" />
@@ -103,7 +104,22 @@ export default function SurgaMeteoDetailBloc({
         )}
       </div>
 
-      {meteo.previsions_3j && (
+      {/* D53 : marées et qualité de l'air n'ont pas encore de source. L'écran le dit au lieu de se taire. */}
+      {(!meteo.qualite_air || (estMaritime && !meteo.maree)) && (
+        <div style={{ fontSize: 11, color: 'var(--surga-text2, #475569)', marginBottom: 10 }}>
+          {estMaritime && !meteo.maree && !meteo.qualite_air
+            ? 'Marées et qualité de l’air : indisponibles pour le moment.'
+            : estMaritime && !meteo.maree
+              ? 'Marées : indisponibles pour le moment.'
+              : 'Qualité de l’air : indisponible pour le moment.'}
+        </div>
+      )}
+
+      <div style={{ fontSize: 11, color: 'var(--surga-text3, #64748B)', marginBottom: 10 }}>
+        Source : {libelleReleveMeteo(meteo)}
+      </div>
+
+      {meteo.previsions_3j && meteo.previsions_3j.length > 0 && (
         <SurgaMeteoPrevisions
           previsions={meteo.previsions_3j}
           showPrevisions={showPrevisions}

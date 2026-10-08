@@ -14,30 +14,10 @@ import {
 } from 'lucide-react'
 import SurgaTraficItemCard from './SurgaTraficItemCard'
 import SurgaTraficReportForm from './SurgaTraficReportForm'
+import { axeRenseigne, heureCourte, MESSAGE_TRAFIC_INDISPONIBLE, CARTE_TRAFIC_EXTERNE } from '@/lib/surga-trafic'
+import type { AxeTrafic } from '@/lib/surga-trafic'
 
-export interface AxeTraficDetail {
-  id: string
-  nom: string
-  origine: string
-  destination: string
-  type: string
-  sens: string
-  niveau: 'fluide' | 'dense' | 'bouche'
-  tempsEstimeMin: number
-  tempsHabituelMin: number
-  distanceKm: number
-  pointsChauds: string[]
-  cause: string
-  incident?: string | null
-  source?: 'tomtom_live' | 'previsionnel'
-  vitesseReelleKmH?: number | null
-  vitesseNormaleKmH?: number | null
-  signalementRecent?: {
-    type: string
-    commentaire?: string
-    date: string
-  } | null
-}
+export type AxeTraficDetail = AxeTrafic
 
 interface IncidentTrafic {
   id: string
@@ -62,7 +42,7 @@ const ONGLETS_FILTRE = [
 export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalProps) {
   const [axes, setAxes] = useState<AxeTraficDetail[]>([])
   const [incidents, setIncidents] = useState<IncidentTrafic[]>([])
-  const [source, setSource] = useState<string>('previsionnel')
+  const [source, setSource] = useState<string>('aucune')
   const [derniereMaj, setDerniereMaj] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(true)
   const [filtreActif, setFiltreActif] = useState<string>('tous')
@@ -73,7 +53,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
   const [typeSignalement, setTypeSignalement] = useState<string>('dense')
   const [commentaire, setCommentaire] = useState<string>('')
   const [envoiEnCours, setEnvoiEnCours] = useState<boolean>(false)
-  const [messageSucces, setMessageSucces] = useState<string | null>(null)
+  const [message, setMessage] = useState<{ texte: string; ok: boolean } | null>(null)
 
   const chargerTrafic = async () => {
     setLoading(true)
@@ -82,9 +62,9 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
       const data = await res.json()
       if (data.success && Array.isArray(data.axes)) {
         setAxes(data.axes)
-        setSource(data.source || 'previsionnel')
+        setSource(data.source || 'aucune')
         setIncidents(data.incidents || [])
-        setDerniereMaj(data.derniereMiseAJour || new Date().toISOString())
+        setDerniereMaj(data.derniereMiseAJour || '')
       }
     } catch (err) {
       console.error('Erreur chargement trafic modal:', err)
@@ -108,23 +88,26 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ axeId: axeSelectionne, typeSignalement, commentaire }),
       })
-      const data = await res.json()
-      if (data.success) {
-        setMessageSucces('Signalement partagé avec les usagers de Dakar.')
+      const data = await res.json().catch(() => null)
+      if (res.ok && data?.success) {
+        setMessage({ texte: 'Signalement partagé avec les usagers de Dakar.', ok: true })
         setCommentaire('')
         setAfficherFormulaire(false)
         await chargerTrafic()
-        setTimeout(() => setMessageSucces(null), 3500)
+        setTimeout(() => setMessage(null), 3500)
+      } else {
+        // SRG-A1-017 : un signalement non enregistré est dit comme tel.
+        setMessage({ texte: data?.error || 'Votre signalement n’a pas pu être enregistré.', ok: false })
       }
     } catch {
-      console.error('Erreur envoi signalement')
+      setMessage({ texte: 'Votre signalement n’a pas pu être envoyé. Vérifiez votre connexion.', ok: false })
     } finally {
       setEnvoiEnCours(false)
     }
   }
 
   const axesFiltres = useMemo(() => {
-    return axes.filter((a) => {
+    return axes.filter(axeRenseigne).filter((a) => {
       if (filtreActif === 'autoroute') return a.type === 'autoroute' || a.type === 'voie_express'
       if (filtreActif === 'corniche') return a.type === 'corniche' || a.type === 'nationale' || a.type === 'echangeur'
       if (filtreActif === 'transports') return a.type === 'ferroviaire' || a.type === 'bus_site_propre'
@@ -192,12 +175,10 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
-                Trafic en Direct • Dakar
+                Trafic • Dakar
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.75)' }}>
-                {source === 'tomtom_live'
-                  ? 'Sondes TomTom Traffic en direct • TER & BRT'
-                  : 'Modèle trafic calibré Dakar • TER & BRT'}
+                Mesures et signalements des usagers
               </div>
             </div>
           </div>
@@ -235,35 +216,27 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
           </div>
         </div>
 
-        {/* Indicateur de source & statut temps réel */}
+        {/* D'où viennent les valeurs affichées, et de quand elles datent */}
         <div
           style={{
             padding: '7px 14px',
-            backgroundColor: source === 'tomtom_live' ? 'rgba(10, 92, 54, 0.08)' : 'rgba(199, 91, 0, 0.08)',
+            backgroundColor: 'rgba(199, 91, 0, 0.08)',
             fontSize: 11,
-            color: source === 'tomtom_live' ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
+            color: 'var(--navy, #1C2B4A)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            gap: 6,
             borderBottom: '1px solid var(--border, #E8DDD2)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Activity size={12} color={source === 'tomtom_live' ? 'var(--price, #0A5C36)' : 'var(--accent, #C75B00)'} />
-            <span>
-              {source === 'tomtom_live'
-                ? 'Sondes TomTom en direct (vitesse et retards réels)'
-                : 'Modèle calibré Dakar (pointes, sorties de bureaux & TER/BRT)'}
-            </span>
-          </div>
-          {derniereMaj && (
-            <span style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>
-              {new Date(derniereMaj).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
+          <Activity size={12} color="var(--accent, #C75B00)" />
+          <span>
+            {source === 'tomtom_live' ? 'Mesures du fournisseur de trafic' : source === 'signalements' ? 'Signalements des usagers (45 dernières minutes)' : 'Aucune mesure ni signalement récent'}
+            {derniereMaj ? `, dernier relevé à ${heureCourte(derniereMaj)}` : ''}
+          </span>
         </div>
 
-        {/* Passerelle directe Carte Trafic Google Maps Live */}
+        {/* Carte externe : Google Maps */}
         <div
           style={{
             padding: '10px 14px',
@@ -279,15 +252,15 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
             <MapPin size={16} color="var(--accent, #C75B00)" style={{ flexShrink: 0 }} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                Carte Trafic Temps Réel (Google Maps)
+                Carte du trafic (Google Maps)
               </div>
               <div style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>
-                Bouchons et flux capteurs en direct sur la presqu'île
+                Service externe, ouvert dans un nouvel onglet
               </div>
             </div>
           </div>
           <a
-            href="https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1"
+            href={CARTE_TRAFIC_EXTERNE}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -309,13 +282,14 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
           </a>
         </div>
 
-        {/* Message de succès */}
-        {messageSucces && (
+        {/* Résultat du signalement */}
+        {message && (
           <div
+            role="status"
             style={{
               padding: '8px 14px',
-              backgroundColor: 'rgba(10, 92, 54, 0.1)',
-              color: 'var(--price, #0A5C36)',
+              backgroundColor: message.ok ? 'rgba(10, 92, 54, 0.1)' : 'rgba(185, 28, 28, 0.08)',
+              color: message.ok ? 'var(--price, #0A5C36)' : '#B91C1C',
               fontSize: 12,
               fontWeight: 700,
               display: 'flex',
@@ -324,12 +298,12 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
               borderBottom: '1px solid var(--border, #E8DDD2)',
             }}
           >
-            <CheckCircle2 size={15} />
-            <span>{messageSucces}</span>
+            {message.ok ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
+            <span>{message.texte}</span>
           </div>
         )}
 
-        {/* Alertes incidents en direct (si TomTom) */}
+        {/* Incidents rapportés par le fournisseur de trafic */}
         {incidents.length > 0 && (
           <div
             style={{
@@ -344,7 +318,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
           >
             <div style={{ fontWeight: 700, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
               <AlertTriangle size={13} />
-              <span>{incidents.length} incident(s) signalé(s) en direct à Dakar</span>
+              <span>{incidents.length} incident(s) rapporté(s) à Dakar</span>
             </div>
             {incidents.map((inc) => (
               <div key={inc.id} style={{ fontSize: 10 }}>• {inc.description}</div>
@@ -429,11 +403,11 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
         >
           {loading && axes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
-              Interrogation des sondes de circulation...
+              Chargement du trafic…
             </div>
           ) : axesFiltres.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
-              Aucun axe dans cette catégorie.
+              {axes.some(axeRenseigne) ? 'Aucun axe renseigné dans cette catégorie.' : MESSAGE_TRAFIC_INDISPONIBLE}
             </div>
           ) : (
             axesFiltres.map((axe) => (

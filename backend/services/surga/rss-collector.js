@@ -59,36 +59,6 @@ function classerRubriquePresse(titre, resume) {
   return 'general';
 }
 
-const SPORT_EVENEMENTS_DEFAUT = [
-  {
-    competition: 'Éliminatoires CAN 2025',
-    equipe_domicile: 'Sénégal',
-    equipe_exterieur: 'Burkina Faso',
-    score_domicile: 2,
-    score_exterieur: 0,
-    statut: 'TERMINE',
-    date_debut: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
-  },
-  {
-    competition: 'Éliminatoires CAN 2025',
-    equipe_domicile: 'Malawi',
-    equipe_exterieur: 'Sénégal',
-    score_domicile: null,
-    score_exterieur: null,
-    statut: 'A_VENIR',
-    date_debut: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
-  },
-  {
-    competition: 'Ligue 1 Sénégal',
-    equipe_domicile: 'Jaraaf de Dakar',
-    equipe_exterieur: 'Génération Foot',
-    score_domicile: 1,
-    score_exterieur: 1,
-    statut: 'TERMINE',
-    date_debut: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
-  },
-];
-
 const ITEMS_SECOURS = [
   {
     source_nom: 'Seneweb',
@@ -240,25 +210,7 @@ async function assurerDonneesInitiales() {
          )`
       ).catch(() => {});
 
-      const { rows: sportRows } = await pool.query('SELECT COUNT(*) as count FROM surga_sport_events').catch(() => ({ rows: [{ count: '1' }] }));
-      if (parseInt(sportRows[0]?.count || '0', 10) === 0) {
-        for (const sp of SPORT_EVENEMENTS_DEFAUT) {
-          await pool.query(
-            `INSERT INTO surga_sport_events (
-              competition, equipe_domicile, equipe_exterieur, score_domicile, score_exterieur, statut, date_debut
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [
-              sp.competition,
-              sp.equipe_domicile,
-              sp.equipe_exterieur,
-              sp.score_domicile,
-              sp.score_exterieur,
-              sp.statut,
-              sp.date_debut,
-            ]
-          ).catch(() => {});
-        }
-      }
+      // SRG-A4-014 : trois rencontres inventées étaient semées ici dans surga_sport_events.
       _derniereInitialisation = Date.now();
     } catch (err) {
       console.warn('[SURGA RSS] Avertissement initialisation sources:', err.message);
@@ -586,22 +538,15 @@ async function recupererRevuePresse({ rubrique = null, limit = 20, offset = 0 } 
  * Récupère les événements sportifs récents ou à venir
  */
 async function getSportEvents({ limit = 4 } = {}) {
-  await assurerDonneesInitiales();
-
+  // SRG-A4-014 : la table surga_sport_events n'a jamais reçu que trois rencontres inventées. Les rencontres viennent
+  // du fournisseur de scores ; sans réponse de sa part, il n'y a rien à annoncer.
   try {
-    const { rows } = await pool.query(
-      `SELECT id, competition, equipe_domicile, equipe_exterieur, score_domicile, score_exterieur, statut, date_debut
-       FROM surga_sport_events
-       ORDER BY date_debut DESC
-       LIMIT $1`,
-      [limit]
-    );
-    if (rows && rows.length > 0) return rows;
+    const { filtrerMatchsSport } = require('./sport-service');
+    return await filtrerMatchsSport({ limit });
   } catch (err) {
-    console.warn('[SURGA SPORT DB WARN]:', err.message);
+    console.warn('[SURGA SPORT WARN]:', err.message);
+    return [];
   }
-
-  return SPORT_EVENEMENTS_DEFAUT.slice(0, limit);
 }
 
 /**
@@ -713,6 +658,5 @@ module.exports = {
   nettoyerResume,
   assurerDonneesInitiales,
   SOURCES_DEFAUT,
-  SPORT_EVENEMENTS_DEFAUT,
   RUBRIQUES_VALIDES,
 };

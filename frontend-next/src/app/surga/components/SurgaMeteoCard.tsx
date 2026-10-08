@@ -3,8 +3,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  Waves,
-  ShieldAlert,
   RefreshCw,
   ChevronDown,
   ChevronUp,
@@ -40,6 +38,8 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
   const [gpsEnCours, setGpsEnCours] = useState(false)
   const [estGpsActif, setEstGpsActif] = useState(Boolean(initialMeteo?.est_gps))
   const [estDeplie, setEstDeplie] = useState(false)
+  // Localité demandée, affichée pendant le chargement et quand la météo manque.
+  const [villeDemandee, setVilleDemandee] = useState<string | null>(null)
 
   const chargerMeteo = useCallback(
     async (params?: { ville?: string; lat?: number; lon?: number }) => {
@@ -81,32 +81,12 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
             setLocalitesList(data.localites)
           }
         } else {
-          // Fallback gracieux si l'API externe est injoignable
-          const resolu = trouverLocaliteParNom(villeRecherche || ville)
-          setMeteo((prev) => ({
-            ville: resolu.nom,
-            est_gps: false,
-            temperature: prev?.temperature ?? 28,
-            ressenti: prev?.ressenti ?? 31,
-            temp_min: prev?.temp_min ?? 24,
-            temp_max: prev?.temp_max ?? 30,
-            condition_code: prev?.condition_code ?? 'soleil',
-            condition_texte: prev?.condition_texte ?? 'Ensoleillé',
-            humidite: prev?.humidite ?? 72,
-            vent_vitesse_kmh: prev?.vent_vitesse_kmh ?? 18,
-            vent_direction: prev?.vent_direction ?? 'Alizé maritime',
-            indice_uv: prev?.indice_uv ?? 8,
-            qualite_air: prev?.qualite_air,
-            maree: resolu.maritime ? prev?.maree : null,
-            previsions_3j: prev?.previsions_3j,
-            source: 'Station locale (secours)',
-            updated_at: new Date().toISOString(),
-          }))
+          // SRG-A2-009 / D43 : pas de valeur de remplacement. L'ancien repli affichait 28 °C et « Ensoleillé ».
+          setMeteo(null)
         }
       } catch (err) {
         console.warn('[SURGA METEO FETCH ERR]:', err)
-        const resolu = trouverLocaliteParNom(villeRecherche || ville)
-        setMeteo((prev) => (prev ? { ...prev, ville: resolu.nom, est_gps: false } : null))
+        setMeteo(null)
       } finally {
         setLoading(false)
       }
@@ -151,26 +131,10 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
     } catch {}
     setEstGpsActif(false)
     setIsLocaliteModalOpen(false)
-    // Mise à jour optimiste immédiate pour un feedback visuel direct et garanti
-    setMeteo((prev) => ({
-      ville: nomCanonique,
-      est_gps: false,
-      temperature: prev?.temperature ?? 28,
-      ressenti: prev?.ressenti ?? 31,
-      temp_min: prev?.temp_min ?? 24,
-      temp_max: prev?.temp_max ?? 30,
-      condition_code: prev?.condition_code ?? 'soleil',
-      condition_texte: prev?.condition_texte ?? 'Ensoleillé',
-      humidite: prev?.humidite ?? 72,
-      vent_vitesse_kmh: prev?.vent_vitesse_kmh ?? 18,
-      vent_direction: prev?.vent_direction ?? 'Alizé maritime',
-      indice_uv: prev?.indice_uv ?? 8,
-      qualite_air: prev?.qualite_air,
-      maree: resolu.maritime ? prev?.maree : null,
-      previsions_3j: prev?.previsions_3j,
-      source: 'Mise à jour directe',
-      updated_at: new Date().toISOString(),
-    }))
+    // Le relevé de l'ancienne localité n'est pas montré sous le nom de la nouvelle : la carte attend la réponse.
+    setVilleDemandee(nomCanonique)
+    setMeteo(null)
+    setLoading(true)
     if (onVilleChange) {
       try {
         onVilleChange(nomCanonique)
@@ -199,11 +163,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
     }
   }, [initialMeteo, chargerMeteo])
 
-  if (!meteo && !loading) {
-    return null
-  }
-
-  const villeAffichee = meteo?.ville || ville
+  const villeAffichee = meteo?.ville || villeDemandee || ville
   const estMaritime = estLocaliteMaritime(villeAffichee)
 
   return (
@@ -230,7 +190,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-            {renderMeteoIcon(meteo?.condition_code || 'soleil', 18)}
+            {renderMeteoIcon(meteo?.condition_code || 'nuageux', 18)}
             <span
               className="surga-card-title"
               style={{
@@ -242,7 +202,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
                 textOverflow: 'ellipsis',
               }}
             >
-              {estMaritime ? `Météo et marées · ${villeAffichee}` : `Météo · ${villeAffichee}`}
+              {`Météo · ${villeAffichee}`}
             </span>
             <ChevronDown size={14} color="var(--surga-accent, #D97706)" style={{ flexShrink: 0 }} />
           </div>
@@ -294,7 +254,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
         </div>
       </div>
 
-      {/* Ligne d'aperçu glanceable immédiate : 28°C Ensoleillé • Marée 17h45 • Air Bonne */}
+      {/* Ligne d'aperçu : température et ciel reçus de la source, ou l'état « indisponible » */}
       <div
         style={{
           display: 'flex',
@@ -309,31 +269,27 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {renderMeteoIcon(meteo?.condition_code || 'soleil', 18)}
-            <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--surga-primary, #0F172A)' }}>
-              {meteo?.temperature ?? '--'}°C
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--surga-text1, #0F172A)' }}>
-              {meteo?.condition_texte || 'Ensoleillé'}
-            </span>
-          </div>
-
-          {estMaritime && meteo?.maree && (
-            <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Waves size={12} color="var(--surga-primary, #0F172A)" />
-              {meteo.maree.etat} {meteo.maree.prochaine_heure}
-            </span>
-          )}
-
-          {meteo?.qualite_air && (
-            <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <ShieldAlert size={12} color={meteo.qualite_air.aqi > 70 ? 'var(--surga-accent, #D97706)' : 'var(--surga-emerald, #059669)'} />
-              Air : {meteo.qualite_air.niveau} (AQI {meteo.qualite_air.aqi})
+          {meteo ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              {renderMeteoIcon(meteo.condition_code, 18)}
+              <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--surga-primary, #0F172A)' }}>
+                {meteo.temperature}°C
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--surga-text1, #0F172A)' }}>
+                {meteo.condition_texte}
+              </span>
+              {meteo.non_actualise && (
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-accent-text, #92400E)' }}>non actualisé</span>
+              )}
+            </div>
+          ) : (
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--surga-text2, #475569)' }}>
+              {loading ? 'Chargement de la météo…' : 'Météo indisponible pour le moment.'}
             </span>
           )}
         </div>
 
+        {meteo && (
         <button
           type="button"
           onClick={() => setEstDeplie(!estDeplie)}
@@ -355,6 +311,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
           <span>{estDeplie ? 'Moins' : 'Détails'}</span>
           {estDeplie ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </button>
+        )}
       </div>
 
       {/* Détails complets repliables via sous-composant modulaire */}

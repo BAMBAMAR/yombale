@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  Calendar, Wallet, Navigation, Sun, Bookmark,
+  Calendar, Wallet, Bookmark,
   Eye, EyeOff, Lock, Radio, Play, Pause, SkipBack, SkipForward,
 } from 'lucide-react'
 import type { SurgaTab } from './SurgaBottomNav'
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync'
 import { getLocalNotes } from '@/lib/surga-offline-sync'
-import { estLocaliteMaritime, estZoneCouverteParTrafic } from '@/lib/surga-meteo'
 import {
   isXaalisMasque,
   toggleXaalisMasque,
@@ -17,6 +16,7 @@ import {
 } from '@/lib/surga-xaalis-security'
 import { useSurgaRadio } from '@/lib/surga-radio-context'
 import SurgaXaalisPinModal from './SurgaXaalisPinModal'
+import { SurgaRailTrafic, SurgaRailMeteo } from './SurgaRailContexte'
 
 export const DEFAUT_RAIL_WIDGETS = ['agenda', 'depenses', 'trafic', 'meteo', 'notes']
 
@@ -27,8 +27,6 @@ interface SurgaDesktopRightRailProps {
   nbAgenda: number
   derniereNoteTitre?: string
   prochainRdvTitre?: string
-  meteoTemp?: string
-  meteoMaree?: string
   ville?: string
   widgetsActifs?: string[]
   onNavigateTab: (tab: SurgaTab) => void
@@ -38,8 +36,7 @@ interface SurgaDesktopRightRailProps {
 
 export default function SurgaDesktopRightRail({
   statsApercu, soldeKalpeFormate, nbNotes, nbAgenda,
-  derniereNoteTitre, prochainRdvTitre, meteoTemp = '28°C',
-  meteoMaree = '17h45', ville = 'Dakar Plateau', widgetsActifs,
+  derniereNoteTitre, prochainRdvTitre, ville = 'Dakar Plateau', widgetsActifs,
   onNavigateTab, onOpenTrafic, onOpenRadios,
 }: SurgaDesktopRightRailProps) {
   const moisActuelNom = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
@@ -57,9 +54,6 @@ export default function SurgaDesktopRightRail({
   const [protegeParPin, setProtegeParPin] = useState(false)
   const [isPinModalOpen, setIsPinModalOpen] = useState(false)
   const [noteEpingleeTexte, setNoteEpingleeTexte] = useState<string>('')
-
-  const estMaritime = estLocaliteMaritime(ville)
-  const couvreTrafic = estZoneCouverteParTrafic(ville)
 
   const widgetsVisibles = Array.isArray(widgetsActifs) && widgetsActifs.length > 0 ? widgetsActifs : DEFAUT_RAIL_WIDGETS
   const estActif = (id: string) => widgetsVisibles.includes(id)
@@ -214,79 +208,9 @@ export default function SurgaDesktopRightRail({
           </div>
         )}
 
-        {/* 3. Trafic en direct (SRG-UI-01 & SRG-UI-15) */}
-        {estActif('trafic') && (
-          <div
-            className="surga-desktop-widget"
-            role="button"
-            tabIndex={0}
-            onClick={onOpenTrafic}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpenTrafic()}
-            title={couvreTrafic ? "Ouvrir le suivi du trafic" : `Trafic indisponible pour ${ville}. Disponible pour Dakar.`}
-          >
-            <div className="surga-widget-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="surga-widget-label">Trafic en direct</span>
-              </div>
-              <Navigation size={14} className="surga-widget-icon" />
-            </div>
-
-            {couvreTrafic ? (
-              <>
-                <div className="surga-trafic-indicators">
-                  <div className="surga-trafic-row">
-                    <span className="surga-trafic-axis">
-                      <span className="surga-trafic-dot green" />
-                      <span>VDN Dégagement</span>
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-emerald, #059669)' }}>fluide</span>
-                    <span className="surga-trafic-time">14 min</span>
-                  </div>
-                  <div className="surga-trafic-row">
-                    <span className="surga-trafic-axis">
-                      <span className="surga-trafic-dot orange" />
-                      <span>Corniche Ouest</span>
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#B45309' }}>dense</span>
-                    <span className="surga-trafic-time">28 min</span>
-                  </div>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginTop: 4 }}>
-                  Mis à jour il y a 4 min
-                </div>
-              </>
-            ) : (
-              <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', padding: '4px 0', lineHeight: 1.4 }}>
-                Trafic indisponible pour {ville}. Disponible pour Dakar.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 4. Météo (SRG-UI-01 & SRG-UI-02 : nom de ville toujours affiché, marées seulement si maritime) */}
-        {estActif('meteo') && (
-          <div
-            className="surga-desktop-widget"
-            role="button"
-            tabIndex={0}
-            onClick={() => onNavigateTab('aujourdhui')}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onNavigateTab('aujourdhui')}
-            title="Voir les détails météo"
-          >
-            <div className="surga-widget-header">
-              <span className="surga-widget-label">
-                {estMaritime ? `Météo et marées · ${ville}` : `Météo · ${ville}`}
-              </span>
-              <Sun size={14} className="surga-widget-icon" />
-            </div>
-            <div className="surga-widget-highlight">{meteoTemp} • Ensoleillé</div>
-            <div className="surga-widget-desc">
-              {estMaritime
-                ? `Marée haute : ${meteoMaree} • Air : Bonne (AQI 45)`
-                : 'Air : Bonne (AQI 45) • Vent modéré'}
-            </div>
-          </div>
-        )}
+        {/* 3 et 4. Trafic et météo : données reçues du serveur, ou « indisponible » (SRG-A3-005, D53) */}
+        {estActif('trafic') && <SurgaRailTrafic ville={ville} onOuvrir={onOpenTrafic} />}
+        {estActif('meteo') && <SurgaRailMeteo ville={ville} onOuvrir={() => onNavigateTab('aujourdhui')} />}
 
         {/* 5. Mémo épinglé */}
         {estActif('notes') && (

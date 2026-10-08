@@ -2,10 +2,11 @@
 
 import React from 'react'
 import { MapPin, Activity, ExternalLink } from 'lucide-react'
-import type { AxeTraficDetail } from './SurgaTraficModal'
+import { libelleNiveau, origineAxe } from '@/lib/surga-trafic'
+import type { AxeTrafic } from '@/lib/surga-trafic'
 
 interface SurgaTraficItemCardProps {
-  axe: AxeTraficDetail
+  axe: AxeTrafic
 }
 
 export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
@@ -15,13 +16,16 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
         return '#B91C1C'
       case 'dense':
         return 'var(--accent, #C75B00)'
-      default:
+      case 'fluide':
         return 'var(--price, #0A5C36)'
+      default:
+        return 'var(--text3, #73675E)'
     }
   }
 
   const couleur = getCouleurNiveau(axe.niveau)
-  const estEnDirect = axe.source === 'tomtom_live'
+  const estMesure = axe.source === 'tomtom_live'
+  const origine = origineAxe(axe)
 
   return (
     <div
@@ -52,7 +56,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {estEnDirect && (
+          {estMesure && (
             <span
               style={{
                 fontSize: 9,
@@ -67,7 +71,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
               }}
             >
               <Activity size={10} />
-              DIRECT
+              MESURÉ
             </span>
           )}
           <span
@@ -81,16 +85,19 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
               textTransform: 'uppercase',
             }}
           >
-            {axe.niveau}
+            {libelleNiveau(axe)}
           </span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-            {axe.tempsEstimeMin} min
-          </span>
+          {axe.tempsEstimeMin !== null && (
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+              {axe.tempsEstimeMin} min
+            </span>
+          )}
         </div>
       </div>
 
       <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
-        {axe.cause}
+        {axe.cause || 'Aucune mesure ni signalement récent sur cet axe.'}
+        {origine ? ` ${origine}.` : ''}
       </div>
 
       <div
@@ -112,7 +119,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span>
             {axe.vitesseReelleKmH ? <strong>{axe.vitesseReelleKmH} km/h • </strong> : null}
-            Habituel : {axe.tempsHabituelMin} min • {axe.distanceKm} km
+            {axe.distanceKm} km
           </span>
           <a
             href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(axe.origine + ', Dakar')}&destination=${encodeURIComponent(axe.destination + ', Dakar')}&travelmode=driving`}

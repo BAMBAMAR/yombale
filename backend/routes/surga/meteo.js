@@ -28,6 +28,7 @@ router.get('/meteo', tokenOptional, async (req, res) => {
     res.json({
       success: true,
       meteo: donnees,
+      indisponible: !donnees,
       localites: localitesList,
       villes_disponibles: Object.keys(VILLES_SENEGAL),
     });

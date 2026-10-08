@@ -90,43 +90,20 @@ function interpreterCodeWMO(code) {
   return { code: 'soleil', texte: 'Ensoleillé' };
 }
 
-/**
- * Calcule l'état déterministe des marées pour la presqu'île de Dakar
- */
-function calculerMareeDakar(date = new Date()) {
-  const h = date.getHours();
-  // Cycle semi-diurne régulier atlantique sénégalais (~6h12 par marée)
-  const isBasse = (h >= 4 && h < 10) || (h >= 16 && h < 22);
-  const prochaineHeure = isBasse ? '11h30' : '17h45';
-  return {
-    etat: isBasse ? 'Marée basse' : 'Marée haute',
-    prochaine_heure: prochaineHeure,
-    hauteur_m: isBasse ? '0.6 m' : '1.8 m',
-    spot_reference: 'Almadies & Yoff',
-  };
-}
+// SRG-A4-015 / D53 : calculerMareeDakar et estimerQualiteAirDakar ont été retirées. Elles rendaient deux horaires de
+// marée fixes et deux indices de qualité de l'air (45 ou 95 selon le mois), sans aucune source. Les champs « maree » et
+// « qualite_air » valent null tant qu'une source n'est pas branchée ; l'écran affiche « indisponible ».
 
-/**
- * Évalue la qualité de l'air dakarois (indice particulaire saisonnier)
- */
-function estimerQualiteAirDakar(mois = new Date().getMonth()) {
-  // Mois 11 à 4 : Harmattan et brume de poussière saharienne
-  const isSaisonSeche = mois >= 10 || mois <= 4;
-  if (isSaisonSeche) {
-    return {
-      aqi: 95,
-      niveau: 'Moyenne à dégradée',
-      particules: 'Poussière saharienne en suspension',
-      conseil: 'Personnes sensibles : limiter les efforts physiques prolongés en extérieur.',
-    };
-  }
-  return {
-    aqi: 45,
-    niveau: 'Bonne',
-    particules: 'Air océanique purifié',
-    conseil: 'Qualité de l’air idéale pour les activités extérieures.',
-  };
-}
+const ROSE_DES_VENTS = ['Nord', 'Nord-Est', 'Est', 'Sud-Est', 'Sud', 'Sud-Ouest', 'Ouest', 'Nord-Ouest'];
+const directionVent = (degres) => (Number.isFinite(degres) ? ROSE_DES_VENTS[Math.round((((degres % 360) + 360) % 360) / 45) % 8] : null);
+const arrondi = (v) => (Number.isFinite(v) ? Math.round(v) : null);
+
+// La source publie un relevé par quart d'heure. Au-delà de ce délai, un relevé n'est plus présenté comme à jour, même
+// si l'appel a réussi (réponse gardée par un cache intermédiaire).
+const DELAI_FRAICHEUR_MS = 90 * 60 * 1000;
+
+// Dernier relevé réellement reçu par localité (D43) : servi daté et marqué « non actualisé » quand la source ne répond pas.
+const derniersReleves = new Map();
 
 /**
  * Fournit les données météo en temps réel (support ville ou coordonnées GPS)
@@ -208,26 +185,33 @@ async function getMeteo(options = 'Dakar') {
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max&timezone=Africa%2FDakar`;
     const res = await axios.get(url, { timeout: 4000 });
-    const { current, daily } = res.data;
+    const { current, daily } = res.data || {};
+    if (!current || !Number.isFinite(current.temperature_2m)) throw new Error('Réponse météo sans température');
 
     const condition = interpreterCodeWMO(current.weather_code);
-    const maree = isMaritime ? calculerMareeDakar() : null;
-    const qualiteAir = estimerQualiteAirDakar();
+    const jours = (daily && daily.time) || [];
 
     const previsions_3j = [];
     const joursSemaine = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    for (let i = 0; i < Math.min(3, daily.time?.length || 0); i++) {
-      const d = new Date(daily.time[i]);
-      const condJ = interpreterCodeWMO(daily.weather_code[i]);
+    for (let i = 0; i < Math.min(3, jours.length); i++) {
+      const tMin = arrondi(daily.temperature_2m_min?.[i]);
+      const tMax = arrondi(daily.temperature_2m_max?.[i]);
+      if (tMin === null || tMax === null) continue;
+      const d = new Date(jours[i]);
+      const condJ = interpreterCodeWMO(daily.weather_code?.[i]);
       previsions_3j.push({
         jour: i === 0 ? "Aujourd'hui" : joursSemaine[d.getDay()],
-        date: daily.time[i],
-        temp_min: Math.round(daily.temperature_2m_min[i]),
-        temp_max: Math.round(daily.temperature_2m_max[i]),
+        date: jours[i],
+        temp_min: tMin,
+        temp_max: tMax,
         condition_code: condJ.code,
         condition_texte: condJ.texte,
       });
     }
+
+    // Heure du relevé donnée par la source (heure de Dakar, égale à l'heure universelle), pas l'heure de l'appel.
+    const releveLe = current.time ? new Date(`${current.time}:00Z`) : null;
+    const releveValide = releveLe && !Number.isNaN(releveLe.getTime());
 
     const payload = {
       ville: nomAffiche,
@@ -237,54 +221,32 @@ async function getMeteo(options = 'Dakar') {
       is_gps: estPositionGps,
       coordonnees: { lat, lon },
       temperature: Math.round(current.temperature_2m),
-      ressenti: Math.round(current.apparent_temperature),
-      temp_min: Math.round(daily.temperature_2m_min?.[0] || current.temperature_2m - 3),
-      temp_max: Math.round(daily.temperature_2m_max?.[0] || current.temperature_2m + 4),
+      ressenti: arrondi(current.apparent_temperature),
+      temp_min: arrondi(daily?.temperature_2m_min?.[0]),
+      temp_max: arrondi(daily?.temperature_2m_max?.[0]),
       condition_code: condition.code,
       condition_texte: condition.texte,
-      humidite: Math.round(current.relative_humidity_2m),
-      vent_vitesse_kmh: Math.round(current.wind_speed_10m),
-      vent_direction: current.wind_direction_10m > 300 || current.wind_direction_10m < 60 ? 'Nord / NNO' : 'Ouest',
-      indice_uv: Math.round(daily.uv_index_max?.[0] || 7),
-      qualite_air: qualiteAir,
-      maree: maree,
+      humidite: arrondi(current.relative_humidity_2m),
+      vent_vitesse_kmh: arrondi(current.wind_speed_10m),
+      vent_direction: directionVent(current.wind_direction_10m),
+      indice_uv: arrondi(daily?.uv_index_max?.[0]),
+      qualite_air: null,
+      maree: null,
       previsions_3j: previsions_3j,
-      source: estPositionGps ? 'Open-Meteo GPS Live' : 'Open-Meteo Dakar Live',
-      updated_at: new Date().toISOString(),
+      source: 'Open-Meteo',
+      updated_at: releveValide ? releveLe.toISOString() : new Date().toISOString(),
+      non_actualise: releveValide ? Date.now() - releveLe.getTime() > DELAI_FRAICHEUR_MS : false,
     };
 
     cacheMeteo.set(cacheKey, { timestamp: Date.now(), data: payload });
+    derniersReleves.set(cacheKey, payload);
     return payload;
   } catch (err) {
-    const fallbackCondition = { code: 'soleil', texte: 'Ensoleillé & Alizé maritime' };
-    const payload = {
-      ville: nomAffiche,
-      zone: zoneNom,
-      region: zoneNom,
-      est_gps: estPositionGps,
-      is_gps: estPositionGps,
-      coordonnees: { lat, lon },
-      temperature: 28,
-      ressenti: 31,
-      temp_min: 24,
-      temp_max: 30,
-      condition_code: fallbackCondition.code,
-      condition_texte: fallbackCondition.texte,
-      humidite: 72,
-      vent_vitesse_kmh: 18,
-      vent_direction: 'Nord-Nord-Ouest (Alizé)',
-      indice_uv: 8,
-      qualite_air: estimerQualiteAirDakar(),
-      maree: isMaritime ? calculerMareeDakar() : null,
-      previsions_3j: [
-        { jour: "Aujourd'hui", temp_min: 24, temp_max: 30, condition_code: 'soleil', condition_texte: 'Ensoleillé' },
-        { jour: 'Demain', temp_min: 24, temp_max: 29, condition_code: 'soleil', condition_texte: 'Ensoleillé' },
-        { jour: 'Après-demain', temp_min: 25, temp_max: 31, condition_code: 'partiellement_nuageux', condition_texte: 'Éclaircies' },
-      ],
-      source: 'Station locale (hors-ligne)',
-      updated_at: new Date().toISOString(),
-    };
-    return payload;
+    // SRG-A2-009 / D43 : l'ancien repli servait « 28 °C, Ensoleillé, Station locale » daté de l'instant de l'appel.
+    // La source ne répond pas : dernier relevé réel, daté et marqué, ou rien.
+    console.warn('[SURGA METEO] Source indisponible :', err.message);
+    const dernier = derniersReleves.get(cacheKey);
+    return dernier ? { ...dernier, non_actualise: true } : null;
   }
 }
 
@@ -294,6 +256,5 @@ module.exports = {
   LOCALITES_SENEGAL,
   trouverLocalitePlusProche,
   interpreterCodeWMO,
-  calculerMareeDakar,
-  estimerQualiteAirDakar,
+  directionVent,
 };

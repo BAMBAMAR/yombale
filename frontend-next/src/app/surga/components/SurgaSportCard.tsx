@@ -364,7 +364,7 @@ export default function SurgaSportCard({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {matchsAffiches.length === 0 ? (
           <div style={{ padding: '16px', textAlign: 'center', color: 'var(--surga-text3, #73675E)', fontSize: 13 }}>
-            Aucun match trouvé pour ce filtre.
+            {filtreCategorie === 'ligue1_sn' ? 'Ligue 1 sénégalaise : indisponible pour le moment.' : 'Aucun match trouvé pour ce filtre.'}
           </div>
         ) : (
           matchsAffiches.map((match, idx) => {

@@ -1,7 +1,7 @@
 // tests/unit/surga.test.js
 // Tests unitaires du module Surga (Tranches 1 & 2)
 
-const { nettoyerResume, SOURCES_DEFAUT, SPORT_EVENEMENTS_DEFAUT } = require('../../backend/services/surga/rss-collector');
+const { nettoyerResume, SOURCES_DEFAUT } = require('../../backend/services/surga/rss-collector');
 
 describe('Module Surga — Tranches 1 & 2', () => {
   describe('Tranche 1 : Préférences & Onboarding', () => {
@@ -57,14 +57,9 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(nettoyerResume(texteCourt)).toBe(texteCourt);
     });
 
-    test('Événements sportifs par défaut structurés', () => {
-      expect(SPORT_EVENEMENTS_DEFAUT.length).toBeGreaterThan(0);
-      const premier = SPORT_EVENEMENTS_DEFAUT[0];
-      expect(premier).toHaveProperty('competition');
-      expect(premier).toHaveProperty('equipe_domicile');
-      expect(premier).toHaveProperty('equipe_exterieur');
-      expect(premier).toHaveProperty('statut');
-      expect(['TERMINE', 'A_VENIR', 'EN_COURS']).toContain(premier.statut);
+    test('Aucune rencontre de secours écrite dans le code (SRG-A4-014)', () => {
+      const collecteur = require('../../backend/services/surga/rss-collector');
+      expect(collecteur.SPORT_EVENEMENTS_DEFAUT).toBeUndefined();
     });
   });
 
@@ -786,7 +781,8 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(synthese).toContain('Autoroute A1');
       expect(synthese).toContain('42 minutes');
       expect(synthese).toContain('Corniche Ouest');
-      expect(synthese).toContain('recommandées pour vos déplacements');
+      // Sans mesure ni signalement, la synthèse ne dit rien (l'ancienne phrase « Circulation globale fluide » était fixe).
+      expect(genererSyntheseBriefingTrafic([{ id: 'vdn-sud', nom: 'VDN', niveau: 'indisponible', tempsEstimeMin: null }])).toBe('');
       // Zéro émoji
       expect(regexEmoji.test(synthese)).toBe(false);
       // Pas de tutoiement
@@ -836,8 +832,11 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(Array.isArray(resultat.axes)).toBe(true);
       expect(resultat.axes.length).toBeGreaterThanOrEqual(8);
       expect(Array.isArray(resultat.incidents)).toBe(true);
-      expect(['tomtom_live', 'previsionnel']).toContain(resultat.source);
-      expect(resultat.derniereMiseAJour).toBeDefined();
+      expect(['tomtom_live', 'signalements', 'aucune']).toContain(resultat.source);
+      // SRG-A4-016 / D53 : un axe sans mesure ni signalement n'a ni niveau ni durée. Le modèle horaire n'est plus servi.
+      const sansDonnee = resultat.axes.filter((a) => !a.signalementRecent && a.source !== 'tomtom_live');
+      expect(sansDonnee.length).toBeGreaterThan(0);
+      expect(sansDonnee.every((a) => a.niveau === 'indisponible' && a.tempsEstimeMin === null && a.updatedAt === null)).toBe(true);
     });
   });
 
@@ -1373,54 +1372,88 @@ describe('Module Surga — Tranches 1 & 2', () => {
   });
 
   describe('Tranche 17 : Météo Dakar Live & Sport Personnalisé Temps Réel', () => {
-    const { getMeteo, interpreterCodeWMO, calculerMareeDakar, estimerQualiteAirDakar } = require('../../backend/services/surga/meteo-service');
+    const meteoService = require('../../backend/services/surga/meteo-service');
+    const { getMeteo, interpreterCodeWMO } = meteoService;
     const { LISTE_EQUIPES_DISPONIBLES, chargerDonneesSportEnDirect, filtrerMatchsSport } = require('../../backend/services/surga/sport-service');
 
-    test('Le service météo traduit les codes WMO et calcule les marées dakariliennes', () => {
+    test('Le service météo traduit les codes WMO ; marées et qualité de l air ne sont plus calculées (SRG-A4-015)', () => {
       expect(interpreterCodeWMO(0).code).toBe('soleil');
       expect(interpreterCodeWMO(61).code).toBe('pluie');
       expect(interpreterCodeWMO(95).code).toBe('orage');
-
-      const maree = calculerMareeDakar();
-      expect(['Marée basse', 'Marée haute']).toContain(maree.etat);
-      expect(maree.spot_reference).toBe('Almadies & Yoff');
-
-      const qualiteAir = estimerQualiteAirDakar();
-      expect(qualiteAir.aqi).toBeGreaterThan(0);
-      expect(qualiteAir.niveau).toBeDefined();
+      expect(meteoService.calculerMareeDakar).toBeUndefined();
+      expect(meteoService.estimerQualiteAirDakar).toBeUndefined();
+      expect(meteoService.directionVent(90)).toBe('Est');
+      expect(meteoService.directionVent(350)).toBe('Nord');
     });
 
-    test('getMeteo retourne une structure météo complète pour Dakar', async () => {
-      const meteo = await getMeteo('Dakar');
-      expect(meteo).toBeDefined();
-      expect(meteo.ville).toBe('Dakar');
-      expect(meteo.temperature).toBeDefined();
-      expect(meteo.ressenti).toBeDefined();
-      expect(meteo.vent_vitesse_kmh).toBeDefined();
-      expect(meteo.maree).toBeDefined();
-      expect(Array.isArray(meteo.previsions_3j)).toBe(true);
-      expect(meteo.previsions_3j.length).toBeGreaterThanOrEqual(1);
+    test('Météo : relevé daté par la source, et aucune valeur de remplacement quand elle ne répond pas (SRG-A2-009)', async () => {
+      const axios = require('axios');
+      const espion = jest.spyOn(axios, 'get');
+      try {
+        // Source muette et aucun relevé connu : rien (l'ancien repli rendait 28 °C, « Ensoleillé », « Station locale »).
+        espion.mockRejectedValueOnce(new Error('coupure'));
+        expect(await getMeteo('Kolda')).toBeNull();
+
+        // Relevé daté par la source : dix minutes avant l'appel.
+        const heureReleve = new Date(Date.now() - 10 * 60 * 1000).toISOString().slice(0, 16);
+        espion.mockResolvedValueOnce({
+          data: {
+            current: { time: heureReleve, temperature_2m: 31.4, apparent_temperature: 34.2, relative_humidity_2m: 61, weather_code: 2, wind_speed_10m: 12.3, wind_direction_10m: 90 },
+            daily: { time: ['2026-10-08'], weather_code: [2], temperature_2m_min: [24.1], temperature_2m_max: [33.8], uv_index_max: [9.2] },
+          },
+        });
+        const releve = await getMeteo('Kolda');
+        expect(releve.ville).toBe('Kolda');
+        expect(releve.temperature).toBe(31);
+        expect(releve.updated_at).toBe(`${heureReleve}:00.000Z`);
+        expect(releve.vent_direction).toBe('Est');
+        expect(releve.maree).toBeNull();
+        expect(releve.qualite_air).toBeNull();
+        expect(releve.non_actualise).toBe(false);
+        expect(releve.previsions_3j.length).toBe(1);
+
+        // Une heure plus tard, la source est muette : dernier relevé réel, à sa date, marqué « non actualisé ».
+        const horloge = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 3600 * 1000);
+        espion.mockRejectedValueOnce(new Error('coupure'));
+        const ancien = await getMeteo('Kolda');
+        horloge.mockRestore();
+        expect(ancien.temperature).toBe(31);
+        expect(ancien.non_actualise).toBe(true);
+        expect(ancien.updated_at).toBe(`${heureReleve}:00.000Z`);
+
+        // Un appel réussi qui rend un relevé de la veille n'est pas présenté comme à jour.
+        const hier = new Date(Date.now() - 26 * 3600 * 1000).toISOString().slice(0, 16);
+        espion.mockResolvedValueOnce({ data: { current: { time: hier, temperature_2m: 25 }, daily: {} } });
+        expect((await getMeteo('Matam')).non_actualise).toBe(true);
+      } finally {
+        espion.mockRestore();
+      }
     });
 
-    test('Le service sport fournit les compétitions réelles et le catalogue d’équipes', async () => {
+    test('Sport : catalogue d’équipes présent ; source coupée, aucune rencontre n’est servie (SRG-A4-014)', async () => {
       expect(LISTE_EQUIPES_DISPONIBLES.length).toBeGreaterThanOrEqual(15);
       const noms = LISTE_EQUIPES_DISPONIBLES.map((e) => e.nom);
       expect(noms.some((n) => n.includes('Sénégal'))).toBe(true);
       expect(noms.some((n) => n.includes('Jaraaf'))).toBe(true);
       expect(noms.some((n) => n.includes('Chelsea'))).toBe(true);
 
-      const matchs = await filtrerMatchsSport({ categorie: 'tous' });
-      expect(matchs.length).toBeGreaterThanOrEqual(5);
+      const axios = require('axios');
+      const espion = jest.spyOn(axios, 'get').mockRejectedValue(new Error('coupure'));
+      try {
+        // L'ancien service ajoutait quatre rencontres de Ligue 1 sénégalaise datées du jour de l'appel.
+        expect(await chargerDonneesSportEnDirect(true)).toEqual([]);
+      } finally {
+        espion.mockRestore();
+      }
     });
 
     test('Le filtrage personnalisé par équipe et catégorie fonctionne rigoureusement', async () => {
-      const matchsLigue1 = await filtrerMatchsSport({ categorie: 'ligue1_sn' });
-      expect(matchsLigue1.length).toBeGreaterThan(0);
-      expect(matchsLigue1.every((m) => m.categorie === 'ligue1_sn')).toBe(true);
+      // D53 : aucune source pour la Ligue 1 sénégalaise. La catégorie est vide, quelle que soit la réponse du fournisseur.
+      const matchsLigue1 = await filtrerMatchsSport({ categorie: 'ligue1_sn', force: true });
+      expect(matchsLigue1).toEqual([]);
 
-      const matchsJaraaf = await filtrerMatchsSport({ equipesSuivies: ['Jaraaf'] });
-      expect(matchsJaraaf.length).toBeGreaterThan(0);
-      expect(matchsJaraaf.some((m) => m.equipe_domicile.includes('Jaraaf') || m.equipe_exterieur.includes('Jaraaf'))).toBe(true);
+      const tous = await filtrerMatchsSport({ categorie: 'tous' });
+      expect(tous.some((m) => String(m.id || '').startsWith('sn-l1-real'))).toBe(false);
     });
 
     test('Les routeurs meteo et sport se chargent sans erreur dans Express', () => {
@@ -1439,17 +1472,27 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(plusProcheAlmadies).toBeDefined();
       expect(plusProcheAlmadies.nom).toContain('Almadies');
 
-      // Appel météo avec coordonnées GPS directes
-      const meteoGps = await getMeteo({ lat: 14.745, lon: -17.515 });
-      expect(meteoGps).toBeDefined();
-      expect(meteoGps.is_gps).toBe(true);
-      expect(meteoGps.coordonnees).toBeDefined();
-      expect(meteoGps.temperature).toBeDefined();
+      const axios = require('axios');
+      const espion = jest.spyOn(axios, 'get').mockResolvedValue({
+        data: {
+          current: { time: '2026-10-08T09:00', temperature_2m: 27.6, apparent_temperature: 30.1, relative_humidity_2m: 70, weather_code: 1, wind_speed_10m: 14, wind_direction_10m: 315 },
+          daily: { time: ['2026-10-08'], weather_code: [1], temperature_2m_min: [24], temperature_2m_max: [30], uv_index_max: [8] },
+        },
+      });
+      try {
+        // Appel météo avec coordonnées GPS directes
+        const meteoGps = await getMeteo({ lat: 14.745, lon: -17.515 });
+        expect(meteoGps.is_gps).toBe(true);
+        expect(meteoGps.coordonnees).toBeDefined();
+        expect(meteoGps.temperature).toBe(28);
 
-      // Appel météo par nom de localité
-      const meteoThies = await getMeteo('Thiès');
-      expect(meteoThies.ville).toBe('Thiès');
-      expect(meteoThies.zone).toBe('Régions');
+        // Appel météo par nom de localité
+        const meteoThies = await getMeteo('Thiès');
+        expect(meteoThies.ville).toBe('Thiès');
+        expect(meteoThies.zone).toBe('Régions');
+      } finally {
+        espion.mockRestore();
+      }
     });
 
     test('Résolution robuste insensible aux accents et ligatures pour toutes les localités du Sénégal', async () => {
@@ -1457,24 +1500,24 @@ describe('Module Surga — Tranches 1 & 2', () => {
       // Couverture complète des 14 régions du Sénégal
       expect(Object.keys(LOCALITES_SENEGAL).length).toBeGreaterThanOrEqual(28);
 
-      // Résolution sans accent (ex: thies, guediawaye, sacre coeur)
-      const resThies = await getMeteo('thies');
-      expect(resThies.ville).toBe('Thiès');
-
-      const resGuediawaye = await getMeteo('guediawaye');
-      expect(resGuediawaye.ville).toBe('Guédiawaye');
-
-      const resSacreCoeur = await getMeteo('sacre coeur');
-      expect(resSacreCoeur.ville).toBe('Mermoz / Sacré-Cœur');
-
-      const resSaintLouis = await getMeteo('saint louis');
-      expect(resSaintLouis.ville).toBe('Saint-Louis');
-
-      const resLouga = await getMeteo('louga');
-      expect(resLouga.ville).toBe('Louga');
-
-      const resDiourbel = await getMeteo('diourbel');
-      expect(resDiourbel.ville).toBe('Diourbel');
+      const axios = require('axios');
+      const espion = jest.spyOn(axios, 'get').mockResolvedValue({
+        data: {
+          current: { time: '2026-10-08T09:00', temperature_2m: 27.6, apparent_temperature: 30.1, relative_humidity_2m: 70, weather_code: 1, wind_speed_10m: 14, wind_direction_10m: 315 },
+          daily: { time: ['2026-10-08'], weather_code: [1], temperature_2m_min: [24], temperature_2m_max: [30], uv_index_max: [8] },
+        },
+      });
+      try {
+        // Résolution sans accent (ex: thies, guediawaye, sacre coeur)
+        expect((await getMeteo('thies')).ville).toBe('Thiès');
+        expect((await getMeteo('guediawaye')).ville).toBe('Guédiawaye');
+        expect((await getMeteo('sacre coeur')).ville).toBe('Mermoz / Sacré-Cœur');
+        expect((await getMeteo('saint louis')).ville).toBe('Saint-Louis');
+        expect((await getMeteo('louga')).ville).toBe('Louga');
+        expect((await getMeteo('diourbel')).ville).toBe('Diourbel');
+      } finally {
+        espion.mockRestore();
+      }
     }, 15000);
   });
 

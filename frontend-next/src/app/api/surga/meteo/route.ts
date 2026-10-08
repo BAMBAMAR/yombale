@@ -1,6 +1,7 @@
 // frontend-next/src/app/api/surga/meteo/route.ts
-// Route API Next.js autonome pour la météo Surga (Dakar, 14 régions et GPS direct)
-// Résilience absolue : fonctionne en dev, SSR, Vercel, Render et hors-ligne
+// Route API Next.js pour la météo Surga (localités du Sénégal et position GPS).
+// D43 / D53 : seule la donnée reçue de la source est servie. Source muette : dernier relevé réel, daté et marqué
+// « non actualisé » ; sinon rien. Marées et qualité de l'air n'ont pas de source : champs à null.
 
 import { NextRequest, NextResponse } from 'next/server'
 import {
@@ -8,11 +9,19 @@ import {
   trouverLocaliteParNom,
   trouverLocalitePlusProche,
   interpreterCodeWMO,
-  calculerMareeDakar,
-  estimerQualiteAirDakar,
+  directionVent,
 } from '@/lib/surga-meteo'
+import type { MeteoData, PrevisionItem } from '@/lib/surga-meteo'
 
 export const dynamic = 'force-dynamic'
+
+// Dernier relevé reçu par localité, gardé par l'instance du serveur.
+const derniersReleves = new Map<string, MeteoData>()
+
+// Au-delà de ce délai, un relevé n'est plus présenté comme à jour, même si l'appel a réussi (réponse gardée en cache).
+const DELAI_FRAICHEUR_MS = 90 * 60 * 1000
+
+const arrondi = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null)
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,7 +33,6 @@ export async function GET(req: NextRequest) {
     let lat = 14.6937
     let lon = -17.4441
     let nomAffiche = 'Dakar'
-    let isMaritime = true
     let zoneNom = 'Dakar'
     let estPositionGps = false
 
@@ -37,7 +45,6 @@ export async function GET(req: NextRequest) {
         estPositionGps = true
         const plusProche = trouverLocalitePlusProche(lat, lon)
         nomAffiche = plusProche.nom
-        isMaritime = plusProche.maritime
         zoneNom = plusProche.zone
       }
     } else if (rawVille) {
@@ -45,11 +52,11 @@ export async function GET(req: NextRequest) {
       lat = match.lat
       lon = match.lon
       nomAffiche = match.nom
-      isMaritime = match.maritime
       zoneNom = match.zone
     }
 
-    let payload: any = null
+    const cle = estPositionGps ? `gps_${lat.toFixed(2)}_${lon.toFixed(2)}` : nomAffiche.toLowerCase()
+    let payload: MeteoData | null = null
 
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max&timezone=Africa%2FDakar`
@@ -58,108 +65,81 @@ export async function GET(req: NextRequest) {
       const res = await fetch(url, { signal: ctrl.signal, next: { revalidate: 600 } })
       clearTimeout(timer)
 
-      if (res.ok) {
-        const data = await res.json()
-        const current = data.current || {}
-        const daily = data.daily || {}
+      const data = res.ok ? await res.json() : null
+      const current = data?.current
+      const daily = data?.daily || {}
 
-        const condition = interpreterCodeWMO(current.weather_code || 0)
-        const maree = isMaritime ? calculerMareeDakar() : null
-        const qualiteAir = estimerQualiteAirDakar()
-
-        const previsions_3j = []
+      if (current && typeof current.temperature_2m === 'number') {
+        const condition = interpreterCodeWMO(current.weather_code ?? 0)
+        const previsions_3j: PrevisionItem[] = []
         const joursSemaine = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
-        const dailyTimes = daily.time || []
+        const dailyTimes: string[] = daily.time || []
         for (let i = 0; i < Math.min(3, dailyTimes.length); i++) {
-          const d = new Date(dailyTimes[i])
+          const tMin = arrondi(daily.temperature_2m_min?.[i])
+          const tMax = arrondi(daily.temperature_2m_max?.[i])
+          if (tMin === null || tMax === null) continue
           const condJ = interpreterCodeWMO(daily.weather_code?.[i] ?? 0)
           previsions_3j.push({
-            jour: i === 0 ? "Aujourd'hui" : joursSemaine[d.getDay()],
+            jour: i === 0 ? "Aujourd'hui" : joursSemaine[new Date(dailyTimes[i]).getDay()],
             date: dailyTimes[i],
-            temp_min: Math.round(daily.temperature_2m_min?.[i] ?? 24),
-            temp_max: Math.round(daily.temperature_2m_max?.[i] ?? 30),
+            temp_min: tMin,
+            temp_max: tMax,
             condition_code: condJ.code,
             condition_texte: condJ.texte,
           })
         }
 
+        // Heure du relevé donnée par la source (heure de Dakar, égale à l'heure universelle), pas l'heure de l'appel.
+        const releveLe = current.time ? new Date(`${current.time}:00Z`) : null
+        const releveValide = releveLe !== null && !isNaN(releveLe.getTime())
+
         payload = {
           ville: nomAffiche,
           zone: zoneNom,
-          region: zoneNom,
           est_gps: estPositionGps,
-          is_gps: estPositionGps,
           coordonnees: { lat, lon },
-          temperature: Math.round(current.temperature_2m ?? 28),
-          ressenti: Math.round(current.apparent_temperature ?? current.temperature_2m ?? 29),
-          temp_min: Math.round(daily.temperature_2m_min?.[0] ?? (current.temperature_2m ? current.temperature_2m - 3 : 24)),
-          temp_max: Math.round(daily.temperature_2m_max?.[0] ?? (current.temperature_2m ? current.temperature_2m + 4 : 31)),
+          temperature: Math.round(current.temperature_2m),
+          ressenti: arrondi(current.apparent_temperature),
+          temp_min: arrondi(daily.temperature_2m_min?.[0]),
+          temp_max: arrondi(daily.temperature_2m_max?.[0]),
           condition_code: condition.code,
           condition_texte: condition.texte,
-          humidite: Math.round(current.relative_humidity_2m ?? 70),
-          vent_vitesse_kmh: Math.round(current.wind_speed_10m ?? 18),
-          vent_direction: current.wind_direction_10m > 300 || current.wind_direction_10m < 60 ? 'Nord / NNO' : 'Ouest',
-          indice_uv: Math.round(daily.uv_index_max?.[0] ?? 7),
-          qualite_air: qualiteAir,
-          maree: maree,
-          previsions_3j: previsions_3j,
-          source: estPositionGps ? 'Open-Meteo GPS Live' : `Open-Meteo ${nomAffiche} Live`,
-          updated_at: new Date().toISOString(),
+          humidite: arrondi(current.relative_humidity_2m),
+          vent_vitesse_kmh: arrondi(current.wind_speed_10m),
+          vent_direction: directionVent(current.wind_direction_10m),
+          indice_uv: arrondi(daily.uv_index_max?.[0]),
+          qualite_air: null,
+          maree: null,
+          previsions_3j,
+          source: 'Open-Meteo',
+          updated_at: releveValide ? releveLe!.toISOString() : new Date().toISOString(),
+          non_actualise: releveValide ? Date.now() - releveLe!.getTime() > DELAI_FRAICHEUR_MS : false,
         }
+        derniersReleves.set(cle, payload)
       }
     } catch (err) {
-      console.warn('[SURGA METEO NEXT ROUTE API FETCH WARN]:', err)
+      console.warn('[SURGA METEO] Source indisponible :', err)
     }
 
     if (!payload) {
-      // Fallback déterministe hors-ligne calibré pour le Sénégal
-      const fallbackCondition = { code: 'soleil', texte: 'Ensoleillé' }
-      payload = {
-        ville: nomAffiche,
-        zone: zoneNom,
-        region: zoneNom,
-        est_gps: estPositionGps,
-        is_gps: estPositionGps,
-        coordonnees: { lat, lon },
-        temperature: 28,
-        ressenti: 31,
-        temp_min: 24,
-        temp_max: 30,
-        condition_code: fallbackCondition.code,
-        condition_texte: fallbackCondition.texte,
-        humidite: 72,
-        vent_vitesse_kmh: 18,
-        vent_direction: 'Nord-Nord-Ouest (Alizé)',
-        indice_uv: 8,
-        qualite_air: estimerQualiteAirDakar(),
-        maree: isMaritime ? calculerMareeDakar() : null,
-        previsions_3j: [
-          { jour: "Aujourd'hui", temp_min: 24, temp_max: 30, condition_code: 'soleil', condition_texte: 'Ensoleillé' },
-          { jour: 'Demain', temp_min: 24, temp_max: 29, condition_code: 'soleil', condition_texte: 'Ensoleillé' },
-          { jour: 'Après-demain', temp_min: 25, temp_max: 31, condition_code: 'partiellement_nuageux', condition_texte: 'Éclaircies' },
-        ],
-        source: 'Station locale (hors-ligne)',
-        updated_at: new Date().toISOString(),
-      }
+      const dernier = derniersReleves.get(cle)
+      payload = dernier ? { ...dernier, non_actualise: true } : null
     }
 
     return NextResponse.json(
       {
         success: true,
         meteo: payload,
+        indisponible: !payload,
         localites: LOCALITES_SENEGAL_LIST,
         villes_disponibles: LOCALITES_SENEGAL_LIST.map((l) => l.nom),
       },
       {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        },
+        // Une réponse « indisponible » n'est pas gardée en cache : la source peut répondre à l'appel suivant.
+        headers: { 'Cache-Control': payload && !payload.non_actualise ? 'public, s-maxage=300, stale-while-revalidate=600' : 'no-store' },
       }
     )
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error?.message || 'Erreur météo serveur' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: 'Météo indisponible pour le moment.' }, { status: 500 })
   }
 }

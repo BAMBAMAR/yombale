@@ -12,4 +12,6 @@ module.exports = {
   assistantActif: () => actif('SURGA_ASSISTANT_ACTIF'),
   // D54 : le podcast privé (SRG-A4-017).
   podcastActif: () => actif('SURGA_PODCAST_ACTIF'),
+  // D53 : la mesure du trafic par le fournisseur n'est interrogée qu'une fois la source vérifiée à Dakar (SRG-A4-016).
+  traficSourceMesureeActive: () => actif('SURGA_TRAFIC_SOURCE_VERIFIEE'),
 };

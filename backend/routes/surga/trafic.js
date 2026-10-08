@@ -23,6 +23,7 @@ router.get('/trafic', async (req, res) => {
     return res.json({
       success: true,
       source: etat.source,
+      disponible: etat.disponible,
       total: etat.axes.length,
       axes: etat.axes,
       incidents: etat.incidents,
@@ -50,6 +51,7 @@ router.get('/trafic/synthese', async (req, res) => {
     return res.json({
       success: true,
       source: etat.source,
+      disponible: etat.disponible,
       synthese,
     });
   } catch (error) {

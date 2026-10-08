@@ -1,6 +1,6 @@
 // frontend-next/src/lib/surga-meteo.ts
 // Module Météo & Marées Surga : Catalogue des localités du Sénégal (14 régions & quartiers),
-// géolocalisation, calculs de marée et interprétation WMO.
+// géolocalisation et interprétation WMO. Marées et qualité de l'air n'ont pas de source (D53).
 
 export interface LocaliteItem {
   id: string
@@ -22,24 +22,26 @@ export interface PrevisionItem {
 
 export interface MeteoData {
   ville: string
+  zone?: string
   est_gps?: boolean
   coordonnees?: { lat: number; lon: number }
   temperature: number
-  ressenti: number
-  temp_min: number
-  temp_max: number
+  ressenti: number | null
+  temp_min: number | null
+  temp_max: number | null
   condition_code: string
   condition_texte: string
-  humidite: number
-  vent_vitesse_kmh: number
-  vent_direction: string
-  indice_uv: number
+  humidite: number | null
+  vent_vitesse_kmh: number | null
+  vent_direction: string | null
+  indice_uv: number | null
+  // Sans source branchée, ces deux champs valent null et l'écran affiche « indisponible ».
   qualite_air?: {
     aqi: number
     niveau: string
     particules: string
     conseil: string
-  }
+  } | null
   maree?: {
     etat: string
     prochaine_heure: string
@@ -48,7 +50,10 @@ export interface MeteoData {
   } | null
   previsions_3j?: PrevisionItem[]
   source: string
+  // Heure du relevé donnée par la source.
   updated_at: string
+  // Vrai quand la source n'a pas répondu et que ce relevé est le dernier reçu (D43).
+  non_actualise?: boolean
 }
 
 export const LOCALITES_SENEGAL: Record<string, { nom: string; lat: number; lon: number; maritime: boolean; zone: string }> = {
@@ -166,34 +171,23 @@ export function interpreterCodeWMO(code: number): { code: string; texte: string 
   return { code: 'soleil', texte: 'Ensoleillé' }
 }
 
-export function calculerMareeDakar(date = new Date()) {
-  const h = date.getHours()
-  const isBasse = (h >= 4 && h < 10) || (h >= 16 && h < 22)
-  const prochaineHeure = isBasse ? '11h30' : '17h45'
-  return {
-    etat: isBasse ? 'Marée basse' : 'Marée haute',
-    prochaine_heure: prochaineHeure,
-    hauteur_m: isBasse ? '0.6 m' : '1.8 m',
-    spot_reference: 'Almadies & Yoff',
-  }
+const ROSE_DES_VENTS = ['Nord', 'Nord-Est', 'Est', 'Sud-Est', 'Sud', 'Sud-Ouest', 'Ouest', 'Nord-Ouest']
+
+export function directionVent(degres: unknown): string | null {
+  if (typeof degres !== 'number' || !Number.isFinite(degres)) return null
+  return ROSE_DES_VENTS[Math.round((((degres % 360) + 360) % 360) / 45) % 8]
 }
 
-export function estimerQualiteAirDakar(mois = new Date().getMonth()) {
-  const isSaisonSeche = mois >= 10 || mois <= 4
-  if (isSaisonSeche) {
-    return {
-      aqi: 95,
-      niveau: 'Moyenne à dégradée',
-      particules: 'Poussière saharienne en suspension',
-      conseil: 'Personnes sensibles : limiter les efforts physiques prolongés en extérieur.',
-    }
-  }
-  return {
-    aqi: 45,
-    niveau: 'Bonne',
-    particules: 'Air océanique purifié',
-    conseil: 'Qualité de l’air idéale pour les activités extérieures.',
-  }
+// « Open-Meteo, relevé de 14 h 15 », ou « non actualisé depuis le 8 octobre à 14 h 15 » quand la source est muette.
+export function libelleReleveMeteo(meteo: Pick<MeteoData, 'source' | 'updated_at' | 'non_actualise'>): string {
+  const d = new Date(meteo.updated_at)
+  if (Number.isNaN(d.getTime())) return meteo.source
+  const heure = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Dakar' })
+    .format(d)
+    .replace(':', '\u00A0h\u00A0')
+  if (!meteo.non_actualise) return `${meteo.source}, relevé de ${heure}`
+  const jour = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', timeZone: 'Africa/Dakar' }).format(d)
+  return `${meteo.source}, non actualisé depuis le ${jour} à ${heure}`
 }
 
 export { estLocaliteMaritime, estZoneCouverteParTrafic, LOCALITES_COTIERES_SENEGAL } from './coastal-locations'
