@@ -3,6 +3,12 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-08 — Sauvegarde de Render et écart de schéma] — `main` `8fad888f`, reporté `845e3e01` ; aucun push
+- **Objet :** sauvegarde de la base de production à la demande de l'utilisateur (`backups/backup-nopalou-20261008224216-render-prod.sql.gz`, 48,7 Mo, 155 tables, 1 552 199 lignes, SHA-256 `688fbed9…cd151f`), lecture seule ; restauration d'essai dans une base locale jetable : 0 erreur.
+- **Constat :** l'archive est sans schéma ; la production diffère des migrations (table `auth_reset_demandes`, colonnes `annonces_classifiees.source_detail`, `historique_prix.created_at`, `scraping_runs.items_valides`, `contact_tel` nullable). **Correctif :** sept instructions idempotentes dans `backend/migrate-inline.js`.
+- **Preuve :** restauration sur un schéma issu des seules migrations : 0 erreur, 1 552 198 lignes sur 1 552 199 (une ligne non identifiée). Base locale `nopalou_render_local` construite ainsi et servie au frontend.
+- **Limites :** un seul exemplaire de l'archive, sur le poste ; le script de sauvegarde n'écrit pas le schéma.
+
 ### [2026-10-08 — Neuvième lot] — réglages d'un compte, alertes, contrastes, accessibilité, journal WhatsApp ; 5 commits locaux sur `feature/surga` et 1 sur `main`, aucun push
 - **Objet :** `feature/surga` : `7f00e7ff` (réglages), `d5402a92` (alertes), `b604cdef` (contrastes), `6366f58e` (accessibilité), `31a8e38e` (report du correctif du journal) ; `main` : `f27f0fc4` (10 commits en avance sur `origin/main`). Demande de l'utilisateur : continuer après le huitième lot.
 - **Corrigées et rejouées (sondes en échec sur le code d'avant, tenues après) :**
