@@ -217,7 +217,10 @@ export default function SurgaLayoutShell({
         />
 
         {/* Colonne 2 : Flux Central (Onglet actif + Command Bar) */}
-        <div className="surga-center-feed" role="region" aria-label="Flux central Surga">
+        {/* Pas de <main> ici : la mise en page racine du site en pose déjà un. */}
+        <div className="surga-center-feed" id="surga-contenu" tabIndex={-1} role="region" aria-label="Contenu de Surga">
+          {/* Sur ordinateur l'en-tête est masqué : le titre de niveau 1 de l'écran reste lu par les lecteurs d'écran. */}
+          <h1 className="surga-sr-only surga-h1-bureau">{getTitreMobile()}</h1>
           <div className="surga-container">
             {children}
           </div>

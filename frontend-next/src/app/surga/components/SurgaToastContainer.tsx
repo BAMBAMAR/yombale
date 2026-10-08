@@ -40,9 +40,10 @@ export default function SurgaToastContainer() {
   if (!toast) return null
 
   return (
+    // Le message est annoncé par la zone permanente de SurgaAccessibiliteAuto : une zone créée avec son texte n'est
+    // pas annoncée. Cette pastille est donc cachée aux lecteurs d'écran pour ne pas répéter.
     <div
-      role="status"
-      aria-live="polite"
+      aria-hidden="true"
       className="surga-global-toast"
       style={{
         position: 'fixed',

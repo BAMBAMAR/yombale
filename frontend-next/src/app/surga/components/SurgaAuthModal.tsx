@@ -146,6 +146,7 @@ export default function SurgaAuthModal({
           {/* Messages statut */}
           {errorMsg && (
             <div
+              role="alert"
               style={{
                 padding: '10px 14px',
                 borderRadius: 10,
@@ -165,6 +166,7 @@ export default function SurgaAuthModal({
 
           {successMsg && (
             <div
+              role="status"
               style={{
                 padding: '10px 14px',
                 borderRadius: 10,

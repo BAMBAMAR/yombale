@@ -1205,3 +1205,41 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 @media (min-width: 1024px) {
   .surga-ordinateur-seulement { display: block; }
 }
+
+/* ==========================================================================
+   Accessibilité (SRG-A3-010) : texte réservé aux lecteurs d'écran, lien d'évitement, titre de niveau 1 du bureau
+   ========================================================================== */
+.surga-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.surga-lien-evitement {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10002;
+  transform: translateY(-250%);
+  background: var(--surga-primary);
+  color: #FFFFFF;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.surga-lien-evitement:focus {
+  transform: none;
+  outline: 3px solid var(--surga-accent);
+  outline-offset: 2px;
+}
+/* Sous 1024 px l'en-tête mobile porte déjà le titre de niveau 1 de l'écran. */
+.surga-h1-bureau { display: none; }
+@media (min-width: 1024px) { .surga-h1-bureau { display: block; } }
+.surga-center-feed:focus { outline: none; }
