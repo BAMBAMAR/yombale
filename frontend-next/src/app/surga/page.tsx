@@ -18,7 +18,7 @@ import { getSoldeKalpeFormate } from '@/lib/surga-kalpe'
 import {
   getLocalNotes, getLocalAgenda, calculerStatsLocales,
   saveLocalDepense, saveLocalNote, saveLocalEvenement,
-  synchroniserSurga, type SurgaDepensesStats,
+  synchroniserSurga, adopterProprietaire, type SurgaDepensesStats,
 } from '@/lib/surga-offline-sync'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
 import { useFabAutoHide } from '@/lib/useFabAutoHide'
@@ -73,7 +73,7 @@ export default function SurgaPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.user) {
-          setUser({ id: d.user.id, nom: d.user.nom, telephone: d.user.telephone, email: d.user.email })
+          setUser({ id: d.user.id, nom: d.user.nom, telephone: d.user.telephone, email: d.user.email }); adopterProprietaire(d.user.id)
         } else {
           setUser(null)
         }
@@ -235,19 +235,19 @@ export default function SurgaPage() {
   const handleVoiceDepense = async (dep: { montant: number; categorie: string; note: string }) => {
     saveLocalDepense({ montant_xof: dep.montant, categorie: dep.categorie, note: dep.note })
     rafraichirApercus()
-    fetch('/api/surga/depenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ montant_xof: dep.montant, categorie: dep.categorie, note: dep.note }) }).catch(() => {})
+    synchroniserSurga().then(() => rafraichirApercus()).catch(() => {}) // SRG-A2-006 : un seul chemin d'écriture, par identifiant
   }
 
   const handleVoiceNote = async (n: { titre: string; contenu: string }) => {
     saveLocalNote({ titre: n.titre, contenu: n.contenu })
     rafraichirApercus()
-    fetch('/api/surga/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(n) }).catch(() => {})
+    synchroniserSurga().then(() => rafraichirApercus()).catch(() => {}) // SRG-A2-006 : un seul chemin d'écriture, par identifiant
   }
 
   const handleVoiceRappel = async (r: { titre: string; date: string; heure: string }) => {
     saveLocalEvenement({ titre: r.titre, date_evenement: r.date, heure_evenement: r.heure, est_rappel: true })
     rafraichirApercus()
-    fetch('/api/surga/agenda', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ titre: r.titre, date_evenement: r.date, heure_evenement: r.heure, est_rappel: true }) }).catch(() => {})
+    synchroniserSurga().then(() => rafraichirApercus()).catch(() => {}) // SRG-A2-006 : un seul chemin d'écriture, par identifiant
   }
 
   const handleReinitialiser = () => {
@@ -282,7 +282,7 @@ export default function SurgaPage() {
 
   // Succès authentification
   const handleAuthSuccess = (authUser: SurgaUser) => {
-    setUser(authUser)
+    setUser(authUser); adopterProprietaire(authUser.id); synchroniserSurga().then(() => rafraichirApercus()).catch(() => {})
     fetch('/api/surga/abonnements/mon-statut')
       .then((r) => r.json())
       .then((data) => {

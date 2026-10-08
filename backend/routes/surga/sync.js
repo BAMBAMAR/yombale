@@ -19,10 +19,23 @@ function assurerUUID(id, idMappings) {
 
 // POST /api/surga/sync
 // Réconcilie les créations/mises à jour accumulées en mode avion
+// Une colonne DATE est rendue par le pilote comme un instant à minuit, heure du serveur : on en reprend le jour.
+const jourSeul = (v) => {
+  if (!v) return v;
+  if (v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
+  return String(v).slice(0, 10);
+};
+
 router.post('/sync', tokenOptional, async (req, res) => {
   try {
     const userId = req.user?.userId || req.user?.id;
-    const { notes = [], depenses = [], agenda = [] } = req.body;
+    const corps = req.body || {};
+    // Bornes : une synchronisation transporte les saisies en attente d'un appareil, pas un historique.
+    const borne = (v) => (Array.isArray(v) ? v.slice(0, 500) : []);
+    const notes = borne(corps.notes), depenses = borne(corps.depenses), agenda = borne(corps.agenda);
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const idsValides = (v) => borne(v).filter((x) => typeof x === 'string' && UUID.test(x));
+    const suppressions = corps.suppressions || {};
 
     if (!userId) {
       return res.json({
@@ -43,14 +56,31 @@ router.post('/sync', tokenOptional, async (req, res) => {
         if (!n.titre || !n.id) continue;
         const validId = assurerUUID(n.id, idMappings);
         await client.query(
-          `INSERT INTO surga_notes (id, user_id, titre, contenu, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, COALESCE($5, NOW()), NOW())
+          // SRG-A1-021 / SRG-A2-002 : tous les champs d'une note sont enregistrés (catégorie, couleur, épingle, liste de tâches).
+          `INSERT INTO surga_notes (id, user_id, titre, contenu, categorie, couleur, epingle, is_checklist, checklist, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, COALESCE($10, NOW()), NOW())
            ON CONFLICT (id) DO UPDATE SET
              titre = EXCLUDED.titre,
              contenu = EXCLUDED.contenu,
+             categorie = EXCLUDED.categorie,
+             couleur = EXCLUDED.couleur,
+             epingle = EXCLUDED.epingle,
+             is_checklist = EXCLUDED.is_checklist,
+             checklist = EXCLUDED.checklist,
              updated_at = NOW()
            WHERE surga_notes.user_id = $2`,
-          [validId, userId, n.titre.trim(), n.contenu || '', n.created_at || null]
+          [
+            validId,
+            userId,
+            String(n.titre).trim().slice(0, 255),
+            n.contenu || '',
+            String(n.categorie || 'general').slice(0, 32),
+            String(n.couleur || 'creme').slice(0, 20),
+            Boolean(n.epingle),
+            Boolean(n.is_checklist),
+            JSON.stringify(Array.isArray(n.checklist) ? n.checklist : []),
+            n.created_at || null,
+          ]
         );
       }
 
@@ -87,31 +117,48 @@ router.post('/sync', tokenOptional, async (req, res) => {
         if (!a.titre || !a.id) continue;
         const validId = assurerUUID(a.id, idMappings);
         await client.query(
-          `INSERT INTO surga_agenda (id, user_id, titre, description, date_evenement, heure_evenement, est_rappel, repetition, termine, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, NOW()), NOW())
+          // SRG-A1-021 : priorité, catégorie et lieu sont enregistrés. Un changement de date ou d'heure réarme le rappel.
+          `INSERT INTO surga_agenda (id, user_id, titre, description, date_evenement, heure_evenement, est_rappel, repetition, termine, priorite, categorie, lieu, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, COALESCE($13, NOW()), NOW())
            ON CONFLICT (id) DO UPDATE SET
              titre = EXCLUDED.titre,
              description = EXCLUDED.description,
+             notification_envoyee = CASE
+               WHEN surga_agenda.date_evenement IS DISTINCT FROM EXCLUDED.date_evenement
+                 OR surga_agenda.heure_evenement IS DISTINCT FROM EXCLUDED.heure_evenement THEN FALSE
+               ELSE surga_agenda.notification_envoyee END,
              date_evenement = EXCLUDED.date_evenement,
              heure_evenement = EXCLUDED.heure_evenement,
              est_rappel = EXCLUDED.est_rappel,
              repetition = EXCLUDED.repetition,
              termine = EXCLUDED.termine,
+             priorite = EXCLUDED.priorite,
+             categorie = EXCLUDED.categorie,
+             lieu = EXCLUDED.lieu,
              updated_at = NOW()
            WHERE surga_agenda.user_id = $2`,
           [
             validId,
             userId,
-            a.titre.trim(),
+            String(a.titre).trim().slice(0, 255),
             a.description || null,
-            a.date_evenement || new Date().toISOString().slice(0, 10),
-            a.heure_evenement || null,
+            String(a.date_evenement || new Date().toISOString()).slice(0, 10),
+            a.heure_evenement ? String(a.heure_evenement).slice(0, 5) : null,
             Boolean(a.est_rappel ?? true),
             a.repetition || 'AUCUNE',
             Boolean(a.termine),
+            String(a.priorite || 'normale').slice(0, 20),
+            String(a.categorie || 'rdv').slice(0, 32),
+            a.lieu ? String(a.lieu).slice(0, 255) : null,
             a.created_at || null,
           ]
         );
+      }
+
+      // 4. Suppressions faites sur l'appareil (SRG-A2-008), limitées aux lignes du compte.
+      const aSupprimer = { surga_notes: idsValides(suppressions.notes), surga_depenses: idsValides(suppressions.depenses), surga_agenda: idsValides(suppressions.agenda) };
+      for (const [table, ids] of Object.entries(aSupprimer)) {
+        if (ids.length) await client.query(`DELETE FROM ${table} WHERE user_id = $1 AND id = ANY($2::uuid[])`, [userId, ids]);
       }
 
       await client.query('COMMIT');
@@ -139,8 +186,10 @@ router.post('/sync', tokenOptional, async (req, res) => {
         synced_at: new Date().toISOString(),
         id_mappings: idMappings,
         notes: freshNotes.rows,
-        depenses: freshDepenses.rows,
-        agenda: freshAgenda.rows,
+        // SRG-A2-004 : les dates partent au format AAAA-MM-JJ. Envoyées comme instants (« …T00:00:00.000Z »), elles
+        // n'étaient plus reconnues par l'appareil : un compte connecté n'était jamais prévenu de ses rappels.
+        depenses: freshDepenses.rows.map((d) => ({ ...d, date_depense: jourSeul(d.date_depense) })),
+        agenda: freshAgenda.rows.map((a) => ({ ...a, date_evenement: jourSeul(a.date_evenement) })),
       });
     } catch (err) {
       await client.query('ROLLBACK');

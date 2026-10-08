@@ -76,6 +76,35 @@ export interface SurgaEvenement {
 const STORAGE_KEY_NOTES = 'surga_offline_notes'
 const STORAGE_KEY_DEPENSES = 'surga_offline_depenses'
 const STORAGE_KEY_AGENDA = 'surga_offline_agenda'
+const STORAGE_KEY_SUPPRESSIONS = 'surga_offline_suppressions'
+const STORAGE_KEY_PROPRIETAIRE = 'surga_offline_proprietaire'
+
+// Suppressions faites sur l'appareil et pas encore connues du serveur (SRG-A2-008 : une note supprimée hors ligne
+// revenait au retour du réseau, parce que le serveur n'en était jamais informé).
+type TypeDonnee = 'notes' | 'depenses' | 'agenda'
+type Suppressions = Record<TypeDonnee, string[]>
+
+function getSuppressions(): Suppressions {
+  const vide: Suppressions = { notes: [], depenses: [], agenda: [] }
+  if (typeof window === 'undefined') return vide
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY_SUPPRESSIONS) || 'null')
+    return s ? { notes: s.notes || [], depenses: s.depenses || [], agenda: s.agenda || [] } : vide
+  } catch {
+    return vide
+  }
+}
+
+function setSuppressions(s: Suppressions): void {
+  if (typeof window === 'undefined') return
+  try { localStorage.setItem(STORAGE_KEY_SUPPRESSIONS, JSON.stringify(s)) } catch {}
+}
+
+function noterSuppression(type: TypeDonnee, id: string): void {
+  const s = getSuppressions()
+  if (!s[type].includes(id)) s[type] = [...s[type], id].slice(-500)
+  setSuppressions(s)
+}
 
 
 export function genererId(): string {
@@ -165,6 +194,7 @@ export function saveLocalNote(note: Partial<SurgaNote> & { titre: string }): Sur
 }
 
 export function deleteLocalNote(id: string): void {
+  noterSuppression('notes', id)
   const notes = getLocalNotes().filter((n) => n.id !== id)
   setLocalNotes(notes)
 }
@@ -204,6 +234,7 @@ export function saveLocalDepense(depense: Partial<SurgaDepense> & { montant_xof:
 }
 
 export function deleteLocalDepense(id: string): void {
+  noterSuppression('depenses', id)
   const existing = getLocalDepenses().find((d) => d.id === id)
   const depenses = getLocalDepenses().filter((d) => d.id !== id)
   setLocalDepenses(depenses)
@@ -332,18 +363,88 @@ export function toggleLocalEvenement(id: string): SurgaEvenement | null {
 }
 
 export function deleteLocalEvenement(id: string): void {
+  noterSuppression('agenda', id)
   const filtered = getLocalAgenda().filter((e) => e.id !== id)
   setLocalAgenda(filtered)
 }
 
+/**
+ * Rattache les données de l'appareil au compte qui vient de se connecter.
+ * SRG-A1-028 : sur un appareil partagé, les notes, les dépenses, le portefeuille et le brouillon de CV d'un compte
+ * passaient sur le compte suivant. Si l'appareil portait les données d'un autre compte, elles sont retirées avant
+ * toute synchronisation. Les données saisies en invité (aucun propriétaire) sont adoptées par le premier compte.
+ */
+export function adopterProprietaire(userId: string): void {
+  if (typeof window === 'undefined' || !userId) return
+  try {
+    const precedent = localStorage.getItem(STORAGE_KEY_PROPRIETAIRE)
+    if (precedent && precedent !== userId) {
+      const aRetirer: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i) || ''
+        if (k.startsWith('surga_offline_') || k.startsWith('surga_kalpe_') || k.startsWith('surga_xaalis_') || k === 'surga_profil_pro' || k === 'surga_documents_emploi') aRetirer.push(k)
+      }
+      aRetirer.forEach((k) => localStorage.removeItem(k))
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('surga-data-change'))
+    }
+    localStorage.setItem(STORAGE_KEY_PROPRIETAIRE, userId)
+  } catch {}
+}
+
+const jourSeul = (v: unknown): string => String(v || '').slice(0, 10)
+
+/**
+ * Fusionne la liste du serveur avec celle de l'appareil.
+ * - une ligne du serveur remplace la ligne locale de même identifiant, sauf si celle-ci a été modifiée pendant l'échange ;
+ * - une ligne locale non envoyée et inconnue du serveur est gardée (saisie pendant l'échange, ou refusée par le serveur) ;
+ * - une ligne supprimée sur l'appareil ne revient pas.
+ */
+function fusionner<T extends { id: string; updated_at?: string; synced?: boolean }>(
+  locales: T[],
+  serveur: T[],
+  idMappings: Record<string, string>,
+  debut: string,
+  supprimes: string[],
+  normaliser: (x: T) => T
+): T[] {
+  const idFinal = (id: string) => idMappings[id] || id
+  const parId = new Map<string, T>()
+  for (const l of locales) parId.set(idFinal(l.id), l)
+  const resultat: T[] = []
+  const vus = new Set<string>()
+  for (const s of serveur) {
+    if (supprimes.includes(s.id)) continue
+    vus.add(s.id)
+    const local = parId.get(s.id)
+    if (local && local.synced === false && (local.updated_at || '') > debut) resultat.push({ ...local, id: s.id })
+    else resultat.push(normaliser({ ...s, synced: true }))
+  }
+  for (const l of locales) {
+    const id = idFinal(l.id)
+    if (vus.has(id) || supprimes.includes(l.id)) continue
+    if (l.synced === false) resultat.push({ ...l, id })
+  }
+  return resultat
+}
+
+/**
+ * Synchronise l'appareil et le serveur.
+ * SRG-A2-001 : un invité recevait « succès » et ses saisies étaient marquées envoyées sans l'être ; elles disparaissaient
+ *              à la première vraie synchronisation. Une réponse « invité » ne marque plus rien.
+ * SRG-A2-002 : la liste du serveur écrasait celle de l'appareil ; elle est maintenant fusionnée.
+ * SRG-A2-003 : sans rien à envoyer, l'appareil ne demandait rien : un second appareil restait vide. L'échange a
+ *              toujours lieu ; il sert aussi à récupérer.
+ * SRG-A2-008 : les suppressions faites sur l'appareil sont transmises.
+ * Retourne true quand le serveur a confirmé l'échange pour un compte connecté.
+ */
 export async function synchroniserSurga(): Promise<boolean> {
   if (typeof window === 'undefined' || !navigator.onLine) return false
 
+  const debut = new Date().toISOString()
   const notesNonSync = getLocalNotes().filter((n) => !n.synced)
   const depensesNonSync = getLocalDepenses().filter((d) => !d.synced)
   const agendaNonSync = getLocalAgenda().filter((a) => !a.synced)
-
-  if (notesNonSync.length === 0 && depensesNonSync.length === 0 && agendaNonSync.length === 0) return true
+  const suppressions = getSuppressions()
 
   try {
     const token = localStorage.getItem('nopalou_session') || localStorage.getItem('token')
@@ -359,52 +460,35 @@ export async function synchroniserSurga(): Promise<boolean> {
         notes: notesNonSync,
         depenses: depensesNonSync,
         agenda: agendaNonSync,
+        suppressions,
       }),
     })
 
     if (!res.ok) return false
     const data = await res.json()
+    // Invité, ou refus : rien n'est enregistré côté serveur, les saisies restent « à envoyer ».
+    if (!data.success || data.guest) return false
 
-    if (data.success) {
-      const idMappings = data.id_mappings || {}
+    const idMappings: Record<string, string> = data.id_mappings || {}
+    const restant = getSuppressions()
 
-      if (Array.isArray(data.notes)) {
-        const mergedNotes = data.notes.map((n: SurgaNote) => ({ ...n, synced: true }))
-        setLocalNotes(mergedNotes)
-      } else {
-        const notes = getLocalNotes().map((n) => ({
-          ...n,
-          id: idMappings[n.id] || n.id,
-          synced: true,
-        }))
-        setLocalNotes(notes)
-      }
-
-      if (Array.isArray(data.depenses)) {
-        const mergedDepenses = data.depenses.map((d: SurgaDepense) => ({ ...d, synced: true }))
-        setLocalDepenses(mergedDepenses)
-      } else {
-        const depenses = getLocalDepenses().map((d) => ({
-          ...d,
-          id: idMappings[d.id] || d.id,
-          synced: true,
-        }))
-        setLocalDepenses(depenses)
-      }
-
-      if (Array.isArray(data.agenda)) {
-        const mergedAgenda = data.agenda.map((a: SurgaEvenement) => ({ ...a, synced: true }))
-        setLocalAgenda(mergedAgenda)
-      } else {
-        const agenda = getLocalAgenda().map((a) => ({
-          ...a,
-          id: idMappings[a.id] || a.id,
-          synced: true,
-        }))
-        setLocalAgenda(agenda)
-      }
-      return true
+    if (Array.isArray(data.notes)) {
+      setLocalNotes(fusionner<SurgaNote>(getLocalNotes(), data.notes, idMappings, debut, restant.notes, (n) => n))
     }
+    if (Array.isArray(data.depenses)) {
+      setLocalDepenses(fusionner<SurgaDepense>(getLocalDepenses(), data.depenses, idMappings, debut, restant.depenses, (d) => ({ ...d, date_depense: jourSeul(d.date_depense) })))
+    }
+    if (Array.isArray(data.agenda)) {
+      setLocalAgenda(fusionner<SurgaEvenement>(getLocalAgenda(), data.agenda, idMappings, debut, restant.agenda, (a) => ({ ...a, date_evenement: jourSeul(a.date_evenement) })))
+    }
+
+    // Les suppressions transmises sont acquises ; celles faites pendant l'échange partiront au prochain.
+    setSuppressions({
+      notes: restant.notes.filter((id) => !suppressions.notes.includes(id)),
+      depenses: restant.depenses.filter((id) => !suppressions.depenses.includes(id)),
+      agenda: restant.agenda.filter((id) => !suppressions.agenda.includes(id)),
+    })
+    return true
   } catch (err) {
     console.warn('[SURGA SYNC FAILED]:', err)
   }
@@ -412,3 +496,11 @@ export async function synchroniserSurga(): Promise<boolean> {
   return false
 }
 
+// SRG-A2-019 : au retour du réseau, les saisies en attente partent sans attendre que l'utilisateur ouvre un onglet.
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    synchroniserSurga()
+      .then((ok) => { if (ok) window.dispatchEvent(new CustomEvent('surga-data-change')) })
+      .catch(() => {})
+  })
+}
