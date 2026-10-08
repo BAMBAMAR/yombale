@@ -182,6 +182,21 @@ describe('trafic mesuré (D71)', () => {
     expect(mesures.creneauCourant(new Date('2026-10-08T20:00:00Z'))).toBeNull();
   });
 
+  test('alertes de presse : la route, pas le reste', () => {
+    const { MOTIF_CIRCULATION } = require('../../backend/services/surga/trafic-service');
+    for (const titre of ['Alerte Trafic: Bus en feu sur l’Autoroute de l’Avenir, Embouteillage de 2 km', 'Autoroute Dakar-AIBD : plus de 5 km d’embouteillages à hauteur de Diamniadio', 'Le trafic perturbé sur l’Autoroute à péage en raison des manifestations', 'Accident sur la VDN : deux blessés graves', 'Circulation perturbée ce week-end à Colobane', 'Route barrée à Keur Massar après les pluies', 'Collision entre un bus et un camion à Kaolack']) {
+      expect([titre, MOTIF_CIRCULATION.test(titre)]).toEqual([titre, true]);
+    }
+    for (const titre of ['Trafic de drogue : 30 kg saisis à Kaolack', 'Circulation monétaire : la BCEAO publie ses chiffres', 'Accident de travail à Sabodala : un mort', 'Un meurtre à la Patte d’Oie émeut le quartier', 'Le TER fête ses quatre ans', 'Lutte : le combat de dimanche sur la Corniche']) {
+      expect([titre, MOTIF_CIRCULATION.test(titre)]).toEqual([titre, false]);
+    }
+  });
+
+  test('nom de l’itinéraire mesuré repris tel quel, absent sinon', () => {
+    expect(mesures.interpreterGoogleRoutes({ routes: [{ distanceMeters: 9900, duration: '2220s', staticDuration: '900s', description: 'N1 et Rte de l\'Aéroport' }] }).itineraire).toBe('N1 et Rte de l\'Aéroport');
+    expect(mesures.interpreterGoogleRoutes({ routes: [{ distanceMeters: 9900, duration: '2220s', staticDuration: '900s' }] }).itineraire).toBeNull();
+  });
+
   test('axe mesuré dans le sens de l’heure : aller avant 13 h, retour ensuite', () => {
     const axe = { sensSelonHeure: true };
     expect(mesures.sensInverse(axe, new Date('2026-10-08T12:30:00Z'))).toBe(false);

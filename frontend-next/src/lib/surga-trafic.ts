@@ -21,8 +21,17 @@ export interface AxeTrafic {
   source?: 'google_maps' | 'signalement' | 'aucune'
   vitesseReelleKmH?: number | null
   vitesseNormaleKmH?: number | null
+  // Par où passe le trajet mesuré, tel que le fournisseur le nomme.
+  itineraire?: string | null
   signalementRecent?: { type: string; commentaire?: string; date: string } | null
   updatedAt?: string | null
+}
+
+export interface AlertePresseTrafic {
+  titre: string
+  source: string
+  url: string
+  publie_le: string
 }
 
 export const axeRenseigne = (axe: AxeTrafic): boolean =>
@@ -57,3 +66,12 @@ export const MESSAGE_TRAFIC_INDISPONIBLE =
   'Trafic indisponible pour le moment : aucune mesure ni signalement récent.'
 
 export const CARTE_TRAFIC_EXTERNE = 'https://www.google.com/maps/@14.7300,-17.4480,13z/data=!5m1!1e1'
+
+// Lien d'itinéraire de Google Maps (gratuit, sans clé) : ouvre l'application sur un téléphone, le site sinon.
+// Sans départ, Google part de la position de l'appareil. Un lieu saisi sans ville est cherché au Sénégal.
+const auSenegal = (lieu: string): string => (/,|sénégal|senegal/i.test(lieu) ? lieu : `${lieu}, Sénégal`)
+export function lienItineraire(depart: string, arrivee: string): string {
+  const p = new URLSearchParams({ api: '1', destination: auSenegal(arrivee.trim()), travelmode: 'driving' })
+  if (depart.trim()) p.set('origin', auSenegal(depart.trim()))
+  return `https://www.google.com/maps/dir/?${p.toString()}`
+}

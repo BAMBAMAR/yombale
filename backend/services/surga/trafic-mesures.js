@@ -59,6 +59,8 @@ function interpreterGoogleRoutes(json) {
     retardMin: Math.max(0, Math.round((avecTrafic - sansTrafic) / 60)),
     vitesseReelleKmH: Math.round(km / (avecTrafic / 3600)),
     vitesseNormaleKmH: Math.round(km / (sansTrafic / 3600)),
+    // Par où passe le trajet mesuré (« N1 et Rte de l'Aéroport ») : le fournisseur rend le plus rapide du moment.
+    itineraire: typeof route.description === 'string' && route.description.trim() ? route.description.trim().slice(0, 80) : null,
   };
 }
 
@@ -81,7 +83,7 @@ async function interrogerGoogle(axe, cle, inverse = false) {
     { origin: point(inverse ? axe.to : axe.from), destination: point(inverse ? axe.from : axe.to), travelMode: 'DRIVE', routingPreference: 'TRAFFIC_AWARE' },
     {
       timeout: 6000,
-      headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': cle, 'X-Goog-FieldMask': 'routes.duration,routes.staticDuration,routes.distanceMeters' },
+      headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': cle, 'X-Goog-FieldMask': 'routes.duration,routes.staticDuration,routes.distanceMeters,routes.description' },
     }
   );
   const mesure = interpreterGoogleRoutes(res.data);

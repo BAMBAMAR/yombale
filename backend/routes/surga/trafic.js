@@ -8,17 +8,20 @@ const {
   getEtatTraficComplet,
   genererSyntheseBriefingTrafic,
   enregistrerSignalement,
+  getAlertesPresseTrafic,
 } = require('../../services/surga/trafic-service');
 const { tokenOptional } = require('../../middlewares/surga-auth');
 
 /**
  * GET /api/surga/trafic
- * État complet des axes de circulation de Dakar (flux TomTom Live ou prévisionnel + signalements)
+ * État des axes de Dakar : mesures du créneau, signalements des usagers, titres de presse sur la circulation
  */
 router.get('/trafic', async (req, res) => {
   try {
     const etat = await getEtatTraficComplet();
     const synthese = genererSyntheseBriefingTrafic(etat.axes, req.query.quartier || 'Dakar');
+    // Les titres de presse complètent l'écran ; leur lecture en échec ne retire pas le reste.
+    const alertesPresse = await getAlertesPresseTrafic().catch((e) => { console.warn('[SurgaTrafic] Alertes de presse illisibles :', e.message); return []; });
 
     return res.json({
       success: true,
@@ -27,6 +30,8 @@ router.get('/trafic', async (req, res) => {
       total: etat.axes.length,
       axes: etat.axes,
       incidents: etat.incidents,
+      alertesPresse,
+      mesures: etat.mesures,
       synthese,
       derniereMiseAJour: etat.derniereMiseAJour,
     });

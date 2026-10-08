@@ -494,6 +494,7 @@ async function getEtatTraficComplet(options = {}) {
     let vitesseReelleKmH = null;
     let vitesseNormaleKmH = null;
     let distanceKm = axe.distanceKm;
+    let itineraire = null;
 
     if (mesure) {
       nbMesures++;
@@ -501,6 +502,7 @@ async function getEtatTraficComplet(options = {}) {
       releveLe = releve.releveLe;
       tempsEstimeMin = mesure.tempsEstimeMin;
       distanceKm = mesure.distanceKm;
+      itineraire = mesure.itineraire || null;
       vitesseReelleKmH = mesure.vitesseReelleKmH;
       vitesseNormaleKmH = mesure.vitesseNormaleKmH;
       niveau = mesuresTrafic.niveauDeLaMesure(mesure);
@@ -557,6 +559,7 @@ async function getEtatTraficComplet(options = {}) {
       source,
       vitesseReelleKmH,
       vitesseNormaleKmH,
+      itineraire,
       signalementRecent: signalement
         ? {
             type: signalement.type_signalement,
@@ -577,6 +580,43 @@ async function getEtatTraficComplet(options = {}) {
     // Ce que l'écran doit pouvoir dire des mesures : qui mesure, quand, et pourquoi il n'y en a pas.
     mesures: { fournisseur: mesuresTrafic.FOURNISSEUR, horaires: mesuresTrafic.HORAIRES, etat: releve.etat, axes: mesuresTrafic.axesMesures() },
   };
+}
+
+// D73 : titres de presse qui parlent de circulation. Le motif vise la route : ni le trafic de drogue, ni la circulation
+// monétaire, ni un accident du travail ; un nom de lieu seul (Patte d'Oie, Corniche) ne suffit pas.
+const MOTIF_CIRCULATION = new RegExp([
+  'embouteillage', 'bouchons?\\b', 'alerte trafic', 'trafic routier', 'trafic (perturb|interrompu|dense|bloqu|ralenti)',
+  'circulation (perturb|bloqu|interrompu|coup|difficile|dense|ralentie|routière|automobile|alternée)',
+  'route (barr|coup|ferm|inond|impraticable)', 'déviation', 'carambolage', 'collision',
+  'accident (de la (route|circulation)|à hauteur|sur (la |l[’\'])?(route|autoroute|vdn|corniche|nationale|rn ?\\d))',
+  'camion (renvers|en panne|fou)', 'bus (renvers|en feu)',
+  'autoroute.*(ferm|perturb|bloqu|accident|embouteill|coup)', '(ferm|perturb|bloqu|accident|coup).*autoroute',
+].join('|'), 'i');
+
+/**
+ * Titres de presse des dernières heures qui parlent de circulation, sourcés et datés.
+ * @returns {Promise<Array<{ titre: string, source: string, url: string, publie_le: string }>>}
+ */
+async function getAlertesPresseTrafic({ heures = 12, limite = 5 } = {}) {
+  const { rows } = await pool.query(
+    `SELECT titre, source_nom, url, published_at
+       FROM surga_briefing_items
+      WHERE published_at >= NOW() - ($1 || ' hours')::interval AND published_at <= NOW() + INTERVAL '5 minutes'
+      ORDER BY published_at DESC
+      LIMIT 400`,
+    [String(heures)]
+  );
+  const vus = new Set();
+  const alertes = [];
+  for (const row of rows) {
+    if (!MOTIF_CIRCULATION.test(row.titre)) continue;
+    const cle = row.titre.toLowerCase().replace(/[^a-zà-ÿ0-9]+/g, ' ').trim().slice(0, 60);
+    if (vus.has(cle)) continue;
+    vus.add(cle);
+    alertes.push({ titre: row.titre, source: row.source_nom, url: row.url, publie_le: new Date(row.published_at).toISOString() });
+    if (alertes.length >= limite) break;
+  }
+  return alertes;
 }
 
 /**
@@ -665,4 +705,6 @@ module.exports = {
   getEtatTraficComplet,
   genererSyntheseBriefingTrafic,
   enregistrerSignalement,
+  getAlertesPresseTrafic,
+  MOTIF_CIRCULATION,
 };

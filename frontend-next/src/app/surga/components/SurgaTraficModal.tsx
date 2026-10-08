@@ -9,23 +9,16 @@ import {
   Plus,
   Activity,
   AlertTriangle,
-  MapPin,
-  ExternalLink,
 } from 'lucide-react'
 import SurgaTraficItemCard from './SurgaTraficItemCard'
 import SurgaTraficReportForm from './SurgaTraficReportForm'
-import { axeRenseigne, heureCourte, MESSAGE_TRAFIC_INDISPONIBLE, CARTE_TRAFIC_EXTERNE } from '@/lib/surga-trafic'
-import type { AxeTrafic } from '@/lib/surga-trafic'
+import SurgaTraficTrajet from './SurgaTraficTrajet'
+import SurgaTraficAlertesPresse from './SurgaTraficAlertesPresse'
+import SurgaChargementEchoue, { lireReponseSurga } from './SurgaChargementEchoue'
+import { axeRenseigne, heureCourte, MESSAGE_TRAFIC_INDISPONIBLE } from '@/lib/surga-trafic'
+import type { AxeTrafic, AlertePresseTrafic } from '@/lib/surga-trafic'
 
 export type AxeTraficDetail = AxeTrafic
-
-interface IncidentTrafic {
-  id: string
-  description: string
-  delaySec: number
-  from?: string
-  to?: string
-}
 
 interface SurgaTraficModalProps {
   isOpen: boolean
@@ -41,7 +34,8 @@ const ONGLETS_FILTRE = [
 
 export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalProps) {
   const [axes, setAxes] = useState<AxeTraficDetail[]>([])
-  const [incidents, setIncidents] = useState<IncidentTrafic[]>([])
+  const [alertes, setAlertes] = useState<AlertePresseTrafic[]>([])
+  const [echec, setEchec] = useState<boolean>(false)
   const [source, setSource] = useState<string>('aucune')
   const [derniereMaj, setDerniereMaj] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(true)
@@ -57,16 +51,17 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
 
   const chargerTrafic = async () => {
     setLoading(true)
+    setEchec(false)
     try {
-      const res = await fetch('/api/surga/trafic')
-      const data = await res.json()
-      if (data.success && Array.isArray(data.axes)) {
-        setAxes(data.axes)
-        setSource(data.source || 'aucune')
-        setIncidents(data.incidents || [])
-        setDerniereMaj(data.derniereMiseAJour || '')
-      }
+      const data = await lireReponseSurga(await fetch('/api/surga/trafic'))
+      setAxes(Array.isArray(data.axes) ? data.axes : [])
+      setSource(data.source || 'aucune')
+      setAlertes(Array.isArray(data.alertesPresse) ? data.alertesPresse : [])
+      setDerniereMaj(data.derniereMiseAJour || '')
     } catch (err) {
+      // SRG-A3-006 : un trafic qui n'a pas pu être lu n'est pas un trafic « indisponible faute de mesure ».
+      setAxes([])
+      setEchec(true)
       console.error('Erreur chargement trafic modal:', err)
     } finally {
       setLoading(false)
@@ -236,51 +231,8 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
           </span>
         </div>
 
-        {/* Carte externe : Google Maps */}
-        <div
-          style={{
-            padding: '10px 14px',
-            backgroundColor: '#FFF8F0',
-            borderBottom: '1px solid var(--border, #E8DDD2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <MapPin size={16} color="var(--accent, #C75B00)" style={{ flexShrink: 0 }} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                Carte du trafic (Google Maps)
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>
-                Service externe, ouvert dans un nouvel onglet
-              </div>
-            </div>
-          </div>
-          <a
-            href={CARTE_TRAFIC_EXTERNE}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              backgroundColor: 'var(--accent, #C75B00)',
-              color: '#FFFFFF',
-              fontSize: 11,
-              fontWeight: 700,
-              padding: '6px 10px',
-              borderRadius: 6,
-              textDecoration: 'none',
-              flexShrink: 0,
-            }}
-          >
-            <span>Voir la carte</span>
-            <ExternalLink size={12} />
-          </a>
-        </div>
+        {/* Trajet libre : ouvre Google Maps, service externe */}
+        <SurgaTraficTrajet />
 
         {/* Résultat du signalement */}
         {message && (
@@ -303,28 +255,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
           </div>
         )}
 
-        {/* Incidents rapportés par le fournisseur de trafic */}
-        {incidents.length > 0 && (
-          <div
-            style={{
-              margin: '8px 14px 0',
-              padding: '8px 10px',
-              backgroundColor: 'rgba(185, 28, 28, 0.08)',
-              borderRadius: 8,
-              border: '1px solid rgba(185, 28, 28, 0.2)',
-              fontSize: 11,
-              color: '#B91C1C',
-            }}
-          >
-            <div style={{ fontWeight: 700, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <AlertTriangle size={13} />
-              <span>{incidents.length} incident(s) rapporté(s) à Dakar</span>
-            </div>
-            {incidents.map((inc) => (
-              <div key={inc.id} style={{ fontSize: 10 }}>• {inc.description}</div>
-            ))}
-          </div>
-        )}
+        <SurgaTraficAlertesPresse alertes={alertes} />
 
         {/* Barre de commande : Onglets et Bouton Signaler */}
         <div style={{ padding: '10px 14px 6px', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
@@ -405,6 +336,8 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
             <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
               Chargement du trafic…
             </div>
+          ) : echec ? (
+            <SurgaChargementEchoue message="Le trafic n’a pas pu être chargé." onReessayer={chargerTrafic} />
           ) : axesFiltres.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
               {axes.some(axeRenseigne) ? 'Aucun axe renseigné dans cette catégorie.' : MESSAGE_TRAFIC_INDISPONIBLE}

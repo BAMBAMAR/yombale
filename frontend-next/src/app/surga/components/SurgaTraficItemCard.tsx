@@ -119,7 +119,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span>
             {axe.vitesseReelleKmH ? <strong>{axe.vitesseReelleKmH} km/h • </strong> : null}
-            {axe.distanceKm} km
+            {axe.distanceKm} km{axe.itineraire ? ` • par ${axe.itineraire}` : ''}
           </span>
           <a
             href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(axe.origine + ', Dakar')}&destination=${encodeURIComponent(axe.destination + ', Dakar')}&travelmode=driving`}
