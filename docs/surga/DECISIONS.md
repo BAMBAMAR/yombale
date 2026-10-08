@@ -86,6 +86,7 @@ consulte ce fichier avant de remettre en question un point.
 | D66 | Les documents de suivi (`CLAUDE.md`, journaux, passation, plan, décisions, méthodologie) sont commités sur `feature/surga`, en local ; les dossiers `audit/` restent hors de git (D41) (questionnaire du 2026-10-08). | Cinq lots de corrections documentés mais non versionnés |
 | D67 | Après le cinquième lot, la suite dans Surga est la fin des corrections d'écran : états d'erreur des fenêtres, brouillon de note protégé, derniers replis sur erreur, traceurs tiers retirés (questionnaire du 2026-10-08). | `SRG-A3-006`, `007`, `009`, `SRG-A2-009` encore en partie |
 | D68 | La sauvegarde quotidienne est diagnostiquée en lecture seule (code et journal des tâches de production), puis corrigée sur `main` ; rien n'est modifié en production (questionnaire du 2026-10-08). | `SRG-A5-010` : aucune réussite depuis le 25 septembre |
+| D70 | La sauvegarde quotidienne est conservée sur Cloudflare R2 (questionnaire du 2026-10-08). L'utilisateur crée le bucket et la clé ; les variables `R2_BUCKET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` et `R2_SECRET_ACCESS_KEY` se posent chez l'hébergeur. | `SRG-A5-010` : le disque de l'hébergeur est effacé à chaque déploiement |
 | D69 | Les tâches planifiées du poste de développement ne sont pas modifiées par l'assistant : il les relève et dit quoi faire (questionnaire du 2026-10-08). | `SRG-A5-011` : le poste écrit dans la base de production |
 
 ## Points ouverts (à trancher en Phase 0 et UI V2, puis à déplacer ci-dessus)
