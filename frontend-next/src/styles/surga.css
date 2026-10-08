@@ -1196,3 +1196,9 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 .surga-demarrage { display: none; padding-top: 16px; }
 .surga-deja-configure .surga-demarrage { display: block; }
 .surga-deja-configure .surga-accueil-public { display: none; }
+
+/* SRG-A2-015 : réglages propres à l'ordinateur (menu de gauche, colonne de droite), hors de vue sur téléphone. */
+.surga-ordinateur-seulement { display: none; }
+@media (min-width: 1024px) {
+  .surga-ordinateur-seulement { display: block; }
+}

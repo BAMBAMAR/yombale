@@ -21,7 +21,7 @@ import {
   demanderPermissionNotification,
   demarrerSurveillanceRappels,
 } from '@/lib/surga-reminders'
-import SurgaAgendaForm from './SurgaAgendaForm'
+import SurgaAgendaForm, { type DonneesRappel } from './SurgaAgendaForm'
 import SurgaAgendaCard from './SurgaAgendaCard'
 import SurgaAgendaWeekStrip from './SurgaAgendaWeekStrip'
 import SurgaAgendaStats from './SurgaAgendaStats'
@@ -35,6 +35,7 @@ export default function SurgaAgendaView() {
     new Date().toISOString().slice(0, 10)
   )
   const [isAdding, setIsAdding] = useState<boolean>(false)
+  const [enEdition, setEnEdition] = useState<SurgaEvenement | null>(null)
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('default')
   const [notification, setNotification] = useState<string | null>(null)
 
@@ -135,22 +136,15 @@ export default function SurgaAgendaView() {
       })
   }, [evenements, filtre, todayStr, now])
 
-  const handleAjouter = async (data: {
-    titre: string
-    description?: string
-    date_evenement: string
-    heure_evenement?: string
-    priorite: SurgaEvenementPriorite
-    categorie: SurgaEvenementCategorie
-    lieu?: string
-    est_rappel: boolean
-    repetition: 'AUCUNE' | 'QUOTIDIEN' | 'HEBDOMADAIRE' | 'MENSUEL'
-  }) => {
-    saveLocalEvenement(data)
+  // Crée un rappel, ou enregistre les changements de celui qui est ouvert (SRG-A2-017). Un rappel modifié est de
+  // nouveau à annoncer : son heure a pu changer.
+  const handleAjouter = async (data: DonneesRappel) => {
+    saveLocalEvenement(enEdition ? { ...enEdition, ...data, notification_envoyee: false } : data)
+    setNotification(enEdition ? 'Rappel modifié' : 'Rappel programmé avec succès')
     setIsAdding(false)
+    setEnEdition(null)
     chargerDonnees()
 
-    setNotification('Rappel programmé avec succès')
     setTimeout(() => setNotification(null), 3000)
 
     await synchroniserSurga()
@@ -188,6 +182,7 @@ export default function SurgaAgendaView() {
       date_evenement: nouvelleDate,
       heure_evenement: nouvelleHeure || target.heure_evenement,
       termine: false,
+      notification_envoyee: false,
     })
     chargerDonnees()
     setNotification(`Rappel reporté au ${nouvelleDate}${nouvelleHeure ? ' à ' + nouvelleHeure : ''}`)
@@ -365,9 +360,11 @@ export default function SurgaAgendaView() {
       )}
 
       {/* Formulaire d'ajout rapide */}
-      {isAdding && (
+      {(isAdding || enEdition) && (
         <SurgaAgendaForm
-          onClose={() => setIsAdding(false)}
+          key={enEdition?.id || 'nouveau'}
+          initial={enEdition ? { ...enEdition, priorite: enEdition.priorite || 'normale', categorie: enEdition.categorie || 'rdv' } : undefined}
+          onClose={() => { setIsAdding(false); setEnEdition(null) }}
           onSubmit={handleAjouter}
         />
       )}
@@ -436,6 +433,7 @@ export default function SurgaAgendaView() {
               onToggle={handleToggle}
               onSupprimer={handleSupprimer}
               onReporter={handleReporter}
+              onModifier={(evt) => { setIsAdding(false); setEnEdition(evt) }}
             />
           ))}
         </div>

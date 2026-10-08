@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   type KalpeModePaiement,
   saveKalpeOperation,
@@ -21,6 +21,8 @@ interface SurgaKalpeSaisieModalProps {
   objectifsExistants: KalpeObjectifLocal[]
   onClose: () => void
   onSuccess: (message: string) => void
+  // Montant repris de la calculatrice : le champ s'ouvre déjà rempli.
+  montantInitial?: number
 }
 
 const CATEGORIES_ENTREE = [
@@ -49,9 +51,13 @@ export default function SurgaKalpeSaisieModal({
   objectifsExistants,
   onClose,
   onSuccess,
+  montantInitial,
 }: SurgaKalpeSaisieModalProps) {
   const [mode, setMode] = useState<SaisieMode>(initialMode)
   const [montant, setMontant] = useState('')
+  useEffect(() => {
+    if (isOpen && montantInitial) setMontant(String(montantInitial))
+  }, [isOpen, montantInitial])
   const [libelle, setLibelle] = useState('')
   const [categorie, setCategorie] = useState(
     initialMode === 'entree' ? CATEGORIES_ENTREE[0] : CATEGORIES_DEPENSE[0]

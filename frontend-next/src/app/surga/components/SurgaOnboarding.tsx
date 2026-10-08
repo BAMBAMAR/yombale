@@ -336,7 +336,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
               Votre Surga est prêt
             </h2>
             <p style={{ fontSize: 15, color: 'var(--text2, #5A4E42)', margin: 0, lineHeight: 1.5 }}>
-              Bonjour. Vos préférences ont été enregistrées avec succès. Vous recevrez désormais votre briefing quotidien à <strong>{heureBriefing}</strong> pour la zone <strong>{quartiers[0] || 'Dakar'}</strong>.
+              Bonjour. Vos préférences sont enregistrées. Votre briefing sera prêt chaque jour à <strong>{heureBriefing}</strong> dans l’application, pour la zone <strong>{quartiers[0] || 'Dakar'}</strong>.
             </p>
           </div>
 

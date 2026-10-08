@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { X, Delete, ArrowRight, Check } from 'lucide-react'
-import { evaluerCalcul, formaterFCFA } from '@/lib/surga-calculator'
+import { evaluerCalcul, formaterFCFA, formaterNombreCalcul } from '@/lib/surga-calculator'
 import SurgaShareButton from './SurgaShareButton'
 import { formaterPartageCalcul } from '@/lib/surga-share'
 
@@ -19,6 +19,7 @@ export default function SurgaCalculatorModal({
 }: SurgaCalculatorModalProps) {
   const [expression, setExpression] = useState<string>('')
   const [resultat, setResultat] = useState<number | null>(null)
+  const [approche, setApproche] = useState<boolean>(false)
   const [erreur, setErreur] = useState<string | null>(null)
 
   if (!isOpen) return null
@@ -44,6 +45,7 @@ export default function SurgaCalculatorModal({
     const res = evaluerCalcul(expression)
     if (res.success && res.resultat !== undefined) {
       setResultat(res.resultat)
+      setApproche(Boolean(res.approche))
       setErreur(null)
     } else {
       setErreur(res.erreur || 'Calcul invalide')
@@ -153,7 +155,7 @@ export default function SurgaCalculatorModal({
                 minHeight: 32,
               }}
             >
-              {resultat !== null ? formaterFCFA(resultat) : ''}
+              {resultat !== null ? `${approche ? '≈ ' : ''}${formaterNombreCalcul(resultat)}` : ''}
             </div>
           )}
         </div>
@@ -237,7 +239,7 @@ export default function SurgaCalculatorModal({
                 }}
               >
                 <Check size={16} />
-                <span>Utiliser {formaterFCFA(resultat)}</span>
+                <span>Utiliser {formaterFCFA(Math.round(resultat))}{Number.isInteger(resultat) ? '' : ' (arrondi)'}</span>
               </button>
             )}
 
@@ -246,7 +248,7 @@ export default function SurgaCalculatorModal({
                 titre: 'Surga Calculatrice',
                 texte: formaterPartageCalcul({
                   expression,
-                  resultatFormate: formaterFCFA(resultat),
+                  resultatFormate: formaterNombreCalcul(resultat),
                 }),
               }}
               taille="md"

@@ -15,6 +15,7 @@ import {
 import SurgaServiceRow from './SurgaServiceRow'
 import { quartierDe } from '@/lib/surga-meteo'
 import SurgaPersonnalisationSection from './SurgaPersonnalisationSection'
+import SurgaServicesListe, { type CleService } from './SurgaServicesListe'
 
 interface SurgaParametresTabProps {
   preferences: any
@@ -40,6 +41,8 @@ interface SurgaParametresTabProps {
   onOpenDonnees?: () => void
   onReinitialiser: () => void
   onSavePreferences?: (nouveauxParametres: { sidebar_services?: string[]; rail_widgets?: string[] }) => void
+  // Téléphone : ouvre un service depuis la liste de l'onglet (SRG-A2-015).
+  onOuvrirService?: (cle: CleService) => void
 }
 
 export default function SurgaParametresTab({
@@ -57,6 +60,7 @@ export default function SurgaParametresTab({
   onOpenDonnees,
   onReinitialiser,
   onSavePreferences,
+  onOuvrirService,
 }: SurgaParametresTabProps) {
   const estPremium = statutPremium?.estPremium ?? false
   const joursRestants = statutPremium?.joursRestants ?? 0
@@ -70,6 +74,13 @@ export default function SurgaParametresTab({
         paddingBottom: 24,
       }}
     >
+      {/* Liste des services : sur téléphone seulement, l'ordinateur les a dans son menu de gauche */}
+      {onOuvrirService && (
+        <div className="surga-context-only-mobile">
+          <SurgaServicesListe onOuvrir={onOuvrirService} />
+        </div>
+      )}
+
       {/* En-tête de section */}
       <div>
         <h2
@@ -311,10 +322,12 @@ export default function SurgaParametresTab({
       </div>
 
       {/* 3. Personnalisation de l'affichage (Desktop) : Menu gauche & Bande droite */}
-      <SurgaPersonnalisationSection
-        preferences={preferences}
-        onSavePreferences={onSavePreferences || (() => {})}
-      />
+      <div className="surga-ordinateur-seulement">
+        <SurgaPersonnalisationSection
+          preferences={preferences}
+          onSavePreferences={onSavePreferences || (() => {})}
+        />
+      </div>
 
       {/* 4. Option Audio du briefing */}
       <SurgaServiceRow

@@ -312,7 +312,7 @@ export default function SurgaImmoAlerteModal({
           </div>
 
           <p style={{ fontSize: 11, color: 'var(--text3, #73675E)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
-            Surga veille en continu sur le catalogue immobilier certifié et vous alerte dès la détection d un bien conforme.
+            Vos critères sont enregistrés pour retrouver les biens correspondants. Surga n’envoie pas encore de notification à la mise en ligne d’un bien.
           </p>
 
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>

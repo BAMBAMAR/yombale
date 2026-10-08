@@ -18,19 +18,23 @@ import {
 } from '@/lib/surga-offline-sync'
 import SurgaAgendaPresets, { type AgendaPresetType } from './SurgaAgendaPresets'
 
+export interface DonneesRappel {
+  titre: string
+  description?: string
+  date_evenement: string
+  heure_evenement?: string
+  priorite: SurgaEvenementPriorite
+  categorie: SurgaEvenementCategorie
+  lieu?: string
+  est_rappel: boolean
+  repetition: 'AUCUNE' | 'QUOTIDIEN' | 'HEBDOMADAIRE' | 'MENSUEL'
+}
+
 interface SurgaAgendaFormProps {
   onClose: () => void
-  onSubmit: (data: {
-    titre: string
-    description?: string
-    date_evenement: string
-    heure_evenement?: string
-    priorite: SurgaEvenementPriorite
-    categorie: SurgaEvenementCategorie
-    lieu?: string
-    est_rappel: boolean
-    repetition: 'AUCUNE' | 'QUOTIDIEN' | 'HEBDOMADAIRE' | 'MENSUEL'
-  }) => void
+  onSubmit: (data: DonneesRappel) => void
+  // SRG-A2-017 : rappel existant à modifier ; sans lui, le formulaire en crée un.
+  initial?: DonneesRappel
 }
 
 const CATEGORIES: Array<{ key: SurgaEvenementCategorie; label: string; icon: LucideIcon }> = [
@@ -42,24 +46,25 @@ const CATEGORIES: Array<{ key: SurgaEvenementCategorie; label: string; icon: Luc
   { key: 'perso', label: 'Personnel', icon: User },
 ]
 
-export default function SurgaAgendaForm({ onClose, onSubmit }: SurgaAgendaFormProps) {
-  const [titre, setTitre] = useState<string>('')
-  const [description, setDescription] = useState<string>('')
-  const [lieu, setLieu] = useState<string>('')
-  const [priorite, setPriorite] = useState<SurgaEvenementPriorite>('normale')
-  const [categorie, setCategorie] = useState<SurgaEvenementCategorie>('rdv')
+export default function SurgaAgendaForm({ onClose, onSubmit, initial }: SurgaAgendaFormProps) {
+  const [titre, setTitre] = useState<string>(initial?.titre || '')
+  const [description, setDescription] = useState<string>(initial?.description || '')
+  const [lieu, setLieu] = useState<string>(initial?.lieu || '')
+  const [priorite, setPriorite] = useState<SurgaEvenementPriorite>(initial?.priorite || 'normale')
+  const [categorie, setCategorie] = useState<SurgaEvenementCategorie>(initial?.categorie || 'rdv')
 
   const [dateEvenement, setDateEvenement] = useState<string>(() =>
-    new Date().toISOString().slice(0, 10)
+    initial?.date_evenement?.slice(0, 10) || new Date().toISOString().slice(0, 10)
   )
 
   const [heureEvenement, setHeureEvenement] = useState<string>(() => {
+    if (initial) return initial.heure_evenement?.slice(0, 5) || ''
     const d = new Date(Date.now() + 15 * 60 * 1000)
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   })
 
-  const [estRappel, setEstRappel] = useState<boolean>(true)
-  const [repetition, setRepetition] = useState<'AUCUNE' | 'QUOTIDIEN' | 'HEBDOMADAIRE' | 'MENSUEL'>('AUCUNE')
+  const [estRappel, setEstRappel] = useState<boolean>(initial?.est_rappel ?? true)
+  const [repetition, setRepetition] = useState<DonneesRappel['repetition']>(initial?.repetition || 'AUCUNE')
 
   const appliquerRaccourci = (type: AgendaPresetType) => {
     const now = new Date()
@@ -117,7 +122,7 @@ export default function SurgaAgendaForm({ onClose, onSubmit }: SurgaAgendaFormPr
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-          Nouveau rappel ou événement
+          {initial ? 'Modifier le rappel' : 'Nouveau rappel ou événement'}
         </span>
         <button
           type="button"
@@ -398,7 +403,7 @@ export default function SurgaAgendaForm({ onClose, onSubmit }: SurgaAgendaFormPr
             }}
           >
             <Clock size={15} />
-            <span>Enregistrer le rappel</span>
+            <span>{initial ? 'Enregistrer les changements' : 'Enregistrer le rappel'}</span>
           </button>
         </div>
       </form>

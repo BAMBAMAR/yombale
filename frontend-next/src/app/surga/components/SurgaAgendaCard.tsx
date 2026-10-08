@@ -17,6 +17,7 @@ import {
   HeartPulse,
   Landmark,
   RotateCcw,
+  Pencil,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -24,12 +25,14 @@ import {
   type SurgaEvenementPriorite,
   type SurgaEvenementCategorie,
 } from '@/lib/surga-offline-sync'
+import { decalerDUneHeure } from '@/lib/surga-agenda-dates'
 
 interface SurgaAgendaCardProps {
   evenement: SurgaEvenement
   onToggle: (id: string) => void
   onSupprimer: (id: string) => void
   onReporter: (id: string, nouvelleDate: string, nouvelleHeure?: string) => void
+  onModifier?: (evenement: SurgaEvenement) => void
 }
 
 const PRIORITE_META: Record<SurgaEvenementPriorite, { label: string; color: string; bg: string }> = {
@@ -52,6 +55,7 @@ export default function SurgaAgendaCard({
   onToggle,
   onSupprimer,
   onReporter,
+  onModifier,
 }: SurgaAgendaCardProps) {
   const [showReporterMenu, setShowReporterMenu] = useState<boolean>(false)
 
@@ -93,10 +97,8 @@ export default function SurgaAgendaCard({
 
   const handleReporterPlus1h = (e: React.MouseEvent) => {
     e.stopPropagation()
-    const d = new Date(Date.now() + 60 * 60 * 1000)
-    const newDate = d.toISOString().slice(0, 10)
-    const newHeure = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-    onReporter(evenement.id, newDate, newHeure)
+    const report = decalerDUneHeure(evenement.date_evenement, evenement.heure_evenement)
+    onReporter(evenement.id, report.date, report.heure)
     setShowReporterMenu(false)
   }
 
@@ -292,6 +294,18 @@ export default function SurgaAgendaCard({
 
         {/* Boutons d'actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
+          {/* SRG-A2-017 : un rappel s'ouvre pour être modifié (titre, date, heure) */}
+          {onModifier && !evenement.termine && (
+            <button
+              type="button"
+              onClick={() => onModifier(evenement)}
+              title="Modifier ce rappel"
+              style={{ background: 'transparent', border: '1px solid var(--border, #E8DDD2)', borderRadius: 6, padding: '3px 6px', fontSize: 11, fontWeight: 600, color: 'var(--text2, #5A4E42)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+            >
+              <Pencil size={11} />
+              <span>Modifier</span>
+            </button>
+          )}
           {/* Menu Reporter */}
           {!evenement.termine && (
             <div style={{ position: 'relative' }}>

@@ -75,7 +75,7 @@ export default function SurgaImmoAlertesTab({
             Aucune alerte programmée
           </div>
           <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0, maxWidth: 340 }}>
-            Activez une veille pour recevoir des notifications en moins de 2 minutes dès la mise en ligne d un bien à Dakar.
+            Enregistrez une recherche pour retrouver les biens qui correspondent à vos critères. Aucune notification n’est envoyée pour le moment.
           </p>
           <button
             type="button"

@@ -23,6 +23,7 @@ import {
 import { quartierDe } from '@/lib/surga-meteo'
 import { useSurgaBriefing } from '@/lib/useSurgaBriefing'
 import { useSurgaOnglet } from '@/lib/useSurgaOnglet'
+import { deposerMontantCalcule } from '@/lib/surga-calculator'
 import { marquerConfigure } from '@/lib/surga-demarrage'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
 import { useFabAutoHide } from '@/lib/useFabAutoHide'
@@ -300,7 +301,7 @@ export default function SurgaPage() {
       onOpenPlaces={() => setIsPlacesOpen(true)} onOpenShopping={() => setIsShoppingOpen(true)} onOpenImmo={() => setIsImmoOpen(true)}
       onOpenTrafic={() => setIsTraficOpen(true)} onOpenDemarches={() => setIsDemarchesOpen(true)} onOpenPresse={() => setIsPresseOpen(true)}
       onOpenVideos={() => setIsVideosOpen(true)} onOpenCalc={() => setIsCalcOpen(true)} onOpenCompte={() => setIsCompteOpen(true)} onOpenPro={() => setIsProOpen(true)}
-      onNavigateTab={(t) => setActiveTab(t)} onInjectMontantCalc={() => setActiveTab('depenses')} onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
+      onNavigateTab={(t) => setActiveTab(t)} onInjectMontantCalc={(m) => { deposerMontantCalcule(m); setActiveTab('depenses') }} onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
       onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote} onConfirmerVoiceRappel={handleVoiceRappel} onDonneesSupprimees={handleReinitialiser}
       onAbonnementActive={() => setStatutPremium({ estPremium: true, joursRestants: 30 })}
       onCreerNoteChecklist={(titre, items) => { saveLocalNote({ titre, contenu: items.join('\n'), categorie: 'general', is_checklist: true }); rafraichirApercus() }}
@@ -413,6 +414,7 @@ export default function SurgaPage() {
             user={user}
             onOpenAuth={() => setIsAuthOpen(true)}
             onOpenCompte={() => setIsCompteOpen(true)}
+            onOuvrirService={(cle) => (cle === 'radios' ? openRadioModal() : ({ trafic: setIsTraficOpen, presse: setIsPresseOpen, immo: setIsImmoOpen, shopping: setIsShoppingOpen, places: setIsPlacesOpen, concours: setIsConcoursOpen, demarches: setIsDemarchesOpen, emploi: setIsEmploiOpen, videos: setIsVideosOpen, calculatrice: setIsCalcOpen })[cle](true))}
             onDeconnexion={handleDeconnexion}
             onSynchroniser={handleSynchroniser}
             isSyncing={isSyncing}

@@ -372,7 +372,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
             ) : videosFiltrees.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '24px 12px', backgroundColor: '#F8FAFC', borderRadius: 8, fontSize: 12, color: '#64748B' }}>
                 {onglet === 'abonnements'
-                  ? 'Vous ne suivez aucune chaîne pour le moment. Cliquez sur "Suivre" ci-dessus pour recevoir vos alertes.'
+                  ? 'Vous ne suivez aucune chaîne pour le moment. Touchez « Suivre » pour retrouver ici leurs dernières vidéos.'
                   : 'Aucune vidéo trouvée pour cette recherche.'}
               </div>
             ) : (

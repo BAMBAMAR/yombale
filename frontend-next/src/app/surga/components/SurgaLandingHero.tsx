@@ -83,7 +83,7 @@ export default function SurgaLandingHero({
           }}
         >
           Briefing matinal sourcé, suivi précis de vos dépenses en FCFA, calculatrice déterministe,
-          trafic en temps réel sur les grands axes et alertes locales. Tout est conçu pour être rapide,
+          circulation signalée par les usagers et la presse, services locaux. Tout est conçu pour être rapide,
           économe en données mobiles et utilisable hors ligne.
         </p>
 

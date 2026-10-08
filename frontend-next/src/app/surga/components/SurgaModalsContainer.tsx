@@ -90,7 +90,7 @@ interface SurgaModalsContainerProps {
   onOpenPro?: () => void
   onNavigateTab?: (tab: 'notes' | 'depenses' | 'agenda' | 'aujourdhui' | 'services') => void
 
-  onInjectMontantCalc: () => void
+  onInjectMontantCalc: (montant: number) => void
   onOpenRadioFromPresse?: () => void
   onConfirmerVoiceDepense: (depense: { montant: number; categorie: string; note: string }) => Promise<void>
   onConfirmerVoiceNote: (note: { titre: string; contenu: string }) => Promise<void>

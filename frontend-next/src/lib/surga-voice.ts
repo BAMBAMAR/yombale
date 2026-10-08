@@ -152,10 +152,18 @@ export function devinerCategorieVocale(texte: string): string {
 }
 
 /**
+ * SRG-A2-005 : un montant s'écrit souvent avec un espace des milliers (« 2 500 », « 1 250 000 »). Le montant
+ * étant le premier groupe de chiffres rencontré, « Note 2 500 FCFA de taxi » proposait 2 FCFA.
+ */
+export function regrouperMilliers(texte: string): string {
+  return texte.replace(/(?<![\d.,])\d{1,3}(?:[ \u00A0\u202F]\d{3})+(?![\d])/g, (groupe) => groupe.replace(/[ \u00A0\u202F]/g, ''));
+}
+
+/**
  * Analyse une phrase dictée et extrait l'intention et ses paramètres
  */
 export function interpreterCommandeVocale(transcription: string): ActionVocaleDetectee {
-  const texteBrut = transcription.trim();
+  const texteBrut = regrouperMilliers(transcription.trim());
   const texteNorm = normaliserNombresVocaux(texteBrut);
 
   // 1. Calculatrice dictée (ex: "calcule 100 / 3", "100 divisé par 3", "combien fait 2500 fois 4")

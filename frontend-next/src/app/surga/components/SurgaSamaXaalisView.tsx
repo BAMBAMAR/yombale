@@ -19,6 +19,7 @@ import {
   isXaalisVerrouille,
   verrouillerXaalisSession,
 } from '@/lib/surga-xaalis-security'
+import { reprendreMontantCalcule } from '@/lib/surga-calculator'
 import SurgaKalpeJournalTab from './SurgaKalpeJournalTab'
 import SurgaKalpeDettesTab from './SurgaKalpeDettesTab'
 import SurgaKalpeEpargneTab from './SurgaKalpeEpargneTab'
@@ -51,6 +52,7 @@ export default function SurgaSamaXaalisView() {
   const [isSaisieOpen, setIsSaisieOpen] = useState(false)
   const [saisieMode, setSaisieMode] = useState<SaisieMode>('depense')
   const [isCalcOpen, setIsCalcOpen] = useState(false)
+  const [montantCalcule, setMontantCalcule] = useState<number | null>(null)
   const [notification, setNotification] = useState<string | null>(null)
 
   const rechargerDonnees = () => {
@@ -101,6 +103,13 @@ export default function SurgaSamaXaalisView() {
     setSaisieMode(mode)
     setIsSaisieOpen(true)
   }
+
+  // SRG-A2-007 : un montant calculé ailleurs dans Surga (« Utiliser ») ouvre la saisie d'une dépense déjà remplie.
+  useEffect(() => {
+    if (verrouille) return
+    const repris = reprendreMontantCalcule()
+    if (repris) { setMontantCalcule(repris); setSaisieMode('depense'); setIsSaisieOpen(true) }
+  }, [verrouille])
 
   const handleSuccessSaisie = (msg: string) => {
     rechargerDonnees()
@@ -286,16 +295,18 @@ export default function SurgaSamaXaalisView() {
         isOpen={isSaisieOpen}
         initialMode={saisieMode}
         objectifsExistants={objectifs}
-        onClose={() => setIsSaisieOpen(false)}
+        onClose={() => { setIsSaisieOpen(false); setMontantCalcule(null) }}
         onSuccess={handleSuccessSaisie}
+        montantInitial={montantCalcule ?? undefined}
       />
 
       {/* Modale Calculatrice */}
       <SurgaCalculatorModal
         isOpen={isCalcOpen}
         onClose={() => setIsCalcOpen(false)}
-        onInjectMontant={() => {
+        onInjectMontant={(montant) => {
           setIsCalcOpen(false)
+          setMontantCalcule(montant)
           handleOuvrirSaisie('depense')
         }}
       />

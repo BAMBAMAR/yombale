@@ -213,7 +213,7 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
                 Immobilier &amp; Alertes Dakar
               </h2>
               <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
-                Catalogue certifié Surga • Veille &lt; 2 minutes
+                Annonces du catalogue Nopalou
               </div>
             </div>
           </div>
@@ -325,7 +325,7 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
                     Aucun bien ne correspond à ces critères
                   </div>
                   <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0, maxWidth: 360 }}>
-                    Créez une alerte personnalisée pour être prévenu dès qu un propriétaire ou une agence publie un bien conforme.
+                    Enregistrez vos critères pour retrouver d’un geste les biens qui y correspondent. Surga n’envoie pas encore de notification pour un nouveau bien.
                   </p>
                   <button
                     type="button"
