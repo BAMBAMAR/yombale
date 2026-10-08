@@ -3,6 +3,19 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-08 — Septième lot] — trajet libre, essais de sources, configuration du poste, fin des écrans ; 5 commits locaux, aucun push
+- **Objet :** `main` : `45b98afb`. `feature/surga` : `eae7aabb` (trafic), `76cf5d13` (report de `main`), `d13063d4` (sources), `d81864f4` (écrans).
+- **Décisions :** D73 à D76 (`DECISIONS.md`). Le push de `main` reste en attente des autres questions de l'utilisateur.
+- **Corrigées et rejouées (build de production local, `scripts/audit/surga/a5/u67-ecran-lot7.js`) :**
+  - Fiches de démarches en brouillon (A5-110) : avant, `?mode_demo=true` servait 21 fiches dont 20 brouillons, et l'écran l'envoyait toujours ; après, 1 fiche (la seule publiée), brouillon en 404 par identifiant comme par adresse, suivi d'un brouillon refusé (404, 0 ligne en base), compteur de l'écran à 1, portail de l'État proposé quand aucune fiche publiée n'est à montrer.
+  - `SRG-A3-006`, Radios (A5-111) : liste en échec : « La liste des radios n'a pas pu être chargée », « Réessayer », jamais « Aucune station trouvée » ; 20 stations après le nouvel essai.
+  - `SRG-A3-006`, Emploi (A5-112) : lecture en échec : message et « Réessayer », pas de formulaire vierge ; enregistrement refusé : alerte à côté du bouton, aucun « enregistré », aucune boîte de dialogue, pas de texte d'erreur du serveur ; enregistrement accepté : confirmé.
+  - `SRG-A3-007`, position de lecture (A5-113) : Aujourd'hui à 700 px (téléphone) ou 462 px (ordinateur), Notes ouvert à 0, retour à la position quittée, puis Notes à 0 par le bouton suivant.
+- **Défaut trouvé en chemin :** l'onglet Profil d'Emploi affichait « Profil enregistré avec succès ! » après tout enregistrement, refus compris.
+- **Ajouts :** « Mon trajet » ouvert dans Google Maps et « Circulation : dans la presse » (D73) ; marées, qualité de l'air et Ligue 1 en essai, coupes africaines (D74) ; séparation de la configuration du poste, à lancer par l'utilisateur (D75).
+- **Tests :** typage 0 erreur ; frontend 118 sur 118 ; backend Surga 181 sur 185 (4 échecs antérieurs).
+- **Non fait :** fenêtres dans l'historique ; position après un rechargement ; brouillon local d'Emploi lisible hors ligne ; messages d'erreur du serveur pour le CV et la lettre ; publication des fiches de démarches (travail de vérification, par la console) ; appel réel à Google ; validation par un agent tiers.
+
 ### [2026-10-08 — Sixième lot] — questionnaire exécuté : worker, sauvegarde, sources, écrans ; 9 commits locaux, aucun push
 - **Objet :** `main` : `c5ddd75c`, `44dbdf51`, `943d5262`. `feature/surga` : `bc634413` (documents), `d150e728` et `83da3d37` (reports de `main`), `74b2ef2a` (sources), `b9ad1083` (écrans), `ac8460e3`.
 - **Décisions :** D63 à D69 (`DECISIONS.md`).
