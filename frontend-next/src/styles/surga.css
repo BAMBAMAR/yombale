@@ -584,65 +584,11 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 /* ==========================================================================
-   SUPPORT DARK MODE NATIF SURGA (FE-12)
+   THEME : CLAIR SEULEMENT (decision D46, fiche SRG-A3-001)
+   Le theme sombre est retire pour le lancement : il passait les textes en blanc sur des surfaces restees
+   blanches (Sama Xaalis, Agenda, Notes). Il pourra revenir, termine et verifie ecran par ecran.
    ========================================================================== */
-@media (prefers-color-scheme: dark) {
-  body:has(.surga-root) {
-    background-color: #0B1120 !important;
-  }
-
-  .surga-root {
-    --surga-primary: #F8FAFC;
-    --surga-primary-light: #334155;
-    --surga-bg: #0B1120;
-    --surga-surface: #1E293B;
-    --surga-border: #334155;
-    --surga-text1: #F8FAFC;
-    --surga-text2: #94A3B8;
-    --surga-text3: #64748B;
-    background-color: #0B1120;
-    color: #F8FAFC;
-  }
-
-  .surga-header {
-    background-color: rgba(15, 23, 42, 0.95) !important;
-    border-bottom-color: #334155 !important;
-  }
-
-  .surga-header-title {
-    color: #F8FAFC !important;
-  }
-
-  .surga-card {
-    background-color: #1E293B !important;
-    border-color: #334155 !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
-  }
-
-  .surga-card-title {
-    color: #F8FAFC !important;
-  }
-
-  .surga-bottom-nav {
-    background-color: rgba(15, 23, 42, 0.98) !important;
-    border-top-color: #334155 !important;
-  }
-
-  .surga-item-row {
-    background-color: #1E293B !important;
-    border-color: #334155 !important;
-  }
-
-  .surga-btn-secondary {
-    background-color: #1E293B !important;
-    border-color: #334155 !important;
-    color: #F8FAFC !important;
-  }
-
-  .surga-btn-secondary:hover {
-    background-color: #334155 !important;
-  }
-}
+.surga-root { color-scheme: light; }
 
 /* ==========================================================================
    LAYOUT RESPONSIVE : 3 POINTS DE RUPTURE STRICTS (<600px, 600-1023px, >=1024px)
