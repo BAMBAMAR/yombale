@@ -20,7 +20,13 @@ const VERIFY_SECRET = process.env.VERIFY_SECRET || (process.env.JWT_SECRET + '_v
 const { genererCodeUnique } = require('../lib/codeApporteur');
 const { validerForceMotDePasse } = require('../lib/passwordValidator');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
-const { resolverComptesParTelephone, telephoneEstLibrePourCompte } = require('../lib/telephoneIntegrity');
+const { resolverComptesParTelephone, telephoneEstLibrePourCompte, normaliserTelephoneCompte } = require('../lib/telephoneIntegrity');
+
+// SRG-A1-004 : messages communs aux écritures du numéro d'un compte.
+const ERREUR_TEL_INVALIDE = 'Numéro de téléphone invalide. Pour un numéro hors du Sénégal, indiquez l\'indicatif du pays (par exemple +33).';
+const ERREUR_TEL_PRIS = 'Ce numéro de téléphone est déjà associé à un autre compte.';
+// Violation d'unicité portant sur le téléphone (course entre deux écritures simultanées), et non sur l'e-mail.
+const estConflitTelephone = (err) => err && err.code === '23505' && /tel/i.test(`${err.constraint || ''} ${err.detail || ''}`);
 const { creerPreuveTelephone } = require('../lib/phoneProof');
 
 // AUD-055 : espace de noms réservé à l'auto-provisionnement WhatsApp — un compte e-mail ordinaire
@@ -57,19 +63,15 @@ router.post('/inscription',
       if (exist.rows.length) return res.status(409).json({ error: 'Email déjà utilisé' });
 
       // Option 1.A : Validation stricte et vérification d'unicité pour empêcher le squat / blocage OTP (VAL8-001, VAL8-002, VAL8-003)
+      // SRG-A1-004 : le numéro est normalisé AVANT le contrôle d'unicité. Le contrôle portait sur les chiffres
+      // saisis : « 771234567 » passait quand « +221771234567 » appartenait déjà à un autre compte.
       let telNormalise = null;
       if (telephone) {
-        const cleanTel = String(telephone).replace(/[^\d+]/g, '').trim();
-        const digitsOnly = cleanTel.replace(/\D/g, '');
-        if (digitsOnly.length < 8 || digitsOnly.length > 15 || cleanTel.length > 20) {
-          return res.status(400).json({ error: 'Numéro de téléphone invalide' });
-        }
-        const libre = await telephoneEstLibrePourCompte(pool, digitsOnly, null);
-        if (!libre) {
-          return res.status(409).json({ error: 'Ce numéro de téléphone est déjà associé à un autre compte.' });
-        }
-        const norm = normalisePhone(telephone);
-        telNormalise = norm ? (norm.startsWith('+') ? norm : '+' + norm) : ('+' + digitsOnly);
+        if (String(telephone).length > 30) return res.status(400).json({ error: ERREUR_TEL_INVALIDE });
+        telNormalise = normaliserTelephoneCompte(telephone);
+        if (!telNormalise) return res.status(400).json({ error: ERREUR_TEL_INVALIDE });
+        const libre = await telephoneEstLibrePourCompte(pool, telNormalise, null);
+        if (!libre) return res.status(409).json({ error: ERREUR_TEL_PRIS });
       }
 
       const hash = await bcrypt.hash(mot_de_passe, 12);
@@ -82,6 +84,7 @@ router.post('/inscription',
         ));
       } catch (insertErr) {
         // AUD-063 : course d'inscription simultanée du même e-mail → 409 propre, pas un 500 générique
+        if (estConflitTelephone(insertErr)) return res.status(409).json({ error: ERREUR_TEL_PRIS });
         if (insertErr.code === '23505') return res.status(409).json({ error: 'Email déjà utilisé' });
         throw insertErr;
       }
@@ -600,10 +603,11 @@ router.put('/profil',
       // AUTRE compte — empêche la confusion d'authentification OTP entre deux comptes partageant un numéro.
       let cleanTel;
       if (telephone !== undefined) {
-        cleanTel = telephone ? String(telephone).replace(/[^\d+]/g, '').trim() : null;
-        if (telephone && !cleanTel) return res.status(400).json({ error: 'Numéro de téléphone invalide' });
+        // SRG-A1-004 : normalisé avant le contrôle, et enregistré normalisé (la valeur saisie était écrite telle quelle).
+        cleanTel = telephone ? normaliserTelephoneCompte(telephone) : null;
+        if (telephone && !cleanTel) return res.status(400).json({ error: ERREUR_TEL_INVALIDE });
         if (cleanTel) {
-          const libre = await telephoneEstLibrePourCompte(pool, cleanTel.replace(/^\+/, ''), req.user.userId);
+          const libre = await telephoneEstLibrePourCompte(pool, cleanTel, req.user.userId);
           if (!libre) return res.status(409).json({ error: 'Ce numéro est déjà associé à un autre compte.' });
         }
       }
@@ -624,10 +628,16 @@ router.put('/profil',
       if (!sets.length) return res.status(400).json({ error: 'Au moins un champ à modifier' });
       vals.push(req.user.userId);
 
-      const { rows } = await pool.query(
-        `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email, telephone, email_verifie`,
-        vals
-      );
+      let rows;
+      try {
+        ({ rows } = await pool.query(
+          `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email, telephone, email_verifie`,
+          vals
+        ));
+      } catch (updateErr) {
+        if (estConflitTelephone(updateErr)) return res.status(409).json({ error: 'Ce numéro est déjà associé à un autre compte.' });
+        throw updateErr;
+      }
 
       if (email && email !== ancienEmail) {
         const verifToken = jwt.sign({ userId: req.user.userId, email: rows[0].email, type: 'verify' }, VERIFY_SECRET, { expiresIn: '24h' });
@@ -1195,10 +1205,17 @@ router.post('/annuler-suppression', verifierToken, async (req, res) => {
       return res.status(400).json({ error: 'Ce compte n\'est pas en attente de suppression.' });
     }
 
-    await pool.query(
-      'UPDATE utilisateurs SET supprime_le=NULL, supprime_par_utilisateur=false WHERE id=$1',
-      [userId]
-    );
+    try {
+      await pool.query(
+        'UPDATE utilisateurs SET supprime_le=NULL, supprime_par_utilisateur=false WHERE id=$1',
+        [userId]
+      );
+    } catch (updateErr) {
+      if (estConflitTelephone(updateErr)) {
+        return res.status(409).json({ error: 'Votre numéro de téléphone est maintenant utilisé par un autre compte. Contactez le support Nopalou pour rétablir le vôtre.' });
+      }
+      throw updateErr;
+    }
 
     if (user.email && !user.email.endsWith('@whatsapp.nopalou.com')) {
       envoyerEmail({
