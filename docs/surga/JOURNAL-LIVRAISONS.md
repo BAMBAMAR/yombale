@@ -3,6 +3,14 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-08 — Adresses de Surga] — D77 : `surga.nopalou.com` renvoie vers `nopalou.com/surga` ; 1 commit local, aucun push
+- **Objet :** `feature/surga` `fa287211`. Décision D77 (réponse de l'utilisateur : « les deux »).
+- **Constat de départ :** le sous-domaine n'a aucun enregistrement DNS ; l'adresse canonique, l'aperçu de partage et les messages y renvoyaient pourtant. Sur un hôte `surga.*`, l'application était servie directement (réécriture), et toute page de Nopalou s'y affichait sans son menu.
+- **Fait :** `frontend-next/src/lib/surga-adresse.ts` ; le middleware renvoie (307) toute demande reçue sur le sous-domaine vers le domaine principal : racine vers `/surga`, autre chemin gardé, requête gardée. Adresse canonique, aperçu de partage, données structurées, liens de partage et lien du rappel alignés sur `nopalou.com/surga`. `NEXT_PUBLIC_SURGA_URL` permet de mettre l'adresse courte dans les partages une fois le sous-domaine créé.
+- **Essayé en local :** hôte `surga.exemple.test` : `/?tab=agenda` rend 307 vers `https://exemple.test/surga?tab=agenda`, `/boutiques/dievo-style` rend 307 vers le même chemin du domaine principal ; domaine principal : 200 sans renvoi. Avant : 200 sur les quatre chemins du sous-domaine. Tests du frontend : 122 sur 122 ; typage 0 erreur.
+- **Limite :** jamais essayé sur le vrai sous-domaine (il n'existe pas) ni derrière l'hébergeur. Next rend relative une adresse de renvoi qui vise sa propre adresse d'écoute : en développement, `surga.localhost` n'est donc pas renvoyé ; chez l'hébergeur l'adresse d'écoute est `0.0.0.0`, le renvoi reste entier (lu dans `render.yaml` et dans le code de Next 14.2.35, non observé en ligne).
+- **À faire par l'utilisateur :** ajouter `surga.nopalou.com` au service `nopalou-frontend` chez Render, puis l'enregistrement CNAME `surga` chez Cloudflare, quand Surga sera en ligne.
+
 ### [2026-10-08 — Septième lot] — trajet libre, essais de sources, configuration du poste, fin des écrans ; 5 commits locaux, aucun push
 - **Objet :** `main` : `45b98afb`. `feature/surga` : `eae7aabb` (trafic), `76cf5d13` (report de `main`), `d13063d4` (sources), `d81864f4` (écrans).
 - **Décisions :** D73 à D76 (`DECISIONS.md`). Le push de `main` reste en attente des autres questions de l'utilisateur.

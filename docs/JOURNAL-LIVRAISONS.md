@@ -1,5 +1,11 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga / Adresses : `surga.nopalou.com` renvoie vers `nopalou.com/surga` (Session 2026-10-08, `feature/surga` `fa287211`, aucun push)** :
+  - *Origine* : décision D77 (réponse de l'utilisateur : « les deux » adresses).
+  - *Code* : `frontend-next/src/lib/surga-adresse.ts`, `frontend-next/src/middleware.ts` (renvoi 307 du sous-domaine, à la place de la réécriture), `app/surga/layout.tsx`, `lib/surga-share.ts`, composants du kiosque, `backend/services/surga/cron-reminders.js`.
+  - *Tests* : `frontend-next/src/__tests__/surga-adresse.test.ts` ; frontend 122 sur 122 ; typage 0 erreur ; essai local sur un hôte factice.
+  - *Limites* : sous-domaine absent du DNS, à créer par l'utilisateur ; jamais essayé derrière l'hébergeur ; aucune migration.
+
 - **Surga et Nopalou / Septième lot : trajet libre, essais de sources, configuration du poste, fin des écrans (Session 2026-10-08, `main` : `45b98afb` ; `feature/surga` : `eae7aabb`, `76cf5d13`, `d13063d4`, `d81864f4` ; aucun push)** :
   - *Origine* : réponses de l'utilisateur aux questionnaires du 2026-10-08 (D73 à D76). Le push de `main` reste en attente de ses autres questions.
   - *Code commun, sur `main` puis reporté (`SRG-A5-011`, D75)* : `scripts/lib/charger-env.js` (les tâches de collecte lisent `.env.collecte` s'il existe, sinon `.env`), appelé par `scripts/sync-immo-local.js` et `scripts/collecte-omnisource.js` ; `scripts/poste/separer-configuration.ps1` et `scripts/poste/creer-base-locale.js` ; `docs/POSTE-DEVELOPPEMENT.md` ; `.env.collecte` et `.env.avant-separation` ignorés par git. Non exécuté sur le poste : l'utilisateur le lance lui-même (D69).
