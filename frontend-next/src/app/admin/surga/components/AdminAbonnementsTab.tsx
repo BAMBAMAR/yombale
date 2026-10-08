@@ -41,7 +41,7 @@ interface StatsFinancieres {
 }
 
 const NOMS_PLANS: Record<string, string> = {
-  b2c_premium: 'Surga Premium B2C',
+  b2c_premium: 'Surga Plus (particulier)',
   b2b_visibilite_resto: 'Visibilité Resto',
   b2b_immo_pro: 'Immo Pro Partenaire',
   b2b_education_pro: 'Prépa Concours Pro',
@@ -212,7 +212,7 @@ export default function AdminAbonnementsTab() {
             style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', fontSize: 13, backgroundColor: '#FFFFFF' }}
           >
             <option value="">Toutes les formules</option>
-            <option value="b2c_premium">Surga Premium B2C</option>
+            <option value="b2c_premium">Surga Plus (particulier)</option>
             <option value="b2b_visibilite_resto">Visibilité Resto</option>
             <option value="b2b_immo_pro">Immo Pro</option>
             <option value="b2b_education_pro">Prépa Concours</option>

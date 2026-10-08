@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Edit2,
 } from 'lucide-react'
+import { libelleAbonnement, nomOffre, useSurgaOffre } from '@/lib/surga-offre'
 
 export interface SurgaUser {
   id: string
@@ -62,6 +63,7 @@ export default function SurgaCompteModal({
   onOpenImmo,
   onOpenAuth,
 }: SurgaCompteModalProps) {
+  const { offre } = useSurgaOffre()
   const [isEditing, setIsEditing] = useState(false)
   const [nomInput, setNomInput] = useState('')
   const [saving, setSaving] = useState(false)
@@ -181,7 +183,7 @@ export default function SurgaCompteModal({
                 display: 'inline-flex', alignItems: 'center', gap: 4,
               }}>
                 {estPremium ? <Crown size={12} strokeWidth={2.5} /> : <Sparkles size={12} strokeWidth={2.5} />}
-                <span>{estPremium ? `Premium (${joursRestants}j)` : 'Surga Gratuit'}</span>
+                <span>{estPremium ? `${nomOffre(offre)} (${joursRestants} j)` : 'Surga Gratuit'}</span>
               </div>
             </div>
 
@@ -318,10 +320,10 @@ export default function SurgaCompteModal({
                 <span>Alertes Immo</span>
               </button>
             )}
-            {onOpenPremium && !estPremium && (
+            {onOpenPremium && !estPremium && offre?.ventes_ouvertes && (
               <button type="button" onClick={() => { onClose(); onOpenPremium() }} style={{ padding: '9px 10px', borderRadius: 8, border: '1px solid rgba(199, 91, 0, 0.3)', backgroundColor: 'rgba(199, 91, 0, 0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)' }}>
                 <Crown size={14} style={{ flexShrink: 0 }} />
-                <span>Passer Premium</span>
+                <span>{libelleAbonnement(offre)}</span>
               </button>
             )}
           </div>

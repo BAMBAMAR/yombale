@@ -73,8 +73,8 @@ router.get('/emploi/droits', identifierSurgaUser, async (req, res) => {
       return res.json({
         success: true,
         guest: true,
-        droitCv: { autorise: false, motif: 'require_auth', message: 'Connectez-vous via WhatsApp pour activer votre 1er CV gratuit.' },
-        droitLettre: { autorise: false, motif: 'require_auth', message: 'Connectez-vous via WhatsApp pour générer votre lettre.' },
+        droitCv: { autorise: false, motif: 'require_auth', message: 'Connectez-vous pour utiliser vos CV gratuits.' },
+        droitLettre: { autorise: false, motif: 'require_auth', message: 'Connectez-vous pour générer votre lettre.' },
         droits: {
           estPremium: false,
           quotaCvAtteint: false,
@@ -95,9 +95,14 @@ router.get('/emploi/droits', identifierSurgaUser, async (req, res) => {
       droits: {
         estPremium: droitCv.motif === 'premium',
         quotaCvAtteint: !droitCv.autorise,
-        cvTelecharges: droitCv.autorise ? 0 : 1,
+        // Vrais chiffres : la limite gratuite se règle dans la console, l'écran ne peut plus la supposer égale à 1.
+        cvLimite: droitCv.limite ?? null,
+        cvUtilises: droitCv.utilises ?? 0,
+        cvTelecharges: droitCv.utilises ?? (droitCv.autorise ? 0 : 1),
         quotaLettreAtteint: !droitLettre.autorise,
-        lettresMoisEnCours: droitLettre.autorise ? 0 : 1,
+        lettresLimite: droitLettre.limite ?? null,
+        lettresUtilisees: droitLettre.utilises ?? 0,
+        lettresMoisEnCours: droitLettre.utilises ?? (droitLettre.autorise ? 0 : 1),
       },
     });
   } catch (err) {

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import SurgaServiceRow from './SurgaServiceRow'
 import { quartierDe } from '@/lib/surga-meteo'
+import { libelleAbonnement, nomOffre, resumeGratuit, useSurgaOffre } from '@/lib/surga-offre'
 import SurgaPersonnalisationSection from './SurgaPersonnalisationSection'
 import SurgaServicesListe, { type CleService } from './SurgaServicesListe'
 
@@ -62,7 +63,10 @@ export default function SurgaParametresTab({
   onSavePreferences,
   onOuvrirService,
 }: SurgaParametresTabProps) {
+  const { offre } = useSurgaOffre()
   const estPremium = statutPremium?.estPremium ?? false
+  // Les espaces professionnels ne s'affichent que si au moins une formule pro est en vente (console d'administration).
+  const proProposes = Boolean(offre?.plans.some((pl) => pl.type === 'b2b'))
   const joursRestants = statutPremium?.joursRestants ?? 0
 
   return (
@@ -265,29 +269,29 @@ export default function SurgaParametresTab({
             <Crown size={20} color={estPremium ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)'} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {estPremium ? 'Surga Premium Actif' : 'Formule Standard (Gratuite)'}
+                {estPremium ? `${nomOffre(offre)} actif` : 'Formule gratuite'}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 {estPremium
-                  ? `Expiration dans ${joursRestants} jour(s) • Vocal & alertes illimités`
-                  : 'Plafond de 20 commandes/jour • Alertes standards'}
+                  ? `Expiration dans ${joursRestants} jour(s)`
+                  : resumeGratuit(offre?.gratuit) || 'Les droits gratuits se règlent dans la console.'}
               </div>
             </div>
           </div>
-          {onOpenPremium && (
+          {onOpenPremium && (estPremium || offre?.ventes_ouvertes) && (
             <button
               type="button"
               onClick={onOpenPremium}
               className={estPremium ? 'surga-btn-secondary' : 'surga-btn-primary'}
               style={{ fontSize: 12, padding: '6px 14px', fontWeight: 700, width: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}
             >
-              {estPremium ? 'Gérer' : 'Passer à Premium'}
+              {estPremium ? 'Gérer' : libelleAbonnement(offre)}
             </button>
           )}
         </div>
 
         {/* Lien Professionnels B2B */}
-        {onOpenPro && (
+        {onOpenPro && proProposes && (
           <div
             style={{
               paddingTop: 8,

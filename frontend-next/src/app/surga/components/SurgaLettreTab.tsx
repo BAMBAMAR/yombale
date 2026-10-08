@@ -2,7 +2,7 @@
 
 // frontend-next/src/app/surga/components/SurgaLettreTab.tsx
 // Rapprochement offre d'emploi, rédaction de lettre de motivation et export PDF
-// Quota : 1 lettre gratuite par mois en formule Standard, illimité en Premium (D27)
+// Quota : le nombre de lettres gratuites et l'abonnement viennent de la console (voir SurgaBandeauDroit)
 // Respect strict du vouvoiement (D19) et zéro hallucination
 // Modularité stricte < 450 lignes, zéro émoji, tokens CSS officiels
 
@@ -18,10 +18,14 @@ import {
   Briefcase,
 } from 'lucide-react'
 import type { ProfilProData } from './SurgaProfilProTab'
+import SurgaBandeauDroit from './SurgaBandeauDroit'
+import { libelleAbonnement, useSurgaOffre } from '@/lib/surga-offre'
 
 interface DroitsLettre {
   estPremium: boolean
   lettresMoisEnCours: number
+  lettresLimite?: number | null
+  lettresUtilisees?: number | null
   quotaAtteint: boolean
   message: string
 }
@@ -46,6 +50,7 @@ export default function SurgaLettreTab({
   generant,
   onOpenPremium,
 }: SurgaLettreTabProps) {
+  const { offre } = useSurgaOffre()
   const [poste, setPoste] = useState(profil.titre_professionnel || '')
   const [entreprise, setEntreprise] = useState('')
   const [texteOffre, setTexteOffre] = useState('')
@@ -122,52 +127,8 @@ ${nom}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* 1. Statut des Droits & Quotas (D27) */}
-      <div
-        className="surga-card"
-        style={{
-          padding: 14,
-          backgroundColor: droits.estPremium ? 'rgba(10, 92, 54, 0.05)' : 'var(--bg, #F8F5F0)',
-          border: droits.estPremium ? '1.5px solid var(--price, #0A5C36)' : '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {droits.estPremium ? (
-              <Crown size={18} color="var(--price, #0A5C36)" />
-            ) : (
-              <FileText size={18} color="var(--navy, #1C2B4A)" />
-            )}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {droits.estPremium
-                  ? 'Surga Premium : Lettres illimitées'
-                  : droits.lettresMoisEnCours === 0
-                  ? '1 lettre gratuite par mois'
-                  : 'Quota mensuel gratuit atteint'}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
-                {droits.estPremium
-                  ? 'Personnalisez et téléchargez autant de lettres de motivation que vous le souhaitez.'
-                  : droits.lettresMoisEnCours === 0
-                  ? 'Votre première lettre de motivation ce mois-ci est incluse sans frais.'
-                  : 'Passez à Surga Premium (1 500 F/mois) pour des lettres illimitées sans restriction.'}
-              </div>
-            </div>
-          </div>
-
-          {!droits.estPremium && (
-            <button
-              type="button"
-              onClick={onOpenPremium}
-              className="surga-btn-secondary"
-              style={{ fontSize: 12, padding: '5px 10px', fontWeight: 700, flexShrink: 0 }}
-            >
-              Passer Premium
-            </button>
-          )}
-        </div>
-      </div>
+      {/* 1. Droits : limite réelle réglée dans la console */}
+      <SurgaBandeauDroit produit="lettres" estPremium={droits.estPremium} limite={droits.lettresLimite} utilises={droits.lettresUtilisees ?? droits.lettresMoisEnCours} onOpenPremium={onOpenPremium} />
 
       {/* 2. Formulaire de l'offre ciblée */}
       <div className="surga-card" style={{ padding: 14 }}>
@@ -307,7 +268,7 @@ ${nom}`
             }}
           >
             <Lock size={16} />
-            <span>Passer à Surga Premium pour télécharger (1 500 F/mois)</span>
+            <span>{offre ? `${libelleAbonnement(offre)} pour télécharger` : 'S’abonner pour télécharger'}</span>
           </button>
         ) : (
           <button

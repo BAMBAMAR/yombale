@@ -46,11 +46,11 @@ const TAB_TITLES: Record<SurgaAdminTab, { title: string; subtitle: string }> = {
   },
   abonnements: {
     title: 'Souscriptions & Gestion du MRR',
-    subtitle: 'Suivi des paiements Wave / Orange Money, régularisations manuelles et volume financier encaissé.',
+    subtitle: 'Suivi des paiements Wave, régularisations manuelles et volume financier encaissé.',
   },
   comptes: {
     title: 'Gestion des Comptes & Droits VIP',
-    subtitle: 'Annuaire des utilisateurs Surga, attribution directe de Premium VIP et suivi des quotas vocaux.',
+    subtitle: 'Annuaire des utilisateurs Surga, attribution directe d’un abonnement offert et état des comptes.',
   },
   reseaux: {
     title: 'Réseaux Sociaux & Canaux de Diffusion',

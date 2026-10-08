@@ -170,7 +170,7 @@ export default function AdminComptesTab() {
             style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, backgroundColor: '#FFFFFF' }}
           >
             <option value="">Tous les utilisateurs</option>
-            <option value="premium">Abonnés Premium uniquement</option>
+            <option value="premium">Abonnés uniquement</option>
             <option value="freemium">Utilisateurs Freemium</option>
           </select>
         </div>
@@ -354,7 +354,7 @@ export default function AdminComptesTab() {
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: 4 }}>Formule à attribuer</label>
                 <select value={planVip} onChange={(e) => setPlanVip(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 13, backgroundColor: '#FFFFFF' }}>
-                  <option value="b2c_premium">Surga Premium Particulier (Vocal illimité, audio continu)</option>
+                  <option value="b2c_premium">Surga Plus (particulier)</option>
                   <option value="b2b_visibilite_resto">Espace Pro Visibilité Resto</option>
                   <option value="b2b_immo_pro">Espace Pro Partenaire Immo</option>
                 </select>

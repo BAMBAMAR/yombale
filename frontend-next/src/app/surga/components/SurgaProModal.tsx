@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   X,
   Briefcase,
@@ -12,53 +12,25 @@ import {
   Phone,
   ShieldCheck,
 } from 'lucide-react'
+import { formaterFCFA } from '@/lib/surga-formatting'
+import { oublierOffre, useSurgaOffre } from '@/lib/surga-offre'
 
 interface SurgaProModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-const OFFRES_PRO = [
-  {
-    id: 'b2b_visibilite_resto',
-    titre: 'Bonnes Adresses & Restauration',
-    tarifMensuel: '5 000 FCFA / mois',
-    icon: UtensilsCrossed,
-    points: [
-      'Positionnement prioritaire en tête de liste dans votre quartier',
-      'Badge vérifié "Recommandé par Surga"',
-      'Bouton contact direct WhatsApp & réservation',
-      'Statistiques mensuelles de consultation',
-    ],
-  },
-  {
-    id: 'b2b_immo_pro',
-    titre: 'Agences Immobilières Partenaires',
-    tarifMensuel: '5 000 FCFA / mois',
-    icon: Building,
-    points: [
-      'Transmission de vos mandats en moins de 60s aux chercheurs qualifiés',
-      'Badge officiel "Agence Immobilière Vérifiée"',
-      'Mise en relation directe sans intermédiaire',
-      'Volume d appels qualifiés mensuels',
-    ],
-  },
-  {
-    id: 'b2b_education_pro',
-    titre: 'Centres de Formation & Prépa Concours',
-    tarifMensuel: '10 000 FCFA / mois',
-    icon: GraduationCap,
-    points: [
-      'Encart dédié sur les pages des concours officiels du Sénégal',
-      'Bouton d inscription directe vers votre WhatsApp ou secrétariat',
-      'Badge "Centre Partenaire Officiel"',
-      'Audience ciblée de candidats préparant activement leurs dossiers',
-    ],
-  },
-]
+// Les formules professionnelles (nom, prix, avantages) viennent de la console d'administration ; cette fenêtre n'est atteignable
+// que si au moins une formule pro est en vente. Seule l'icône dépend de l'identifiant de la formule.
+const ICONES_PRO: Record<string, typeof Briefcase> = {
+  b2b_visibilite_resto: UtensilsCrossed,
+  b2b_immo_pro: Building,
+  b2b_education_pro: GraduationCap,
+}
 
 export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
-  const [offreChoisie, setOffreChoisie] = useState<string>('b2b_visibilite_resto')
+  const { offre, recharger } = useSurgaOffre()
+  const [offreChoisie, setOffreChoisie] = useState<string>('')
   const [nomEtablissement, setNomEtablissement] = useState<string>('')
   const [telephoneContact, setTelephoneContact] = useState<string>('')
   const [quartier, setQuartier] = useState<string>('')
@@ -66,12 +38,23 @@ export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
   const [succes, setSucces] = useState<boolean>(false)
   const [erreur, setErreur] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!isOpen) return
+    oublierOffre()
+    recharger()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
+
   if (!isOpen) return null
 
-  const offreActuelle = OFFRES_PRO.find((o) => o.id === offreChoisie) || OFFRES_PRO[0]
+  const plansPro = (offre?.plans ?? []).filter((p) => p.type === 'b2b' && p.cycles.length > 0)
+  const offreActuelle = plansPro.find((p) => p.id === offreChoisie) || plansPro[0] || null
+  const cycleMensuel = (p: { cycles: { cycle: string; montant: number }[] } | null) => p?.cycles.find((c) => c.cycle === 'mensuel') || p?.cycles[0] || null
+  const tarif = (p: { cycles: { cycle: string; montant: number }[] } | null) => { const c = cycleMensuel(p); return c ? `${formaterFCFA(c.montant)} / mois` : '' }
 
   const handleSouscrirePro = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!offreActuelle) return
     if (!nomEtablissement.trim() || !telephoneContact.trim()) {
       setErreur('Veuillez renseigner le nom de votre structure et un téléphone de contact.')
       return
@@ -85,8 +68,8 @@ export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan: offreChoisie,
-          cycle: 'mensuel',
+          plan: offreActuelle.id,
+          cycle: cycleMensuel(offreActuelle)?.cycle || 'mensuel',
           provider: 'wave',
           phone: telephoneContact,
           metadata: {
@@ -196,13 +179,16 @@ export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
                   Sélectionnez votre formule professionnelle
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {OFFRES_PRO.map((offre) => {
-                    const Icon = offre.icon
-                    const estSelectionne = offreChoisie === offre.id
+                  {plansPro.length === 0 && (
+                    <div style={{ fontSize: 13, color: 'var(--text2, #5A4E42)' }}>Aucune formule professionnelle n’est proposée pour le moment.</div>
+                  )}
+                  {plansPro.map((plan) => {
+                    const Icon = ICONES_PRO[plan.id] || Briefcase
+                    const estSelectionne = offreActuelle?.id === plan.id
                     return (
                       <div
-                        key={offre.id}
-                        onClick={() => setOffreChoisie(offre.id)}
+                        key={plan.id}
+                        onClick={() => setOffreChoisie(plan.id)}
                         style={{
                           padding: '12px 14px',
                           borderRadius: 10,
@@ -217,16 +203,12 @@ export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Icon size={18} color={estSelectionne ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)'} />
-                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-                              {offre.titre}
-                            </span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>{plan.nom}</span>
                           </div>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>
-                            {offre.tarifMensuel}
-                          </span>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>{tarif(plan)}</span>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingLeft: 26 }}>
-                          {offre.points.map((pt, i) => (
+                          {plan.avantages.map((pt, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
                               <Check size={12} color="var(--price, #0A5C36)" />
                               <span>{pt}</span>
@@ -312,7 +294,7 @@ export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
               {/* Bouton de validation */}
               <button
                 type="submit"
-                disabled={chargement}
+                disabled={chargement || !offreActuelle || offre?.ventes_ouvertes === false}
                 className="surga-btn-primary"
                 style={{
                   width: '100%',
@@ -328,7 +310,7 @@ export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
                 }}
               >
                 <ShieldCheck size={16} />
-                <span>Activer mon partenariat ({offreActuelle.tarifMensuel})</span>
+                <span>Activer mon partenariat{offreActuelle ? ` (${tarif(offreActuelle)})` : ''}</span>
                 <ArrowRight size={16} />
               </button>
             </form>

@@ -2,7 +2,7 @@
 
 // frontend-next/src/app/surga/components/SurgaCvTab.tsx
 // Génération de CV professionnel en PDF A4 conforme aux standards sénégalais
-// Quota & Droits : 1 CV gratuit avec mention, puis 500 FCFA à l'acte (Option A) ou Surga Premium
+// Quota & Droits : le nombre de CV gratuits et l'abonnement viennent de la console (voir SurgaBandeauDroit)
 // Modularité stricte < 450 lignes, zéro émoji, tokens CSS officiels
 
 import React, { useState } from 'react'
@@ -17,10 +17,14 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import type { ProfilProData } from './SurgaProfilProTab'
+import SurgaBandeauDroit from './SurgaBandeauDroit'
+import { libelleAbonnement, useSurgaOffre } from '@/lib/surga-offre'
 
 interface DroitsCv {
   estPremium: boolean
   cvTelecharges: number
+  cvLimite?: number | null
+  cvUtilises?: number | null
   quotaAtteint: boolean
   message: string
 }
@@ -40,6 +44,7 @@ export default function SurgaCvTab({
   generant,
   onOpenPremium,
 }: SurgaCvTabProps) {
+  const { offre } = useSurgaOffre()
   const [modeleChoisi, setModeleChoisi] = useState<'sobre_moderne' | 'classique_pro'>('sobre_moderne')
   const [exactitudeConfirmee, setExactitudeConfirmee] = useState(false)
   const [erreurExactitude, setErreurExactitude] = useState(false)
@@ -78,52 +83,8 @@ export default function SurgaCvTab({
         </div>
       )}
 
-      {/* 2. Statut des Droits & Quotas (D27 / Section 1 bis) */}
-      <div
-        className="surga-card"
-        style={{
-          padding: 14,
-          backgroundColor: droits.estPremium ? 'rgba(10, 92, 54, 0.05)' : 'var(--bg, #F8F5F0)',
-          border: droits.estPremium ? '1.5px solid var(--price, #0A5C36)' : '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {droits.estPremium ? (
-              <Crown size={18} color="var(--price, #0A5C36)" />
-            ) : (
-              <FileText size={18} color="var(--navy, #1C2B4A)" />
-            )}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {droits.estPremium
-                  ? 'Surga Premium : Générations illimitées'
-                  : droits.cvTelecharges === 0
-                  ? '1er CV Gratuit disponible'
-                  : 'Plafond gratuit atteint (1 CV gratuit utilisé)'}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
-                {droits.estPremium
-                  ? 'Générez et téléchargez vos CV en haute fidélité sans aucune mention commerciale.'
-                  : droits.cvTelecharges === 0
-                  ? 'Votre premier CV est 100% offert avec une mention discrète en pied de page.'
-                  : '500 FCFA par nouveau CV à l’acte ou accès illimité via Surga Premium (1 500 F/mois).'}
-              </div>
-            </div>
-          </div>
-
-          {!droits.estPremium && (
-            <button
-              type="button"
-              onClick={onOpenPremium}
-              className="surga-btn-secondary"
-              style={{ fontSize: 12, padding: '5px 10px', fontWeight: 700, flexShrink: 0 }}
-            >
-              Passer Premium
-            </button>
-          )}
-        </div>
-      </div>
+      {/* 2. Droits : limite réelle réglée dans la console */}
+      <SurgaBandeauDroit produit="cv" estPremium={droits.estPremium} limite={droits.cvLimite} utilises={droits.cvUtilises ?? droits.cvTelecharges} onOpenPremium={onOpenPremium} />
 
       {/* 3. Choix du Modèle de CV */}
       <div className="surga-card" style={{ padding: 14 }}>
@@ -257,7 +218,7 @@ export default function SurgaCvTab({
             }}
           >
             <Lock size={16} />
-            <span>Débloquer ce CV (500 FCFA à l’acte ou Surga Premium)</span>
+            <span>{offre ? `${libelleAbonnement(offre)} pour générer ce CV` : 'Débloquer ce CV'}</span>
           </button>
         ) : (
           <button

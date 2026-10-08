@@ -321,7 +321,7 @@ async function verifierDroitCv(userId) {
   const limite = await offre.getReglage('emploi_cv_gratuits');
   const nbCvGeneres = await getUsageCompteur(userId, 'cv_generation', 'global');
   if (nbCvGeneres < limite) {
-    return { autorise: true, avecMention: true, motif: 'gratuit_decouverte', limite };
+    return { autorise: true, avecMention: true, motif: 'gratuit_decouverte', limite, utilises: nbCvGeneres };
   }
 
   return {
@@ -329,6 +329,7 @@ async function verifierDroitCv(userId) {
     avecMention: false,
     motif: 'limite_atteinte',
     limite,
+    utilises: nbCvGeneres,
     message: limite > 0
       ? `Vous avez utilisé ${limite > 1 ? `vos ${limite} CV gratuits` : 'votre CV gratuit'}. Passez à Surga Plus pour des CV sans mention et sans limite.`
       : 'Les CV sont réservés aux abonnés Surga Plus.',
@@ -348,13 +349,14 @@ async function verifierDroitLettre(userId) {
   const limite = await offre.getReglage('emploi_lettres_gratuites_mois');
   const nbLettresMois = await getUsageCompteur(userId, 'lettre_generation', periode);
   if (nbLettresMois < limite) {
-    return { autorise: true, motif: 'gratuit_mensuel', limite };
+    return { autorise: true, motif: 'gratuit_mensuel', limite, utilises: nbLettresMois };
   }
 
   return {
     autorise: false,
     motif: 'limite_atteinte',
     limite,
+    utilises: nbLettresMois,
     message: limite > 0
       ? `Vous avez utilisé ${limite > 1 ? `vos ${limite} lettres gratuites` : 'votre lettre gratuite'} de ce mois. Passez à Surga Plus pour continuer.`
       : 'Les lettres de motivation sont réservées aux abonnés Surga Plus.',

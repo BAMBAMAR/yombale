@@ -3,7 +3,7 @@
 // frontend-next/src/app/surga/components/SurgaEntretienTab.tsx
 // Préparation à l'entretien d'embauche : banque de questions, simulation, analyse constructive STAR
 // Passerelles vers Notes (fiche de révision), Agenda (date et rappel) et Sama Xaalis (budget transport)
-// Quotas : 1 simulation gratuite/semaine, illimité en Premium (D27)
+// Quotas : le nombre de simulations gratuites et l'abonnement viennent de la console (voir SurgaBandeauDroit)
 // Modularité stricte < 450 lignes, zéro émoji, tokens CSS officiels
 
 import React, { useState, useEffect } from 'react'
@@ -21,6 +21,7 @@ import {
   Send,
 } from 'lucide-react'
 import type { ProfilProData } from './SurgaProfilProTab'
+import SurgaBandeauDroit from './SurgaBandeauDroit'
 import { saveLocalNote, saveLocalEvenement, saveLocalDepense } from '@/lib/surga-offline-sync'
 import { getSurgaEmploiHeaders } from '@/lib/surga-emploi-api'
 
@@ -44,6 +45,7 @@ interface SurgaEntretienTabProps {
     estPremium: boolean
     quotaAtteint: boolean
     simulationsSemaine: number
+    limite?: number | null
     message: string
   }
   onOpenPremium: () => void
@@ -177,47 +179,8 @@ export default function SurgaEntretienTab({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* 1. Statut Quota Hebdomadaire (D27 / Section 1 bis) */}
-      <div
-        className="surga-card"
-        style={{
-          padding: 14,
-          backgroundColor: droitsSimulation.estPremium ? 'rgba(10, 92, 54, 0.05)' : 'var(--bg, #F8F5F0)',
-          border: droitsSimulation.estPremium ? '1.5px solid var(--price, #0A5C36)' : '1px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {droitsSimulation.estPremium ? (
-              <Crown size={18} color="var(--price, #0A5C36)" />
-            ) : (
-              <HelpCircle size={18} color="var(--navy, #1C2B4A)" />
-            )}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {droitsSimulation.estPremium
-                  ? 'Surga Premium : Simulations illimitées'
-                  : droitsSimulation.quotaAtteint
-                  ? 'Quota hebdomadaire atteint'
-                  : '1 simulation gratuite par semaine incluse'}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
-                {droitsSimulation.message}
-              </div>
-            </div>
-          </div>
-          {!droitsSimulation.estPremium && (
-            <button
-              type="button"
-              onClick={onOpenPremium}
-              className="surga-btn-secondary"
-              style={{ fontSize: 12, padding: '5px 10px', fontWeight: 700 }}
-            >
-              Passer Premium
-            </button>
-          )}
-        </div>
-      </div>
+      {/* 1. Droits : limite réelle réglée dans la console */}
+      <SurgaBandeauDroit produit="simulations" estPremium={droitsSimulation.estPremium} limite={droitsSimulation.limite} utilises={droitsSimulation.simulationsSemaine} onOpenPremium={onOpenPremium} />
 
       {/* 2. Configuration du poste & Secteur */}
       <div className="surga-card" style={{ padding: 14 }}>

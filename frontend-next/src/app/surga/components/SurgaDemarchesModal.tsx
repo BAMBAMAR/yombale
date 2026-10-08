@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Sparkles,
 } from 'lucide-react';
+import { libelleAbonnement, useSurgaOffre } from '@/lib/surga-offre';
 import SurgaChargementEchoue, { lireReponseSurga } from './SurgaChargementEchoue';
 import SurgaDemarcheCard, { DemarcheAdminData } from './SurgaDemarcheCard';
 import SurgaDemarcheDetailModal from './SurgaDemarcheDetailModal';
@@ -46,6 +47,7 @@ export default function SurgaDemarchesModal({
   onAjouterDepense,
   onAjouterAgenda,
 }: SurgaDemarchesModalProps) {
+  const { offre } = useSurgaOffre();
   const [ongletActif, setOngletActif] = useState<'catalogue' | 'suivis'>('catalogue');
   const [categorieFiltre, setCategorieFiltre] = useState('tous');
   const [recherche, setRecherche] = useState('');
@@ -239,7 +241,7 @@ export default function SurgaDemarchesModal({
               <AlertCircle size={16} color="var(--accent, #C75B00)" />
               <span>{erreurQuota}</span>
             </div>
-            {onOpenPremium && (
+            {onOpenPremium && offre?.ventes_ouvertes && (
               <button
                 type="button"
                 onClick={onOpenPremium}
@@ -247,7 +249,7 @@ export default function SurgaDemarchesModal({
                 style={{ fontSize: 12, padding: '4px 8px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}
               >
                 <Sparkles size={11} />
-                <span>Passer Premium</span>
+                <span>{libelleAbonnement(offre)}</span>
               </button>
             )}
           </div>

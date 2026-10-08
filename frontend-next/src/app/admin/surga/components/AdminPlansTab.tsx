@@ -22,6 +22,7 @@ export interface PlanItem {
   type: string
   description: string
   tarifs: {
+    hebdomadaire: number
     mensuel: number
     annuel: number
   }
@@ -42,6 +43,7 @@ export default function AdminPlansTab() {
   const [formNom, setFormNom] = useState('')
   const [formType, setFormType] = useState('b2c')
   const [formDescription, setFormDescription] = useState('')
+  const [formHebdo, setFormHebdo] = useState(0)
   const [formMensuel, setFormMensuel] = useState(1500)
   const [formAnnuel, setFormAnnuel] = useState(15000)
   const [formPromo, setFormPromo] = useState('')
@@ -72,6 +74,7 @@ export default function AdminPlansTab() {
     setFormNom(plan.nom)
     setFormType(plan.type || 'b2c')
     setFormDescription(plan.description || '')
+    setFormHebdo(plan.tarifs.hebdomadaire ?? 0)
     setFormMensuel(plan.tarifs.mensuel)
     setFormAnnuel(plan.tarifs.annuel)
     setFormPromo(plan.badge_promo || '')
@@ -84,6 +87,7 @@ export default function AdminPlansTab() {
     setFormNom('')
     setFormType('b2c')
     setFormDescription('')
+    setFormHebdo(0)
     setFormMensuel(2000)
     setFormAnnuel(20000)
     setFormPromo('')
@@ -101,6 +105,28 @@ export default function AdminPlansTab() {
     setFormAvantages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const basculerVente = async (plan: PlanItem) => {
+    const nouvelEtat = !(plan.actif !== false)
+    try {
+      const res = await fetch(`/api/admin/surga/plans/${plan.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actif: nouvelEtat }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setMessage({ type: 'succes', texte: nouvelEtat ? `${plan.nom} est de nouveau en vente.` : `${plan.nom} est retiré de la vente (les abonnements déjà payés restent valables).` })
+        chargerPlans()
+      } else {
+        setMessage({ type: 'erreur', texte: data.error || 'Changement refusé.' })
+      }
+    } catch {
+      setMessage({ type: 'erreur', texte: 'Erreur réseau lors de la mise à jour.' })
+    } finally {
+      setTimeout(() => setMessage(null), 3500)
+    }
+  }
+
   const soumettreFormulaire = async (e: React.FormEvent) => {
     e.preventDefault()
     setSauvegardeEnCours(true)
@@ -109,11 +135,11 @@ export default function AdminPlansTab() {
       nom: formNom,
       type: formType,
       description: formDescription,
+      tarifHebdo: Number(formHebdo),
       tarifMensuel: Number(formMensuel),
       tarifAnnuel: Number(formAnnuel),
       avantages: formAvantages,
       badgePromo: formPromo,
-      actif: true,
     }
 
     try {
@@ -171,7 +197,7 @@ export default function AdminPlansTab() {
             Gestionnaire des Tarifs &amp; Formules Surga
           </div>
           <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>
-            Ajustez directement les montants mensuels et annuels en FCFA. Toute modification est immédiatement répercutée sur les paiements Wave et Orange Money.
+            Fixez le prix de chaque durée (7 jours, 30 jours, 12 mois) en FCFA ; un prix à 0 retire cette durée de l’offre. Toute modification est vue par l’application et par le paiement Wave dans les secondes qui suivent. Le paiement est unique : Wave ne renouvelle pas tout seul.
           </div>
         </div>
 
@@ -198,10 +224,12 @@ export default function AdminPlansTab() {
       {/* Grille des Formules Configurables */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: 16 }}>
         {plans.map((p) => {
+          const enVente = p.actif !== false
           return (
             <div
               key={p.id}
               style={{
+                opacity: enVente ? 1 : 0.7,
                 backgroundColor: '#FFFFFF',
                 borderRadius: 12,
                 border: '1px solid #E2E8F0',
@@ -217,6 +245,11 @@ export default function AdminPlansTab() {
                   <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.8, color: p.type === 'b2b' ? '#06B6D4' : '#F59E0B' }}>
                     {p.type === 'b2b' ? 'Espace Pro B2B' : 'Particulier B2C'}
                   </span>
+                  {!enVente && (
+                    <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20, backgroundColor: 'rgba(100, 116, 139, 0.15)', color: '#475569' }}>
+                      Hors vente
+                    </span>
+                  )}
                   {p.badge_promo && (
                     <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20, backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#D97706' }}>
                       {p.badge_promo}
@@ -230,16 +263,34 @@ export default function AdminPlansTab() {
                 {/* Bloc Tarifs Fixés */}
                 <div style={{ margin: '14px 0', padding: '12px 14px', borderRadius: 8, backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Tarif Mensuel :</span>
-                    <span style={{ fontSize: 16, fontWeight: 800, color: '#10B981' }}>
-                      {p.tarifs.mensuel.toLocaleString('fr-FR')} FCFA <small style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>/mois</small>
-                    </span>
+                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>7 jours :</span>
+                    {p.tarifs.hebdomadaire > 0 ? (
+                      <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+                        {p.tarifs.hebdomadaire.toLocaleString('fr-FR')} FCFA <small style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>/semaine</small>
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#94A3B8' }}>Non proposé</span>
+                    )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: '1px dashed #CBD5E1' }}>
-                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Tarif Annuel :</span>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
-                      {p.tarifs.annuel.toLocaleString('fr-FR')} FCFA <small style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>/an</small>
-                    </span>
+                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>30 jours :</span>
+                    {p.tarifs.mensuel > 0 ? (
+                      <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+                        {p.tarifs.mensuel.toLocaleString('fr-FR')} FCFA <small style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>/30 jours</small>
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#94A3B8' }}>Non proposé</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: '1px dashed #CBD5E1' }}>
+                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>12 mois :</span>
+                    {p.tarifs.annuel > 0 ? (
+                      <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+                        {p.tarifs.annuel.toLocaleString('fr-FR')} FCFA <small style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>/an</small>
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#94A3B8' }}>Non proposé</span>
+                    )}
                   </div>
                 </div>
 
@@ -257,7 +308,14 @@ export default function AdminPlansTab() {
                 </ul>
               </div>
 
-              <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => basculerVente(p)}
+                  style={{ padding: '8px 14px', borderRadius: 6, border: '1px solid #CBD5E1', backgroundColor: enVente ? '#FFFFFF' : '#0B132B', color: enVente ? '#475569' : '#FFFFFF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {enVente ? 'Retirer de la vente' : 'Remettre en vente'}
+                </button>
                 <button
                   type="button"
                   onClick={() => ouvrirEdition(p)}
@@ -303,16 +361,21 @@ export default function AdminPlansTab() {
                 <input type="text" required value={formNom} onChange={(e) => setFormNom(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 13 }} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#10B981', display: 'block', marginBottom: 4 }}>Montant Mensuel (FCFA)</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: 4 }}>7 jours (FCFA)</label>
+                  <input type="number" required min="0" step="100" value={formHebdo} onChange={(e) => setFormHebdo(Number(e.target.value))} style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 14, fontWeight: 800, color: '#0F172A' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#10B981', display: 'block', marginBottom: 4 }}>30 jours (FCFA)</label>
                   <input type="number" required min="0" step="100" value={formMensuel} onChange={(e) => setFormMensuel(Number(e.target.value))} style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '2px solid #10B981', fontSize: 14, fontWeight: 800, color: '#0F172A' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: 4 }}>Montant Annuel (FCFA)</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: 4 }}>12 mois (FCFA)</label>
                   <input type="number" required min="0" step="100" value={formAnnuel} onChange={(e) => setFormAnnuel(Number(e.target.value))} style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 14, fontWeight: 800, color: '#0F172A' }} />
                 </div>
               </div>
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: -6 }}>0 = cette durée n’est pas proposée. La durée de 30 jours s’applique à partir du paiement.</div>
 
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: 4 }}>Badge Promotionnel (ex: 2 mois offerts)</label>
@@ -344,7 +407,7 @@ export default function AdminPlansTab() {
                 <button type="button" onClick={() => setModalOuverte(false)} style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #CBD5E1', backgroundColor: '#FFFFFF', color: '#475569', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
                 <button type="submit" disabled={sauvegardeEnCours} style={{ padding: '8px 20px', borderRadius: 6, border: 'none', backgroundColor: '#10B981', color: '#FFFFFF', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Save size={14} />
-                  <span>{sauvegardeEnCours ? 'Sauvegarde...' : 'Enregistrer les tarifs'}</span>
+                  <span>{sauvegardeEnCours ? 'Sauvegarde...' : 'Enregistrer'}</span>
                 </button>
               </div>
             </form>

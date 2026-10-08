@@ -395,6 +395,8 @@ export default function SurgaEmploiModal({
               droits={{
                 estPremium: droits.estPremium,
                 cvTelecharges: droits.cvTelecharges,
+                cvLimite: droits.cvLimite,
+                cvUtilises: droits.cvUtilises,
                 quotaAtteint: droits.quotaCvAtteint,
                 message: droits.message,
               }}
@@ -410,6 +412,8 @@ export default function SurgaEmploiModal({
               droits={{
                 estPremium: droits.estPremium,
                 lettresMoisEnCours: droits.lettresMoisEnCours,
+                lettresLimite: droits.lettresLimite,
+                lettresUtilisees: droits.lettresUtilisees,
                 quotaAtteint: droits.quotaLettreAtteint,
                 message: droits.message,
               }}
