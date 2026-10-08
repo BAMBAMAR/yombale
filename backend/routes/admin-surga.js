@@ -19,6 +19,8 @@ const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
 // Protection RBAC obligatoire
 router.use(requireAdminAuth);
+// Sans base, la console ne montre pas des compteurs à zéro : elle dit que le service est indisponible.
+router.use(require('../middlewares/surga-base').exigerBase);
 router.use(requireAdminRole('super_admin', 'admin_operationnel', 'moderateur'));
 
 // ─────────────────────────────────────────────────────────────────────────────

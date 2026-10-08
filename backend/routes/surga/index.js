@@ -3,6 +3,10 @@
 
 const express = require('express');
 const router = express.Router();
+const { exigerBase } = require('../../middlewares/surga-base');
+
+// Sans base, aucune route ne répond depuis un repli en mémoire (sauf météo, scores et radios, qui n'en dépendent pas).
+router.use(exigerBase);
 
 router.use('/', require('./preferences'));
 router.use('/', require('./briefing'));

@@ -46,91 +46,8 @@ const QUARTIERS_DAKAR = [
   'Somone',
 ];
 
-/**
- * Biens immobiliers de démonstration si base de données non connectée
- */
-const BIENS_DEMO = [
-  {
-    id: 'immo-demo-1',
-    titre: 'Appartement F3 standing avec vue dégagée',
-    description: 'Bel appartement lumineux au 3e étage avec ascenseur, grand salon, cuisine équipée, gardiennage 24/7 et groupe électrogène.',
-    prix: 450000,
-    surface_m2: 110,
-    nb_pieces: 3,
-    nb_chambres: 2,
-    type_bien: 'appartement',
-    transaction: 'location',
-    ville: 'Dakar',
-    quartier: 'Mermoz',
-    meuble: false,
-    verifie: true,
-    agence_nom: 'Immo Prestige Sénégal',
-    contact_tel: '+221771234567',
-    contact_whatsapp: '221771234567',
-    photos: ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&auto=format&fit=crop&q=80'],
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'immo-demo-2',
-    titre: 'Studio moderne meublé climatisé',
-    description: 'Studio tout confort avec kitchenette, wifi haut débit, idéal pour consultant ou cadre en mission.',
-    prix: 280000,
-    surface_m2: 42,
-    nb_pieces: 1,
-    nb_chambres: 1,
-    type_bien: 'studio',
-    transaction: 'location',
-    ville: 'Dakar',
-    quartier: 'Almadies',
-    meuble: true,
-    verifie: true,
-    agence_nom: 'Dakar Habitat Pro',
-    contact_tel: '+221772345678',
-    contact_whatsapp: '221772345678',
-    photos: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&auto=format&fit=crop&q=80'],
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'immo-demo-3',
-    titre: 'Villa R+1 avec jardin et piscine',
-    description: 'Magnifique villa familiale 5 pièces avec jardin arboré, garage 2 véhicules, quartier sécurisé et calme.',
-    prix: 185000000,
-    surface_m2: 350,
-    nb_pieces: 5,
-    nb_chambres: 4,
-    type_bien: 'villa',
-    transaction: 'vente',
-    ville: 'Dakar',
-    quartier: 'Ngor',
-    meuble: false,
-    verifie: true,
-    agence_nom: 'Teranga Real Estate',
-    contact_tel: '+221773456789',
-    contact_whatsapp: '221773456789',
-    photos: ['https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&auto=format&fit=crop&q=80'],
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'immo-demo-4',
-    titre: 'Appartement F4 neuf à louer',
-    description: 'Spacieux F4 neuf, cuisine avec buanderie, 3 chambres avec salles de bain privatives, réservoir d eau avec suppresseur.',
-    prix: 600000,
-    surface_m2: 145,
-    nb_pieces: 4,
-    nb_chambres: 3,
-    type_bien: 'appartement',
-    transaction: 'location',
-    ville: 'Dakar',
-    quartier: 'Fann Résidence',
-    meuble: false,
-    verifie: true,
-    agence_nom: 'Agence Diop & Associés',
-    contact_tel: '+221774567890',
-    contact_whatsapp: '221774567890',
-    photos: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&auto=format&fit=crop&q=80'],
-    created_at: new Date().toISOString(),
-  },
-];
+// SRG-A2-009 / D43 : quatre annonces de démonstration étaient servies ici quand la lecture des annonces échouait
+// (« Appartement F3 standing… »). Une annonce affichée est une annonce de la base, ou rien.
 
 /**
  * Normaliser une chaîne pour la recherche insensible à la casse et aux accents
@@ -363,12 +280,12 @@ async function rechercherBiensImmo(filtres = {}) {
 
       return { biens, total: biens.length };
     } catch (err) {
-      console.warn('[SurgaImmo] Erreur lecture DB annonces_immo, fallback démo:', err.message);
+      console.error('[SurgaImmo] Lecture des annonces impossible :', err.message);
+      throw err;
     }
   }
 
-  // Repli mémoire démo
-  let resultats = [...BIENS_DEMO];
+  let resultats = [];
   if (transaction && transaction !== 'tous') {
     resultats = resultats.filter((b) => b.transaction === transaction);
   }
@@ -401,6 +318,8 @@ async function rechercherBiensImmo(filtres = {}) {
  * @returns {Promise<Object|null>}
  */
 async function recupererBienParId(id) {
+  // Un identifiant qui n'en est pas un ne désigne aucune annonce : pas de requête, pas d'erreur.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id || ''))) return null;
   if (pool) {
     try {
       const res = await pool.query(
@@ -436,10 +355,13 @@ async function recupererBienParId(id) {
           created_at: row.created_at,
         };
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[SurgaImmo] Lecture de l\'annonce impossible :', e.message);
+      throw e;
+    }
   }
 
-  return BIENS_DEMO.find((b) => b.id === id) || null;
+  return null;
 }
 
 /**
@@ -678,7 +600,6 @@ function genererSyntheseImmoBriefing(alertes = [], biensRecents = []) {
 
 module.exports = {
   QUARTIERS_DAKAR,
-  BIENS_DEMO,
   parserRechercheImmoNaturelle,
   rechercherBiensImmo,
   recupererBienParId,

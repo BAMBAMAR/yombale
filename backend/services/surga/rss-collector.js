@@ -59,88 +59,8 @@ function classerRubriquePresse(titre, resume) {
   return 'general';
 }
 
-const ITEMS_SECOURS = [
-  {
-    source_nom: 'Seneweb',
-    titre: 'Innovation & Tech : L écosystème des startups sénégalaises en forte expansion',
-    resume: 'Les fintechs et solutions de logistique locale attirent de nouveaux investissements régionaux pour digitaliser les filières artisanales.',
-    url: 'https://www.seneweb.com/fr/news/Tech/startups-senegal-fintech',
-    categorie: 'actualites',
-    rubrique_presse: 'tech',
-    published_at: '2025-01-15T07:00:00.000Z',
-    est_archive_locale: true,
-  },
-  {
-    source_nom: 'APS',
-    titre: 'Transport urbain : Le TER adapte ses horaires de pointe entre Dakar et Diamniadio',
-    resume: 'La Seter annonce un cadencement renforcé le matin dès 06h30 pour fluidifier les trajets des usagers vers le centre-ville.',
-    url: 'https://aps.sn/transport-ter-dakar-diamniadio-horaires',
-    categorie: 'actualites',
-    rubrique_presse: 'societe',
-    published_at: '2025-01-15T08:00:00.000Z',
-    est_archive_locale: true,
-  },
-  {
-    source_nom: 'Le Soleil',
-    titre: 'Économie : Renforcement des initiatives de commerce digital et soutien aux PME',
-    resume: 'Un plan d accompagnement des marchands locaux pour l adoption des outils numériques et des paiements mobiles est déployé à Dakar.',
-    url: 'https://lesoleil.sn/commerce-digital-pme-senegal',
-    categorie: 'actualites',
-    rubrique_presse: 'economie',
-    published_at: '2025-01-15T07:30:00.000Z',
-    est_archive_locale: true,
-  },
-  {
-    source_nom: 'PressAfrik',
-    titre: 'Société : Modernisation des axes routiers et fluidification de la circulation dakaroise',
-    resume: 'De nouveaux aménagements urbains sont déployés pour décongestionner les entrées de la capitale en période de forte affluence.',
-    url: 'https://www.pressafrik.com/modernisation-axes-routiers-dakar',
-    categorie: 'actualites',
-    rubrique_presse: 'societe',
-    published_at: '2025-01-15T06:45:00.000Z',
-    est_archive_locale: true,
-  },
-  {
-    source_nom: 'Sud Quotidien',
-    titre: 'Institutions : Session parlementaire consacrée aux orientations budgétaires',
-    resume: 'L Assemblée nationale examine les priorités économiques et les réformes fiscales orientées vers l emploi des jeunes.',
-    url: 'https://www.sudquotidien.sn/assemblee-orientations-budget',
-    categorie: 'actualites',
-    rubrique_presse: 'politique',
-    published_at: '2025-01-15T06:30:00.000Z',
-    est_archive_locale: true,
-  },
-  {
-    source_nom: 'SeneNews',
-    titre: 'Politique : Suivi des réformes institutionnelles et concertations citoyennes',
-    resume: 'Les concertations nationales se poursuivent avec l ensemble des acteurs de la société civile pour renforcer la transparence.',
-    url: 'https://www.senenews.com/reforme-institutionnelle-senegal',
-    categorie: 'actualites',
-    rubrique_presse: 'politique',
-    published_at: '2025-01-15T05:45:00.000Z',
-    est_archive_locale: true,
-  },
-  {
-    source_nom: 'Leral.net',
-    titre: 'Société : Dialogue social et accords pour l amélioration des conditions des contractuels',
-    resume: 'Les discussions sectorielles progressent entre les syndicats et les représentants des ministères concernés.',
-    url: 'https://www.leral.net/dialogue-social-accords-contractuels',
-    categorie: 'actualites',
-    rubrique_presse: 'societe',
-    published_at: '2025-01-15T05:30:00.000Z',
-    est_archive_locale: true,
-  },
-  {
-    source_nom: 'Dakaractu',
-    titre: 'Économie : Dynamisation des corridors logistiques et investissements régionaux',
-    resume: 'Les projets d infrastructures portuaires et ferroviaires visent à consolider la position du Sénégal comme hub logistique sous-régional.',
-    url: 'https://www.dakaractu.com/corridors-logistiques-hub-senegal',
-    categorie: 'actualites',
-    rubrique_presse: 'economie',
-    published_at: '2025-01-15T05:15:00.000Z',
-    est_archive_locale: true,
-  },
-];
+// SRG-A2-009 / D43 : les articles de secours écrits ici (« Innovation & Tech : l'écosystème des startups… ») étaient
+// servis comme l'actualité du jour quand la collecte ne rendait rien. Sans article collecté, la liste est vide.
 
 /**
  * Nettoie le texte HTML et extrait un résumé court < 180 caractères
@@ -416,9 +336,6 @@ async function getBriefingItems({ categories = ['actualites', 'trafic'], limit =
 
   // SRG-UI-04 : Un article sans date de publication fiable est exclu du briefing.
   // Zéro fabrication de fausses heures de fraîcheur. En absence de candidats récents, conserver la date source authentique.
-  if (candidats.length === 0) {
-    candidats = ITEMS_SECOURS.filter((it) => Boolean(it.published_at));
-  }
 
   // Algorithme d'équilibrage des sources sénégalaises
   // Garantit une représentation équitable et variée (Seneweb, Le Soleil, APS, PressAfrik, SeneNews, Leral, etc.)
@@ -494,14 +411,6 @@ async function recupererRevuePresse({ rubrique = null, limit = 20, offset = 0 } 
     }
   }
 
-  // Fallback de secours ultime
-  if (articlesTrouves.length === 0) {
-    let fallback = ITEMS_SECOURS;
-    if (rubrique && RUBRIQUES_VALIDES.includes(rubrique.toLowerCase())) {
-      fallback = fallback.filter((it) => it.rubrique_presse === rubrique.toLowerCase());
-    }
-    articlesTrouves = fallback;
-  }
 
   // Si on affiche toutes les rubriques, assurer une répartition équilibrée entre les sources
   if (!rubrique || rubrique === 'toutes') {
@@ -573,6 +482,7 @@ async function genererSynthesePresseThematique() {
   if (!articlesBruts || articlesBruts.length === 0) {
     return {
       themes: [],
+      nbTotalArticles: 0,
       syntheseGlobale: 'Aucune actualité disponible pour le moment.',
       date: new Date().toISOString(),
     };

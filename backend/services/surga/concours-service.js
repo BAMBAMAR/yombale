@@ -833,7 +833,9 @@ async function listerConcours(filtres = {}) {
         return { concours: items, total };
       }
     } catch (err) {
-      console.warn('[SurgaConcours] Erreur DB surga_concours, fallback mémoire:', err.message);
+      // Le catalogue écrit dans le code ne remplace pas une lecture en échec : dates et statuts peuvent y différer.
+      console.error('[SurgaConcours] Lecture des concours impossible :', err.message);
+      throw err;
     }
   }
 

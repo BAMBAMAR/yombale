@@ -843,7 +843,6 @@ describe('Module Surga — Tranches 1 & 2', () => {
   describe('Tranche 12 : Immobilier & Moteur d Alertes Immobilières', () => {
     const {
       QUARTIERS_DAKAR,
-      BIENS_DEMO,
       parserRechercheImmoNaturelle,
       rechercherBiensImmo,
       recupererBienParId,
@@ -891,28 +890,22 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(criteres.quartier).toBe('Almadies');
     });
 
-    test('Recherche multi-critères dans le pôle immobilier', async () => {
+    test('Recherche : seules des annonces de la base sont rendues, jamais une annonce de démonstration (SRG-A2-009)', async () => {
+      const immoService = require('../../backend/services/surga/immo-service');
+      expect(immoService.BIENS_DEMO).toBeUndefined();
       const { biens, total } = await rechercherBiensImmo({
         typeBien: 'appartement',
         transaction: 'location',
         quartier: 'Mermoz',
       });
-      expect(total).toBeGreaterThanOrEqual(1);
-      const premier = biens[0];
-      expect(premier.type_bien).toBe('appartement');
-      expect(premier.quartier).toBe('Mermoz');
-      expect(premier.prix).toBeDefined();
-      expect(premier.verifie).toBe(true);
-      expect(premier.contact_tel).toBeDefined();
+      expect(total).toBe(biens.length);
+      expect(biens.some((b) => String(b.id).startsWith('immo-demo'))).toBe(false);
+      expect(biens.every((b) => b.type_bien === 'appartement')).toBe(true);
     });
 
-    test('Fiche détaillée d un bien par son identifiant', async () => {
-      const bien = await recupererBienParId('immo-demo-2');
-      expect(bien).toBeDefined();
-      expect(bien.id).toBe('immo-demo-2');
-      expect(bien.type_bien).toBe('studio');
-      expect(bien.quartier).toBe('Almadies');
-      expect(bien.meuble).toBe(true);
+    test('Fiche détaillée : une annonce de démonstration n existe plus', async () => {
+      expect(await recupererBienParId('immo-demo-2')).toBeNull();
+      expect(await recupererBienParId('00000000-0000-4000-8000-000000000000')).toBeNull();
     });
 
     test('Correspondance déterministe d une annonce avec une alerte', () => {

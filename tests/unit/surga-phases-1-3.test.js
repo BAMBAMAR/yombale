@@ -388,35 +388,16 @@ describe('PHASE 3 — IA Hybride (Fast-Path L0 + Fallback LLM L1) & Synthèse de
     const sim2 = similariteTitres('Victoire des Lions du Sénégal', 'Hausse du prix de l électricité');
     expect(sim2).toBeLessThan(0.2);
 
-    mockQuery.mockResolvedValueOnce({ rows: [] }); // table init
-    mockQuery.mockResolvedValueOnce({
-      rows: [
-        {
-          id: '1',
-          source_nom: 'APS',
-          titre: 'Conseil des ministres à Dakar',
-          resume: 'Examen des réformes',
-          rubrique_presse: 'politique',
-          url: 'https://aps.sn/1',
-        },
-        {
-          id: '2',
-          source_nom: 'Le Soleil',
-          titre: 'Conseil des ministres : les décisions',
-          resume: 'Détail des décisions',
-          rubrique_presse: 'politique',
-          url: 'https://lesoleil.sn/2',
-        },
-        {
-          id: '3',
-          source_nom: 'Seneweb',
-          titre: 'Croissance de l économie sénégalaise',
-          resume: 'Le taux atteint 8 pour cent',
-          rubrique_presse: 'economie',
-          url: 'https://seneweb.com/3',
-        },
-      ],
-    });
+    // Les articles viennent de la lecture de la revue de presse, quelle que soit la place de cette requête parmi les
+    // autres. L'ancien simulacre répondait aux deux premières requêtes seulement : le test passait grâce aux articles
+    // de secours écrits dans le code, retirés depuis (SRG-A2-009).
+    const maintenant = new Date().toISOString();
+    const articles = [
+      { id: '1', source_nom: 'APS', titre: 'Conseil des ministres à Dakar', resume: 'Examen des réformes', rubrique_presse: 'politique', url: 'https://aps.sn/1', published_at: maintenant },
+      { id: '2', source_nom: 'Le Soleil', titre: 'Conseil des ministres : les décisions', resume: 'Détail des décisions', rubrique_presse: 'politique', url: 'https://lesoleil.sn/2', published_at: maintenant },
+      { id: '3', source_nom: 'Seneweb', titre: 'Croissance de l économie sénégalaise', resume: 'Le taux atteint 8 pour cent', rubrique_presse: 'economie', url: 'https://seneweb.com/3', published_at: maintenant },
+    ];
+    mockQuery.mockImplementation(async (sql) => (/select/i.test(String(sql)) && /surga_briefing_items/.test(String(sql)) && !/count\(/i.test(String(sql)) ? { rows: articles } : { rows: [] }));
 
     const synthese = await genererSynthesePresseThematique();
     expect(synthese).toBeDefined();
@@ -427,6 +408,7 @@ describe('PHASE 3 — IA Hybride (Fast-Path L0 + Fallback LLM L1) & Synthèse de
     if (themeEco) {
       expect(themeEco.sources.length).toBeGreaterThan(0);
     }
+    mockQuery.mockReset();
   });
 });
 

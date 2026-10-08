@@ -217,7 +217,8 @@ async function rechercherPlaces(criteres = {}) {
         return { places: res.rows.map(normaliserPlaceRow), total };
       }
     } catch (err) {
-      console.warn('[SurgaPlaces] Erreur DB surga_places, fallback mémoire:', err.message);
+      console.error('[SurgaPlaces] Lecture des adresses impossible :', err.message);
+      throw err;
     }
   }
 
