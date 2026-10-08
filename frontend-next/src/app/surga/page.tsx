@@ -18,8 +18,9 @@ import { getSoldeKalpeFormate } from '@/lib/surga-kalpe'
 import {
   getLocalNotes, getLocalAgenda, calculerStatsLocales,
   saveLocalDepense, saveLocalNote, saveLocalEvenement,
-  synchroniserSurga, adopterProprietaire, type SurgaDepensesStats,
+  synchroniserSurga, adopterProprietaire, enregistrerPuisSynchroniser, preparerDeconnexion, retirerDonneesDuCompte, type SurgaDepensesStats,
 } from '@/lib/surga-offline-sync'
+import { quartierDe } from '@/lib/surga-meteo'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
 import { useFabAutoHide } from '@/lib/useFabAutoHide'
 
@@ -232,23 +233,13 @@ export default function SurgaPage() {
     setIsOnboarded(true)
   }
 
-  const handleVoiceDepense = async (dep: { montant: number; categorie: string; note: string }) => {
-    saveLocalDepense({ montant_xof: dep.montant, categorie: dep.categorie, note: dep.note })
-    rafraichirApercus()
-    synchroniserSurga().then(() => rafraichirApercus()).catch(() => {}) // SRG-A2-006 : un seul chemin d'écriture, par identifiant
-  }
-
-  const handleVoiceNote = async (n: { titre: string; contenu: string }) => {
-    saveLocalNote({ titre: n.titre, contenu: n.contenu })
-    rafraichirApercus()
-    synchroniserSurga().then(() => rafraichirApercus()).catch(() => {}) // SRG-A2-006 : un seul chemin d'écriture, par identifiant
-  }
-
-  const handleVoiceRappel = async (r: { titre: string; date: string; heure: string }) => {
-    saveLocalEvenement({ titre: r.titre, date_evenement: r.date, heure_evenement: r.heure, est_rappel: true })
-    rafraichirApercus()
-    synchroniserSurga().then(() => rafraichirApercus()).catch(() => {}) // SRG-A2-006 : un seul chemin d'écriture, par identifiant
-  }
+  // SRG-A2-006 : une commande confirmée passe par un seul chemin d'écriture (pose sur l'appareil, puis synchronisation).
+  const handleVoiceDepense = async (dep: { montant: number; categorie: string; note: string }) =>
+    enregistrerPuisSynchroniser(() => saveLocalDepense({ montant_xof: dep.montant, categorie: dep.categorie, note: dep.note }), rafraichirApercus)
+  const handleVoiceNote = async (n: { titre: string; contenu: string }) =>
+    enregistrerPuisSynchroniser(() => saveLocalNote({ titre: n.titre, contenu: n.contenu }), rafraichirApercus)
+  const handleVoiceRappel = async (r: { titre: string; date: string; heure: string }) =>
+    enregistrerPuisSynchroniser(() => saveLocalEvenement({ titre: r.titre, date_evenement: r.date, heure_evenement: r.heure, est_rappel: true }), rafraichirApercus)
 
   const handleReinitialiser = () => {
     if (confirm('Voulez-vous réinitialiser votre configuration Surga pour recommencer l’onboarding ?')) {
@@ -260,10 +251,11 @@ export default function SurgaPage() {
   // Déconnexion propre
   const handleDeconnexion = async () => {
     try {
+      if (!(await preparerDeconnexion())) return
       await fetch('/api/auth/deconnexion', { method: 'POST' }).catch(() => {})
       await deleteSessionAction()
       try { localStorage.removeItem('token') } catch {}
-      setUser(null)
+      retirerDonneesDuCompte(); setUser(null); setBriefingData(null); setIsOnboarded(false); rafraichirApercus()
     } catch (err) {
       console.error('[SURGA LOGOUT ERROR]:', err)
     }
@@ -298,6 +290,37 @@ export default function SurgaPage() {
     rafraichirApercus()
   }
 
+  // Fenêtres de Surga, montées aussi sur l'écran de configuration : le bouton « Connexion » y restait sans effet.
+  const modales = (
+    <SurgaModalsContainer
+      isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
+      isPodcastOpen={isPodcastOpen} isTraficOpen={isTraficOpen} isImmoOpen={isImmoOpen}
+      isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isShoppingOpen={isShoppingOpen} isPlusServicesOpen={isPlusServicesOpen} isPremiumOpen={isPremiumOpen}
+      isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen}
+      isEmploiOpen={isEmploiOpen} isDemarchesOpen={isDemarchesOpen}
+      isAuthOpen={isAuthOpen} isCompteOpen={isCompteOpen}
+      onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)} onClosePresse={() => setIsPresseOpen(false)}
+      onClosePodcast={() => setIsPodcastOpen(false)} onCloseTrafic={() => setIsTraficOpen(false)} onCloseImmo={() => setIsImmoOpen(false)}
+      onCloseConcours={() => setIsConcoursOpen(false)} onClosePlaces={() => setIsPlacesOpen(false)} onCloseShopping={() => setIsShoppingOpen(false)}
+      onClosePlusServices={() => setIsPlusServicesOpen(false)} onOpenPodcastModal={() => setIsPodcastOpen(true)}
+      onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)} onCloseDonnees={() => setIsDonneesOpen(false)}
+      onCloseVideos={() => setIsVideosOpen(false)} onCloseEmploi={() => setIsEmploiOpen(false)} onCloseDemarches={() => setIsDemarchesOpen(false)}
+      onOpenAuth={() => setIsAuthOpen(true)} onCloseAuth={() => setIsAuthOpen(false)} onAuthSuccess={handleAuthSuccess}
+      onCloseCompte={() => setIsCompteOpen(false)} user={user} statutPremium={statutPremium} onUserUpdated={(u) => { setUser(u); chargerProfilUser() }}
+      onDeconnexion={handleDeconnexion} onSynchroniser={handleSynchroniser} isSyncing={isSyncing}
+      onOpenPremium={() => setIsPremiumOpen(true)} onOpenEmploi={() => setIsEmploiOpen(true)} onOpenConcours={() => setIsConcoursOpen(true)}
+      onOpenPlaces={() => setIsPlacesOpen(true)} onOpenShopping={() => setIsShoppingOpen(true)} onOpenImmo={() => setIsImmoOpen(true)}
+      onOpenTrafic={() => setIsTraficOpen(true)} onOpenDemarches={() => setIsDemarchesOpen(true)} onOpenPresse={() => setIsPresseOpen(true)}
+      onOpenVideos={() => setIsVideosOpen(true)} onOpenCalc={() => setIsCalcOpen(true)} onOpenCompte={() => setIsCompteOpen(true)} onOpenPro={() => setIsProOpen(true)}
+      onNavigateTab={(t) => setActiveTab(t)} onInjectMontantCalc={() => setActiveTab('depenses')} onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
+      onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote} onConfirmerVoiceRappel={handleVoiceRappel} onDonneesSupprimees={handleReinitialiser}
+      onAbonnementActive={() => setStatutPremium({ estPremium: true, joursRestants: 30 })}
+      onCreerNoteChecklist={(titre, items) => { saveLocalNote({ titre, contenu: items.join('\n'), categorie: 'general', is_checklist: true }); rafraichirApercus() }}
+      onAjouterDepenseDemarche={(m, d) => { saveLocalDepense({ montant_xof: m, categorie: 'autre', note: d, date_depense: new Date().toISOString() }); rafraichirApercus() }}
+      onAjouterAgendaDemarche={(t, date) => { saveLocalEvenement({ titre: t, date_evenement: date, heure_evenement: '09:00', categorie: 'demarche' }); rafraichirApercus() }}
+    />
+  )
+
   // Écran de chargement et pré-rendu SEO initial
   if (isOnboarded === null) {
     return <SurgaLandingHero onDemarrerOnboarding={() => setAfficherFormulaireOnboarding(true)} />
@@ -320,6 +343,7 @@ export default function SurgaPage() {
       <>
         <SurgaHeader titre="Surga" sousTitre="Configuration initiale" user={user} onOpenAuth={() => setIsAuthOpen(true)} onOpenCompte={() => setIsCompteOpen(true)} />
         <SurgaOnboarding onComplete={handleOnboardingComplete} initialData={preferences || undefined} />
+        {modales}
       </>
     )
   }
@@ -336,7 +360,7 @@ export default function SurgaPage() {
         prochainRdvTitre={prochainRdvTitre || (briefingData?.agenda_du_jour?.[0] ? `${briefingData.agenda_du_jour[0].heure ? briefingData.agenda_du_jour[0].heure + ' : ' : ''}${briefingData.agenda_du_jour[0].titre}` : undefined)}
         statsApercu={statsApercu}
         soldeKalpeFormate={soldeKalpeFormate}
-        quartier={preferences?.quartiers?.[0] || 'Dakar'}
+        quartier={quartierDe(preferences)}
         isFabHidden={isFabHidden}
         sidebarServices={preferences?.sidebar_services}
         railWidgets={preferences?.rail_widgets}
@@ -414,34 +438,7 @@ export default function SurgaPage() {
         )}
       </SurgaLayoutShell>
 
-      {/* Modales globales de Surga */}
-      <SurgaModalsContainer
-        isCalcOpen={isCalcOpen} isVoiceOpen={isVoiceOpen} isPresseOpen={isPresseOpen}
-        isPodcastOpen={isPodcastOpen} isTraficOpen={isTraficOpen} isImmoOpen={isImmoOpen}
-        isConcoursOpen={isConcoursOpen} isPlacesOpen={isPlacesOpen} isShoppingOpen={isShoppingOpen} isPlusServicesOpen={isPlusServicesOpen} isPremiumOpen={isPremiumOpen}
-        isProOpen={isProOpen} isDonneesOpen={isDonneesOpen} isVideosOpen={isVideosOpen}
-        isEmploiOpen={isEmploiOpen} isDemarchesOpen={isDemarchesOpen}
-        isAuthOpen={isAuthOpen} isCompteOpen={isCompteOpen}
-        onCloseCalc={() => setIsCalcOpen(false)} onCloseVoice={() => setIsVoiceOpen(false)} onClosePresse={() => setIsPresseOpen(false)}
-        onClosePodcast={() => setIsPodcastOpen(false)} onCloseTrafic={() => setIsTraficOpen(false)} onCloseImmo={() => setIsImmoOpen(false)}
-        onCloseConcours={() => setIsConcoursOpen(false)} onClosePlaces={() => setIsPlacesOpen(false)} onCloseShopping={() => setIsShoppingOpen(false)}
-        onClosePlusServices={() => setIsPlusServicesOpen(false)} onOpenPodcastModal={() => setIsPodcastOpen(true)}
-        onClosePremium={() => setIsPremiumOpen(false)} onClosePro={() => setIsProOpen(false)} onCloseDonnees={() => setIsDonneesOpen(false)}
-        onCloseVideos={() => setIsVideosOpen(false)} onCloseEmploi={() => setIsEmploiOpen(false)} onCloseDemarches={() => setIsDemarchesOpen(false)}
-        onOpenAuth={() => setIsAuthOpen(true)} onCloseAuth={() => setIsAuthOpen(false)} onAuthSuccess={handleAuthSuccess}
-        onCloseCompte={() => setIsCompteOpen(false)} user={user} statutPremium={statutPremium} onUserUpdated={(u) => { setUser(u); chargerProfilUser() }}
-        onDeconnexion={handleDeconnexion} onSynchroniser={handleSynchroniser} isSyncing={isSyncing}
-        onOpenPremium={() => setIsPremiumOpen(true)} onOpenEmploi={() => setIsEmploiOpen(true)} onOpenConcours={() => setIsConcoursOpen(true)}
-        onOpenPlaces={() => setIsPlacesOpen(true)} onOpenShopping={() => setIsShoppingOpen(true)} onOpenImmo={() => setIsImmoOpen(true)}
-        onOpenTrafic={() => setIsTraficOpen(true)} onOpenDemarches={() => setIsDemarchesOpen(true)} onOpenPresse={() => setIsPresseOpen(true)}
-        onOpenVideos={() => setIsVideosOpen(true)} onOpenCalc={() => setIsCalcOpen(true)} onOpenCompte={() => setIsCompteOpen(true)} onOpenPro={() => setIsProOpen(true)}
-        onNavigateTab={(t) => setActiveTab(t)} onInjectMontantCalc={() => setActiveTab('depenses')} onOpenRadioFromPresse={() => { setIsPresseOpen(false); openRadioModal() }}
-        onConfirmerVoiceDepense={handleVoiceDepense} onConfirmerVoiceNote={handleVoiceNote} onConfirmerVoiceRappel={handleVoiceRappel} onDonneesSupprimees={handleReinitialiser}
-        onAbonnementActive={() => setStatutPremium({ estPremium: true, joursRestants: 30 })}
-        onCreerNoteChecklist={(titre, items) => { saveLocalNote({ titre, contenu: items.join('\n'), categorie: 'general', is_checklist: true }); rafraichirApercus() }}
-        onAjouterDepenseDemarche={(m, d) => { saveLocalDepense({ montant_xof: m, categorie: 'autre', note: d, date_depense: new Date().toISOString() }); rafraichirApercus() }}
-        onAjouterAgendaDemarche={(t, date) => { saveLocalEvenement({ titre: t, date_evenement: date, heure_evenement: '09:00', categorie: 'demarche' }); rafraichirApercus() }}
-      />
+      {modales}
     </>
   )
 }

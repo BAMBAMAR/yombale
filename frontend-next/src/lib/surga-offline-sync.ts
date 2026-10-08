@@ -388,6 +388,115 @@ export function adopterProprietaire(userId: string): void {
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('surga-data-change'))
     }
     localStorage.setItem(STORAGE_KEY_PROPRIETAIRE, userId)
+    rendreCoffre(userId)
+  } catch {}
+}
+
+/**
+ * SRG-A2-006 : un seul chemin d'écriture. La saisie est posée sur l'appareil, puis envoyée par la synchronisation ;
+ * « apres » rafraîchit l'écran à la pose et au retour du serveur.
+ */
+export function enregistrerPuisSynchroniser(ecrire: () => void, apres: () => void): void {
+  ecrire()
+  apres()
+  synchroniserSurga().then(apres).catch(() => {})
+}
+
+const estCleDuCompte = (k: string): boolean =>
+  k.startsWith('surga_offline_') || k.startsWith('surga_kalpe_') || k.startsWith('surga_xaalis_') ||
+  k === 'surga_profil_pro' || k === 'surga_documents_emploi' || k === 'surga_preferences' || k === 'surga_onboarding_done' ||
+  k === 'surga_meteo_ville' || k === 'surga_meteo_gps'
+
+// Données qui n'existent que sur l'appareil : le portefeuille Sama Xaalis et ses réglages (D36, envoi au serveur, non fait).
+const estCleAppareilSeul = (k: string): boolean => k.startsWith('surga_kalpe_') || k.startsWith('surga_xaalis_')
+const PREFIXE_COFFRE = 'surga_coffre_'
+
+/**
+ * Rend à un compte ce qui avait été rangé à son nom sur cet appareil lors de sa déconnexion.
+ * Les opérations saisies entre-temps (en invité) s'ajoutent aux siennes ; un réglage posé entre-temps est gardé.
+ */
+function rendreCoffre(userId: string): void {
+  const prefixe = `${PREFIXE_COFFRE}${userId}::`
+  const cles: string[] = []
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i) || ''
+    if (k.startsWith(prefixe)) cles.push(k)
+  }
+  for (const cle of cles) {
+    const k = cle.slice(prefixe.length)
+    const range = localStorage.getItem(cle)
+    const present = localStorage.getItem(k)
+    let valeur: string | null = present ?? range
+    try {
+      const a = JSON.parse(range ?? 'null')
+      const b = JSON.parse(present ?? 'null')
+      if (Array.isArray(a)) {
+        const dejaLa = new Set(a.map((x) => x?.id))
+        valeur = JSON.stringify([...a, ...(Array.isArray(b) ? b.filter((x) => !dejaLa.has(x?.id)) : [])])
+      }
+    } catch {}
+    if (valeur !== null) localStorage.setItem(k, valeur)
+    localStorage.removeItem(cle)
+  }
+  if (cles.length > 0) {
+    window.dispatchEvent(new CustomEvent('surga-data-change'))
+    window.dispatchEvent(new CustomEvent('surga-kalpe-change'))
+  }
+}
+
+/**
+ * Nombre de saisies de l'appareil que le serveur n'a pas encore reçues.
+ */
+export function compterSaisiesNonEnvoyees(): number {
+  if (typeof window === 'undefined') return 0
+  const nonEnvoyees = (liste: Array<{ synced?: boolean }>) => liste.filter((e) => e.synced === false).length
+  let suppressions = 0
+  try {
+    const brut = JSON.parse(localStorage.getItem('surga_offline_suppressions') || '{}')
+    suppressions = Object.values(brut).reduce((n: number, v) => n + (Array.isArray(v) ? v.length : 0), 0)
+  } catch {}
+  return nonEnvoyees(getLocalNotes()) + nonEnvoyees(getLocalDepenses()) + nonEnvoyees(getLocalAgenda()) + suppressions
+}
+
+/**
+ * Avant une déconnexion : dernier envoi des saisies au serveur. S'il en reste que le serveur n'a pas reçues,
+ * l'utilisateur choisit : rester connecté, ou se déconnecter en les perdant. Rend false s'il renonce.
+ */
+export async function preparerDeconnexion(): Promise<boolean> {
+  if (typeof window === 'undefined') return true
+  if (compterSaisiesNonEnvoyees() > 0) {
+    try { await synchroniserSurga() } catch {}
+  }
+  const reste = compterSaisiesNonEnvoyees()
+  if (reste === 0) return true
+  return window.confirm(
+    `${reste} saisie${reste > 1 ? 's' : ''} de cet appareil n'${reste > 1 ? 'ont' : 'a'} pas pu être envoyée${reste > 1 ? 's' : ''} à votre compte. En vous déconnectant maintenant, ${reste > 1 ? 'elles seront effacées' : 'elle sera effacée'} de cet appareil. Se déconnecter quand même ?`
+  )
+}
+
+/**
+ * SRG-A1-028 : à la déconnexion, tout ce que le compte a laissé sur l'appareil est retiré (notes, dépenses, rappels,
+ * brouillon de CV, préférences, localité météo). La personne suivante repart d'un appareil vide.
+ * Le portefeuille n'est pas effacé : il n'existe nulle part ailleurs. Il est rangé au nom du compte, hors de la vue de
+ * l'application, et lui est rendu à sa prochaine connexion sur cet appareil (rendreCoffre).
+ * Limite : rangé, il reste lisible dans le stockage du navigateur par qui sait y regarder.
+ */
+export function retirerDonneesDuCompte(): void {
+  if (typeof window === 'undefined') return
+  try {
+    const proprietaire = localStorage.getItem(STORAGE_KEY_PROPRIETAIRE)
+    const aRetirer: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) || ''
+      if (estCleDuCompte(k)) aRetirer.push(k)
+    }
+    for (const k of aRetirer) {
+      const v = localStorage.getItem(k)
+      if (proprietaire && estCleAppareilSeul(k) && v !== null) localStorage.setItem(`${PREFIXE_COFFRE}${proprietaire}::${k}`, v)
+      localStorage.removeItem(k)
+    }
+    window.dispatchEvent(new CustomEvent('surga-data-change'))
+    window.dispatchEvent(new CustomEvent('surga-kalpe-change'))
   } catch {}
 }
 
