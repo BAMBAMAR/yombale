@@ -5,6 +5,7 @@
 const { pool } = require('../../models/db');
 const { evaluerCalcul, formaterFCFA } = require('./calculator');
 const { sendWhatsAppText, normalisePhone } = require('../whatsapp');
+const { resolverComptesParTelephone } = require('../../lib/telephoneIntegrity');
 
 const QUOTA_JOURNALIER_GRATUIT = 2;
 
@@ -319,14 +320,14 @@ async function verifierQuota(phone, isVocal = false) {
   const normPh = normalisePhone(phone);
   try {
     // Vérification préalable du statut Premium
-    const suffixe = normPh.slice(-9);
+    // SRG-A4-003 : numéro complet, jamais un suffixe (les neuf derniers chiffres confondaient deux pays).
     const aboCheck = await pool.query(
       `SELECT id FROM surga_abonnements
-       WHERE (phone = $1 OR phone LIKE '%' || $2)
+       WHERE regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = $1
          AND statut = 'actif'
          AND fin > NOW()
        LIMIT 1`,
-      [normPh, suffixe]
+      [normPh.replace(/\D/g, '')]
     );
 
     const estPremium = aboCheck.rows.length > 0;
@@ -353,17 +354,20 @@ async function verifierQuota(phone, isVocal = false) {
 /**
  * Trouve l'identifiant utilisateur lié au numéro de téléphone
  */
+// SRG-A4-003 / SRG-A1-004 : le compte se cherche sur le numéro complet, par la résolution commune à Nopalou.
+// L'ancienne recherche prenait le premier compte dont le numéro finissait par les neuf mêmes chiffres : un numéro
+// d'un autre pays écrivait sur le compte d'un tiers. WhatsApp donne toujours l'indicatif : le numéro est lu comme
+// international. Deux comptes pour un même numéro : aucun n'est choisi.
+async function resoudreCompteWhatsApp(phone) {
+  const chiffres = String(phone || '').replace(/\D/g, '');
+  if (chiffres.length < 8) return { userId: null, ambigu: false };
+  const { rows, ambigu } = await resolverComptesParTelephone(pool, '+' + chiffres, 'id');
+  return { userId: ambigu ? null : rows[0]?.id || null, ambigu };
+}
+
 async function trouverUserIdParTelephone(phone) {
-  const normPh = normalisePhone(phone);
-  const suffixe = normPh.slice(-9);
   try {
-    const res = await pool.query(
-      `SELECT id FROM utilisateurs
-       WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
-       LIMIT 1`,
-      [phone, normPh, suffixe]
-    );
-    return res.rows[0]?.id || null;
+    return (await resoudreCompteWhatsApp(phone)).userId;
   } catch {
     return null;
   }
@@ -375,10 +379,15 @@ async function trouverUserIdParTelephone(phone) {
  */
 async function obtenirOuCreerUserId(phone) {
   const normPh = normalisePhone(phone);
-  let userId = await trouverUserIdParTelephone(normPh);
-  if (userId) return userId;
-
-  if (!pool) return null;
+  let compte;
+  try {
+    compte = await resoudreCompteWhatsApp(normPh);
+  } catch {
+    return null;
+  }
+  if (compte.userId) return compte.userId;
+  // Numéro porté par plusieurs comptes : ni choix au hasard, ni compte de plus.
+  if (compte.ambigu || !pool) return null;
 
   try {
     const nomDefaut = `Utilisateur Surga ${normPh.slice(-4)}`;
@@ -394,11 +403,7 @@ async function obtenirOuCreerUserId(phone) {
   } catch (err) {
     console.error('[SURGA AUTO-PROVISION USER ERR]:', err.message);
     try {
-      const retry = await pool.query(
-        'SELECT id FROM utilisateurs WHERE telephone = $1 OR telephone = $2 LIMIT 1',
-        [phone, normPh]
-      );
-      return retry.rows[0]?.id || null;
+      return await trouverUserIdParTelephone(normPh);
     } catch {
       return null;
     }
@@ -647,24 +652,20 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
   // ── 3.4 Consultation Trafic Routier Live ────────────────────────────────────
   if (parseResult.intention === 'CHECK_TRAFFIC') {
     try {
-      const { genererSyntheseBriefingTrafic, AXES_ROUTIERS_DAKAR } = require('./trafic-service');
-      const synthese = await genererSyntheseBriefingTrafic();
-      let detailAxe = '';
-
-      if (parseResult.axe && parseResult.axe !== 'global') {
-        const axeTrouve = AXES_ROUTIERS_DAKAR.find((a) =>
-          a.id.toLowerCase().includes(parseResult.axe) || a.nom.toLowerCase().includes(parseResult.axe)
-        );
-        if (axeTrouve) {
-          detailAxe = `\n\nAxe ciblé (${axeTrouve.nom}) : Temps habituel ~${axeTrouve.tempsHabituelMin} min (${axeTrouve.distanceKm} km).`;
-        }
-      }
+      // SRG-A4-016 : la synthèse était appelée sans les axes et rendait une phrase fixe, annoncée « en direct ».
+      // Elle se construit sur l'état réel (mesures et signalements datés) ; sans donnée, la réponse le dit.
+      const { getEtatTraficComplet, genererSyntheseBriefingTrafic } = require('./trafic-service');
+      const etat = await getEtatTraficComplet();
+      const cible = parseResult.axe && parseResult.axe !== 'global'
+        ? etat.axes.filter((a) => a.id.toLowerCase().includes(parseResult.axe) || a.nom.toLowerCase().includes(parseResult.axe))
+        : etat.axes;
+      const synthese = genererSyntheseBriefingTrafic(cible);
 
       await sendWhatsAppText(
         normPh,
-        `Surga : Point Trafic Dakar en direct :\n\n` +
-        `${synthese}${detailAxe}\n\n` +
-        `Consultez la carte des ralentissements en direct : https://surga.nopalou.com`
+        synthese
+          ? `Surga : trafic à Dakar, d'après les mesures et les signalements des usagers :\n\n${synthese}`
+          : 'Surga : trafic indisponible pour le moment (aucune mesure ni signalement récent).'
       );
       return true;
     } catch (err) {

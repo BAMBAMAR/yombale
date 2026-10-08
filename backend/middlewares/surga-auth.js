@@ -57,10 +57,11 @@ async function tokenOptional(req, res, next) {
     );
     const u = rows[0];
     if (!u || u.suspendu || u.anonymise_le) return refuser();
-    // Un jeton d'une autre version que celle du compte est une session révoquée.
-    // Limite connue : le cookie de session signé par le frontend (frontend-next/src/lib/session.ts) ne porte pas de
-    // version ; il est accepté ici comme par verifierToken, et n'est donc pas révocable avant son expiration.
-    if (decoded.jwtVersion !== undefined && u.jwt_version && decoded.jwtVersion !== u.jwt_version) return refuser();
+    // Un jeton d'une autre version que celle du compte est une session révoquée. Un jeton sans version (cookie signé
+    // par le frontend avant le correctif de SRG-A1-005) vaut « version 1 », comme dans verifierToken : il tombe à la
+    // première déconnexion ou au premier changement de mot de passe.
+    const versionDuJeton = decoded.jwtVersion === undefined ? 1 : decoded.jwtVersion;
+    if (u.jwt_version && versionDuJeton !== u.jwt_version) return refuser();
   } catch (err) {
     // Base injoignable : la session ne peut être ni confirmée ni refusée. Répondre en invité ferait croire à un compte
     // connecté que ses données sont vides ; la requête échoue donc franchement.
