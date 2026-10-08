@@ -18,6 +18,9 @@ const withSerwist = require('@serwist/next').default({
   // le ticket de caisse en cours et interrompt la synchronisation. La reconnexion déclenche la
   // synchronisation (RegisterSW / usePosSyncNotifications), jamais un rechargement de page.
   reloadOnOnline: false,
+  // SRG-A3-002 : par défaut Serwist enregistre lui-même /sw.js depuis le bundle commun à toutes les pages,
+  // y compris celles qui ont leur propre worker. L'enregistrement est fait par RegisterSW, et par lui seul.
+  register: false,
 });
 
 /** @type {import('next').NextConfig} */
