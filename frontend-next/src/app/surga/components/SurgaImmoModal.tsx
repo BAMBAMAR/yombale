@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   ArrowRight,
 } from 'lucide-react'
+import SurgaChargementEchoue from './SurgaChargementEchoue'
 import SurgaImmoCard, { BienImmoItem } from './SurgaImmoCard'
 import SurgaImmoAlerteModal from './SurgaImmoAlerteModal'
 import SurgaImmoAlertesTab, { AlerteImmoItem } from './SurgaImmoAlertesTab'
@@ -33,6 +34,8 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
   const [queryVocale, setQueryVocale] = useState<string>('')
   const [rechercheEnCours, setRechercheEnCours] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
+  const [echec, setEchec] = useState<boolean>(false)
+  const [essai, setEssai] = useState<number>(0)
   const [filtreType, setFiltreType] = useState<string>('tous')
   const [filtreTransaction, setFiltreTransaction] = useState<string>('tous')
   const [filtreQuartier, setFiltreQuartier] = useState<string>('')
@@ -46,6 +49,7 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
 
     async function initialiser() {
       setLoading(true)
+      setEchec(false)
       try {
         const [resBiens, resAlertes, resQuartiers] = await Promise.all([
           fetch('/api/surga/immo/biens'),
@@ -58,6 +62,7 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
           resAlertes.json(),
           resQuartiers.json(),
         ])
+        if (!resBiens.ok || !dataBiens.success) throw new Error('annonces non reçues')
 
         if (isMounted) {
           if (dataBiens.success && Array.isArray(dataBiens.biens)) {
@@ -72,6 +77,7 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
         }
       } catch (err) {
         console.error('Erreur initialisation immo:', err)
+        if (isMounted) setEchec(true)
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -81,7 +87,7 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
     return () => {
       isMounted = false
     }
-  }, [isOpen])
+  }, [isOpen, essai])
 
   if (!isOpen) return null
 
@@ -299,6 +305,8 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
                 <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
                   Chargement des biens immobiliers...
                 </div>
+              ) : echec ? (
+                <SurgaChargementEchoue message="Les annonces n’ont pas pu être chargées." onReessayer={() => setEssai((n) => n + 1)} />
               ) : biensFiltres.length === 0 ? (
                 <div
                   style={{

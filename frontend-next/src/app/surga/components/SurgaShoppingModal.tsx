@@ -8,6 +8,7 @@ import {
   Store,
   Tag,
 } from 'lucide-react'
+import SurgaChargementEchoue, { lireReponseSurga } from './SurgaChargementEchoue'
 import {
   BoutiqueCard,
   ProduitCard,
@@ -36,11 +37,14 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
   const [boutiques, setBoutiques] = useState<BoutiqueItem[]>([])
   const [produits, setProduits] = useState<ProduitItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [echec, setEchec] = useState(false)
+  const [essai, setEssai] = useState(0)
 
   useEffect(() => {
     if (!isOpen) return
     let isMounted = true
     setLoading(true)
+    setEchec(false)
 
     const params = new URLSearchParams()
     if (categorieActive !== 'tous') params.append('categorie', categorieActive)
@@ -48,15 +52,15 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
     params.append('limit', '200')
 
     fetch(`/api/surga/shopping?${params.toString()}`)
-      .then((res) => res.json())
+      .then(lireReponseSurga)
       .then((data) => {
         if (!isMounted) return
-        if (data.success) {
-          setBoutiques(data.boutiques || [])
-          setProduits(data.produits || [])
-        }
+        setBoutiques(data.boutiques || [])
+        setProduits(data.produits || [])
       })
-      .catch(() => {})
+      .catch(() => {
+        if (isMounted) setEchec(true)
+      })
       .finally(() => {
         if (isMounted) setLoading(false)
       })
@@ -64,7 +68,7 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
     return () => {
       isMounted = false
     }
-  }, [isOpen, categorieActive, recherche])
+  }, [isOpen, categorieActive, recherche, essai])
 
   const boutiquesFiltrees = useMemo(() => {
     if (!recherche.trim()) return boutiques
@@ -285,6 +289,8 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
               Chargement des boutiques et produits...
             </div>
+          ) : echec ? (
+            <SurgaChargementEchoue message="Les boutiques et les produits n’ont pas pu être chargés." onReessayer={() => setEssai((n) => n + 1)} />
           ) : onglet === 'boutiques' ? (
             boutiquesFiltrees.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text3, #73675E)' }}>

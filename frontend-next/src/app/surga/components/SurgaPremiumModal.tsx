@@ -267,27 +267,6 @@ export default function SurgaPremiumModal({
                   >
                     <span>Wave Sénégal</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setProvider('orange_money')}
-                    style={{
-                      flex: 1,
-                      padding: '10px 14px',
-                      borderRadius: 10,
-                      border: provider === 'orange_money' ? '2px solid #FF7900' : '1px solid var(--border, #E8DDD2)',
-                      backgroundColor: provider === 'orange_money' ? 'rgba(255, 121, 0, 0.06)' : '#FFFFFF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                      color: 'var(--navy, #1C2B4A)',
-                    }}
-                  >
-                    <span>Orange Money</span>
-                  </button>
                 </div>
               </div>
 
@@ -363,7 +342,7 @@ export default function SurgaPremiumModal({
                 Validation de votre paiement
               </div>
               <p style={{ fontSize: 13, color: 'var(--text2, #5A4E42)', margin: 0 }}>
-                La passerelle sécurisée s est ouverte dans un nouvel onglet. Dès que vous avez approuvé la transaction sur votre application mobile {provider === 'wave' ? 'Wave' : 'Orange Money'}, cliquez ci-dessous pour activer immédiatement vos avantages.
+                La passerelle sécurisée s est ouverte dans un nouvel onglet. Dès que vous avez approuvé la transaction sur votre application mobile Wave, cliquez ci-dessous pour activer immédiatement vos avantages.
               </p>
               <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
                 Référence : <code>{referencePaiement}</code>

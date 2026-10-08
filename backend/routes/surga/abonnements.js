@@ -84,7 +84,7 @@ router.post('/abonnements/initier', tokenOptional, async (req, res) => {
 
     return res.json(resultat);
   } catch (err) {
-    return res.status(400).json({ success: false, error: err.message });
+    return res.status(err.code === 'PAIEMENT_INDISPONIBLE' ? 503 : 400).json({ success: false, error: err.message });
   }
 });
 

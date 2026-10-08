@@ -19,6 +19,18 @@ try {
 }
 
 const CYCLE_REVERIFICATION_JOURS = 90;
+
+// SRG-A2-009 : quand une requête échoue, l'erreur remonte. Les tableaux en mémoire ci-dessous ne servent qu'aux tests
+// unitaires, joués sans base : en service, ils rendaient des fiches écrites dans le code et gardaient des écritures
+// dans le processus, perdues au redémarrage.
+function remonter(erreur, ecriture) {
+  if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID) return;
+  console.error('[SurgaDemarches] Requête en échec :', erreur.message);
+  const e = new Error('Ce service est momentanément indisponible. Veuillez réessayer dans un instant.');
+  e.code = ecriture ? 'ENREGISTREMENT_IMPOSSIBLE' : 'LECTURE_IMPOSSIBLE';
+  e.status = 503;
+  throw e;
+}
 const URL_PORTAIL_OFFICIEL = 'https://e-senegal.sn/#/home/demarches';
 
 /**
@@ -712,8 +724,8 @@ async function rechercherDemarches({ query, categorie, statut, includeBrouillons
       const sql = `SELECT * FROM surga_demarches ${whereClause} ORDER BY created_at DESC`;
       const { rows } = await pool.query(sql, vals);
       fiches = rows;
-    } catch {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, false);
       fiches = [];
     }
   }
@@ -782,8 +794,8 @@ async function getDemarcheParIdOuSlug(identifiant, { includeBrouillons = false }
         : `SELECT * FROM surga_demarches WHERE (id = $1 OR slug = $1) AND statut = 'PUBLIE'`;
       const { rows } = await pool.query(query, [identifiant]);
       if (rows.length > 0) return rows[0];
-    } catch {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, false);
     }
   }
 
@@ -876,8 +888,8 @@ async function sauvegarderDemarcheAdmin(donnees) {
       ];
       const { rows } = await pool.query(sql, params);
       return rows[0];
-    } catch {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, true);
     }
   }
 
@@ -905,8 +917,8 @@ async function reverifierDemarcheAdmin(id) {
         [maintenant.toISOString(), prochaine.toISOString(), id]
       );
       if (rows.length > 0) return rows[0];
-    } catch {
-      // repli mémoire
+    } catch (erreur) {
+      remonter(erreur, true);
     }
   }
 
@@ -928,8 +940,8 @@ async function supprimerDemarcheAdmin(id) {
     try {
       const res = await pool.query('DELETE FROM surga_demarches WHERE id = $1', [id]);
       return res.rowCount > 0;
-    } catch {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, true);
     }
   }
 
@@ -993,8 +1005,8 @@ async function getSignalementsAdmin({ statut = 'EN_ATTENTE' } = {}) {
       `;
       const { rows } = await pool.query(sql, params);
       return rows;
-    } catch {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, false);
     }
   }
 
@@ -1026,8 +1038,8 @@ async function traiterSignalementAdmin(id, { statut, reponse_admin }) {
         [statut, reponse_admin || null, String(id)]
       );
       if (rows.length > 0) return rows[0];
-    } catch {
-      // repli mémoire
+    } catch (erreur) {
+      remonter(erreur, true);
     }
   }
 
@@ -1122,8 +1134,8 @@ async function ajouterSuiviDemarche(userId, demarcheId, { date_echeance, notes }
           [date_echeance || null, notes || null, userId, demarcheId]
         );
         return rows[0];
-      } catch {
-        // repli mémoire
+      } catch (erreur) {
+        remonter(erreur, true);
       }
     }
     const mem = suivisMemoire.get(`${userId}:${demarcheId}`);
@@ -1159,8 +1171,8 @@ async function ajouterSuiviDemarche(userId, demarcheId, { date_echeance, notes }
         [userId, demarcheId, date_echeance || null, notes || null]
       );
       return rows[0];
-    } catch {
-      // repli mémoire
+    } catch (erreur) {
+      remonter(erreur, true);
     }
   }
 
@@ -1188,8 +1200,8 @@ async function getSuiviUtilisateurDemarche(userId, demarcheId) {
         [userId, demarcheId]
       );
       if (rows.length > 0) return rows[0];
-    } catch {
-      // repli mémoire
+    } catch (erreur) {
+      remonter(erreur, false);
     }
   }
 
@@ -1209,8 +1221,8 @@ async function supprimerSuiviDemarche(userId, demarcheId) {
         [userId, demarcheId]
       );
       return res.rowCount > 0;
-    } catch {
-      // repli mémoire
+    } catch (erreur) {
+      remonter(erreur, true);
     }
   }
 
@@ -1234,8 +1246,8 @@ async function getSuivisUtilisateur(userId) {
       `;
       const { rows } = await pool.query(sql, [userId]);
       return rows;
-    } catch {
-      // repli mémoire
+    } catch (erreur) {
+      remonter(erreur, false);
     }
   }
 

@@ -11,6 +11,7 @@ import {
   RotateCw,
   Layers,
 } from 'lucide-react'
+import SurgaChargementEchoue from './SurgaChargementEchoue'
 import {
   toggleRappelVideo,
   estVideoRappelee,
@@ -51,6 +52,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
   const [videos, setVideos] = useState<VideoItem[]>([])
   const [recherche, setRecherche] = useState('')
   const [chargement, setChargement] = useState(false)
+  const [echec, setEchec] = useState(false)
   const [syncEnCours, setSyncEnCours] = useState(false)
   const [abonnementsLocaux, setAbonnementsLocaux] = useState<string[]>([])
   const [versionRappels, setVersionRappels] = useState(0)
@@ -79,6 +81,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
   const chargerDonnees = useCallback(async () => {
     if (!isOpen) return
     setChargement(true)
+    setEchec(false)
     try {
       const token = typeof window !== 'undefined'
         ? (localStorage.getItem('nopalou_session') || localStorage.getItem('token'))
@@ -105,9 +108,11 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
 
       if (resVideos.success && Array.isArray(resVideos.videos)) {
         setVideos(resVideos.videos)
+      } else {
+        setEchec(true)
       }
     } catch {
-      // Tolérance mode hors-ligne
+      setEchec(true)
     } finally {
       setChargement(false)
     }
@@ -362,6 +367,8 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
               <div style={{ textAlign: 'center', padding: '24px 0', fontSize: 12, color: '#64748B' }}>
                 Chargement des sorties récentes...
               </div>
+            ) : echec ? (
+              <SurgaChargementEchoue message="Les vidéos n’ont pas pu être chargées." onReessayer={chargerDonnees} />
             ) : videosFiltrees.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '24px 12px', backgroundColor: '#F8FAFC', borderRadius: 8, fontSize: 12, color: '#64748B' }}>
                 {onglet === 'abonnements'

@@ -11,6 +11,7 @@ import {
   Layers,
   Sparkles,
 } from 'lucide-react'
+import SurgaChargementEchoue from './SurgaChargementEchoue'
 import SurgaConcoursCard, { ConcoursItem } from './SurgaConcoursCard'
 import SurgaConcoursDetailModal from './SurgaConcoursDetailModal'
 
@@ -28,6 +29,8 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
   const [categorieChoisie, setCategorieChoisie] = useState<string>('tous')
   const [recherche, setRecherche] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(true)
+  const [echec, setEchec] = useState<boolean>(false)
+  const [essai, setEssai] = useState<number>(0)
   const [concoursSelectionne, setConcoursSelectionne] = useState<ConcoursItem | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false)
 
@@ -38,6 +41,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
 
     async function chargerDonnees() {
       setLoading(true)
+      setEchec(false)
       try {
         const [resConcours, resSuivis, resCategories] = await Promise.all([
           fetch('/api/surga/concours'),
@@ -50,6 +54,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
           resSuivis.json(),
           resCategories.json(),
         ])
+        if (!resConcours.ok || !dataConcours.success) throw new Error('concours non reçus')
 
         if (isMounted) {
           if (dataConcours.success && Array.isArray(dataConcours.concours)) {
@@ -65,6 +70,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
         }
       } catch (err) {
         console.error('Erreur chargement concours:', err)
+        if (isMounted) setEchec(true)
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -74,7 +80,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
     return () => {
       isMounted = false
     }
-  }, [isOpen])
+  }, [isOpen, essai])
 
   if (!isOpen) return null
 
@@ -320,6 +326,8 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
             <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
               Chargement des concours officiels...
             </div>
+          ) : echec ? (
+            <SurgaChargementEchoue message="Les concours n’ont pas pu être chargés." onReessayer={() => setEssai((n) => n + 1)} />
           ) : listeAffichee.length === 0 ? (
             <div
               style={{

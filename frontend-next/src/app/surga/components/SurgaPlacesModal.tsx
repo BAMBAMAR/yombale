@@ -11,6 +11,7 @@ import {
   UtensilsCrossed,
   SlidersHorizontal,
 } from 'lucide-react'
+import SurgaChargementEchoue, { lireReponseSurga } from './SurgaChargementEchoue'
 import SurgaPlaceCard, { type PlaceItem } from './SurgaPlaceCard'
 import SurgaPlaceDetailModal from './SurgaPlaceDetailModal'
 
@@ -51,6 +52,7 @@ export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalPr
   const [places, setPlaces] = useState<PlaceItem[]>([])
   const [favorisIds, setFavorisIds] = useState<string[]>([])
   const [chargement, setChargement] = useState<boolean>(false)
+  const [echec, setEchec] = useState<boolean>(false)
   const [onglets, setOnglets] = useState<'tous' | 'favoris'>('tous')
   const [rechercheTexte, setRechercheTexte] = useState<string>('')
   const [categorieChoisie, setCategorieChoisie] = useState<string>('tous')
@@ -71,6 +73,7 @@ export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalPr
   // Charger ou filtrer les adresses
   const chargerPlaces = useCallback(async () => {
     setChargement(true)
+    setEchec(false)
     try {
       let url = '/api/surga/places'
       const params = new URLSearchParams()
@@ -82,13 +85,12 @@ export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalPr
       const queryStr = params.toString()
       if (queryStr) url += `?${queryStr}`
 
-      const res = await fetch(url)
-      const data = await res.json()
-      if (data.success && Array.isArray(data.places)) {
-        setPlaces(data.places)
-      }
+      const data = await lireReponseSurga(await fetch(url))
+      setPlaces(Array.isArray(data.places) ? data.places : [])
     } catch {
-      // En cas d'erreur de réseau, garder la liste existante
+      // Une liste gardée sans le dire passerait pour le résultat de la recherche en cours.
+      setPlaces([])
+      setEchec(true)
     } finally {
       setChargement(false)
     }
@@ -335,6 +337,8 @@ export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalPr
               <RefreshCw size={22} className="animate-spin" style={{ margin: '0 auto 8px auto', display: 'block' }} />
               Recherche des meilleures adresses en cours...
             </div>
+          ) : echec ? (
+            <SurgaChargementEchoue message="Les adresses n’ont pas pu être chargées." onReessayer={chargerPlaces} />
           ) : placesAffichees.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 20px', color: 'var(--text2, #5A4E42)' }}>
               <p style={{ fontSize: 14, fontWeight: 700, margin: '0 0 6px 0' }}>

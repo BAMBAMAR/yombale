@@ -28,7 +28,7 @@ router.get('/demarches', async (req, res) => {
       ...resultat,
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -70,7 +70,7 @@ router.get('/demarches/suivis', tokenOptional, async (req, res) => {
       quota: droit,
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -104,7 +104,7 @@ router.post('/demarches/:id/suivis', verifierToken, async (req, res) => {
         limite: err.limite,
       });
     }
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -125,7 +125,7 @@ router.delete('/demarches/:id/suivis', verifierToken, async (req, res) => {
         : 'Aucun suivi actif trouvé pour cette démarche.',
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -163,7 +163,7 @@ router.post('/demarches/:id/signalements', tokenOptional, async (req, res) => {
     });
   } catch (err) {
     if (err.code === 'ENREGISTREMENT_IMPOSSIBLE') return res.status(503).json({ success: false, error: err.message });
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -194,7 +194,7 @@ router.get('/demarches/:id', async (req, res) => {
       demarche,
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 

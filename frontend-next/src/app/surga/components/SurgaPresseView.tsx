@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { Newspaper, X, RefreshCw, Filter, TrendingUp, Cpu, Landmark, Users, BookOpen, Radio } from 'lucide-react'
+import SurgaChargementEchoue, { lireReponseSurga } from './SurgaChargementEchoue'
 import SurgaKiosqueUnes, { type UneItem } from './SurgaKiosqueUnes'
 import SurgaArticleCard from './SurgaArticleCard'
 
@@ -58,21 +59,22 @@ export default function SurgaPresseView({
   const [loading, setLoading] = useState<boolean>(false)
   const [loadingUnes, setLoadingUnes] = useState<boolean>(false)
   const [refreshing, setRefreshing] = useState<boolean>(false)
+  const [echec, setEchec] = useState<boolean>(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
 
   const chargerArticles = useCallback(async (rubrique: string) => {
     setLoading(true)
+    setEchec(false)
     try {
       const url =
         rubrique === 'toutes'
           ? '/api/surga/presse'
           : `/api/surga/presse?rubrique=${encodeURIComponent(rubrique)}`
-      const res = await fetch(url)
-      const data = await res.json()
-      if (data.success && Array.isArray(data.articles)) {
-        setArticles(data.articles)
-      }
+      const data = await lireReponseSurga(await fetch(url))
+      setArticles(Array.isArray(data.articles) ? data.articles : [])
     } catch (err) {
+      setArticles([])
+      setEchec(true)
       console.warn('[SURGA PRESSE FETCH WARN]:', err)
     } finally {
       setLoading(false)
@@ -81,13 +83,13 @@ export default function SurgaPresseView({
 
   const chargerUnes = useCallback(async () => {
     setLoadingUnes(true)
+    setEchec(false)
     try {
-      const res = await fetch('/api/surga/kiosque?limit=50')
-      const data = await res.json()
-      if (data.success && Array.isArray(data.unes)) {
-        setUnes(data.unes)
-      }
+      const data = await lireReponseSurga(await fetch('/api/surga/kiosque?limit=50'))
+      setUnes(Array.isArray(data.unes) ? data.unes : [])
     } catch (err) {
+      setUnes([])
+      setEchec(true)
       console.warn('[SURGA KIOSQUE FETCH WARN]:', err)
     } finally {
       setLoadingUnes(false)
@@ -387,13 +389,17 @@ export default function SurgaPresseView({
 
         {/* Corps défilable */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-          {vueMode === 'kiosque' ? (
+          {vueMode === 'kiosque' && echec && !loadingUnes ? (
+            <SurgaChargementEchoue message="Les unes n’ont pas pu être chargées." onReessayer={chargerUnes} />
+          ) : vueMode === 'kiosque' ? (
             <SurgaKiosqueUnes unes={unes} loading={loadingUnes} />
           ) : loading ? (
             <div style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--text3, #73675E)' }}>
               <RefreshCw size={24} style={{ animation: 'spin 1.2s linear infinite', opacity: 0.6 }} />
               <div style={{ marginTop: 10, fontSize: 13 }}>Chargement des dépêches...</div>
             </div>
+          ) : echec ? (
+            <SurgaChargementEchoue message="Les dépêches n’ont pas pu être chargées." onReessayer={() => chargerArticles(rubriqueActive)} />
           ) : articles.length === 0 ? (
             <div className="surga-card" style={{ textAlign: 'center', padding: '36px 16px', color: 'var(--text2, #5A4E42)' }}>
               <Filter size={28} style={{ opacity: 0.4, marginBottom: 10 }} />

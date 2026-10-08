@@ -364,6 +364,14 @@ async function initierSouscription({ userId, phone, planKey, cycle = 'mensuel', 
   const dateDebut = new Date();
   const dateFin = new Date(dateDebut.getTime() + intervalleJours * 24 * 60 * 60 * 1000);
 
+  // Seul Wave ouvre un vrai paiement. Les autres moyens rendaient une adresse de simulation : aucun paiement possible,
+  // et une souscription laissée en attente. Ils sont refusés avant toute écriture.
+  if (provider !== 'wave') {
+    const e = new Error('Ce moyen de paiement n’est pas encore disponible pour Surga. Choisissez Wave.');
+    e.code = 'PAIEMENT_INDISPONIBLE';
+    throw e;
+  }
+
   // Enregistrement de l'abonnement en statut 'en_attente'
   const insertSql = `
     INSERT INTO surga_abonnements (
@@ -396,33 +404,27 @@ async function initierSouscription({ userId, phone, planKey, cycle = 'mensuel', 
   let paiementUrl = null;
   let sessionId = null;
 
-  if (provider === 'wave') {
-    try {
-      const waveSession = await wave.createCheckoutSession({
-        amount: montantXof,
-        currency: 'XOF',
-        success_url: successUrl,
-        error_url: errorUrl,
-        client_reference: referencePaiement,
-      });
-      paiementUrl = waveSession.wave_url;
-      sessionId = waveSession.session_id;
+  try {
+    const waveSession = await wave.createCheckoutSession({
+      amount: montantXof,
+      currency: 'XOF',
+      success_url: successUrl,
+      error_url: errorUrl,
+      client_reference: referencePaiement,
+    });
+    paiementUrl = waveSession.wave_url;
+    sessionId = waveSession.session_id;
+    if (!paiementUrl || !sessionId) throw new Error('réponse de Wave sans adresse de paiement');
 
-      // Mise à jour du session_id
-      await pool.query(
-        'UPDATE surga_abonnements SET session_id = $1 WHERE id = $2',
-        [sessionId, abonnementCree.id]
-      );
-    } catch (errWave) {
-      console.warn('[SURGA ABONNEMENT] Wave non disponible en direct, bascule en simulation sandbox:', errWave.message);
-      // Fallback sandbox pour tests ou validation locale sans clé Wave de production
-      paiementUrl = `${origin}/surga?simulate_wave=1&ref=${referencePaiement}&amount=${montantXof}`;
-    }
-  } else if (provider === 'orange_money') {
-    // Mode Orange Money via passerelle Nopalou
-    paiementUrl = `${origin}/surga?simulate_om=1&ref=${referencePaiement}&amount=${montantXof}`;
-  } else {
-    paiementUrl = successUrl;
+    await pool.query('UPDATE surga_abonnements SET session_id = $1 WHERE id = $2', [sessionId, abonnementCree.id]);
+  } catch (errWave) {
+    // Le paiement n'a pas pu être ouvert : la souscription est marquée en échec et l'erreur est dite, au lieu de
+    // rendre une adresse de simulation présentée comme la passerelle.
+    console.error('[SURGA ABONNEMENT] Paiement Wave non ouvert :', errWave.message);
+    await pool.query("UPDATE surga_abonnements SET statut = 'echoue' WHERE id = $1", [abonnementCree.id]).catch(() => {});
+    const e = new Error('Le paiement Wave n’a pas pu être ouvert. Veuillez réessayer dans un instant.');
+    e.code = 'PAIEMENT_INDISPONIBLE';
+    throw e;
   }
 
   return {

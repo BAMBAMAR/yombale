@@ -7,6 +7,18 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { pool } = require('../../models/db');
 
+// SRG-A2-009 : quand une requête échoue, l'erreur remonte. Les tableaux en mémoire ci-dessous ne servent qu'aux tests
+// unitaires, joués sans base : en service, ils rendaient des fiches écrites dans le code et gardaient des écritures
+// dans le processus, perdues au redémarrage.
+function remonter(erreur, ecriture) {
+  if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID) return;
+  console.error('[SurgaVideos] Requête en échec :', erreur.message);
+  const e = new Error('Ce service est momentanément indisponible. Veuillez réessayer dans un instant.');
+  e.code = ecriture ? 'ENREGISTREMENT_IMPOSSIBLE' : 'LECTURE_IMPOSSIBLE';
+  e.status = 503;
+  throw e;
+}
+
 /**
  * Catalogue référentiel des chaînes et flux officiels sénégalais par défaut
  */
@@ -423,8 +435,8 @@ async function getSources({ type = null, actifOnly = true } = {}) {
       if (rows && rows.length > 0) {
         return rows;
       }
-    } catch (err) {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, false);
     }
   }
 
@@ -482,8 +494,8 @@ async function getDernieresVideos({ limit = 30, type = null, sourceId = null, us
       if (rows && rows.length > 0) {
         return rows;
       }
-    } catch (err) {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, false);
     }
   }
 
@@ -532,8 +544,8 @@ async function getAbonnementsUtilisateur(userId) {
         [userId]
       );
       return rows;
-    } catch (err) {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, false);
     }
   }
 
@@ -605,8 +617,8 @@ async function sauvegarderSourceAdmin({ id, nom, chaine_nom, type = 'SERIE', ide
       `;
       const { rows } = await pool.query(query, [sourceId, type.toUpperCase(), nom, chaine_nom || '', plateforme, identifiant_flux, !!actif]);
       return rows[0];
-    } catch (err) {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, true);
     }
   }
 
@@ -631,8 +643,8 @@ async function supprimerSourceAdmin(id) {
     try {
       const res = await pool.query(`DELETE FROM surga_video_sources WHERE id = $1`, [id]);
       return res.rowCount > 0;
-    } catch (err) {
-      // Repli mémoire
+    } catch (erreur) {
+      remonter(erreur, true);
     }
   }
 

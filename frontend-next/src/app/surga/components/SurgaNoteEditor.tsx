@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   X,
   Save,
@@ -20,6 +20,7 @@ import {
   type SurgaChecklistItem,
 } from '@/lib/surga-offline-sync'
 import SurgaChecklistEditor from './SurgaChecklistEditor'
+import { lireBrouillonNote, garderBrouillonNote, effacerBrouillonNote } from '@/lib/surga-brouillon-note'
 
 interface SurgaNoteEditorProps {
   noteInitiale?: SurgaNote | null
@@ -57,22 +58,46 @@ export default function SurgaNoteEditor({
   onEnregistrer,
   onFermer,
 }: SurgaNoteEditorProps) {
-  const [titre, setTitre] = useState<string>(noteInitiale?.titre || '')
-  const [contenu, setContenu] = useState<string>(noteInitiale?.contenu || '')
-  const [categorie, setCategorie] = useState<SurgaNoteCategorie>(noteInitiale?.categorie || 'general')
-  const [couleur, setCouleur] = useState<SurgaNoteCouleur>(noteInitiale?.couleur || 'creme')
-  const [epingle, setEpingle] = useState<boolean>(Boolean(noteInitiale?.epingle))
-  const [isChecklist, setIsChecklist] = useState<boolean>(Boolean(noteInitiale?.is_checklist))
-  const [checklist, setChecklist] = useState<SurgaChecklistItem[]>(
-    noteInitiale?.checklist && noteInitiale.checklist.length > 0
-      ? noteInitiale.checklist
-      : []
-  )
+  // SRG-A3-007 : un brouillon gardé pour cette même note (ou pour une nouvelle note) est repris à l'ouverture.
+  const [brouillon] = useState(() => {
+    const b = lireBrouillonNote()
+    return b && b.id === (noteInitiale?.id ?? null) ? b : null
+  })
+  const depart = brouillon || noteInitiale
+  const [repris, setRepris] = useState<boolean>(Boolean(brouillon))
+  const [titre, setTitre] = useState<string>(depart?.titre || '')
+  const [contenu, setContenu] = useState<string>(depart?.contenu || '')
+  const [categorie, setCategorie] = useState<SurgaNoteCategorie>(depart?.categorie || 'general')
+  const [couleur, setCouleur] = useState<SurgaNoteCouleur>(depart?.couleur || 'creme')
+  const [epingle, setEpingle] = useState<boolean>(Boolean(depart?.epingle))
+  const [isChecklist, setIsChecklist] = useState<boolean>(Boolean(depart?.is_checklist))
+  const [checklist, setChecklist] = useState<SurgaChecklistItem[]>(depart?.checklist && depart.checklist.length > 0 ? depart.checklist : [])
+
+  // Le brouillon suit la saisie. Une note ouverte puis laissée telle quelle n'en crée pas.
+  useEffect(() => {
+    const inchangee = !repris && titre === (noteInitiale?.titre || '') && contenu === (noteInitiale?.contenu || '') &&
+      JSON.stringify(checklist) === JSON.stringify(noteInitiale?.checklist || [])
+    if (inchangee) return
+    garderBrouillonNote({ id: noteInitiale?.id ?? null, titre, contenu, categorie, couleur, epingle, is_checklist: isChecklist, checklist })
+  }, [titre, contenu, categorie, couleur, epingle, isChecklist, checklist, repris, noteInitiale])
+
+  const abandonnerBrouillon = () => {
+    effacerBrouillonNote()
+    setRepris(false)
+    setTitre(noteInitiale?.titre || '')
+    setContenu(noteInitiale?.contenu || '')
+    setCategorie(noteInitiale?.categorie || 'general')
+    setCouleur(noteInitiale?.couleur || 'creme')
+    setEpingle(Boolean(noteInitiale?.epingle))
+    setIsChecklist(Boolean(noteInitiale?.is_checklist))
+    setChecklist(noteInitiale?.checklist || [])
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!titre.trim()) return
 
+    effacerBrouillonNote()
     onEnregistrer({
       id: noteInitiale?.id,
       titre: titre.trim(),
@@ -111,6 +136,15 @@ export default function SurgaNoteEditor({
           <X size={18} color="var(--text2, #5A4E42)" />
         </button>
       </div>
+
+      {repris && (
+        <div role="status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', padding: '8px 10px', borderRadius: 8, backgroundColor: 'var(--surga-bg, #F8FAFC)', border: '1px solid var(--surga-border, #E2E8F0)', fontSize: 12, color: 'var(--surga-text2, #475569)' }}>
+          <span>Brouillon repris : ce texte n’avait pas été enregistré.</span>
+          <button type="button" onClick={abandonnerBrouillon} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-text, #92400E)' }}>
+            Effacer le brouillon
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>

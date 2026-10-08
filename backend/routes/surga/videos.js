@@ -39,7 +39,7 @@ router.get('/videos/sources', tokenOptional, async (req, res) => {
       total: sourcesEnrichies.length,
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -61,7 +61,7 @@ router.get('/videos/abonnements', verifierToken, async (req, res) => {
       total: abonnements.length,
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -93,7 +93,7 @@ router.post('/videos/abonnements/:sourceId/toggle', verifierToken, async (req, r
     });
   } catch (err) {
     if (err.code === 'ENREGISTREMENT_IMPOSSIBLE') return res.status(503).json({ success: false, error: err.message });
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -121,7 +121,7 @@ router.get('/videos/derniers', tokenOptional, async (req, res) => {
       total: videos.length,
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 

@@ -247,19 +247,24 @@ export default async function RootLayout({
           </a>
         )}
 
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-3KGE1YBMVJ"
-          strategy="lazyOnload"
-          nonce={nonce}
-        />
-        <Script id="ga4-init" strategy="lazyOnload" nonce={nonce}>
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-3KGE1YBMVJ');
-          `}
-        </Script>
+        {/* SRG-A3-009 / D48 : aucun traceur tiers sur Surga. */}
+        {!isSurga && (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-3KGE1YBMVJ"
+              strategy="lazyOnload"
+              nonce={nonce}
+            />
+            <Script id="ga4-init" strategy="lazyOnload" nonce={nonce}>
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-3KGE1YBMVJ');
+              `}
+            </Script>
+          </>
+        )}
 
         {!isSurga && (
           <header role="banner">

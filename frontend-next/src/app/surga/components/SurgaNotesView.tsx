@@ -24,6 +24,7 @@ import {
 } from '@/lib/surga-offline-sync'
 import SurgaNoteCard from './SurgaNoteCard'
 import SurgaNoteEditor from './SurgaNoteEditor'
+import { lireBrouillonNote, garderBrouillonNote, effacerBrouillonNote, type BrouillonNote } from '@/lib/surga-brouillon-note'
 
 type FiltreCategorie = 'toutes' | 'epingles' | SurgaNoteCategorie
 
@@ -43,6 +44,9 @@ export default function SurgaNotesView() {
   const [filtreActif, setFiltreActif] = useState<FiltreCategorie>('toutes')
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const [noteEnEdition, setNoteEnEdition] = useState<SurgaNote | null>(null)
+  // SRG-A3-007 : note en cours d'écriture laissée sans enregistrement (rechargement, retour, changement d'onglet).
+  const [brouillon, setBrouillon] = useState<BrouillonNote | null>(null)
+  useEffect(() => { if (!isEditing) setBrouillon(lireBrouillonNote()) }, [isEditing])
   const [notification, setNotification] = useState<string | null>(null)
 
   const chargerNotes = () => {
@@ -108,6 +112,15 @@ export default function SurgaNotesView() {
   }
 
   const handleOuvrirEdition = (note: SurgaNote) => {
+    setNoteEnEdition(note)
+    setIsEditing(true)
+  }
+
+  const handleReprendreBrouillon = () => {
+    if (!brouillon) return
+    const note = brouillon.id ? notes.find((n) => n.id === brouillon.id) || null : null
+    // La note d'origine n'existe plus : son brouillon devient celui d'une nouvelle note.
+    if (brouillon.id && !note) garderBrouillonNote({ ...brouillon, id: null })
     setNoteEnEdition(note)
     setIsEditing(true)
   }
@@ -321,6 +334,16 @@ export default function SurgaNotesView() {
         >
           <CheckCircle2 size={15} />
           <span>{notification}</span>
+        </div>
+      )}
+
+      {!isEditing && brouillon && (
+        <div role="status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, backgroundColor: 'var(--surga-surface, #FFFFFF)', border: '1px solid var(--surga-border, #E2E8F0)', fontSize: 13, color: 'var(--surga-text1, #0F172A)' }}>
+          <span style={{ minWidth: 0, wordBreak: 'break-word' }}>Une note n’a pas été enregistrée{brouillon.titre.trim() ? ` : « ${brouillon.titre.trim()} »` : ''}.</span>
+          <span style={{ display: 'inline-flex', gap: 14, flexShrink: 0 }}>
+            <button type="button" onClick={handleReprendreBrouillon} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--surga-accent-text, #92400E)' }}>Reprendre</button>
+            <button type="button" onClick={() => { effacerBrouillonNote(); setBrouillon(null) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--surga-text2, #475569)' }}>Effacer</button>
+          </span>
         </div>
       )}
 
