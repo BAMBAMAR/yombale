@@ -466,6 +466,7 @@ async function getEtatTraficComplet(options = {}) {
       SELECT axe_id, type_signalement, commentaire, created_at
       FROM surga_trafic_signalements
       WHERE created_at >= NOW() - INTERVAL '45 minutes'
+        AND statut <> 'rejete' -- un signalement écarté par la modération n'est plus montré
       ORDER BY created_at DESC
     `);
     for (const row of resSig.rows) {

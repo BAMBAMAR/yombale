@@ -109,7 +109,7 @@ router.get('/trafic/axes', (req, res) => {
  * POST /api/surga/trafic/signalements
  * Enregistrer un signalement de ralentissement / accident
  */
-router.post('/trafic/signalements', tokenOptional, async (req, res) => {
+router.post('/trafic/signalements', require('../../middlewares/surga-limites').limiterSignalement, tokenOptional, async (req, res) => {
   try {
     const { axeId, typeSignalement, commentaire } = req.body;
     if (!axeId || !typeSignalement) {

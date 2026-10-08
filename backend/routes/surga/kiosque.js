@@ -2,6 +2,7 @@
 // Route API pour le Kiosque des Unes de la presse sénégalaise
 
 const express = require('express');
+const { requireAdminAuth } = require('../../middlewares/admin-rbac');
 const router = express.Router();
 const { recupererUnesDuJour, synchroniserUnesProjetBi } = require('../../services/surga/kiosque-service');
 
@@ -31,7 +32,8 @@ router.get('/kiosque', async (req, res) => {
 
 // POST /api/surga/kiosque/sync
 // Force la synchronisation des Unes depuis ProjetBI (LE-PROJET)
-router.post('/kiosque/sync', async (req, res) => {
+// SRG-A1-014 : déclencheur réservé à l'administration ; l'application ne l'appelle pas.
+router.post('/kiosque/sync', requireAdminAuth, async (req, res) => {
   try {
     const result = await synchroniserUnesProjetBi();
     const unes = await recupererUnesDuJour({ limit: 50 });

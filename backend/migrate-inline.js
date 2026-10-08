@@ -3228,6 +3228,9 @@ module.exports = async function migrateInline(customConnStr = null) {
        created_at TIMESTAMPTZ DEFAULT NOW()
      )`,
     `CREATE INDEX IF NOT EXISTS idx_surga_trafic_signalements_date ON surga_trafic_signalements(axe_id, created_at DESC)`,
+    // SRG-A1-003 : la console modère les signalements par un statut que la table n'avait pas (onglet en erreur 500).
+    `ALTER TABLE surga_trafic_signalements ADD COLUMN IF NOT EXISTS statut VARCHAR(20) NOT NULL DEFAULT 'en_attente'`,
+    `ALTER TABLE surga_trafic_signalements ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`,
     // D71 : compteur mensuel des appels au fournisseur de trafic, pour rester sous le seuil gratuit.
     `CREATE TABLE IF NOT EXISTS surga_trafic_appels (
        mois VARCHAR(7) PRIMARY KEY,

@@ -121,7 +121,8 @@ router.get('/briefing', tokenOptional, async (req, res) => {
 
 // POST /api/surga/briefing/refresh
 // Force l'actualisation des flux RSS
-router.post('/briefing/refresh', tokenOptional, async (req, res) => {
+// SRG-A1-014 : déclencheur réservé à l'administration ; l'application ne l'appelle pas.
+router.post('/briefing/refresh', require('../../middlewares/admin-rbac').requireAdminAuth, async (req, res) => {
   try {
     const resultat = await collecterTousLesFlux();
     res.json({

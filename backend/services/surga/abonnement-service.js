@@ -626,7 +626,7 @@ async function listerAbonnementsAdmin({ page = 1, limit = 20, statut, plan } = {
       a.id, a.user_id, a.phone, a.plan, a.cycle, a.montant_xof,
       a.provider, a.statut, a.reference_paiement, a.client_metadata,
       a.debut, a.fin, a.created_at,
-      u.email, u.nom_complet
+      u.email, u.nom AS nom_complet
     FROM surga_abonnements a
     LEFT JOIN utilisateurs u ON a.user_id = u.id
     ${whereClause}

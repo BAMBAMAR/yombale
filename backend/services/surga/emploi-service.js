@@ -271,6 +271,58 @@ async function incrementerUsage(userId, service, periode) {
 }
 
 /**
+ * SRG-A1-023 : prend une unité du quota si la limite n'est pas atteinte, en une seule instruction.
+ * Lire le compteur puis l'augmenter plus tard laissait passer dix demandes simultanées pour un quota de un.
+ * Rend true si l'unité est prise, false si le quota est déjà consommé.
+ */
+async function reserverUsage(userId, service, periode, limite) {
+  if (!userId) return false;
+
+  if (pool) {
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO surga_usages (user_id, service, periode, quantite, updated_at)
+         VALUES ($1, $2, $3, 1, NOW())
+         ON CONFLICT (user_id, service, periode)
+         DO UPDATE SET quantite = surga_usages.quantite + 1, updated_at = NOW()
+         WHERE surga_usages.quantite < $4
+         RETURNING quantite`,
+        [userId, service, periode, limite]
+      );
+      return rows.length > 0;
+    } catch (err) {
+      if (!process.env.JEST_WORKER_ID) throw err;
+    }
+  }
+
+  const key = `${userId}:${service}:${periode}`;
+  const actuel = usagesMemoire.get(key) || 0;
+  if (actuel >= limite) return false;
+  usagesMemoire.set(key, actuel + 1);
+  return true;
+}
+
+/**
+ * Rend une unité prise par reserverUsage quand la suite a échoué : la personne ne perd pas son quota sur une panne.
+ */
+async function libererUsage(userId, service, periode) {
+  if (!userId) return;
+  if (pool) {
+    try {
+      await pool.query(
+        'UPDATE surga_usages SET quantite = GREATEST(quantite - 1, 0), updated_at = NOW() WHERE user_id = $1 AND service = $2 AND periode = $3',
+        [userId, service, periode]
+      );
+      return;
+    } catch (err) {
+      if (!process.env.JEST_WORKER_ID) return;
+    }
+  }
+  const key = `${userId}:${service}:${periode}`;
+  usagesMemoire.set(key, Math.max((usagesMemoire.get(key) || 0) - 1, 0));
+}
+
+/**
  * Vérifie les droits de génération d'un CV (Gratuit 1 avec mention, Payant sans mention)
  */
 async function verifierDroitCv(userId) {
@@ -977,6 +1029,9 @@ module.exports = {
   evaluerReponseEntretien,
   genererFicheRevisionEntretien,
   incrementerUsage,
+  reserverUsage,
+  libererUsage,
+  getPeriodeSemaineCourante,
   sauvegarderDocumentEmploi,
   getDocumentEmploi,
   listerDocumentsUtilisateur,

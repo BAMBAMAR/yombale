@@ -5,7 +5,9 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../../models/db');
-const { tokenOptional } = require('../../middlewares/surga-auth');
+const { tokenOptional, verifierToken } = require('../../middlewares/surga-auth');
+const { limiterPush } = require('../../middlewares/surga-limites');
+const { hotePushAutorise } = require('../../services/surga/push-hotes');
 
 const REPETITIONS_AUTORISEES = ['AUCUNE', 'QUOTIDIEN', 'HEBDOMADAIRE', 'MENSUEL'];
 
@@ -255,79 +257,95 @@ router.get('/push/vapid-key', async (req, res) => {
   }
 });
 
+// SRG-A1-012 : les trois routes exigent un compte. Un invité reçoit ses rappels par l'appareil seul ; l'envoi
+// par le serveur ne concerne que les comptes. L'appelant n'agit que sur ses propres abonnements.
+
 // POST /api/surga/push/subscribe
-router.post('/push/subscribe', tokenOptional, async (req, res) => {
+router.post('/push/subscribe', limiterPush, verifierToken, async (req, res) => {
   try {
-    const userId = req.user?.userId || req.user?.id || null;
-    const { subscription, userAgent } = req.body;
+    const userId = req.user.userId;
+    const { subscription, userAgent } = req.body || {};
 
     if (!subscription || !subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
       return res.status(400).json({ success: false, error: 'Payload d’abonnement Web Push invalide' });
     }
+    if (!hotePushAutorise(subscription.endpoint)) {
+      return res.status(400).json({ success: false, error: 'Adresse de notification non reconnue' });
+    }
 
     const { endpoint, keys } = subscription;
 
-    await pool.query(
+    // Une adresse déjà enregistrée par un autre compte ne change de propriétaire que si l'appelant présente les
+    // clés déjà connues : seul le navigateur qui détient l'abonnement les a (appareil partagé, changement de
+    // compte). Connaître l'adresse ne suffit plus à s'approprier l'abonnement ni à en remplacer les clés.
+    const { rows } = await pool.query(
       `INSERT INTO surga_push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, updated_at)
        VALUES ($1, $2, $3, $4, $5, NOW())
        ON CONFLICT (endpoint) DO UPDATE SET
-         user_id = COALESCE(EXCLUDED.user_id, surga_push_subscriptions.user_id),
+         user_id = EXCLUDED.user_id,
          p256dh = EXCLUDED.p256dh,
          auth = EXCLUDED.auth,
          user_agent = EXCLUDED.user_agent,
-         updated_at = NOW()`,
-      [userId, endpoint, keys.p256dh, keys.auth, userAgent || req.headers['user-agent'] || null]
+         updated_at = NOW()
+       WHERE surga_push_subscriptions.user_id IS NULL
+          OR surga_push_subscriptions.user_id::text = EXCLUDED.user_id::text
+          OR (surga_push_subscriptions.p256dh = EXCLUDED.p256dh AND surga_push_subscriptions.auth = EXCLUDED.auth)
+       RETURNING endpoint`,
+      [userId, endpoint, keys.p256dh, keys.auth, String(userAgent || req.headers['user-agent'] || '').slice(0, 300) || null]
     );
+    if (rows.length === 0) {
+      return res.status(409).json({ success: false, error: 'Cet abonnement appartient à un autre compte' });
+    }
 
     return res.json({ success: true, message: 'Abonnement Web Push enregistré avec succès' });
   } catch (err) {
-    console.error('[SURGA PUSH SUBSCRIBE ERROR]:', err);
+    console.error('[SURGA PUSH SUBSCRIBE ERROR]:', err.message);
     return res.status(500).json({ success: false, error: 'Erreur enregistrement abonnement Web Push' });
   }
 });
 
 // POST /api/surga/push/unsubscribe
-router.post('/push/unsubscribe', async (req, res) => {
+router.post('/push/unsubscribe', limiterPush, verifierToken, async (req, res) => {
   try {
-    const { endpoint } = req.body;
+    const { endpoint } = req.body || {};
     if (!endpoint) {
       return res.status(400).json({ success: false, error: 'Endpoint requis' });
     }
 
-    await pool.query('DELETE FROM surga_push_subscriptions WHERE endpoint = $1', [endpoint]);
-    return res.json({ success: true, message: 'Désabonnement réussi' });
+    const { rowCount } = await pool.query(
+      'DELETE FROM surga_push_subscriptions WHERE endpoint = $1 AND user_id::text = $2::text',
+      [endpoint, req.user.userId]
+    );
+    return res.json({ success: true, retire: rowCount > 0, message: 'Désabonnement réussi' });
   } catch (err) {
-    console.error('[SURGA PUSH UNSUBSCRIBE ERROR]:', err);
+    console.error('[SURGA PUSH UNSUBSCRIBE ERROR]:', err.message);
     return res.status(500).json({ success: false, error: 'Erreur désabonnement' });
   }
 });
 
-// POST /api/surga/push/test
-router.post('/push/test', tokenOptional, async (req, res) => {
+// POST /api/surga/push/test : envoie vers les abonnements enregistrés de l'appelant, jamais vers une adresse du corps.
+router.post('/push/test', limiterPush, verifierToken, async (req, res) => {
   try {
-    const userId = req.user?.userId || req.user?.id;
-    const { subscription } = req.body;
     const { sendWebPushNotification } = require('../../lib/vapidHelper');
-
-    const targetSub = subscription || (userId ? (await pool.query('SELECT endpoint, p256dh, auth FROM surga_push_subscriptions WHERE user_id = $1 LIMIT 1', [userId])).rows[0] : null);
-
-    if (!targetSub || !targetSub.endpoint) {
+    const { rows } = await pool.query(
+      'SELECT endpoint, p256dh, auth FROM surga_push_subscriptions WHERE user_id::text = $1::text ORDER BY updated_at DESC LIMIT 1',
+      [req.user.userId]
+    );
+    if (rows.length === 0) {
       return res.status(400).json({ success: false, error: 'Aucun abonnement Web Push trouvé pour le test' });
     }
 
-    const testPayload = {
+    const result = await sendWebPushNotification(rows[0], {
       title: 'Surga — Test de notification',
       body: 'Le système de notifications Web Push est opérationnel.',
       icon: '/surga/icon-192.png',
       badge: '/surga/icon-192.png',
       url: '/surga?tab=agenda',
       tag: 'surga-test-notif',
-    };
-
-    const result = await sendWebPushNotification(targetSub, testPayload);
-    return res.json({ success: result.success, result });
+    });
+    return res.json({ success: result.success, statusCode: result.statusCode });
   } catch (err) {
-    console.error('[SURGA PUSH TEST ERROR]:', err);
+    console.error('[SURGA PUSH TEST ERROR]:', err.message);
     return res.status(500).json({ success: false, error: 'Erreur test push' });
   }
 });

@@ -17,7 +17,7 @@ const { interpreterCommandeVocale } = require('../../services/surga/voice-interp
 
 // POST /api/surga/audio/interpret
 // Interprète une commande vocale via architecture hybride L0 Fast Path + L1 Structured Output
-router.post('/audio/interpret', async (req, res) => {
+router.post('/audio/interpret', require('../../middlewares/surga-limites').limiterInterprete, async (req, res) => {
   try {
     const { texte } = req.body || {};
     if (!texte || typeof texte !== 'string') {

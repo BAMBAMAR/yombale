@@ -9,7 +9,7 @@ const { traiterRequeteSurgaAssistant } = require('../../services/surga/assistant
  * POST /api/surga/assistant
  * Traite une requête de l'Omnibar Surga (rédaction, question, action locale, navigation)
  */
-router.post('/assistant', async (req, res) => {
+router.post('/assistant', require('../../middlewares/surga-limites').limiterInterprete, async (req, res) => {
   // D52 / SRG-A4-018 : l'assistant ne fait pas partie du lancement. Route fermée côté serveur tant que l'interrupteur
   // est éteint : elle acceptait des appels au modèle de langage sans compte, sans plafond et sans borne de taille.
   if (!require('../../services/surga/interrupteurs').assistantActif()) {

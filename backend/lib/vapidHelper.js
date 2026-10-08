@@ -87,6 +87,13 @@ async function getVapidPublicKey() {
  */
 async function sendWebPushNotification(subscription, payload) {
   try {
+    // SRG-A1-012 : aucune connexion vers une adresse qui n'est pas celle d'un service de notification. Une ligne
+    // enregistrée avant ce contrôle est rendue comme expirée : l'appelant la retire.
+    const { hotePushAutorise } = require('../services/surga/push-hotes');
+    if (!subscription || !hotePushAutorise(subscription.endpoint)) {
+      return { success: false, statusCode: 400, expired: true, error: 'Adresse de notification non reconnue' };
+    }
+
     await initVapid();
 
     const pushSubscription = {

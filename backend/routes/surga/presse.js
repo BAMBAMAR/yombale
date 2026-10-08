@@ -4,6 +4,7 @@
 // Sourcing strict : résumés courts (< 180 car), lien obligatoire vers la source originale
 
 const express = require('express');
+const limites = require('../../middlewares/surga-limites');
 const router = express.Router();
 const {
   recupererRevuePresse,
@@ -42,8 +43,16 @@ router.get('/presse', async (req, res) => {
 
 // POST /api/surga/presse/refresh
 // Force l'ingestion des derniers flux RSS d'actualité et la synchronisation du Kiosque ProjetBI
-router.post('/presse/refresh', async (req, res) => {
+// SRG-A1-014 : une collecte par tranche de cinq minutes, quel que soit le nombre de visiteurs qui la demandent.
+const ECART_ENTRE_COLLECTES_MS = 5 * 60 * 1000;
+let derniereCollecteLe = 0;
+
+router.post('/presse/refresh', limites.limiterDeclencheur, async (req, res) => {
   try {
+    if (Date.now() - derniereCollecteLe < ECART_ENTRE_COLLECTES_MS) {
+      return res.json({ success: true, deja_a_jour: true, totalNouveaux: 0, totalUnes: 0, message: 'La presse vient d’être actualisée.' });
+    }
+    derniereCollecteLe = Date.now();
     const [result, resultUnes] = await Promise.all([
       collecterTousLesFlux(),
       synchroniserUnesProjetBi().catch(() => ({ total: 0 })),

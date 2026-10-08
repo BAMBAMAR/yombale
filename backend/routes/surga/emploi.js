@@ -158,18 +158,34 @@ router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
       });
     }
 
-    const titre = `CV - ${nomComplet} (${titrePoste || 'Professionnel'})`;
-    const doc = await emploiService.sauvegarderDocumentEmploi({
-      userId,
-      type: 'CV',
-      titre,
-      contenu: profil,
-      modele,
-      estAchete: !droit.avecMention,
-    });
+    // SRG-A1-023 : le CV gratuit est pris avant la génération, en une instruction ; des demandes simultanées
+    // n'en obtiennent qu'un.
+    const cvGratuit = droit.motif === 'gratuit_decouverte';
+    if (cvGratuit && !(await emploiService.reserverUsage(userId, 'cv_generation', 'global', 1))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Vous avez déjà généré votre CV gratuit. Passez à Surga Premium ou débloquez ce CV sans mention pour 500 FCFA.',
+        motif: 'limite_atteinte',
+        quotaAtteint: true,
+        prix_acte_xof: 500,
+        requireAuth: !!req.user.guest,
+      });
+    }
 
-    if (droit.motif === 'gratuit_decouverte') {
-      await emploiService.incrementerUsage(userId, 'cv_generation', 'global');
+    const titre = `CV - ${nomComplet} (${titrePoste || 'Professionnel'})`;
+    let doc;
+    try {
+      doc = await emploiService.sauvegarderDocumentEmploi({
+        userId,
+        type: 'CV',
+        titre,
+        contenu: profil,
+        modele,
+        estAchete: !droit.avecMention,
+      });
+    } catch (erreur) {
+      if (cvGratuit) await emploiService.libererUsage(userId, 'cv_generation', 'global');
+      throw erreur;
     }
 
     // Si le client préfère recevoir directement le binaire PDF
@@ -239,6 +255,20 @@ router.post('/emploi/lettre/generer', identifierSurgaUser, async (req, res) => {
       });
     }
 
+    // SRG-A1-023 : la lettre gratuite du mois est prise avant la génération, en une instruction.
+    const moisCourant = new Date();
+    const periodeLettre = `${moisCourant.getFullYear()}-${String(moisCourant.getMonth() + 1).padStart(2, '0')}`;
+    const lettreGratuite = droit.motif === 'gratuit_mensuel';
+    if (lettreGratuite && !(await emploiService.reserverUsage(userId, 'lettre_generation', periodeLettre, 1))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Vous avez atteint votre quota gratuit d une lettre de motivation ce mois-ci. Passez à Surga Premium pour continuer.',
+        motif: 'limite_atteinte',
+        quotaAtteint: true,
+        requireAuth: !!req.user.guest,
+      });
+    }
+
     const proposition = emploiService.genererPropositionLettre({
       profil,
       titrePosteOffre,
@@ -247,18 +277,22 @@ router.post('/emploi/lettre/generer', identifierSurgaUser, async (req, res) => {
     });
 
     const titre = `Lettre de motivation - ${titrePosteOffre || profil.titre_poste || 'Candidature'}`;
-    const doc = await emploiService.sauvegarderDocumentEmploi({
-      userId,
-      type: 'LETTRE',
-      titre,
-      contenu: proposition,
-      modele: 'sobre_moderne',
-      offreTexte,
-    });
-
-    const d = new Date();
-    const periode = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    await emploiService.incrementerUsage(userId, 'lettre_generation', periode);
+    let doc;
+    try {
+      doc = await emploiService.sauvegarderDocumentEmploi({
+        userId,
+        type: 'LETTRE',
+        titre,
+        contenu: proposition,
+        modele: 'sobre_moderne',
+        offreTexte,
+      });
+    } catch (erreur) {
+      if (lettreGratuite) await emploiService.libererUsage(userId, 'lettre_generation', periodeLettre);
+      throw erreur;
+    }
+    // Un compte Premium n'a pas de quota : son usage est seulement compté.
+    if (!lettreGratuite) await emploiService.incrementerUsage(userId, 'lettre_generation', periodeLettre);
 
     if (req.query.format === 'pdf' || req.headers.accept?.includes('application/pdf')) {
       const filename = `lettre_${doc.id}.pdf`;
@@ -432,15 +466,14 @@ router.post('/emploi/entretien/session', identifierSurgaUser, async (req, res) =
       });
     }
 
-    if (!droits.estPremium) {
-      const d = new Date();
-      const annee = d.getFullYear();
-      const premierJanvier = new Date(annee, 0, 1);
-      const nbJours = Math.floor((d - premierJanvier) / (24 * 60 * 60 * 1000));
-      const semaine = Math.ceil((nbJours + premierJanvier.getDay() + 1) / 7);
-      const periode = `${annee}-W${String(semaine).padStart(2, '0')}`;
-
-      await emploiService.incrementerUsage(userId, 'entretien_simulation', periode);
+    // SRG-A1-023 : la simulation gratuite de la semaine est prise en une instruction, sur la même période que
+    // celle que lit le contrôle des droits.
+    if (!droits.estPremium && !(await emploiService.reserverUsage(userId, 'entretien_simulation', emploiService.getPeriodeSemaineCourante(), 1))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Quota hebdomadaire atteint (1 simulation gratuite par semaine). Passez à Surga Premium pour vous entraîner sans limite.',
+        quotaAtteint: true,
+      });
     }
 
     return res.json({

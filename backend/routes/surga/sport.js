@@ -83,22 +83,30 @@ router.get('/sport', tokenOptional, async (req, res) => {
 // Sauvegarde les équipes favorites de l'utilisateur
 router.post('/sport/mes-equipes', tokenOptional, async (req, res) => {
   try {
-    const { equipes } = req.body;
-    if (!Array.isArray(equipes)) {
+    const recues = req.body?.equipes;
+    if (!Array.isArray(recues)) {
       return res.status(400).json({ success: false, error: 'Format invalide (liste attendue)' });
     }
+    // Des noms d'équipes, rien d'autre : textes courts, sans doublon, trente au plus.
+    const equipes = [...new Set(recues.filter((e) => typeof e === 'string').map((e) => e.trim().slice(0, 80)).filter(Boolean))].slice(0, 30);
 
-    if (req.user?.userId) {
+    // SRG-A1-015 : la liste était passée telle quelle à une colonne JSONB ; le pilote en faisait un tableau
+    // PostgreSQL, refusé par la base (500 pour tout compte connecté). Elle part désormais en JSON, et la ligne des
+    // préférences est créée si le compte n'en a pas encore.
+    const enregistre = Boolean(req.user?.userId);
+    if (enregistre) {
       await pool.query(
-        `UPDATE surga_preferences
-         SET equipes_suivies = $1, updated_at = NOW()
-         WHERE user_id = $2`,
-        [equipes, req.user.userId]
+        `INSERT INTO surga_preferences (user_id, equipes_suivies)
+         VALUES ($2, $1::jsonb)
+         ON CONFLICT (user_id) DO UPDATE SET equipes_suivies = EXCLUDED.equipes_suivies, updated_at = NOW()`,
+        [JSON.stringify(equipes), req.user.userId]
       );
     }
 
     res.json({
       success: true,
+      // Un invité garde ses équipes sur son appareil : rien n'est écrit pour lui sur le serveur.
+      enregistre,
       message: 'Équipes favorites mises à jour avec succès',
       equipes_suivies: equipes,
     });

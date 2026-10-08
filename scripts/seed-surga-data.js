@@ -4,6 +4,18 @@
 // Zéro émoji, vouvoiement strict D19
 
 require('dotenv').config();
+
+// SRG-A1-031 : ce script écrit dans la base désignée par la configuration chargée. Le fichier .env du dépôt peut
+// désigner la production : sans accord explicite, il ne s'exécute que sur une base locale.
+{
+  const base = process.env.DATABASE_URL || '';
+  const locale = /@(127\.0\.0\.1|localhost)[:/]/.test(base);
+  if (!locale && process.env.SEED_SURGA_BASE_DISTANTE !== 'oui') {
+    console.error('[SEED SURGA] Refus : la base configurée n\'est pas locale. Pour l\'exécuter quand même, poser SEED_SURGA_BASE_DISTANTE=oui.');
+    process.exit(1);
+  }
+}
+
 const { pool } = require('../backend/models/db');
 
 async function seedSurgaData() {

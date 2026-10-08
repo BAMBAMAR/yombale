@@ -143,7 +143,7 @@ router.delete('/demarches/:id/suivis', verifierToken, async (req, res) => {
  * POST /api/surga/demarches/:id/signalements
  * Signale une inexactitude ou une erreur sur une démarche (Fiche éditoriale)
  */
-router.post('/demarches/:id/signalements', tokenOptional, async (req, res) => {
+router.post('/demarches/:id/signalements', require('../../middlewares/surga-limites').limiterSignalement, tokenOptional, async (req, res) => {
   try {
     const { id } = req.params;
     const { message, contact_email } = req.body || {};

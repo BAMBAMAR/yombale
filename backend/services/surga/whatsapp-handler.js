@@ -679,7 +679,8 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
   if (parseResult.intention === 'SEARCH_DEMARCHES') {
     try {
       const { rechercherDemarches } = require('./demarches-service');
-      const demarches = await rechercherDemarches(parseResult.query);
+      // rechercherDemarches attend un objet et rend { fiches } : l'appel passait un texte et lisait un tableau.
+      const demarches = (await rechercherDemarches({ query: parseResult.query })).fiches || [];
 
       if (!demarches || demarches.length === 0) {
         await sendWhatsAppText(

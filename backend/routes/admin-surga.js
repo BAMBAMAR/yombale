@@ -23,6 +23,40 @@ router.use(requireAdminAuth);
 router.use(require('../middlewares/surga-base').exigerBase);
 router.use(requireAdminRole('super_admin', 'admin_operationnel', 'moderateur'));
 
+// SRG-A1-016, D38 : ce qui touche à l'argent ou à l'offre (formule accordée, tarif, statut d'un abonnement) et les
+// canaux officiels n'est pas ouvert au modérateur.
+const reserveAuxFinances = requireAdminRole('super_admin', 'finance', 'admin_operationnel');
+
+// SRG-A1-016 : toute écriture réussie de la console laisse une ligne au journal d'audit de l'administration.
+// Posé une fois ici plutôt que dans chaque route : une route ajoutée demain est tracée d'office.
+router.use((req, res, next) => {
+  if (req.method === 'GET') return next();
+  res.on('finish', () => {
+    if (res.statusCode >= 400) return;
+    const cible = req.path.split('/').filter(Boolean);
+    enregistrerAdminLog({
+      req,
+      adminRole: req.adminUser?.role,
+      action: `surga_${req.method.toLowerCase()}_${cible[0] || 'racine'}`,
+      cibleType: `surga_${cible[0] || 'racine'}`,
+      cibleId: cible[1] || null,
+      description: `${req.method} /api/admin/surga${req.path}`,
+      nouvelleValeur: resumerCorps(req.body),
+    }).catch(() => {});
+  });
+  next();
+});
+
+// Ce que le journal garde d'une écriture : les noms des champs et les valeurs courtes, jamais un texte long.
+function resumerCorps(corps) {
+  if (!corps || typeof corps !== 'object') return null;
+  const resume = {};
+  for (const [cle, valeur] of Object.entries(corps).slice(0, 20)) {
+    resume[cle] = ['string', 'number', 'boolean'].includes(typeof valeur) ? String(valeur).slice(0, 80) : '(objet)';
+  }
+  return resume;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. STATISTIQUES GLOBALES SURGA
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,9 +224,6 @@ router.post('/places', async (req, res) => {
       ]
     );
 
-    if (enregistrerAdminLog) {
-      enregistrerAdminLog(req, 'surga_place_creee', { id, nom });
-    }
 
     res.json({ success: true, place: insertRes.rows[0] });
   } catch (err) {
@@ -644,7 +675,7 @@ router.get('/signalements', async (req, res) => {
     let i = 1;
 
     if (statut && statut !== 'tous') {
-      conds.push(`statut = $${i}`);
+      conds.push(`s.statut = $${i}`);
       vals.push(statut);
       i++;
     }
@@ -653,7 +684,7 @@ router.get('/signalements', async (req, res) => {
     const { rows } = await pool.query(
       `SELECT s.*, u.nom AS utilisateur_nom, u.telephone AS utilisateur_tel
        FROM surga_trafic_signalements s
-       LEFT JOIN utilisateurs u ON u.id = s.utilisateur_id
+       LEFT JOIN utilisateurs u ON u.id = s.user_id
        ${where}
        ORDER BY s.created_at DESC
        LIMIT 100`,
@@ -756,7 +787,7 @@ router.get('/abonnements', async (req, res) => {
   }
 });
 
-router.put('/abonnements/:id/statut', async (req, res) => {
+router.put('/abonnements/:id/statut', reserveAuxFinances, async (req, res) => {
   try {
     const { id } = req.params;
     const { statut } = req.body;
@@ -796,7 +827,7 @@ router.get('/plans', async (req, res) => {
   }
 });
 
-router.post('/plans', async (req, res) => {
+router.post('/plans', reserveAuxFinances, async (req, res) => {
   try {
     const { id, nom, type, description, tarifMensuel, tarifAnnuel, avantages, badgePromo } = req.body;
     if (!nom || tarifMensuel === undefined || tarifAnnuel === undefined) {
@@ -809,7 +840,7 @@ router.post('/plans', async (req, res) => {
   }
 });
 
-router.put('/plans/:id', async (req, res) => {
+router.put('/plans/:id', reserveAuxFinances, async (req, res) => {
   try {
     const { id } = req.params;
     const { nom, description, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo } = req.body;
@@ -820,7 +851,7 @@ router.put('/plans/:id', async (req, res) => {
   }
 });
 
-router.delete('/plans/:id', async (req, res) => {
+router.delete('/plans/:id', reserveAuxFinances, async (req, res) => {
   try {
     const { id } = req.params;
     await supprimerPlan(id);
@@ -878,7 +909,7 @@ router.get('/utilisateurs', async (req, res) => {
 
     if (q) {
       params.push(`%${q}%`);
-      conditions.push(`(u.nom_complet ILIKE $${params.length} OR u.telephone ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+      conditions.push(`(u.nom ILIKE $${params.length} OR u.telephone ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
     }
 
     if (statut === 'premium') {
@@ -898,8 +929,8 @@ router.get('/utilisateurs', async (req, res) => {
     params.push(parseInt(limit, 10), offset);
     const query = `
       SELECT
-        u.id, u.nom_complet, u.telephone, u.email, u.created_at,
-        p.quartier as quartier_prefere, p.heure_briefing, p.equipe_sport,
+        u.id, u.nom AS nom_complet, u.telephone, u.email, u.created_at,
+        p.quartiers->>0 AS quartier_prefere, p.heure_briefing, p.equipes_suivies,
         (
           SELECT a.plan
           FROM surga_abonnements a
@@ -939,7 +970,7 @@ router.get('/utilisateurs', async (req, res) => {
   }
 });
 
-router.put('/utilisateurs/:id/premium', async (req, res) => {
+router.put('/utilisateurs/:id/premium', reserveAuxFinances, async (req, res) => {
   try {
     const { id } = req.params;
     const { action = 'accorder', mois = 1, plan = 'b2c_premium' } = req.body;
@@ -1017,7 +1048,7 @@ router.get('/canaux', (req, res) => {
   res.json({ success: true, canaux: canauxMemoire });
 });
 
-router.put('/canaux', (req, res) => {
+router.put('/canaux', reserveAuxFinances, (req, res) => {
   try {
     const updates = req.body;
     canauxMemoire = {
@@ -1040,11 +1071,13 @@ router.post('/canaux/test-whatsapp', (req, res) => {
     if (!telephone) {
       return res.status(400).json({ success: false, error: 'Numéro de téléphone requis.' });
     }
-    // Simulation / déclenchement de message de test
-    res.json({
-      success: true,
-      message: `Message de test transmis avec succès vers ${telephone}.`,
-      contenu: message || canauxMemoire.templates_messages.bienvenue
+    // SRG-A1-016 : cette route répondait « transmis avec succès » sans rien envoyer. WhatsApp est éteint pour
+    // Surga (D51) : elle le dit, au lieu de simuler un envoi.
+    void message;
+    res.status(503).json({
+      success: false,
+      code: 'CANAL_ETEINT',
+      error: 'Aucun message n’a été envoyé : le canal WhatsApp de Surga n’est pas ouvert.',
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
