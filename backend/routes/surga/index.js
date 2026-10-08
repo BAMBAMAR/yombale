@@ -4,6 +4,12 @@
 const express = require('express');
 const router = express.Router();
 const { exigerBase } = require('../../middlewares/surga-base');
+const { surveillance, demarrerVeille } = require('../../services/surga/surveillance');
+
+// SRG-A5-008 : chaque réponse est comptée par famille de routes (y compris les 503 de l'absence de base) ; au-dessus
+// du seuil d'erreurs 5xx, l'administrateur est alerté.
+router.use(surveillance().intergiciel);
+demarrerVeille({ erreurs: true });
 
 // Sans base, aucune route ne répond depuis un repli en mémoire (sauf météo, scores et radios, qui n'en dépendent pas).
 router.use(exigerBase);

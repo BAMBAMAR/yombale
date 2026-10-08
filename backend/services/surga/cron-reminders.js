@@ -5,6 +5,7 @@
 const { pool } = require('../../models/db');
 const { sendWebPushNotification } = require('../../lib/vapidHelper');
 const { sendWhatsAppText, normalisePhone } = require('../whatsapp');
+const { surveillance, demarrerVeille } = require('./surveillance');
 
 let intervalId = null;
 let isProcessing = false;
@@ -287,21 +288,35 @@ async function traiterRappelsEchus(options = {}) {
 /**
  * Lance la boucle de surveillance des rappels
  */
+// SRG-A5-008 : chaque passage est tracé (cron_executions) et suivi ; un échec répété ou un arrêt alerte l'administrateur.
+async function passage() {
+  const suivi = surveillance();
+  try {
+    const stats = await traiterRappelsEchus();
+    await suivi.passageRappels(stats);
+    return stats;
+  } catch (err) {
+    await suivi.passageRappels(null, err);
+    throw err;
+  }
+}
+
 function demarrerCronRappels() {
   if (intervalId) return;
 
   console.log('[SURGA CRON]: Démarrage du worker de rappels (intervalle 60s)');
-  
+  demarrerVeille({ rappels: true });
+
   // Exécution immédiate au démarrage
   setTimeout(() => {
-    traiterRappelsEchus().catch(() => {});
+    passage().catch(() => {});
   }, 2000);
 
   intervalId = setInterval(async () => {
     if (isProcessing) return;
     isProcessing = true;
     try {
-      await traiterRappelsEchus();
+      await passage();
     } catch (err) {
       console.warn('[SURGA CRON TICK ERR]:', err.message);
     } finally {

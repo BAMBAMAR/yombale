@@ -60,6 +60,12 @@ function resumerCorps(corps) {
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. STATISTIQUES GLOBALES SURGA
 // ─────────────────────────────────────────────────────────────────────────────
+// SRG-A5-008 : santé de Surga : réponses et erreurs 5xx par famille de routes sur 5 minutes, dernier passage de
+// l'ordonnanceur de rappels. Compteurs du processus qui répond (remis à zéro à chaque redémarrage).
+router.get('/sante', (req, res) => {
+  res.json({ success: true, ...require('../services/surga/surveillance').surveillance().etat() });
+});
+
 router.get('/stats', async (req, res) => {
   try {
     if (!pool) {

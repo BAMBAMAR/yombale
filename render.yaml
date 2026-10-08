@@ -113,6 +113,9 @@ services:
       # Trafic mesuré : clé de l'API d'itinéraires de Google. Sans elle, la brique s'en tient aux signalements.
       - key: SURGA_GOOGLE_ROUTES_CLE
         sync: false
+      # Suivi des exceptions (SRG-A5-008) : actif seulement si la valeur est posée chez l'hébergeur.
+      - key: SENTRY_DSN
+        sync: false
 
       # ── Scrapers immo Facebook (optionnel) ───────────────────────────────────
       - key: FB_EMAIL
