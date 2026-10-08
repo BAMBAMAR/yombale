@@ -11,6 +11,7 @@ const {
 } = require('../../services/surga/rss-collector');
 const { getMeteo, VILLES_SENEGAL } = require('../../services/surga/meteo-service');
 const { filtrerMatchsSport, sportSourceMuette } = require('../../services/surga/sport-service');
+const { choixDepuisAdresse } = require('../../services/surga/preferences-saisie');
 
 // GET /api/surga/briefing
 // Génère et retourne le briefing structuré selon les préférences du profil
@@ -22,22 +23,38 @@ router.get('/briefing', tokenOptional, async (req, res) => {
     let quartierPrincipal = 'Dakar Plateau';
     let equipesSuivies = [];
 
+    // SRG-A2-011 : les choix que l'appareil joint à la demande (invité, ou compte pas encore configuré).
+    const choixAppareil = choixDepuisAdresse(req.query);
+    let ligneConfiguree = false;
+
     if (userId) {
       try {
         const { rows } = await pool.query(
-          'SELECT modules_actifs, heure_briefing, quartiers, equipes_suivies FROM surga_preferences WHERE user_id = $1',
+          'SELECT modules_actifs, heure_briefing, quartiers, equipes_suivies, onboarding_termine FROM surga_preferences WHERE user_id = $1',
           [userId]
         );
         if (rows.length > 0) {
           const pref = rows[0];
-          if (Array.isArray(pref.modules_actifs)) modulesActifs = pref.modules_actifs;
-          if (pref.heure_briefing) heureBriefing = pref.heure_briefing;
-          if (Array.isArray(pref.quartiers) && typeof pref.quartiers[0] === 'string' && pref.quartiers[0].trim()) quartierPrincipal = pref.quartiers[0];
-          if (Array.isArray(pref.equipes_suivies)) equipesSuivies = pref.equipes_suivies;
+          // La ligne d'un compte qui n'a pas fini sa configuration ne porte que des valeurs par défaut : elle ne
+          // doit pas masquer ce que l'appareil sait de ses choix.
+          ligneConfiguree = pref.onboarding_termine === true;
+          if (ligneConfiguree || !choixAppareil) {
+            if (Array.isArray(pref.modules_actifs)) modulesActifs = pref.modules_actifs;
+            if (pref.heure_briefing) heureBriefing = pref.heure_briefing;
+            if (Array.isArray(pref.quartiers) && typeof pref.quartiers[0] === 'string' && pref.quartiers[0].trim()) quartierPrincipal = pref.quartiers[0];
+            if (Array.isArray(pref.equipes_suivies)) equipesSuivies = pref.equipes_suivies;
+          }
         }
       } catch (err) {
         console.warn('[SURGA BRIEFING PREFS WARN]:', err.message);
       }
+    }
+
+    if (choixAppareil && !ligneConfiguree) {
+      if (choixAppareil.modules) modulesActifs = choixAppareil.modules;
+      if (choixAppareil.heure) heureBriefing = choixAppareil.heure;
+      if (choixAppareil.quartier) quartierPrincipal = choixAppareil.quartier;
+      if (choixAppareil.equipes) equipesSuivies = choixAppareil.equipes;
     }
 
     // Catégories à charger selon les modules actifs

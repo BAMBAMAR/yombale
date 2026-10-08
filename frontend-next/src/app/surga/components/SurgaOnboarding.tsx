@@ -64,8 +64,9 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
     initialData?.heure_briefing || '07:30'
   )
   const [langue, setLangue] = useState<string>(initialData?.langue || 'fr')
+  // Une seule zone principale : le briefing, la météo et le trafic lisent la première, les autres n'avaient aucun effet.
   const [quartiers, setQuartiers] = useState<string[]>(
-    initialData?.quartiers?.length ? initialData.quartiers : ['Dakar Plateau']
+    initialData?.quartiers?.length ? [initialData.quartiers[0]] : ['Dakar Plateau']
   )
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
@@ -75,11 +76,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
     )
   }
 
-  const toggleQuartier = (q: string) => {
-    setQuartiers((prev) =>
-      prev.includes(q) ? (prev.length > 1 ? prev.filter((item) => item !== q) : prev) : [...prev, q]
-    )
-  }
+  const choisirQuartier = (q: string) => setQuartiers([q])
 
   const handleFinish = async () => {
     setIsSubmitting(true)
@@ -88,9 +85,12 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
       heure_briefing: heureBriefing,
       langue,
       quartiers,
-      equipes_suivies: ['Équipe Nationale du Sénégal'],
-      audio_actif: false,
+      // Refaire la configuration garde les équipes et l'option audio déjà choisies.
+      equipes_suivies: initialData?.equipes_suivies?.length ? initialData.equipes_suivies : ['Équipe Nationale du Sénégal'],
+      audio_actif: initialData?.audio_actif ?? false,
       onboarding_termine: true,
+      ...(initialData?.sidebar_services ? { sidebar_services: initialData.sidebar_services } : {}),
+      ...(initialData?.rail_widgets ? { rail_widgets: initialData.rail_widgets } : {}),
     }
 
     try {
@@ -264,14 +264,16 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
               <MapPin size={16} color="var(--accent, #C75B00)" />
               Votre zone de déplacement principale
             </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <div role="radiogroup" aria-label="Zone de déplacement principale" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {QUARTIERS_POPULAIRES.map((q) => {
                 const isSelected = quartiers.includes(q)
                 return (
                   <button
                     key={q}
                     type="button"
-                    onClick={() => toggleQuartier(q)}
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => choisirQuartier(q)}
                     style={{
                       padding: '8px 12px',
                       borderRadius: 20,
@@ -348,7 +350,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
             <div style={{ fontSize: 14, color: 'var(--text2, #5A4E42)', display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div><strong>Briques actives :</strong> {selectedBriques.join(', ')}</div>
               <div><strong>Heure briefing :</strong> {heureBriefing}</div>
-              <div><strong>Zone principale :</strong> {quartiers.join(', ')}</div>
+              <div><strong>Zone principale :</strong> {quartiers[0]}</div>
               <div><strong>Noyau inclus :</strong> Notes, Dépenses FCFA, Calculatrice, Agenda</div>
             </div>
           </div>

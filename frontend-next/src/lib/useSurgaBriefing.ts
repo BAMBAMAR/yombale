@@ -29,7 +29,9 @@ function garderCopie(data: any): void {
   } catch {}
 }
 
-export function useSurgaBriefing(actif: boolean) {
+// « choix » : paramètres d'adresse composés des réglages de l'appareil (zone, briques, heure, équipes). Quand ils
+// changent, le briefing est redemandé.
+export function useSurgaBriefing(actif: boolean, choix = '') {
   const [briefingData, setBriefingData] = useState<any | null>(null)
   const [etatBriefing, setEtatBriefing] = useState<EtatBriefing>('chargement')
   // Date de réception du briefing affiché quand il vient de la copie de l'appareil ; null quand il vient du serveur.
@@ -37,7 +39,7 @@ export function useSurgaBriefing(actif: boolean) {
 
   const chargerBriefing = useCallback(() => {
     setEtatBriefing('chargement')
-    fetch('/api/surga/briefing')
+    fetch(choix ? `/api/surga/briefing?${choix}` : '/api/surga/briefing')
       .then(async (r) => {
         const data = await r.json().catch(() => null)
         if (!r.ok || !data?.success) throw new Error(`briefing ${r.status}`)
@@ -55,7 +57,7 @@ export function useSurgaBriefing(actif: boolean) {
         }
         setEtatBriefing('erreur')
       })
-  }, [])
+  }, [choix])
 
   useEffect(() => {
     if (!actif) return

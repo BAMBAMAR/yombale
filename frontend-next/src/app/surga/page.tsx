@@ -23,6 +23,8 @@ import {
 import { quartierDe } from '@/lib/surga-meteo'
 import { useSurgaBriefing } from '@/lib/useSurgaBriefing'
 import { useSurgaOnglet } from '@/lib/useSurgaOnglet'
+import { useSurgaPreferences } from '@/lib/useSurgaPreferences'
+import { parametresBriefing, enregistrerPreferences } from '@/lib/surga-preferences-sync'
 import { deposerMontantCalcule } from '@/lib/surga-calculator'
 import { marquerConfigure } from '@/lib/surga-demarrage'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
@@ -43,8 +45,9 @@ export default function SurgaPage() {
   // L'état « configuré » est aussi posé en témoin, pour que le serveur n'envoie plus l'accueil public (SRG-A3-003).
   const setIsOnboarded = (oui: boolean) => { definirOnboarded(oui); marquerConfigure(oui) }
   const [afficherFormulaireOnboarding, setAfficherFormulaireOnboarding] = useState<boolean>(false)
-  const [preferences, setPreferences] = useState<SurgaPreferencesData | null>(null)
-  const { briefingData, setBriefingData, etatBriefing, briefingRecuLe, chargerBriefing } = useSurgaBriefing(isOnboarded === true)
+  const { preferences, setPreferences, appliquerChangement, reconcilierALaConnexion } = useSurgaPreferences(setIsOnboarded)
+  // SRG-A2-011 : le briefing reprend la zone, les briques, l'heure et les équipes choisies sur l'appareil.
+  const { briefingData, setBriefingData, etatBriefing, briefingRecuLe, chargerBriefing } = useSurgaBriefing(isOnboarded === true, parametresBriefing(preferences))
 
   // Modales
   const [isCalcOpen, setIsCalcOpen] = useState(false), [isVoiceOpen, setIsVoiceOpen] = useState(false)
@@ -117,44 +120,8 @@ export default function SurgaPage() {
     }
   }, [activeTab, rafraichirApercus])
 
-  // Chargement des préférences utilisateur et statut Premium
+  // Statut Premium. Les réglages sont lus par useSurgaPreferences.
   useEffect(() => {
-    try {
-      const storedDone = localStorage.getItem('surga_onboarding_done')
-      const storedPrefs = localStorage.getItem('surga_preferences')
-      if (storedDone === 'true' && storedPrefs) {
-        const parsed = JSON.parse(storedPrefs)
-        if (Array.isArray(parsed.modules_actifs) && !parsed.modules_actifs.includes('meteo')) {
-          parsed.modules_actifs.push('meteo')
-          try { localStorage.setItem('surga_preferences', JSON.stringify(parsed)) } catch {}
-        }
-        setPreferences(parsed)
-        setIsOnboarded(true)
-        return
-      }
-    } catch {}
-
-    fetch('/api/surga/preferences')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success && data.preferences?.onboarding_termine) {
-          const pref = data.preferences
-          if (Array.isArray(pref.modules_actifs) && !pref.modules_actifs.includes('meteo')) {
-            pref.modules_actifs.push('meteo')
-          }
-          setPreferences(pref)
-          setIsOnboarded(true)
-          try {
-            localStorage.setItem('surga_onboarding_done', 'true')
-            localStorage.setItem('surga_preferences', JSON.stringify(pref))
-          } catch {}
-        } else {
-          setIsOnboarded(false)
-        }
-      })
-      .catch(() => setIsOnboarded(false))
-
-    // Vérification du statut Premium
     fetch('/api/surga/abonnements/mon-statut')
       .then((r) => r.json())
       .then((data) => {
@@ -189,37 +156,14 @@ export default function SurgaPage() {
     }
   }, [preferences?.audio_actif, briefingData])
 
-  const handleToggleAudio = async () => {
-    const nouveauStatut = !preferences?.audio_actif
-    const updated = { ...(preferences || {}), audio_actif: nouveauStatut } as SurgaPreferencesData
-    setPreferences(updated)
-    try {
-      localStorage.setItem('surga_preferences', JSON.stringify(updated))
-      await fetch('/api/surga/preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      })
-    } catch {}
-  }
-
-  const handleUpdatePreferences = async (patch: Partial<SurgaPreferencesData> & { sidebar_services?: string[]; rail_widgets?: string[] }) => {
-    const updated = { ...(preferences || {}), ...patch } as SurgaPreferencesData
-    setPreferences(updated)
-    try {
-      localStorage.setItem('surga_preferences', JSON.stringify(updated))
-      window.dispatchEvent(new CustomEvent('surga-data-change'))
-      await fetch('/api/surga/preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      }).catch(() => {})
-    } catch {}
-  }
+  const handleToggleAudio = () => appliquerChangement({ audio_actif: !preferences?.audio_actif })
+  const handleUpdatePreferences = (patch: Partial<SurgaPreferencesData>) => appliquerChangement(patch)
 
   const handleOnboardingComplete = (data: SurgaPreferencesData) => {
     setPreferences(data)
     setIsOnboarded(true)
+    // Un compte connecté reçoit ses réglages tout de suite ; un invité les garde sur l'appareil jusqu'à sa connexion.
+    if (user) enregistrerPreferences(data)
   }
 
   // SRG-A2-006 : une commande confirmée passe par un seul chemin d'écriture (pose sur l'appareil, puis synchronisation).
@@ -264,6 +208,8 @@ export default function SurgaPage() {
   // Succès authentification
   const handleAuthSuccess = (authUser: SurgaUser) => {
     setUser(authUser); adopterProprietaire(authUser.id); synchroniserSurga().then(() => rafraichirApercus()).catch(() => {})
+    // SRG-A2-011 : le compte déjà configuré impose ses réglages à l'appareil ; sinon l'appareil lui envoie les siens.
+    reconcilierALaConnexion().then(chargerBriefing)
     fetch('/api/surga/abonnements/mon-statut')
       .then((r) => r.json())
       .then((data) => {

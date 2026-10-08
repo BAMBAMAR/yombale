@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional } = require('../../middlewares/surga-auth');
+const { listeDeTextes, listeOu, heureValide } = require('../../services/surga/preferences-saisie');
 
 const DEFAUTS_PREFERENCES = {
   modules_actifs: ['briefing', 'meteo', 'actualites', 'trafic', 'notes', 'depenses', 'calculatrice', 'agenda'],
@@ -77,18 +78,6 @@ router.get('/preferences', tokenOptional, async (req, res) => {
   }
 });
 
-// Une liste de préférences est une liste de textes courts. Tout autre contenu est écarté : un tableau imbriqué
-// enregistré comme « quartier » faisait planter l'écran d'accueil à la lecture suivante.
-function listeDeTextes(valeur, { max = 20, longueur = 80 } = {}) {
-  if (!Array.isArray(valeur)) return null;
-  return valeur
-    .filter((v) => typeof v === 'string')
-    .map((v) => v.trim())
-    .filter((v) => v.length > 0 && v.length <= longueur)
-    .slice(0, max);
-}
-const listeOu = (valeur, repli, options) => listeDeTextes(valeur, options) || listeDeTextes(repli, options) || [];
-
 // Handler commun pour la mise à jour des préférences (PUT ou POST)
 const handleSauvegarderPreferences = async (req, res) => {
   try {
@@ -104,6 +93,7 @@ const handleSauvegarderPreferences = async (req, res) => {
       consentement_voix,
       sidebar_services,
       rail_widgets,
+      onboarding_termine,
     } = req.body;
 
     const { rows: currentRows } = await pool.query(
@@ -113,7 +103,7 @@ const handleSauvegarderPreferences = async (req, res) => {
     const existing = currentRows[0] || DEFAUTS_PREFERENCES;
 
     const nextModules = listeOu(modules_actifs, existing.modules_actifs);
-    const nextHeure = typeof heure_briefing === 'string' && /^\d{2}:\d{2}$/.test(heure_briefing)
+    const nextHeure = heureValide(heure_briefing)
       ? heure_briefing
       : (existing.heure_briefing || '07:30');
     const nextLangue = typeof langue === 'string' && ['fr', 'wo'].includes(langue)
@@ -126,12 +116,16 @@ const handleSauvegarderPreferences = async (req, res) => {
     const nextConsentVoix = typeof consentement_voix === 'boolean' ? consentement_voix : Boolean(existing.consentement_voix);
     const nextSidebar = listeOu(sidebar_services, existing.sidebar_services || DEFAUTS_PREFERENCES.sidebar_services);
     const nextRail = listeOu(rail_widgets, existing.rail_widgets || DEFAUTS_PREFERENCES.rail_widgets);
+    // SRG-A2-011 : « configuré » ne fait que passer à vrai. Un appareil qui envoie ses réglages après la
+    // configuration l'établit ; un envoi qui l'omet ou le nie ne le retire pas.
+    const nextConfigure = Boolean(existing.onboarding_termine) || onboarding_termine === true;
 
     const { rows } = await pool.query(
       `INSERT INTO surga_preferences (
-        user_id, modules_actifs, heure_briefing, langue, quartiers, equipes_suivies, sources_presse, audio_actif, consentement_voix, sidebar_services, rail_widgets, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+        user_id, modules_actifs, heure_briefing, langue, quartiers, equipes_suivies, sources_presse, audio_actif, consentement_voix, sidebar_services, rail_widgets, onboarding_termine, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
       ON CONFLICT (user_id) DO UPDATE SET
+        onboarding_termine = surga_preferences.onboarding_termine OR EXCLUDED.onboarding_termine,
         modules_actifs = EXCLUDED.modules_actifs,
         heure_briefing = EXCLUDED.heure_briefing,
         langue = EXCLUDED.langue,
@@ -156,6 +150,7 @@ const handleSauvegarderPreferences = async (req, res) => {
         nextConsentVoix,
         JSON.stringify(nextSidebar),
         JSON.stringify(nextRail),
+        nextConfigure,
       ]
     );
 
@@ -191,7 +186,7 @@ router.post('/onboarding', verifierToken, async (req, res) => {
 
     const modulesRecus = listeDeTextes(modules_actifs) || [];
     const modules = modulesRecus.length > 0 ? modulesRecus : DEFAUTS_PREFERENCES.modules_actifs;
-    const heure = typeof heure_briefing === 'string' && /^\d{2}:\d{2}$/.test(heure_briefing)
+    const heure = heureValide(heure_briefing)
       ? heure_briefing
       : '07:30';
     const lang = typeof langue === 'string' && ['fr', 'wo'].includes(langue)
