@@ -126,7 +126,7 @@ export default function SurgaMeteoDetailBloc({
 
       <div style={{ fontSize: 11, color: 'var(--surga-text3, #64748B)', marginBottom: 10 }}>
         Source : {libelleReleveMeteo(meteo)}
-        {estimations && ` ; ${estimations} : ${(afficherMaree && maree?.source) || air?.source || 'Open-Meteo'}, estimation par modèle${afficherMaree ? ', à ne pas utiliser pour naviguer' : ''}.`}
+        {estimations && ` ; ${estimations} : Open-Meteo, estimation par modèle${afficherMaree ? ', à ne pas utiliser pour naviguer' : ''}.`}
       </div>
 
       {meteo.previsions_3j && meteo.previsions_3j.length > 0 && (
