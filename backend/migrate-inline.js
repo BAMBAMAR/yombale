@@ -3051,6 +3051,16 @@ module.exports = async function migrateInline(customConnStr = null) {
        erreur_msg      TEXT
      )`,
     `CREATE INDEX IF NOT EXISTS idx_scraping_runs_source ON scraping_runs(source, started_at DESC)`,
+    // Ecart de schema production / depot releve a la sauvegarde de Render du 2026-10-08 : colonnes ajoutees a la main ou par des
+    // scripts ponctuels (backend/scripts/apply_corrections_sql.js), table creee a la demande par une route (auth.js). Sans ces
+    // instructions, la sauvegarde de production (donnees seules) ne se restaure pas sur une base reconstruite depuis les migrations.
+    `CREATE TABLE IF NOT EXISTS auth_reset_demandes (id BIGSERIAL PRIMARY KEY, utilisateur_id UUID NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())`,
+    `CREATE INDEX IF NOT EXISTS idx_auth_reset_demandes_user_date ON auth_reset_demandes(utilisateur_id, created_at)`,
+    `ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS source_detail VARCHAR(255)`,
+    `ALTER TABLE annonces_classifiees ALTER COLUMN contact_tel DROP NOT NULL`,
+    `ALTER TABLE historique_prix ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+    `CREATE INDEX IF NOT EXISTS idx_historique_prix_created_at ON historique_prix(created_at DESC)`,
+    `ALTER TABLE scraping_runs ADD COLUMN IF NOT EXISTS items_valides INTEGER`,
     // AUD-187 : prix tel que publié par la source (provenance), à côté du prix normalisé
     `ALTER TABLE offres ADD COLUMN IF NOT EXISTS prix_brut TEXT`,
     // AUD-181 : nom normalisé (même normalisation que matching.js), indexé ; alias des fiches fusionnées (retour arrière possible)
