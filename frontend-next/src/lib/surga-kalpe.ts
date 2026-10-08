@@ -56,90 +56,11 @@ const STORAGE_KEYS = {
   OBJECTIFS: 'surga_kalpe_objectifs',
 }
 
-// Données démo réalistes pour un démarrage propre et inspirant
-const OPERATIONS_INITIALES: KalpeOperationLocal[] = [
-  {
-    id: 'op-1',
-    direction: 'entree',
-    type: 'revenu',
-    montant: 150000,
-    categorie: 'Prestation / Salaire',
-    libelle: 'Versement honoraire mission Dakar',
-    mode_paiement: 'wave',
-    date_operation: new Date().toISOString().slice(0, 10),
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'op-2',
-    direction: 'sortie',
-    type: 'depense',
-    montant: 25000,
-    categorie: 'Alimentation / Courses',
-    libelle: 'Courses hebdomadaires marché Kermel',
-    mode_paiement: 'cash',
-    date_operation: new Date().toISOString().slice(0, 10),
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'op-3',
-    direction: 'sortie',
-    type: 'depense',
-    montant: 10000,
-    categorie: 'Énergie / Woyofal',
-    libelle: 'Recharge compteur Woyofal',
-    mode_paiement: 'om',
-    date_operation: new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10),
-    created_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-  },
-]
-
-const DETTES_INITIALES: KalpeDetteLocal[] = [
-  {
-    id: 'det-1',
-    tiers_nom: 'Moussa Diop',
-    tiers_telephone: '+221 77 412 34 56',
-    montant_initial: 50000,
-    montant_paye: 20000,
-    montant_restant: 30000,
-    direction: 'a_recevoir',
-    date_pret: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString().slice(0, 10),
-    date_echeance: new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString().slice(0, 10),
-    statut: 'en_cours',
-    note: 'Avance travaux atelier',
-  },
-  {
-    id: 'det-2',
-    tiers_nom: 'Quincaillerie Almadies',
-    tiers_telephone: '+221 78 123 45 67',
-    montant_initial: 25000,
-    montant_paye: 0,
-    montant_restant: 25000,
-    direction: 'a_payer',
-    date_pret: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString().slice(0, 10),
-    date_echeance: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().slice(0, 10),
-    statut: 'en_cours',
-    note: 'Matériaux peinture',
-  },
-]
-
-const OBJECTIFS_INITIAUX: KalpeObjectifLocal[] = [
-  {
-    id: 'obj-1',
-    titre: 'Tabaski 2026',
-    montant_cible: 200000,
-    montant_actuel: 85000,
-    categorie: 'Fête & Famille',
-    statut: 'en_cours',
-  },
-  {
-    id: 'obj-2',
-    titre: 'Fonds d’urgence imprévus',
-    montant_cible: 500000,
-    montant_actuel: 210000,
-    categorie: 'Épargne de sécurité',
-    statut: 'en_cours',
-  },
-]
+// SRG-A1-030 / SRG-A2-014 (décision D37) : le portefeuille d'un nouveau visiteur est vide.
+// Il s'ouvrait sur des opérations, des dettes et des objectifs d'exemple, qui entraient dans le solde et les totaux du mois.
+const OPERATIONS_INITIALES: KalpeOperationLocal[] = []
+const DETTES_INITIALES: KalpeDetteLocal[] = []
+const OBJECTIFS_INITIAUX: KalpeObjectifLocal[] = []
 
 export function getKalpeOperations(): KalpeOperationLocal[] {
   if (typeof window === 'undefined') return OPERATIONS_INITIALES
