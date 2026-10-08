@@ -10,6 +10,7 @@
  */
 
 const path = require('path');
+const { pathToFileURL } = require('url');
 const { executerTacheCron } = require('../lib/cronLogger');
 
 let cronModule;
@@ -25,8 +26,9 @@ try {
 async function lancerSauvegardeAutomatique(label = 'cron-daily') {
   try {
     const backupScriptPath = path.resolve(__dirname, '../../scripts/backup-database.mjs');
-    // Import dynamique du module ES
-    const { executerSauvegarde } = await import(backupScriptPath);
+    // Import dynamique du module ES. SRG-A5-010 : sous Windows, import() refuse un chemin absolu (« Received
+    // protocol 'c:' ») ; l'adresse file:// est acceptée sur tous les systèmes.
+    const { executerSauvegarde } = await import(pathToFileURL(backupScriptPath).href);
     const report = await executerSauvegarde({ label });
 
     return {
