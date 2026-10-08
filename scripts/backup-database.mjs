@@ -14,6 +14,8 @@
 import 'dotenv/config'
 import pg from 'pg'
 import fs from 'fs'
+import http from 'http'
+import https from 'https'
 import path from 'path'
 import zlib from 'zlib'
 import crypto from 'crypto'
@@ -55,13 +57,18 @@ async function uploadToS3(filePath, fileName) {
 
   try {
     console.log(`☁️  Téléversement vers le bucket S3/R2 "${S3_BUCKET}"...`)
-    const fileContent = fs.readFileSync(filePath)
+    // SRG-A5-010 : l'archive n'est pas chargée en mémoire. Son empreinte est calculée au fil de la lecture, et le corps
+    // de l'envoi est lu sur le disque à mesure qu'il part.
+    const taille = fs.statSync(filePath).size
+    const payloadHash = await new Promise((resolve, reject) => {
+      const h = crypto.createHash('sha256')
+      fs.createReadStream(filePath).on('data', (c) => h.update(c)).on('end', () => resolve(h.digest('hex'))).on('error', reject)
+    })
     const date = new Date()
     const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '')
     const dateStamp = amzDate.substring(0, 8)
 
     const url = new URL(`${S3_ENDPOINT}/${S3_BUCKET}/${fileName}`)
-    const payloadHash = crypto.createHash('sha256').update(fileContent).digest('hex')
 
     // Signature SigV4 simplifiée
     const service = 's3'
@@ -84,25 +91,32 @@ async function uploadToS3(filePath, fileName) {
 
     const authHeader = `AWS4-HMAC-SHA256 Credential=${S3_ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
 
-    const response = await fetch(url.toString(), {
-      method: 'PUT',
-      headers: {
-        'x-amz-date': amzDate,
-        'x-amz-content-sha256': payloadHash,
-        'Authorization': authHeader,
-        'Content-Type': 'application/gzip'
-      },
-      body: fileContent
+    const envoyer = url.protocol === 'http:' ? http.request : https.request
+    const reponse = await new Promise((resolve, reject) => {
+      const req = envoyer(url, {
+        method: 'PUT',
+        headers: {
+          'x-amz-date': amzDate,
+          'x-amz-content-sha256': payloadHash,
+          'Authorization': authHeader,
+          'Content-Type': 'application/gzip',
+          'Content-Length': String(taille)
+        }
+      }, (res) => {
+        let texte = ''
+        res.on('data', (c) => { texte += c })
+        res.on('end', () => resolve({ status: res.statusCode, texte }))
+      })
+      req.on('error', reject)
+      fs.createReadStream(filePath).on('error', reject).pipe(req)
     })
 
-    if (response.ok) {
+    if (reponse.status >= 200 && reponse.status < 300) {
       console.log(`✅ Téléversement distant réussi sur S3/R2 : ${fileName}`)
       return { uploaded: true, url: url.toString() }
-    } else {
-      const errText = await response.text()
-      console.warn(`⚠️  Échec téléversement S3 (${response.status}) : ${errText.substring(0, 200)}`)
-      return { uploaded: false, error: errText }
     }
+    console.warn(`⚠️  Échec téléversement S3 (${reponse.status}) : ${reponse.texte.substring(0, 200)}`)
+    return { uploaded: false, error: reponse.texte.substring(0, 300) || `réponse ${reponse.status}` }
   } catch (err) {
     console.warn(`⚠️  Erreur réseau lors du téléversement S3 : ${err.message}`)
     return { uploaded: false, error: err.message }
