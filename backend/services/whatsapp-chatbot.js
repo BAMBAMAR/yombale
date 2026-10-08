@@ -2327,7 +2327,8 @@ async function handleIncomingInternal(msg) {
     }
 
     // 0. Détection prioritaire Surga (utilisateur en flux Surga ou avec session active)
-    if (!state?.startsWith('COMMANDE_') && !context?.boutique_id) {
+    // D51 : uniquement quand le routage Surga est allumé (éteint par défaut, voir services/surga/interrupteurs.js).
+    if (require('./surga/interrupteurs').whatsappActif() && !state?.startsWith('COMMANDE_') && !context?.boutique_id) {
       let estSessionSurga = false;
       try {
         const poolDb = require('../models/db').pool;
@@ -2740,7 +2741,11 @@ async function handleIncomingInternal(msg) {
   }
 
   // ── SURGA : Assistant personnel de poche (Tranche 5) ──────────────────────
+  // SRG-A4-001 / SRG-A4-002 (D51) : routage éteint par défaut. Allumé, Surga prenait tout message d'un numéro « libre »
+  // dont il reconnaissait un mot, y compris ceux des clients de Nopalou. À rallumer seulement avec le routage par
+  // numéros activés (D55).
   try {
+    if (!require('./surga/interrupteurs').whatsappActif()) throw Object.assign(new Error('routage Surga éteint'), { silencieux: true });
     const { traiterMessageWhatsAppSurga, parserIntentionWhatsApp } = require('./surga/whatsapp-handler');
     const parseSurga = parserIntentionWhatsApp(text);
     const estInvocationExplicite = text.toLowerCase().trim().startsWith('surga');
@@ -2751,7 +2756,7 @@ async function handleIncomingInternal(msg) {
       if (traite) return;
     }
   } catch (errSurga) {
-    console.warn('[SURGA ROUTER WARN]:', errSurga.message);
+    if (!errSurga.silencieux) console.warn('[SURGA ROUTER WARN]:', errSurga.message);
   }
 
   // ── 3. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─

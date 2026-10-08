@@ -13,6 +13,9 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
  * Récupère la clé API Gemini
  */
 async function getGeminiApiKey() {
+  // D52 / SRG-A4-018 : aucun appel au modèle de langage tant que l'assistant est éteint. Sans clé, l'appelant suit
+  // son chemin sans modèle (règles déterministes).
+  if (!require('./interrupteurs').assistantActif()) return null;
   return (
     process.env.GEMINI_API_KEY ||
     process.env.GOOGLE_API_KEY ||

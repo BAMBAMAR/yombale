@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../../models/db');
-const { tokenOptional, verifierToken } = require('../../middlewares/auth');
+const { tokenOptional, verifierToken } = require('../../middlewares/surga-auth');
 const {
   preparerScriptAudio,
   genererPodcastFeedXml,
@@ -103,6 +103,8 @@ router.get('/audio/script', tokenOptional, async (req, res) => {
 // GET /api/surga/podcast/token
 // Récupère ou génère l'URL du flux podcast privé de l'utilisateur
 router.get('/podcast/token', tokenOptional, async (req, res) => {
+  // D54 / SRG-A4-017 : podcast retiré du lancement (il servait trois secondes de silence). Route fermée tant que l'interrupteur est éteint.
+  if (!require('../../services/surga/interrupteurs').podcastActif()) return res.status(404).json({ success: false, error: 'Not Found' });
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -136,6 +138,8 @@ router.get('/podcast/token', tokenOptional, async (req, res) => {
 // POST /api/surga/podcast/regenerer-token
 // Révocation de sécurité : régénère un nouveau jeton d'accès au podcast
 router.post('/podcast/regenerer-token', verifierToken, async (req, res) => {
+  // D54 / SRG-A4-017 : podcast retiré du lancement (il servait trois secondes de silence). Route fermée tant que l'interrupteur est éteint.
+  if (!require('../../services/surga/interrupteurs').podcastActif()) return res.status(404).json({ success: false, error: 'Not Found' });
   try {
     const userId = req.user.userId;
     const nouveauToken = await regenererPodcastToken(userId);
@@ -159,6 +163,8 @@ router.post('/podcast/regenerer-token', verifierToken, async (req, res) => {
 // GET /api/surga/podcast/:token/feed.xml
 // Sert le flux RSS 2.0 Podcast XML privé
 router.get('/podcast/:token/feed.xml', async (req, res) => {
+  // D54 / SRG-A4-017 : podcast retiré du lancement (il servait trois secondes de silence). Route fermée tant que l'interrupteur est éteint.
+  if (!require('../../services/surga/interrupteurs').podcastActif()) return res.status(404).json({ success: false, error: 'Not Found' });
   try {
     const { token } = req.params;
     let utilisateurNom = 'Abonné Surga';
@@ -212,6 +218,8 @@ router.get('/podcast/:token/feed.xml', async (req, res) => {
 // GET /api/surga/podcast/:token/stream.mp3
 // Sert le flux audio MP3 du briefing (résolution du bug 404, en-têtes streaming et Range requests)
 router.get('/podcast/:token/stream.mp3', async (req, res) => {
+  // D54 / SRG-A4-017 : podcast retiré du lancement (il servait trois secondes de silence). Route fermée tant que l'interrupteur est éteint.
+  if (!require('../../services/surga/interrupteurs').podcastActif()) return res.status(404).json({ success: false, error: 'Not Found' });
   try {
     const { token } = req.params;
 
