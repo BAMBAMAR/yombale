@@ -24,6 +24,8 @@ export interface SportEventItem {
   buteurs?: string | null
   diffuseur?: string | null
   date_debut: string
+  /** Raison de la présence du match dans la sélection (« Vous suivez … »), fournie par le service sport */
+  raison_presence?: string | null
 }
 
 interface SurgaSportCardProps {

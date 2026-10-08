@@ -183,7 +183,6 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
                   }),
                   url: item.url,
                 }}
-                sansCopier
                 taille="sm"
               />
 

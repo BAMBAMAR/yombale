@@ -94,7 +94,7 @@ export default function SurgaPage() {
       const todayStr = new Date().toISOString().slice(0, 10)
       const agendaToday = getLocalAgenda().filter((e) => e.date_evenement === todayStr && !e.termine)
       setNbAgenda(agendaToday.length)
-      setProchainRdvTitre(agendaToday[0] ? (agendaToday[0].heure ? `${agendaToday[0].heure} : ${agendaToday[0].titre}` : agendaToday[0].titre) : undefined)
+      setProchainRdvTitre(agendaToday[0] ? (agendaToday[0].heure_evenement ? `${agendaToday[0].heure_evenement} : ${agendaToday[0].titre}` : agendaToday[0].titre) : undefined)
     } catch {}
   }, [])
 
