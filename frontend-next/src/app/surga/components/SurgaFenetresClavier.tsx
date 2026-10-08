@@ -87,6 +87,11 @@ export default function SurgaFenetresClavier() {
     // Pour chaque fenêtre ouverte : l'élément qui avait le focus avant elle.
     const origines = new Map<HTMLElement, HTMLElement | null>()
     let image = 0
+    // Historique : entrées posées pour des fenêtres encore ouvertes, retours lancés par ce composant et pas
+    // encore reçus, fenêtres que le bouton retour vient de fermer.
+    let entrees = 0
+    let retoursInternes = 0
+    const fermeesParRetour = new Set<HTMLElement>()
 
     const synchroniser = () => {
       image = 0
@@ -95,6 +100,10 @@ export default function SurgaFenetresClavier() {
         if (origines.has(fenetre)) continue
         const actif = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null
         origines.set(fenetre, actif)
+        // SRG-A3-007 : une entrée d'historique par fenêtre ouverte, à la même adresse : le bouton retour du
+        // téléphone ferme la fenêtre au lieu de changer d'onglet ou de quitter Surga derrière elle.
+        window.history.pushState({ surgaFenetre: true }, '')
+        entrees += 1
         const cadre = decrire(fenetre)
         // Une fenêtre qui place elle-même le focus (champ de recherche, code) garde son choix.
         if (!fenetre.contains(document.activeElement)) cadre.focus({ preventScroll: true })
@@ -102,6 +111,13 @@ export default function SurgaFenetresClavier() {
       for (const [fenetre, origine] of Array.from(origines.entries())) {
         if (ouvertes.includes(fenetre)) continue
         origines.delete(fenetre)
+        // Fenêtre fermée autrement que par le bouton retour : son entrée d'historique est retirée, si elle est
+        // encore celle du dessus. Un changement d'onglet a pu passer devant : elle est alors laissée en place.
+        if (fermeesParRetour.has(fenetre)) fermeesParRetour.delete(fenetre)
+        else if (entrees > 0) {
+          entrees -= 1
+          if (window.history.state?.surgaFenetre) { retoursInternes += 1; window.history.back() }
+        }
         const dessus = ouvertes[ouvertes.length - 1]
         const focusPerdu = !document.activeElement || document.activeElement === document.body || !document.activeElement.isConnected
         if (!focusPerdu) continue
@@ -135,13 +151,26 @@ export default function SurgaFenetresClavier() {
       else if (!e.shiftKey && (!dedans || actif === dernier)) { e.preventDefault(); premier.focus() }
     }
 
+    const auRetour = () => {
+      // Retour déclenché par ce composant pour retirer l'entrée d'une fenêtre déjà fermée : rien à faire.
+      if (retoursInternes > 0) { retoursInternes -= 1; return }
+      const ouvertes = fenetresOuvertes()
+      const dessus = ouvertes[ouvertes.length - 1]
+      if (!dessus || entrees === 0) return
+      entrees -= 1
+      const fermer = boutonDeFermeture(dessus)
+      if (fermer) { fermeesParRetour.add(dessus); fermer.click() }
+    }
+
     const observateur = new MutationObserver(planifier)
     observateur.observe(document.body, { childList: true, subtree: true })
     document.addEventListener('keydown', auClavier)
+    window.addEventListener('popstate', auRetour)
     planifier()
     return () => {
       observateur.disconnect()
       document.removeEventListener('keydown', auClavier)
+      window.removeEventListener('popstate', auRetour)
       if (image) window.cancelAnimationFrame(image)
     }
   }, [])
