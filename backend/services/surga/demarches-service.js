@@ -956,24 +956,24 @@ async function creerSignalement({ demarche_id, user_id, message, contact_email }
     created_at: new Date().toISOString(),
   };
 
-  if (pool) {
-    try {
-      const { rows } = await pool.query(
-        `INSERT INTO surga_demarches_signalements (
-           id, demarche_id, user_id, message, contact_email, statut, created_at
-         )
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, 'EN_ATTENTE', NOW())
-         RETURNING *`,
-        [demarche_id, user_id || null, signalement.message, signalement.contact_email]
-      );
-      return rows[0];
-    } catch {
-      // Repli mémoire
-    }
+  // SRG-A1-017 : « transmis à notre équipe » n'est vrai que si la ligne est écrite. L'ancien repli gardait le
+  // signalement dans la mémoire du processus, où personne ne le lisait.
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO surga_demarches_signalements (
+         id, demarche_id, user_id, message, contact_email, statut, created_at
+       )
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, 'EN_ATTENTE', NOW())
+       RETURNING *`,
+      [demarche_id, user_id || null, signalement.message, signalement.contact_email]
+    );
+    return rows[0];
+  } catch (dbErr) {
+    console.error('[SurgaDemarches] Signalement non enregistré :', dbErr.message);
+    const err = new Error('Votre signalement n\'a pas pu être enregistré. Veuillez réessayer dans un instant.');
+    err.code = 'ENREGISTREMENT_IMPOSSIBLE';
+    throw err;
   }
-
-  signalementsMemoire.set(id, signalement);
-  return signalement;
 }
 
 /**

@@ -80,7 +80,8 @@ router.get('/demarches/suivis', tokenOptional, async (req, res) => {
  */
 router.post('/demarches/:id/suivis', verifierToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    // Le jeton de session porte « userId » ; « id » n'existe pas et le suivi partait sans propriétaire.
+    const userId = req.user.userId;
     const { id } = req.params;
     const { date_echeance, notes } = req.body || {};
 
@@ -113,7 +114,7 @@ router.post('/demarches/:id/suivis', verifierToken, async (req, res) => {
  */
 router.delete('/demarches/:id/suivis', verifierToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { id } = req.params;
 
     const supprime = await demarchesService.supprimerSuiviDemarche(userId, id);
@@ -132,7 +133,7 @@ router.delete('/demarches/:id/suivis', verifierToken, async (req, res) => {
  * POST /api/surga/demarches/:id/signalements
  * Signale une inexactitude ou une erreur sur une démarche (Fiche éditoriale)
  */
-router.post('/demarches/:id/signalements', async (req, res) => {
+router.post('/demarches/:id/signalements', tokenOptional, async (req, res) => {
   try {
     const { id } = req.params;
     const { message, contact_email } = req.body || {};
@@ -144,19 +145,9 @@ router.post('/demarches/:id/signalements', async (req, res) => {
       });
     }
 
-    // Récupérer userId si authentifié via token optionnel
-    let userId = null;
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const token = authHeader.split(' ')[1];
-        const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret_jwt');
-        userId = payload.id;
-      } catch {
-        // Ignorer si token invalide
-      }
-    }
+    // L'ancienne lecture du jeton se faisait ici, avec un secret de repli écrit dans le code et un champ « id »
+    // absent du jeton : le signalement n'était jamais rattaché à son auteur.
+    const userId = req.user?.userId || null;
 
     const signalement = await demarchesService.creerSignalement({
       demarche_id: id,
@@ -171,6 +162,7 @@ router.post('/demarches/:id/signalements', async (req, res) => {
       message: 'Votre signalement a été transmis à notre équipe de vérification. Merci pour votre contribution.',
     });
   } catch (err) {
+    if (err.code === 'ENREGISTREMENT_IMPOSSIBLE') return res.status(503).json({ success: false, error: err.message });
     return res.status(500).json({ success: false, error: err.message });
   }
 });

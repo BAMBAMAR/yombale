@@ -548,46 +548,33 @@ async function toggleAbonnementUtilisateur(userId, sourceId, canal = 'in_app') {
     throw new Error('Identifiants utilisateur et source requis.');
   }
 
-  if (pool) {
-    try {
-      const checkRes = await pool.query(
-        `SELECT id FROM surga_video_abonnements WHERE user_id = $1 AND source_id = $2`,
+  // SRG-A1-017 : l'abonnement n'est tenu que s'il est écrit. L'ancien repli le gardait dans la mémoire du processus
+  // et répondait « activé » : il disparaissait au redémarrage et aucune alerte ne partait.
+  try {
+    const checkRes = await pool.query(
+      `SELECT id FROM surga_video_abonnements WHERE user_id = $1 AND source_id = $2`,
+      [userId, sourceId]
+    );
+
+    if (checkRes.rows.length > 0) {
+      await pool.query(
+        `DELETE FROM surga_video_abonnements WHERE user_id = $1 AND source_id = $2`,
         [userId, sourceId]
       );
-
-      if (checkRes.rows.length > 0) {
-        await pool.query(
-          `DELETE FROM surga_video_abonnements WHERE user_id = $1 AND source_id = $2`,
-          [userId, sourceId]
-        );
-        return { abonne: false, source_id: sourceId };
-      } else {
-        await pool.query(
-          `INSERT INTO surga_video_abonnements (user_id, source_id, canal)
-           VALUES ($1, $2, $3)
-           ON CONFLICT (user_id, source_id) DO NOTHING`,
-          [userId, sourceId, canal || 'in_app']
-        );
-        return { abonne: true, source_id: sourceId };
-      }
-    } catch (err) {
-      // Repli mémoire
+      return { abonne: false, source_id: sourceId };
     }
-  }
-
-  const idx = abonnementsMemoire.findIndex((a) => a.user_id === userId && a.source_id === sourceId);
-  if (idx >= 0) {
-    abonnementsMemoire.splice(idx, 1);
-    return { abonne: false, source_id: sourceId };
-  } else {
-    abonnementsMemoire.push({
-      id: `abo-${Date.now().toString(36)}`,
-      user_id: userId,
-      source_id: sourceId,
-      canal: canal || 'in_app',
-      created_at: new Date().toISOString(),
-    });
+    await pool.query(
+      `INSERT INTO surga_video_abonnements (user_id, source_id, canal)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, source_id) DO NOTHING`,
+      [userId, sourceId, canal || 'in_app']
+    );
     return { abonne: true, source_id: sourceId };
+  } catch (dbErr) {
+    console.error('[SurgaVideos] Abonnement non enregistré :', dbErr.message);
+    const err = new Error('Votre choix n\'a pas pu être enregistré. Veuillez réessayer dans un instant.');
+    err.code = 'ENREGISTREMENT_IMPOSSIBLE';
+    throw err;
   }
 }
 

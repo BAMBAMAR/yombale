@@ -92,6 +92,7 @@ router.post('/videos/abonnements/:sourceId/toggle', verifierToken, async (req, r
         : 'Abonnement retiré avec succès.',
     });
   } catch (err) {
+    if (err.code === 'ENREGISTREMENT_IMPOSSIBLE') return res.status(503).json({ success: false, error: err.message });
     res.status(500).json({ success: false, error: err.message });
   }
 });

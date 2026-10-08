@@ -9,6 +9,7 @@ const {
   genererSyntheseBriefingTrafic,
   enregistrerSignalement,
 } = require('../../services/surga/trafic-service');
+const { tokenOptional } = require('../../middlewares/surga-auth');
 
 /**
  * GET /api/surga/trafic
@@ -101,7 +102,7 @@ router.get('/trafic/axes', (req, res) => {
  * POST /api/surga/trafic/signalements
  * Enregistrer un signalement de ralentissement / accident
  */
-router.post('/trafic/signalements', async (req, res) => {
+router.post('/trafic/signalements', tokenOptional, async (req, res) => {
   try {
     const { axeId, typeSignalement, commentaire } = req.body;
     if (!axeId || !typeSignalement) {
@@ -111,7 +112,7 @@ router.post('/trafic/signalements', async (req, res) => {
       });
     }
 
-    const userId = req.user ? req.user.id : null;
+    const userId = req.user?.userId || null;
     const signalement = await enregistrerSignalement({
       axeId,
       typeSignalement,
@@ -125,6 +126,9 @@ router.post('/trafic/signalements', async (req, res) => {
     });
   } catch (error) {
     console.error('[SurgaTrafic] Erreur création signalement:', error);
+    if (error.code === 'ENREGISTREMENT_IMPOSSIBLE') {
+      return res.status(503).json({ success: false, error: error.message });
+    }
     return res.status(400).json({
       success: false,
       error: error.message || 'Erreur lors du signalement',

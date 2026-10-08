@@ -728,27 +728,22 @@ async function enregistrerSignalement({ axeId, typeSignalement, commentaire, use
 
   const comPropre = commentaire ? commentaire.replace(/<[^>]*>/g, '').slice(0, 180).trim() : '';
 
-  if (pool) {
-    try {
-      const res = await pool.query(
-        `INSERT INTO surga_trafic_signalements (axe_id, user_id, type_signalement, commentaire)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, axe_id, type_signalement, commentaire, created_at`,
-        [axeId, userId || null, typeSignalement, comPropre]
-      );
-      if (res.rows.length > 0) return res.rows[0];
-    } catch (dbErr) {
-      console.warn('[SurgaTrafic] Erreur DB signalement, fallback mémoire:', dbErr.message);
-    }
+  // SRG-A1-017 : un signalement non écrit n'est pas un signalement reçu. L'ancien repli rendait un faux identifiant
+  // « sig-local-… » et un code 201 quand la base était en erreur.
+  try {
+    const res = await pool.query(
+      `INSERT INTO surga_trafic_signalements (axe_id, user_id, type_signalement, commentaire)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, axe_id, type_signalement, commentaire, created_at`,
+      [axeId, userId || null, typeSignalement, comPropre]
+    );
+    return res.rows[0];
+  } catch (dbErr) {
+    console.error('[SurgaTrafic] Signalement non enregistré :', dbErr.message);
+    const err = new Error('Votre signalement n\'a pas pu être enregistré. Veuillez réessayer dans un instant.');
+    err.code = 'ENREGISTREMENT_IMPOSSIBLE';
+    throw err;
   }
-
-  return {
-    id: 'sig-local-' + Date.now(),
-    axe_id: axeId,
-    type_signalement: typeSignalement,
-    commentaire: comPropre,
-    created_at: new Date().toISOString(),
-  };
 }
 
 module.exports = {

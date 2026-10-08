@@ -1542,23 +1542,17 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(res2.inserees).toBe(0); // Dédoublonné avec succès !
     });
 
-    test('Bascule réversible d abonnement utilisateur (Toggle Anti-IDOR)', async () => {
+    test('Abonnement vidéo : une bascule qui ne peut pas être écrite est refusée, jamais annoncée (SRG-A1-017)', async () => {
+      // Cet identifiant n'est pas celui d'un compte : rien ne peut être écrit. L'ancien repli gardait l'abonnement
+      // dans la mémoire du processus et répondait « abonné ».
       const userIdTest = 'user-test-video-uuid-1';
       const sourceIdTest = 'src-marodi-tv';
 
-      // 1. Activer l'abonnement
-      const abo1 = await videoService.toggleAbonnementUtilisateur(userIdTest, sourceIdTest);
-      expect(abo1.abonne).toBe(true);
-      expect(abo1.source_id).toBe(sourceIdTest);
+      await expect(videoService.toggleAbonnementUtilisateur(userIdTest, sourceIdTest)).rejects.toMatchObject({
+        code: 'ENREGISTREMENT_IMPOSSIBLE',
+      });
 
-      let liste = await videoService.getAbonnementsUtilisateur(userIdTest);
-      expect(liste.some((a) => a.source_id === sourceIdTest)).toBe(true);
-
-      // 2. Désactiver l'abonnement
-      const abo2 = await videoService.toggleAbonnementUtilisateur(userIdTest, sourceIdTest);
-      expect(abo2.abonne).toBe(false);
-
-      liste = await videoService.getAbonnementsUtilisateur(userIdTest);
+      const liste = await videoService.getAbonnementsUtilisateur(userIdTest);
       expect(liste.some((a) => a.source_id === sourceIdTest)).toBe(false);
     });
 
@@ -2030,7 +2024,8 @@ describe('Module Surga — Tranches 1 & 2', () => {
 
     test('Portabilité RGPD : l export intègre les démarches suivies et signalements', async () => {
       const donneesService = require('../../backend/services/surga/donnees-service');
-      const userIdTest = 'user-rgpd-demarches-' + Date.now();
+      // Identifiant bien formé d'un compte sans données : l'export et la purge lisent la base (SRG-A1-018, SRG-A1-019).
+      const userIdTest = require('crypto').randomUUID();
 
       const exportDonnees = await donneesService.exporterDonneesUtilisateur({ userId: userIdTest });
       expect(exportDonnees).toBeDefined();
@@ -2039,6 +2034,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
 
       const purgeResultats = await donneesService.supprimerDonneesUtilisateur({ userId: userIdTest });
       expect(purgeResultats).toBeDefined();
+      expect(purgeResultats.abonnements_conserves_anonymises).toBe(0);
     });
 
     test('Les routeurs REST démarches (client et admin) se chargent et répondent dans Express', () => {
