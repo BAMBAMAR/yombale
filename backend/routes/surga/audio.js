@@ -58,7 +58,7 @@ router.get('/audio/script', tokenOptional, async (req, res) => {
         );
         if (rows.length > 0) {
           audioActif = !!rows[0].audio_actif;
-          if (Array.isArray(rows[0].quartiers) && rows[0].quartiers[0]) {
+          if (Array.isArray(rows[0].quartiers) && typeof rows[0].quartiers[0] === 'string' && rows[0].quartiers[0].trim()) {
             quartier = rows[0].quartiers[0];
           }
         }

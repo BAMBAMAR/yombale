@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import SurgaServiceRow from './SurgaServiceRow'
+import { quartierDe } from '@/lib/surga-meteo'
 import SurgaPersonnalisationSection from './SurgaPersonnalisationSection'
 
 interface SurgaParametresTabProps {
@@ -91,7 +92,7 @@ export default function SurgaParametresTab({
         >
           Heure du briefing : <strong>{preferences?.heure_briefing || '07:30'}</strong>
           {' • '}
-          Quartier : <strong>{preferences?.quartiers?.[0] || 'Dakar'}</strong>
+          Quartier : <strong>{quartierDe(preferences)}</strong>
         </p>
       </div>
 

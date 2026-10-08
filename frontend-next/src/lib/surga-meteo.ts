@@ -99,8 +99,8 @@ export const LOCALITES_SENEGAL_LIST: LocaliteItem[] = Object.entries(LOCALITES_S
   zone: item.zone,
 }))
 
-export function normaliserTexte(str: string): string {
-  return (str || '')
+export function normaliserTexte(str: unknown): string {
+  return (typeof str === 'string' ? str : '')
     .replace(/[œŒ]/g, 'oe')
     .replace(/[æÆ]/g, 'ae')
     .normalize('NFD')
@@ -169,6 +169,12 @@ export function interpreterCodeWMO(code: number): { code: string; texte: string 
   if (code >= 80 && code <= 82) return { code: 'averse', texte: 'Averses' }
   if (code >= 95) return { code: 'orage', texte: 'Orages isolés' }
   return { code: 'soleil', texte: 'Ensoleillé' }
+}
+
+// Localité de référence d'un profil : toujours un texte. Une préférence illisible vaut « Dakar ».
+export function quartierDe(preferences?: { quartiers?: unknown } | null): string {
+  const premier = Array.isArray(preferences?.quartiers) ? preferences.quartiers[0] : null
+  return typeof premier === 'string' && premier.trim() ? premier : 'Dakar'
 }
 
 const ROSE_DES_VENTS = ['Nord', 'Nord-Est', 'Est', 'Sud-Est', 'Sud', 'Sud-Ouest', 'Ouest', 'Nord-Ouest']

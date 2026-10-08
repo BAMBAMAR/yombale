@@ -77,6 +77,18 @@ router.get('/preferences', tokenOptional, async (req, res) => {
   }
 });
 
+// Une liste de préférences est une liste de textes courts. Tout autre contenu est écarté : un tableau imbriqué
+// enregistré comme « quartier » faisait planter l'écran d'accueil à la lecture suivante.
+function listeDeTextes(valeur, { max = 20, longueur = 80 } = {}) {
+  if (!Array.isArray(valeur)) return null;
+  return valeur
+    .filter((v) => typeof v === 'string')
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0 && v.length <= longueur)
+    .slice(0, max);
+}
+const listeOu = (valeur, repli, options) => listeDeTextes(valeur, options) || listeDeTextes(repli, options) || [];
+
 // Handler commun pour la mise à jour des préférences (PUT ou POST)
 const handleSauvegarderPreferences = async (req, res) => {
   try {
@@ -100,20 +112,20 @@ const handleSauvegarderPreferences = async (req, res) => {
     );
     const existing = currentRows[0] || DEFAUTS_PREFERENCES;
 
-    const nextModules = Array.isArray(modules_actifs) ? modules_actifs : existing.modules_actifs;
+    const nextModules = listeOu(modules_actifs, existing.modules_actifs);
     const nextHeure = typeof heure_briefing === 'string' && /^\d{2}:\d{2}$/.test(heure_briefing)
       ? heure_briefing
       : (existing.heure_briefing || '07:30');
     const nextLangue = typeof langue === 'string' && ['fr', 'wo'].includes(langue)
       ? langue
       : (existing.langue || 'fr');
-    const nextQuartiers = Array.isArray(quartiers) ? quartiers : existing.quartiers;
-    const nextEquipes = Array.isArray(equipes_suivies) ? equipes_suivies : existing.equipes_suivies;
-    const nextSources = Array.isArray(sources_presse) ? sources_presse : existing.sources_presse;
+    const nextQuartiers = listeOu(quartiers, existing.quartiers, { max: 5 });
+    const nextEquipes = listeOu(equipes_suivies, existing.equipes_suivies, { max: 30 });
+    const nextSources = listeOu(sources_presse, existing.sources_presse, { max: 30 });
     const nextAudio = typeof audio_actif === 'boolean' ? audio_actif : Boolean(existing.audio_actif);
     const nextConsentVoix = typeof consentement_voix === 'boolean' ? consentement_voix : Boolean(existing.consentement_voix);
-    const nextSidebar = Array.isArray(sidebar_services) ? sidebar_services : (existing.sidebar_services || DEFAUTS_PREFERENCES.sidebar_services);
-    const nextRail = Array.isArray(rail_widgets) ? rail_widgets : (existing.rail_widgets || DEFAUTS_PREFERENCES.rail_widgets);
+    const nextSidebar = listeOu(sidebar_services, existing.sidebar_services || DEFAUTS_PREFERENCES.sidebar_services);
+    const nextRail = listeOu(rail_widgets, existing.rail_widgets || DEFAUTS_PREFERENCES.rail_widgets);
 
     const { rows } = await pool.query(
       `INSERT INTO surga_preferences (
@@ -177,17 +189,16 @@ router.post('/onboarding', verifierToken, async (req, res) => {
       equipes_suivies,
     } = req.body;
 
-    const modules = Array.isArray(modules_actifs) && modules_actifs.length > 0
-      ? modules_actifs
-      : DEFAUTS_PREFERENCES.modules_actifs;
+    const modulesRecus = listeDeTextes(modules_actifs) || [];
+    const modules = modulesRecus.length > 0 ? modulesRecus : DEFAUTS_PREFERENCES.modules_actifs;
     const heure = typeof heure_briefing === 'string' && /^\d{2}:\d{2}$/.test(heure_briefing)
       ? heure_briefing
       : '07:30';
     const lang = typeof langue === 'string' && ['fr', 'wo'].includes(langue)
       ? langue
       : 'fr';
-    const quartiersList = Array.isArray(quartiers) ? quartiers : [];
-    const equipesList = Array.isArray(equipes_suivies) ? equipes_suivies : [];
+    const quartiersList = listeDeTextes(quartiers, { max: 5 }) || [];
+    const equipesList = listeDeTextes(equipes_suivies, { max: 30 }) || [];
 
     const { rows } = await pool.query(
       `INSERT INTO surga_preferences (

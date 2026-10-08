@@ -56,8 +56,8 @@ export const ZONES_TRAFIC_DAKAR = [
   'medina',
 ]
 
-function normaliser(str: string): string {
-  return (str || '')
+function normaliser(str: unknown): string {
+  return (typeof str === 'string' ? str : '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()

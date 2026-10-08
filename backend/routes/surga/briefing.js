@@ -32,7 +32,7 @@ router.get('/briefing', tokenOptional, async (req, res) => {
           const pref = rows[0];
           if (Array.isArray(pref.modules_actifs)) modulesActifs = pref.modules_actifs;
           if (pref.heure_briefing) heureBriefing = pref.heure_briefing;
-          if (Array.isArray(pref.quartiers) && pref.quartiers[0]) quartierPrincipal = pref.quartiers[0];
+          if (Array.isArray(pref.quartiers) && typeof pref.quartiers[0] === 'string' && pref.quartiers[0].trim()) quartierPrincipal = pref.quartiers[0];
           if (Array.isArray(pref.equipes_suivies)) equipesSuivies = pref.equipes_suivies;
         }
       } catch (err) {

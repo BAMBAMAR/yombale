@@ -17,6 +17,7 @@ import SurgaDashboardTools from './SurgaDashboardTools'
 import SurgaShareButton from './SurgaShareButton'
 import type { SurgaTab } from './SurgaBottomNav'
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync'
+import { quartierDe } from '@/lib/surga-meteo'
 
 export interface BriefingData {
   message_synthese?: string
@@ -84,7 +85,7 @@ export default function SurgaAujourdhuiTab({
   onToggleAudio,
 }: SurgaAujourdhuiTabProps) {
   const heureBriefing = preferences?.heure_briefing || briefingData?.heure_briefing || '07:30'
-  const quartier = preferences?.quartiers?.[0] || 'Dakar'
+  const quartier = quartierDe(preferences)
   // Sur mobile et dans le digest, afficher 2 à 3 brèves complètes sans troncature agressive
   const brevesPhares = (briefingData?.items || []).slice(0, 3)
   const prochainRdv = briefingData?.agenda_du_jour?.[0]
