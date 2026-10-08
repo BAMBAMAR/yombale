@@ -9,6 +9,7 @@ const {
   LISTE_EQUIPES_DISPONIBLES,
   genererProgrammeSportActuel,
   filtrerMatchsSport,
+  sportSourceMuette,
 } = require('../../services/surga/sport-service');
 
 // GET /api/surga/sport/equipes
@@ -69,7 +70,7 @@ router.get('/sport', tokenOptional, async (req, res) => {
       total: matchs.length,
       matchs,
       // D53 : aucune source pour la Ligue 1 sénégalaise. L'écran le dit au lieu d'afficher une liste vide.
-      indisponible: categorie === 'ligue1_sn',
+      indisponible: categorie === 'ligue1_sn' || (matchs.length === 0 && sportSourceMuette()),
     });
   } catch (err) {
     console.error('[SURGA SPORT GET ERR]:', err.message);

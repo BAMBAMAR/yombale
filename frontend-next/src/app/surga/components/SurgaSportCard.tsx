@@ -30,6 +30,8 @@ export interface SportEventItem {
 
 interface SurgaSportCardProps {
   sports: SportEventItem[]
+  // La source des scores n'a pas répondu : l'écran dit « indisponible », pas « aucun match ».
+  sourceMuette?: boolean
   equipesFavoritesCompte?: string[]
   onRefresh?: () => void
 }
@@ -108,10 +110,12 @@ export function trierMatchsParPriorite(liste: SportEventItem[], favorites: strin
 
 export default function SurgaSportCard({
   sports: initialSports,
+  sourceMuette = false,
   equipesFavoritesCompte,
 }: SurgaSportCardProps) {
   const [matchs, setMatchs] = useState<SportEventItem[]>(initialSports || [])
   const [loading, setLoading] = useState(false)
+  const [indisponible, setIndisponible] = useState<boolean>(sourceMuette)
   const [filtreCategorie, setFiltreCategorie] = useState<string>('tous')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [afficherTous, setAfficherTous] = useState(false)
@@ -202,8 +206,12 @@ export default function SurgaSportCard({
       const data = await res.json()
       if (data.success && Array.isArray(data.matchs)) {
         setMatchs(data.matchs)
+        setIndisponible(Boolean(data.indisponible) && categorie !== 'ligue1_sn')
+      } else {
+        setIndisponible(true)
       }
     } catch (err) {
+      setIndisponible(true)
       console.warn('[SURGA SPORT REFRESH ERR]:', err)
     } finally {
       setLoading(false)
@@ -364,7 +372,7 @@ export default function SurgaSportCard({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {matchsAffiches.length === 0 ? (
           <div style={{ padding: '16px', textAlign: 'center', color: 'var(--surga-text3, #73675E)', fontSize: 13 }}>
-            {filtreCategorie === 'ligue1_sn' ? 'Ligue 1 sénégalaise : indisponible pour le moment.' : 'Aucun match trouvé pour ce filtre.'}
+            {filtreCategorie === 'ligue1_sn' ? 'Ligue 1 sénégalaise : indisponible pour le moment.' : indisponible ? 'Scores indisponibles pour le moment.' : 'Aucun match trouvé pour ce filtre.'}
           </div>
         ) : (
           matchsAffiches.map((match, idx) => {

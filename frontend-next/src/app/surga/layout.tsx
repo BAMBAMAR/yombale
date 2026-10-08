@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next'
+import { cookies } from 'next/headers'
+import { TEMOIN_CONFIGURE, CLASSE_CONFIGURE } from '@/lib/surga-demarrage'
 import React from 'react'
 import '@/styles/surga.css'
 import SurgaSwRegister from './components/SurgaSwRegister'
@@ -67,8 +69,10 @@ const surgaJsonLd = {
 }
 
 export default function SurgaLayout({ children }: { children: React.ReactNode }) {
+  // SRG-A3-003 : appareil déjà configuré : l'attente de l'application est envoyée à la place de l'accueil public.
+  const dejaConfigure = cookies().get(TEMOIN_CONFIGURE)?.value === '1'
   return (
-    <div className="surga-root">
+    <div className={dejaConfigure ? `surga-root ${CLASSE_CONFIGURE}` : 'surga-root'}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(surgaJsonLd) }}

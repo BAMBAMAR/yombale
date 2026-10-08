@@ -5,6 +5,8 @@ import { Sun, Newspaper, Calendar, Trophy } from 'lucide-react'
 import SurgaBriefingActions from './SurgaBriefingActions'
 import SurgaAudioPlayer from './SurgaAudioPlayer'
 import SurgaBriefingSkeleton from './SurgaBriefingSkeleton'
+import { SurgaBriefingIndisponible, SurgaBriefingNonActualise } from './SurgaBriefingEtat'
+import type { EtatBriefing } from '@/lib/useSurgaBriefing'
 import SurgaMeteoCard, { type MeteoData } from './SurgaMeteoCard'
 import SurgaNewsList, { type BriefingNewsItem } from './SurgaNewsList'
 import SurgaSportCard, { type SportEventItem } from './SurgaSportCard'
@@ -25,6 +27,7 @@ export interface BriefingData {
   date?: string
   items?: BriefingNewsItem[]
   sports?: SportEventItem[]
+  sport_indisponible?: boolean
   meteo?: MeteoData
   agenda_du_jour?: any[]
 }
@@ -32,6 +35,8 @@ export interface BriefingData {
 interface SurgaAujourdhuiTabProps {
   preferences: any
   briefingData: BriefingData | null
+  etatBriefing?: EtatBriefing
+  briefingRecuLe?: string | null
   audioScript: string
   soldeKalpeFormate: string
   statsApercu: SurgaDepensesStats | null
@@ -63,6 +68,8 @@ import {
 export default function SurgaAujourdhuiTab({
   preferences,
   briefingData,
+  etatBriefing = 'pret',
+  briefingRecuLe = null,
   audioScript,
   soldeKalpeFormate,
   statsApercu,
@@ -93,9 +100,14 @@ export default function SurgaAujourdhuiTab({
 
   return (
     <>
-      {/* Squelette de chargement anti-CLS si pas encore de briefing chargé */}
+      {/* SRG-A3-006 : briefing montré depuis la copie de l'appareil : sa date, et un bouton si l'actualisation a échoué */}
+      {briefingData && briefingRecuLe && (
+        <SurgaBriefingNonActualise recuLe={briefingRecuLe} enCours={etatBriefing === 'chargement'} onReessayer={chargerBriefing} />
+      )}
+
+      {/* Sans briefing : squelette pendant l'attente, message et bouton si le chargement a échoué */}
       {!briefingData ? (
-        <SurgaBriefingSkeleton />
+        etatBriefing === 'erreur' ? <SurgaBriefingIndisponible onReessayer={chargerBriefing} /> : <SurgaBriefingSkeleton />
       ) : (
         /* Carte Briefing du jour */
         <div className="surga-card" style={{ borderLeft: '4px solid var(--surga-accent, #D97706)' }}>
@@ -265,7 +277,7 @@ export default function SurgaAujourdhuiTab({
       )}
 
       {/* Section Briques : Actualités & Revue de presse (SRG-UI-05, SRG-UI-24 : sans doublon, typographie épurée) */}
-      {(preferences?.modules_actifs?.includes('actualites') || !preferences?.modules_actifs) && (
+      {briefingData && (preferences?.modules_actifs?.includes('actualites') || !preferences?.modules_actifs) && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--surga-primary, #0F172A)', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -298,9 +310,10 @@ export default function SurgaAujourdhuiTab({
       )}
 
       {/* Section Briques : Sport & Résultats */}
-      {preferences?.modules_actifs?.includes('sport') && (
+      {briefingData && preferences?.modules_actifs?.includes('sport') && (
         <SurgaSportCard
           sports={briefingData?.sports || []}
+          sourceMuette={Boolean(briefingData?.sport_indisponible)}
           equipesFavoritesCompte={preferences?.equipes_suivies}
         />
       )}

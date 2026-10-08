@@ -10,7 +10,7 @@ const {
   getBriefingItems,
 } = require('../../services/surga/rss-collector');
 const { getMeteo, VILLES_SENEGAL } = require('../../services/surga/meteo-service');
-const { filtrerMatchsSport } = require('../../services/surga/sport-service');
+const { filtrerMatchsSport, sportSourceMuette } = require('../../services/surga/sport-service');
 
 // GET /api/surga/briefing
 // Génère et retourne le briefing structuré selon les préférences du profil
@@ -103,6 +103,7 @@ router.get('/briefing', tokenOptional, async (req, res) => {
       modules_actifs: modulesActifs,
       items,
       sports,
+      sport_indisponible: modulesActifs.includes('sport') && sports.length === 0 && sportSourceMuette(),
       meteo: meteoData,
       localites: Object.entries(VILLES_SENEGAL).map(([id, l]) => ({
         id,

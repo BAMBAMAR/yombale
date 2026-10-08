@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import SurgaBriefingSkeleton from './SurgaBriefingSkeleton'
 import {
   Sun,
   Calculator,
@@ -24,7 +25,12 @@ export default function SurgaLandingHero({
   onIgnorerVersApp,
 }: SurgaLandingHeroProps) {
   return (
-    <div className="surga-container" style={{ paddingBottom: 40 }}>
+    <>
+      {/* SRG-A3-003 : sur un appareil déjà configuré, cette attente remplace l'accueil public pendant le chargement */}
+      <div className="surga-demarrage surga-container" aria-busy="true" aria-label="Chargement de Surga">
+        <SurgaBriefingSkeleton />
+      </div>
+    <div className="surga-container surga-accueil-public" style={{ paddingBottom: 40 }}>
       {/* En-tête Héroïque */}
       <section
         style={{
@@ -286,5 +292,6 @@ export default function SurgaLandingHero({
         </div>
       </section>
     </div>
+    </>
   )
 }

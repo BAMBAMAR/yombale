@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { sessionEstPerdue } from '@/lib/surga-offline-sync'
 import {
   X,
   MessageCircle,
@@ -114,7 +115,9 @@ export default function SurgaAuthModal({
             <div>
               <div style={{ fontSize: 16, fontWeight: 800 }}>Compte &amp; Synchronisation</div>
               <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.75)' }}>
-                Sauvegardez vos notes, dépenses et accès Surga
+                {sessionEstPerdue()
+                  ? 'Votre session a expiré. Reconnectez-vous : vos saisies sont gardées sur cet appareil.'
+                  : 'Sauvegardez vos notes, dépenses et accès Surga'}
               </div>
             </div>
           </div>

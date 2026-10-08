@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { marquerConfigure } from '@/lib/surga-demarrage'
 import {
   X,
   Shield,
@@ -119,6 +120,7 @@ export default function SurgaDonneesModal({
       // Nettoyage local systématique
       try {
         localStorage.removeItem('surga_onboarding_done')
+        marquerConfigure(false)
         localStorage.removeItem('surga_preferences')
         localStorage.removeItem('surga_offline_notes')
         localStorage.removeItem('surga_offline_depenses')

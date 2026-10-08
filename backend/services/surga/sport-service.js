@@ -8,6 +8,8 @@ const axios = require('axios');
 // Cache mémoire pour préserver les quotas et assurer une latence < 30ms
 let cacheMatchs = null;
 let dernierFetchMs = 0;
+// Vrai quand aucun des flux du fournisseur n'a répondu au dernier chargement : « indisponible », pas « aucun match ».
+let sourceMuette = false;
 const TTL_CACHE_MS = 10 * 60 * 1000; // 10 minutes
 
 const LISTE_EQUIPES_DISPONIBLES = [
@@ -147,6 +149,7 @@ async function chargerDonneesSportEnDirect(force = false) {
     );
 
     const reponses = await Promise.all(requetes);
+    sourceMuette = reponses.every((res) => !res);
 
     reponses.forEach((res, idx) => {
       if (!res?.data?.events) return;
@@ -281,4 +284,5 @@ module.exports = {
   LISTE_EQUIPES_DISPONIBLES,
   chargerDonneesSportEnDirect,
   filtrerMatchsSport,
+  sportSourceMuette: () => sourceMuette,
 };

@@ -2,6 +2,7 @@
 // Gestionnaire offline-first et synchronisation pour Surga (Tranche 3)
 
 import { formaterFCFA } from './surga-calculator'
+import { marquerConfigure } from './surga-demarrage'
 import { saveKalpeOperation, getKalpeOperations, deleteKalpeOperation } from './surga-kalpe'
 
 export interface SurgaChecklistItem {
@@ -376,6 +377,7 @@ export function deleteLocalEvenement(id: string): void {
  */
 export function adopterProprietaire(userId: string): void {
   if (typeof window === 'undefined' || !userId) return
+  sessionPerdueSignalee = false
   try {
     const precedent = localStorage.getItem(STORAGE_KEY_PROPRIETAIRE)
     if (precedent && precedent !== userId) {
@@ -400,6 +402,21 @@ export function enregistrerPuisSynchroniser(ecrire: () => void, apres: () => voi
   ecrire()
   apres()
   synchroniserSurga().then(apres).catch(() => {})
+}
+
+/**
+ * La session n'est plus reconnue par le serveur. Le jeton périmé est retiré de l'appareil et l'écran est prévenu une
+ * fois (événement « surga-session-perdue ») ; les saisies non envoyées restent en attente et partiront à la reconnexion.
+ */
+let sessionPerdueSignalee = false
+// Vrai entre la perte de la session et la reconnexion : la fenêtre de connexion dit alors pourquoi elle s'ouvre.
+export const sessionEstPerdue = (): boolean => sessionPerdueSignalee
+export function signalerSessionPerdue(): void {
+  if (typeof window === 'undefined' || sessionPerdueSignalee) return
+  sessionPerdueSignalee = true
+  try { localStorage.removeItem('token'); localStorage.removeItem('nopalou_session') } catch {}
+  window.dispatchEvent(new CustomEvent('surga-session-perdue'))
+  window.dispatchEvent(new CustomEvent('surga-toast', { detail: { message: 'Votre session a expiré. Reconnectez-vous : vos saisies sont gardées sur cet appareil.', type: 'info' } }))
 }
 
 const estCleDuCompte = (k: string): boolean =>
@@ -495,6 +512,7 @@ export function retirerDonneesDuCompte(): void {
       if (proprietaire && estCleAppareilSeul(k) && v !== null) localStorage.setItem(`${PREFIXE_COFFRE}${proprietaire}::${k}`, v)
       localStorage.removeItem(k)
     }
+    marquerConfigure(false)
     window.dispatchEvent(new CustomEvent('surga-data-change'))
     window.dispatchEvent(new CustomEvent('surga-kalpe-change'))
   } catch {}
@@ -573,6 +591,8 @@ export async function synchroniserSurga(): Promise<boolean> {
       }),
     })
 
+    // SRG-A3-008 : le serveur refuse la session (expirée, ou révoquée depuis un autre appareil). L'écran est prévenu.
+    if (res.status === 401) { signalerSessionPerdue(); return false }
     if (!res.ok) return false
     const data = await res.json()
     // Invité, ou refus : rien n'est enregistré côté serveur, les saisies restent « à envoyer ».

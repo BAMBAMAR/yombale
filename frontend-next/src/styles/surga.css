@@ -591,11 +591,13 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 .surga-root { color-scheme: light; }
 
 /* ==========================================================================
-   LAYOUT RESPONSIVE : 3 POINTS DE RUPTURE STRICTS (<600px, 600-1023px, >=1024px)
+   LAYOUT RESPONSIVE : 2 DISPOSITIONS (téléphone jusqu'à 1 023 px, ordinateur à partir de 1 024 px)
    ========================================================================== */
 
-/* 1. Mobile (< 600px) : Barre d'onglets en bas, FAB micro, header mobile */
-@media (max-width: 599px) {
+/* 1. Téléphone et tablette (< 1 024 px) : barre d'onglets en bas, en-tête mobile.
+   D49 / SRG-A3-013 : de 600 à 1 023 px, un menu réduit à 68 px coupait ses icônes, n'avait aucun libellé et laissait
+   « Réglages » et « Compte » hors de l'écran. Cette plage reçoit la disposition du téléphone. */
+@media (max-width: 1023px) {
   .surga-desktop-sidebar,
   .surga-desktop-right-rail,
   .surga-desktop-command-wrapper {
@@ -630,113 +632,17 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   }
 }
 
-/* 2. Tablette (600px à 1023px) : Rail d'icônes à gauche (68px), zéro barre basse */
+/* Entre 600 et 1 023 px, le contenu garde une largeur de lecture et reste centré. */
 @media (min-width: 600px) and (max-width: 1023px) {
-  body:has(.surga-root) {
-    background-color: #EDE7E0 !important;
-  }
-
-  .surga-mobile-header-wrap,
-  .surga-bottom-nav,
-  .surga-fab-mic,
-  .surga-desktop-right-rail {
-    display: none !important;
-  }
-
-  .surga-app-shell {
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .surga-main-grid {
-    display: grid !important;
-    grid-template-columns: 68px minmax(0, 1fr) !important;
-    width: 100%;
-    min-height: 100vh;
-    background: #FFFFFF;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
-  }
-
-  .surga-desktop-sidebar {
-    display: flex !important;
-    width: 68px !important;
-    padding: 12px 6px !important;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    background: #FAFAF8;
-    border-right: 1px solid #ECE4DA;
-    box-sizing: border-box;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .surga-desktop-sidebar::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
-  }
-
-  .surga-desktop-sidebar .surga-sidebar-section-title {
-    display: none !important;
-  }
-
-  .surga-desktop-sidebar .surga-sidebar-btn {
-    justify-content: center !important;
-    padding: 10px 0 !important;
-    width: 100% !important;
-  }
-
-  .surga-desktop-sidebar .surga-sidebar-btn span:not(.surga-sidebar-badge) {
-    display: none !important;
-  }
-
-  .surga-desktop-sidebar .surga-sidebar-btn div {
-    justify-content: center !important;
-  }
-
-  .surga-desktop-sidebar .surga-brand-text {
-    display: none !important;
-  }
-
-  .surga-center-feed {
-    display: flex !important;
-    flex-direction: column;
-    min-width: 0;
-    height: 100vh;
-    background: #FFFFFF;
-    position: relative;
-    overflow-y: auto;
-    overflow-y: overlay;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
-  }
-
-  .surga-center-feed .surga-container {
+  .surga-center-feed .surga-container,
+  .surga-mobile-header-wrap > * {
     max-width: 720px;
-    margin: 0 auto;
-    padding: 24px 20px 40px 20px !important;
-    flex: 1;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .surga-desktop-command-wrapper {
-    display: block !important;
-    position: sticky;
-    bottom: 0;
-    background: #FFFFFF !important;
-    border-top: 1px solid var(--surga-border, #E2E8F0);
-    padding: 12px 20px 20px 20px;
-    z-index: 20;
-    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04);
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
-/* 3. Ordinateur (>= 1024px) : Menu latéral 240px, flux central max 720px, rail droit 300px (360px à 1920px) */
+/* 2. Ordinateur (>= 1024px) : Menu latéral 240px, flux central max 720px, rail droit 300px (360px à 1920px) */
 @media (min-width: 1024px) {
   body:has(.surga-root) {
     background-color: #EDE7E0 !important;
@@ -1282,3 +1188,11 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     border-radius: 12px;
   }
 }
+
+/* ==========================================================================
+   DÉMARRAGE (SRG-A3-003) : sur un appareil déjà configuré, le serveur envoie l'attente de l'application à la place
+   de la page d'accueil publique. La classe est posée par app/surga/layout.tsx d'après le témoin « surga_configure ».
+   ========================================================================== */
+.surga-demarrage { display: none; padding-top: 16px; }
+.surga-deja-configure .surga-demarrage { display: block; }
+.surga-deja-configure .surga-accueil-public { display: none; }

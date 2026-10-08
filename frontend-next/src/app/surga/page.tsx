@@ -21,6 +21,9 @@ import {
   synchroniserSurga, adopterProprietaire, enregistrerPuisSynchroniser, preparerDeconnexion, retirerDonneesDuCompte, type SurgaDepensesStats,
 } from '@/lib/surga-offline-sync'
 import { quartierDe } from '@/lib/surga-meteo'
+import { useSurgaBriefing } from '@/lib/useSurgaBriefing'
+import { useSurgaOnglet } from '@/lib/useSurgaOnglet'
+import { marquerConfigure } from '@/lib/surga-demarrage'
 import { demarrerSurveillanceRappels } from '@/lib/surga-reminders'
 import { useFabAutoHide } from '@/lib/useFabAutoHide'
 
@@ -34,12 +37,13 @@ export interface SurgaUser {
 export default function SurgaPage() {
   const { openRadioModal } = useSurgaRadio()
   const isFabHidden = useFabAutoHide()
-  const [activeTab, setActiveTab] = useState<SurgaTab>('aujourdhui')
-  const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null)
+  const [activeTab, setActiveTab] = useSurgaOnglet()
+  const [isOnboarded, definirOnboarded] = useState<boolean | null>(null)
+  // L'état « configuré » est aussi posé en témoin, pour que le serveur n'envoie plus l'accueil public (SRG-A3-003).
+  const setIsOnboarded = (oui: boolean) => { definirOnboarded(oui); marquerConfigure(oui) }
   const [afficherFormulaireOnboarding, setAfficherFormulaireOnboarding] = useState<boolean>(false)
   const [preferences, setPreferences] = useState<SurgaPreferencesData | null>(null)
-  const [briefingData, setBriefingData] = useState<any | null>(null)
-  const [loadingBriefing, setLoadingBriefing] = useState<boolean>(false)
+  const { briefingData, setBriefingData, etatBriefing, briefingRecuLe, chargerBriefing } = useSurgaBriefing(isOnboarded === true)
 
   // Modales
   const [isCalcOpen, setIsCalcOpen] = useState(false), [isVoiceOpen, setIsVoiceOpen] = useState(false)
@@ -164,29 +168,13 @@ export default function SurgaPage() {
       .catch(() => {})
   }, [])
 
-  // Chargement du briefing dynamique
-  const chargerBriefing = useCallback(() => {
-    setLoadingBriefing(true)
-    fetch('/api/surga/briefing')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) {
-          setBriefingData(data)
-        }
-      })
-      .catch((err) => {
-        console.warn('[SURGA BRIEFING FETCH WARN]:', err)
-      })
-      .finally(() => {
-        setLoadingBriefing(false)
-      })
-  }, [])
-
+  // SRG-A3-008 : session expirée ou révoquée constatée pendant un envoi. L'écran cesse d'afficher « connecté » et
+  // propose la reconnexion ; les saisies restent en attente sur l'appareil.
   useEffect(() => {
-    if (isOnboarded) {
-      chargerBriefing()
-    }
-  }, [isOnboarded, chargerBriefing])
+    const surSessionPerdue = () => { deleteSessionAction().catch(() => {}); setUser(null); setIsAuthOpen(true) }
+    window.addEventListener('surga-session-perdue', surSessionPerdue)
+    return () => window.removeEventListener('surga-session-perdue', surSessionPerdue)
+  }, [])
 
   // Chargement du script audio si l'option est active
   useEffect(() => {
@@ -386,7 +374,7 @@ export default function SurgaPage() {
         {activeTab === 'aujourdhui' && (
           <SurgaAujourdhuiTab
             preferences={preferences}
-            briefingData={briefingData}
+            briefingData={briefingData} etatBriefing={etatBriefing} briefingRecuLe={briefingRecuLe}
             audioScript={audioScript}
             onToggleAudio={handleToggleAudio}
             soldeKalpeFormate={soldeKalpeFormate}
