@@ -70,7 +70,7 @@ function extraireScoreESPN(competitor) {
 /**
  * Normalise un événement ESPN en SportEventItem avec détection stricte des scores et du statut
  */
-function normaliserEvenementESPN(event, competitionNom, categorie, diffuseurDefaut = 'Canal+ / beIN') {
+function normaliserEvenementESPN(event, competitionNom, categorie, diffuseurDefaut = null) {
   try {
     const comp = event.competitions?.[0];
     if (!comp) return null;
@@ -131,17 +131,20 @@ async function chargerDonneesSportEnDirect(force = false) {
 
   const endpoints = [
     // Lions du Sénégal — Calendrier direct officiel & éliminatoires en temps réel
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.friendly/teams/654/schedule', nom: 'Match Amical', cat: 'nationale', diff: 'RTS 1 / beIN Sports' },
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/caf.nations_qual/teams/654/schedule', nom: 'Éliminatoires CAN', cat: 'nationale', diff: 'RTS 1 / beIN Sports' },
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.worldq.caf/teams/654/schedule', nom: 'Éliminatoires Mondial', cat: 'nationale', diff: 'RTS 1 / beIN Sports' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.friendly/teams/654/schedule', nom: 'Match Amical', cat: 'nationale' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/caf.nations_qual/teams/654/schedule', nom: 'Éliminatoires CAN', cat: 'nationale' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.worldq.caf/teams/654/schedule', nom: 'Éliminatoires Mondial', cat: 'nationale' },
 
     // Grands championnats et coupes en direct
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard', nom: 'Ligue des Champions', cat: 'ucl', diff: 'Canal+ Foot' },
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard', nom: 'Premier League', cat: 'premier_league', diff: 'Canal+ Sport 1' },
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard', nom: 'LaLiga', cat: 'laliga', diff: 'beIN Sports 1' },
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard', nom: 'Ligue 1', cat: 'ligue1_fr', diff: 'DAZN / Canal+' },
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard', nom: 'Serie A', cat: 'serie_a', diff: 'beIN Sports 2' },
-    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/ksa.1/scoreboard', nom: 'Saudi Pro League', cat: 'saudi_pro', diff: 'Canal+ Sport 3' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard', nom: 'Ligue des Champions', cat: 'ucl' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard', nom: 'Premier League', cat: 'premier_league' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard', nom: 'LaLiga', cat: 'laliga' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard', nom: 'Ligue 1', cat: 'ligue1_fr' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard', nom: 'Serie A', cat: 'serie_a' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/ksa.1/scoreboard', nom: 'Saudi Pro League', cat: 'saudi_pro' },
+    // D74 : coupes africaines des clubs, où jouent des clubs sénégalais (même source, sans clé).
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/caf.champions/scoreboard', nom: 'Ligue des Champions CAF', cat: 'caf' },
+    { url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/caf.confed/scoreboard', nom: 'Coupe de la Confédération CAF', cat: 'caf' },
   ];
 
   try {
@@ -159,7 +162,7 @@ async function chargerDonneesSportEnDirect(force = false) {
       const config = endpoints[idx];
 
       res.data.events.forEach((ev) => {
-        const item = normaliserEvenementESPN(ev, config.nom, config.cat, config.diff);
+        const item = normaliserEvenementESPN(ev, config.nom, config.cat);
         if (item) {
           resultats.push(item);
         }

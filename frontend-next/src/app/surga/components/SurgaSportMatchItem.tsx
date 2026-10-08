@@ -266,7 +266,7 @@ export default function SurgaSportMatchItem({
             <span style={{ color: 'var(--surga-text3, #94A3B8)' }}>• {match.diffuseur}</span>
           )}
           {match.source === 'TheSportsDB' && (
-            <span style={{ color: 'var(--surga-text3, #94A3B8)' }}>• Source : TheSportsDB</span>
+            <span style={{ color: 'var(--surga-text3, #94A3B8)' }}>• Source : TheSportsDB{match.calendrier_partiel ? ', calendrier partiel' : ''}</span>
           )}
         </div>
 

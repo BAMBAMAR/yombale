@@ -233,6 +233,7 @@ async function lireQualiteAir(lat, lon) {
 // ───────────────────────── Ligue 1 du Sénégal : TheSportsDB ─────────────────────────
 
 const LIGUE1_SENEGAL_ID = 4754;
+const CLES_D_ESSAI = new Set(['1', '3', '123']);
 const STATUTS_TERMINES = new Set(['FT', 'AET', 'PEN', 'AP', 'Match Finished']);
 const STATUTS_EN_COURS = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE']);
 const STATUTS_SANS_DATE = new Set(['PST', 'CANC', 'ABD', 'AWD', 'WO', 'SUSP', 'Postponed', 'Cancelled']);
@@ -297,7 +298,9 @@ async function lireLigue1Senegal() {
   ligue1Repond = listes.some((l) => l !== null);
   const vus = new Set();
   const uniques = listes.flatMap((l) => l || []).filter((e) => e && e.idEvent && !vus.has(e.idEvent) && vus.add(e.idEvent));
-  return dansLaFenetre(interpreterTheSportsDb(uniques, maintenant), maintenant);
+  // D74 : avec la clé publique d'essai, la source ne rend qu'une partie des rencontres : chaque ligne le porte.
+  const partiel = CLES_D_ESSAI.has(cle);
+  return dansLaFenetre(interpreterTheSportsDb(uniques, maintenant), maintenant).map((m) => (partiel ? { ...m, calendrier_partiel: true } : m));
 }
 
 module.exports = {

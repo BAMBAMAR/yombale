@@ -22,7 +22,7 @@ export interface SportEventItem {
   statut: 'EN_DIRECT' | 'TERMINE' | 'A_VENIR' | string
   minute_jeu?: string | null
   buteurs?: string | null
-  diffuseur?: string | null; heure_inconnue?: boolean; source?: string
+  diffuseur?: string | null; heure_inconnue?: boolean; source?: string; calendrier_partiel?: boolean
   date_debut: string
   /** Raison de la présence du match dans la sélection (« Vous suivez … »), fournie par le service sport */
   raison_presence?: string | null
@@ -341,7 +341,7 @@ export default function SurgaSportCard({
           { id: 'serie_a', label: 'Serie A' },
           { id: 'saudi_pro', label: 'Saudi Pro League' },
           { id: 'nationale', label: 'Lions du Sénégal' },
-          { id: 'ligue1_sn', label: 'Ligue 1 SN' },
+          { id: 'ligue1_sn', label: 'Ligue 1 SN' }, { id: 'caf', label: 'Coupes africaines' },
         ].map((tab) => {
           const isActive = filtreCategorie === tab.id
           return (
