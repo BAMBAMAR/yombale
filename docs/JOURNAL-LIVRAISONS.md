@@ -1,5 +1,8 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga / Offre de Surga pilotée par la console d'administration (`feature/surga` : `425ce79d`, `29a97de2` ; aucun push)** :
+  - Prix des trois durées (7 jours, 30 jours, 12 mois), formules, avantages, quotas gratuits (CV, lettres, simulations, démarches suivies) et ouverture des ventes se règlent dans `/admin/surga` et commandent l'application (offre publique, droits d'emploi, souscription Wave). Source unique : `backend/services/surga/offre-service.js` (tables `surga_plans`, `surga_reglages`). Écrans lus sur `frontend-next/src/lib/surga-offre.ts`. Sonde A5-131 : 20 sur 20. Détail : `CLAUDE.md` et `docs/surga/JOURNAL-LIVRAISONS.md`.
+
 - **Surga / Sauvegarde de Render et écart de schéma (Session 2026-10-08, `main` : `8fad888f`, reporté `845e3e01` sur `feature/surga` ; `main` 11 commits locaux en avance sur `origin/main` ; aucun push)** :
   - *Sauvegarde de la production, sur demande de l'utilisateur* : `node scripts/backup-database.mjs render-prod` (transaction en lecture seule) : `backups/backup-nopalou-20261008224216-render-prod.sql.gz`, 48,7 Mo, 155 tables, 1 552 199 lignes, SHA-256 `688fbed9…cd151f`. Un seul exemplaire, sur le poste (R2 non configuré) ; `backups/` est ignoré par git. Les deux archives du 24/09 ont été mises à l'abri dans `backups/conservees/` (la rotation garde les 7 plus récentes).
   - *Restauration prouvée* : chargée dans une base locale jetable : 0 erreur, 1 552 199 lignes sur un schéma complété à la main ; puis, après correction des migrations, 0 erreur et 1 552 198 lignes sur un schéma issu des seules migrations (une ligne d'écart non identifiée, probablement écartée par un index unique plus strict que celui de la production).

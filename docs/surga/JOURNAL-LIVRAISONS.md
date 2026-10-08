@@ -3,6 +3,13 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-08 — Offre pilotée par la console] — `425ce79d`, `29a97de2` ; aucun push
+- **Objet :** « tout doit être gérable sur admin ». L'offre retenue (gratuit + Surga Plus : 500 FCFA / 7 jours, 1 500 FCFA / 30 jours, 15 000 FCFA / 12 mois) et ses quotas gratuits se règlent dans la console et commandent l'application.
+- **Serveur (`425ce79d`) :** `offre-service.js` (plans et réglages en base, validation, cache 15 s), migrations idempotentes, souscription au prix de la console, statut d'abonné limité aux formules particulier, `/abonnements/offre`, `/api/admin/surga/plans` et `/reglages` avec trace d'audit. 20 tests (`surga-offre.test.js`).
+- **Écrans et console (`29a97de2`) :** fenêtre d'abonnement, bandeaux de droits, compte, paramètres, démarches, espaces pro lus sur l'offre ; console : prix des trois durées, retrait et remise en vente, réglages réels et état réel des services.
+- **Preuve :** sonde `a5/w131-offre-console.js` (A5-131) 20 sur 20 sur un backend isolé (port 4105, base `nopalou_audit`) : prix, durée à 0, quotas, valeur hors bornes refusée sans rien écrire, ventes fermées, formule retirée, écriture en base ; valeurs d'origine rétablies. Typage 0 erreur, frontend 153 sur 153, backend Surga 169 sur 172 (3 échecs antérieurs, contenu de la base).
+- **Limites :** non rejoué dans un navigateur ; Wave jamais appelé en réel ; avantages saisis librement ; formules professionnelles hors vente (rien de construit derrière).
+
 ### [2026-10-08 — Sauvegarde de Render et écart de schéma] — `main` `8fad888f`, reporté `845e3e01` ; aucun push
 - **Objet :** sauvegarde de la base de production à la demande de l'utilisateur (`backups/backup-nopalou-20261008224216-render-prod.sql.gz`, 48,7 Mo, 155 tables, 1 552 199 lignes, SHA-256 `688fbed9…cd151f`), lecture seule ; restauration d'essai dans une base locale jetable : 0 erreur.
 - **Constat :** l'archive est sans schéma ; la production diffère des migrations (table `auth_reset_demandes`, colonnes `annonces_classifiees.source_detail`, `historique_prix.created_at`, `scraping_runs.items_valides`, `contact_tel` nullable). **Correctif :** sept instructions idempotentes dans `backend/migrate-inline.js`.
