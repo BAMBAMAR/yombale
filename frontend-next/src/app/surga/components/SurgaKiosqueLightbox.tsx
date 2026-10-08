@@ -219,7 +219,7 @@ export default function SurgaKiosqueLightbox({
       role="dialog"
       aria-modal="true"
       aria-label={`Une de ${selectedUne.nom_journal}`}
-      style={{
+      data-surga-echap="propre" style={{
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.94)',

@@ -174,7 +174,7 @@ export default function SurgaXaalisPinModal({
 
   return (
     <div
-      style={{
+      data-surga-echap="propre" style={{
         position: 'fixed',
         inset: 0,
         zIndex: 99999,

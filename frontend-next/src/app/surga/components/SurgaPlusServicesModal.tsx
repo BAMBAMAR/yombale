@@ -141,7 +141,7 @@ export default function SurgaPlusServicesModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="plus-services-modal-title"
-      style={{
+      data-surga-echap="propre" style={{
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(28, 43, 74, 0.65)',
