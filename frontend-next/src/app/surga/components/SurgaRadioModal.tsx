@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react'
 import { Radio as RadioIcon, X, Search } from 'lucide-react'
 import SurgaRadioCard from './SurgaRadioCard'
 import SurgaRadioMiniPlayer from './SurgaRadioMiniPlayer'
+import SurgaChargementEchoue from './SurgaChargementEchoue'
 import { useSurgaRadio, type StationRadio } from '@/lib/surga-radio-context'
 
 export type { StationRadio }
@@ -25,6 +26,8 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
   const {
     stations,
     loadingStations,
+    echecStations,
+    rechargerStations,
     stationActive,
     isPlaying,
     isBuffering,
@@ -251,6 +254,8 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
             <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--text3, #73675E)' }}>
               Chargement des stations sénégalaises...
             </div>
+          ) : echecStations && stations.length === 0 ? (
+            <SurgaChargementEchoue message="La liste des radios n’a pas pu être chargée." onReessayer={rechargerStations} />
           ) : stationsFiltrees.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--text3, #73675E)' }}>
               Aucune station trouvée pour cette recherche.

@@ -45,16 +45,31 @@ export function telechargerBlobPdf(blob: Blob, nomFichier: string): void {
   document.body.removeChild(a)
 }
 
+// Une lecture en échec (réseau coupé, statut d'erreur, « success: false ») vaut null. L'ancien repli la changeait
+// en objet vide : la fenêtre montrait alors un profil vierge, que l'on pouvait enregistrer par-dessus le vrai.
+async function lireEmploi(adresse: string, headers: Record<string, string>): Promise<any | null> {
+  try {
+    const res = await fetch(adresse, { headers })
+    if (!res.ok) return null
+    const data = await res.json()
+    return data && data.success ? data : null
+  } catch {
+    return null
+  }
+}
+
 export async function fetchSurgaEmploiDonnees() {
   const headers = getSurgaEmploiHeaders(true)
   const [resProfil, resDroits, resDocs, resDroitsEntretien] = await Promise.all([
-    fetch('/api/surga/emploi/profil', { headers }).then((r) => r.json()).catch(() => ({})),
-    fetch('/api/surga/emploi/droits', { headers }).then((r) => r.json()).catch(() => ({})),
-    fetch('/api/surga/emploi/documents', { headers }).then((r) => r.json()).catch(() => ({})),
-    fetch('/api/surga/emploi/entretien/droits', { headers }).then((r) => r.json()).catch(() => ({})),
+    lireEmploi('/api/surga/emploi/profil', headers),
+    lireEmploi('/api/surga/emploi/droits', headers),
+    lireEmploi('/api/surga/emploi/documents', headers),
+    lireEmploi('/api/surga/emploi/entretien/droits', headers),
   ])
 
   return {
+    // « echec » : au moins une des quatre lectures n'a pas abouti. À distinguer de « pas encore de profil ».
+    echec: [resProfil, resDroits, resDocs, resDroitsEntretien].some((r) => r === null),
     profil: resProfil?.success && resProfil.profil ? resProfil.profil : null,
     droits: resDroits?.success && resDroits.droits ? resDroits.droits : null,
     documents: resDocs?.success && Array.isArray(resDocs.documents) ? resDocs.documents : [],

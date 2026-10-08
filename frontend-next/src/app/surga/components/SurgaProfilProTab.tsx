@@ -8,6 +8,7 @@ import {
   Trash2,
   Save,
   CheckCircle2,
+  AlertCircle,
 } from 'lucide-react'
 import SurgaProfilProExperiences from './SurgaProfilProExperiences'
 import SurgaProfilProFormations from './SurgaProfilProFormations'
@@ -47,10 +48,16 @@ export interface ProfilProData {
   langues: ProfilLangue[]
 }
 
+// Ce que l'enregistrement a donné : le message s'affiche à côté du bouton, là où la personne regarde.
+export interface ResultatEnregistrement {
+  ok: boolean
+  message: string
+}
+
 interface SurgaProfilProTabProps {
   profil: ProfilProData
   onChange: (nouveau: ProfilProData) => void
-  onSave: () => Promise<void>
+  onSave: () => Promise<ResultatEnregistrement>
   saving: boolean
 }
 
@@ -61,7 +68,7 @@ export default function SurgaProfilProTab({
   saving,
 }: SurgaProfilProTabProps) {
   const [nouvelleCompetence, setNouvelleCompetence] = useState('')
-  const [sauvegardeSucces, setSauvegardeSucces] = useState(false)
+  const [resultat, setResultat] = useState<ResultatEnregistrement | null>(null)
 
   const handleChangeChamp = (champ: keyof ProfilProData, valeur: any) => {
     onChange({ ...profil, [champ]: valeur })
@@ -126,10 +133,11 @@ export default function SurgaProfilProTab({
 
   const handleSoumettre = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSauvegardeSucces(false)
-    await onSave()
-    setSauvegardeSucces(true)
-    setTimeout(() => setSauvegardeSucces(false), 3000)
+    setResultat(null)
+    // « Enregistré » ne s'affiche que si le serveur l'a confirmé ; un refus reste à l'écran jusqu'au prochain essai.
+    const donne = await onSave()
+    setResultat(donne)
+    if (donne.ok) setTimeout(() => setResultat((r) => (r === donne ? null : r)), 4000)
   }
 
   return (
@@ -296,21 +304,24 @@ export default function SurgaProfilProTab({
       />
 
       {/* Barre de sauvegarde */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
         <button
           type="submit"
           disabled={saving}
           className="surga-btn-primary"
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', fontSize: 14, fontWeight: 700, minHeight: 46, width: 'auto' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', fontSize: 14, fontWeight: 700, minHeight: 46, width: 'auto', flexShrink: 0 }}
         >
           <Save size={16} />
           <span>{saving ? 'Enregistrement en cours...' : 'Enregistrer mon profil'}</span>
         </button>
 
-        {sauvegardeSucces && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--surga-emerald, #059669)', fontSize: 14, fontWeight: 700 }}>
-            <CheckCircle2 size={18} />
-            <span>Profil enregistré avec succès !</span>
+        {resultat && (
+          <div
+            role={resultat.ok ? 'status' : 'alert'}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '1 1 220px', minWidth: 0, color: resultat.ok ? 'var(--surga-emerald, #059669)' : 'var(--surga-danger, #DC2626)', fontSize: 14, fontWeight: 700 }}
+          >
+            {resultat.ok ? <CheckCircle2 size={18} style={{ flexShrink: 0 }} /> : <AlertCircle size={18} style={{ flexShrink: 0 }} />}
+            <span>{resultat.message}</span>
           </div>
         )}
       </div>

@@ -65,8 +65,6 @@ export default function SurgaDemarchesModal({
       const params = new URLSearchParams();
       if (terme.trim()) params.set('q', terme.trim());
       if (cat !== 'tous') params.set('categorie', cat);
-      // Mode démo technique tant que les fiches sont marquées BROUILLON selon la condition de démarrage
-      params.set('mode_demo', 'true');
 
       const data = await lireReponseSurga(await fetch(`/api/surga/demarches?${params.toString()}`));
       setDemarches(data.fiches || []);
@@ -398,6 +396,10 @@ export default function SurgaDemarchesModal({
             <SurgaChargementEchoue message="Le guide des démarches n’a pas pu être chargé." onReessayer={() => chargerDemarches(recherche, categorieFiltre)} />
           ) : nonCouvert ? (
             <SurgaDemarcheNonCouvertBanner />
+          ) : ongletActif === 'catalogue' && demarches.length === 0 ? (
+            // Aucune fiche publiée (toutes en cours de vérification, ou aucune dans cette rubrique) : on le dit
+            // et on renvoie au portail de l'État, plutôt que « aucun résultat ».
+            <SurgaDemarcheNonCouvertBanner enVerification />
           ) : demarchesAffichees.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 0', fontSize: 13, color: 'var(--text3, #73675E)' }}>
               {ongletActif === 'suivis'

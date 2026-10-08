@@ -7,7 +7,9 @@
 import React from 'react';
 import { ShieldCheck, ExternalLink } from 'lucide-react';
 
-export default function SurgaDemarcheNonCouvertBanner() {
+// « enVerification » : aucune fiche publiée à montrer (guide encore en relecture, ou rubrique vide). Sans cette
+// option : une recherche qui ne correspond à aucune fiche.
+export default function SurgaDemarcheNonCouvertBanner({ enVerification = false }: { enVerification?: boolean }) {
   return (
     <div
       style={{
@@ -25,11 +27,12 @@ export default function SurgaDemarcheNonCouvertBanner() {
       <ShieldCheck size={32} color="var(--navy, #1C2B4A)" />
       <div>
         <h3 style={{ fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: '0 0 6px 0' }}>
-          Cette démarche n&apos;est pas encore répertoriée
+          {enVerification ? 'Aucune fiche vérifiée à afficher pour le moment' : 'Cette démarche n’est pas encore répertoriée'}
         </h3>
         <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0, lineHeight: 1.4, maxWidth: 440 }}>
-          Par rigueur éditoriale, Surga ne génère aucune réponse improvisée. Vous pouvez consulter directement
-          le portail officiel des démarches administratives du Sénégal.
+          {enVerification
+            ? 'Surga ne publie une fiche qu’après vérification auprès de l’administration. En attendant, le portail officiel des démarches administratives du Sénégal fait référence.'
+            : 'Par rigueur éditoriale, Surga ne génère aucune réponse improvisée. Vous pouvez consulter directement le portail officiel des démarches administratives du Sénégal.'}
         </p>
       </div>
       <a

@@ -14,13 +14,13 @@ const demarchesService = require('../../services/surga/demarches-service');
  */
 router.get('/demarches', async (req, res) => {
   try {
-    const { q, categorie, mode_demo } = req.query;
-    const includeBrouillons = mode_demo === 'true' || mode_demo === '1';
+    const { q, categorie } = req.query;
 
+    // Le public ne lit que les fiches publiées. L'ancien paramètre « mode_demo » ouvrait les brouillons à
+    // n'importe quel visiteur : il est ignoré. Les brouillons se lisent par la console d'administration.
     const resultat = await demarchesService.rechercherDemarches({
       query: q,
       categorie,
-      includeBrouillons,
     });
 
     return res.json({
@@ -84,6 +84,16 @@ router.post('/demarches/:id/suivis', verifierToken, async (req, res) => {
     const userId = req.user.userId;
     const { id } = req.params;
     const { date_echeance, notes } = req.body || {};
+
+    // On ne suit qu'une fiche publiée : un brouillon n'est pas montré, il ne se suit pas non plus.
+    const fiche = await demarchesService.getDemarcheParIdOuSlug(id);
+    if (!fiche) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cette démarche administrative est introuvable ou n\'a pas encore été validée par la rédaction.',
+        portail_officiel: demarchesService.URL_PORTAIL_OFFICIEL,
+      });
+    }
 
     const suivi = await demarchesService.ajouterSuiviDemarche(userId, id, {
       date_echeance,
@@ -174,12 +184,9 @@ router.post('/demarches/:id/signalements', tokenOptional, async (req, res) => {
 router.get('/demarches/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { mode_demo } = req.query;
-    const includeBrouillons = mode_demo === 'true' || mode_demo === '1';
 
-    const demarche = await demarchesService.getDemarcheParIdOuSlug(id, {
-      includeBrouillons,
-    });
+    // Fiche publiée seulement : un brouillon répond 404, même à qui en connaît l'adresse.
+    const demarche = await demarchesService.getDemarcheParIdOuSlug(id);
 
     if (!demarche) {
       return res.status(404).json({

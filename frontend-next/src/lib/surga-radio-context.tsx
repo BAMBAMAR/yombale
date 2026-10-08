@@ -20,6 +20,8 @@ export interface StationRadio {
 export interface SurgaRadioContextType {
   stations: StationRadio[]
   loadingStations: boolean
+  echecStations: boolean
+  rechargerStations: () => void
   stationActive: StationRadio | null
   isPlaying: boolean
   isBuffering: boolean
@@ -41,6 +43,7 @@ const SurgaRadioContext = createContext<SurgaRadioContextType | undefined>(undef
 export function SurgaRadioProvider({ children }: { children: React.ReactNode }) {
   const [stations, setStations] = useState<StationRadio[]>([])
   const [loadingStations, setLoadingStations] = useState<boolean>(false)
+  const [echecStations, setEchecStations] = useState<boolean>(false)
   const [stationActive, setStationActive] = useState<StationRadio | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [isBuffering, setIsBuffering] = useState<boolean>(false)
@@ -51,28 +54,32 @@ export function SurgaRadioProvider({ children }: { children: React.ReactNode }) 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const proxyTriedRef = useRef<boolean>(false)
 
-  // Chargement des stations une seule fois
-  useEffect(() => {
-    let isMounted = true
-    async function chargerStations() {
-      setLoadingStations(true)
-      try {
-        const res = await fetch('/api/surga/radios')
-        const data = await res.json()
-        if (isMounted && data.success && Array.isArray(data.stations)) {
-          setStations(data.stations)
-        }
-      } catch (err) {
-        console.error('Erreur chargement radios Surga:', err)
-      } finally {
-        if (isMounted) setLoadingStations(false)
-      }
-    }
-    chargerStations()
-    return () => {
-      isMounted = false
+  // Chargement des stations au montage, puis à la demande (« Réessayer »). SRG-A3-006 : un échec se dit, au lieu
+  // de laisser la fenêtre afficher « Aucune station trouvée ». Les stations déjà chargées restent à l'écran.
+  const monteRef = useRef<boolean>(true)
+  const rechargerStations = useCallback(async () => {
+    setLoadingStations(true)
+    setEchecStations(false)
+    try {
+      const res = await fetch('/api/surga/radios')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      if (!data?.success || !Array.isArray(data.stations)) throw new Error('réponse en échec')
+      if (monteRef.current) setStations(data.stations)
+    } catch {
+      if (monteRef.current) setEchecStations(true)
+    } finally {
+      if (monteRef.current) setLoadingStations(false)
     }
   }, [])
+
+  useEffect(() => {
+    monteRef.current = true
+    rechargerStations()
+    return () => {
+      monteRef.current = false
+    }
+  }, [rechargerStations])
 
   // Synchronisation MediaSession API pour contrôles natifs mobile / écran de verrouillage
   useEffect(() => {
@@ -246,6 +253,8 @@ export function SurgaRadioProvider({ children }: { children: React.ReactNode }) 
       value={{
         stations,
         loadingStations,
+        echecStations,
+        rechargerStations,
         stationActive,
         isPlaying,
         isBuffering,

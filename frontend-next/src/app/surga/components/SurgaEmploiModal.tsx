@@ -6,12 +6,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { X } from 'lucide-react'
-import SurgaProfilProTab, { type ProfilProData } from './SurgaProfilProTab'
+import SurgaProfilProTab, { type ProfilProData, type ResultatEnregistrement } from './SurgaProfilProTab'
 import SurgaCvTab from './SurgaCvTab'
 import SurgaLettreTab from './SurgaLettreTab'
 import SurgaEntretienTab from './SurgaEntretienTab'
 import SurgaDocumentsEmploiTab, { type DocumentEmploi } from './SurgaDocumentsEmploiTab'
 import SurgaEmploiNav, { type TabEmploi } from './SurgaEmploiNav'
+import SurgaChargementEchoue from './SurgaChargementEchoue'
 import {
   getSurgaEmploiHeaders,
   telechargerBlobPdf,
@@ -62,16 +63,22 @@ export default function SurgaEmploiModal({
   const [saving, setSaving] = useState<boolean>(false)
   const [generant, setGenerant] = useState<boolean>(false)
   const [messageToast, setMessageToast] = useState<string>('')
+  const [toastErreur, setToastErreur] = useState<boolean>(false)
+  const [echec, setEchec] = useState<boolean>(false)
 
-  const afficherToast = (msg: string) => {
+  const afficherToast = (msg: string, erreur = false) => {
     setMessageToast(msg)
-    setTimeout(() => setMessageToast(''), 3500)
+    setToastErreur(erreur)
+    setTimeout(() => setMessageToast(''), erreur ? 6000 : 3500)
   }
+  const signalerErreur = (msg: string) => afficherToast(msg, true)
 
   // Chargement des données
   const rechargerDonnees = useCallback(async () => {
     try {
       const data = await fetchSurgaEmploiDonnees()
+      setEchec(data.echec)
+      if (data.echec) return
       if (data.profil) {
         setProfil({
           nom_complet: data.profil.nom_complet || '',
@@ -103,7 +110,9 @@ export default function SurgaEmploiModal({
       if (data.droitsEntretien) {
         setDroitsSimulation(data.droitsEntretien)
       }
-    } catch {}
+    } catch {
+      setEchec(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -119,7 +128,7 @@ export default function SurgaEmploiModal({
   }, [rechargerDonnees])
 
   // Sauvegarde du profil
-  const handleSauvegarderProfil = async () => {
+  const handleSauvegarderProfil = async (): Promise<ResultatEnregistrement> => {
     setSaving(true)
     try {
       if (typeof window !== 'undefined') {
@@ -130,11 +139,14 @@ export default function SurgaEmploiModal({
         headers: getSurgaEmploiHeaders(true),
         body: JSON.stringify(profil),
       })
-      const data = await res.json()
-      if (data.success) {
+      const data = await res.json().catch(() => null)
+      if (res.ok && data?.success) {
         if (data.profil) setProfil((prev) => ({ ...prev, ...data.profil }))
-        afficherToast(data.guest ? 'Brouillon sauvegardé en local.' : 'Profil professionnel enregistré avec succès.')
+        return { ok: true, message: data.guest ? 'Brouillon gardé sur cet appareil. Connectez-vous pour l’enregistrer.' : 'Profil enregistré.' }
       }
+      return { ok: false, message: 'Le profil n’a pas pu être enregistré. Votre saisie reste sur cet appareil.' }
+    } catch {
+      return { ok: false, message: 'Connexion impossible : le profil n’est pas enregistré. Votre saisie reste sur cet appareil.' }
     } finally {
       setSaving(false)
     }
@@ -178,7 +190,7 @@ export default function SurgaEmploiModal({
           afficherToast('CV généré et téléchargé avec succès.')
         } else {
           const errData = await pdfRes.json().catch(() => ({}))
-          alert(errData.error || 'Erreur lors du téléchargement du PDF.')
+          signalerErreur(errData.error || 'Erreur lors du téléchargement du PDF.')
         }
         rechargerDonnees()
       } else if (json.requireAuth && onOpenAuth) {
@@ -187,10 +199,10 @@ export default function SurgaEmploiModal({
       } else if (json.motif === 'limite_atteinte' || json.quotaAtteint) {
         onOpenPremium()
       } else {
-        alert(json.error || 'Erreur lors de la génération du CV.')
+        signalerErreur(json.error || 'Erreur lors de la génération du CV.')
       }
     } catch {
-      alert('Erreur réseau lors de la génération du CV.')
+      signalerErreur('Erreur réseau lors de la génération du CV.')
     } finally {
       setGenerant(false)
     }
@@ -229,6 +241,8 @@ export default function SurgaEmploiModal({
           const blob = await pdfRes.blob()
           telechargerBlobPdf(blob, `Lettre_${donnees.poste_vise.replace(/\s+/g, '_') || 'Surga'}.pdf`)
           afficherToast('Lettre générée et téléchargée avec succès.')
+        } else {
+          signalerErreur('La lettre est enregistrée, mais son téléchargement a échoué. Retrouvez-la dans vos documents.')
         }
         rechargerDonnees()
       } else if (json.requireAuth && onOpenAuth) {
@@ -237,10 +251,10 @@ export default function SurgaEmploiModal({
       } else if (json.motif === 'limite_atteinte' || json.quotaAtteint) {
         onOpenPremium()
       } else {
-        alert(json.error || 'Erreur lors de la génération de la lettre.')
+        signalerErreur(json.error || 'Erreur lors de la génération de la lettre.')
       }
     } catch {
-      alert('Erreur réseau lors de la génération de la lettre.')
+      signalerErreur('Erreur réseau lors de la génération de la lettre.')
     } finally {
       setGenerant(false)
     }
@@ -256,21 +270,24 @@ export default function SurgaEmploiModal({
         const blob = await res.blob()
         telechargerBlobPdf(blob, nom || 'document.pdf')
       } else {
-        alert('Impossible de télécharger ce document.')
+        signalerErreur('Impossible de télécharger ce document.')
       }
     } catch {
-      alert('Erreur réseau lors du téléchargement.')
+      signalerErreur('Erreur réseau lors du téléchargement.')
     }
   }
 
   // Supprimer un document
   const handleSupprimerDoc = async (id: string) => {
     if (!confirm('Voulez-vous supprimer définitivement ce document ?')) return
-    await fetch(`/api/surga/emploi/documents/${id}`, {
-      method: 'DELETE',
-      headers: getSurgaEmploiHeaders(true),
-    })
-    setDocuments((prev) => prev.filter((d) => d.id !== id))
+    // Le document ne quitte la liste que si le serveur l'a supprimé.
+    try {
+      const res = await fetch(`/api/surga/emploi/documents/${id}`, { method: 'DELETE', headers: getSurgaEmploiHeaders(true) })
+      if (!res.ok) return signalerErreur('Ce document n’a pas pu être supprimé.')
+      setDocuments((prev) => prev.filter((d) => d.id !== id))
+    } catch {
+      signalerErreur('Connexion impossible : le document n’est pas supprimé.')
+    }
   }
 
   if (!isOpen) return null
@@ -342,9 +359,10 @@ export default function SurgaEmploiModal({
         <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
           {messageToast && (
             <div
+              role={toastErreur ? 'alert' : 'status'}
               style={{
-                backgroundColor: 'rgba(10, 92, 54, 0.1)',
-                color: 'var(--price, #0A5C36)',
+                backgroundColor: toastErreur ? 'var(--surga-danger-soft, rgba(220, 38, 38, 0.09))' : 'rgba(10, 92, 54, 0.1)',
+                color: toastErreur ? 'var(--surga-danger, #DC2626)' : 'var(--price, #0A5C36)',
                 padding: '8px 12px',
                 borderRadius: 8,
                 fontSize: 12,
@@ -357,7 +375,12 @@ export default function SurgaEmploiModal({
             </div>
           )}
 
-          {activeTab === 'profil' && (
+          {/* Lecture en échec : ni profil vierge ni liste vide, qui se confondraient avec « rien d'enregistré ». */}
+          {echec && (
+            <SurgaChargementEchoue message="Votre espace Emploi n’a pas pu être chargé." onReessayer={rechargerDonnees} />
+          )}
+
+          {!echec && activeTab === 'profil' && (
             <SurgaProfilProTab
               profil={profil}
               onChange={setProfil}
@@ -366,7 +389,7 @@ export default function SurgaEmploiModal({
             />
           )}
 
-          {activeTab === 'cv' && (
+          {!echec && activeTab === 'cv' && (
             <SurgaCvTab
               profil={profil}
               droits={{
@@ -381,7 +404,7 @@ export default function SurgaEmploiModal({
             />
           )}
 
-          {activeTab === 'lettre' && (
+          {!echec && activeTab === 'lettre' && (
             <SurgaLettreTab
               profil={profil}
               droits={{
@@ -396,7 +419,7 @@ export default function SurgaEmploiModal({
             />
           )}
 
-          {activeTab === 'entretien' && (
+          {!echec && activeTab === 'entretien' && (
             <SurgaEntretienTab
               profil={profil}
               droitsSimulation={droitsSimulation}
@@ -405,7 +428,7 @@ export default function SurgaEmploiModal({
             />
           )}
 
-          {activeTab === 'documents' && (
+          {!echec && activeTab === 'documents' && (
             <SurgaDocumentsEmploiTab
               documents={documents}
               onTelecharger={handleTelechargerDocExistant}
