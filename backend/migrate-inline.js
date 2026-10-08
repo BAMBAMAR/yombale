@@ -1442,6 +1442,39 @@ module.exports = async function migrateInline(customConnStr = null) {
     console.warn('[MIGRATE] ⚠️  AUD-052 : index unique utilisateurs.telephone NON posé (doublons existants à résoudre manuellement) —', e.message);
   }
 
+  // SRG-A1-004 : l'index ci-dessus porte sur la valeur écrite. « 771234567 » et « +221771234567 » y coexistent : un
+  // compte pouvait prendre le numéro d'un autre sous une autre écriture. Celui-ci porte sur la forme canonique du
+  // numéro (backend/lib/telephoneIntegrity.js), pour les comptes actifs. Aucune donnée n'est modifiée. Si des comptes
+  // actifs partagent déjà un numéro, l'index n'est pas posé : la migration échoue en mode strict, avertit sinon.
+  {
+    const { SQL_TEL_CANONIQUE } = require('./lib/telephoneIntegrity');
+    let doublons = [];
+    try {
+      ({ rows: doublons } = await pool.query(
+        `SELECT ${SQL_TEL_CANONIQUE} AS numero, COUNT(*)::int AS comptes FROM utilisateurs
+         WHERE telephone IS NOT NULL AND supprime_le IS NULL GROUP BY 1 HAVING COUNT(*) > 1`
+      ));
+    } catch (e) {
+      console.warn('[MIGRATE] ⚠️  SRG-A1-004 : contrôle des numéros en double impossible —', e.message);
+    }
+    if (doublons.length > 0) {
+      const message = `SRG-A1-004 : ${doublons.length} numéro(s) porté(s) par plusieurs comptes actifs ; index unique canonique NON posé (à résoudre avant)`;
+      if (process.env.MIGRATE_STRICT === 'true') throw new Error(message);
+      console.warn('[MIGRATE] ⚠️  ' + message);
+    } else {
+      try {
+        await pool.query(
+          `CREATE UNIQUE INDEX IF NOT EXISTS uidx_utilisateurs_tel_canonique ON utilisateurs (${SQL_TEL_CANONIQUE})
+           WHERE telephone IS NOT NULL AND supprime_le IS NULL`
+        );
+        console.log('[MIGRATE] ✅ Index unique sur la forme canonique du téléphone posé (SRG-A1-004)');
+      } catch (e) {
+        if (process.env.MIGRATE_STRICT === 'true') throw e;
+        console.warn('[MIGRATE] ⚠️  SRG-A1-004 : index unique canonique NON posé —', e.message);
+      }
+    }
+  }
+
   // --- NOUVELLES FONCTIONNALITÉS POS (Fiscalité, Documents, Fournisseurs) ---
   try {
     // 1. Boutiques et produits + Infos légales OHADA
