@@ -147,7 +147,8 @@ async function traiterRappelsEchus(options = {}) {
         body: rappel.description || (rappel.heure_evenement ? `Prévu à ${rappel.heure_evenement}` : 'Rappel du jour'),
         icon: '/surga/icon-192.png',
         badge: '/surga/icon-192.png',
-        url: '/surga/agenda',
+        // SRG-A1-029 : « /surga/agenda » n'existe pas (404). L'agenda s'ouvre par l'onglet porté par l'adresse.
+        url: '/surga?tab=agenda',
         tag: `surga-rappel-${rappel.id}`,
         data: {
           rappelId: rappel.id,
@@ -183,7 +184,7 @@ async function traiterRappelsEchus(options = {}) {
           const msgWa = `Surga Rappel : ${rappel.titre}\n` +
             (rappel.heure_evenement ? `Heure prévue : ${rappel.heure_evenement}\n` : '') +
             (rappel.description ? `Note : ${rappel.description}\n` : '') +
-            `Pour ouvrir votre agenda : https://surga.nopalou.com/agenda`;
+            `Pour ouvrir votre agenda : https://surga.nopalou.com/?tab=agenda`;
 
           // SRG-A1-025 : le canal est noté avant l'appel. Une exception du fournisseur était journalisée
           // « in_app succes » alors que rien n'était parti.

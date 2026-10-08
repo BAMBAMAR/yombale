@@ -314,7 +314,8 @@ export default async function RootLayout({
 
         <main id="app-main" tabIndex={-1} style={isSurga ? { padding: 0, margin: 0, minHeight: '100vh' } : undefined}>{children}</main>
 
-        <RegisterSW />
+        {/* SRG-A3-002 : le worker de Nopalou n'est pas installé depuis Surga (il mettait tout le site en cache, 547 fichiers) */}
+        {!isSurga && <RegisterSW />}
         <VoiceConsentHost />
         <WebVitals />
 

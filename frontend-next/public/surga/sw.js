@@ -1,17 +1,14 @@
 // frontend-next/public/surga/sw.js
-// Service Worker dédié à l'application Surga (compatible scope / ou /surga/)
-// Cache Low-Data & Support Hors-Ligne
+// Service worker de Surga. Portée : « /surga » sur le domaine principal, « / » sur le sous-domaine surga.*
+// Peu de données : rien n'est téléchargé d'avance en dehors de la page et de ses icônes ; le reste entre en cache
+// au fil de l'usage. Hors ligne : la page, son JavaScript et ses styles sont relus depuis le cache.
 
-const SURGA_CACHE_NAME = 'surga-pwa-v2';
-const STATIC_ASSETS = [
-  '/',
-  '/surga',
-  '/surga/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-];
-
+const SURGA_CACHE_NAME = 'surga-pwa-v3';
 const isSubdomain = self.location.hostname.startsWith('surga.');
+const PAGE = isSubdomain ? '/' : '/surga';
+
+// Sur le domaine principal, « / » est la page d'accueil de Nopalou : elle n'a rien à faire dans ce cache.
+const STATIC_ASSETS = [PAGE, '/surga/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -37,41 +34,43 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+const garder = (request, response) => {
+  if (response && response.status === 200 && response.type === 'basic') {
+    const copie = response.clone();
+    caches.open(SURGA_CACHE_NAME).then((cache) => cache.put(request, copie));
+  }
+  return response;
+};
+
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  // Ce worker ne contrôle que des pages de Surga : toute demande vient d'elles. Seules les ressources du site sont
+  // gérées ; l'API garde le réseau (l'application tient elle-même la copie de ses données).
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
 
-  // Gérer si sous-domaine surga.* OU chemin /surga
-  const isSurgaScope = isSubdomain || url.pathname.startsWith('/surga');
-  if (!isSurgaScope) {
+  // Fichiers du build : leur nom change à chaque version, le cache d'abord.
+  // SRG-A3-012 : ils n'étaient pas gardés sur le domaine principal ; hors ligne, la page se rechargeait sans son code.
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      caches.match(request).then((enCache) => enCache || fetch(request).then((reponse) => garder(request, reponse)))
+    );
     return;
   }
 
-  // Ne pas intercepter les requêtes API (laisser le réseau avec repli client)
-  if (url.pathname.startsWith('/api/')) {
-    return;
-  }
-
-  // Stratégie Network-first avec fallback Cache
+  // Le reste : réseau d'abord, cache en secours.
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response && response.status === 200 && response.type === 'basic') {
-          const responseClone = response.clone();
-          caches.open(SURGA_CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return response;
-      })
+    fetch(request)
+      .then((reponse) => garder(request, reponse))
       .catch(async () => {
-        const cached = await caches.match(event.request);
-        if (cached) return cached;
-        // Si document HTML, fallback sur la page racine de surga ou racine sous-domaine
-        if (event.request.mode === 'navigate') {
-          const fallbackUrl = isSubdomain ? '/' : '/surga';
-          const matchFallback = await caches.match(fallbackUrl);
-          if (matchFallback) return matchFallback;
-          return caches.match('/surga');
+        const enCache = await caches.match(request);
+        if (enCache) return enCache;
+        // Navigation hors ligne vers une adresse non gardée (« /surga?tab=notes ») : la page de Surga, qui lit l'onglet.
+        if (request.mode === 'navigate') {
+          const page = await caches.match(PAGE);
+          if (page) return page;
         }
         return new Response('Contenu indisponible hors-ligne', {
           status: 503,
@@ -81,7 +80,17 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// ── Gestion Web Push & Notifications d'arrière-plan ──────────────────────────
+// ── Notifications ────────────────────────────────────────────────────────────
+
+// SRG-A1-029 : l'adresse « /surga/agenda » n'existe pas (404). L'agenda s'ouvre par « ?tab=agenda ».
+const AGENDA = `${PAGE}?tab=agenda`;
+// Une adresse reçue du serveur est toujours écrite pour le domaine principal ; sur le sous-domaine, « /surga » tombe.
+const adresseLocale = (adresse) => {
+  if (!adresse) return AGENDA;
+  if (!isSubdomain) return adresse;
+  const sans = adresse.replace(/^\/surga(?=$|[/?#])/, '');
+  return sans.startsWith('/') ? sans : `/${sans}`;
+};
 
 self.addEventListener('push', (event) => {
   let data = {
@@ -89,7 +98,7 @@ self.addEventListener('push', (event) => {
     body: 'Vous avez un rappel programmé.',
     icon: '/surga/icon-192.png',
     badge: '/surga/icon-192.png',
-    url: isSubdomain ? '/agenda' : '/surga/agenda',
+    url: AGENDA,
   };
 
   if (event.data) {
@@ -108,8 +117,8 @@ self.addEventListener('push', (event) => {
     tag: data.tag || 'surga-notif',
     renotify: true,
     data: {
-      url: data.url || (isSubdomain ? '/agenda' : '/surga/agenda'),
       ...data.data,
+      url: adresseLocale(data.url),
     },
   };
 
@@ -118,17 +127,14 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url)
-    ? event.notification.data.url
-    : (isSubdomain ? '/' : '/surga');
+  const targetUrl = adresseLocale(event.notification.data && event.notification.data.url);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Si une fenêtre est déjà ouverte, la focaliser et naviguer
-      for (const client of clientList) {
-        if (client.url.includes(targetUrl) && 'focus' in client) {
-          return client.focus();
-        }
+      // Une fenêtre de Surga est déjà ouverte : elle est amenée sur l'écran visé, puis mise au premier plan.
+      const ouverte = clientList.find((client) => new URL(client.url).pathname.startsWith(PAGE));
+      if (ouverte && 'navigate' in ouverte) {
+        return ouverte.navigate(targetUrl).then((client) => (client && 'focus' in client ? client.focus() : undefined));
       }
       if (clients.openWindow) {
         return clients.openWindow(targetUrl);
@@ -136,4 +142,3 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
-

@@ -320,7 +320,7 @@ router.post('/push/test', tokenOptional, async (req, res) => {
       body: 'Le système de notifications Web Push est opérationnel.',
       icon: '/surga/icon-192.png',
       badge: '/surga/icon-192.png',
-      url: '/surga/agenda',
+      url: '/surga?tab=agenda',
       tag: 'surga-test-notif',
     };
 
