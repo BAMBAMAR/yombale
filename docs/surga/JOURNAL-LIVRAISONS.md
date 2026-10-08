@@ -3,6 +3,23 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-08 — Sixième lot] — questionnaire exécuté : worker, sauvegarde, sources, écrans ; 9 commits locaux, aucun push
+- **Objet :** `main` : `c5ddd75c`, `44dbdf51`, `943d5262`. `feature/surga` : `bc634413` (documents), `d150e728` et `83da3d37` (reports de `main`), `74b2ef2a` (sources), `b9ad1083` (écrans), `ac8460e3`.
+- **Décisions :** D63 à D69 (`DECISIONS.md`).
+- **Corrigées et rejouées :**
+  - `SRG-A3-002` (fin) : le worker de Nopalou ne s'installe plus depuis Surga. Première visite : 4 fichiers, 139 Ko ; après rechargement : 41 fichiers, 1,7 Mo (avant : 547 fichiers, 64,6 Mo). Hors ligne de Nopalou rejoué : worker actif sur `/`, 3 ventes hors ligne synchronisées sans doublon, dette d'un client créé hors ligne, navigation hors ligne (A5-079, kit `scripts/audit/offline`).
+  - `SRG-A5-010` : sauvegarde à 214 Mo au pic au lieu de 683, contenu identique, export interrompu sans archive restante (A5-099). Diagnostic : 4 erreurs « Received protocol 'c:' » venues d'un backend lancé sous Windows avec la configuration de production ; 12 exécutions jamais terminées sur l'hébergeur, mémoire probable.
+  - `SRG-A3-006` (fin) : presse et unes, shopping, adresses, annonces, concours, démarches, vidéos : message d'échec, « Réessayer », jamais « aucun résultat » sur une erreur 500 ou 429 (A5-103).
+  - `SRG-A3-007` : brouillon de note gardé, bandeau « Une note n'a pas été enregistrée », reprise, effacement à l'enregistrement (A5-104).
+  - `SRG-A3-009` : aucune demande vers les traceurs de Google depuis `/surga` ni `/surga?tab=notes` ; l'accueil de Nopalou les charge toujours (A5-102).
+  - `SRG-A2-009` (fin) : démarches et vidéos, requête en échec : 503 au lieu des fiches écrites dans le code ; un suivi n'est plus gardé dans le processus (A5-101 : 5 verdicts en échec avant, tenus après).
+  - `SRG-A4-014`, `015`, `SRG-A3-005` (sources) : météo réelle de MET Norway pour Dakar, Kaffrine et Saint-Louis ; marée et qualité de l'air d'Open-Meteo quand l'interrupteur est ouvert, `null` sinon ; pas de marée à l'intérieur des terres ; 5 rencontres de Ligue 1 du Sénégal lues avec la clé d'essai (A5-100, A5-105, A5-106).
+- **Trouvé en chemin :** le choix « Orange Money » de la fenêtre Premium ouvrait un onglet de Surga à la place d'un paiement, et laissait une souscription en attente ; un paiement Wave non ouvert rendait une adresse de simulation. Refus avant écriture, bouton retiré, erreur dite.
+- **Relevé, non modifié :** tâches planifiées du poste (`SRG-A5-011`) : `Nopalou_Scraper_Combo` et `Nopalou_Scraper_Facebook` écrivent dans la base de production ; la seconde sort en erreur (session Facebook invalidée sur un groupe ; colonne `http_codes` absente de `scraping_runs` en production).
+- **Limites :** marées estimées, écart d'environ 30 minutes avec la table de marée de Dakar (pleine mer 19 h 11 contre 19 h 43 le 8 octobre) ; Open-Meteo gratuit réservé à un usage non commercial ; TheSportsDB tenue par des contributeurs, clé d'essai partielle ; trafic sans source ; envoi S3, paiement Wave réel et journaux de l'hébergeur non essayés ; position de lecture non rétablie ; fenêtres Emploi, Radios et Trafic non revues ; l'écran des démarches demande `mode_demo=true` et montre des fiches en brouillon.
+- **Tests :** typage 0 erreur ; frontend 118 sur 118 ; backend Surga, sources et téléphone 180 sur 184 (4 échecs antérieurs : clé de notification de l'environnement d'audit, contenu de la base d'audit).
+- **Les 19 P0 :** inchangés depuis le cinquième lot. NO-GO non révisé : aucun agent tiers.
+
 ### [2026-10-08 — Cinquième lot de corrections] — replis de lecture, états d'erreur, parcours, service worker : 10 fiches, 3 commits locaux, aucun push
 - **Objet :** commits `5272ca6c`, `b46fe6bd`, `7774a69f` sur `feature/surga`.
 - **Corrigées et rejouées :**

@@ -1,4 +1,14 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
+
+- **Surga et Nopalou / Sixième lot : worker, sauvegarde, sources, écrans (Session 2026-10-08, `main` : `c5ddd75c`, `44dbdf51`, `943d5262` ; `feature/surga` : `bc634413`, `d150e728`, `83da3d37`, `74b2ef2a`, `b9ad1083`, `ac8460e3` ; aucun push)** :
+  - *Origine* : réponses de l'utilisateur au questionnaire du 2026-10-08 (D63 à D69).
+  - *Code commun, sur `main` puis reporté* : `register: false` dans la configuration Serwist (`SRG-A3-002`), sondes hors ligne de Nopalou rejouées sur un build de production (t01, t04b, t05a, t05b, t05c, t10, t24 du kit `scripts/audit/offline`) ; sauvegarde quotidienne (`SRG-A5-010`) : curseur de 500 lignes, écriture qui attend le compresseur, archive provisoire, import `file://` ; mesure `scripts/audit/surga/a5/s99-sauvegarde-memoire.mjs` : 683 Mo puis 214 Mo au pic, même empreinte du contenu SQL, export interrompu sans fichier restant.
+  - *Surga, sources* : `backend/services/surga/sources-externes.js` (MET Norway, Open-Meteo Marine et Air Quality, TheSportsDB), interrupteurs `SURGA_OPEN_METEO_CLE`, `SURGA_OPEN_METEO_ESSAI`, `SURGA_THESPORTSDB_CLE`, contact `SURGA_SOURCES_CONTACT` ; route météo du frontend retirée ; lecture en réel sous liste blanche : `a5/x90-sources.js` (A5-100).
+  - *Surga, écrans* : `SurgaChargementEchoue.tsx` dans sept fenêtres ; `surga-brouillon-note.ts` ; mesure d'audience de Google hors de Surga ; `remonter()` dans les services des démarches et des vidéos ; paiement simulé retiré de `abonnement-service.js`.
+  - *Rejeu sur build de production* : A5-079 (worker de Surga seul : 4 puis 41 fichiers), A5-102 (aucun traceur sur `/surga`, témoin sur `/`), A5-103 (sept fenêtres en échec 500 ou 429), A5-104 (brouillon repris après rechargement), A5-105 (sources éteintes : « indisponible »), A5-106 (rendu d'un relevé complet). En process : A5-099, A5-100, A5-101.
+  - *Exploitation* : avant de pousser `main`, rien ne bloque côté numéros (A5-098 : aucun doublon) ; après la mise en ligne, lire `cron_executions` le lendemain pour `sauvegarde_quotidienne` et configurer un stockage S3 ou R2 ; retirer le fichier `.env` de production du poste de développement ou désactiver ses deux tâches planifiées (`SRG-A5-011`).
+  - *Non fait* : source de trafic (TomTom ne couvre pas le Sénégal) ; clés d'abonnement ; position de lecture ; validation par un agent tiers.
+
 - **Nopalou Admin & CRM / Éradication Flood CSP Report-Only & Résolution Erreurs 500 / 504 Prospection (Session 2026-10-07, branche `feature/surga`)** :
   * **Mission Réalisée** :
     - Élimination des avertissements CSP Report-Only polluant la console du navigateur sur `/admin`.

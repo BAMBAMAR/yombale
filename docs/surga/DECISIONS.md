@@ -92,7 +92,7 @@ consulte ce fichier avant de remettre en question un point.
 | # | Point | Comment le trancher |
 |---|---|---|
 | O1 | Cadre WhatsApp autorisé pour Surga | Confirmation de Meta ou du fournisseur d'accès à l'API |
-| O2 | Source de données du trafic à Dakar | Spike : faisabilité et coût (API payante, signalements) |
+| O2 | Source de données du trafic à Dakar | Constat du 2026-10-08 : la couverture publiée par TomTom ne compte pas le Sénégal. Reste à choisir : une source payante qui mesure Dakar (par exemple l'API d'itinéraires de Google, coût à chiffrer sur les corridors suivis), les seuls signalements d'usagers, ou le retrait de la brique |
 | O3 | Fournisseur de transcription vocale | Spike : test avec enregistrements réalistes, en français puis en wolof |
 | O4 | Comportement de la PWA sur iPhone (push, audio en arrière-plan) | Test sur appareils réels ; part d'iPhone parmi les utilisateurs |
 | O6 | Droits de diffusion des flux audio Radio FM (SRG-UI-25) | Accords de rediffusion à valider avec les directions techniques des stations sénégalaises (RFM, Zik FM, Sud FM, etc.) avant passage en production publique |
