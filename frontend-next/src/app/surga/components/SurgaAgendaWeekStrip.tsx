@@ -65,8 +65,8 @@ export default function SurgaAgendaWeekStrip({
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'var(--accent, #C75B00)',
-              fontSize: 11,
+              color: 'var(--surga-accent-ink, #A64B08)',
+              fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
               padding: '2px 6px',
@@ -112,7 +112,7 @@ export default function SurgaAgendaWeekStrip({
                 position: 'relative',
               }}
             >
-              <span style={{ fontSize: 10, fontWeight: 600, opacity: estSelectionne ? 0.85 : 0.65 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, opacity: estSelectionne ? 0.85 : 0.65 }}>
                 {j.dayName}
               </span>
               <span style={{ fontSize: 14, fontWeight: 800, marginTop: 2 }}>

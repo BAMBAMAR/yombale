@@ -177,7 +177,7 @@ export default function SurgaAssistantModal({
                 height: 32,
                 borderRadius: 8,
                 backgroundColor: 'rgba(217, 119, 6, 0.12)',
-                color: 'var(--surga-accent, #D97706)',
+                color: 'var(--surga-accent-ink, #A64B08)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -189,7 +189,7 @@ export default function SurgaAssistantModal({
               <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--surga-primary, #0F172A)' }}>
                 Surga AI Assistant
               </div>
-              <div style={{ fontSize: 11.5, color: '#64748B' }}>
+              <div style={{ fontSize: 12, color: '#64748B' }}>
                 Rédaction, questions, navigation & actions locales
               </div>
             </div>

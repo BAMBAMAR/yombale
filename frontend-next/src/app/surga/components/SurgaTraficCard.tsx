@@ -82,7 +82,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--surga-accent, #D97706)',
+              color: 'var(--surga-accent-ink, #A64B08)',
               flexShrink: 0,
             }}
           >
@@ -103,9 +103,9 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
               {source === 'google_maps' && (
                 <span
                   style={{
-                    fontSize: 9,
+                    fontSize: 12,
                     fontWeight: 800,
-                    color: 'var(--surga-emerald, #059669)',
+                    color: 'var(--surga-emerald-ink, #047857)',
                     backgroundColor: 'rgba(5, 150, 105, 0.1)',
                     padding: '1px 5px',
                     borderRadius: 4,
@@ -122,7 +122,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
             </div>
             <div
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: 'var(--surga-text3, #94A3B8)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -144,9 +144,9 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
-              color: 'var(--surga-accent, #D97706)',
+              color: 'var(--surga-accent-ink, #A64B08)',
               backgroundColor: 'rgba(217, 119, 6, 0.1)',
               padding: '4px 8px',
               borderRadius: 6,
@@ -207,7 +207,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
 
           {/* Aperçu des 3 axes clés */}
           {loading ? (
-            <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', padding: '6px 0' }}>
+            <div style={{ fontSize: 12, color: 'var(--surga-text3, #94A3B8)', padding: '6px 0' }}>
               Chargement du trafic…
             </div>
           ) : axesPertinents.length === 0 ? (
@@ -229,7 +229,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
                       borderRadius: 6,
                       backgroundColor: 'var(--surga-surface, #FFFFFF)',
                       border: '1px solid var(--surga-border, #E2E8F0)',
-                      fontSize: 11,
+                      fontSize: 12,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
@@ -257,13 +257,13 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                       {axe.vitesseReelleKmH ? (
-                        <span style={{ fontSize: 10, color: 'var(--surga-text3, #94A3B8)' }}>
+                        <span style={{ fontSize: 12, color: 'var(--surga-text3, #94A3B8)' }}>
                           {axe.vitesseReelleKmH} km/h
                         </span>
                       ) : null}
                       <span
                         style={{
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: 700,
                           color: couleur,
                           padding: '1px 5px',
@@ -274,7 +274,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
                         {libelleNiveau(axe)}
                       </span>
                       {axe.tempsEstimeMin !== null && (
-                        <span style={{ fontSize: 10, color: 'var(--surga-text2, #475569)', fontWeight: 600 }}>
+                        <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', fontWeight: 600 }}>
                           {axe.tempsEstimeMin} min
                         </span>
                       )}
@@ -282,7 +282,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
                   </div>
                 )
               })}
-              <div style={{ fontSize: 11, color: 'var(--surga-text3, #64748B)', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--surga-text3, #64748B)', marginTop: 4 }}>
                 {origineAxe(axesPertinents[0])}
               </div>
             </div>

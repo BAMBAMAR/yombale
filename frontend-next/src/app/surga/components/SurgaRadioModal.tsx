@@ -130,7 +130,7 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
               <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
                 Radios Locales du Sénégal
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.75)' }}>
+              <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.75)' }}>
                 Écoute en direct & Navigation libre dans Surga
               </div>
             </div>
@@ -172,7 +172,7 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
               padding: '6px 14px',
               backgroundColor: '#FEF2F2',
               color: '#991B1B',
-              fontSize: 11,
+              fontSize: 12,
               borderBottom: '1px solid #FCA5A5',
             }}
           >
@@ -235,7 +235,7 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
                     borderColor: estActif ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
                     backgroundColor: estActif ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
                     color: estActif ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: estActif ? 700 : 500,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
@@ -280,7 +280,7 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
             padding: '8px 14px',
             backgroundColor: '#F8F5F0',
             borderTop: '1px solid var(--border, #E8DDD2)',
-            fontSize: 10,
+            fontSize: 12,
             color: 'var(--text3, #73675E)',
             display: 'flex',
             alignItems: 'center',
@@ -294,7 +294,7 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
             style={{
               background: 'transparent',
               border: 'none',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               color: 'var(--navy, #1C2B4A)',
               cursor: 'pointer',

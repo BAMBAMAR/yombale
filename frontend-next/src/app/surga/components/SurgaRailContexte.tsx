@@ -22,7 +22,7 @@ const clavier = (action: () => void) => (e: React.KeyboardEvent) => {
 }
 
 const TEXTE_ETAT: React.CSSProperties = { fontSize: 12, color: 'var(--surga-text2, #475569)', padding: '4px 0', lineHeight: 1.4 }
-const TEXTE_ORIGINE: React.CSSProperties = { fontSize: 11, color: 'var(--surga-text3, #64748B)', marginTop: 4 }
+const TEXTE_ORIGINE: React.CSSProperties = { fontSize: 12, color: 'var(--surga-text3, #64748B)', marginTop: 4 }
 
 const COULEUR_NIVEAU: Record<string, string> = {
   bouche: '#B91C1C',
@@ -79,7 +79,7 @@ export function SurgaRailTrafic({ ville, onOuvrir }: RailProps) {
                   <span className={`surga-trafic-dot ${PASTILLE_NIVEAU[axe.niveau] || ''}`} />
                   <span>{axe.nom.split('(')[0].trim()}</span>
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: COULEUR_NIVEAU[axe.niveau] || 'var(--surga-text2, #475569)' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: COULEUR_NIVEAU[axe.niveau] || 'var(--surga-text2, #475569)' }}>
                   {libelleNiveau(axe).toLowerCase()}
                 </span>
                 {axe.tempsEstimeMin !== null && <span className="surga-trafic-time">{axe.tempsEstimeMin} min</span>}

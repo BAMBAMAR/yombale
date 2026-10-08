@@ -34,7 +34,7 @@ export default function SurgaArticleCard({
       className="surga-card"
       style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 14px', margin: 0 }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, fontWeight: 700 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, fontWeight: 700 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span
             style={{
@@ -83,7 +83,7 @@ export default function SurgaArticleCard({
               borderColor: enNote ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
               backgroundColor: enNote ? 'rgba(28, 43, 74, 0.1)' : '#FFFFFF',
               color: 'var(--navy, #1C2B4A)',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: enNote ? 700 : 600,
               cursor: 'pointer',
               transition: 'all 0.15s ease',
@@ -120,7 +120,7 @@ export default function SurgaArticleCard({
             gap: 3,
             fontSize: 12,
             fontWeight: 700,
-            color: 'var(--accent, #C75B00)',
+            color: 'var(--surga-accent-ink, #A64B08)',
             textDecoration: 'none',
           }}
         >

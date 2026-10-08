@@ -111,7 +111,7 @@ export default function SurgaPodcastModal({ isOpen, onClose }: SurgaPodcastModal
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent-ink, #A64B08)',
               }}
             >
               <Radio size={18} />
@@ -120,7 +120,7 @@ export default function SurgaPodcastModal({ isOpen, onClose }: SurgaPodcastModal
               <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
                 Flux Podcast Privé
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 Écoutez votre briefing matinal dans votre application favorite
               </div>
             </div>
@@ -197,7 +197,7 @@ export default function SurgaPodcastModal({ isOpen, onClose }: SurgaPodcastModal
             padding: '10px 12px',
             backgroundColor: 'var(--bg, #F8F5F0)',
             borderRadius: 8,
-            fontSize: 11,
+            fontSize: 12,
             color: 'var(--text2, #5A4E42)',
             lineHeight: 1.4,
             marginBottom: 14,
@@ -220,8 +220,8 @@ export default function SurgaPodcastModal({ isOpen, onClose }: SurgaPodcastModal
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--accent, #C75B00)',
-              fontSize: 11,
+              color: 'var(--surga-accent-ink, #A64B08)',
+              fontSize: 12,
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',

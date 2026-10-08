@@ -294,7 +294,7 @@ export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalPr
                   borderColor: categorieChoisie === cat.id ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
                   backgroundColor: categorieChoisie === cat.id ? 'var(--accent, #C75B00)' : '#FFFFFF',
                   color: categorieChoisie === cat.id ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 700,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',

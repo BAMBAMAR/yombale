@@ -111,7 +111,7 @@ export default function SurgaPersistentRadioBar() {
                   borderRadius: 4,
                   backgroundColor: isBuffering ? 'var(--accent, #C75B00)' : 'var(--price, #0A5C36)',
                   color: '#FFFFFF',
-                  fontSize: 9,
+                  fontSize: 12,
                   fontWeight: 700,
                   flexShrink: 0,
                 }}
@@ -121,7 +121,7 @@ export default function SurgaPersistentRadioBar() {
             </div>
             <div
               style={{
-                fontSize: 10,
+                fontSize: 12,
                 color: 'rgba(255, 255, 255, 0.75)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -135,7 +135,7 @@ export default function SurgaPersistentRadioBar() {
               <span>•</span>
               <span>{stationActive.region}</span>
               <span>•</span>
-              <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 600 }}>Changer</span>
+              <span style={{ color: 'var(--surga-accent-ink, #A64B08)', fontWeight: 600 }}>Changer</span>
               <ChevronUp size={10} color="var(--accent, #C75B00)" />
             </div>
           </div>

@@ -318,7 +318,7 @@ export default function SurgaProfilProTab({
         {resultat && (
           <div
             role={resultat.ok ? 'status' : 'alert'}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '1 1 220px', minWidth: 0, color: resultat.ok ? 'var(--surga-emerald, #059669)' : 'var(--surga-danger, #DC2626)', fontSize: 14, fontWeight: 700 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '1 1 220px', minWidth: 0, color: resultat.ok ? 'var(--surga-emerald-ink, #047857)' : 'var(--surga-danger, #DC2626)', fontSize: 14, fontWeight: 700 }}
           >
             {resultat.ok ? <CheckCircle2 size={18} style={{ flexShrink: 0 }} /> : <AlertCircle size={18} style={{ flexShrink: 0 }} />}
             <span>{resultat.message}</span>

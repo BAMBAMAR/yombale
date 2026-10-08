@@ -210,9 +210,9 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
           {estGpsActif && (
             <span
               style={{
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
-                color: 'var(--surga-emerald, #059669)',
+                color: 'var(--surga-emerald-ink, #047857)',
                 backgroundColor: 'var(--surga-emerald-soft, rgba(5, 150, 105, 0.1))',
                 padding: '2px 6px',
                 borderRadius: 6,
@@ -279,7 +279,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
                 {meteo.condition_texte}
               </span>
               {meteo.non_actualise && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-accent-text, #92400E)' }}>non actualisé</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-text, #92400E)' }}>non actualisé</span>
               )}
             </div>
           ) : (
@@ -300,7 +300,7 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
             cursor: 'pointer',
             fontSize: 12,
             fontWeight: 700,
-            color: 'var(--surga-accent, #D97706)',
+            color: 'var(--surga-accent-ink, #A64B08)',
             display: 'flex',
             alignItems: 'center',
             gap: 2,

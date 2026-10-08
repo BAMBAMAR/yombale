@@ -59,7 +59,7 @@ export default function SurgaServiceRow({
           </div>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 12,
               color: 'var(--text3, #73675E)',
               lineHeight: 1.35,
               marginTop: 2,
@@ -75,7 +75,7 @@ export default function SurgaServiceRow({
           onClick={onAction}
           className={actionVariant === 'primary' ? 'surga-btn-primary' : 'surga-btn-secondary'}
           style={{
-            fontSize: 11,
+            fontSize: 12,
             padding: '6px 14px',
             width: 'auto',
             flexShrink: 0,

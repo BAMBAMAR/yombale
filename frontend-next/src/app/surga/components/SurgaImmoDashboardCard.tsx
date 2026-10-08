@@ -84,7 +84,7 @@ export default function SurgaImmoDashboardCard({ onOuvrirModal }: SurgaImmoDashb
             <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
               Immobilier &amp; Logement
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
               Offres vérifiées &bull; Alertes immédiates
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function SurgaImmoDashboardCard({ onOuvrirModal }: SurgaImmoDashb
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--accent, #C75B00)',
+            color: 'var(--surga-accent-ink, #A64B08)',
             fontSize: 12,
             fontWeight: 700,
             cursor: 'pointer',
@@ -147,9 +147,9 @@ export default function SurgaImmoDashboardCard({ onOuvrirModal }: SurgaImmoDashb
                 >
                   {b.titre}
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>{b.quartier}</div>
+                <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>{b.quartier}</div>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--price, #0A5C36)', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--price, #0A5C36)', whiteSpace: 'nowrap' }}>
                 {formatPrix(b.prix, b.transaction)}
               </span>
             </div>
@@ -178,7 +178,7 @@ export default function SurgaImmoDashboardCard({ onOuvrirModal }: SurgaImmoDashb
           marginTop: 2,
         }}
       >
-        <Bell size={13} style={{ color: 'var(--accent, #C75B00)' }} />
+        <Bell size={13} style={{ color: 'var(--surga-accent-ink, #A64B08)' }} />
         <span>Créer une veille immobilière</span>
       </button>
     </div>

@@ -244,7 +244,7 @@ export default function SurgaDemarchesModal({
                 type="button"
                 onClick={onOpenPremium}
                 className="surga-btn-primary"
-                style={{ fontSize: 11, padding: '4px 8px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ fontSize: 12, padding: '4px 8px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}
               >
                 <Sparkles size={11} />
                 <span>Passer Premium</span>
@@ -367,7 +367,7 @@ export default function SurgaDemarchesModal({
                 style={{
                   padding: '4px 10px',
                   borderRadius: 20,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',

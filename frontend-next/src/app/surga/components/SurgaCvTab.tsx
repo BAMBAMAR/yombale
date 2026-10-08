@@ -102,7 +102,7 @@ export default function SurgaCvTab({
                   ? '1er CV Gratuit disponible'
                   : 'Plafond gratuit atteint (1 CV gratuit utilisé)'}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
                 {droits.estPremium
                   ? 'Générez et téléchargez vos CV en haute fidélité sans aucune mention commerciale.'
                   : droits.cvTelecharges === 0
@@ -117,7 +117,7 @@ export default function SurgaCvTab({
               type="button"
               onClick={onOpenPremium}
               className="surga-btn-secondary"
-              style={{ fontSize: 11, padding: '5px 10px', fontWeight: 700, flexShrink: 0 }}
+              style={{ fontSize: 12, padding: '5px 10px', fontWeight: 700, flexShrink: 0 }}
             >
               Passer Premium
             </button>
@@ -152,7 +152,7 @@ export default function SurgaCvTab({
               </span>
               {modeleChoisi === 'sobre_moderne' && <Check size={16} color="var(--accent, #C75B00)" />}
             </div>
-            <p style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', margin: 0 }}>
+            <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0 }}>
               En-tête bleu nuit minéral, mise en valeur des compétences par puces et typographie fluide.
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function SurgaCvTab({
               </span>
               {modeleChoisi === 'classique_pro' && <Check size={16} color="var(--accent, #C75B00)" />}
             </div>
-            <p style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', margin: 0 }}>
+            <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0 }}>
               Présentation sobre noir &amp; blanc, idéale pour concours, administration et banques.
             </p>
           </div>
@@ -226,13 +226,13 @@ export default function SurgaCvTab({
           />
           <div style={{ fontSize: 12, color: 'var(--navy, #1C2B4A)', lineHeight: 1.4 }}>
             <strong>Je certifie sur l’honneur l’exactitude de ces informations.</strong>
-            <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 2 }}>
               Surga ne modifie ni n’invente aucune expérience professionnelle. Le document final reflète strictement vos déclarations.
             </div>
           </div>
         </label>
         {erreurExactitude && (
-          <div style={{ color: '#DC2626', fontSize: 11, fontWeight: 700, marginTop: 6 }}>
+          <div style={{ color: '#DC2626', fontSize: 12, fontWeight: 700, marginTop: 6 }}>
             Veuillez cocher cette case pour valider votre relecture avant de télécharger le PDF.
           </div>
         )}

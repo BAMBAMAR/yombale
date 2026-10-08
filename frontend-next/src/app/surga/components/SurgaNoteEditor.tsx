@@ -269,7 +269,7 @@ export default function SurgaNoteEditor({
                     borderColor: estActive ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
                     backgroundColor: estActive ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
                     color: estActive ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: estActive ? 700 : 500,
                     cursor: 'pointer',
                     display: 'inline-flex',
@@ -287,7 +287,7 @@ export default function SurgaNoteEditor({
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3, #73675E)', display: 'block', marginBottom: 4 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3, #73675E)', display: 'block', marginBottom: 4 }}>
               Couleur
             </label>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -321,7 +321,7 @@ export default function SurgaNoteEditor({
               border: '1px solid',
               borderColor: epingle ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
               backgroundColor: epingle ? 'rgba(199, 91, 0, 0.1)' : '#FFFFFF',
-              color: epingle ? 'var(--accent, #C75B00)' : 'var(--text2, #5A4E42)',
+              color: epingle ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text2, #5A4E42)',
               fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',

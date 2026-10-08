@@ -92,7 +92,7 @@ export default function SurgaDemarcheCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               padding: '2px 8px',
               borderRadius: 6,
@@ -109,7 +109,7 @@ export default function SurgaDemarcheCard({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
                 padding: '2px 8px',
                 borderRadius: 6,
@@ -128,7 +128,7 @@ export default function SurgaDemarcheCard({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 600,
                 color: 'var(--price, #0A5C36)',
               }}
@@ -140,7 +140,7 @@ export default function SurgaDemarcheCard({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text3, #73675E)' }}>
-          <span style={{ fontSize: 11, fontWeight: 700 }}>Consulter</span>
+          <span style={{ fontSize: 12, fontWeight: 700 }}>Consulter</span>
           <ChevronRight size={14} />
         </div>
       </div>

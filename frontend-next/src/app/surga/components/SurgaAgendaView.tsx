@@ -225,7 +225,7 @@ export default function SurgaAgendaView() {
             type="button"
             onClick={handleActiverNotifications}
             style={{
-              backgroundColor: 'var(--accent, #C75B00)',
+              backgroundColor: 'var(--surga-accent-hover, #B45309)', // texte blanc : 5,0:1 (l'ambre du micro ne donne que 3,2:1)
               color: '#FFFFFF',
               border: 'none',
               borderRadius: 8,
@@ -303,7 +303,7 @@ export default function SurgaAgendaView() {
                     : tab.key === 'retard'
                     ? '#DC2626'
                     : 'var(--navy, #1C2B4A)',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: estActif ? 700 : 500,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',

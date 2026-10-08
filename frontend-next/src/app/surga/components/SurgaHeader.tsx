@@ -116,7 +116,7 @@ export default function SurgaHeader({
             {titre === 'Surga' ? (
               <>
                 <span>SUR</span>
-                <span style={{ color: 'var(--surga-accent, #D97706)' }}>GA</span>
+                <span style={{ color: 'var(--surga-accent-ink, #A64B08)' }}>GA</span>
               </>
             ) : (
               titre
@@ -152,7 +152,7 @@ export default function SurgaHeader({
               cursor: 'pointer',
               border: user ? '1px solid rgba(5, 150, 105, 0.35)' : '1px solid var(--surga-border, #E2E8F0)',
               backgroundColor: user ? 'var(--surga-emerald-soft, rgba(5, 150, 105, 0.08))' : 'var(--surga-surface, #FFFFFF)',
-              color: user ? 'var(--surga-emerald, #059669)' : 'var(--surga-primary, #0F172A)',
+              color: user ? 'var(--surga-emerald-ink, #047857)' : 'var(--surga-primary, #0F172A)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,

@@ -81,11 +81,11 @@ export default function SurgaMeteoDetailBloc({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
               <Waves size={13} color="var(--surga-primary, #0F172A)" />
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-primary, #0F172A)' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-primary, #0F172A)' }}>
                 {maree.etat}
               </span>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text2, #475569)' }}>
+            <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)' }}>
               {maree.prochaine_type || 'Prochaine'} vers {maree.prochaine_heure}
             </div>
           </div>
@@ -102,11 +102,11 @@ export default function SurgaMeteoDetailBloc({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
               <ShieldAlert size={13} color={air.aqi > 100 ? 'var(--surga-accent, #D97706)' : 'var(--surga-emerald, #059669)'} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-text1, #0F172A)' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-text1, #0F172A)' }}>
                 Air : {air.niveau}
               </span>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text2, #475569)' }}>
+            <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)' }}>
               {air.indice || 'AQI'} {air.aqi}{air.particules ? ` • ${air.particules}` : ''}
             </div>
           </div>
@@ -115,7 +115,7 @@ export default function SurgaMeteoDetailBloc({
 
       {/* D53 : une brique sans source, ou dont la source se tait, est dite « indisponible ». */}
       {(!air || (estMaritime && !maree)) && (
-        <div style={{ fontSize: 11, color: 'var(--surga-text2, #475569)', marginBottom: 10 }}>
+        <div style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', marginBottom: 10 }}>
           {estMaritime && !maree && !air
             ? 'Marées et qualité de l’air : indisponibles pour le moment.'
             : estMaritime && !maree
@@ -124,7 +124,7 @@ export default function SurgaMeteoDetailBloc({
         </div>
       )}
 
-      <div style={{ fontSize: 11, color: 'var(--surga-text3, #64748B)', marginBottom: 10 }}>
+      <div style={{ fontSize: 12, color: 'var(--surga-text3, #64748B)', marginBottom: 10 }}>
         Source : {libelleReleveMeteo(meteo)}
         {estimations && ` ; ${estimations} : Open-Meteo, estimation par modèle${afficherMaree ? ', à ne pas utiliser pour naviguer' : ''}.`}
       </div>

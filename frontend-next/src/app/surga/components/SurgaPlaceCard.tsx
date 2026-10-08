@@ -131,7 +131,7 @@ export default function SurgaPlaceCard({
             style={{
               backgroundColor: 'rgba(28, 43, 74, 0.08)',
               color: 'var(--navy, #1C2B4A)',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 800,
               padding: '2px 8px',
               borderRadius: 6,
@@ -142,7 +142,7 @@ export default function SurgaPlaceCard({
           </span>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               color: 'var(--price, #0A5C36)',
               backgroundColor: 'rgba(10, 92, 54, 0.08)',
@@ -167,10 +167,10 @@ export default function SurgaPlaceCard({
             }}
           >
             <Star size={12} fill="var(--accent, #C75B00)" color="var(--accent, #C75B00)" />
-            <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--surga-accent-ink, #A64B08)' }}>
               {Number(place.note_moyenne || 4.5).toFixed(1)}
             </span>
-            <span style={{ fontSize: 10, color: 'var(--text3, #73675E)' }}>
+            <span style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
               ({place.nb_avis})
             </span>
           </div>
@@ -188,7 +188,7 @@ export default function SurgaPlaceCard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: place.est_favori ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)',
+              color: place.est_favori ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text3, #73675E)',
               transition: 'transform 0.15s ease',
             }}
           >
@@ -244,7 +244,7 @@ export default function SurgaPlaceCard({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: 700,
             color: 'var(--price, #0A5C36)',
             backgroundColor: 'rgba(10, 92, 54, 0.08)',
@@ -261,7 +261,7 @@ export default function SurgaPlaceCard({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              fontSize: 10,
+              fontSize: 12,
               color: 'var(--text3, #73675E)',
               backgroundColor: '#FFFFFF',
               border: '1px solid var(--border, #E8DDD2)',
@@ -300,7 +300,7 @@ export default function SurgaPlaceCard({
                 border: '1px solid rgba(10, 92, 54, 0.2)',
                 borderRadius: 6,
                 padding: '4px 8px',
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
               }}
@@ -323,7 +323,7 @@ export default function SurgaPlaceCard({
                 border: '1px solid var(--border, #E8DDD2)',
                 borderRadius: 6,
                 padding: '4px 8px',
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
               }}
@@ -339,9 +339,9 @@ export default function SurgaPlaceCard({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
-            color: 'var(--accent, #C75B00)',
+            color: 'var(--surga-accent-ink, #A64B08)',
           }}
         >
           <span>Détails &amp; avis</span>

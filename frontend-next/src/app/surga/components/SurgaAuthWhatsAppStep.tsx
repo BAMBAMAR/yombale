@@ -137,7 +137,7 @@ export default function SurgaAuthWhatsAppStep({
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--surga-accent, #D97706)',
+              color: 'var(--surga-accent-ink, #A64B08)',
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',
@@ -239,7 +239,7 @@ export default function SurgaAuthWhatsAppStep({
           style={{
             background: 'none',
             border: 'none',
-            color: resendTimer > 0 ? 'var(--surga-text3, #94A3B8)' : 'var(--surga-accent, #D97706)',
+            color: resendTimer > 0 ? 'var(--surga-text3, #94A3B8)' : 'var(--surga-accent-ink, #A64B08)',
             cursor: resendTimer > 0 ? 'not-allowed' : 'pointer',
             fontWeight: 700,
             textDecoration: resendTimer > 0 ? 'none' : 'underline',

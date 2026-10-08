@@ -180,7 +180,7 @@ export default function SurgaPresseView({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent-ink, #A64B08)',
               }}
             >
               <Newspaper size={20} />
@@ -189,7 +189,7 @@ export default function SurgaPresseView({
               <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
                 Presse &amp; Kiosque Sénégal
               </h2>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 Sources vérifiées : Seneweb, APS, Le Soleil, PressAfrik, SeneNews...
               </div>
             </div>
@@ -311,7 +311,7 @@ export default function SurgaPresseView({
                 cursor: 'pointer',
                 border: '1px solid var(--border, #E8DDD2)',
                 backgroundColor: 'var(--bg, #F8F5F0)',
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent-ink, #A64B08)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -370,7 +370,7 @@ export default function SurgaPresseView({
                     gap: 5,
                     padding: '5px 11px',
                     borderRadius: 14,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: isActive ? 700 : 600,
                     border: isActive ? '1px solid var(--navy, #1C2B4A)' : '1px solid var(--border, #E8DDD2)',
                     backgroundColor: isActive ? 'var(--navy, #1C2B4A)' : '#FFFFFF',

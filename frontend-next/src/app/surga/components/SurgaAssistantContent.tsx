@@ -40,7 +40,7 @@ export default function SurgaAssistantContent({
   if (chargement) {
     return (
       <div style={{ textAlign: 'center', padding: '36px 0', color: '#64748B' }}>
-        <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: 'var(--surga-accent, #D97706)' }} />
+        <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: 'var(--surga-accent-ink, #A64B08)' }} />
         <div style={{ fontWeight: 600 }}>Surga prépare votre réponse...</div>
       </div>
     )
@@ -48,7 +48,7 @@ export default function SurgaAssistantContent({
 
   if (!resultat) {
     return (
-      <div style={{ textAlign: 'center', padding: '30px 0', color: '#94A3B8' }}>
+      <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--surga-text3, #536175)' }}>
         Posez votre question ou dictez votre demande à Surga.
       </div>
     )
@@ -60,7 +60,7 @@ export default function SurgaAssistantContent({
       {resultat.type === 'LLM_REPLY' && (
         <div>
           {resultat.titreSuggere && (
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-accent, #D97706)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {resultat.titreSuggere}
             </div>
           )}
@@ -113,7 +113,7 @@ export default function SurgaAssistantContent({
                 borderRadius: 8,
                 border: '1px solid #CBD5E1',
                 backgroundColor: noteEnregistree ? '#FEF3C7' : '#FFFFFF',
-                color: noteEnregistree ? '#D97706' : '#0F172A',
+                color: noteEnregistree ? 'var(--surga-accent-ink, #A64B08)' : '#0F172A',
                 fontSize: 13,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -157,7 +157,7 @@ export default function SurgaAssistantContent({
               height: 44,
               borderRadius: 12,
               backgroundColor: isDette ? 'rgba(217, 119, 6, 0.12)' : 'rgba(5, 150, 105, 0.1)',
-              color: isDette ? '#D97706' : '#059669',
+              color: isDette ? 'var(--surga-accent-ink, #A64B08)' : 'var(--surga-emerald-ink, #047857)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -165,7 +165,7 @@ export default function SurgaAssistantContent({
             }}>
               <Wallet size={22} />
             </div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: isDette ? '#D97706' : '#059669', marginBottom: 4 }}>
+            <div style={{ fontSize: 24, fontWeight: 900, color: isDette ? 'var(--surga-accent-ink, #A64B08)' : 'var(--surga-emerald-ink, #047857)', marginBottom: 4 }}>
               {resultat.data?.montant?.toLocaleString('fr-FR')} FCFA
             </div>
             <div style={{ fontSize: 14, color: '#64748B', marginBottom: 18 }}>
@@ -198,7 +198,7 @@ export default function SurgaAssistantContent({
       {/* 3. ACTION LOCALE RAPPEL */}
       {resultat.type === 'ACTION_RAPPEL' && (
         <div style={{ textAlign: 'center', padding: '10px 0' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(217, 119, 6, 0.1)', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(217, 119, 6, 0.1)', color: 'var(--surga-accent-ink, #A64B08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}>
             <Calendar size={22} />
           </div>
           <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>
@@ -236,7 +236,7 @@ export default function SurgaAssistantContent({
           <div style={{ fontSize: 14, color: '#64748B', marginBottom: 4 }}>
             {resultat.expression} =
           </div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--surga-accent, #D97706)' }}>
+          <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--surga-accent-ink, #A64B08)' }}>
             {resultat.formatFCFA}
           </div>
         </div>

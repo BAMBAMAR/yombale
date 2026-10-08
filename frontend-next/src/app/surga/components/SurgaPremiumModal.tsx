@@ -151,7 +151,7 @@ export default function SurgaPremiumModal({
             </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 800 }}>Surga Premium</div>
-              <div style={{ fontSize: 11, opacity: 0.85 }}>Votre assistant de poche d exception</div>
+              <div style={{ fontSize: 12, opacity: 0.85 }}>Votre assistant de poche d exception</div>
             </div>
           </div>
           <button
@@ -226,7 +226,7 @@ export default function SurgaPremiumModal({
                       right: 8,
                       backgroundColor: 'var(--accent, #C75B00)',
                       color: '#FFFFFF',
-                      fontSize: 9,
+                      fontSize: 12,
                       fontWeight: 800,
                       padding: '2px 6px',
                       borderRadius: 10,
@@ -344,7 +344,7 @@ export default function SurgaPremiumModal({
               <p style={{ fontSize: 13, color: 'var(--text2, #5A4E42)', margin: 0 }}>
                 La passerelle sécurisée s est ouverte dans un nouvel onglet. Dès que vous avez approuvé la transaction sur votre application mobile Wave, cliquez ci-dessous pour activer immédiatement vos avantages.
               </p>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 Référence : <code>{referencePaiement}</code>
               </div>
 

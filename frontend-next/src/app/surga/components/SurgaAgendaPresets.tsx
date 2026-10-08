@@ -22,7 +22,7 @@ export default function SurgaAgendaPresets({ onSelect }: SurgaAgendaPresetsProps
     <div>
       <label
         style={{
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: 700,
           color: 'var(--text3, #73675E)',
           display: 'flex',
@@ -45,7 +45,7 @@ export default function SurgaAgendaPresets({ onSelect }: SurgaAgendaPresetsProps
               borderRadius: 6,
               border: '1px solid var(--border, #E8DDD2)',
               backgroundColor: '#FFFFFF',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 600,
               color: 'var(--navy, #1C2B4A)',
               cursor: 'pointer',

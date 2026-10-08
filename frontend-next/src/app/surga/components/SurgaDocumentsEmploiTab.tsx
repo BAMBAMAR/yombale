@@ -61,7 +61,7 @@ export default function SurgaDocumentsEmploiTab({
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
                 {doc.titre || doc.nom_fichier}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 {doc.type_document === 'cv' ? 'Curriculum Vitae' : 'Lettre de motivation'} &bull;{' '}
                 {new Date(doc.created_at).toLocaleDateString('fr-FR')}
               </div>
@@ -73,7 +73,7 @@ export default function SurgaDocumentsEmploiTab({
               type="button"
               onClick={() => onTelecharger(doc.id, doc.nom_fichier)}
               className="surga-btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px', fontSize: 11 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px', fontSize: 12 }}
             >
               <Download size={13} />
               <span>PDF</span>

@@ -37,7 +37,7 @@ interface SurgaAgendaCardProps {
 
 const PRIORITE_META: Record<SurgaEvenementPriorite, { label: string; color: string; bg: string }> = {
   normale: { label: 'Normale', color: 'var(--price, #0A5C36)', bg: 'rgba(10, 92, 54, 0.08)' },
-  importante: { label: 'Importante', color: 'var(--accent, #C75B00)', bg: 'rgba(199, 91, 0, 0.1)' },
+  importante: { label: 'Importante', color: 'var(--surga-accent-ink, #A64B08)', bg: 'rgba(199, 91, 0, 0.1)' },
   urgente: { label: 'Urgente', color: '#DC2626', bg: 'rgba(220, 38, 38, 0.1)' },
 }
 
@@ -163,7 +163,7 @@ export default function SurgaAgendaCard({
                 gap: 4,
                 padding: '2px 7px',
                 borderRadius: 10,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
                 backgroundColor: 'rgba(28, 43, 74, 0.06)',
                 color: 'var(--navy, #1C2B4A)',
@@ -180,7 +180,7 @@ export default function SurgaAgendaCard({
                 alignItems: 'center',
                 padding: '2px 6px',
                 borderRadius: 10,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 800,
                 backgroundColor: pMeta.bg,
                 color: pMeta.color,
@@ -198,7 +198,7 @@ export default function SurgaAgendaCard({
                   gap: 3,
                   padding: '2px 6px',
                   borderRadius: 10,
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 800,
                   backgroundColor: '#FEE2E2',
                   color: '#DC2626',
@@ -214,7 +214,7 @@ export default function SurgaAgendaCard({
                 style={{
                   padding: '2px 6px',
                   borderRadius: 10,
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 800,
                   backgroundColor: 'rgba(28, 43, 74, 0.1)',
                   color: 'var(--navy, #1C2B4A)',
@@ -244,7 +244,7 @@ export default function SurgaAgendaCard({
           )}
 
           {evenement.lieu && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 4 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 4 }}>
               <MapPin size={11} color="var(--accent, #C75B00)" />
               <span>{evenement.lieu}</span>
             </div>
@@ -285,7 +285,7 @@ export default function SurgaAgendaCard({
           )}
 
           {evenement.repetition !== 'AUCUNE' && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--accent, #C75B00)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12, color: 'var(--surga-accent-ink, #A64B08)' }}>
               <Repeat size={12} />
               <span>{evenement.repetition.toLowerCase()}</span>
             </span>
@@ -300,7 +300,7 @@ export default function SurgaAgendaCard({
               type="button"
               onClick={() => onModifier(evenement)}
               title="Modifier ce rappel"
-              style={{ background: 'transparent', border: '1px solid var(--border, #E8DDD2)', borderRadius: 6, padding: '3px 6px', fontSize: 11, fontWeight: 600, color: 'var(--text2, #5A4E42)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+              style={{ background: 'transparent', border: '1px solid var(--border, #E8DDD2)', borderRadius: 6, padding: '3px 6px', fontSize: 12, fontWeight: 600, color: 'var(--text2, #5A4E42)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}
             >
               <Pencil size={11} />
               <span>Modifier</span>
@@ -318,7 +318,7 @@ export default function SurgaAgendaCard({
                   border: '1px solid var(--border, #E8DDD2)',
                   borderRadius: 6,
                   padding: '3px 6px',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   color: 'var(--text2, #5A4E42)',
                   cursor: 'pointer',
@@ -357,7 +357,7 @@ export default function SurgaAgendaCard({
                       background: 'none',
                       border: 'none',
                       padding: '6px 8px',
-                      fontSize: 11,
+                      fontSize: 12,
                       textAlign: 'left',
                       cursor: 'pointer',
                       borderRadius: 4,
@@ -373,7 +373,7 @@ export default function SurgaAgendaCard({
                       background: 'none',
                       border: 'none',
                       padding: '6px 8px',
-                      fontSize: 11,
+                      fontSize: 12,
                       textAlign: 'left',
                       cursor: 'pointer',
                       borderRadius: 4,

@@ -38,7 +38,7 @@ export default function SurgaVideoCard({
 
       {/* Ligne 2 : Métadonnées + Boutons d'action calés à droite */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#64748B' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748B' }}>
           <span
             style={{
               padding: '2px 6px',
@@ -46,7 +46,7 @@ export default function SurgaVideoCard({
               backgroundColor: video.source_type === 'LUTTE' ? '#FEF2F2' : '#EFF6FF',
               color: video.source_type === 'LUTTE' ? '#DC2626' : '#2563EB',
               fontWeight: 800,
-              fontSize: 10,
+              fontSize: 12,
             }}
           >
             {video.source_type === 'LUTTE' ? 'LUTTE' : 'SÉRIE'}
@@ -69,7 +69,7 @@ export default function SurgaVideoCard({
               border: estRappele ? '1px solid #F59E0B' : '1px solid #E2E8F0',
               backgroundColor: estRappele ? '#FEF3C7' : '#FFFFFF',
               color: estRappele ? '#92400E' : '#475569',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -91,7 +91,7 @@ export default function SurgaVideoCard({
               borderRadius: 6,
               backgroundColor: 'var(--surga-navy, #1C2B4A)',
               color: '#FFFFFF',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               textDecoration: 'none',
             }}

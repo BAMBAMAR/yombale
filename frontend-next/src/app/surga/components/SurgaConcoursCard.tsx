@@ -90,7 +90,7 @@ export default function SurgaConcoursCard({
               style={{
                 backgroundColor: 'var(--navy, #1C2B4A)',
                 color: '#FFFFFF',
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 800,
                 padding: '2px 7px',
                 borderRadius: 5,
@@ -100,14 +100,14 @@ export default function SurgaConcoursCard({
               {concours.sigle}
             </span>
           )}
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3, #73675E)' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3, #73675E)' }}>
             Niveau {concours.niveau_requis}
           </span>
         </div>
 
         <span
           style={{
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
             padding: '2px 8px',
             borderRadius: 6,
@@ -135,7 +135,7 @@ export default function SurgaConcoursCard({
       </h3>
 
       {/* Ligne 3 : Organisme officiel */}
-      <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', lineHeight: 1.3 }}>
+      <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', lineHeight: 1.3 }}>
         {concours.organisme}
       </div>
 
@@ -148,7 +148,7 @@ export default function SurgaConcoursCard({
           paddingTop: 8,
           marginTop: 2,
           borderTop: '1px solid var(--border, #E8DDD2)',
-          fontSize: 11,
+          fontSize: 12,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text3, #73675E)' }}>
@@ -181,7 +181,7 @@ export default function SurgaConcoursCard({
                 borderColor: estSuivi ? 'rgba(10, 92, 54, 0.3)' : 'var(--border, #E8DDD2)',
                 borderRadius: 6,
                 padding: '4px 8px',
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}

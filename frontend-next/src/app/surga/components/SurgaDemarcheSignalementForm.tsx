@@ -100,7 +100,7 @@ export default function SurgaDemarcheSignalementForm({
           style={{
             background: 'none',
             border: 'none',
-            fontSize: 11,
+            fontSize: 12,
             color: 'var(--text3, #73675E)',
             cursor: 'pointer',
           }}
@@ -111,7 +111,7 @@ export default function SurgaDemarcheSignalementForm({
           type="submit"
           disabled={envoiEnCours}
           className="surga-btn-primary"
-          style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+          style={{ fontSize: 12, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
         >
           <Send size={11} />
           <span>{envoiEnCours ? 'Transmission...' : 'Transmettre'}</span>

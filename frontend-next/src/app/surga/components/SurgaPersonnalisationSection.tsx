@@ -35,11 +35,11 @@ interface ServiceConfigItem {
 }
 
 const CATALOGUE_SERVICES: ServiceConfigItem[] = [
-  { id: 'trafic', label: 'Trafic Dakar', desc: 'Mesures et signalements des usagers', icon: Navigation, color: '#059669' },
+  { id: 'trafic', label: 'Trafic Dakar', desc: 'Mesures et signalements des usagers', icon: Navigation, color: 'var(--surga-emerald-ink, #047857)' },
   { id: 'presse', label: 'Kiosque des Unes', desc: 'Revues de presse & premières pages', icon: Newspaper, color: '#1C2B4A' },
   { id: 'immo', label: 'Pôle Immobilier', desc: 'Maisons, appartements & terrains vérifiés', icon: Home, color: '#2563EB' },
   { id: 'shopping', label: 'Shopping Nopalou', desc: 'Boutiques locales, produits & prix', icon: ShoppingBag, color: '#C75B00' },
-  { id: 'places', label: 'Bonnes Adresses', desc: 'Restaurants, cafés & sorties à Dakar', icon: MapPin, color: '#D97706' },
+  { id: 'places', label: 'Bonnes Adresses', desc: 'Restaurants, cafés & sorties à Dakar', icon: MapPin, color: 'var(--surga-accent-ink, #A64B08)' },
   { id: 'radios', label: 'Radios FM direct', desc: 'Bouquet des radios sénégalaises en continu', icon: Radio, color: '#7C3AED' },
   { id: 'concours', label: 'Concours nationaux', desc: 'Échéances officielles J-30/J-7/J-1 & dossiers', icon: Award, color: '#DC2626' },
   { id: 'demarches', label: 'Démarches administratives', desc: 'Fiches officielles & pièces certifiées', icon: FileCheck, color: '#0D9488' },
@@ -58,8 +58,8 @@ interface WidgetConfigItem {
 const CATALOGUE_WIDGETS: WidgetConfigItem[] = [
   { id: 'agenda', label: 'Votre journée (Agenda)', desc: 'Rappels et rendez-vous du planning', icon: Calendar, color: '#2563EB' },
   { id: 'depenses', label: 'Sama Xaalis (Finances)', desc: 'Dépenses du mois & solde Kalpé en FCFA', icon: Wallet, color: '#0A5C36' },
-  { id: 'trafic', label: 'Trafic', desc: 'Mesures et signalements des usagers', icon: Navigation, color: '#059669' },
-  { id: 'meteo', label: 'Météo et marées', desc: 'Température, ciel et vent', icon: Sun, color: '#D97706' },
+  { id: 'trafic', label: 'Trafic', desc: 'Mesures et signalements des usagers', icon: Navigation, color: 'var(--surga-emerald-ink, #047857)' },
+  { id: 'meteo', label: 'Météo et marées', desc: 'Température, ciel et vent', icon: Sun, color: 'var(--surga-accent-ink, #A64B08)' },
   { id: 'notes', label: 'Mémo épinglé', desc: 'Aperçu instantané de votre note prioritaire', icon: Bookmark, color: '#7C3AED' },
   { id: 'radios', label: 'Radios FM direct', desc: 'Lecteur direct et contrôle de la station', icon: Radio, color: '#C75B00' },
 ]
@@ -157,7 +157,7 @@ export default function SurgaPersonnalisationSection({
             <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
               Personnalisation de l&apos;affichage (Desktop)
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
               Adaptez le menu gauche et les widgets de droite selon vos besoins
             </div>
           </div>
@@ -166,7 +166,7 @@ export default function SurgaPersonnalisationSection({
         {messageSucces && (
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               color: 'var(--price, #0A5C36)',
               backgroundColor: 'rgba(10, 92, 54, 0.1)',
@@ -237,7 +237,7 @@ export default function SurgaPersonnalisationSection({
       {/* Contenu : Onglet Menu Gauche */}
       {ongletActif === 'sidebar' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginBottom: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginBottom: 2 }}>
             Cochez les services visibles directement dans la barre latérale gauche :
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 6 }}>
@@ -280,7 +280,7 @@ export default function SurgaPersonnalisationSection({
                       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {s.label}
                       </div>
-                      <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {s.desc}
                       </div>
                     </div>
@@ -312,7 +312,7 @@ export default function SurgaPersonnalisationSection({
       {/* Contenu : Onglet Bande Droite */}
       {ongletActif === 'rail' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginBottom: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginBottom: 2 }}>
             Cochez les widgets de contexte affichés dans la colonne latérale droite :
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 6 }}>
@@ -355,7 +355,7 @@ export default function SurgaPersonnalisationSection({
                       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {w.label}
                       </div>
-                      <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {w.desc}
                       </div>
                     </div>
@@ -393,7 +393,7 @@ export default function SurgaPersonnalisationSection({
             background: 'none',
             border: 'none',
             color: 'var(--text3, #73675E)',
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
             cursor: 'pointer',
             padding: 0,

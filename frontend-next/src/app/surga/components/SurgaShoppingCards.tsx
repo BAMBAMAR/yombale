@@ -93,7 +93,7 @@ export function BoutiqueCard({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 3,
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: 700,
                     color: 'var(--price, #0A5C36)',
                     backgroundColor: 'rgba(10, 92, 54, 0.08)',
@@ -105,8 +105,8 @@ export function BoutiqueCard({
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 2 }}>
-              <span style={{ fontWeight: 600, color: 'var(--accent, #C75B00)' }}>{boutique.categorie}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 2 }}>
+              <span style={{ fontWeight: 600, color: 'var(--surga-accent-ink, #A64B08)' }}>{boutique.categorie}</span>
               {boutique.ville && (
                 <>
                   <span>•</span>
@@ -229,7 +229,7 @@ export function ProduitCard({
           </div>
         )}
         <div style={{ padding: '10px 12px' }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent, #C75B00)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', textTransform: 'uppercase' }}>
             {produit.categorie}
           </span>
           <h4
@@ -248,7 +248,7 @@ export function ProduitCard({
           >
             {produit.nom}
           </h4>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginBottom: 6 }}>
             Par <strong>{produit.boutique_nom}</strong>
           </div>
           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>
@@ -270,7 +270,7 @@ export function ProduitCard({
             backgroundColor: 'var(--navy, #1C2B4A)',
             color: '#FFFFFF',
             textDecoration: 'none',
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',

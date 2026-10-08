@@ -267,15 +267,15 @@ export default function SurgaNotesView() {
       >
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{stats.total}</div>
-          <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Notes au total</div>
+          <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Notes au total</div>
         </div>
         <div style={{ textAlign: 'center', borderLeft: '1px solid var(--border, #E8DDD2)', borderRight: '1px solid var(--border, #E8DDD2)' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>{stats.epingles}</div>
-          <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Épinglées</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--surga-accent-ink, #A64B08)' }}>{stats.epingles}</div>
+          <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Épinglées</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>{stats.checklists}</div>
-          <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Checklists</div>
+          <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>Checklists</div>
         </div>
       </div>
 
@@ -305,7 +305,7 @@ export default function SurgaNotesView() {
                 borderColor: estActif ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
                 backgroundColor: estActif ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
                 color: estActif ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: estActif ? 700 : 500,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',

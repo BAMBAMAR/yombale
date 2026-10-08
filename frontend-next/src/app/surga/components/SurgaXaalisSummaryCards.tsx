@@ -94,7 +94,7 @@ export default function SurgaXaalisSummaryCards({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
           <ArrowUpRight size={14} color="var(--accent, #C75B00)" />
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent, #C75B00)' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)' }}>
             Dépenses du mois
           </span>
         </div>

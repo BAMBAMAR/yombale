@@ -202,7 +202,7 @@ export default function SurgaDonneesModal({
             </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 800 }}>Protection &amp; Données Personnelles</div>
-              <div style={{ fontSize: 11, opacity: 0.85 }}>Conformité CDP Sénégal &amp; Droit à l oubli</div>
+              <div style={{ fontSize: 12, opacity: 0.85 }}>Conformité CDP Sénégal &amp; Droit à l oubli</div>
             </div>
           </div>
           <button
@@ -274,7 +274,7 @@ export default function SurgaDonneesModal({
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
                     Portabilité des données
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                     Exportez l ensemble de vos dépenses, notes et rappels en format JSON clair.
                   </div>
                 </div>
@@ -308,7 +308,7 @@ export default function SurgaDonneesModal({
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#991B1B' }}>
                       Suppression définitive
                     </div>
-                    <div style={{ fontSize: 11, color: '#B91C1C' }}>
+                    <div style={{ fontSize: 12, color: '#B91C1C' }}>
                       Purger irrévocablement vos notes, historiques de dépenses et alertes.
                     </div>
                   </div>

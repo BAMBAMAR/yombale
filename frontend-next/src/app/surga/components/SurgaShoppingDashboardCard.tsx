@@ -45,7 +45,7 @@ export default function SurgaShoppingDashboardCard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--accent, #C75B00)',
+              color: 'var(--surga-accent-ink, #A64B08)',
             }}
           >
             <ShoppingBag size={16} />
@@ -54,7 +54,7 @@ export default function SurgaShoppingDashboardCard({
             <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
               Shopping &amp; Boutiques Nopalou
             </h3>
-            <span style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            <span style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
               Boutiques marchandes et articles certifiés
             </span>
           </div>
@@ -67,9 +67,9 @@ export default function SurgaShoppingDashboardCard({
             alignItems: 'center',
             gap: 4,
             padding: '4px 8px',
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
-            color: 'var(--accent, #C75B00)',
+            color: 'var(--surga-accent-ink, #A64B08)',
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
@@ -123,14 +123,14 @@ export default function SurgaShoppingDashboardCard({
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
                 {boutiqueDuMoment.nom}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 {boutiqueDuMoment.categorie} • {boutiqueDuMoment.ville}
               </div>
             </div>
           </div>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               color: 'var(--price, #0A5C36)',
               backgroundColor: 'rgba(10, 92, 54, 0.08)',

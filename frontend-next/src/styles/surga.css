@@ -75,7 +75,9 @@ body:has(.surga-root) #app-main {
   --surga-border: #E2E8F0;         /* Gris Épure (lignes 1px de cartes et séparateurs) */
   --surga-text1: #0F172A;          /* Encre Anthracite (texte principal, contraste 16.5:1) */
   --surga-text2: #475569;          /* Ardoise Tempérée (métadonnées, labels secondaires) */
-  --surga-text3: #94A3B8;          /* Gris Neutre placeholders */
+  --surga-text3: #536175;          /* Gris Neutre : placeholders, sources, dates (6,3:1 sur blanc, 5,0:1 sur fond beige, SRG-A3-011 ; était #94A3B8 à 2,56:1) */
+  --surga-accent-ink: #A64B08;     /* Ambre lisible : couleur de TEXTE et d'icône ambre (5,9:1 sur blanc, 5,0:1 sur fond ambre teinté). #D97706 reste réservé aux fonds, bordures et au micro */
+  --surga-emerald-ink: #047857;    /* Émeraude lisible : couleur de TEXTE vert (5,5:1 sur blanc). #059669 reste réservé aux fonds */
 
   /* Rétrocompatibilité transparente pour tous les composants existants */
   --navy: var(--surga-primary);
@@ -84,7 +86,8 @@ body:has(.surga-root) #app-main {
   --border: var(--surga-border);
   --text1: var(--surga-text1);
   --text2: var(--surga-text2);
-  --price: var(--surga-emerald);
+  --text3: var(--surga-text3);
+  --price: var(--surga-emerald-ink);
 
   font-family: var(--font-inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: 16px;
@@ -245,7 +248,7 @@ body:has(.surga-root) #app-main {
 
 .surga-price-tag {
   font-weight: 700;
-  color: var(--surga-emerald, #059669);
+  color: var(--surga-emerald-ink, #047857);
   white-space: nowrap;
 }
 
@@ -388,7 +391,7 @@ body:has([role="dialog"]) .surga-fab-mic {
   }
 
   .surga-header-date {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .surga-header-logo-wrap.hide-on-subview-mobile {
@@ -443,7 +446,7 @@ body:has([role="dialog"]) .surga-fab-mic {
 }
 
 .surga-nav-item.active {
-  color: var(--surga-accent, #D97706);
+  color: var(--surga-accent-ink, #A64B08);
   font-weight: 700;
 }
 
@@ -569,11 +572,11 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     font-size: 17px !important;
   }
   .surga-header-date {
-    font-size: 11px !important;
+    font-size: 12px !important;
   }
   .surga-header-badge {
     padding: 4px 8px !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
   }
   .surga-card {
     padding: 12px !important;
@@ -831,7 +834,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 
 /* Titres de section dans la sidebar (SRG-UI-13 : étiquettes calmes, majuscule initiale, gris lisible) */
 .surga-sidebar-section-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--surga-text2, #64748B);
   letter-spacing: 0.02em;
@@ -883,7 +886,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-sidebar-badge {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 10px;
@@ -931,14 +934,14 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-widget-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: #64748B;
   letter-spacing: 0.01em;
 }
 
 .surga-widget-icon {
-  color: #94A3B8;
+  color: var(--surga-text3, #536175);
 }
 
 .surga-widget-highlight {
@@ -956,13 +959,13 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-widget-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: #64748B;
   line-height: 1.35;
 }
 
 .surga-note-memo {
-  font-size: 11.5px;
+  font-size: 12px;
   color: #334155;
   font-style: italic;
   line-height: 1.35;
@@ -1042,7 +1045,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-command-search-icon {
-  color: #94A3B8;
+  color: var(--surga-text3, #536175);
   flex-shrink: 0;
 }
 
@@ -1057,7 +1060,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 }
 
 .surga-command-input::placeholder {
-  color: #94A3B8;
+  color: var(--surga-text3, #536175);
 }
 
 .surga-command-right {
@@ -1069,7 +1072,7 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 .surga-kbd-shortcut {
   background: #F1ECE6;
   color: #64748B;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   padding: 3px 7px;
   border-radius: 5px;

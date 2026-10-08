@@ -140,7 +140,7 @@ export default function SurgaParametresTab({
               <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
                 {user ? (user.nom || user.telephone || 'Compte Surga actif') : 'Mode invité (Stockage local)'}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 {user
                   ? `WhatsApp : ${user.telephone || 'Connecté'} • Synchronisé`
                   : 'Données enregistrées uniquement sur cet appareil'}
@@ -156,7 +156,7 @@ export default function SurgaParametresTab({
                   onClick={onOpenCompte}
                   className="surga-btn-secondary"
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     padding: '6px 10px',
                     fontWeight: 700,
                     width: 'auto',
@@ -177,7 +177,7 @@ export default function SurgaParametresTab({
                   className="surga-btn-secondary"
                   disabled={isSyncing}
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     padding: '6px 9px',
                     fontWeight: 700,
                     width: 'auto',
@@ -197,11 +197,11 @@ export default function SurgaParametresTab({
                   onClick={onDeconnexion}
                   className="surga-btn-secondary"
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     padding: '6px 9px',
                     fontWeight: 700,
                     width: 'auto',
-                    color: 'var(--accent, #C75B00)',
+                    color: 'var(--surga-accent-ink, #A64B08)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 4,
@@ -220,7 +220,7 @@ export default function SurgaParametresTab({
                 onClick={onOpenAuth}
                 className="surga-btn-primary"
                 style={{
-                  fontSize: 11,
+                  fontSize: 12,
                   padding: '6px 14px',
                   fontWeight: 700,
                   width: 'auto',
@@ -239,7 +239,7 @@ export default function SurgaParametresTab({
             style={{
               paddingTop: 8,
               borderTop: '1px dashed var(--border, #E8DDD2)',
-              fontSize: 11,
+              fontSize: 12,
               color: 'var(--text2, #5A4E42)',
             }}
           >
@@ -267,7 +267,7 @@ export default function SurgaParametresTab({
               <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
                 {estPremium ? 'Surga Premium Actif' : 'Formule Standard (Gratuite)'}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 {estPremium
                   ? `Expiration dans ${joursRestants} jour(s) • Vocal & alertes illimités`
                   : 'Plafond de 20 commandes/jour • Alertes standards'}
@@ -279,7 +279,7 @@ export default function SurgaParametresTab({
               type="button"
               onClick={onOpenPremium}
               className={estPremium ? 'surga-btn-secondary' : 'surga-btn-primary'}
-              style={{ fontSize: 11, padding: '6px 14px', fontWeight: 700, width: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}
+              style={{ fontSize: 12, padding: '6px 14px', fontWeight: 700, width: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               {estPremium ? 'Gérer' : 'Passer à Premium'}
             </button>
@@ -297,7 +297,7 @@ export default function SurgaParametresTab({
               justifyContent: 'space-between',
             }}
           >
-            <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', display: 'flex', alignItems: 'center', gap: 6 }}>
               <Briefcase size={13} color="var(--navy, #1C2B4A)" />
               <span>Vous êtes restaurateur, agence immo ou centre de formation ?</span>
             </div>
@@ -307,8 +307,8 @@ export default function SurgaParametresTab({
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--accent, #C75B00)',
-                fontSize: 11,
+                color: 'var(--surga-accent-ink, #A64B08)',
+                fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
                 padding: 0,

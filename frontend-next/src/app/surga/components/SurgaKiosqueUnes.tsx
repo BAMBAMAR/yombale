@@ -129,7 +129,7 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
               >
                 {une.nom_journal}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 {formatDateParution(une.date_parution)}
               </div>
             </div>

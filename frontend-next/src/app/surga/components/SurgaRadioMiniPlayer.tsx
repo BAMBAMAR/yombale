@@ -80,7 +80,7 @@ export default function SurgaRadioMiniPlayer({
                 borderRadius: 4,
                 backgroundColor: 'var(--price, #0A5C36)',
                 color: '#FFFFFF',
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: 700,
               }}
             >
@@ -88,7 +88,7 @@ export default function SurgaRadioMiniPlayer({
               {isBuffering ? 'Connexion...' : 'DIRECT'}
             </span>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+          <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
             {station.frequence} • {station.region}
           </div>
         </div>

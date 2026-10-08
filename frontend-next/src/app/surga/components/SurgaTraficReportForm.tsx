@@ -71,7 +71,7 @@ export default function SurgaTraficReportForm({
           style={{
             flex: 1,
             padding: '6px 8px',
-            fontSize: 11,
+            fontSize: 12,
             borderRadius: 6,
             border: '1px solid var(--border, #E8DDD2)',
             backgroundColor: '#FFFFFF',
@@ -90,7 +90,7 @@ export default function SurgaTraficReportForm({
           onChange={(e) => onTypeChange(e.target.value)}
           style={{
             padding: '6px 8px',
-            fontSize: 11,
+            fontSize: 12,
             borderRadius: 6,
             border: '1px solid var(--border, #E8DDD2)',
             backgroundColor: '#FFFFFF',
@@ -115,7 +115,7 @@ export default function SurgaTraficReportForm({
           style={{
             flex: 1,
             padding: '6px 10px',
-            fontSize: 11,
+            fontSize: 12,
             borderRadius: 6,
             border: '1px solid var(--border, #E8DDD2)',
             outline: 'none',
@@ -125,7 +125,7 @@ export default function SurgaTraficReportForm({
           type="submit"
           disabled={envoiEnCours}
           className="surga-btn-primary"
-          style={{ fontSize: 11, padding: '6px 12px', gap: 4 }}
+          style={{ fontSize: 12, padding: '6px 12px', gap: 4 }}
         >
           <Send size={12} />
           <span>Envoyer</span>

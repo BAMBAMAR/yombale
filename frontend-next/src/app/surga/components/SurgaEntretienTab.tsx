@@ -201,7 +201,7 @@ export default function SurgaEntretienTab({
                   ? 'Quota hebdomadaire atteint'
                   : '1 simulation gratuite par semaine incluse'}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
                 {droitsSimulation.message}
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function SurgaEntretienTab({
               type="button"
               onClick={onOpenPremium}
               className="surga-btn-secondary"
-              style={{ fontSize: 11, padding: '5px 10px', fontWeight: 700 }}
+              style={{ fontSize: 12, padding: '5px 10px', fontWeight: 700 }}
             >
               Passer Premium
             </button>
@@ -227,7 +227,7 @@ export default function SurgaEntretienTab({
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Secteur d’activité</label>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Secteur d’activité</label>
             <select
               value={secteur}
               onChange={(e) => setSecteur(e.target.value)}
@@ -244,7 +244,7 @@ export default function SurgaEntretienTab({
           </div>
 
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Poste visé</label>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Poste visé</label>
             <input
               type="text"
               value={poste}
@@ -261,14 +261,14 @@ export default function SurgaEntretienTab({
       {questionCourante && (
         <div className="surga-card" style={{ padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent, #C75B00)', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', textTransform: 'uppercase' }}>
               Question {indexQuestion + 1} sur {questions.length}
             </span>
             <button
               type="button"
               onClick={() => setAfficherConseils(!afficherConseils)}
               className="surga-btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, padding: '3px 8px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '3px 8px' }}
             >
               <Lightbulb size={12} color="var(--accent, #C75B00)" />
               <span>{afficherConseils ? 'Masquer conseils' : 'Voir conseils'}</span>
@@ -321,7 +321,7 @@ export default function SurgaEntretienTab({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
-                fontSize: 11,
+                fontSize: 12,
                 cursor: 'pointer',
               }}
             >
@@ -374,7 +374,7 @@ export default function SurgaEntretienTab({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* Points forts */}
             <div style={{ backgroundColor: 'rgba(10, 92, 54, 0.05)', padding: 10, borderRadius: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--price, #0A5C36)', marginBottom: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--price, #0A5C36)', marginBottom: 4 }}>
                 Points forts observés :
               </div>
               <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: 'var(--navy, #1C2B4A)' }}>
@@ -386,7 +386,7 @@ export default function SurgaEntretienTab({
 
             {/* Points d'amélioration */}
             <div style={{ backgroundColor: 'rgba(217, 119, 6, 0.06)', padding: 10, borderRadius: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent, #C75B00)', marginBottom: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', marginBottom: 4 }}>
                 Conseils pour faire la différence :
               </div>
               <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: 'var(--navy, #1C2B4A)' }}>
@@ -398,7 +398,7 @@ export default function SurgaEntretienTab({
 
             {/* Suggestion inspirante */}
             {evaluation.suggestion && (
-              <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', fontStyle: 'italic', padding: '6px 8px', borderLeft: '3px solid var(--accent, #C75B00)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', fontStyle: 'italic', padding: '6px 8px', borderLeft: '3px solid var(--accent, #C75B00)' }}>
                 Exemple inspirant : {evaluation.suggestion}
               </div>
             )}
@@ -406,7 +406,7 @@ export default function SurgaEntretienTab({
 
           {/* 5. Passerelles transversales Surga */}
           <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid var(--border, #E8DDD2)' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)', marginBottom: 8 }}>
               Actions transversales de préparation :
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -414,7 +414,7 @@ export default function SurgaEntretienTab({
                 type="button"
                 onClick={handleEnregistrerEnNote}
                 className="surga-btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px', width: 'auto' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '6px 10px', width: 'auto' }}
               >
                 <FileText size={13} color="var(--navy, #1C2B4A)" />
                 <span>{noteEnregistree ? 'Fiche enregistrée' : 'Fiche de révision en Note'}</span>
@@ -423,7 +423,7 @@ export default function SurgaEntretienTab({
                 type="button"
                 onClick={handlePlanifierAgenda}
                 className="surga-btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px', width: 'auto' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '6px 10px', width: 'auto' }}
               >
                 <Calendar size={13} color="var(--accent, #C75B00)" />
                 <span>{agendaEnregistre ? 'Rappels planifiés' : 'Planifier date Agenda'}</span>
@@ -432,7 +432,7 @@ export default function SurgaEntretienTab({
                 type="button"
                 onClick={handleInscrireBudgetTransport}
                 className="surga-btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 10px', width: 'auto' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '6px 10px', width: 'auto' }}
               >
                 <Wallet size={13} color="var(--price, #0A5C36)" />
                 <span>{budgetEnregistre ? 'Budget inscrit' : 'Budget transport (3 000 F)'}</span>

@@ -128,7 +128,7 @@ export default function SurgaImmoAlerteModal({
                 height: 28,
                 borderRadius: '50%',
                 backgroundColor: 'rgba(199, 91, 0, 0.1)',
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent-ink, #A64B08)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -311,7 +311,7 @@ export default function SurgaImmoAlerteModal({
             </div>
           </div>
 
-          <p style={{ fontSize: 11, color: 'var(--text3, #73675E)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+          <p style={{ fontSize: 12, color: 'var(--text3, #73675E)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
             Vos critères sont enregistrés pour retrouver les biens correspondants. Surga n’envoie pas encore de notification à la mise en ligne d’un bien.
           </p>
 

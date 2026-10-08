@@ -211,7 +211,7 @@ export default function SurgaAgendaForm({ onClose, onSubmit, initial }: SurgaAge
             {(
               [
                 { key: 'normale', label: 'Normale', color: 'var(--price, #0A5C36)' },
-                { key: 'importante', label: 'Importante', color: 'var(--accent, #C75B00)' },
+                { key: 'importante', label: 'Importante', color: 'var(--surga-accent-ink, #A64B08)' },
                 { key: 'urgente', label: 'Urgente', color: '#DC2626' },
               ] as const
             ).map((p) => {
@@ -261,7 +261,7 @@ export default function SurgaAgendaForm({ onClose, onSubmit, initial }: SurgaAge
                     borderColor: estActive ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
                     backgroundColor: estActive ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
                     color: estActive ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: estActive ? 700 : 500,
                     cursor: 'pointer',
                     display: 'inline-flex',
@@ -325,7 +325,7 @@ export default function SurgaAgendaForm({ onClose, onSubmit, initial }: SurgaAge
                   borderColor: repetition === rep.key ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
                   backgroundColor: repetition === rep.key ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
                   color: repetition === rep.key ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer',
                   textAlign: 'center',

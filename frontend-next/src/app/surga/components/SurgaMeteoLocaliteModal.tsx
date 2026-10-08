@@ -148,7 +148,7 @@ export default function SurgaMeteoLocaliteModal({
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800 }}>Localité &amp; Position Météo</div>
-              <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.75)' }}>
+              <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.75)' }}>
                 Dakar, banlieue, 14 régions du Sénégal ou GPS
               </div>
             </div>
@@ -281,7 +281,7 @@ export default function SurgaMeteoLocaliteModal({
                 style={{
                   padding: '5px 12px',
                   borderRadius: 20,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: estActif ? 700 : 500,
                   border: estActif ? '1.5px solid var(--navy, #1C2B4A)' : '1px solid var(--border, #E8DDD2)',
                   backgroundColor: estActif ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
@@ -358,7 +358,7 @@ export default function SurgaMeteoLocaliteModal({
                       <div style={{ fontSize: 13, fontWeight: estSelectionnee ? 800 : 600, color: 'var(--navy, #1C2B4A)' }}>
                         {loc.nom}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 1 }}>
+                      <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 1 }}>
                         {loc.zone} {loc.maritime ? '• Littoral (Marées directes)' : ''}
                       </div>
                     </div>

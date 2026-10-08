@@ -49,7 +49,7 @@ export default function SurgaLandingHero({
             alignItems: 'center',
             gap: 6,
             background: 'var(--surga-accent-soft, rgba(217, 119, 6, 0.08))',
-            color: 'var(--surga-accent, #D97706)',
+            color: 'var(--surga-accent-ink, #A64B08)',
             padding: '6px 14px',
             borderRadius: 20,
             fontSize: 13,
@@ -170,7 +170,7 @@ export default function SurgaLandingHero({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent-ink, #A64B08)',
                 flexShrink: 0,
               }}
             >

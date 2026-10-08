@@ -59,7 +59,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
           {estMesure && (
             <span
               style={{
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: 700,
                 color: 'var(--price, #0A5C36)',
                 backgroundColor: 'rgba(10, 92, 54, 0.1)',
@@ -76,7 +76,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
           )}
           <span
             style={{
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: 700,
               color: couleur,
               backgroundColor: 'var(--bg, #F8F5F0)',
@@ -95,7 +95,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
         </div>
       </div>
 
-      <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
+      <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
         {axe.cause || 'Aucune mesure ni signalement récent sur cet axe.'}
         {origine ? ` ${origine}.` : ''}
       </div>
@@ -105,7 +105,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          fontSize: 10,
+          fontSize: 12,
           color: 'var(--text3, #73675E)',
           marginTop: 2,
           paddingTop: 6,
@@ -130,7 +130,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 2,
-              color: 'var(--accent, #C75B00)',
+              color: 'var(--surga-accent-ink, #A64B08)',
               textDecoration: 'none',
               fontWeight: 700,
             }}

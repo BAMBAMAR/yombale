@@ -328,7 +328,7 @@ export default function SurgaDepensesView() {
                   </span>
                   <span
                     style={{
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 700,
                       backgroundColor: 'rgba(28,43,74,0.08)',
                       color: 'var(--navy, #1C2B4A)',

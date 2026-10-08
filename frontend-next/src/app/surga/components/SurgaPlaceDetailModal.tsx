@@ -121,7 +121,7 @@ export default function SurgaPlaceDetailModal({
         {/* En-tête de la modale */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--border, #E8DDD2)', backgroundColor: '#FFFFFF' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ backgroundColor: 'var(--navy, #1C2B4A)', color: '#FFFFFF', fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 6 }}>
+            <span style={{ backgroundColor: 'var(--navy, #1C2B4A)', color: '#FFFFFF', fontSize: 12, fontWeight: 800, padding: '3px 8px', borderRadius: 6 }}>
               {place.categorie.toUpperCase()}
             </span>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>
@@ -130,7 +130,7 @@ export default function SurgaPlaceDetailModal({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button type="button" onClick={() => onToggleFavori?.(place)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: place.est_favori ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)' }} aria-label="Favori">
+            <button type="button" onClick={() => onToggleFavori?.(place)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: place.est_favori ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text3, #73675E)' }} aria-label="Favori">
               <Heart size={20} fill={place.est_favori ? 'var(--accent, #C75B00)' : 'none'} />
             </button>
             <button type="button" onClick={handlePartager} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--navy, #1C2B4A)' }} aria-label="Partager">
@@ -168,10 +168,10 @@ export default function SurgaPlaceDetailModal({
                 }}
               >
                 <Star size={14} fill="var(--accent, #C75B00)" color="var(--accent, #C75B00)" />
-                <strong style={{ fontSize: 13, color: 'var(--accent, #C75B00)' }}>
+                <strong style={{ fontSize: 13, color: 'var(--surga-accent-ink, #A64B08)' }}>
                   {Number(place.note_moyenne || 4.5).toFixed(1)} / 5
                 </strong>
-                <span style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+                <span style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                   ({place.nb_avis} avis certifiés)
                 </span>
               </div>
@@ -198,7 +198,7 @@ export default function SurgaPlaceDetailModal({
                 marginBottom: 6,
                 fontSize: 12,
                 fontWeight: 800,
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent-ink, #A64B08)',
               }}
             >
               <Info size={14} />
@@ -230,7 +230,7 @@ export default function SurgaPlaceDetailModal({
           >
             <UtensilsCrossed size={16} color="var(--price, #0A5C36)" style={{ marginTop: 2, flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--price, #0A5C36)', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--price, #0A5C36)', textTransform: 'uppercase' }}>
                 Spécialité incontournable
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy, #1C2B4A)', marginTop: 2 }}>
@@ -271,7 +271,7 @@ export default function SurgaPlaceDetailModal({
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      fontSize: 11,
+                      fontSize: 12,
                       color: 'var(--navy, #1C2B4A)',
                       backgroundColor: 'var(--bg, #F8F5F0)',
                       border: '1px solid var(--border, #E8DDD2)',
@@ -302,8 +302,8 @@ export default function SurgaPlaceDetailModal({
                 border: '1px solid',
                 borderColor: sortiePlanifiee ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
                 backgroundColor: sortiePlanifiee ? 'rgba(199, 91, 0, 0.12)' : 'var(--bg, #F8F5F0)',
-                color: sortiePlanifiee ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
-                fontSize: 11,
+                color: sortiePlanifiee ? 'var(--surga-accent-ink, #A64B08)' : 'var(--navy, #1C2B4A)',
+                fontSize: 12,
                 fontWeight: sortiePlanifiee ? 800 : 700,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -327,7 +327,7 @@ export default function SurgaPlaceDetailModal({
                 borderColor: depenseNotee ? 'var(--price, #0A5C36)' : 'var(--border, #E8DDD2)',
                 backgroundColor: depenseNotee ? 'rgba(10, 92, 54, 0.12)' : 'var(--bg, #F8F5F0)',
                 color: depenseNotee ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: depenseNotee ? 800 : 700,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -351,7 +351,7 @@ export default function SurgaPlaceDetailModal({
                 borderColor: adresseEnNote ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
                 backgroundColor: adresseEnNote ? 'rgba(28, 43, 74, 0.1)' : 'var(--bg, #F8F5F0)',
                 color: 'var(--navy, #1C2B4A)',
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: adresseEnNote ? 800 : 700,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -391,7 +391,7 @@ export default function SurgaPlaceDetailModal({
           <button
             type="button"
             onClick={handleItineraire}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFFFFF', color: 'var(--accent, #C75B00)', border: '1px solid var(--accent, #C75B00)', borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFFFFF', color: 'var(--surga-accent-ink, #A64B08)', border: '1px solid var(--accent, #C75B00)', borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
           >
             <Navigation size={14} />
             <span>Ouvrir l itinéraire dans Google Maps</span>

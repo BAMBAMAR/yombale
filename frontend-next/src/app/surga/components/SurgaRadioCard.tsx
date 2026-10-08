@@ -37,12 +37,12 @@ export default function SurgaRadioCard({
           </span>
           <span
             style={{
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: 700,
               padding: '1px 5px',
               borderRadius: 4,
               backgroundColor: 'var(--bg, #F8F5F0)',
-              color: 'var(--accent, #C75B00)',
+              color: 'var(--surga-accent-ink, #A64B08)',
               border: '1px solid var(--border, #E8DDD2)',
             }}
           >
@@ -52,7 +52,7 @@ export default function SurgaRadioCard({
 
         <div
           style={{
-            fontSize: 11,
+            fontSize: 12,
             color: 'var(--text2, #5A4E42)',
             marginTop: 2,
             whiteSpace: 'nowrap',
@@ -69,7 +69,7 @@ export default function SurgaRadioCard({
             alignItems: 'center',
             gap: 8,
             marginTop: 4,
-            fontSize: 10,
+            fontSize: 12,
             color: 'var(--text3, #73675E)',
           }}
         >
@@ -94,7 +94,7 @@ export default function SurgaRadioCard({
           border: 'none',
           backgroundColor: isEnLecture ? 'var(--navy, #1C2B4A)' : 'var(--accent, #C75B00)',
           color: '#FFFFFF',
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: 700,
           cursor: 'pointer',
           display: 'flex',

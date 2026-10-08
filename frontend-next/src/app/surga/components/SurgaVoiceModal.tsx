@@ -150,7 +150,7 @@ export default function SurgaVoiceModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--surga-accent, #D97706)',
+                color: 'var(--surga-accent-ink, #A64B08)',
               }}
             >
               <Mic size={20} strokeWidth={2.4} />

@@ -83,7 +83,7 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
             <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
               Concours &amp; Examens
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
               Fonction publique &bull; Alertes J-30 / J-7 / J-1
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--accent, #C75B00)',
+            color: 'var(--surga-accent-ink, #A64B08)',
             fontSize: 12,
             fontWeight: 700,
             cursor: 'pointer',
@@ -139,7 +139,7 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
                     style={{
                       backgroundColor: 'var(--navy, #1C2B4A)',
                       color: '#FFFFFF',
-                      fontSize: 9,
+                      fontSize: 12,
                       fontWeight: 800,
                       padding: '1px 5px',
                       borderRadius: 4,
@@ -164,9 +164,9 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
 
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
-                  color: 'var(--accent, #C75B00)',
+                  color: 'var(--surga-accent-ink, #A64B08)',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -198,7 +198,7 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
           marginTop: 2,
         }}
       >
-        <Bell size={13} style={{ color: 'var(--accent, #C75B00)' }} />
+        <Bell size={13} style={{ color: 'var(--surga-accent-ink, #A64B08)' }} />
         <span>Consulter le calendrier des concours</span>
       </button>
     </div>

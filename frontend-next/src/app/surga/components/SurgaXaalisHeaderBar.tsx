@@ -101,7 +101,7 @@ export default function SurgaXaalisHeaderBar({
             border: `1px solid ${masque ? 'var(--accent, #C75B00)' : 'var(--surga-border, #E2E8F0)'}`,
             fontSize: 12,
             fontWeight: 700,
-            color: masque ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+            color: masque ? 'var(--surga-accent-ink, #A64B08)' : 'var(--navy, #1C2B4A)',
             cursor: 'pointer',
             minHeight: 34,
           }}

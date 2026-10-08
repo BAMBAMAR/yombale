@@ -25,7 +25,7 @@ export default function SurgaXaalisLockedScreen({ onUnlock }: SurgaXaalisLockedS
           height: 58,
           borderRadius: 18,
           backgroundColor: 'rgba(199, 91, 0, 0.1)',
-          color: 'var(--accent, #C75B00)',
+          color: 'var(--surga-accent-ink, #A64B08)',
           margin: '0 auto 14px',
           display: 'flex',
           alignItems: 'center',

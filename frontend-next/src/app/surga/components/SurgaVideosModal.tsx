@@ -207,7 +207,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
               <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--surga-navy, #1C2B4A)' }}>
                 Séries TV &amp; Lutte du Sénégal
               </div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>
+              <div style={{ fontSize: 12, color: '#64748B' }}>
                 Alertes de sorties et vidéos officielles &bull; Mode Low-Data
               </div>
             </div>
@@ -264,7 +264,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
               <button
                 type="button"
                 onClick={() => setRecherche('')}
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#94A3B8' }}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--surga-text3, #536175)' }}
               >
                 <X size={13} />
               </button>
@@ -303,7 +303,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
                   border: 'none',
                   backgroundColor: estActif ? 'var(--surga-navy, #1C2B4A)' : '#F1F5F9',
                   color: estActif ? '#FFFFFF' : '#475569',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
@@ -343,7 +343,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
                       border: estSuivi ? '1px solid #059669' : '1px solid #CBD5E1',
                       backgroundColor: estSuivi ? '#ECFDF5' : '#FFFFFF',
                       color: estSuivi ? '#065F46' : '#334155',
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 700,
                       cursor: 'pointer',
                     }}
@@ -360,7 +360,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>Dernières parutions ({videosFiltrees.length})</span>
-              <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 500 }}>Lien direct YouTube</span>
+              <span style={{ fontSize: 12, color: 'var(--surga-text3, #536175)', fontWeight: 500 }}>Lien direct YouTube</span>
             </div>
 
             {chargement ? (
@@ -400,7 +400,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            fontSize: 11,
+            fontSize: 12,
             color: '#64748B',
           }}
         >
@@ -414,7 +414,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
               border: 'none',
               backgroundColor: '#E2E8F0',
               color: '#1E293B',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
             }}

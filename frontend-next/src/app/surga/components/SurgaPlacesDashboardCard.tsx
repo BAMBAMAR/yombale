@@ -46,7 +46,7 @@ export default function SurgaPlacesDashboardCard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--accent, #C75B00)',
+              color: 'var(--surga-accent-ink, #A64B08)',
             }}
           >
             <UtensilsCrossed size={16} />
@@ -55,7 +55,7 @@ export default function SurgaPlacesDashboardCard({
             <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
               Bonnes Adresses &amp; Bons Plans
             </h3>
-            <span style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            <span style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
               Recommandations certifiées à Dakar
             </span>
           </div>
@@ -67,7 +67,7 @@ export default function SurgaPlacesDashboardCard({
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--accent, #C75B00)',
+            color: 'var(--surga-accent-ink, #A64B08)',
             fontSize: 12,
             fontWeight: 700,
             cursor: 'pointer',
@@ -102,14 +102,14 @@ export default function SurgaPlacesDashboardCard({
               <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
                 {placeDuJour.nom}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <span style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 &bull; {placeDuJour.quartier}
               </span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Star size={12} fill="var(--accent, #C75B00)" color="var(--accent, #C75B00)" />
-              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--surga-accent-ink, #A64B08)' }}>
                 {Number(placeDuJour.note_moyenne || 4.5).toFixed(1)}
               </span>
             </div>
@@ -130,7 +130,7 @@ export default function SurgaPlacesDashboardCard({
             {placeDuJour.resume_honnete}
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--price, #0A5C36)', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--price, #0A5C36)', fontWeight: 600 }}>
             <Sparkles size={11} />
             <span>Spécialité : {placeDuJour.specialite}</span>
           </div>

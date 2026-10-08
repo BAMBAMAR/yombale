@@ -303,11 +303,11 @@ export default function SurgaSportCard({
               border: 'none',
               padding: 4,
               cursor: 'pointer',
-              color: 'var(--surga-accent, #D97706)',
+              color: 'var(--surga-accent-ink, #A64B08)',
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
             }}
           >
@@ -352,7 +352,7 @@ export default function SurgaSportCard({
               style={{
                 padding: '5px 12px',
                 borderRadius: 20,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 700,
                 border: 'none',
                 cursor: 'pointer',

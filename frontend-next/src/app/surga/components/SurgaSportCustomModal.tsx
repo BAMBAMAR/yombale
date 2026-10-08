@@ -264,7 +264,7 @@ export default function SurgaSportCustomModal({
                   padding: '4px 8px',
                   borderRadius: 6,
                   border: 'none',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 700,
                   cursor: 'pointer',
                   backgroundColor: filtreLigue === lig.id ? 'var(--navy, #1C2B4A)' : 'var(--bg, #F8F5F0)',
@@ -315,7 +315,7 @@ export default function SurgaSportCustomModal({
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text1, #1A1612)' }}>
                       {eq.nom}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 2 }}>
                       {eq.championnat || eq.pays} • {eq.pays}
                     </div>
                   </div>

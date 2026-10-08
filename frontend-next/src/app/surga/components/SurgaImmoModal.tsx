@@ -212,7 +212,7 @@ export default function SurgaImmoModal({ isOpen, onClose }: SurgaImmoModalProps)
               <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
                 Immobilier &amp; Alertes Dakar
               </h2>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 Annonces du catalogue Nopalou
               </div>
             </div>

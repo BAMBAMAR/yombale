@@ -168,7 +168,7 @@ export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
             </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 800 }}>Espaces Professionnels Surga</div>
-              <div style={{ fontSize: 11, opacity: 0.85 }}>Développez votre visibilité et votre clientèle</div>
+              <div style={{ fontSize: 12, opacity: 0.85 }}>Développez votre visibilité et votre clientèle</div>
             </div>
           </div>
           <button
@@ -227,7 +227,7 @@ export default function SurgaProModal({ isOpen, onClose }: SurgaProModalProps) {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingLeft: 26 }}>
                           {offre.points.map((pt, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text2, #5A4E42)' }}>
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
                               <Check size={12} color="var(--price, #0A5C36)" />
                               <span>{pt}</span>
                             </div>

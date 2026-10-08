@@ -136,7 +136,7 @@ export default function SurgaCompteModal({
             </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Mon Compte Surga</div>
-              <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)' }}>Profil &amp; synchronisation cloud</div>
+              <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)' }}>Profil &amp; synchronisation cloud</div>
             </div>
           </div>
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text2, #5A4E42)', padding: 4 }} aria-label="Fermer">
@@ -167,7 +167,7 @@ export default function SurgaCompteModal({
                 </div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{user.nom || 'Utilisateur Nopalou'}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--price, #0A5C36)', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--price, #0A5C36)', fontWeight: 600 }}>
                     <ShieldCheck size={13} strokeWidth={2.5} />
                     <span>Connecté par WhatsApp</span>
                   </div>
@@ -175,9 +175,9 @@ export default function SurgaCompteModal({
               </div>
 
               <div style={{
-                padding: '4px 9px', borderRadius: 20, fontSize: 11, fontWeight: 800,
+                padding: '4px 9px', borderRadius: 20, fontSize: 12, fontWeight: 800,
                 backgroundColor: estPremium ? 'rgba(199, 91, 0, 0.1)' : 'rgba(28, 43, 74, 0.08)',
-                color: estPremium ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                color: estPremium ? 'var(--surga-accent-ink, #A64B08)' : 'var(--navy, #1C2B4A)',
                 display: 'inline-flex', alignItems: 'center', gap: 4,
               }}>
                 {estPremium ? <Crown size={12} strokeWidth={2.5} /> : <Sparkles size={12} strokeWidth={2.5} />}
@@ -209,12 +209,12 @@ export default function SurgaCompteModal({
                 </div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Mode invité</div>
-                  <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', marginTop: 2 }}>Stockage local sur cet appareil</div>
+                  <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', marginTop: 2 }}>Stockage local sur cet appareil</div>
                 </div>
               </div>
 
               <div style={{
-                padding: '4px 9px', borderRadius: 20, fontSize: 11, fontWeight: 800,
+                padding: '4px 9px', borderRadius: 20, fontSize: 12, fontWeight: 800,
                 backgroundColor: 'rgba(28, 43, 74, 0.08)', color: 'var(--navy, #1C2B4A)',
                 display: 'inline-flex', alignItems: 'center', gap: 4,
               }}>
@@ -261,7 +261,7 @@ export default function SurgaCompteModal({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>Informations personnelles</span>
               {!isEditing && (
-                <button type="button" onClick={() => setIsEditing(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--accent, #C75B00)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <button type="button" onClick={() => setIsEditing(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--surga-accent-ink, #A64B08)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Edit2 size={13} />
                   <span>Modifier</span>
                 </button>
@@ -302,7 +302,7 @@ export default function SurgaCompteModal({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {onOpenEmploi && (
               <button type="button" onClick={() => { onClose(); onOpenEmploi() }} style={{ padding: '9px 10px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', backgroundColor: '#FFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: 'var(--navy, #1C2B4A)' }}>
-                <FileText size={14} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+                <FileText size={14} style={{ color: 'var(--surga-accent-ink, #A64B08)', flexShrink: 0 }} />
                 <span>Mon CV &amp; Emploi</span>
               </button>
             )}
@@ -319,7 +319,7 @@ export default function SurgaCompteModal({
               </button>
             )}
             {onOpenPremium && !estPremium && (
-              <button type="button" onClick={() => { onClose(); onOpenPremium() }} style={{ padding: '9px 10px', borderRadius: 8, border: '1px solid rgba(199, 91, 0, 0.3)', backgroundColor: 'rgba(199, 91, 0, 0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--accent, #C75B00)' }}>
+              <button type="button" onClick={() => { onClose(); onOpenPremium() }} style={{ padding: '9px 10px', borderRadius: 8, border: '1px solid rgba(199, 91, 0, 0.3)', backgroundColor: 'rgba(199, 91, 0, 0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)' }}>
                 <Crown size={14} style={{ flexShrink: 0 }} />
                 <span>Passer Premium</span>
               </button>

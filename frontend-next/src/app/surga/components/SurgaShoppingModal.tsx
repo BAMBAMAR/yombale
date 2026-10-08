@@ -157,7 +157,7 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent-ink, #A64B08)',
               }}
             >
               <ShoppingBag size={20} />
@@ -266,13 +266,13 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
                   style={{
                     padding: '4px 10px',
                     borderRadius: 20,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: active ? 700 : 500,
                     whiteSpace: 'nowrap',
                     border: '1px solid',
                     borderColor: active ? 'var(--accent, #C75B00)' : 'var(--surga-border, #E2E8F0)',
                     backgroundColor: active ? 'rgba(199, 91, 0, 0.1)' : '#FFFFFF',
-                    color: active ? 'var(--accent, #C75B00)' : 'var(--text2, #475569)',
+                    color: active ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text2, #475569)',
                     cursor: 'pointer',
                   }}
                 >

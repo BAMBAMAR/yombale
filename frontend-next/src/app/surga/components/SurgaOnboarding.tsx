@@ -131,7 +131,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
       {step === 1 && (
         <section aria-labelledby="step1-title">
           <div style={{ marginBottom: 20 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent, #C75B00)', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', textTransform: 'uppercase' }}>
               Étape 1 sur 3
             </span>
             <h2 id="step1-title" style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: '4px 0 6px 0' }}>
@@ -168,7 +168,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
                         height: 40,
                         borderRadius: 8,
                         backgroundColor: isSelected ? 'rgba(199,91,0,0.1)' : 'var(--bg, #F8F5F0)',
-                        color: isSelected ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                        color: isSelected ? 'var(--surga-accent-ink, #A64B08)' : 'var(--navy, #1C2B4A)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -217,7 +217,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
       {step === 2 && (
         <section aria-labelledby="step2-title">
           <div style={{ marginBottom: 20 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent, #C75B00)', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', textTransform: 'uppercase' }}>
               Étape 2 sur 3
             </span>
             <h2 id="step2-title" style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: '4px 0 6px 0' }}>
@@ -246,7 +246,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
                     borderRadius: 8,
                     border: `1.5px solid ${heureBriefing === h ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)'}`,
                     backgroundColor: heureBriefing === h ? 'rgba(199,91,0,0.06)' : '#FFFFFF',
-                    color: heureBriefing === h ? 'var(--accent, #C75B00)' : 'var(--text1, #1A1612)',
+                    color: heureBriefing === h ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text1, #1A1612)',
                     fontWeight: heureBriefing === h ? 700 : 500,
                     cursor: 'pointer',
                     fontSize: 15,
@@ -279,7 +279,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
                       borderRadius: 20,
                       border: `1px solid ${isSelected ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)'}`,
                       backgroundColor: isSelected ? 'rgba(199,91,0,0.08)' : '#FFFFFF',
-                      color: isSelected ? 'var(--accent, #C75B00)' : 'var(--text2, #5A4E42)',
+                      color: isSelected ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text2, #5A4E42)',
                       fontWeight: isSelected ? 700 : 500,
                       fontSize: 13,
                       cursor: 'pointer',
@@ -325,7 +325,7 @@ export default function SurgaOnboarding({ onComplete, initialData }: SurgaOnboar
                 height: 64,
                 borderRadius: '50%',
                 backgroundColor: 'rgba(199,91,0,0.1)',
-                color: 'var(--accent, #C75B00)',
+                color: 'var(--surga-accent-ink, #A64B08)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',

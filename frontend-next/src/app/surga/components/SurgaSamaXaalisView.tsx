@@ -259,7 +259,7 @@ export default function SurgaSamaXaalisView() {
                       border: 'none',
                       fontSize: 12,
                       fontWeight: 700,
-                      color: 'var(--accent, #C75B00)',
+                      color: 'var(--surga-accent-ink, #A64B08)',
                       cursor: 'pointer',
                       padding: 4,
                     }}

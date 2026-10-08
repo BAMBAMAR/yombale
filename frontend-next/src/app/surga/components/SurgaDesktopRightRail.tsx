@@ -180,7 +180,7 @@ export default function SurgaDesktopRightRail({
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="surga-widget-label">Sama Xaalis ({moisCapitalise})</span>
                 {protegeParPin && (
-                  <span title="Protection par Code PIN active" style={{ display: 'inline-flex', color: 'var(--accent, #C75B00)' }}>
+                  <span title="Protection par Code PIN active" style={{ display: 'inline-flex', color: 'var(--surga-accent-ink, #A64B08)' }}>
                     <Lock size={11} />
                   </span>
                 )}
@@ -201,7 +201,7 @@ export default function SurgaDesktopRightRail({
             <div className="surga-widget-value-strong">{valeurMoisAffichee}</div>
             <div className="surga-widget-desc">
               Solde Kalpé : <strong>{valeurSoldeAffichee}</strong>
-              <span title="Kalpé : votre portefeuille et budget personnel en FCFA" style={{ marginLeft: 4, cursor: 'help', fontSize: 11, color: 'var(--surga-text3, #94A3B8)' }}>
+              <span title="Kalpé : votre portefeuille et budget personnel en FCFA" style={{ marginLeft: 4, cursor: 'help', fontSize: 12, color: 'var(--surga-text3, #94A3B8)' }}>
                 (portefeuille)
               </span>
             </div>

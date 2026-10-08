@@ -55,7 +55,7 @@ export default function SurgaEmploiNav({
               fontWeight: 700,
               border: 'none',
               background: estActif ? '#FFFFFF' : 'transparent',
-              color: estActif ? 'var(--accent, #C75B00)' : 'var(--text2, #5A4E42)',
+              color: estActif ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text2, #5A4E42)',
               borderBottom: estActif ? '2px solid var(--accent, #C75B00)' : 'none',
               cursor: 'pointer',
               whiteSpace: 'nowrap',

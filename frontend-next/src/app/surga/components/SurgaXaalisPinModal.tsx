@@ -231,7 +231,7 @@ export default function SurgaXaalisPinModal({
             height: 50,
             borderRadius: 16,
             backgroundColor: 'rgba(199, 91, 0, 0.12)',
-            color: 'var(--accent, #C75B00)',
+            color: 'var(--surga-accent-ink, #A64B08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

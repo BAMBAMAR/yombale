@@ -102,7 +102,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
             left: 8,
             backgroundColor: bien.transaction === 'location' ? 'var(--navy, #1C2B4A)' : 'var(--accent, #C75B00)',
             color: '#FFFFFF',
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: 800,
             textTransform: 'uppercase',
             padding: '3px 8px',
@@ -120,7 +120,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
               right: 8,
               backgroundColor: 'rgba(10, 92, 54, 0.92)',
               color: '#FFFFFF',
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: 700,
               padding: '3px 7px',
               borderRadius: 6,
@@ -142,7 +142,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
           </span>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 600,
               color: 'var(--text3, #73675E)',
               display: 'inline-flex',
@@ -167,7 +167,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
           {bien.titre}
         </h3>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: 'var(--text2, #5A4E42)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
           {bien.nb_chambres && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
               <BedDouble size={12} />
@@ -186,7 +186,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
             </span>
           )}
           {bien.agence_nom && (
-            <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text3, #73675E)', fontWeight: 600 }}>
+            <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text3, #73675E)', fontWeight: 600 }}>
               {bien.agence_nom}
             </span>
           )}
@@ -207,7 +207,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
               border: 'none',
               borderRadius: 6,
               padding: '6px 10px',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -228,7 +228,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
                 border: '1px solid var(--border, #E8DDD2)',
                 borderRadius: 6,
                 padding: '6px 10px',
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -251,12 +251,12 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
               justifyContent: 'center',
               gap: 3,
               backgroundColor: visitePlanifiee ? 'rgba(199, 91, 0, 0.12)' : '#FFFFFF',
-              color: visitePlanifiee ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+              color: visitePlanifiee ? 'var(--surga-accent-ink, #A64B08)' : 'var(--navy, #1C2B4A)',
               border: '1px solid',
               borderColor: visitePlanifiee ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
               borderRadius: 6,
               padding: '6px 8px',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: visitePlanifiee ? 700 : 500,
               cursor: 'pointer',
               transition: 'all 0.15s ease',
@@ -286,7 +286,7 @@ export default function SurgaImmoCard({ bien, onSelectionner }: SurgaImmoCardPro
               borderColor: immoEnNote ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
               borderRadius: 6,
               padding: '6px 8px',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: immoEnNote ? 700 : 500,
               cursor: 'pointer',
               transition: 'all 0.15s ease',

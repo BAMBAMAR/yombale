@@ -74,7 +74,7 @@ export default function SurgaShareButton({
           padding: libelle || copieEffectuee ? padding : 0,
           fontSize,
           fontWeight: 600,
-          color: copieEffectuee ? 'var(--surga-emerald, #059669)' : 'var(--surga-primary, #0F172A)',
+          color: copieEffectuee ? 'var(--surga-emerald-ink, #047857)' : 'var(--surga-primary, #0F172A)',
           backgroundColor: copieEffectuee ? 'rgba(5, 150, 105, 0.08)' : 'var(--surga-surface, #FFFFFF)',
           border: '1px solid',
           borderColor: copieEffectuee ? 'rgba(5, 150, 105, 0.3)' : 'var(--surga-border, #E2E8F0)',

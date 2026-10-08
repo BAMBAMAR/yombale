@@ -34,7 +34,7 @@ export default function SurgaDemarchePiecesSection({
             type="button"
             onClick={onExporterNote}
             className="surga-btn-secondary"
-            style={{ fontSize: 11, padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
+            style={{ fontSize: 12, padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
           >
             <FileText size={12} />
             <span>Exporter en Note</span>
@@ -75,16 +75,16 @@ export default function SurgaDemarchePiecesSection({
                   {piece.intitule}
                 </span>
                 {piece.precision && (
-                  <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 2 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 2 }}>
                     {piece.precision}
                   </div>
                 )}
               </div>
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
-                  color: piece.obligatoire ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)',
+                  color: piece.obligatoire ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text3, #73675E)',
                 }}
               >
                 {piece.obligatoire ? 'Obligatoire' : 'Facultatif'}

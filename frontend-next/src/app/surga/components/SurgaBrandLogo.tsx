@@ -73,7 +73,7 @@ export default function SurgaBrandLogo({
             lineHeight: 1,
           }}
         >
-          SUR<span style={{ color: 'var(--surga-accent, #D97706)' }}>GA</span>
+          SUR<span style={{ color: 'var(--surga-accent-ink, #A64B08)' }}>GA</span>
         </div>
       )}
     </div>

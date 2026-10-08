@@ -102,9 +102,9 @@ export default function SurgaSportMatchItem({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 800,
-              color: 'var(--surga-accent, #D97706)',
+              color: 'var(--surga-accent-ink, #A64B08)',
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
             }}
@@ -118,7 +118,7 @@ export default function SurgaSportMatchItem({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 3,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
                 color: '#92400E',
                 backgroundColor: 'rgba(217, 119, 6, 0.1)',
@@ -137,9 +137,9 @@ export default function SurgaSportMatchItem({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 3,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 800,
-                color: 'var(--surga-accent, #D97706)',
+                color: 'var(--surga-accent-ink, #A64B08)',
                 backgroundColor: 'rgba(217, 119, 6, 0.1)',
                 border: '1px solid rgba(217, 119, 6, 0.25)',
                 padding: '1px 6px',
@@ -159,7 +159,7 @@ export default function SurgaSportMatchItem({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 3,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 900,
                 color: '#FFFFFF',
                 backgroundColor: '#DC2626',
@@ -192,12 +192,12 @@ export default function SurgaSportMatchItem({
         ) : isTermine ? (
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               padding: '2px 8px',
               borderRadius: 6,
               backgroundColor: 'rgba(5, 150, 105, 0.08)',
-              color: 'var(--surga-emerald, #059669)',
+              color: 'var(--surga-emerald-ink, #047857)',
               flexShrink: 0,
             }}
           >
@@ -234,7 +234,7 @@ export default function SurgaSportMatchItem({
       </div>
 
       {match.buteurs && (
-        <div style={{ fontSize: 11, color: 'var(--surga-emerald, #059669)', fontStyle: 'italic' }}>
+        <div style={{ fontSize: 12, color: 'var(--surga-emerald-ink, #047857)', fontStyle: 'italic' }}>
           {match.buteurs}
         </div>
       )}

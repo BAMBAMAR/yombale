@@ -319,7 +319,7 @@ export default function SurgaPlusServicesModal({
                       {s.badge && (
                         <span
                           style={{
-                            fontSize: 10.5,
+                            fontSize: 12,
                             fontWeight: 600,
                             padding: '2px 6px',
                             borderRadius: 6,

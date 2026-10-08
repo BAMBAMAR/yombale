@@ -79,7 +79,7 @@ export default function SurgaTraficTrajet() {
           <span>Carte du trafic</span>
         </a>
       </div>
-      <div style={{ fontSize: 11, color: 'var(--surga-text3, #64748B)' }}>
+      <div style={{ fontSize: 12, color: 'var(--surga-text3, #64748B)' }}>
         L’itinéraire et le trafic s’affichent dans Google Maps, service externe.
       </div>
     </form>

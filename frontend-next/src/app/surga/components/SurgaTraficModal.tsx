@@ -172,7 +172,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
               <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
                 Trafic • Dakar
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.75)' }}>
+              <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.75)' }}>
                 Mesures et signalements des usagers
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
           style={{
             padding: '7px 14px',
             backgroundColor: 'rgba(199, 91, 0, 0.08)',
-            fontSize: 11,
+            fontSize: 12,
             color: 'var(--navy, #1C2B4A)',
             display: 'flex',
             alignItems: 'center',
@@ -275,7 +275,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
                       borderColor: estActif ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
                       backgroundColor: estActif ? 'var(--navy, #1C2B4A)' : 'transparent',
                       color: estActif ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: estActif ? 700 : 500,
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
@@ -292,7 +292,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
               onClick={() => setAfficherFormulaire(!afficherFormulaire)}
               className="surga-btn-secondary"
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 padding: '4px 10px',
                 display: 'inline-flex',
                 alignItems: 'center',

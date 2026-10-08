@@ -178,7 +178,7 @@ export default function SurgaKalpeEpargneTab({
 
                   <span
                     style={{
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 800,
                       color: isAtteint ? 'var(--price, #0A5C36)' : '#2563EB',
                       backgroundColor: isAtteint ? 'rgba(10,92,54,0.1)' : 'rgba(37,99,235,0.08)',
@@ -194,7 +194,7 @@ export default function SurgaKalpeEpargneTab({
                   <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
                     {obj.montant_actuel.toLocaleString('fr-FR')} FCFA
                   </span>
-                  <span style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                     Objectif: {obj.montant_cible.toLocaleString('fr-FR')} FCFA
                   </span>
                 </div>
@@ -222,7 +222,7 @@ export default function SurgaKalpeEpargneTab({
                       border: 'none',
                       backgroundColor: '#2563EB',
                       color: '#FFFFFF',
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 700,
                       cursor: 'pointer',
                     }}

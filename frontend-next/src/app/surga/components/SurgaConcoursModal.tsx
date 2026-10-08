@@ -197,7 +197,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
               <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
                 Concours &amp; Examens du Sénégal
               </h2>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 Dossiers, dates limites &amp; rappels J-30 / J-7 / J-1
               </div>
             </div>
@@ -305,7 +305,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
                       whiteSpace: 'nowrap',
                       padding: '5px 10px',
                       borderRadius: 6,
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 600,
                       cursor: 'pointer',
                       border: '1px solid',

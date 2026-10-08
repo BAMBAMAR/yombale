@@ -334,7 +334,7 @@ export default function SurgaEmploiModal({
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
               Pôle Emploi &amp; Carrière Surga
             </h2>
-            <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
               CV PDF A4, Lettres de motivation &amp; Préparation d’entretien
             </div>
           </div>

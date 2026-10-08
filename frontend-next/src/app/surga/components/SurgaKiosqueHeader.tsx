@@ -80,9 +80,9 @@ export default function SurgaKiosqueHeader({
           </span>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
-              color: 'var(--accent, #C75B00)',
+              color: 'var(--surga-accent-ink, #A64B08)',
               backgroundColor: 'rgba(199, 91, 0, 0.1)',
               padding: '2px 8px',
               borderRadius: 10,
@@ -94,7 +94,7 @@ export default function SurgaKiosqueHeader({
         </div>
         <div
           style={{
-            fontSize: 11,
+            fontSize: 12,
             color: 'var(--text3, #73675E)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',

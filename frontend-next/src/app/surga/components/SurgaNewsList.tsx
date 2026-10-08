@@ -154,7 +154,7 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
                       border: '1px solid',
                       borderColor: estEnNote ? 'var(--surga-accent, #D97706)' : 'var(--surga-border, #E2E8F0)',
                       backgroundColor: estEnNote ? 'rgba(217, 119, 6, 0.12)' : 'var(--surga-surface, #FFFFFF)',
-                      color: estEnNote ? 'var(--surga-accent, #D97706)' : 'var(--surga-primary, #0F172A)',
+                      color: estEnNote ? 'var(--surga-accent-ink, #A64B08)' : 'var(--surga-primary, #0F172A)',
                       cursor: 'pointer',
                       padding: 0,
                       transition: 'all 0.15s ease',
@@ -202,7 +202,7 @@ export default function SurgaNewsList({ items, onVoirPlus }: SurgaNewsListProps)
                   borderRadius: 8,
                   border: '1px solid var(--surga-border, #E2E8F0)',
                   backgroundColor: 'var(--surga-surface, #FFFFFF)',
-                  color: 'var(--surga-accent, #D97706)',
+                  color: 'var(--surga-accent-ink, #A64B08)',
                   textDecoration: 'none',
                   transition: 'all 0.15s ease',
                 }}

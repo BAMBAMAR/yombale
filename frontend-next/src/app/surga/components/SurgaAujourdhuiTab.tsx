@@ -162,7 +162,7 @@ export default function SurgaAujourdhuiTab({
               {/* Titres phares du matin */}
               {brevesPhares.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--surga-text2, #64748B)', letterSpacing: '0.02em' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-text2, #64748B)', letterSpacing: '0.02em' }}>
                     À la une ce matin
                   </span>
                   {brevesPhares.map((it, idx) => (
@@ -194,10 +194,10 @@ export default function SurgaAujourdhuiTab({
                           }}
                           title={it.titre}
                         >
-                          <span style={{ color: 'var(--surga-accent, #D97706)', fontWeight: 800, marginRight: 5 }}>•</span>
+                          <span style={{ color: 'var(--surga-accent-ink, #A64B08)', fontWeight: 800, marginRight: 5 }}>•</span>
                           {it.titre}
                         </a>
-                        <div style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginTop: 2, paddingLeft: 10 }}>
+                        <div style={{ fontSize: 12, color: 'var(--surga-text3, #94A3B8)', marginTop: 2, paddingLeft: 10 }}>
                           {it.source_nom} · {formaterHeurePublication(it.published_at)}
                         </div>
                       </div>
@@ -243,7 +243,7 @@ export default function SurgaAujourdhuiTab({
                       ({formaterHoraireMatch(prochainMatch)})
                     </span>
                     {prochainMatch.raison_presence && (
-                      <span style={{ fontSize: 11, color: 'var(--surga-text3, #94A3B8)', marginLeft: 6 }}>
+                      <span style={{ fontSize: 12, color: 'var(--surga-text3, #94A3B8)', marginLeft: 6 }}>
                         ({prochainMatch.raison_presence})
                       </span>
                     )}
@@ -290,7 +290,7 @@ export default function SurgaAujourdhuiTab({
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--surga-accent, #D97706)',
+                color: 'var(--surga-accent-ink, #A64B08)',
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',

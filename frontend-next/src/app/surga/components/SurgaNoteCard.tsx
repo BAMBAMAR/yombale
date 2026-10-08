@@ -160,7 +160,7 @@ export default function SurgaNoteCard({
                 gap: 4,
                 padding: '2px 7px',
                 borderRadius: 10,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: 0.4,
@@ -180,10 +180,10 @@ export default function SurgaNoteCard({
                   gap: 3,
                   padding: '2px 6px',
                   borderRadius: 10,
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 800,
                   backgroundColor: 'rgba(199, 91, 0, 0.12)',
-                  color: 'var(--accent, #C75B00)',
+                  color: 'var(--surga-accent-ink, #A64B08)',
                 }}
               >
                 <Pin size={10} />
@@ -223,7 +223,7 @@ export default function SurgaNoteCard({
             border: 'none',
             padding: 4,
             cursor: 'pointer',
-            color: note.epingle ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)',
+            color: note.epingle ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text3, #73675E)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -237,7 +237,7 @@ export default function SurgaNoteCard({
       {note.is_checklist && nbItems > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {/* Barre de progression */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3, #73675E)', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--text3, #73675E)', fontWeight: 600 }}>
             <span>{nbFaits} sur {nbItems} faits</span>
             <span>{progression}%</span>
           </div>
@@ -275,7 +275,7 @@ export default function SurgaNoteCard({
               </div>
             ))}
             {nbItems > 4 && (
-              <span style={{ fontSize: 11, color: 'var(--text3, #73675E)', fontStyle: 'italic', marginTop: 2 }}>
+              <span style={{ fontSize: 12, color: 'var(--text3, #73675E)', fontStyle: 'italic', marginTop: 2 }}>
                 +{nbItems - 4} autre(s) élément(s)...
               </span>
             )}
@@ -318,7 +318,7 @@ export default function SurgaNoteCard({
             border: '1px solid #BBF7D0',
             backgroundColor: depenseEnregistree ? 'rgba(10, 92, 54, 0.12)' : '#F0FDF4',
             color: 'var(--price, #0A5C36)',
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 600,
             cursor: 'pointer',
             marginTop: 2,
@@ -344,7 +344,7 @@ export default function SurgaNoteCard({
           marginTop: 2,
         }}
       >
-        <span style={{ fontSize: 11, color: 'var(--text3, #73675E)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <span style={{ fontSize: 12, color: 'var(--text3, #73675E)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <Clock size={11} />
           <span>{formaterDate(note.updated_at || note.created_at)}</span>
         </span>
@@ -365,8 +365,8 @@ export default function SurgaNoteCard({
               padding: '4px 6px',
               borderRadius: 6,
               cursor: 'pointer',
-              color: rappelActif ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)',
-              fontSize: 11,
+              color: rappelActif ? 'var(--surga-accent-ink, #A64B08)' : 'var(--text3, #73675E)',
+              fontSize: 12,
               fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
@@ -389,7 +389,7 @@ export default function SurgaNoteCard({
               borderRadius: 6,
               cursor: 'pointer',
               color: copie ? 'var(--price, #0A5C36)' : 'var(--text3, #73675E)',
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',

@@ -146,7 +146,7 @@ ${nom}`
                   ? '1 lettre gratuite par mois'
                   : 'Quota mensuel gratuit atteint'}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)' }}>
+              <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
                 {droits.estPremium
                   ? 'Personnalisez et téléchargez autant de lettres de motivation que vous le souhaitez.'
                   : droits.lettresMoisEnCours === 0
@@ -161,7 +161,7 @@ ${nom}`
               type="button"
               onClick={onOpenPremium}
               className="surga-btn-secondary"
-              style={{ fontSize: 11, padding: '5px 10px', fontWeight: 700, flexShrink: 0 }}
+              style={{ fontSize: 12, padding: '5px 10px', fontWeight: 700, flexShrink: 0 }}
             >
               Passer Premium
             </button>
@@ -177,7 +177,7 @@ ${nom}`
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Poste visé *</label>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Poste visé *</label>
             <input
               type="text"
               value={poste}
@@ -189,7 +189,7 @@ ${nom}`
           </div>
 
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Entreprise / Organisation</label>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Entreprise / Organisation</label>
             <input
               type="text"
               value={entreprise}
@@ -201,7 +201,7 @@ ${nom}`
           </div>
 
           <div style={{ gridColumn: '1 / -1' }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>
               Texte de l’annonce ou exigences (facultatif)
             </label>
             <textarea
@@ -231,7 +231,7 @@ ${nom}`
         <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: '0 0 6px 0' }}>
           Texte de votre lettre de motivation
         </h3>
-        <p style={{ fontSize: 11, color: 'var(--text3, #73675E)', margin: '0 0 10px 0' }}>
+        <p style={{ fontSize: 12, color: 'var(--text3, #73675E)', margin: '0 0 10px 0' }}>
           Vous êtes libre de retoucher chaque paragraphe pour refléter fidèlement votre style et vos motivations réelles.
         </p>
 
@@ -275,13 +275,13 @@ ${nom}`
             />
             <div style={{ fontSize: 12, color: 'var(--navy, #1C2B4A)', lineHeight: 1.4 }}>
               <strong>J’ai relu et j’approuve les termes de cette lettre de motivation.</strong>
-              <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 2 }}>
                 Le document PDF sera édité avec votre en-tête et prêt à l’envoi.
               </div>
             </div>
           </label>
           {erreurRelecture && (
-            <div style={{ color: '#DC2626', fontSize: 11, fontWeight: 700, marginTop: 6 }}>
+            <div style={{ color: '#DC2626', fontSize: 12, fontWeight: 700, marginTop: 6 }}>
               Veuillez confirmer la relecture de votre lettre avant le téléchargement.
             </div>
           )}

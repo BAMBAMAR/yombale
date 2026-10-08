@@ -58,7 +58,7 @@ export default function SurgaMeteoPrevisions({
           border: 'none',
           borderRadius: 6,
           cursor: 'pointer',
-          color: 'var(--accent, #C75B00)',
+          color: 'var(--surga-accent-ink, #A64B08)',
           fontSize: 12,
           fontWeight: 700,
         }}

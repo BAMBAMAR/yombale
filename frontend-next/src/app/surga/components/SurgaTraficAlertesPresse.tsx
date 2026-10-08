@@ -35,7 +35,7 @@ export default function SurgaTraficAlertesPresse({ alertes }: { alertes: AlerteP
             >
               {a.titre}
             </a>
-            <div style={{ fontSize: 11, color: 'var(--surga-text3, #64748B)', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 12, color: 'var(--surga-text3, #64748B)', whiteSpace: 'nowrap' }}>
               {a.source}{quand(a.publie_le) ? ` · ${quand(a.publie_le)}` : ''}
             </div>
           </li>

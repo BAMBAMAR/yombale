@@ -25,7 +25,7 @@ function getModeBadge(mode?: string) {
   return (
     <span
       style={{
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 800,
         padding: '2px 6px',
         borderRadius: 4,
@@ -201,11 +201,11 @@ export default function SurgaKalpeJournalTab({
                       {op.libelle}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                         {op.categorie}
                       </span>
                       {getModeBadge(op.mode_paiement)}
-                      <span style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                         • {op.date_operation}
                       </span>
                     </div>

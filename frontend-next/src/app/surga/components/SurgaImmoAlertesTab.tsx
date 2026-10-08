@@ -47,7 +47,7 @@ export default function SurgaImmoAlertesTab({
             border: 'none',
             borderRadius: 6,
             padding: '6px 10px',
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -70,7 +70,7 @@ export default function SurgaImmoAlertesTab({
             gap: 8,
           }}
         >
-          <Bell size={32} style={{ color: 'var(--accent, #C75B00)' }} />
+          <Bell size={32} style={{ color: 'var(--surga-accent-ink, #A64B08)' }} />
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
             Aucune alerte programmée
           </div>
@@ -118,7 +118,7 @@ export default function SurgaImmoAlertesTab({
                   </span>
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: 700,
                       padding: '2px 6px',
                       borderRadius: 4,
@@ -129,7 +129,7 @@ export default function SurgaImmoAlertesTab({
                     {alt.actif ? 'Active' : 'En pause'}
                   </span>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 2 }}>
                   {alt.type_bien || 'Tous types'} • {alt.transaction || 'Location'} •{' '}
                   {alt.quartier || 'Tout Dakar'}{' '}
                   {alt.prix_max_xof ? `• Max ${new Intl.NumberFormat('fr-FR').format(alt.prix_max_xof)} F` : ''}
@@ -145,7 +145,7 @@ export default function SurgaImmoAlertesTab({
                     borderRadius: 6,
                     border: '1px solid var(--border, #E8DDD2)',
                     backgroundColor: 'var(--bg, #F8F5F0)',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 600,
                     cursor: 'pointer',
                     color: 'var(--navy, #1C2B4A)',

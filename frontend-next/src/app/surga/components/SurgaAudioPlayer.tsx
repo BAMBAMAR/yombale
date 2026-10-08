@@ -159,7 +159,7 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
                 ? 'En pause'
                 : `Écouter (${dureeTexte})`}
             </span>
-            <span style={{ fontSize: 11, color: 'var(--surga-text2, #475569)', fontWeight: 500 }}>
+            <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', fontWeight: 500 }}>
               · Lecture sans connexion
             </span>
           </div>
@@ -188,7 +188,7 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
                   color: vitesseChoisie === v ? '#FFFFFF' : 'var(--surga-text2, #475569)',
                   border: 'none',
                   borderRadius: 4,
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
                   padding: '2px 5px',
                   cursor: 'pointer',
@@ -224,7 +224,7 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
               }}
             />
           </div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--surga-text2, #475569)', minWidth: 50, textAlign: 'right' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-text2, #475569)', minWidth: 50, textAlign: 'right' }}>
             {formaterTemps(playerState.tempsEcouleSec)} / {formaterTemps(playerState.tempsTotalEstimeSec)}
           </div>
         </div>

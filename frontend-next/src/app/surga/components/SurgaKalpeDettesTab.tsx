@@ -94,7 +94,7 @@ export default function SurgaKalpeDettesTab({
             border: '1px solid rgba(10,92,54,0.2)',
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--price, #0A5C36)', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--price, #0A5C36)', textTransform: 'uppercase' }}>
             À recevoir (Créances)
           </div>
           <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--price, #0A5C36)', marginTop: 2 }}>
@@ -110,10 +110,10 @@ export default function SurgaKalpeDettesTab({
             border: '1px solid rgba(199,91,0,0.2)',
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent, #C75B00)', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', textTransform: 'uppercase' }}>
             À payer (Dettes)
           </div>
-          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--accent, #C75B00)', marginTop: 2 }}>
+          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--surga-accent-ink, #A64B08)', marginTop: 2 }}>
             {totalAPayer.toLocaleString('fr-FR')} FCFA
           </div>
         </div>
@@ -188,12 +188,12 @@ export default function SurgaKalpeDettesTab({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span
                         style={{
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: 800,
                           padding: '2px 6px',
                           borderRadius: 4,
                           backgroundColor: isRecevoir ? 'rgba(10,92,54,0.1)' : 'rgba(199,91,0,0.1)',
-                          color: isRecevoir ? 'var(--price, #0A5C36)' : 'var(--accent, #C75B00)',
+                          color: isRecevoir ? 'var(--price, #0A5C36)' : 'var(--surga-accent-ink, #A64B08)',
                           textTransform: 'uppercase',
                         }}
                       >
@@ -205,7 +205,7 @@ export default function SurgaKalpeDettesTab({
                     </div>
 
                     {dette.tiers_telephone && (
-                      <div style={{ fontSize: 11, color: 'var(--text3, #73675E)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                      <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
                         <Phone size={10} />
                         <span>{dette.tiers_telephone}</span>
                       </div>
@@ -216,7 +216,7 @@ export default function SurgaKalpeDettesTab({
                     <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
                       {dette.montant_restant.toLocaleString('fr-FR')} F
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
+                    <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                       sur {dette.montant_initial.toLocaleString('fr-FR')} F
                     </div>
                   </div>
@@ -233,7 +233,7 @@ export default function SurgaKalpeDettesTab({
                   />
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3, #73675E)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--text3, #73675E)' }}>
                   <span>{pct}% réglé</span>
                   {dette.date_echeance && <span>Échéance : {dette.date_echeance}</span>}
                 </div>
@@ -253,7 +253,7 @@ export default function SurgaKalpeDettesTab({
                         border: 'none',
                         backgroundColor: 'var(--navy, #1C2B4A)',
                         color: '#FFFFFF',
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: 700,
                         cursor: 'pointer',
                       }}

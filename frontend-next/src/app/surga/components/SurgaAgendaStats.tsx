@@ -23,7 +23,7 @@ export default function SurgaAgendaStats({ aujourdhui, enRetard, termines }: Sur
     >
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{aujourdhui}</div>
-        <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+        <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
           Aujourd’hui
         </div>
       </div>
@@ -39,7 +39,7 @@ export default function SurgaAgendaStats({ aujourdhui, enRetard, termines }: Sur
         </div>
         <div
           style={{
-            fontSize: 10,
+            fontSize: 12,
             color: enRetard > 0 ? '#DC2626' : 'var(--text3, #73675E)',
             textTransform: 'uppercase',
             letterSpacing: 0.3,
@@ -50,7 +50,7 @@ export default function SurgaAgendaStats({ aujourdhui, enRetard, termines }: Sur
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--price, #0A5C36)' }}>{termines}</div>
-        <div style={{ fontSize: 10, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+        <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
           Complétés
         </div>
       </div>

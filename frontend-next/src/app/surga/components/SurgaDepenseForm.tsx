@@ -114,7 +114,7 @@ export default function SurgaDepenseForm({
               border: '1px solid var(--surga-border, #E2E8F0)',
               fontSize: 18,
               fontWeight: 800,
-              color: 'var(--surga-emerald, #059669)',
+              color: 'var(--surga-emerald-ink, #047857)',
               outline: 'none',
               boxSizing: 'border-box',
             }}

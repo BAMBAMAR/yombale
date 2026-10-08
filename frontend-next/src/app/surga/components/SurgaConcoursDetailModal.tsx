@@ -126,7 +126,7 @@ export default function SurgaConcoursDetailModal({
                   style={{
                     backgroundColor: 'var(--navy, #1C2B4A)',
                     color: '#FFFFFF',
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: 800,
                     padding: '2px 7px',
                     borderRadius: 5,
@@ -135,7 +135,7 @@ export default function SurgaConcoursDetailModal({
                   {concours.sigle}
                 </span>
               )}
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3, #73675E)' }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3, #73675E)' }}>
                 Niveau requis : {concours.niveau_requis}
               </span>
             </div>
@@ -150,7 +150,7 @@ export default function SurgaConcoursDetailModal({
             >
               {concours.titre}
             </h2>
-            <div style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', marginTop: 2 }}>
               {concours.organisme}
             </div>
           </div>
@@ -187,10 +187,10 @@ export default function SurgaConcoursDetailModal({
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
               Calendrier officiel des étapes
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12 }}>
               <div>
                 <span style={{ color: 'var(--text3, #73675E)', display: 'block' }}>Date limite de dépôt :</span>
-                <strong style={{ color: 'var(--accent, #C75B00)' }}>{formaterDate(concours.date_cloture)}</strong>
+                <strong style={{ color: 'var(--surga-accent-ink, #A64B08)' }}>{formaterDate(concours.date_cloture)}</strong>
               </div>
               <div>
                 <span style={{ color: 'var(--text3, #73675E)', display: 'block' }}>Épreuves prévues :</span>
@@ -227,7 +227,7 @@ export default function SurgaConcoursDetailModal({
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
                   Pièces du dossier ({nbPiecesCochees}/{pieces.length})
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--price, #0A5C36)' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--price, #0A5C36)' }}>
                   {pourcentageDossier}% réuni
                 </span>
               </div>
@@ -294,8 +294,8 @@ export default function SurgaConcoursDetailModal({
                     border: '1px solid',
                     borderColor: checklistEnNote ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
                     backgroundColor: checklistEnNote ? 'rgba(199, 91, 0, 0.12)' : 'var(--bg, #F8F5F0)',
-                    color: checklistEnNote ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
-                    fontSize: 11,
+                    color: checklistEnNote ? 'var(--surga-accent-ink, #A64B08)' : 'var(--navy, #1C2B4A)',
+                    fontSize: 12,
                     fontWeight: 700,
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
@@ -321,7 +321,7 @@ export default function SurgaConcoursDetailModal({
                       borderColor: fraisEnregistres ? 'var(--price, #0A5C36)' : 'var(--border, #E8DDD2)',
                       backgroundColor: fraisEnregistres ? 'rgba(10, 92, 54, 0.12)' : 'var(--bg, #F8F5F0)',
                       color: fraisEnregistres ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 700,
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
@@ -352,7 +352,7 @@ export default function SurgaConcoursDetailModal({
                     padding: '8px 10px',
                     borderRadius: 6,
                     backgroundColor: 'var(--bg, #F8F5F0)',
-                    fontSize: 11,
+                    fontSize: 12,
                   }}
                 >
                   <div>

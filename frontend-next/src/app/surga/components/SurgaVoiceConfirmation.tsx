@@ -110,7 +110,7 @@ export default function SurgaVoiceConfirmation({
       {/* Dépense */}
       {actionDetectee.intention === 'ADD_EXPENSE' && actionDetectee.depenseData && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent)', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--surga-accent-ink, #A64B08)', marginBottom: '8px' }}>
             <Wallet size={16} />
             <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Enregistrer cette dépense ?</span>
           </div>
