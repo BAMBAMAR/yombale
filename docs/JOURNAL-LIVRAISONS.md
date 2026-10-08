@@ -1,5 +1,13 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga / Huitième lot : notifications, limites, console, quotas, agenda, calculatrice, services sur téléphone, fenêtres au clavier (Session 2026-10-08, `feature/surga` : `5d403ae4`, `a0fa3a70`, `8f6beb1e`, `e1f3a110` ; aucun push)** :
+  - *Serveur* : `backend/routes/surga/agenda.js` (routes de notification), `backend/services/surga/push-hotes.js`, `backend/lib/vapidHelper.js`, `backend/middlewares/surga-limites.js` et les routes qu'il protège, `backend/routes/admin-surga.js` (requêtes, rôle sur l'argent, trace d'audit), `backend/routes/surga/sport.js`, `backend/services/surga/emploi-service.js` et `backend/routes/surga/emploi.js` (quotas), `scripts/seed-surga-data.js`.
+  - *Migration* : colonnes `statut` et `updated_at` de `surga_trafic_signalements` (idempotente, validée sur base vide).
+  - *Écrans* : `SurgaAgendaCard.tsx`, `SurgaAgendaForm.tsx`, `SurgaAgendaView.tsx`, `lib/surga-agenda-dates.ts` ; `lib/surga-calculator.ts`, `SurgaCalculatorModal.tsx`, reprise du montant dans `SurgaKalpeSaisieModal.tsx` ; `lib/surga-voice.ts` (espace des milliers) ; `SurgaServicesListe.tsx` dans l'onglet Services ; textes de `SurgaOnboarding.tsx` et des fenêtres immobilières ; `SurgaFenetresClavier.tsx` dans `app/surga/layout.tsx`.
+  - *Fiches* : `SRG-A1-003`, `012`, `014`, `015`, `016`, `023`, `031` (en partie) ; `SRG-A2-005` (appareil), `007`, `010`, `015`, `017` ; `SRG-A3-010` (fenêtres), fin de `SRG-A3-007`.
+  - *Tests* : typage 0 erreur ; frontend 130 sur 130 ; backend Surga 181 sur 185 (4 échecs antérieurs) ; sondes A5-114 à A5-124.
+  - *Limites* : écrans rejoués sur le serveur de développement ; étiquettes, annonces et contrastes non traités ; limites de débit dépendantes de `SRG-A5-012` en production ; aucun agent tiers.
+
 - **Surga / Adresses : `surga.nopalou.com` renvoie vers `nopalou.com/surga` (Session 2026-10-08, `feature/surga` `fa287211`, aucun push)** :
   - *Origine* : décision D77 (réponse de l'utilisateur : « les deux » adresses).
   - *Code* : `frontend-next/src/lib/surga-adresse.ts`, `frontend-next/src/middleware.ts` (renvoi 307 du sous-domaine, à la place de la réécriture), `app/surga/layout.tsx`, `lib/surga-share.ts`, composants du kiosque, `backend/services/surga/cron-reminders.js`.

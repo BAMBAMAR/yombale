@@ -3,6 +3,27 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-08 — Huitième lot] — serveur, écrans et fenêtres au clavier ; 4 commits locaux, aucun push
+- **Objet :** `feature/surga` : `5d403ae4` (serveur), `a0fa3a70` (écrans), `8f6beb1e` (fenêtres au clavier), `e1f3a110` (bouton retour). Demande de l'utilisateur : corriger tout ce qui relève du code.
+- **Corrigées et rejouées, serveur (`scripts/audit/surga/a5/v98-lot8.js`, les cinq contrôles en échec sur le code de `2846ccde`, tenus après) :**
+  - `SRG-A1-012` (A5-114) : un compte prenait l'abonnement d'un autre en soumettant son adresse (200, propriétaire et clés remplacés) ; après, 409, ligne et clés intactes ; sans jeton 401 sur les trois routes (200 avant) ; cinq adresses hors des services de notification refusées (400 ; 200 avant) ; même navigateur sous un autre compte, mêmes clés : transfert accepté.
+  - `SRG-A1-014` (A5-115) : 13 signalements de trafic sur 13 et 12 de démarche sur 12 écrits sans compte, 6 collectes de presse sur 6 ; après, 10 écrits puis 429, une collecte puis « déjà à jour » puis 429 ; `kiosque/sync` et `briefing/refresh` : 401 sans jeton (200 avant).
+  - `SRG-A1-003`, `SRG-A1-016` (A5-116) : onglets Comptes, Abonnements, Signalements en 500, puis 200 ; modérateur sur le tarif et les canaux : 200, puis 403 sur les quatre routes d'argent ; modération d'un signalement : 500 et 0 trace, puis 200, une ligne d'audit, signalement rejeté retiré de l'écran ; essai WhatsApp « transmis avec succès » sans envoi, puis 503.
+  - `SRG-A1-015` (A5-117) : équipes favorites d'un compte en 500, puis 200 et lues en base.
+  - `SRG-A1-023` (A5-118) : 10 lettres simultanées pour un quota de 1 : 9 documents ; après, 1 document, compteur à 1 (CV : 1 avant et après).
+- **Corrigées et rejouées, écrans (serveur de développement) :**
+  - `SRG-A2-017` (A5-119) : rappel de demain 14 h, « + 1 heure » : demain 15 h ; ouvert en modification, titre changé, même rappel.
+  - `SRG-A2-007` (A5-120) : 7 ÷ 2 affiche 3,5 ; « 1.2.3+1 » refusé ; 2 500 × 4, « Utiliser » : saisie de dépense ouverte avec 10000.
+  - `SRG-A2-015` (A5-121) : téléphone, onglet Services : 11 entrées, Démarches, Emploi et Radios s'ouvrent ; personnalisation du bureau hors de vue.
+  - `SRG-A2-010` (A5-122) : fin de configuration « sera prêt chaque jour… dans l'application » ; plus de « veille en moins de 2 minutes ».
+  - `SRG-A3-010` (A5-123) : dix fenêtres au clavier : 0 tenue avant, 10 après (focus, tabulation, Échap, retour du focus, rôle, nom).
+  - `SRG-A3-007`, fin (A5-124) : le bouton retour ferme la fenêtre, l'onglet reste ; une fenêtre fermée par Échap ne laisse pas de retour à vide.
+- **Aussi :** `SRG-A2-005` sur l'appareil (tests unitaires) ; `SRG-A1-031` : script de peuplement refusé sur une base non locale ; appel fautif de `rechercherDemarches` dans le gestionnaire WhatsApp.
+- **Migration :** `statut` et `updated_at` sur `surga_trafic_signalements` ; base vide : 155 tables, 0 erreur.
+- **Tests :** typage 0 erreur ; frontend 130 sur 130 ; backend Surga 181 sur 185 (4 échecs antérieurs).
+- **Non fait :** étiquettes des champs, annonces d'état, contrastes (`SRG-A3-011`) ; préférences d'un compte entre appareils (`SRG-A2-011`) ; alertes sur erreurs (`SRG-A5-008`) ; poids de la page (`SRG-A3-004`) ; code commun sur `main` (`SRG-A1-026`, `SRG-A5-012`) ; rejeu sur un build de production ; fenêtres empilées au bouton retour ; validation par un agent tiers.
+- **À savoir :** les nouvelles limites comptent par adresse. En production le compteur ne suit pas le visiteur (`SRG-A5-012`) : tant que ce point n'est pas corrigé sur `main`, elles peuvent se partager entre visiteurs.
+
 ### [2026-10-08 — Adresses de Surga] — D77 : `surga.nopalou.com` renvoie vers `nopalou.com/surga` ; 1 commit local, aucun push
 - **Objet :** `feature/surga` `fa287211`. Décision D77 (réponse de l'utilisateur : « les deux »).
 - **Constat de départ :** le sous-domaine n'a aucun enregistrement DNS ; l'adresse canonique, l'aperçu de partage et les messages y renvoyaient pourtant. Sur un hôte `surga.*`, l'application était servie directement (réécriture), et toute page de Nopalou s'y affichait sans son menu.
