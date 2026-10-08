@@ -58,7 +58,8 @@ async function exporterDonneesUtilisateur({ userId }) {
     // 2. Notes
     if (userId) {
       const notesRes = await pool.query(
-        'SELECT id, titre, contenu, tags, epingle, created_at, updated_at FROM surga_notes WHERE user_id = $1 ORDER BY created_at DESC',
+        // SRG-A1-018 : colonnes réelles de la table (l'ancienne liste visait « tags », absente : l'export sortait vide)
+        'SELECT id, titre, contenu, categorie, couleur, epingle, is_checklist, checklist, created_at, updated_at FROM surga_notes WHERE user_id = $1 ORDER BY created_at DESC',
         [userId]
       );
       exportGlobal.notes = notesRes.rows;
@@ -67,7 +68,7 @@ async function exporterDonneesUtilisateur({ userId }) {
     // 3. Dépenses
     if (userId) {
       const depensesRes = await pool.query(
-        'SELECT id, montant, devise, categorie, description, date_depense, created_at FROM surga_depenses WHERE user_id = $1 ORDER BY date_depense DESC',
+        'SELECT id, montant_xof, categorie, note, date_depense, created_at FROM surga_depenses WHERE user_id = $1 ORDER BY date_depense DESC',
         [userId]
       );
       exportGlobal.depenses = depensesRes.rows;
@@ -76,7 +77,7 @@ async function exporterDonneesUtilisateur({ userId }) {
     // 4. Agenda
     if (userId) {
       const agendaRes = await pool.query(
-        'SELECT id, titre, description, date_evenement, heure_evenement, termine, created_at FROM surga_agenda WHERE user_id = $1 ORDER BY date_evenement DESC',
+        'SELECT id, titre, description, date_evenement, heure_evenement, priorite, categorie, lieu, est_rappel, repetition, termine, created_at FROM surga_agenda WHERE user_id = $1 ORDER BY date_evenement DESC',
         [userId]
       );
       exportGlobal.agenda = agendaRes.rows;
@@ -85,7 +86,7 @@ async function exporterDonneesUtilisateur({ userId }) {
     // 5. Alertes Immo
     if (userId) {
       const alertesRes = await pool.query(
-        'SELECT id, criteres, actif, created_at FROM surga_alertes_immo WHERE user_id = $1',
+        'SELECT * FROM surga_alertes_immo WHERE user_id = $1',
         [userId]
       );
       exportGlobal.alertes_immo = alertesRes.rows;
@@ -191,7 +192,9 @@ async function exporterDonneesUtilisateur({ userId }) {
       exportGlobal.demarches_signalements = sigRes.rows;
     }
   } catch (err) {
-    console.warn('[SURGA EXPORT ERREUR]:', err.message);
+    // SRG-A1-018 : une erreur de lecture ne doit plus produire un export partiel présenté comme complet.
+    console.error('[SURGA EXPORT ERREUR]:', err.message);
+    throw err;
   }
 
   return exportGlobal;
@@ -233,8 +236,8 @@ async function supprimerDonneesUtilisateur({ userId }) {
   try {
     client = await pool.connect();
   } catch (errConnect) {
-    // Mode offline ou test unitaire Jest sans base Postgres
-    return resultats;
+    // SRG-A1-017 / SRG-A1-019 : sans base, la purge n'a pas eu lieu. Le dire, au lieu de renvoyer un bilan de succès.
+    throw errConnect;
   }
   try {
     await client.query('BEGIN');
@@ -285,11 +288,20 @@ async function supprimerDonneesUtilisateur({ userId }) {
       // Préférences
       await client.query('DELETE FROM surga_preferences WHERE user_id = $1', [userId]);
       resultats.preferences_reinitialisees = true;
+
+      // SRG-A1-019 : tables oubliées par la purge (le journal des notifications porte le titre des rappels).
+      await client.query('DELETE FROM surga_notifications_logs WHERE user_id = $1', [userId]);
+      await client.query('DELETE FROM surga_push_subscriptions WHERE user_id = $1', [userId]);
     }
 
     if (phone) {
-      await client.query('DELETE FROM surga_whatsapp_sessions WHERE phone = $1', [phone]);
-      await client.query('DELETE FROM surga_quotas WHERE phone = $1', [phone]);
+      // SRG-A1-019 : le numéro est stocké avec ou sans « + » selon la table ; la comparaison se fait sur les chiffres
+      // du numéro complet (jamais sur un suffixe, qui confondrait deux pays).
+      const chiffres = String(phone).replace(/\D/g, '');
+      if (chiffres.length >= 8) {
+        await client.query("DELETE FROM surga_whatsapp_sessions WHERE regexp_replace(phone, '\\D', '', 'g') = $1", [chiffres]);
+        await client.query("DELETE FROM surga_quotas WHERE regexp_replace(phone, '\\D', '', 'g') = $1", [chiffres]);
+      }
     }
 
     await client.query('COMMIT');
