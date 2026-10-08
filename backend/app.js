@@ -513,6 +513,7 @@ async function demarrerApp() {
       try { require('./services/cron-verification-boutiques'); } catch (e) { console.warn('[CRON VERIFICATION] Warning:', e.message); }
       try { require('./services/cron-surga-rss'); } catch (e) { console.warn('[CRON SURGA RSS] Warning:', e.message); }
       try { const { demarrerCronRappels } = require('./services/surga/cron-reminders'); demarrerCronRappels(); } catch (e) { console.warn('[CRON SURGA RAPPELS] Warning:', e.message); }
+      try { const { demarrerCronPurgeComptes } = require('./services/surga/cron-purge-comptes'); demarrerCronPurgeComptes(); } catch (e) { console.warn('[CRON SURGA PURGE COMPTES] Warning:', e.message); }
     } else {
       console.log('⚡ [MODE WEB SERVER] Démarrage de l\'API Web & crons');
       const { demarrerScraping, demarrerCronsMetier } = require('./services/scraper');
@@ -533,6 +534,7 @@ async function demarrerApp() {
       try { require('./services/cron-verification-boutiques'); } catch (e) { console.warn('[CRON VERIFICATION] Warning:', e.message); }
       try { require('./services/cron-surga-rss'); } catch (e) { console.warn('[CRON SURGA RSS] Warning:', e.message); }
       try { const { demarrerCronRappels } = require('./services/surga/cron-reminders'); demarrerCronRappels(); } catch (e) { console.warn('[CRON SURGA RAPPELS] Warning:', e.message); }
+      try { const { demarrerCronPurgeComptes } = require('./services/surga/cron-purge-comptes'); demarrerCronPurgeComptes(); } catch (e) { console.warn('[CRON SURGA PURGE COMPTES] Warning:', e.message); }
     }
   });
 

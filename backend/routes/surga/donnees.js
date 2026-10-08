@@ -33,7 +33,9 @@ router.get('/donnees/export', verifierToken, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.send(JSON.stringify(donnees, null, 2));
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    // Le texte de l'erreur de base ne sort pas : il nommait la base et ses tables.
+    console.error('[SURGA DONNEES]', err.message);
+    return res.status(503).json({ success: false, error: 'L\'export n\'a pas pu être préparé. Veuillez réessayer dans un instant.' });
   }
 });
 
@@ -62,13 +64,21 @@ router.delete('/donnees/supprimer', verifierToken, async (req, res) => {
 
     const bilan = await supprimerDonneesUtilisateur({ userId });
 
+    // D39 : la réponse dit ce qui est conservé.
+    const conserves = bilan.abonnements_conserves_anonymises || 0;
+    const message = conserves > 0
+      ? `Vos données Surga ont été définitivement supprimées. ${conserves > 1 ? `${conserves} paiements d'abonnement sont conservés` : 'Un paiement d\'abonnement est conservé'} pour la comptabilité, sans votre numéro ni votre identifiant : l'abonnement n'est plus rattaché à votre compte.`
+      : 'Vos données Surga ont été définitivement supprimées.';
+
     return res.json({
       success: true,
-      message: 'L ensemble de vos données Surga a été définitivement supprimé avec succès.',
+      message,
       bilan,
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    // Le texte de l'erreur de base ne sort pas : il nommait la base et ses tables.
+    console.error('[SURGA DONNEES]', err.message);
+    return res.status(503).json({ success: false, error: 'La suppression n\'a pas eu lieu : aucune donnée n\'a été retirée. Veuillez réessayer dans un instant.' });
   }
 });
 

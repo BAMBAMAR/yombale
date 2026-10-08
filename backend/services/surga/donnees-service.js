@@ -200,25 +200,49 @@ async function exporterDonneesUtilisateur({ userId }) {
   return exportGlobal;
 }
 
+// Tables purgées en premier, dans cet ordre, avec leur compteur dans le bilan rendu à l'utilisateur.
+const BILAN_PAR_TABLE = {
+  surga_notes: 'notes_supprimees',
+  surga_depenses: 'depenses_supprimees',
+  surga_agenda: 'agenda_supprime',
+  surga_alertes_immo: 'alertes_immo_supprimees',
+  surga_suivi_concours: 'concours_suivis_supprimes',
+  surga_favoris_places: 'favoris_supprimes',
+  surga_video_abonnements: 'video_abonnements_supprimes',
+  surga_documents_emploi: 'documents_emploi_supprimes',
+  surga_demarches_suivis: 'demarches_suivies_supprimees',
+};
+// Les abonnements suivent une règle à part (D39) : ils ne passent pas par la suppression générale.
+const TABLE_ABONNEMENTS = 'surga_abonnements';
+const NOM_TABLE_SURGA = /^surga_[a-z0-9_]+$/;
+
 /**
- * Supprime de façon irréversible et complète l'intégralité des données personnelles de l'utilisateur
+ * Tables surga_* portant une colonne donnée, lues dans le schéma.
+ * SRG-A1-019 / SRG-A1-020 : la purge suivait une liste écrite à la main ; chaque table ajoutée ensuite y échappait.
+ */
+async function tablesSurgaAvecColonne(executeur, colonne) {
+  const { rows } = await executeur.query(
+    `SELECT table_name, data_type FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name LIKE 'surga\\_%' AND column_name = $1
+     ORDER BY table_name`,
+    [colonne]
+  );
+  return rows.filter((r) => NOM_TABLE_SURGA.test(r.table_name));
+}
+
+// La colonne user_id est de type uuid dans les migrations ; une base retouchée à la main peut la porter en texte.
+const filtreUserId = (type, parametre) => (type === 'uuid' ? `user_id = ${parametre}::uuid` : `user_id::text = ${parametre}::text`);
+
+/**
+ * Supprime de façon irréversible et complète l'intégralité des données personnelles de l'utilisateur.
+ * D39 : tout est supprimé, sauf les abonnements encaissés, conservés sans téléphone ni identifiant.
  */
 async function supprimerDonneesUtilisateur({ userId }) {
   if (!userId) {
     throw new Error('Identifiant utilisateur requis pour la suppression.');
   }
-
-  let phone = null;
-  if (pool) {
-    try {
-      const userRes = await pool.query('SELECT telephone FROM utilisateurs WHERE id = $1', [userId]);
-      if (userRes.rows.length > 0) {
-        phone = userRes.rows[0].telephone;
-      }
-    } catch (e) {
-      console.warn('[SURGA PURGE SERVICE]: Impossible de récupérer le téléphone', e.message);
-    }
-  }
+  // SRG-A1-017 / SRG-A1-019 : sans base, la purge n'a pas eu lieu. Le dire, au lieu de renvoyer un bilan de succès.
+  if (!pool) throw new Error('Base de données indisponible : aucune donnée n\'a été supprimée.');
 
   const resultats = {
     notes_supprimees: 0,
@@ -228,85 +252,63 @@ async function supprimerDonneesUtilisateur({ userId }) {
     concours_suivis_supprimes: 0,
     favoris_supprimes: 0,
     preferences_reinitialisees: false,
+    abonnements_supprimes: 0,
+    abonnements_conserves_anonymises: 0,
   };
 
-  if (!pool) return resultats;
-
-  let client = null;
-  try {
-    client = await pool.connect();
-  } catch (errConnect) {
-    // SRG-A1-017 / SRG-A1-019 : sans base, la purge n'a pas eu lieu. Le dire, au lieu de renvoyer un bilan de succès.
-    throw errConnect;
-  }
+  const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    if (userId) {
-      // Notes
-      const resNotes = await client.query('DELETE FROM surga_notes WHERE user_id = $1', [userId]);
-      resultats.notes_supprimees = resNotes.rowCount;
+    const userRes = await client.query('SELECT telephone FROM utilisateurs WHERE id = $1', [userId]);
+    const phone = userRes.rows[0]?.telephone || null;
+    // Le numéro est stocké avec ou sans « + » selon la table ; la comparaison se fait sur les chiffres du numéro
+    // complet (jamais sur un suffixe, qui confondrait deux pays).
+    const chiffres = phone ? String(phone).replace(/\D/g, '') : '';
+    const parTelephone = chiffres.length >= 8;
 
-      // Dépenses
-      const resDep = await client.query('DELETE FROM surga_depenses WHERE user_id = $1', [userId]);
-      resultats.depenses_supprimees = resDep.rowCount;
+    // 1. Abonnements (D39)
+    const proprietaire = parTelephone
+      ? "(user_id = $1 OR regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = $2)"
+      : 'user_id = $1';
+    const paramsAbo = parTelephone ? [userId, chiffres] : [userId];
+    const encaisse = "statut NOT IN ('en_attente', 'echoue', 'annule') AND montant_xof > 0";
+    const resAboSup = await client.query(`DELETE FROM ${TABLE_ABONNEMENTS} WHERE ${proprietaire} AND NOT (${encaisse})`, paramsAbo);
+    resultats.abonnements_supprimes = resAboSup.rowCount;
+    const resAboAnon = await client.query(
+      `UPDATE ${TABLE_ABONNEMENTS}
+       SET user_id = NULL, phone = NULL, client_metadata = '{}'::jsonb, updated_at = NOW()
+       WHERE ${proprietaire}`,
+      paramsAbo
+    );
+    resultats.abonnements_conserves_anonymises = resAboAnon.rowCount;
 
-      // Agenda
-      const resAgenda = await client.query('DELETE FROM surga_agenda WHERE user_id = $1', [userId]);
-      resultats.agenda_supprime = resAgenda.rowCount;
-
-      // Alertes Immo
-      const resImmo = await client.query('DELETE FROM surga_alertes_immo WHERE user_id = $1', [userId]);
-      resultats.alertes_immo_supprimees = resImmo.rowCount;
-
-      // Concours suivis
-      const resConcours = await client.query('DELETE FROM surga_suivi_concours WHERE user_id = $1', [userId]);
-      resultats.concours_suivis_supprimes = resConcours.rowCount;
-
-      // Favoris places
-      const resFav = await client.query('DELETE FROM surga_favoris_places WHERE user_id = $1', [userId]);
-      resultats.favoris_supprimes = resFav.rowCount;
-
-      // Abonnements vidéos
-      const resVid = await client.query('DELETE FROM surga_video_abonnements WHERE user_id = $1', [userId]);
-      resultats.video_abonnements_supprimes = resVid.rowCount;
-
-      // Documents emploi et profil pro (Tranche 18)
-      const resDocs = await client.query('DELETE FROM surga_documents_emploi WHERE user_id = $1', [userId]);
-      resultats.documents_emploi_supprimes = resDocs.rowCount;
-
-      const resProf = await client.query('DELETE FROM surga_profil_pro WHERE user_id = $1', [userId]);
-      resultats.profil_pro_supprime = resProf.rowCount > 0;
-
-      await client.query('DELETE FROM surga_usages WHERE user_id = $1', [userId]);
-
-      // Démarches administratives (Tranche 20)
-      const resDemSuivis = await client.query('DELETE FROM surga_demarches_suivis WHERE user_id = $1', [userId]);
-      resultats.demarches_suivies_supprimees = resDemSuivis.rowCount;
-      await client.query('DELETE FROM surga_demarches_signalements WHERE user_id = $1', [userId]);
-
-      // Préférences
-      await client.query('DELETE FROM surga_preferences WHERE user_id = $1', [userId]);
-      resultats.preferences_reinitialisees = true;
-
-      // SRG-A1-019 : tables oubliées par la purge (le journal des notifications porte le titre des rappels).
-      await client.query('DELETE FROM surga_notifications_logs WHERE user_id = $1', [userId]);
-      await client.query('DELETE FROM surga_push_subscriptions WHERE user_id = $1', [userId]);
+    // 2. Toutes les tables Surga rattachées au compte
+    const tablesUser = (await tablesSurgaAvecColonne(client, 'user_id')).filter((t) => t.table_name !== TABLE_ABONNEMENTS);
+    const connues = Object.keys(BILAN_PAR_TABLE);
+    tablesUser.sort((a, b) => {
+      const ia = connues.indexOf(a.table_name), ib = connues.indexOf(b.table_name);
+      return (ia < 0 ? connues.length : ia) - (ib < 0 ? connues.length : ib);
+    });
+    for (const t of tablesUser) {
+      const res = await client.query(`DELETE FROM ${t.table_name} WHERE ${filtreUserId(t.data_type, '$1')}`, [userId]);
+      const cle = BILAN_PAR_TABLE[t.table_name];
+      if (cle) resultats[cle] = res.rowCount;
+      if (t.table_name === 'surga_profil_pro') resultats.profil_pro_supprime = res.rowCount > 0;
+      if (t.table_name === 'surga_preferences') resultats.preferences_reinitialisees = true;
     }
 
-    if (phone) {
-      // SRG-A1-019 : le numéro est stocké avec ou sans « + » selon la table ; la comparaison se fait sur les chiffres
-      // du numéro complet (jamais sur un suffixe, qui confondrait deux pays).
-      const chiffres = String(phone).replace(/\D/g, '');
-      if (chiffres.length >= 8) {
-        await client.query("DELETE FROM surga_whatsapp_sessions WHERE regexp_replace(phone, '\\D', '', 'g') = $1", [chiffres]);
-        await client.query("DELETE FROM surga_quotas WHERE regexp_replace(phone, '\\D', '', 'g') = $1", [chiffres]);
+    // 3. Lignes rattachées au seul numéro (sessions et compteurs WhatsApp, alertes posées sans compte)
+    if (parTelephone) {
+      const tablesTel = (await tablesSurgaAvecColonne(client, 'phone')).filter((t) => t.table_name !== TABLE_ABONNEMENTS);
+      for (const t of tablesTel) {
+        await client.query(`DELETE FROM ${t.table_name} WHERE regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = $1`, [chiffres]);
       }
     }
 
     await client.query('COMMIT');
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => {});
     console.error('[SURGA PURGE ERREUR]:', err.message);
     throw err;
   } finally {
@@ -316,7 +318,46 @@ async function supprimerDonneesUtilisateur({ userId }) {
   return resultats;
 }
 
+const DELAI_GRACE_JOURS = 30;
+
+/**
+ * SRG-A1-020 : supprime les données Surga des comptes supprimés.
+ * Un compte est concerné s'il a été anonymisé, ou si sa demande de suppression a plus de trente jours (le délai
+ * annoncé à l'utilisateur). La suppression du compte lui-même reste l'affaire de Nopalou : rien n'est écrit dans
+ * la table utilisateurs.
+ * Limite : un compte déjà anonymisé n'a plus de numéro ; ses lignes rattachées au seul numéro ne sont plus retrouvables.
+ */
+async function purgerDonneesComptesSupprimes({ limite = 50 } = {}) {
+  const bilan = { comptes_trouves: 0, comptes_purges: 0, echecs: 0 };
+  if (!pool) throw new Error('Base de données indisponible.');
+
+  const tables = await tablesSurgaAvecColonne(pool, 'user_id');
+  if (!tables.length) return bilan;
+  const aDesDonnees = tables
+    .map((t) => `EXISTS (SELECT 1 FROM ${t.table_name} s WHERE ${t.data_type === 'uuid' ? 's.user_id = u.id' : 's.user_id::text = u.id::text'})`)
+    .join(' OR ');
+  const { rows } = await pool.query(
+    `SELECT u.id FROM utilisateurs u
+     WHERE (u.anonymise_le IS NOT NULL OR u.supprime_le <= NOW() - ($1 || ' days')::interval)
+       AND (${aDesDonnees})
+     ORDER BY u.id LIMIT $2`,
+    [String(DELAI_GRACE_JOURS), limite]
+  );
+  bilan.comptes_trouves = rows.length;
+  for (const { id } of rows) {
+    try {
+      await supprimerDonneesUtilisateur({ userId: id });
+      bilan.comptes_purges++;
+    } catch (err) {
+      bilan.echecs++;
+      console.error('[SURGA PURGE COMPTES SUPPRIMES]:', err.message);
+    }
+  }
+  return bilan;
+}
+
 module.exports = {
   exporterDonneesUtilisateur,
   supprimerDonneesUtilisateur,
+  purgerDonneesComptesSupprimes,
 };
