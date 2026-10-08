@@ -182,6 +182,15 @@ describe('trafic mesuré (D71)', () => {
     expect(mesures.creneauCourant(new Date('2026-10-08T20:00:00Z'))).toBeNull();
   });
 
+  test('axe mesuré dans le sens de l’heure : aller avant 13 h, retour ensuite', () => {
+    const axe = { sensSelonHeure: true };
+    expect(mesures.sensInverse(axe, new Date('2026-10-08T12:30:00Z'))).toBe(false);
+    expect(mesures.sensInverse(axe, new Date('2026-10-08T13:00:00Z'))).toBe(true);
+    expect(mesures.sensInverse({}, new Date('2026-10-08T17:00:00Z'))).toBe(false);
+    expect(mesures.axesMesures()).toContain('ouest-foire-colobane');
+    expect(mesures.axesMesures()).toHaveLength(6);
+  });
+
   test('durées avec et sans trafic lues telles quelles, niveau tiré du retard', () => {
     const m = mesures.interpreterGoogleRoutes({ routes: [{ distanceMeters: 6600, duration: '1200s', staticDuration: '480s' }] });
     expect(m).toMatchObject({ distanceKm: 6.6, tempsEstimeMin: 20, tempsSansTraficMin: 8, retardMin: 12, vitesseReelleKmH: 20, vitesseNormaleKmH: 50 });

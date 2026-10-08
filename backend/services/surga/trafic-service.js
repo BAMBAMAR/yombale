@@ -76,6 +76,26 @@ const AXES_ROUTIERS_DAKAR = [
     pointsChauds: ['Échangeur Foire', 'CICES', 'Golf Club'],
   },
   {
+    // D72 : itinéraire demandé par l'utilisateur. Aucun point de passage n'est imposé : le plus court chemin entre
+    // les deux extrémités passe par l'avenue Seydina Limamoulaye, l'échangeur de Patte d'Oie et l'autoroute
+    // (calcul sur OpenStreetMap, 9,2 km) ; un point de passage mal placé ajoutait 3 km au retour.
+    // Mesuré vers Colobane avant 13 h, vers Ouest Foire ensuite (sensSelonHeure).
+    id: 'ouest-foire-colobane',
+    nom: 'Ouest Foire ➔ Patte d’Oie ➔ Colobane',
+    nomRetour: 'Colobane ➔ Patte d’Oie ➔ Ouest Foire',
+    origine: 'Ouest Foire',
+    destination: 'Colobane',
+    type: 'voie_express',
+    sens: 'mixte',
+    sensSelonHeure: true,
+    tempsHabituelMin: 9,
+    distanceKm: 9.2,
+    from: '14.7494,-17.4702',
+    to: '14.6951,-17.4454',
+    coords: { lat: 14.7360, lon: -17.4397 },
+    pointsChauds: ['Échangeur de Patte d’Oie', 'Colobane'],
+  },
+  {
     id: 'corniche-ouest-sud',
     nom: 'Corniche Ouest (Vers Soumbédioune & Plateau)',
     origine: 'Almadies / Ouakam',
@@ -517,11 +537,14 @@ async function getEtatTraficComplet(options = {}) {
 
     if (releveLe && (!dernierReleve || releveLe > dernierReleve)) dernierReleve = releveLe;
 
+    // Axe mesuré dans le sens de l'heure : le nom et les extrémités suivent le sens du relevé.
+    const retour = Boolean(mesure && mesure.inverse);
+
     return {
       id: axe.id,
-      nom: axe.nom,
-      origine: axe.origine,
-      destination: axe.destination,
+      nom: retour ? axe.nomRetour || axe.nom : axe.nom,
+      origine: retour ? axe.destination : axe.origine,
+      destination: retour ? axe.origine : axe.destination,
       type: axe.type,
       sens: axe.sens,
       niveau,
@@ -610,6 +633,13 @@ async function enregistrerSignalement({ axeId, typeSignalement, commentaire, use
   }
 
   const comPropre = commentaire ? commentaire.replace(/<[^>]*>/g, '').slice(0, 180).trim() : '';
+
+  // Un signalement se rattache à la ligne de son axe : elle est créée si elle manque (axe ajouté depuis le dernier
+  // chargement de la table, ou table jamais chargée). Sans elle, le signalement était refusé par la base.
+  await pool.query(
+    'INSERT INTO surga_trafic_axes (id, nom, origine, destination) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING',
+    [axeExiste.id, axeExiste.nom.slice(0, 128), axeExiste.origine.slice(0, 64), axeExiste.destination.slice(0, 64)]
+  ).catch((e) => console.warn('[SurgaTrafic] Ligne de l’axe non créée :', e.message));
 
   // SRG-A1-017 : un signalement non écrit n'est pas un signalement reçu. L'ancien repli rendait un faux identifiant
   // « sig-local-… » et un code 201 quand la base était en erreur.

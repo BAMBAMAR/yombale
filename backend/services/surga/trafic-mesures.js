@@ -13,7 +13,10 @@
 const axios = require('axios');
 const interrupteurs = require('./interrupteurs');
 
-const AXES_PAR_DEFAUT = ['a1-entrant', 'a1-sortant', 'vdn-sud', 'vdn-nord', 'rn1-rufisque', 'corniche-ouest-sud'];
+const AXES_PAR_DEFAUT = ['a1-entrant', 'a1-sortant', 'vdn-sud', 'vdn-nord', 'ouest-foire-colobane', 'rn1-rufisque'];
+// Un axe « sensSelonHeure » est mesuré à l'aller avant cette heure, au retour ensuite : un seul appel par créneau.
+const HEURE_DU_RETOUR = 13;
+const sensInverse = (axe, creneau) => Boolean(axe.sensSelonHeure) && creneau.getUTCHours() >= HEURE_DU_RETOUR;
 const DUREE_CRENEAU_MS = 30 * 60 * 1000;
 const DEBUT_MIN = 6 * 60 + 30; // 6 h 30
 const FIN_MIN = 20 * 60; // 20 h
@@ -72,16 +75,17 @@ const point = (texte) => {
   return { location: { latLng: { latitude, longitude } } };
 };
 
-async function interrogerGoogle(axe, cle) {
+async function interrogerGoogle(axe, cle, inverse = false) {
   const res = await axios.post(
     process.env.SURGA_GOOGLE_ROUTES_ADRESSE || ADRESSE,
-    { origin: point(axe.from), destination: point(axe.to), travelMode: 'DRIVE', routingPreference: 'TRAFFIC_AWARE' },
+    { origin: point(inverse ? axe.to : axe.from), destination: point(inverse ? axe.from : axe.to), travelMode: 'DRIVE', routingPreference: 'TRAFFIC_AWARE' },
     {
       timeout: 6000,
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': cle, 'X-Goog-FieldMask': 'routes.duration,routes.staticDuration,routes.distanceMeters' },
     }
   );
-  return interpreterGoogleRoutes(res.data);
+  const mesure = interpreterGoogleRoutes(res.data);
+  return mesure ? { ...mesure, inverse } : null;
 }
 
 // Réserve n appels dans le compteur du mois. Rend faux si le plafond serait dépassé ou si la base ne répond pas :
@@ -126,7 +130,7 @@ async function lireMesures(pool, axes, maintenant = new Date()) {
     let etat = 'plafond';
     if (suivis.length > 0 && (await reserverAppels(pool, suivis.length, maintenant))) {
       etat = 'mesure';
-      const resultats = await Promise.all(suivis.map((axe) => interrogerGoogle(axe, cle).catch((err) => {
+      const resultats = await Promise.all(suivis.map((axe) => interrogerGoogle(axe, cle, sensInverse(axe, creneau)).catch((err) => {
         console.warn(`[SurgaTrafic] Mesure indisponible pour ${axe.id} :`, err.response ? `réponse ${err.response.status}` : err.message);
         return null;
       })));
@@ -146,6 +150,7 @@ module.exports = {
   niveauDeLaMesure,
   reserverAppels,
   axesMesures,
+  sensInverse,
   HORAIRES: '6 h 30 à 20 h',
   FOURNISSEUR: 'Google Maps',
   oublier: () => { memoire = { creneau: 0, releveLe: null, mesures: new Map() }; },
