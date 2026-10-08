@@ -2,7 +2,9 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Sparkles, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import SurgaBrandLogo from '@/app/surga/components/SurgaBrandLogo'
+import '@/styles/surga-home-banner.css'
 
 export default function SurgaHeroBanner() {
   return (
@@ -10,13 +12,14 @@ export default function SurgaHeroBanner() {
       className="surga-home-banner"
       aria-label="Découverte de Surga, assistant de poche Nopalou"
     >
+      <div className="surga-home-banner-logo">
+        <SurgaBrandLogo taille={44} afficherTexte={false} />
+      </div>
+
       <div className="surga-home-banner-text">
-        <h3>
-          <Sparkles size={18} color="var(--accent, #C75B00)" />
-          <span>Surga — Votre Assistant du Quotidien</span>
-        </h3>
+        <h3>Surga, votre assistant du quotidien</h3>
         <p>
-          Briefing personnalisé, notes, gestion des dépenses en FCFA et calculs exacts réunis au même endroit.
+          Briefing personnalisé, notes, dépenses en FCFA et calculs exacts réunis au même endroit.
         </p>
       </div>
 
