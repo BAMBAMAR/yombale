@@ -3145,6 +3145,17 @@ module.exports = async function migrateInline(customConnStr = null) {
      )`,
     `CREATE INDEX IF NOT EXISTS idx_surga_agenda_user_date ON surga_agenda(user_id, date_evenement ASC, heure_evenement ASC)`,
     `CREATE INDEX IF NOT EXISTS idx_surga_agenda_notif ON surga_agenda(date_evenement, heure_evenement, termine, notification_envoyee)`,
+    // SRG-A1-001 : colonnes écrites par routes/surga/notes.js et agenda.js, absentes des migrations (toute création de note
+    // ou de rappel répondait 500 sur une base issue du dépôt). Types et valeurs par défaut relevés sur la production, où ces
+    // colonnes avaient été ajoutées à la main : IF NOT EXISTS rend ces instructions sans effet là-bas.
+    `ALTER TABLE surga_notes ADD COLUMN IF NOT EXISTS categorie VARCHAR(32) DEFAULT 'general'`,
+    `ALTER TABLE surga_notes ADD COLUMN IF NOT EXISTS couleur VARCHAR(20) DEFAULT 'creme'`,
+    `ALTER TABLE surga_notes ADD COLUMN IF NOT EXISTS epingle BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE surga_notes ADD COLUMN IF NOT EXISTS is_checklist BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE surga_notes ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'::jsonb`,
+    `ALTER TABLE surga_agenda ADD COLUMN IF NOT EXISTS priorite VARCHAR(20) DEFAULT 'normale'`,
+    `ALTER TABLE surga_agenda ADD COLUMN IF NOT EXISTS categorie VARCHAR(32) DEFAULT 'rdv'`,
+    `ALTER TABLE surga_agenda ADD COLUMN IF NOT EXISTS lieu VARCHAR(255)`,
     `CREATE TABLE IF NOT EXISTS surga_whatsapp_sessions (
        phone VARCHAR(30) PRIMARY KEY,
        action_en_attente JSONB,
