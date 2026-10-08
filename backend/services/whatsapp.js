@@ -1,5 +1,6 @@
 // backend/services/whatsapp.js — Meta Cloud API v18.0
 const axios = require('axios');
+const { purgerErreurHttp } = require('../lib/erreurSure');
 const whatsappHealth = require('./whatsapp-health');
 const { sendSMS } = require('./sms');
 
@@ -86,7 +87,8 @@ async function post(payload) {
       ...errObj,
       recipient_id: payload?.to,
     });
-    throw err;
+    // SRG-A1-026 : l'erreur relancee ne porte plus la requete (jeton, corps du message avec le code, numero).
+    throw purgerErreurHttp(err);
   }
 }
 
