@@ -1,6 +1,6 @@
 'use server'
 import { redirect } from 'next/navigation'
-import { createSession, deleteSession, getSession } from '@/lib/session'
+import { createSession, deleteSession, getSession, versionDuJeton } from '@/lib/session'
 import { verifierJetonSession } from '@/lib/session-verify'
 import { backendFetch } from '@/lib/backend-fetch'
 import { validerForceMotDePasse } from '@/lib/password-validator'
@@ -28,6 +28,7 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
       nom: data.user.nom,
       email: data.user.email,
       telephone: data.user.telephone,
+      jwtVersion: versionDuJeton(data.token),
     })
   } catch (e) {
     console.error('[LOGIN]', e instanceof Error ? e.message : e)
@@ -63,6 +64,7 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
       nom: data.user.nom,
       email: data.user.email,
       telephone: data.user.telephone,
+      jwtVersion: versionDuJeton(data.token),
     })
   } catch (e) {
     console.error('[SIGNUP]', e instanceof Error ? e.message : e)
@@ -118,6 +120,7 @@ export async function updateProfil(prevState: AuthState, formData: FormData): Pr
         nom: data.user.nom,
         email: data.user.email,
         telephone: data.user.telephone,
+        jwtVersion: current.jwtVersion,
       })
     }
     return { message: 'Profil mis à jour ✓' }
@@ -161,6 +164,7 @@ export async function setAuthCookieAction(token: unknown) {
     nom: (payload.nom as string) || '',
     email: (payload.email as string) || '',
     telephone: (payload.telephone as string) || '',
+    jwtVersion: typeof payload.jwtVersion === 'number' ? payload.jwtVersion : undefined,
   })
 }
 

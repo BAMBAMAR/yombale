@@ -3,7 +3,7 @@
 // Établit la session HTTP-Only et redirige le marchand directement sur son outil.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createSession } from '@/lib/session'
+import { createSession, versionDuJeton } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
       nom: data.user.nom || undefined,
       email: data.user.email || undefined,
       telephone: data.user.telephone || undefined,
+      jwtVersion: versionDuJeton(data.token),
     })
 
     // Redirection directe vers la destination finale demandée

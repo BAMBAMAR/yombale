@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createSession } from '@/lib/session'
+import { createSession, versionDuJeton } from '@/lib/session'
 import { AlertCircle, ArrowRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -37,6 +37,7 @@ export default async function ConnexionMagiquePage({
           nom: data.user.nom,
           email: data.user.email,
           telephone: data.user.telephone,
+          jwtVersion: versionDuJeton(data.token),
         })
 
         const destination =

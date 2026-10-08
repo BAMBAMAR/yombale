@@ -57,7 +57,11 @@ async function verifierToken(req, res, next) {
         if (rows[0].anonymise_le) {
           return res.status(401).json({ error: 'Ce compte a été définitivement supprimé.' });
         }
-        if (decoded.jwtVersion !== undefined && rows[0].jwt_version && rows[0].jwt_version !== decoded.jwtVersion) {
+        // SRG-A1-005 : un jeton sans version (cookie signé par le frontend avant ce correctif) échappait à la
+        // révocation. Il vaut désormais « version 1 » : il reste accepté tant que le compte n'a jamais révoqué
+        // ses sessions, et il est refusé dès la première déconnexion ou le premier changement de mot de passe.
+        const versionDuJeton = decoded.jwtVersion === undefined ? 1 : decoded.jwtVersion;
+        if (rows[0].jwt_version && rows[0].jwt_version !== versionDuJeton) {
           return res.status(401).json({ error: 'Session révoquée, veuillez vous reconnecter' });
         }
         req.compteEnSuppression = !!rows[0].supprime_le;
