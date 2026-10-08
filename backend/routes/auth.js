@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { secondesDeVerrou, enregistrerEchec, effacerEchecs } = require('../lib/verrouConnexion'); // AUD-148
 const { erreurPublique } = require('../lib/safeError'); // AUD-145
 const bcrypt = require('bcryptjs');
+const { erreurPourJournal } = require('../lib/erreurSure');
 const jwt    = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
@@ -781,7 +782,7 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
 
     res.json({ success: true, message: 'Code envoyé' });
   } catch (err) {
-    console.error('[OTP SEND]', err);
+    console.error('[OTP SEND]', erreurPourJournal(err));
     res.status(500).json({ error: 'Impossible d\'envoyer le code. Vérifiez votre numéro ou réessayez.' });
   }
 });
@@ -803,7 +804,7 @@ router.post('/whatsapp-otp-verify', limiterAuth, async (req, res) => {
     }
     res.json({ success: true });
   } catch (err) {
-    console.error('[OTP VERIFY]', err);
+    console.error('[OTP VERIFY]', erreurPourJournal(err));
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -874,7 +875,7 @@ router.post('/whatsapp-otp-login', limiterAuth, async (req, res) => {
     
     res.json({ success: true, user, token });
   } catch (err) {
-    console.error('[OTP LOGIN]', err);
+    console.error('[OTP LOGIN]', erreurPourJournal(err));
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -904,6 +905,7 @@ router.post('/whatsapp-otp-register', limiterAuth, async (req, res) => {
     const email = `${telephone}@whatsapp.nopalou.com`;
     const plainPassword = require('crypto').randomBytes(16).toString('hex');
     const bcrypt = require('bcryptjs');
+const { erreurPourJournal } = require('../lib/erreurSure');
     const hash = await bcrypt.hash(plainPassword, 12);
 
     const codeApporteur = await genererCodeUnique();
@@ -923,7 +925,7 @@ router.post('/whatsapp-otp-register', limiterAuth, async (req, res) => {
     
     res.status(201).json({ success: true, user, token });
   } catch (err) {
-    console.error('[OTP REGISTER]', err);
+    console.error('[OTP REGISTER]', erreurPourJournal(err));
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -983,7 +985,7 @@ router.post('/whatsapp-login', limiterAuth, async (req, res) => {
     
     res.json({ success: true, message: 'Lien magique envoyé sur WhatsApp' });
   } catch (err) {
-    console.error('[AUTH WHATSAPP]', err);
+    console.error('[AUTH WHATSAPP]', erreurPourJournal(err));
     res.status(500).json({ error: erreurPublique(err, req) });
   }
 });
@@ -1182,7 +1184,7 @@ router.post('/supprimer-compte', verifierToken, async (req, res) => {
       date_limite: dateLimite,
     });
   } catch (err) {
-    console.error('[AUTH SUPPRIMER COMPTE]', err);
+    console.error('[AUTH SUPPRIMER COMPTE]', erreurPourJournal(err));
     res.status(500).json({ error: 'Erreur lors de la demande de suppression.' });
   }
 });
@@ -1240,7 +1242,7 @@ router.post('/annuler-suppression', verifierToken, async (req, res) => {
       message: 'La suppression de votre compte a été annulée avec succès. Votre compte reste actif.',
     });
   } catch (err) {
-    console.error('[AUTH ANNULER SUPPRESSION]', err);
+    console.error('[AUTH ANNULER SUPPRESSION]', erreurPourJournal(err));
     res.status(500).json({ error: 'Erreur lors de l\'annulation de la suppression.' });
   }
 });
