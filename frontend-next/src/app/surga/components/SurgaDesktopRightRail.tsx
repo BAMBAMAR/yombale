@@ -210,7 +210,7 @@ export default function SurgaDesktopRightRail({
 
         {/* 3 et 4. Trafic et météo : données reçues du serveur, ou « indisponible » (SRG-A3-005, D53) */}
         {estActif('trafic') && <SurgaRailTrafic ville={ville} onOuvrir={onOpenTrafic} />}
-        {estActif('meteo') && <SurgaRailMeteo ville={ville} onOuvrir={() => onNavigateTab('aujourdhui')} />}
+        {estActif('meteo') && <SurgaRailMeteo ville={ville} />}
 
         {/* 5. Mémo épinglé */}
         {estActif('notes') && (

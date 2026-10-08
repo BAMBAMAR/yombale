@@ -11,6 +11,7 @@ import { estLocaliteMaritime, estZoneCouverteParTrafic, libelleReleveMeteo } fro
 import type { MeteoData } from '@/lib/surga-meteo'
 import { axeRenseigne, libelleNiveau, origineAxe, MESSAGE_TRAFIC_INDISPONIBLE } from '@/lib/surga-trafic'
 import type { AxeTrafic } from '@/lib/surga-trafic'
+import SurgaMeteoFenetre from './SurgaMeteoFenetre'
 
 interface RailProps {
   ville: string
@@ -93,10 +94,14 @@ export function SurgaRailTrafic({ ville, onOuvrir }: RailProps) {
   )
 }
 
-export function SurgaRailMeteo({ ville, onOuvrir }: RailProps) {
+// Le widget ouvre sa propre fenêtre : renvoyer vers l'écran Aujourd'hui ne montrait rien sur ordinateur (la carte
+// météo y est masquée, un seul exemplaire des blocs de contexte).
+export function SurgaRailMeteo({ ville }: { ville: string }) {
   const estMaritime = estLocaliteMaritime(ville)
   const [chargement, setChargement] = useState(true)
   const [meteo, setMeteo] = useState<MeteoData | null>(null)
+  const [fenetreOuverte, setFenetreOuverte] = useState(false)
+  const onOuvrir = () => setFenetreOuverte(true)
 
   useEffect(() => {
     let actif = true
@@ -110,7 +115,9 @@ export function SurgaRailMeteo({ ville, onOuvrir }: RailProps) {
     return () => { actif = false }
   }, [ville])
 
+  // La fenêtre est posée à côté du widget, pas dedans : un clic sur « Fermer » remonterait au widget (qui la rouvrirait).
   return (
+    <>
     <div
       className="surga-desktop-widget"
       role="button"
@@ -136,5 +143,7 @@ export function SurgaRailMeteo({ ville, onOuvrir }: RailProps) {
         <div style={TEXTE_ETAT}>{chargement ? 'Chargement de la météo…' : 'Météo indisponible pour le moment.'}</div>
       )}
     </div>
+    {fenetreOuverte && <SurgaMeteoFenetre ville={ville} meteo={meteo} onClose={() => setFenetreOuverte(false)} />}
+    </>
   )
 }
