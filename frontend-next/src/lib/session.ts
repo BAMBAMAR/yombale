@@ -1,5 +1,5 @@
 import 'server-only'
-import { SignJWT } from 'jose'
+import { SignJWT, decodeJwt } from 'jose'
 import { cookies } from 'next/headers'
 import { verifierJetonSession } from './session-verify'
 
@@ -13,6 +13,24 @@ export interface SessionPayload {
   nom?: string
   email?: string
   telephone?: string
+  // Version de session du compte (utilisateurs.jwt_version). Le backend la compare à chaque appel : une
+  // déconnexion ou un changement de mot de passe l'incrémente et révoque les cookies qui portent l'ancienne.
+  jwtVersion?: number
+}
+
+/**
+ * Version de session portée par le jeton que le backend vient d'émettre (connexion, inscription, lien magique).
+ * SRG-A1-005 : le cookie signé ici ne la reprenait pas ; il restait accepté sept jours après une déconnexion.
+ * Le jeton vient de la réponse du backend, reçue de serveur à serveur : il est lu, pas vérifié une seconde fois.
+ */
+export function versionDuJeton(token: unknown): number | undefined {
+  if (typeof token !== 'string') return undefined
+  try {
+    const v = decodeJwt(token).jwtVersion
+    return typeof v === 'number' ? v : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export async function encrypt(payload: SessionPayload): Promise<string> {
@@ -32,6 +50,7 @@ export async function decrypt(token: string): Promise<SessionPayload | null> {
     email: payload.email as string | undefined,
     nom: payload.nom as string | undefined,
     telephone: payload.telephone as string | undefined,
+    jwtVersion: typeof payload.jwtVersion === 'number' ? payload.jwtVersion : undefined,
   }
 }
 
