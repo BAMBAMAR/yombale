@@ -321,7 +321,7 @@ export default function SurgaParametresTab({
         iconColor="var(--accent, #C75B00)"
         iconBg="rgba(199, 91, 0, 0.08)"
         titre="Option Audio du briefing"
-        description="Synthèse vocale locale et flux podcast privé (0 Mo)"
+        description="Lecture à voix haute par le téléphone (0 Mo)"
         actionLabel={preferences?.audio_actif ? 'Activée' : 'Désactivée'}
         actionVariant={preferences?.audio_actif ? 'primary' : 'secondary'}
         onAction={onToggleAudio}

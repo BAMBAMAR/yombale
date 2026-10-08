@@ -10,6 +10,7 @@ import SurgaAssistantModal, { type SurgaAssistantResultat } from './SurgaAssista
 import type { SurgaUser } from '../page'
 import type { SurgaDepensesStats } from '@/lib/surga-offline-sync'
 import { Mic } from 'lucide-react'
+import { SURGA_ASSISTANT_ACTIF, SURGA_VOIX_ACTIVE } from '@/lib/surga-fonctions'
 
 interface SurgaLayoutShellProps {
   activeTab: SurgaTab
@@ -221,12 +222,15 @@ export default function SurgaLayoutShell({
             {children}
           </div>
 
-          <div className="surga-desktop-command-wrapper">
-            <SurgaDesktopCommandBar
-              onOpenVoice={onOpenVoice}
-              onSubmitQuery={handleExecuteAssistantQuery}
-            />
-          </div>
+          {/* D52 : l'assistant ne fait pas partie du lancement */}
+          {SURGA_ASSISTANT_ACTIF && (
+            <div className="surga-desktop-command-wrapper">
+              <SurgaDesktopCommandBar
+                onOpenVoice={onOpenVoice}
+                onSubmitQuery={handleExecuteAssistantQuery}
+              />
+            </div>
+          )}
         </div>
 
         {/* Colonne 3 : Rail Droit Contextuel Desktop */}
@@ -244,22 +248,24 @@ export default function SurgaLayoutShell({
         />
       </div>
 
-      {/* Bouton micro flottant FAB (mobile uniquement) */}
-      <button
-        type="button"
-        className={`surga-fab-mic${isFabHidden ? ' surga-fab-hidden' : ''}`}
-        aria-label="Commande vocale Surga"
-        title="Parler à Surga"
-        onClick={onOpenVoice}
-      >
-        <Mic size={22} />
-      </button>
+      {/* Bouton micro flottant FAB (mobile uniquement). D52 : la voix ne fait pas partie du lancement */}
+      {SURGA_VOIX_ACTIVE && (
+        <button
+          type="button"
+          className={`surga-fab-mic${isFabHidden ? ' surga-fab-hidden' : ''}`}
+          aria-label="Commande vocale Surga"
+          title="Parler à Surga"
+          onClick={onOpenVoice}
+        >
+          <Mic size={22} />
+        </button>
+      )}
 
       {/* Navigation basse (mobile uniquement) */}
       <SurgaBottomNav activeTab={activeTab} onTabChange={onTabChange} />
 
       {/* Modale d'interaction de l'Assistant IA Unifié Surga */}
-      <SurgaAssistantModal
+      {SURGA_ASSISTANT_ACTIF && <SurgaAssistantModal
         isOpen={isAssistantOpen}
         onClose={() => setIsAssistantOpen(false)}
         initialQuery={assistantQuery}
@@ -271,7 +277,7 @@ export default function SurgaLayoutShell({
         onConfirmerRappel={onConfirmerRappel}
         onNavigateTab={onTabChange}
         onOpenModal={handleOpenModal}
-      />
+      />}
     </div>
   )
 }

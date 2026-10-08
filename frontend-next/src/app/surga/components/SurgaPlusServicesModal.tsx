@@ -1,5 +1,6 @@
 'use client'
 
+import { SURGA_PODCAST_ACTIF } from '@/lib/surga-fonctions'
 import React, { useEffect } from 'react'
 import {
   X,
@@ -255,7 +256,7 @@ export default function SurgaPlusServicesModal({
             gap: 10,
           }}
         >
-          {services.map((s) => {
+          {services.filter((s) => s.id !== 'podcast' || SURGA_PODCAST_ACTIF).map((s) => {
             const Icon = s.icon
             return (
               <button
