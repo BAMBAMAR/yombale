@@ -1,5 +1,11 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Nopalou Poste de développement / Configuration des tâches de collecte séparée de celle du dépôt (Session 2026-10-08, branche `main`, commit local, aucun push)** :
+  - *Origine* : fiche `SRG-A5-011` ; le `.env` du dépôt est la configuration de production, et un backend lancé sur le poste a rejoué les tâches planifiées de production les nuits des 5, 6 et 7 octobre.
+  - *Fait* : `scripts/lib/charger-env.js` (les scripts de collecte lisent `.env.collecte` s'il existe, sinon `.env`) ; `scripts/poste/separer-configuration.ps1` (aperçu par défaut, `-Appliquer`, `-CreerBase`, `-Annuler`) ; `scripts/poste/creer-base-locale.js` ; notice `docs/POSTE-DEVELOPPEMENT.md`.
+  - *Essais* : chargeur et script sur un dossier factice (copie identique, clés de services réels rendues factices, annulation) ; création puis retrait d'une base jetable ; refus d'une base distante.
+  - *Non fait* : la séparation n'est pas appliquée au poste ; l'utilisateur la lance. Tant qu'elle ne l'est pas, rien ne change.
+
 - **Nopalou PWA et sauvegarde / Worker enregistré par un seul composant ; sauvegarde quotidienne réparée (Session 2026-10-08, branche `main`, commits locaux `c5ddd75c` et `44dbdf51`, aucun push)** :
   - *Origine* : deux fiches de la campagne d'audit de Surga qui portent sur du code commun à Nopalou (`SRG-A3-002`, `SRG-A5-010`) ; décisions D63 et D68 de `docs/surga/DECISIONS.md` sur `feature/surga`.
   - *Worker (`frontend-next/next.config.js`)* : Serwist enregistrait `/sw.js` depuis le bundle chargé par toutes les pages, en plus du composant `RegisterSW`. `register: false` : `RegisterSW` est le seul à l'enregistrer. Rejoué sur un build de production avec le kit `scripts/audit/offline` : worker actif sur `/` après un rechargement (t01), aucun rechargement au retour du réseau (t04b), caisse en ligne (t05a), ventes hors ligne puis synchronisation, 3 ventes en base et aucun doublon (t05b, t05c), dette d'un client créé hors ligne (t10), navigation hors ligne (t24).

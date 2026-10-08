@@ -8,7 +8,9 @@
 //   node scripts/collecte-omnisource.js --mode       → Focus Mode & Prêt-à-Porter
 //   node scripts/collecte-omnisource.js --places     → Scanner Commerces Physiques Dakar (Google Places)
 
-require('dotenv').config();
+// SRG-A5-011 : les tâches de collecte lisent .env.collecte quand il existe, sinon .env (scripts/lib/charger-env.js).
+const FICHIER_DE_CONFIGURATION = require('./lib/charger-env').chargerEnvCollecte();
+console.log(`Configuration lue : ${FICHIER_DE_CONFIGURATION}`);
 const { lancerCollecteOmnisource } = require('../backend/services/omnisource-collector');
 
 const args = process.argv.slice(2);

@@ -9,7 +9,9 @@
 //   node scripts/sync-immo-local.js --all              → les 3 sources en séquence
 //   node scripts/sync-immo-local.js --dry              → dry-run (affiche sans insérer)
 
-require('dotenv').config();
+// SRG-A5-011 : les tâches de collecte lisent .env.collecte quand il existe, sinon .env (scripts/lib/charger-env.js).
+const FICHIER_DE_CONFIGURATION = require('./lib/charger-env').chargerEnvCollecte();
+console.log(`Configuration lue : ${FICHIER_DE_CONFIGURATION}`);
 const path = require('path');
 const fs   = require('fs');
 

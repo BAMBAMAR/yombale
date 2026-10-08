@@ -1,6 +1,9 @@
 .env
 .env.local
 .env.production
+# SRG-A5-011 : configuration propre aux tâches de collecte du poste, et ancien .env gardé pour revenir en arrière
+.env.collecte
+.env.avant-separation
 node_modules/
 npm-debug.log*
 dist/
