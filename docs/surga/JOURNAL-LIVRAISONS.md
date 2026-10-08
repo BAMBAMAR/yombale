@@ -3,6 +3,19 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-08 — Neuvième lot] — réglages d'un compte, alertes, contrastes, accessibilité, journal WhatsApp ; 5 commits locaux sur `feature/surga` et 1 sur `main`, aucun push
+- **Objet :** `feature/surga` : `7f00e7ff` (réglages), `d5402a92` (alertes), `b604cdef` (contrastes), `6366f58e` (accessibilité), `31a8e38e` (report du correctif du journal) ; `main` : `f27f0fc4` (10 commits en avance sur `origin/main`). Demande de l'utilisateur : continuer après le huitième lot.
+- **Corrigées et rejouées (sondes en échec sur le code d'avant, tenues après) :**
+  - `SRG-A2-011` (A5-125 serveur, A5-126 deux appareils) : briefing d'un invité sans ses choix (Dakar Plateau, sport maintenu), plusieurs zones retenues, réglages jamais envoyés au compte, second appareil sans les réglages du premier ; après, zone et briques reprises, compte configuré imposé à l'appareil, compte non écrasé, changement fait ailleurs repris au rechargement.
+  - `SRG-A5-008` (15 tests unitaires, contrôle par mutation : 4 échecs ; trace `surga_rappels` vérifiée dans `cron_executions` de la base d'audit) : aucune alerte sur 2 820 réponses 500 ; après, alerte à 25 % de 5xx, à 3 échecs de suite de l'ordonnanceur, à 5 minutes sans passage, à 6 heures sans article de presse.
+  - `SRG-A3-011` (A5-127, A5-128) : 53 textes sous le seuil AA et jusqu'à 64 % du texte sous 12 px ; après, 0 et 0 ; aucun débordement de page à 320, 390 et 1440 px.
+  - `SRG-A3-010`, suite (A5-129) : 1 champ nommé sur 16, annonces vides, pas de lien d'évitement ; après, 16 sur 16, annonce lue, lien d'évitement, un titre de niveau 1 et un repère principal par écran.
+  - `SRG-A1-026` (`main`, 7 tests, mutation : 1 échec) : jeton, code et numéro écrits au journal à chaque échec d'envoi ; après, un message sûr.
+- **Tests :** typage 0 erreur ; frontend 142 sur 142 ; backend Surga 210 sur 214 (mêmes 4 échecs antérieurs : clé VAPID de l'environnement, vidéo déjà en base, deux fiches de démarche) ; A5-123 et A5-124 rejouées.
+- **Limites :** serveur de développement ; contrastes mesurés sur les cinq onglets seulement ; `aria-pressed`/`role="switch"` et libellés liés dans le code non faits ; santé de Surga par l'API seulement ; `SRG-A5-012` et `SRG-A3-004` non traités (voir `CORRECTIONS_APPLIQUEES.md`).
+- **Incident :** une exécution de `tests/unit/surga` sans l'environnement isolé a pu écrire dans la base de production (vidéo d'essai, fiche `dem-test-cycle-90j` publiée, un signalement). Voir `CLAUDE.md`, neuvième lot. Contrôle et nettoyage en attente de l'accord de l'utilisateur.
+- **À faire à la mise en ligne de `main` :** renouveler le jeton WhatsApp s'il figure dans les journaux de production ; poser `SENTRY_DSN`.
+
 ### [2026-10-08 — Huitième lot] — serveur, écrans et fenêtres au clavier ; 4 commits locaux, aucun push
 - **Objet :** `feature/surga` : `5d403ae4` (serveur), `a0fa3a70` (écrans), `8f6beb1e` (fenêtres au clavier), `e1f3a110` (bouton retour). Demande de l'utilisateur : corriger tout ce qui relève du code.
 - **Corrigées et rejouées, serveur (`scripts/audit/surga/a5/v98-lot8.js`, les cinq contrôles en échec sur le code de `2846ccde`, tenus après) :**
