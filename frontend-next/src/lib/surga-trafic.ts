@@ -18,7 +18,7 @@ export interface AxeTrafic {
   pointsChauds: string[]
   cause: string | null
   incident?: string | null
-  source?: 'tomtom_live' | 'signalement' | 'aucune'
+  source?: 'google_maps' | 'signalement' | 'aucune'
   vitesseReelleKmH?: number | null
   vitesseNormaleKmH?: number | null
   signalementRecent?: { type: string; commentaire?: string; date: string } | null
@@ -47,7 +47,8 @@ export function heureCourte(iso?: string | null): string {
 // D'où vient la valeur affichée, et de quand elle date.
 export function origineAxe(axe: Pick<AxeTrafic, 'source' | 'updatedAt'>): string {
   const heure = heureCourte(axe.updatedAt)
-  if (axe.source === 'tomtom_live') return heure ? `Mesuré à ${heure}` : 'Mesuré'
+  // Le nom du fournisseur s'écrit tel quel : il demande à être cité, sans traduction ni modification.
+  if (axe.source === 'google_maps') return heure ? `Mesuré à ${heure} · Google Maps` : 'Mesuré · Google Maps'
   if (axe.source === 'signalement') return heure ? `Signalé par un usager à ${heure}` : 'Signalé par un usager'
   return ''
 }

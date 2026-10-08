@@ -24,7 +24,7 @@ export default function SurgaTraficItemCard({ axe }: SurgaTraficItemCardProps) {
   }
 
   const couleur = getCouleurNiveau(axe.niveau)
-  const estMesure = axe.source === 'tomtom_live'
+  const estMesure = axe.source === 'google_maps'
   const origine = origineAxe(axe)
 
   return (

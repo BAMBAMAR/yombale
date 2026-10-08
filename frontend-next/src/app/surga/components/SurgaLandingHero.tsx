@@ -253,10 +253,10 @@ export default function SurgaLandingHero({
             </div>
             <div>
               <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-                Trafic TomTom en Direct
+                Trafic à Dakar
               </h3>
               <p style={{ margin: 0, fontSize: 14, color: '#6A5F53', lineHeight: 1.5 }}>
-                État de la circulation sur l&apos;A1, la VDN, la Corniche Ouest et la RN1, avec prévisions aux heures de pointe et état du TER et du BRT.
+                Temps de parcours mesurés sur l&apos;A1, la VDN, la Corniche Ouest et la route de Rufisque, et signalements des usagers.
               </p>
             </div>
           </div>

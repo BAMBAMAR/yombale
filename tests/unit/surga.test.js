@@ -832,9 +832,9 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(Array.isArray(resultat.axes)).toBe(true);
       expect(resultat.axes.length).toBeGreaterThanOrEqual(8);
       expect(Array.isArray(resultat.incidents)).toBe(true);
-      expect(['tomtom_live', 'signalements', 'aucune']).toContain(resultat.source);
+      expect(['google_maps', 'signalements', 'aucune']).toContain(resultat.source);
       // SRG-A4-016 / D53 : un axe sans mesure ni signalement n'a ni niveau ni durée. Le modèle horaire n'est plus servi.
-      const sansDonnee = resultat.axes.filter((a) => !a.signalementRecent && a.source !== 'tomtom_live');
+      const sansDonnee = resultat.axes.filter((a) => !a.signalementRecent && a.source !== 'google_maps');
       expect(sansDonnee.length).toBeGreaterThan(0);
       expect(sansDonnee.every((a) => a.niveau === 'indisponible' && a.tempsEstimeMin === null && a.updatedAt === null)).toBe(true);
     });

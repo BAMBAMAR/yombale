@@ -140,7 +140,7 @@ export default function SurgaVoiceServiceCard({
       {intention === 'CHECK_TRAFFIC' && (
         <ServiceItem
           icon={Car}
-          badge="Trafic Dakar Live (TomTom)"
+          badge="Trafic à Dakar"
           title={`Axe : ${(actionDetectee.traficData?.axe || 'global').toUpperCase()}`}
           desc="Suivi en temps réel des ralentissements sur la presqu’île de Dakar."
           actionLabel="Voir le trafic en direct"

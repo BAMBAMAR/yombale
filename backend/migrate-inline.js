@@ -3228,6 +3228,12 @@ module.exports = async function migrateInline(customConnStr = null) {
        created_at TIMESTAMPTZ DEFAULT NOW()
      )`,
     `CREATE INDEX IF NOT EXISTS idx_surga_trafic_signalements_date ON surga_trafic_signalements(axe_id, created_at DESC)`,
+    // D71 : compteur mensuel des appels au fournisseur de trafic, pour rester sous le seuil gratuit.
+    `CREATE TABLE IF NOT EXISTS surga_trafic_appels (
+       mois VARCHAR(7) PRIMARY KEY,
+       appels INTEGER NOT NULL DEFAULT 0,
+       maj_le TIMESTAMPTZ DEFAULT NOW()
+     )`,
     `CREATE TABLE IF NOT EXISTS surga_alertes_immo (
        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
        user_id UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,

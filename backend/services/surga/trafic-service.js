@@ -1,10 +1,10 @@
 // backend/services/surga/trafic-service.js
 // Service de suivi, prévision déterministe et signalements du trafic routier à Dakar
-// Intégration en temps réel TomTom Traffic API (Routing & Incidents) avec cache intelligent Low-Data
+// Mesures par l'API d'itinéraires de Google sur six axes (trafic-mesures.js, D71) et signalements des usagers
 // Conforme philosophie Surga / Nopalou : Low-Data, Zéro Emoji, Vouvoiement strict D19
 
 const axios = require('axios');
-const { traficSourceMesureeActive } = require('./interrupteurs');
+const mesuresTrafic = require('./trafic-mesures');
 
 let pool = null;
 try {
@@ -16,7 +16,7 @@ try {
 
 /**
  * Corridors routiers et transports structurants majeurs de la presqu'île de Dakar
- * Avec coordonnées d'origine et destination GPS pour interrogation directe TomTom en temps réel.
+ * Avec coordonnées d'origine et de destination, pour les axes dont le temps de parcours est mesuré.
  */
 const AXES_ROUTIERS_DAKAR = [
   {
@@ -175,114 +175,7 @@ const AXES_ROUTIERS_DAKAR = [
   },
 ];
 
-// Pause utilitaire pour respecter le burst rate limit TomTom (5 requêtes/seconde max)
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Cache mémoire serveur avec TTL (6 min) pour respecter strictement les 2 500 requêtes gratuites/jour TomTom
-const CACHE_TTL_MS = 6 * 60 * 1000;
-let cacheTraficTomTom = {
-  timestamp: 0,
-  axesData: new Map(),
-  incidents: [],
-};
-
-/**
- * Interroger TomTom Routing avec trafic en temps réel pour un corridor
- * @param {string} from - 'lat,lon'
- * @param {string} to - 'lat,lon'
- * @param {string} apiKey
- * @returns {Promise<Object|null>}
- */
-async function interrogerTomTomCorridor(from, to, apiKey) {
-  if (!apiKey || !from || !to) return null;
-  try {
-    const url = `https://api.tomtom.com/routing/1/calculateRoute/${from}:${to}/json?traffic=true&computeTravelTimeFor=all&key=${encodeURIComponent(apiKey)}`;
-    const res = await axios.get(url, { timeout: 4500 });
-    const s = res.data?.routes?.[0]?.summary;
-    if (!s) return null;
-
-    const distanceKm = Math.round(s.lengthInMeters / 100) / 10;
-    const tempsEstimeMin = Math.round(s.travelTimeInSeconds / 60);
-    const tempsSansTraficMin = Math.round(s.noTrafficTravelTimeInSeconds / 60) || tempsEstimeMin;
-    const retardMin = Math.round(s.trafficDelayInSeconds / 60);
-    const vitesseReelleKmH = s.travelTimeInSeconds > 0 ? Math.round(distanceKm / (s.travelTimeInSeconds / 3600)) : 50;
-    const vitesseNormaleKmH = s.noTrafficTravelTimeInSeconds > 0 ? Math.round(distanceKm / (s.noTrafficTravelTimeInSeconds / 3600)) : vitesseReelleKmH;
-
-    return {
-      distanceKm,
-      tempsEstimeMin,
-      tempsSansTraficMin,
-      retardMin,
-      vitesseReelleKmH,
-      vitesseNormaleKmH,
-      trafficLengthMeters: s.trafficLengthInMeters || 0,
-    };
-  } catch (err) {
-    return null;
-  }
-}
-
-/**
- * Récupérer les incidents TomTom récents sur la presqu'île de Dakar
- * @param {string} apiKey
- * @returns {Promise<Array>}
- */
-async function interrogerTomTomIncidents(apiKey) {
-  if (!apiKey) return [];
-  try {
-    const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=-17.53,14.65,-17.25,14.80&fields={incidents{type,properties{iconCategory,magnitudeOfDelay,events{description},from,to,length}}}&language=fr-FR&categoryFilter=0,1,2,3,4,5,6,7,8,9,10,11,14&key=${encodeURIComponent(apiKey)}`;
-    const res = await axios.get(url, { timeout: 4000 });
-    const incidentsRaw = res.data?.incidents || [];
-    return incidentsRaw.slice(0, 5).map((inc, i) => {
-      const p = inc.properties || {};
-      const desc = p.events?.[0]?.description || 'Incident de circulation signalé';
-      return {
-        id: 'tt-inc-' + i,
-        description: desc,
-        delaySec: p.magnitudeOfDelay || 0,
-        from: p.from || '',
-        to: p.to || '',
-      };
-    });
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Actualiser le cache TomTom Live si le TTL est dépassé
- * @param {string} apiKey
- */
-async function actualiserDonneesTomTomSiNecessaire(apiKey) {
-  const maintenant = Date.now();
-  if (maintenant - cacheTraficTomTom.timestamp < CACHE_TTL_MS && cacheTraficTomTom.axesData.size > 0) {
-    return cacheTraficTomTom;
-  }
-
-  const mapAxes = new Map();
-  const axesRoutiers = AXES_ROUTIERS_DAKAR.filter((a) => a.from && a.to);
-
-  // Exécution séquencée avec petite pause pour ne jamais dépasser le burst limit (QPS <= 5)
-  for (const axe of axesRoutiers) {
-    const data = await interrogerTomTomCorridor(axe.from, axe.to, apiKey);
-    if (data) {
-      mapAxes.set(axe.id, data);
-    }
-    await sleep(220);
-  }
-
-  const incidents = await interrogerTomTomIncidents(apiKey);
-
-  if (mapAxes.size > 0) {
-    cacheTraficTomTom = {
-      timestamp: maintenant,
-      axesData: mapAxes,
-      incidents,
-    };
-  }
-
-  return cacheTraficTomTom;
-}
+// A5-108 : le connecteur TomTom a été retiré. À Dakar, ce fournisseur rend le temps de la route vide.
 
 /**
  * Calcul déterministe de l'état du trafic selon l'heure à Dakar (UTC/GMT)
@@ -529,25 +422,21 @@ function evaluerEtatTheoriqueAxe(axe, dateRef = new Date()) {
 }
 
 /**
- * Récupérer l'état de tous les axes avec prise en compte du flux TomTom Live et des signalements récents
+ * État de tous les axes : mesures du créneau en cours (six axes) et signalements récents des usagers
  * @param {Object} [options]
  * @param {Date} [options.dateRef]
- * @param {string} [options.apiKey]
- * @returns {Promise<{ axes: Array, incidents: Array, source: 'tomtom_live'|'signalements'|'aucune', disponible: boolean, derniereMiseAJour: string|null }>}
+ * @returns {Promise<{ axes: Array, incidents: Array, source: 'google_maps'|'signalements'|'aucune', disponible: boolean, derniereMiseAJour: string|null }>}
  */
 async function getEtatTraficComplet(options = {}) {
   // SRG-A4-016 / D53 : une valeur n'est rendue que si elle vient d'une mesure du fournisseur ou d'un signalement daté.
   // Le modèle horaire (evaluerEtatTheoriqueAxe) n'est plus servi : il donnait chaque jour les mêmes durées à la même
-  // heure, datées de l'instant de l'appel. Le fournisseur n'est interrogé que si la source a été vérifiée à Dakar.
-  const apiKey = traficSourceMesureeActive() ? (options.apiKey || process.env.TOMTOM_API_KEY || null) : null;
-
-  let tomtomData = null;
-  if (apiKey) {
-    try {
-      tomtomData = await actualiserDonneesTomTomSiNecessaire(apiKey);
-    } catch (e) {
-      // Fournisseur injoignable : aucune mesure.
-    }
+  // heure, datées de l'instant de l'appel. Les mesures viennent de trafic-mesures.js : sans clé, hors horaires ou
+  // plafond mensuel atteint, il n'y en a pas.
+  let releve = { etat: 'eteint', releveLe: null, mesures: new Map() };
+  try {
+    releve = await mesuresTrafic.lireMesures(pool, AXES_ROUTIERS_DAKAR, options.dateRef || new Date());
+  } catch (e) {
+    console.warn('[SurgaTrafic] Mesures indisponibles :', e.message);
   }
 
   // Signalements des usagers de moins de 45 minutes
@@ -574,9 +463,7 @@ async function getEtatTraficComplet(options = {}) {
 
   const axes = AXES_ROUTIERS_DAKAR.map((axe) => {
     const signalement = signalementsRecents.get(axe.id);
-    const liveCorridor = tomtomData?.axesData?.get(axe.id);
-    // Le fournisseur rend « aucun retard » là où il n'a pas de capteurs : seule une congestion mesurée est retenue.
-    const mesure = liveCorridor && (liveCorridor.retardMin >= 3 || liveCorridor.trafficLengthMeters > 400) ? liveCorridor : null;
+    const mesure = releve.mesures.get(axe.id) || null;
 
     let niveau = 'indisponible';
     let tempsEstimeMin = null;
@@ -590,23 +477,18 @@ async function getEtatTraficComplet(options = {}) {
 
     if (mesure) {
       nbMesures++;
-      source = 'tomtom_live';
-      releveLe = new Date(tomtomData.timestamp).toISOString();
+      source = 'google_maps';
+      releveLe = releve.releveLe;
       tempsEstimeMin = mesure.tempsEstimeMin;
       distanceKm = mesure.distanceKm;
       vitesseReelleKmH = mesure.vitesseReelleKmH;
       vitesseNormaleKmH = mesure.vitesseNormaleKmH;
-      const ratio = vitesseNormaleKmH > 0 ? vitesseReelleKmH / vitesseNormaleKmH : 1;
-      if (mesure.retardMin >= 15 || ratio <= 0.45) {
-        niveau = 'bouche';
-        cause = `Bouchon mesuré : ${mesure.retardMin} min de retard (${vitesseReelleKmH} km/h)`;
-      } else if (mesure.retardMin >= 5 || ratio <= 0.75) {
-        niveau = 'dense';
-        cause = `Ralentissement mesuré : ${mesure.retardMin} min de retard (${vitesseReelleKmH} km/h)`;
-      } else {
-        niveau = 'fluide';
-        cause = `Circulation fluide (${vitesseReelleKmH} km/h mesurés)`;
-      }
+      niveau = mesuresTrafic.niveauDeLaMesure(mesure);
+      cause = niveau === 'bouche'
+        ? `Bouchon mesuré : ${mesure.retardMin} min de retard (${vitesseReelleKmH} km/h)`
+        : niveau === 'dense'
+          ? `Ralentissement mesuré : ${mesure.retardMin} min de retard (${vitesseReelleKmH} km/h)`
+          : `Circulation fluide (${vitesseReelleKmH} km/h mesurés)`;
     }
 
     if (signalement) {
@@ -665,10 +547,12 @@ async function getEtatTraficComplet(options = {}) {
 
   return {
     axes,
-    incidents: tomtomData?.incidents || [],
-    source: nbMesures > 0 ? 'tomtom_live' : nbSignales > 0 ? 'signalements' : 'aucune',
+    incidents: [],
+    source: nbMesures > 0 ? 'google_maps' : nbSignales > 0 ? 'signalements' : 'aucune',
     disponible: nbMesures + nbSignales > 0,
     derniereMiseAJour: dernierReleve,
+    // Ce que l'écran doit pouvoir dire des mesures : qui mesure, quand, et pourquoi il n'y en a pas.
+    mesures: { fournisseur: mesuresTrafic.FOURNISSEUR, horaires: mesuresTrafic.HORAIRES, etat: releve.etat, axes: mesuresTrafic.axesMesures() },
   };
 }
 
@@ -751,6 +635,4 @@ module.exports = {
   getEtatTraficComplet,
   genererSyntheseBriefingTrafic,
   enregistrerSignalement,
-  interrogerTomTomCorridor,
-  interrogerTomTomIncidents,
 };

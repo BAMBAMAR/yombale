@@ -170,3 +170,42 @@ describe('interrupteurs des sources', () => {
     expect(sources.ligue1SenegalBranchee()).toBe(false);
   });
 });
+
+describe('trafic mesuré (D71)', () => {
+  const mesures = require('../../backend/services/surga/trafic-mesures');
+
+  test('créneaux d’une demi-heure, de 6 h 30 à 20 h', () => {
+    expect(mesures.creneauCourant(new Date('2026-10-08T06:29:00Z'))).toBeNull();
+    expect(mesures.creneauCourant(new Date('2026-10-08T06:30:00Z')).toISOString()).toBe('2026-10-08T06:30:00.000Z');
+    expect(mesures.creneauCourant(new Date('2026-10-08T17:47:00Z')).toISOString()).toBe('2026-10-08T17:30:00.000Z');
+    expect(mesures.creneauCourant(new Date('2026-10-08T19:59:00Z')).toISOString()).toBe('2026-10-08T19:30:00.000Z');
+    expect(mesures.creneauCourant(new Date('2026-10-08T20:00:00Z'))).toBeNull();
+  });
+
+  test('durées avec et sans trafic lues telles quelles, niveau tiré du retard', () => {
+    const m = mesures.interpreterGoogleRoutes({ routes: [{ distanceMeters: 6600, duration: '1200s', staticDuration: '480s' }] });
+    expect(m).toMatchObject({ distanceKm: 6.6, tempsEstimeMin: 20, tempsSansTraficMin: 8, retardMin: 12, vitesseReelleKmH: 20, vitesseNormaleKmH: 50 });
+    expect(mesures.niveauDeLaMesure(m)).toBe('bouche');
+    const libre = mesures.interpreterGoogleRoutes({ routes: [{ distanceMeters: 30000, duration: '1650s', staticDuration: '1620s' }] });
+    expect(mesures.niveauDeLaMesure(libre)).toBe('fluide');
+  });
+
+  test('réponse sans durée ou sans itinéraire : aucune mesure', () => {
+    expect(mesures.interpreterGoogleRoutes({})).toBeNull();
+    expect(mesures.interpreterGoogleRoutes({ routes: [] })).toBeNull();
+    expect(mesures.interpreterGoogleRoutes({ routes: [{ distanceMeters: 5000, duration: '600s' }] })).toBeNull();
+  });
+
+  test('sans clé, aucun appel et aucune mesure', async () => {
+    const garde = process.env.SURGA_GOOGLE_ROUTES_CLE; delete process.env.SURGA_GOOGLE_ROUTES_CLE;
+    const pool = { query: jest.fn() };
+    const r = await mesures.lireMesures(pool, [], new Date('2026-10-08T10:00:00Z'));
+    expect(r.etat).toBe('eteint'); expect(r.mesures.size).toBe(0); expect(pool.query).not.toHaveBeenCalled();
+    if (garde) process.env.SURGA_GOOGLE_ROUTES_CLE = garde;
+  });
+
+  test('compteur illisible : la réservation est refusée, aucun appel payant', async () => {
+    const pool = { query: jest.fn().mockRejectedValue(new Error('base en panne')) };
+    expect(await mesures.reserverAppels(pool, 6)).toBe(false);
+  });
+});

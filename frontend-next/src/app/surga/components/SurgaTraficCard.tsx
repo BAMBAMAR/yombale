@@ -100,7 +100,7 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
               >
                 Trafic
               </span>
-              {source === 'tomtom_live' && (
+              {source === 'google_maps' && (
                 <span
                   style={{
                     fontSize: 9,

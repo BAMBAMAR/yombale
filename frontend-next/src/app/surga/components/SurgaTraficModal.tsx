@@ -231,7 +231,7 @@ export default function SurgaTraficModal({ isOpen, onClose }: SurgaTraficModalPr
         >
           <Activity size={12} color="var(--accent, #C75B00)" />
           <span>
-            {source === 'tomtom_live' ? 'Mesures du fournisseur de trafic' : source === 'signalements' ? 'Signalements des usagers (45 dernières minutes)' : 'Aucune mesure ni signalement récent'}
+            {source === 'google_maps' ? 'Temps de parcours mesurés sur six axes, de 6 h 30 à 20 h · Google Maps' : source === 'signalements' ? 'Signalements des usagers (45 dernières minutes)' : 'Aucune mesure ni signalement récent'}
             {derniereMaj ? `, dernier relevé à ${heureCourte(derniereMaj)}` : ''}
           </span>
         </div>
