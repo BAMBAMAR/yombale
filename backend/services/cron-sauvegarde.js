@@ -31,6 +31,12 @@ async function lancerSauvegardeAutomatique(label = 'cron-daily') {
     const { executerSauvegarde } = await import(pathToFileURL(backupScriptPath).href);
     const report = await executerSauvegarde({ label });
 
+    // SRG-A5-010 : un stockage distant est configuré et l'envoi a échoué : la tâche est en erreur, et l'alerte part.
+    // Une archive restée sur le disque de l'hébergeur ne survit pas au déploiement suivant.
+    if (report.s3 && report.s3.uploaded === false && report.s3.reason !== 'not_configured') {
+      throw new Error(`Archive produite mais non envoyée au stockage distant : ${String(report.s3.error || 'erreur inconnue').slice(0, 200)}`);
+    }
+
     return {
       succes: true,
       tablesArchivées: report.tablesCount,
