@@ -29,7 +29,8 @@ function formatMatchHeureSeule(dateStr: string): string {
   }
 }
 
-function formatMatchDate(dateStr: string): string {
+// sansHeure : la source connaît le jour de la rencontre, pas son heure.
+function formatMatchDate(dateStr: string, sansHeure = false): string {
   try {
     const d = new Date(dateStr)
     const isThisYear = d.getFullYear() === new Date().getFullYear()
@@ -38,8 +39,7 @@ function formatMatchDate(dateStr: string): string {
       day: 'numeric',
       month: 'short',
       ...(isThisYear ? {} : { year: 'numeric' }),
-      hour: '2-digit',
-      minute: '2-digit',
+      ...(sansHeure ? {} : { hour: '2-digit' as const, minute: '2-digit' as const }),
     }).format(d)
   } catch {
     return 'Prochainement'
@@ -215,7 +215,7 @@ export default function SurgaSportMatchItem({
               flexShrink: 0,
             }}
           >
-            {formatMatchHeureSeule(match.date_debut)}
+            {match.heure_inconnue ? 'Heure à confirmer' : formatMatchHeureSeule(match.date_debut)}
           </span>
         )}
       </div>
@@ -261,9 +261,12 @@ export default function SurgaSportMatchItem({
           }}
         >
           <Calendar size={12} color="var(--surga-text3, #94A3B8)" />
-          <span style={{ fontWeight: 600 }}>{formatMatchDate(match.date_debut)}</span>
+          <span style={{ fontWeight: 600 }}>{formatMatchDate(match.date_debut, match.heure_inconnue)}</span>
           {match.diffuseur && (
             <span style={{ color: 'var(--surga-text3, #94A3B8)' }}>• {match.diffuseur}</span>
+          )}
+          {match.source === 'TheSportsDB' && (
+            <span style={{ color: 'var(--surga-text3, #94A3B8)' }}>• Source : TheSportsDB</span>
           )}
         </div>
 
@@ -300,7 +303,7 @@ export default function SurgaSportMatchItem({
                 equipeDomicile: match.equipe_domicile,
                 equipeExterieur: match.equipe_exterieur,
                 score: hasScore ? `${match.score_domicile} - ${match.score_exterieur}` : undefined,
-                heure: !isTermine ? formatMatchDate(match.date_debut) : undefined,
+                heure: !isTermine ? formatMatchDate(match.date_debut, match.heure_inconnue) : undefined,
                 statut: match.statut,
               }),
             }}

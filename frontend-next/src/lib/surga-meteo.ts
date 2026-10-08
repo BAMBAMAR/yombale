@@ -35,22 +35,29 @@ export interface MeteoData {
   vent_vitesse_kmh: number | null
   vent_direction: string | null
   indice_uv: number | null
-  // Sans source branchée, ces deux champs valent null et l'écran affiche « indisponible ».
+  // Sans source branchée, ou quand elle se tait, ces deux champs valent null et l'écran affiche « indisponible ».
+  // Les deux sont des estimations par modèle : ni une station de mesure, ni un marégraphe.
   qualite_air?: {
     aqi: number
+    indice?: string
     niveau: string
     particules: string
     conseil: string
+    source?: string
+    updated_at?: string
   } | null
   maree?: {
     etat: string
+    prochaine_type?: string
     prochaine_heure: string
+    prochaine_le?: string
     hauteur_m: string
     spot_reference: string
+    source?: string
   } | null
   previsions_3j?: PrevisionItem[]
   source: string
-  // Heure du relevé donnée par la source.
+  // Heure à laquelle la source a calculé sa prévision.
   updated_at: string
   // Vrai quand la source n'a pas répondu et que ce relevé est le dernier reçu (D43).
   non_actualise?: boolean
@@ -160,17 +167,6 @@ export function trouverLocalitePlusProche(lat: number, lon: number): LocaliteIte
   return plusProche
 }
 
-export function interpreterCodeWMO(code: number): { code: string; texte: string } {
-  if (code === 0) return { code: 'soleil', texte: 'Ensoleillé' }
-  if (code === 1 || code === 2) return { code: 'partiellement_nuageux', texte: 'Éclaircies' }
-  if (code === 3) return { code: 'nuageux', texte: 'Couvert' }
-  if (code >= 45 && code <= 48) return { code: 'poussiere', texte: 'Brume de poussière (Harmattan)' }
-  if (code >= 51 && code <= 67) return { code: 'pluie', texte: 'Pluie légère' }
-  if (code >= 80 && code <= 82) return { code: 'averse', texte: 'Averses' }
-  if (code >= 95) return { code: 'orage', texte: 'Orages isolés' }
-  return { code: 'soleil', texte: 'Ensoleillé' }
-}
-
 // Localité de référence d'un profil : toujours un texte. Une préférence illisible vaut « Dakar ».
 export function quartierDe(preferences?: { quartiers?: unknown } | null): string {
   const premier = Array.isArray(preferences?.quartiers) ? preferences.quartiers[0] : null
@@ -184,14 +180,14 @@ export function directionVent(degres: unknown): string | null {
   return ROSE_DES_VENTS[Math.round((((degres % 360) + 360) % 360) / 45) % 8]
 }
 
-// « Open-Meteo, relevé de 14 h 15 », ou « non actualisé depuis le 8 octobre à 14 h 15 » quand la source est muette.
+// « MET Norway, prévision de 14 h 15 », ou « non actualisé depuis le 8 octobre à 14 h 15 » quand la source est muette.
 export function libelleReleveMeteo(meteo: Pick<MeteoData, 'source' | 'updated_at' | 'non_actualise'>): string {
   const d = new Date(meteo.updated_at)
   if (Number.isNaN(d.getTime())) return meteo.source
   const heure = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Dakar' })
     .format(d)
     .replace(':', '\u00A0h\u00A0')
-  if (!meteo.non_actualise) return `${meteo.source}, relevé de ${heure}`
+  if (!meteo.non_actualise) return `${meteo.source}, prévision de ${heure}`
   const jour = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', timeZone: 'Africa/Dakar' }).format(d)
   return `${meteo.source}, non actualisé depuis le ${jour} à ${heure}`
 }

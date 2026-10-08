@@ -22,7 +22,7 @@ export interface SportEventItem {
   statut: 'EN_DIRECT' | 'TERMINE' | 'A_VENIR' | string
   minute_jeu?: string | null
   buteurs?: string | null
-  diffuseur?: string | null
+  diffuseur?: string | null; heure_inconnue?: boolean; source?: string
   date_debut: string
   /** Raison de la présence du match dans la sélection (« Vous suivez … »), fournie par le service sport */
   raison_presence?: string | null
@@ -206,7 +206,7 @@ export default function SurgaSportCard({
       const data = await res.json()
       if (data.success && Array.isArray(data.matchs)) {
         setMatchs(data.matchs)
-        setIndisponible(Boolean(data.indisponible) && categorie !== 'ligue1_sn')
+        setIndisponible(Boolean(data.indisponible))
       } else {
         setIndisponible(true)
       }
@@ -372,7 +372,7 @@ export default function SurgaSportCard({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {matchsAffiches.length === 0 ? (
           <div style={{ padding: '16px', textAlign: 'center', color: 'var(--surga-text3, #73675E)', fontSize: 13 }}>
-            {filtreCategorie === 'ligue1_sn' ? 'Ligue 1 sénégalaise : indisponible pour le moment.' : indisponible ? 'Scores indisponibles pour le moment.' : 'Aucun match trouvé pour ce filtre.'}
+            {!indisponible ? 'Aucun match trouvé pour ce filtre.' : filtreCategorie === 'ligue1_sn' ? 'Ligue 1 sénégalaise : indisponible pour le moment.' : 'Scores indisponibles pour le moment.'}
           </div>
         ) : (
           matchsAffiches.map((match, idx) => {

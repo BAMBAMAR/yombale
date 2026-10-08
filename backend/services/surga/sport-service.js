@@ -4,6 +4,7 @@
 // Calendrier officiel FIFA des Lions du Sénégal. La Ligue 1 sénégalaise n'a pas de source (D53).
 
 const axios = require('axios');
+const sources = require('./sources-externes');
 
 // Cache mémoire pour préserver les quotas et assurer une latence < 30ms
 let cacheMatchs = null;
@@ -148,8 +149,10 @@ async function chargerDonneesSportEnDirect(force = false) {
       axios.get(ep.url, { timeout: 3500 }).catch(() => null)
     );
 
-    const reponses = await Promise.all(requetes);
+    // D65 : la Ligue 1 du Sénégal vient d'une autre source, lue en même temps (liste vide si elle n'est pas branchée).
+    const [reponses, ligue1] = await Promise.all([Promise.all(requetes), sources.lireLigue1Senegal().catch(() => [])]);
     sourceMuette = reponses.every((res) => !res);
+    resultats.push(...ligue1);
 
     reponses.forEach((res, idx) => {
       if (!res?.data?.events) return;
@@ -174,8 +177,8 @@ async function chargerDonneesSportEnDirect(force = false) {
   });
 
   // SRG-A4-014 / D53 : quatre rencontres de Ligue 1 sénégalaise étaient ajoutées ici, écrites dans le code et datées
-  // du jour de l'appel. Aucune source ne les fournit : la catégorie « ligue1_sn » reste vide et l'écran affiche
-  // « indisponible » tant qu'une source n'est pas branchée.
+  // du jour de l'appel. Elles viennent maintenant de la source lue plus haut ; sans elle, la catégorie « ligue1_sn »
+  // reste vide et l'écran affiche « indisponible ».
 
   // Dédoublonnage strict par identifiant ou par paire d'équipes + date
   const vus = new Set();
@@ -285,4 +288,6 @@ module.exports = {
   chargerDonneesSportEnDirect,
   filtrerMatchsSport,
   sportSourceMuette: () => sourceMuette,
+  // Vrai quand la Ligue 1 du Sénégal n'a pas de source branchée, ou que cette source n'a pas répondu.
+  ligue1SenegalIndisponible: () => !sources.ligue1SenegalBranchee() || sources.ligue1SenegalRepond() === false,
 };

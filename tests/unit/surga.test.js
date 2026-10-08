@@ -1366,13 +1366,27 @@ describe('Module Surga — Tranches 1 & 2', () => {
 
   describe('Tranche 17 : Météo Dakar Live & Sport Personnalisé Temps Réel', () => {
     const meteoService = require('../../backend/services/surga/meteo-service');
-    const { getMeteo, interpreterCodeWMO } = meteoService;
+    const { getMeteo } = meteoService;
+    const sourcesExternes = require('../../backend/services/surga/sources-externes');
+    // Réponse de la source météo (MET Norway) : une prévision pour l'heure en cours, calculée à l'instant donné.
+    const reponseMetNo = (calculeLe, temperature) => ({
+      data: {
+        properties: {
+          meta: { updated_at: calculeLe },
+          timeseries: [{
+            time: `${new Date().toISOString().slice(0, 13)}:00:00Z`,
+            data: { instant: { details: { air_temperature: temperature, relative_humidity: 61, wind_speed: 3.4, wind_from_direction: 90 } }, next_1_hours: { summary: { symbol_code: 'partlycloudy_day' } } },
+          }],
+        },
+      },
+    });
+    beforeAll(() => { delete process.env.SURGA_OPEN_METEO_CLE; delete process.env.SURGA_OPEN_METEO_ESSAI; delete process.env.SURGA_THESPORTSDB_CLE; });
     const { LISTE_EQUIPES_DISPONIBLES, chargerDonneesSportEnDirect, filtrerMatchsSport } = require('../../backend/services/surga/sport-service');
 
-    test('Le service météo traduit les codes WMO ; marées et qualité de l air ne sont plus calculées (SRG-A4-015)', () => {
-      expect(interpreterCodeWMO(0).code).toBe('soleil');
-      expect(interpreterCodeWMO(61).code).toBe('pluie');
-      expect(interpreterCodeWMO(95).code).toBe('orage');
+    test('Le service météo traduit les symboles de sa source ; marées et qualité de l air ne sont plus calculées (SRG-A4-015)', () => {
+      expect(sourcesExternes.interpreterSymbole('clearsky_day').code).toBe('soleil');
+      expect(sourcesExternes.interpreterSymbole('rain').code).toBe('pluie');
+      expect(sourcesExternes.interpreterSymbole('rainandthunder').code).toBe('orage');
       expect(meteoService.calculerMareeDakar).toBeUndefined();
       expect(meteoService.estimerQualiteAirDakar).toBeUndefined();
       expect(meteoService.directionVent(90)).toBe('Est');
@@ -1387,36 +1401,37 @@ describe('Module Surga — Tranches 1 & 2', () => {
         espion.mockRejectedValueOnce(new Error('coupure'));
         expect(await getMeteo('Kolda')).toBeNull();
 
-        // Relevé daté par la source : dix minutes avant l'appel.
-        const heureReleve = new Date(Date.now() - 10 * 60 * 1000).toISOString().slice(0, 16);
-        espion.mockResolvedValueOnce({
-          data: {
-            current: { time: heureReleve, temperature_2m: 31.4, apparent_temperature: 34.2, relative_humidity_2m: 61, weather_code: 2, wind_speed_10m: 12.3, wind_direction_10m: 90 },
-            daily: { time: ['2026-10-08'], weather_code: [2], temperature_2m_min: [24.1], temperature_2m_max: [33.8], uv_index_max: [9.2] },
-          },
-        });
+        // Prévision datée par la source : calculée dix minutes avant l'appel.
+        const calculeLe = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+        espion.mockResolvedValueOnce(reponseMetNo(calculeLe, 31.4));
         const releve = await getMeteo('Kolda');
         expect(releve.ville).toBe('Kolda');
         expect(releve.temperature).toBe(31);
-        expect(releve.updated_at).toBe(`${heureReleve}:00.000Z`);
+        expect(releve.source).toBe('MET Norway');
+        expect(releve.updated_at).toBe(calculeLe);
         expect(releve.vent_direction).toBe('Est');
+        expect(releve.vent_vitesse_kmh).toBe(12);
+        // La source ne donne ni ressenti ni extrêmes pour une journée qu'elle ne couvre pas : rien n'est inventé.
+        expect(releve.ressenti).toBeNull();
+        expect(releve.temp_max).toBeNull();
+        expect(releve.previsions_3j).toEqual([]);
+        // Sources des marées et de l'air éteintes : champs à null, sans appel.
         expect(releve.maree).toBeNull();
         expect(releve.qualite_air).toBeNull();
         expect(releve.non_actualise).toBe(false);
-        expect(releve.previsions_3j.length).toBe(1);
+        expect(espion).toHaveBeenCalledTimes(2);
 
-        // Une heure plus tard, la source est muette : dernier relevé réel, à sa date, marqué « non actualisé ».
+        // Une heure plus tard, la source est muette : dernière prévision reçue, à sa date, marquée « non actualisé ».
         const horloge = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 3600 * 1000);
         espion.mockRejectedValueOnce(new Error('coupure'));
         const ancien = await getMeteo('Kolda');
         horloge.mockRestore();
         expect(ancien.temperature).toBe(31);
         expect(ancien.non_actualise).toBe(true);
-        expect(ancien.updated_at).toBe(`${heureReleve}:00.000Z`);
+        expect(ancien.updated_at).toBe(calculeLe);
 
-        // Un appel réussi qui rend un relevé de la veille n'est pas présenté comme à jour.
-        const hier = new Date(Date.now() - 26 * 3600 * 1000).toISOString().slice(0, 16);
-        espion.mockResolvedValueOnce({ data: { current: { time: hier, temperature_2m: 25 }, daily: {} } });
+        // Un appel réussi qui rend une prévision calculée la veille n'est pas présenté comme à jour.
+        espion.mockResolvedValueOnce(reponseMetNo(new Date(Date.now() - 26 * 3600 * 1000).toISOString(), 25));
         expect((await getMeteo('Matam')).non_actualise).toBe(true);
       } finally {
         espion.mockRestore();
@@ -1466,12 +1481,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(plusProcheAlmadies.nom).toContain('Almadies');
 
       const axios = require('axios');
-      const espion = jest.spyOn(axios, 'get').mockResolvedValue({
-        data: {
-          current: { time: '2026-10-08T09:00', temperature_2m: 27.6, apparent_temperature: 30.1, relative_humidity_2m: 70, weather_code: 1, wind_speed_10m: 14, wind_direction_10m: 315 },
-          daily: { time: ['2026-10-08'], weather_code: [1], temperature_2m_min: [24], temperature_2m_max: [30], uv_index_max: [8] },
-        },
-      });
+      const espion = jest.spyOn(axios, 'get').mockResolvedValue(reponseMetNo(new Date().toISOString(), 27.6));
       try {
         // Appel météo avec coordonnées GPS directes
         const meteoGps = await getMeteo({ lat: 14.745, lon: -17.515 });
@@ -1494,12 +1504,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(Object.keys(LOCALITES_SENEGAL).length).toBeGreaterThanOrEqual(28);
 
       const axios = require('axios');
-      const espion = jest.spyOn(axios, 'get').mockResolvedValue({
-        data: {
-          current: { time: '2026-10-08T09:00', temperature_2m: 27.6, apparent_temperature: 30.1, relative_humidity_2m: 70, weather_code: 1, wind_speed_10m: 14, wind_direction_10m: 315 },
-          daily: { time: ['2026-10-08'], weather_code: [1], temperature_2m_min: [24], temperature_2m_max: [30], uv_index_max: [8] },
-        },
-      });
+      const espion = jest.spyOn(axios, 'get').mockResolvedValue(reponseMetNo(new Date().toISOString(), 27.6));
       try {
         // Résolution sans accent (ex: thies, guediawaye, sacre coeur)
         expect((await getMeteo('thies')).ville).toBe('Thiès');

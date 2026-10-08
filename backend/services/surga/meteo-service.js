@@ -1,8 +1,8 @@
 // backend/services/surga/meteo-service.js
 // Service Météo pour Surga (Dakar et Régions du Sénégal)
-// Données météo locales, indice UV, qualité de l'air, vent et marées dakaroises
+// Localités, mémoire et dernier relevé ; les sources elles-mêmes sont dans sources-externes.js
 
-const axios = require('axios');
+const sources = require('./sources-externes');
 
 const LOCALITES_SENEGAL = {
   // Dakar & Presqu'île
@@ -76,31 +76,11 @@ function trouverLocalitePlusProche(lat, lon) {
   return plusProche;
 }
 
-/**
- * Traduit le code météo WMO en libellé et icône locale
- */
-function interpreterCodeWMO(code) {
-  if (code === 0) return { code: 'soleil', texte: 'Ensoleillé' };
-  if (code === 1 || code === 2) return { code: 'partiellement_nuageux', texte: 'Éclaircies' };
-  if (code === 3) return { code: 'nuageux', texte: 'Couvert' };
-  if (code >= 45 && code <= 48) return { code: 'poussiere', texte: 'Brume de poussière (Harmattan)' };
-  if (code >= 51 && code <= 67) return { code: 'pluie', texte: 'Pluie légère' };
-  if (code >= 80 && code <= 82) return { code: 'averse', texte: 'Averses' };
-  if (code >= 95) return { code: 'orage', texte: 'Orages isolés' };
-  return { code: 'soleil', texte: 'Ensoleillé' };
-}
-
-// SRG-A4-015 / D53 : calculerMareeDakar et estimerQualiteAirDakar ont été retirées. Elles rendaient deux horaires de
-// marée fixes et deux indices de qualité de l'air (45 ou 95 selon le mois), sans aucune source. Les champs « maree » et
-// « qualite_air » valent null tant qu'une source n'est pas branchée ; l'écran affiche « indisponible ».
-
-const ROSE_DES_VENTS = ['Nord', 'Nord-Est', 'Est', 'Sud-Est', 'Sud', 'Sud-Ouest', 'Ouest', 'Nord-Ouest'];
-const directionVent = (degres) => (Number.isFinite(degres) ? ROSE_DES_VENTS[Math.round((((degres % 360) + 360) % 360) / 45) % 8] : null);
-const arrondi = (v) => (Number.isFinite(v) ? Math.round(v) : null);
-
-// La source publie un relevé par quart d'heure. Au-delà de ce délai, un relevé n'est plus présenté comme à jour, même
-// si l'appel a réussi (réponse gardée par un cache intermédiaire).
-const DELAI_FRAICHEUR_MS = 90 * 60 * 1000;
+// SRG-A4-015 / D53 : calculerMareeDakar et estimerQualiteAirDakar rendaient deux horaires de marée fixes et deux indices
+// de qualité de l'air (45 ou 95 selon le mois), sans aucune source. D57, D65 : la météo vient de MET Norway, les marées
+// et la qualité de l'air d'Open-Meteo (sources-externes.js). Une source absente ou muette laisse son champ à null :
+// l'écran affiche « indisponible ».
+const { directionVent } = sources;
 
 // Dernier relevé réellement reçu par localité (D43) : servi daté et marqué « non actualisé » quand la source ne répond pas.
 const derniersReleves = new Map();
@@ -183,35 +163,13 @@ async function getMeteo(options = 'Dakar') {
   }
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max&timezone=Africa%2FDakar`;
-    const res = await axios.get(url, { timeout: 4000 });
-    const { current, daily } = res.data || {};
-    if (!current || !Number.isFinite(current.temperature_2m)) throw new Error('Réponse météo sans température');
-
-    const condition = interpreterCodeWMO(current.weather_code);
-    const jours = (daily && daily.time) || [];
-
-    const previsions_3j = [];
-    const joursSemaine = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    for (let i = 0; i < Math.min(3, jours.length); i++) {
-      const tMin = arrondi(daily.temperature_2m_min?.[i]);
-      const tMax = arrondi(daily.temperature_2m_max?.[i]);
-      if (tMin === null || tMax === null) continue;
-      const d = new Date(jours[i]);
-      const condJ = interpreterCodeWMO(daily.weather_code?.[i]);
-      previsions_3j.push({
-        jour: i === 0 ? "Aujourd'hui" : joursSemaine[d.getDay()],
-        date: jours[i],
-        temp_min: tMin,
-        temp_max: tMax,
-        condition_code: condJ.code,
-        condition_texte: condJ.texte,
-      });
-    }
-
-    // Heure du relevé donnée par la source (heure de Dakar, égale à l'heure universelle), pas l'heure de l'appel.
-    const releveLe = current.time ? new Date(`${current.time}:00Z`) : null;
-    const releveValide = releveLe && !Number.isNaN(releveLe.getTime());
+    const releve = await sources.lireMeteo(lat, lon);
+    if (!releve) throw new Error('Réponse météo inexploitable');
+    // Marées (localités du littoral) et qualité de l'air : chacune vaut null si sa source est éteinte ou muette.
+    const [maree, qualite_air] = await Promise.all([
+      isMaritime ? sources.lireMaree(lat, lon) : null,
+      sources.lireQualiteAir(lat, lon),
+    ]);
 
     const payload = {
       ville: nomAffiche,
@@ -220,22 +178,9 @@ async function getMeteo(options = 'Dakar') {
       est_gps: estPositionGps,
       is_gps: estPositionGps,
       coordonnees: { lat, lon },
-      temperature: Math.round(current.temperature_2m),
-      ressenti: arrondi(current.apparent_temperature),
-      temp_min: arrondi(daily?.temperature_2m_min?.[0]),
-      temp_max: arrondi(daily?.temperature_2m_max?.[0]),
-      condition_code: condition.code,
-      condition_texte: condition.texte,
-      humidite: arrondi(current.relative_humidity_2m),
-      vent_vitesse_kmh: arrondi(current.wind_speed_10m),
-      vent_direction: directionVent(current.wind_direction_10m),
-      indice_uv: arrondi(daily?.uv_index_max?.[0]),
-      qualite_air: null,
-      maree: null,
-      previsions_3j: previsions_3j,
-      source: 'Open-Meteo',
-      updated_at: releveValide ? releveLe.toISOString() : new Date().toISOString(),
-      non_actualise: releveValide ? Date.now() - releveLe.getTime() > DELAI_FRAICHEUR_MS : false,
+      ...releve,
+      qualite_air,
+      maree,
     };
 
     cacheMeteo.set(cacheKey, { timestamp: Date.now(), data: payload });
@@ -243,10 +188,11 @@ async function getMeteo(options = 'Dakar') {
     return payload;
   } catch (err) {
     // SRG-A2-009 / D43 : l'ancien repli servait « 28 °C, Ensoleillé, Station locale » daté de l'instant de l'appel.
-    // La source ne répond pas : dernier relevé réel, daté et marqué, ou rien.
+    // La source ne répond pas : dernière prévision reçue, datée et marquée, ou rien. La marée et la qualité de l'air
+    // de ce relevé ne sont plus servies : elles décrivaient l'heure où il a été reçu.
     console.warn('[SURGA METEO] Source indisponible :', err.message);
     const dernier = derniersReleves.get(cacheKey);
-    return dernier ? { ...dernier, non_actualise: true } : null;
+    return dernier ? { ...dernier, maree: null, qualite_air: null, non_actualise: true } : null;
   }
 }
 
@@ -255,6 +201,5 @@ module.exports = {
   VILLES_SENEGAL,
   LOCALITES_SENEGAL,
   trouverLocalitePlusProche,
-  interpreterCodeWMO,
   directionVent,
 };

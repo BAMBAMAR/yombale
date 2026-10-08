@@ -13,5 +13,16 @@ module.exports = {
   // D54 : le podcast privé (SRG-A4-017).
   podcastActif: () => actif('SURGA_PODCAST_ACTIF'),
   // D53 : la mesure du trafic par le fournisseur n'est interrogée qu'une fois la source vérifiée à Dakar (SRG-A4-016).
+  // Constat du 2026-10-08 : la couverture publiée par TomTom ne compte pas le Sénégal. Ne pas ouvrir avec ce fournisseur.
   traficSourceMesureeActive: () => actif('SURGA_TRAFIC_SOURCE_VERIFIEE'),
+  // D57, D65 : marées et qualité de l'air viennent d'Open-Meteo, dont l'accès gratuit est réservé à un usage non
+  // commercial. Avec une clé d'abonnement, les serveurs réservés aux clients sont interrogés ; sans clé, rien n'est
+  // appelé, sauf si les essais non commerciaux sont ouverts. Rend null quand la source ne doit pas être appelée.
+  openMeteo: () => {
+    const cle = (process.env.SURGA_OPEN_METEO_CLE || '').trim();
+    if (cle) return { cle };
+    return actif('SURGA_OPEN_METEO_ESSAI') ? { cle: null } : null;
+  },
+  // D65 : Ligue 1 du Sénégal par TheSportsDB. Sans clé, la catégorie reste « indisponible ».
+  theSportsDbCle: () => (process.env.SURGA_THESPORTSDB_CLE || '').trim() || null,
 };
