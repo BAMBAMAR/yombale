@@ -5,6 +5,12 @@
 - **Branche `feature/surga` Exclusivement pour SURGA** : La branche `feature/surga` est STRICTEMENT réservée aux développements exclusifs de l'assistant personnel **SURGA** (`/surga`, `/admin/surga`, `backend/services/surga/`).
 - **Vérification Systématique** : Avant de démarrer ou poursuivre toute tâche relative à Nopalou ou à l'administration générale, vérifier systématiquement la branche active avec `git branch --show-current` et basculer sur `main`.
 
+## 🧊 Gel du Dépôt pendant un Audit SURGA (décision utilisateur du 2026-10-07)
+- **Un seul dossier, une seule session à la fois** : ce dossier de travail est partagé. Pendant qu'un agent d'audit de la campagne pré-production Surga y travaille (signe : `git branch --show-current` renvoie `feature/surga` et `audit/HANDOVER/` contient un handover en cours), **aucune autre session ne doit** y exécuter `git commit`, `git stash`, `git checkout`, `git switch`, `git reset` ni `git clean`.
+- **Pourquoi** : le 2026-10-07, un `git stash -u` suivi d'un passage sur `main` a retiré du disque tous les livrables de l'Audit 1 en cours et déplacé `HEAD` sous les tests.
+- **Travail Nopalou urgent pendant un audit** : le faire dans un dossier séparé (`git worktree add ../yombale-main main`), jamais dans celui-ci.
+- **Dossiers de la campagne** : `audit/00_PREPARATION/`, `audit/01_ARCHITECTURE_SECURITE/`, `audit/HANDOVER/` et les suivants décrivent des failles. Ils sont ignorés par git : ne jamais les ajouter de force (`git add -f`).
+
 ## 📌 Règle Obligatoire de Documentation Exhaustive pour les Prochaines Sessions
 - **Mise à Jour Systématique de TOUS les Documents** : À la fin de chaque session de travail, après chaque livraison ou tâche majeure (et obligatoirement avant tout déploiement / `git push`), l'assistant DOIT **systématiquement et sans exception mettre à jour l'ensemble des documents de documentation et de passation** pour garantir une reprise parfaite lors des prochaines sessions :
   1. `CLAUDE.md` (résumé des nouveautés, migrations SQL et corrections en tête du journal des versions).

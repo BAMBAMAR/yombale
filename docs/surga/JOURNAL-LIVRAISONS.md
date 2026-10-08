@@ -3,6 +3,149 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-08 — Cinquième lot de corrections] — replis de lecture, états d'erreur, parcours, service worker : 10 fiches, 3 commits locaux, aucun push
+- **Objet :** commits `5272ca6c`, `b46fe6bd`, `7774a69f` sur `feature/surga`.
+- **Corrigées et rejouées :**
+  - `SRG-A1-017` (P0), fin : base absente, plus aucune lecture ni écriture servie (`lot5b-panne-base.js` : 7 lectures avant, 0 après).
+  - `SRG-A3-008` : session révoquée ailleurs, constatée à l'envoi : prénom retiré, fenêtre de connexion avec le motif, note gardée en attente (A5-077).
+  - `SRG-A3-003` : JavaScript retardé de 4 s sur un appareil configuré : accueil public masqué, attente affichée (A5-075).
+  - `SRG-A3-013` : 768 × 1024, 844 × 390, 1023 × 768 : cinq onglets nommés et visibles, compte accessible (A5-078).
+  - `SRG-A3-012`, `SRG-A1-029`, sur build de production : hors ligne servi par le worker de Surga, dernier briefing compris ; `/surga?tab=agenda` rend 200 (A5-079).
+- **En partie :** `SRG-A3-006` (écran « Aujourd'hui » fait, huit fenêtres restantes), `SRG-A3-007` (onglet dans l'adresse fait ; brouillon de note et position de lecture non traités), `SRG-A3-002` (le worker de Surga contrôle la page ; celui de Nopalou s'installe encore et met 547 fichiers en cache), `SRG-A2-009` (presse, annonces, sport, météo, trafic faits ; replis sur erreur de requête restants ailleurs).
+- **Mesures :** typage 0 erreur ; tests du frontend 97 sur 97 ; tests unitaires 161 sur 165 (4 échecs antérieurs). Sondes des lots précédents rejouées en succès.
+- **Limites :** écran sur le serveur de développement ; service worker sur un build de production, une fois ; mise à jour du worker et clic sur une notification réelle non rejoués ; aucun agent tiers.
+- **Décision attendue :** couper l'enregistrement automatique du worker de Nopalou (`register: false`, `frontend-next/next.config.js`), sur `main`, avec rejeu des sondes hors ligne de Nopalou.
+- **Reste :** états d'erreur des fenêtres, brouillons, traceurs (`SRG-A3-009`), page d'accueil légère (D60), portefeuille envoyé au serveur (D36), une source par brique (D53, D57), exploitation (`SRG-A5-006`, `008`, `009`). Détail : `audit/05_PRODUCTION_RESILIENCE/CORRECTIONS_APPLIQUEES.md`, « Cinquième lot ».
+
+### [2026-10-08 — Quatrième lot de corrections] — les P0 du code commun, corrigés sur `main` puis reportés : 3 fiches, aucun push
+- **Objet :** `SRG-A1-004` et la fin de `SRG-A1-005`, qui sont dans le code d'authentification de Nopalou. Décision D62 : correction sur `main` (commits `e3009b82`, `7ee053d3`, `b434a8cb`), report sur `feature/surga` (`0b9e44a4`, `8ce9eacc`), alignement de Surga (`9dcaee1b`).
+- **`SRG-A1-004` (P0), corrigée et rejouée.** Sonde `a5/v70-telephone.js` A5-070. Avant, sur `main` : par `PUT /profil`, 3 écritures sur 5 du numéro d'un tiers acceptées, titulaire en 409, jumeau accepté par la base. Après : 5 sur 5 refusées à l'inscription et par le profil, titulaire servi, jumeau refusé (23505), numéro étranger accepté avec son indicatif. Migration : 0 erreur sur base vide en mode strict ; sur une base portant un doublon, avertissement ou échec selon le mode, aucune donnée modifiée (A5-071).
+- **`SRG-A1-005` (P0), fin de la fiche, corrigée et rejouée.** Sondes A5-072 et A5-073 : un jeton sans version passait encore après la déconnexion (200) ; il est refusé (401), sur les routes de Nopalou comme de Surga ; dans le navigateur, le cookie porte la version et tombe à la déconnexion.
+- **`SRG-A4-003` (P0), corrigée, fonction éteinte.** `a4/h02-whatsapp.js S7` : aucune ligne nouvelle sur le compte du tiers.
+- **Les 19 P0 :** 13 corrigés et rejoués ; `SRG-A1-020` corrigé côté Surga ; `SRG-A4-003` corrigé et éteint ; `SRG-A4-001`, `002` neutralisés ; `SRG-A1-017`, `SRG-A2-004` en partie.
+- **Mesures :** sur `main`, 7 tests nouveaux, typage 0 erreur, suite complète 982 sur 1 008 (3 suites instables, qui passent seules). Sur `feature/surga`, 160 sur 165 (5 échecs antérieurs).
+- **Limites :** aucun agent tiers ; pas de build de production ; état des doublons de numéros en production inconnu (22 dans la base d'audit) ; `SRG-A1-020` ne peut pas se finir sur `main`, où Surga n'existe pas.
+- **Constat nouveau, non corrigé :** `POST /api/auth/deconnexion` accepte un jeton déjà révoqué et incrémente la version de session.
+- **Reste :** replis de lecture, états d'erreur, parcours, service worker, traceurs, page d'accueil légère, portefeuille envoyé au serveur (D36), une source par brique, exploitation. Détail : `audit/05_PRODUCTION_RESILIENCE/CORRECTIONS_APPLIQUEES.md`, « Quatrième lot ».
+
+### [2026-10-08 — Troisième lot de corrections] — purge, comptes supprimés, données sans source, appareil partagé : 10 fiches, 5 commits locaux, aucun push
+- **Objet :** suite du lot « avant production ». Commits `42ae06aa` à `74b7d53b` sur `feature/surga`.
+- **Corrigées et rejouées :**
+  - `SRG-A1-019` (P0), purge selon D39. Sonde `a5/v60-lot3.js` A5-060, compte neuf : 18 lignes dans 13 emplacements avant, 0 après ; 2 paiements d'abonnement gardés sans identifiant ni numéro, 2 abonnements non payés supprimés.
+  - `SRG-A1-028` (P0), appareil partagé. Sonde `ui-session.js` A1-091, par l'interface : rien du premier compte ne reste lisible après sa déconnexion, 0 ligne chez le second, ses saisies non envoyées arrivées sur son propre compte, portefeuille rendu à son retour.
+  - `SRG-A4-014`, `015`, `016` (P1), données sans source. Sonde `a5/u61-sources.js` A5-063, téléphone et bureau : aucune des quinze valeurs écrites dans le code ne s'affiche ; « indisponible » à leur place ; un signalement d'usager s'affiche avec son heure.
+- **Corrigée côté Surga :** `SRG-A1-020` (P0). Tâche horaire `surga_purge_comptes_supprimes` (A5-061) : données gardées pendant les trente jours, supprimées ensuite ; compte témoin intact. Reste l'appel dans la route d'anonymisation, code de Nopalou.
+- **En partie :** `SRG-A1-017` (plus aucune écriture ne réussit sans base ; 7 lectures de repli restent), `SRG-A3-005` (météo et trafic de la colonne de droite lus sur le serveur ; total du mois et heure du prochain rappel non traités), `SRG-A2-009` (météo, sport et trafic faits ; articles, annonces, concours et adresses de secours restent).
+- **Trouvé en chemin, corrigé :** auteur jamais écrit sur les suivis et signalements (`req.user.id`) ; secret de repli dans `demarches.js` ; texte d'erreur PostgreSQL rendu par l'export ; préférences acceptant n'importe quelle liste (plantage de l'accueil) ; bouton « Connexion » sans effet sur l'écran de configuration ; relevé météo de dix heures présenté comme à jour.
+- **Mesures :** typage 0 erreur ; tests du frontend 97 sur 97 ; tests unitaires Surga du backend 153 sur 158 (5 échecs antérieurs, sans rapport). Onze tests réécrits : ils passaient grâce aux valeurs inventées.
+- **Limites :** serveur de développement, pas de build ; source météo et fournisseur de trafic réels non interrogés ; écran de purge non rejoué ; un compte déjà anonymisé n'a plus de numéro, ses lignes rattachées au seul numéro ne sont plus retrouvables ; le portefeuille rangé reste lisible dans le stockage du navigateur ; aucun agent tiers.
+- **Interrupteur ajouté :** `SURGA_TRAFIC_SOURCE_VERIFIEE` (éteint par défaut). À allumer seulement après vérification de ce que le fournisseur mesure à Dakar.
+- **Reste :** `SRG-A1-004`, fin de `SRG-A1-005` et de `SRG-A1-020` (code commun à Nopalou : décision attendue sur la branche) ; replis de lecture ; états d'erreur, parcours, service worker, traceurs, page d'accueil légère ; une source par brique (D53, D57) ; exploitation. Détail : `audit/05_PRODUCTION_RESILIENCE/CORRECTIONS_APPLIQUEES.md`, « Troisième lot ».
+
+### [2026-10-08 — Deuxième lot de corrections] — synchronisation de l'appareil, portefeuille, thème, masquages : 13 fiches, 4 commits locaux, aucun push
+- **Objet :** suite du lot « avant production ». Commits `a49f7b32` à `af741124` sur `feature/surga`.
+- **Corrigées, rejouées dans le navigateur :** `SRG-A2-001` (notes et rappel d'invité gardés à la connexion : 0 sur 2 → 2 sur 2), `SRG-A2-002` (liste de tâches et attributs gardés), `SRG-A2-003` (note visible sur un second appareil), `SRG-A2-006` (dépense dictée : 2 lignes → 1), `SRG-A2-008` (suppression hors ligne tenue), `SRG-A1-021`, `SRG-A1-030` et `SRG-A2-014` (portefeuille vide), `SRG-A3-001` (thème clair), masquage de l'assistant, du micro et du podcast.
+- **En partie ou sans rejeu :** `SRG-A2-004` (dates justes, rappel du jour visible ; notification d'un compte connecté non rejouée), `SRG-A1-028` et `SRG-A2-019` (écrites, non rejouées).
+- **Mesures :** journée type, 12 étapes : 4 en échec avant, 1 après. Export par l'interface : complet. Typage 0 erreur ; tests du frontend 97 sur 97 ; tests unitaires Surga du backend : mêmes 7 échecs qu'avant toute correction.
+- **Limites :** rejeu sur le serveur de développement, pas sur un build ; comptes de test chargés des exécutions passées (constats de A2-015, 022, 024, 026 à lire avec la base) ; aucun agent tiers n'a validé.
+- **Reste :** `SRG-A1-004`, `SRG-A1-020`, fin de `SRG-A1-005`, `017`, `019`, données sans source à l'écran, interface, exploitation. Détail : `audit/05_PRODUCTION_RESILIENCE/CORRECTIONS_APPLIQUEES.md`.
+
+### [2026-10-08 — Premier lot de corrections après la campagne d'audit] — 19 fiches touchées, 6 commits locaux, aucun push
+- **Objet :** début du lot « avant production » de `audit/05_PRODUCTION_RESILIENCE/PLAN_ACTION_FINAL.md`. Commits `84c4bef5` à `2fb779e9` sur `feature/surga`. Backend et typage du frontend ; aucun écran modifié ; aucune action sur la production.
+- **Corrigées, sonde en échec avant et en succès après :** `SRG-A1-027` (tsc 5 → 0), `SRG-A1-001` (notes et rappels 500 → 201, migration aux types de la production), `SRG-A1-008`, `009`, `010` (actions et lectures sans jeton : 200 → 401), `SRG-A1-018` (export 0 → complet), `SRG-A1-025` et `SRG-A5-002`, `003`, `004` (rappels), `SRG-A5-001` (25 synchronisations simultanées : 25 erreurs en 15 s → 25 réussites en 0,4 s).
+- **En partie :** `SRG-A1-005` (cookie de session sans version encore accepté), `SRG-A1-019` (D39 non fait), `SRG-A1-017` (3 écritures publiques annoncent encore un succès sans base), `SRG-A5-005`.
+- **Interrupteurs éteints par défaut :** WhatsApp (`SRG-A4-001`, `002` neutralisées : 0 phrase sur 9 prise par Surga), assistant et modèle de langage (`SRG-A4-018`), podcast (`SRG-A4-017`).
+- **Non-régression :** isolation entre comptes, coupure de la base, verrou des rappels : tenus. Tests unitaires Surga : 5 échecs sur 158, contre 7 avant, aucun nouveau. Schéma face au code : 9 écarts, contre 17.
+- **Ce qui n'est pas fait :** validation par un agent tiers ; rejeu dans le navigateur ; `next build` complet ; masquage de l'assistant, de la voix et du podcast à l'écran ; les P0 `SRG-A1-004`, `020`, `028`, `SRG-A2-001` à `004`, `SRG-A3-001`. Détail : `audit/05_PRODUCTION_RESILIENCE/CORRECTIONS_APPLIQUEES.md`.
+
+### [2026-10-07 — Campagne d'audit pré-production, Agent 5] — Audit 5 exécuté, campagne close : NO-GO (aucun code modifié)
+- **Objet :** consolider les quatre audits, rejouer les points critiques, tester les conditions de production et décider. HEAD `792b133f`, environnement isolé. Ni correction, ni commit, ni push.
+- **Méthode :** 35 tests des Audits 1 à 4 rejoués (backend isolé ; interface sur un build de production fait hors dépôt) ; 20 tests propres : charge à 1, 10, 100 et 1 000 visiteurs simultanés, base lente, base coupée puis revenue, ordonnanceur de rappels chargé dans la sonde, sauvegarde applicative puis restauration, migrations sur base vide ; lecture de `render.yaml`, des alertes et des journaux ; modèle de coûts.
+- **Décision : NO-GO.** 116 anomalies ouvertes : 19 P0, 62 P1, 30 P2, 5 P3. 16 P0 rejoués, 16 reproduits. Neuf critères de NO-GO démontrés.
+- **Nouveau :** 12 fiches `SRG-A5-001` à `012`. P1 : 20 synchronisations simultanées figent l'API 15 s (`sync.js`) ; hébergement décrit en offre gratuite, tâches planifiées dans le processus web ; aucune alerte propre à Surga ; déploiement automatique de `main` sans préproduction ni retour arrière ; sauvegarde de production non établie. P2 : rafale de rappels récurrents, rappel mensuel faux en fin de mois, rappel sans compte envoyé à un tiers (latent), rappel sans heure à minuit, trafic à 2,1 s.
+- **Mesures (poste de bureau) :** ouverture, 95e centile par visiteur : 2,1 s, 2,2 s, 2,9 s, 23,2 s ; 100 appels par seconde sans erreur ; 250 erreurs sur 500 à 100 utilisateurs connectés ; mémoire 128 à 640 Mo ; premier chargement 606 Ko.
+- **Coûts (calculés) :** 264 000 FCFA par mois à 10 000 utilisateurs actifs sans message WhatsApp sortant ; 72 à 180 FCFA de plus par utilisateur avec un message WhatsApp sortant par jour ; assistant sans plafond : 18 400 FCFA par adresse et par jour en cas d'abus.
+- **Production (lecture seule, autorisée par D58) :** sauvegarde quotidienne, 0 réussite sur 16 exécutions depuis le 25 septembre (`SRG-A5-010`) ; tâches exécutées contre la base de production depuis un poste Windows, 29 tables `surga_*` et données d'essai déjà présentes (`SRG-A5-011`) ; limite de débit non liée au visiteur, 997, 985, 993, 998 pour quatre appels du même poste (`SRG-A5-012`) ; colonnes de `SRG-A1-001` présentes en production, hors migrations ; index unique sur le téléphone présent ; aller-retour à la base 0,1 s à chaud ; Surga hors ligne (404).
+- **Décisions (D51 à D61) :** application seule au lancement ; WhatsApp, assistant et voix après ; podcast retiré ; briques sans source gardées sur des sources fiables, « indisponible » en attendant ; autre source météo ; essais réels après les P0 ; page d'accueil légère séparée de l'application ; liste blanche approuvée. Reste avant production : 18 P0 et 54 P1.
+- **Ce qui n'est pas fait :** aucune correction. Production non observée. Fournisseurs, téléphones et utilisateurs réels : aucun. Thème sombre et purge par l'interface : rejeu non concluant.
+- **Livrables :** `audit/05_PRODUCTION_RESILIENCE/` (`VALIDATION_FINALE_SURGA.md`, `AUDIT.md`, `CORRECTIONS.md`, `MATRICE_GO_NO_GO.md`, `MATRICE_ANOMALIES_FINALE.md`, `PLAN_ACTION_FINAL.md`, `MODELE_COUTS.md`, `MATRICE_RESILIENCE.md`, `MATRICE_OBSERVABILITE.md`, `PREUVES/`), `audit/HANDOVER/HANDOVER_AGENT_5.md`, sondes `scripts/audit/surga/a5/`.
+
+### [2026-10-07 — Campagne d'audit pré-production, Agent 4] — Audit 4 exécuté : assistant, données, sources, voix, WhatsApp, résilience (aucun code modifié)
+- **Objet :** établir si une demande comprise par Surga produit le bon résultat, avec les bonnes données, les bonnes sources, les bonnes autorisations et une écriture vérifiable. HEAD `792b133f`, environnement isolé. Ni correction, ni commit, ni push.
+- **Méthode :** 67 phrases données aux quatre interprètes du produit ; 96 messages WhatsApp joués par le point d'entrée réel du bot, envois collectés, base lue à chaque étape ; services de presse, météo et sport appelés avec leurs sources réelles (liste blanche de sources publiques sans clé) ; routes du backend jouées avec tous les fournisseurs coupés.
+- **Résultat :** 36 tests, 2 `PASS`, 10 `PARTIAL`, 24 `FAIL`, 5 `BLOCKED`. 24 anomalies `SRG-A4-001` à `SRG-A4-024` : 3 P0, 15 P1, 5 P2, 1 P3.
+- **P0 (WhatsApp, absents de `main` aujourd'hui) :**
+  - `SRG-A4-001` : un client de Nopalou qui écrit « Bonjour », « commande », « appartement à louer à Dakar » reçoit une réponse de Surga, puis « quota atteint… Surga Premium (1 500 FCFA/mois) » dès le troisième message.
+  - `SRG-A4-002` : un « oui » sans action en attente ouvre le parcours marchand de Nopalou ; les messages suivants créent une boutique « Note 4400 taxi » et un second compte sur le numéro.
+  - `SRG-A4-003` : depuis +33 7 00 00 02 01, une dépense est écrite sur le compte +221 70 000 02 01 (recherche du compte sur les neuf derniers chiffres).
+- **P1 prouvés :**
+  - `SRG-A4-004` : « Bonjour » et « oui » comptent dans le plafond de 2 ; la confirmation est refusée ; l'action attend sans expirer et s'écrit 26 heures plus tard sur un simple « oui ».
+  - `SRG-A4-005` : « annule », « corrige », « 2 », « Oui. », « oui merci » non compris ; une seconde commande efface la première sans prévenir.
+  - `SRG-A4-006` : si l'accusé ne part pas, « Veuillez réessayer » est envoyé alors que la ligne est écrite : deux dépenses à la relance.
+  - `SRG-A4-007` : une écriture faite par WhatsApp n'apparaît pas dans l'application (« Votre carnet de notes est vide »).
+  - `SRG-A4-008` : texte dicté et numéro au journal du backend ; fichier audio déposé chez l'hébergeur d'images avant analyse.
+  - `SRG-A4-009`, `SRG-A4-010`, `SRG-A4-011` : « sept mille » lu 7, « trois mille cinq cents » lu 3 ; « Note code porte 4521 » proposé comme dépense ; « Note appeler la police » ouvre les concours ; « vendredi », « le 15 novembre », « huit heures » remplacés par aujourd'hui ou 09:00.
+  - `SRG-A4-012` : l'assistant répond « 28°C Ensoleillé • Marée haute 17h45 » quel que soit le temps (fonctions importées inexistantes).
+  - `SRG-A4-013` : sans réponse du modèle, un discours de baptême devient un discours de réunion, sous « Réponse générée par l'assistant Surga ».
+  - `SRG-A4-014` : quatre rencontres de Ligue 1 sénégalaise et deux scores écrits dans le code, datés chaque jour d'hier et d'avant-hier.
+  - `SRG-A4-015`, `SRG-A4-016` : marées (deux valeurs), qualité de l'air (deux valeurs) et trafic (modèle horaire) sans source, présentés comme des mesures.
+  - `SRG-A4-017` : le podcast annonce 3 minutes et sert 3 secondes de silence.
+  - `SRG-A4-018` : sans jeton, 80 demandes sur 80 déclenchent un appel au modèle ; texte de 96 000 caractères transmis entier.
+- **Conformes :** moteur de calcul exact, identique côté serveur et côté téléphone, sans modèle de langage ; aucune écriture WhatsApp sans question ; même identifiant de message traité une seule fois ; douze flux de presse en marche, briefing de moins d'une heure, sourcé, daté ; température conforme à la source ; aucune consigne glissée dans une phrase ne contourne la confirmation.
+- **Non vérifié :** transcription réelle, réponses réelles du modèle, WhatsApp réel, trafic du fournisseur, lecture à voix haute, coûts réels, production. Le modèle `gemini-1.5-flash` nommé dans le code est annoncé retiré par son éditeur : à contrôler par un appel.
+- **Livrables :** `audit/04_IA_VOIX_WHATSAPP_DONNEES/` (`AUDIT.md`, `CORRECTIONS.md`, quatre matrices, `PREUVES/`), `audit/HANDOVER/HANDOVER_AGENT_4.md`. Sondes : `scripts/audit/surga/a4/`.
+- **Écart de méthode :** deux sondes ont interrogé des sources publiques sans clé à travers une liste blanche (`guard-sources.js`) ; `docs/METHODOLOGIE-AUDIT.md` ne le prévoit pas. À valider ou refuser.
+
+### [2026-10-07 — Campagne d'audit pré-production, Agent 3] — Audit 3 exécuté : frontend, ergonomie, mobile, application installable, accessibilité (aucun code modifié)
+- **Objet :** établir par des tests dans un navigateur si le frontend de Surga tient sur téléphone, au quotidien, avec un réseau moyen. HEAD `792b133f`, environnement isolé. Le build de production du dépôt échouant toujours (`SRG-A1-027`, rejoué), les mesures portent sur un build fait dans une copie hors dépôt, identique au commit sauf la vérification des types. Ni correction, ni commit, ni push.
+- **Résultat :** 47 tests, 4 `PASS`, 23 `PARTIAL`, 20 `FAIL`. 23 anomalies `SRG-A3-001` à `SRG-A3-023` : 1 P0, 12 P1, 8 P2, 2 P3.
+- **P0 :** `SRG-A3-001`, thème sombre du téléphone : le texte passe au blanc sur des surfaces restées blanches (contraste 1,04:1) ; montants de Sama Xaalis et commandes de l'Agenda illisibles.
+- **P1 prouvés :**
+  - `SRG-A3-002` : `/surga` est contrôlée par le service worker racine de Nopalou, qui met en cache 547 fichiers à la première visite (64,8 Mo de stockage sur le poste d'audit ; 9,9 Mo calculés pour un build issu du dépôt).
+  - `SRG-A3-003` : un utilisateur déjà configuré revoit la page d'accueil publique 3,1 s en 4G lente simulée et 8,5 s en 3G ; briefing à 5,8 s et 14,1 s ; décalage de mise en page 1,12.
+  - `SRG-A3-004` : 602 Ko au premier chargement (budget écrit : 50), 309 Ko de JavaScript (budget proposé : 120), dont 130 Ko de la mise en page de Nopalou et 177 Ko de script Google ; 23 rapports de politique de sécurité par page.
+  - `SRG-A3-005` : sur ordinateur, « 28°C • Ensoleillé », « VDN fluide 14 min » et « Mis à jour il y a 4 min » sont écrits dans le code.
+  - `SRG-A3-006` : attente et panne affichées comme « Aucune brève disponible », « Aucune boutique trouvée » ; squelette sans fin ; aucune relance ; limite de débit (429) muette.
+  - `SRG-A3-007` : onglets et fenêtres absents de l'adresse ; le bouton retour fait quitter Surga et perd un brouillon.
+  - `SRG-A3-008` : session perdue, l'en-tête affiche toujours le prénom et la note saisie est marquée envoyée, sans ligne en base.
+  - `SRG-A3-009` : scripts de Google Analytics et de DoubleClick chargés sans accord, sous la mention « Données chiffrées & privées ».
+  - `SRG-A3-010`, `SRG-A3-011` : fenêtres sans gestion du focus ni d'Échap, 1 champ étiqueté sur 15, 358 textes sous le seuil de contraste AA.
+  - `SRG-A3-012` : hors ligne porté par le worker de Nopalou ; worker de Surga jamais mis à jour ; `/surga?tab=…` hors ligne affiche la page de la caisse.
+  - `SRG-A3-013` : de 600 à 1 023 px, menu coupé, sans libellés, compte et réglages inaccessibles.
+- **Conformes :** aucun débordement en largeur de 320 à 1 440 px ; 2 à 4 gestes pour noter, dépenser, calculer, rappeler ; états vides des Notes et de l'Agenda ; focus visible au clavier ; zoom libre ; mouvement réduit respecté ; fenêtres des briques chargées à la demande (8 à 27 Ko).
+- **Livrables :** `audit/03_FRONT_UX_PWA/AUDIT.md`, `CORRECTIONS.md` (23 fiches), `MATRICE_RESPONSIVE.md`, `MATRICE_PERFORMANCE.md`, `MATRICE_ETATS_UI.md`, `PREUVES/` (377 fichiers, 326 captures), `audit/HANDOVER/HANDOVER_AGENT_3.md`. Sondes rejouables dans `scripts/audit/surga/a3/`.
+- **Ce qui n'est pas fait :** aucune correction. Téléphone réel, clavier virtuel, lecteur d'écran, iPhone, installation réelle, tests avec des personnes, benchmark : non réalisés. Temps mesurés avec réseau et processeur ralentis par le navigateur, sur un poste de bureau : ordres de grandeur. Poids réel du précache et temps de l'hébergeur : à mesurer en production (Agent 5).
+
+### [2026-10-07 — Campagne d'audit pré-production, Agent 2] — Audit 2 exécuté : fonctionnel, E2E, parcours utilisateur (aucun code modifié)
+- **Objet :** jouer dans l'interface réelle (Chromium, 390 px et 1440 px) les parcours qu'un utilisateur fait chaque jour, et lire la base à chaque étape. HEAD `792b133f`, environnement isolé. Ni correction, ni commit, ni push.
+- **Résultat :** 72 tests, 13 `PASS`, 28 `PARTIAL`, 30 `FAIL`, 1 `BLOCKED` (création de compte par WhatsApp). 21 anomalies : 4 P0, 13 P1, 3 P2, 1 P3.
+- **P0 prouvés :**
+  - `SRG-A2-001` : un invité crée des notes et un rappel, puis se connecte : ils ne sont jamais envoyés et disparaissent de l'appareil (`/sync` répond « succès » en invité, le client les marque synchronisés, puis remplace sa liste par celle du serveur, vide).
+  - `SRG-A2-002` : une liste de tâches est vidée après son enregistrement ; catégorie, couleur, épingle, priorité et lieu sont perdus (`/sync` n'écrit que titre et contenu, le client remplace le local par la réponse).
+  - `SRG-A2-003` : sur un second appareil, notes et agenda sont vides alors que la base les contient (aucune lecture du serveur sans envoi).
+  - `SRG-A2-004` : pour un compte connecté, la date d'un rappel revient au format `2026-10-07T00:00:00.000Z` : rappel absent de « Aujourd'hui », aucune notification ; le serveur journalise « succès » sans envoi.
+- **P1 marquants :** « Note 2 500 FCFA de taxi » lu 2 FCFA (`SRG-A2-005`) ; dépenses dictées doublées en base (`SRG-A2-006`) ; 7÷2 affiché « 4 FCFA » sous « Résultat exact » (`SRG-A2-007`) ; sources en panne : articles de janvier 2025 datés « Hier », score de football daté d'hier, « Mis à jour il y a 4 min » écrit dans le code (`SRG-A2-009`) ; briefing « reçu à l'heure choisie » et alertes immobilières « en moins de 2 minutes » sans aucun envoi (`SRG-A2-010`) ; session non reconnue si `SESSION_SECRET` ≠ `JWT_SECRET` (`SRG-A2-013`) ; sur mobile, aucune entrée vers Démarches, Emploi, Vidéos, Podcast (`SRG-A2-015`) ; 20 fiches de démarche au statut brouillon servies comme « officielles vérifiées » (`SRG-A2-016`).
+- **Conformes :** cycle d'une note de texte sur un appareil, création, « terminé » et suppression d'un rappel, déconnexion, nom du profil, option audio, profil professionnel et CV en PDF, bonnes adresses, shopping, lecture d'une radio.
+- **Livrables :** `audit/02_FONCTIONNEL_E2E/AUDIT.md`, `MATRICE_TESTS_E2E.md`, `CORRECTIONS.md` (21 fiches), `PREUVES/` (285 fichiers, 181 captures), `audit/HANDOVER/HANDOVER_AGENT_2.md`. Sondes rejouables dans `scripts/audit/surga/a2/`.
+- **Ce qui n'est pas fait :** aucune correction. Sources réelles, voix réelle, livraison WhatsApp et push : non vérifiables sous garde réseau (Agent 4). Notifications et hors ligne à rejouer sur un build de production, qui échoue (`SRG-A1-027`).
+
+### [2026-10-07 — Campagne d'audit pré-production, Agent 1] — Audit 1 exécuté : architecture, sécurité, comptes, données, infrastructure (aucun code modifié)
+- **Objet :** exécuter les 106 tests de la matrice dans l'environnement isolé (backend 4100, frontend 3001, PostgreSQL local 54329, garde réseau), sur HEAD `fdb4fbf4`. Ni correction, ni commit, ni push.
+- **Résultat :** 104 tests exécutés, 33 `PASS`, 28 `PARTIAL`, 43 `FAIL`, 2 non exécutés (A1-088, A1-107). 36 anomalies : 11 P0, 14 P1, 9 P2, 2 P3.
+- **P0 prouvés :**
+  - `SRG-A1-001` : `POST /notes`, `PUT /notes/:id` et `POST /agenda` en 500 pour tout utilisateur connecté ; 8 colonnes écrites par le code sont absentes de `migrate-inline.js`.
+  - `SRG-A1-004` : `PUT /api/auth/profil` accepte le numéro d'un tiers sous un autre format ; le titulaire reçoit 409 à sa demande d'OTP ; une écriture WhatsApp part sur un autre compte.
+  - `SRG-A1-005` : `tokenOptional` ne contrôle ni `jwt_version` ni la suspension ; un jeton révoqué lit, écrit et supprime sur 40 routes.
+  - `SRG-A1-008` et `SRG-A1-009` : suppression d'un document Emploi par simple en-tête, bascule et suppression d'une alerte immobilière, sans jeton.
+  - `SRG-A1-017` : base en erreur, la purge répond « définitivement supprimé », l'export renvoie un fichier vide, 9 écritures annoncent un succès, `verifierToken` laisse passer les jetons révoqués.
+  - `SRG-A1-018`, `SRG-A1-019`, `SRG-A1-020` : export limité aux préférences, purge incomplète, aucune donnée Surga supprimée avec le compte.
+  - `SRG-A1-027` : `next build` échoue, `tsc --noEmit` renvoie 5 erreurs dans des fichiers Surga.
+  - `SRG-A1-028` : sur un appareil partagé, les données locales d'un compte sont écrites sur le suivant.
+- **Rejeu des anomalies historiques :** export et purge par `?phone=` tenus ; activation Premium sans paiement tenue ; services reconnectés à la base tenus pour le chemin nominal ; révocation de session et unicité du numéro en régression.
+- **Écarts avec les sessions précédentes :** « 158/158 tests PASS » et « tsc 0 erreur » non reproduits (156 tests passent sans base, 152 avec une base migrée).
+- **Livrables :** `audit/01_ARCHITECTURE_SECURITE/AUDIT.md`, `CORRECTIONS.md` (36 fiches), `PREUVES/` (111 fichiers), `audit/HANDOVER/HANDOVER_AGENT_1.md`. Sondes rejouables dans `scripts/audit/surga/`.
+- **Ce qui n'est pas fait :** aucune correction. Parcours par l'interface limités à la connexion. Rien de vérifié sur la base ni sur l'hébergeur de production.
+
 ### [2026-10-07 — Campagne d'audit pré-production, Agent 0] — Préparation de l'Audit 1 (aucun code modifié)
 - **Objet :** préparer l'audit d'exécution « Architecture, sécurité, comptes, données, infrastructure ». Ni correction ni test : seulement le périmètre, la matrice, les données de test et les critères.
 - **Livrables :**
