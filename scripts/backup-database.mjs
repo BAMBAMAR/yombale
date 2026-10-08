@@ -18,6 +18,7 @@ import path from 'path'
 import zlib from 'zlib'
 import crypto from 'crypto'
 import { pipeline } from 'stream/promises'
+import { once } from 'events'
 import { fileURLToPath } from 'url'
 import sqlDump from '../backend/lib/sqlDump.js'
 
@@ -114,6 +115,11 @@ async function uploadToS3(filePath, fileName) {
 function purgerAnciensBackups() {
   try {
     if (!fs.existsSync(BACKUP_DIR)) return
+    // Archives provisoires laissées par une exécution tuée en cours de route (plus d'un jour)
+    for (const f of fs.readdirSync(BACKUP_DIR).filter(n => n.endsWith('.sql.gz.partiel'))) {
+      const p = path.join(BACKUP_DIR, f)
+      if (Date.now() - fs.statSync(p).mtimeMs > 24 * 3600 * 1000) fs.unlinkSync(p)
+    }
     const files = fs.readdirSync(BACKUP_DIR)
       .filter(f => f.startsWith('backup-nopalou-') && f.endsWith('.sql.gz'))
       .map(f => ({
@@ -144,6 +150,9 @@ function purgerAnciensBackups() {
  */
 // AUD-031 : sérialisation déplacée dans backend/lib/sqlDump.js (testable) et corrigée pour les colonnes tableau
 const formaterValeurSql = sqlDump.formaterValeurSql
+
+// SRG-A5-010 : nombre de lignes lues à la fois dans une table (la mémoire ne dépend plus de la taille de la base)
+const LIGNES_PAR_LECTURE = 500
 
 // Décodeur de types : dates renvoyées telles quelles par PostgreSQL (chaînes), autres types inchangés
 const OID_DATES = new Set([1082, 1114, 1184]) // date, timestamp, timestamptz
@@ -178,6 +187,10 @@ export async function executerSauvegarde({ destination = 'both', label = 'auto' 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
   const client = await pool.connect()
+  // L'archive s'écrit sous un nom provisoire : un export interrompu ne laisse pas un fichier qui passerait pour une sauvegarde.
+  const gzTempPath = `${gzFilePath}.partiel`
+  let gzStream = null
+  let fileWriteStream = null
   const report = {
     timestamp: new Date().toISOString(),
     baseName,
@@ -214,12 +227,20 @@ export async function executerSauvegarde({ destination = 'both', label = 'auto' 
     console.log(`🔍 Schéma inspecté : ${tables.length} tables actives, ${sequences.length} séquences détectées.\n`)
 
     // 3. Préparation du flux de compression gzip et calcul SHA-256
-    const gzStream = zlib.createGzip({ level: 9 })
-    const fileWriteStream = fs.createWriteStream(gzFilePath)
+    gzStream = zlib.createGzip({ level: 9 })
+    fileWriteStream = fs.createWriteStream(gzTempPath)
     const hashStream = crypto.createHash('sha256')
 
     gzStream.on('data', chunk => hashStream.update(chunk))
     const streamPromise = pipeline(gzStream, fileWriteStream)
+    // Sans ce gestionnaire, une erreur d'écriture pendant l'export resterait sans destinataire jusqu'à l'attente finale.
+    streamPromise.catch(() => {})
+
+    // SRG-A5-010 : écrire() attend que le compresseur ait absorbé ce qu'il a reçu. Sans cette attente, tout le
+    // texte SQL d'une table s'accumulait en mémoire avant d'être compressé.
+    const ecrire = async (texte) => {
+      if (!gzStream.write(texte)) await once(gzStream, 'drain')
+    }
 
     // En-tête SQL de sécurité
     gzStream.write(`-- =====================================================================\n`)
@@ -237,6 +258,10 @@ export async function executerSauvegarde({ destination = 'both', label = 'auto' 
     gzStream.write(`SET session_replication_role = 'replica';\n\n`)
 
     let totalRowsExported = 0
+
+    // SRG-A5-010 : une seule image de la base pour tout l'export (les tables restent cohérentes entre elles), en
+    // lecture seule ; c'est aussi ce qui permet de lire chaque table par un curseur.
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY')
 
     // 4. Exportation table par table
     for (let i = 0; i < tables.length; i++) {
@@ -268,19 +293,30 @@ export async function executerSauvegarde({ destination = 'both', label = 'auto' 
 
       // AUD-031 : date / timestamp / timestamptz lus en TEXTE (pas en objet Date) : conserve la précision à la
       // microseconde et évite tout décalage de fuseau ou de jour lors de la restauration.
-      const rowsRes = await client.query({ text: `SELECT * FROM "${table}";`, types: typesDatesBrutes })
+      // SRG-A5-010 : la table est lue par lots, par un curseur. La lire d'un seul bloc demandait plus de mémoire
+      // que n'en a l'instance (676 Mo mesurés pour une base de 249 Mo) : la tâche ne se terminait jamais.
       const colsEscaped = columns.map(c => `"${c}"`).join(', ')
+      const BATCH_SIZE = 100 // lignes par INSERT, pour la vitesse de restauration
+      let lignesTable = 0
+      await client.query(`DECLARE sauvegarde_curseur NO SCROLL CURSOR FOR SELECT * FROM "${table}";`)
+      for (;;) {
+        const lot = await client.query({ text: `FETCH ${LIGNES_PAR_LECTURE} FROM sauvegarde_curseur;`, types: typesDatesBrutes })
+        if (lot.rows.length === 0) break
+        for (let j = 0; j < lot.rows.length; j += BATCH_SIZE) {
+          const batch = lot.rows.slice(j, j + BATCH_SIZE)
+          const valuesList = batch.map(row => {
+            const vals = columns.map(col => formaterValeurSql(row[col], udtMap[col]))
+            return `(${vals.join(', ')})`
+          }).join(',\n  ')
 
-      // Batching d'inserts pour maximiser les performances de restauration
-      const BATCH_SIZE = 100
-      for (let j = 0; j < rowsRes.rows.length; j += BATCH_SIZE) {
-        const batch = rowsRes.rows.slice(j, j + BATCH_SIZE)
-        const valuesList = batch.map(row => {
-          const vals = columns.map(col => formaterValeurSql(row[col], udtMap[col]))
-          return `(${vals.join(', ')})`
-        }).join(',\n  ')
-
-        gzStream.write(`INSERT INTO "${table}" (${colsEscaped}) VALUES\n  ${valuesList}\n  ON CONFLICT DO NOTHING;\n`)
+          await ecrire(`INSERT INTO "${table}" (${colsEscaped}) VALUES\n  ${valuesList}\n  ON CONFLICT DO NOTHING;\n`)
+        }
+        lignesTable += lot.rows.length
+      }
+      await client.query('CLOSE sauvegarde_curseur;')
+      // Le décompte et la lecture portent sur la même image de la base : un écart signale une archive incomplète.
+      if (lignesTable !== rowCount) {
+        throw new Error(`Sauvegarde incomplète : table ${table}, ${lignesTable} lignes écrites pour ${rowCount} comptées`)
       }
 
       totalRowsExported += rowCount
@@ -292,6 +328,7 @@ export async function executerSauvegarde({ destination = 'both', label = 'auto' 
     }
 
     console.log(`\n✅ 100% des tables exportées avec succès (${totalRowsExported} lignes).`)
+    await client.query('COMMIT')
 
     // 5. Sauvegarde et réalignement des séquences (auto-incréments)
     gzStream.write(`\n-- ---------------------------------------------------------------------\n`)
@@ -317,6 +354,7 @@ export async function executerSauvegarde({ destination = 'both', label = 'auto' 
 
     // Attente finalisation écriture
     await streamPromise
+    fs.renameSync(gzTempPath, gzFilePath)
 
     // Calcul empreinte SHA-256
     const sha256Digest = hashStream.digest('hex')
@@ -349,6 +387,15 @@ export async function executerSauvegarde({ destination = 'both', label = 'auto' 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
 
     return report
+  } catch (err) {
+    // La transaction de lecture est refermée et l'archive provisoire retirée.
+    await client.query('ROLLBACK').catch(() => {})
+    if (gzStream) gzStream.destroy()
+    if (fileWriteStream && !fileWriteStream.closed) {
+      await new Promise((resolve) => { fileWriteStream.once('close', resolve); fileWriteStream.destroy() })
+    }
+    try { if (fs.existsSync(gzTempPath)) fs.unlinkSync(gzTempPath) } catch { /* retirée à la main si le système la tient encore */ }
+    throw err
   } finally {
     client.release()
     await pool.end()
