@@ -4,7 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { tokenOptional } = require('../../middlewares/auth');
+const { tokenOptional } = require('../../middlewares/surga-auth');
 const {
   CATEGORIES_PLACES,
   TAGS_AMBIANCE,

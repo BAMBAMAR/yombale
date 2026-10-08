@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { tokenOptional } = require('../../middlewares/auth');
+const { tokenOptional } = require('../../middlewares/surga-auth');
 const { getMeteo, VILLES_SENEGAL } = require('../../services/surga/meteo-service');
 
 // GET /api/surga/meteo

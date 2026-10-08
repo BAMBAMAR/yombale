@@ -4,7 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { tokenOptional } = require('../../middlewares/auth');
+const { tokenOptional } = require('../../middlewares/surga-auth');
 const {
   QUARTIERS_DAKAR,
   parserRechercheImmoNaturelle,
@@ -249,8 +249,13 @@ router.patch('/immo/alertes/:id/toggle', tokenOptional, async (req, res) => {
     const userId = req.user?.userId || req.user?.id;
     const { id } = req.params;
 
+    // SRG-A1-009 : sans session, aucune alerte ne peut être modifiée.
+    if (!userId) {
+      return res.status(401).json({ success: false, requireAuth: true, error: 'Connexion requise pour modifier une alerte.' });
+    }
+
     const modifiee = await basculerAlerteImmo(id, userId);
-    if (!modifiee && userId) {
+    if (!modifiee) {
       return res.status(404).json({
         success: false,
         error: 'Alerte introuvable ou non autorisée.',
@@ -280,8 +285,13 @@ router.delete('/immo/alertes/:id', tokenOptional, async (req, res) => {
     const userId = req.user?.userId || req.user?.id;
     const { id } = req.params;
 
+    // SRG-A1-009 : sans session, aucune alerte ne peut être supprimée.
+    if (!userId) {
+      return res.status(401).json({ success: false, requireAuth: true, error: 'Connexion requise pour supprimer une alerte.' });
+    }
+
     const supprime = await supprimerAlerteImmo(id, userId);
-    if (!supprime && userId) {
+    if (!supprime) {
       return res.status(404).json({
         success: false,
         error: 'Alerte introuvable ou vous n avez pas les droits pour la supprimer.',

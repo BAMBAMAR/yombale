@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { tokenOptional, verifierToken } = require('../../middlewares/auth');
+const { tokenOptional, verifierToken } = require('../../middlewares/surga-auth');
 const { pool } = require('../../models/db');
 const {
   LISTE_EQUIPES_DISPONIBLES,

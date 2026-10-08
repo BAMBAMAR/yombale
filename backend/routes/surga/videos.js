@@ -4,7 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { verifierToken, tokenOptional } = require('../../middlewares/auth');
+const { verifierToken, tokenOptional } = require('../../middlewares/surga-auth');
 const {
   getSources,
   getDernieresVideos,

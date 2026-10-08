@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const { pool } = require('../../models/db');
-const { tokenOptional } = require('../../middlewares/auth');
+const { tokenOptional } = require('../../middlewares/surga-auth');
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -116,18 +116,20 @@ router.post('/sync', tokenOptional, async (req, res) => {
 
       await client.query('COMMIT');
 
-      // Récupération de l'état consolidé
-      const freshNotes = await pool.query(
+      // Récupération de l'état consolidé.
+      // SRG-A5-001 : ces lectures passent par la connexion déjà prise. Les demander au groupe (pool.query) pendant
+      // que cette requête en tient une bloquait toute l'API dès 20 synchronisations simultanées.
+      const freshNotes = await client.query(
         'SELECT * FROM surga_notes WHERE user_id = $1 ORDER BY updated_at DESC',
         [userId]
       );
 
-      const freshDepenses = await pool.query(
+      const freshDepenses = await client.query(
         'SELECT * FROM surga_depenses WHERE user_id = $1 ORDER BY date_depense DESC, created_at DESC',
         [userId]
       );
 
-      const freshAgenda = await pool.query(
+      const freshAgenda = await client.query(
         'SELECT * FROM surga_agenda WHERE user_id = $1 ORDER BY date_evenement ASC, heure_evenement ASC NULLS LAST',
         [userId]
       );

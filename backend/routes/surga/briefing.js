@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../../models/db');
-const { tokenOptional, verifierToken } = require('../../middlewares/auth');
+const { tokenOptional, verifierToken } = require('../../middlewares/surga-auth');
 const {
   collecterTousLesFlux,
   getBriefingItems,

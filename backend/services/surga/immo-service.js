@@ -547,11 +547,12 @@ async function listerAlertesImmo(userId) {
  */
 async function basculerAlerteImmo(alerteId, userId) {
   if (pool) {
-    const query = userId
-      ? `UPDATE surga_alertes_immo SET actif = NOT actif, updated_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *`
-      : `UPDATE surga_alertes_immo SET actif = NOT actif, updated_at = NOW() WHERE id = $1 RETURNING *`;
-    const params = userId ? [alerteId, userId] : [alerteId];
-    const res = await pool.query(query, params);
+    // SRG-A1-009 : jamais de mise à jour sans propriétaire.
+    if (!userId) return null;
+    const res = await pool.query(
+      `UPDATE surga_alertes_immo SET actif = NOT actif, updated_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *`,
+      [alerteId, userId]
+    );
     return res.rows[0] || null;
   }
   return null;
@@ -565,14 +566,15 @@ async function basculerAlerteImmo(alerteId, userId) {
  */
 async function supprimerAlerteImmo(alerteId, userId) {
   if (pool) {
-    const query = userId
-      ? `DELETE FROM surga_alertes_immo WHERE id = $1 AND user_id = $2 RETURNING id`
-      : `DELETE FROM surga_alertes_immo WHERE id = $1 RETURNING id`;
-    const params = userId ? [alerteId, userId] : [alerteId];
-    const res = await pool.query(query, params);
+    // SRG-A1-009 : jamais de suppression sans propriétaire.
+    if (!userId) return false;
+    const res = await pool.query(
+      `DELETE FROM surga_alertes_immo WHERE id = $1 AND user_id = $2 RETURNING id`,
+      [alerteId, userId]
+    );
     return res.rowCount > 0;
   }
-  return true;
+  return false;
 }
 
 /**

@@ -4,7 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { verifierToken } = require('../../middlewares/auth');
+const { verifierToken } = require('../../middlewares/surga-auth');
 const {
   exporterDonneesUtilisateur,
   supprimerDonneesUtilisateur,

@@ -4,7 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { tokenOptional, verifierToken } = require('../../middlewares/auth');
+const { tokenOptional, verifierToken } = require('../../middlewares/surga-auth');
 const {
   getCataloguePlans,
   verifierStatutPremium,
@@ -35,10 +35,14 @@ router.get('/abonnements/plans', (req, res) => {
  */
 router.get('/abonnements/mon-statut', tokenOptional, async (req, res) => {
   try {
+    // SRG-A1-010 : le statut est celui du compte de la session. Un numéro passé en paramètre n'identifie personne :
+    // il permettait de lire sans jeton l'abonnement d'un tiers, y compris avec un numéro partiel ou un joker.
     const userId = req.user?.userId;
-    const phone = req.query.phone;
+    if (!userId) {
+      return res.json({ success: true, estPremium: false, plan: null, guest: true });
+    }
 
-    const statut = await verifierStatutPremium({ userId, phone });
+    const statut = await verifierStatutPremium({ userId });
     return res.json({
       success: true,
       ...statut,

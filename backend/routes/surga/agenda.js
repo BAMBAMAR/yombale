@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../../models/db');
-const { tokenOptional } = require('../../middlewares/auth');
+const { tokenOptional } = require('../../middlewares/surga-auth');
 
 const REPETITIONS_AUTORISEES = ['AUCUNE', 'QUOTIDIEN', 'HEBDOMADAIRE', 'MENSUEL'];
 

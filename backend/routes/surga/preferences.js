@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../../models/db');
-const { verifierToken, tokenOptional } = require('../../middlewares/auth');
+const { verifierToken, tokenOptional } = require('../../middlewares/surga-auth');
 
 const DEFAUTS_PREFERENCES = {
   modules_actifs: ['briefing', 'meteo', 'actualites', 'trafic', 'notes', 'depenses', 'calculatrice', 'agenda'],

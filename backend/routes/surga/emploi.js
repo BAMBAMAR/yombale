@@ -4,7 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { tokenOptional } = require('../../middlewares/auth');
+const { tokenOptional } = require('../../middlewares/surga-auth');
 const emploiService = require('../../services/surga/emploi-service');
 
 /**
@@ -17,13 +17,9 @@ function identifierSurgaUser(req, res, next) {
   tokenOptional(req, res, () => {
     let uid = req.user?.userId || req.user?.id;
     if (!uid) {
-      const clientHeader = req.headers['x-surga-user-id'] || req.headers['x-device-id'] || req.query.surga_user_id;
-      if (clientHeader && typeof clientHeader === 'string' && clientHeader.trim()) {
-        uid = clientHeader.trim();
-      } else {
-        uid = 'surga_guest_default';
-      }
-      req.user = { id: uid, userId: uid, guest: true };
+      // SRG-A1-008 : l'identité ne vient jamais d'un en-tête ou d'un paramètre fourni par le client.
+      // Un visiteur sans session valide est un invité sans identifiant : aucune route ne peut agir en son nom.
+      req.user = { id: null, userId: null, guest: true };
     } else {
       req.user.id = uid;
       req.user.userId = uid;
@@ -336,6 +332,9 @@ router.get('/emploi/documents/:id/pdf', identifierSurgaUser, async (req, res) =>
  */
 router.delete('/emploi/documents/:id', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.status(401).json({ success: false, requireAuth: true, error: 'Connexion requise pour supprimer ce document.' });
+    }
     const userId = req.user.id;
     const docId = req.params.id;
 
@@ -370,6 +369,9 @@ router.get('/emploi/entretien/banque', (req, res) => {
  */
 router.get('/emploi/entretien/droits', identifierSurgaUser, async (req, res) => {
   try {
+    if (req.user.guest) {
+      return res.json({ success: true, guest: true, droits: { autorise: false, motif: 'require_auth', message: 'Connectez-vous pour lancer une simulation d entretien.' } });
+    }
     const userId = req.user.id;
     const droits = await emploiService.verifierDroitSimulationEntretien(userId);
     return res.json({ success: true, droits });
