@@ -16,6 +16,8 @@ try {
 
 const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
+const offre = require('../services/surga/offre-service');
+const interrupteursSurga = require('../services/surga/interrupteurs');
 
 // Protection RBAC obligatoire
 router.use(requireAdminAuth);
@@ -824,46 +826,113 @@ router.put('/abonnements/:id/statut', reserveAuxFinances, async (req, res) => {
 // ==========================================
 // GESTION DES PLANS & TARIFICATION DYNAMIQUE
 // ==========================================
+// Une erreur de validation se dit à l'administrateur ; rien n'est enregistré à moitié.
+function repondreErreurOffre(res, err) {
+  const statut = { VALIDATION: 400, PLAN_INTROUVABLE: 404, PLAN_EXISTE: 409, BASE_INDISPONIBLE: 503 }[err.code] || 500;
+  return res.status(statut).json({ success: false, error: err.message, code: err.code || undefined });
+}
+
+// Toutes les formules, y compris celles retirées de la vente : sans elles, une formule désactivée ne se réactive plus.
 router.get('/plans', async (req, res) => {
   try {
-    const plans = await getCataloguePlansAsync();
+    const plans = await offre.chargerPlans({ inclureInactifs: true, frais: true });
     res.json({ success: true, plans });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    repondreErreurOffre(res, err);
   }
 });
 
 router.post('/plans', reserveAuxFinances, async (req, res) => {
   try {
-    const { id, nom, type, description, tarifMensuel, tarifAnnuel, avantages, badgePromo } = req.body;
-    if (!nom || tarifMensuel === undefined || tarifAnnuel === undefined) {
-      return res.status(400).json({ success: false, error: 'Nom, tarif mensuel et tarif annuel requis.' });
-    }
-    const nouveauPlan = await creerPlan({ id, nom, type, description, tarifMensuel, tarifAnnuel, avantages, badgePromo });
+    const { id, nom, type, description, tarifHebdo, tarifMensuel, tarifAnnuel, avantages, badgePromo, actif, ordre } = req.body;
+    const nouveauPlan = await creerPlan({ id, nom, type, description, tarifHebdo, tarifMensuel, tarifAnnuel, avantages, badgePromo, actif, ordre });
     res.json({ success: true, plan: nouveauPlan });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    repondreErreurOffre(res, err);
   }
 });
 
 router.put('/plans/:id', reserveAuxFinances, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nom, description, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo } = req.body;
-    const planModifie = await mettreAJourPlan(id, { nom, description, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo });
+    const { nom, type, description, tarifHebdo, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo, ordre } = req.body;
+    // Les champs absents ne sont pas touchés : enregistrer des prix ne réactive plus une formule désactivée.
+    const planModifie = await mettreAJourPlan(id, { nom, type, description, tarifHebdo, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo, ordre });
     res.json({ success: true, plan: planModifie });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    repondreErreurOffre(res, err);
   }
 });
 
 router.delete('/plans/:id', reserveAuxFinances, async (req, res) => {
   try {
-    const { id } = req.params;
-    await supprimerPlan(id);
-    res.json({ success: true, message: 'Plan désactivé avec succès.' });
+    await supprimerPlan(req.params.id);
+    res.json({ success: true, message: 'Formule retirée de la vente ; elle peut être réactivée.' });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    repondreErreurOffre(res, err);
+  }
+});
+
+// Quotas gratuits et ouverture des ventes, avec l'état réel des fournisseurs (booléens seulement, jamais une clé).
+async function etatFournisseurs() {
+  const cfg = require('../lib/settingsCache');
+  const present = async (cleReglage, ...variables) => {
+    if (variables.some((v) => (process.env[v] || '').trim())) return true;
+    try { return Boolean(String((await cfg.get(cleReglage)) || '').trim()); } catch { return false; }
+  };
+  const waveCle = await present('wave_api_key', 'WAVE_API_KEY');
+  const waveSecret = await present('wave_signing_secret', 'WAVE_SIGNING_SECRET', 'WAVE_WEBHOOK_SECRET');
+  const meteo = interrupteursSurga.openMeteo();
+  return [
+    { id: 'wave', libelle: 'Wave : paiement des abonnements', etat: waveCle && waveSecret ? 'ok' : waveCle ? 'partiel' : 'absent',
+      detail: waveCle && waveSecret ? 'Clé API et secret de signature du webhook présents.' : waveCle ? 'Clé API présente, secret de signature absent : un paiement ne sera pas confirmé automatiquement.' : 'Clé API absente : aucun paiement ne peut être ouvert.' },
+    { id: 'google_trafic', libelle: 'Google : trafic mesuré sur six axes', etat: interrupteursSurga.googleRoutesCle() ? 'ok' : 'absent',
+      detail: interrupteursSurga.googleRoutesCle() ? 'Clé présente.' : 'Sans clé, le trafic se limite aux signalements des usagers.' },
+    { id: 'open_meteo', libelle: 'Open-Meteo : marées et qualité de l’air', etat: meteo ? 'ok' : 'absent',
+      detail: meteo ? (meteo.cle ? 'Abonnement.' : 'Essai non commercial (à remplacer par un abonnement avant le lancement).') : 'Éteint : marées et qualité de l’air restent indisponibles.' },
+    { id: 'thesportsdb', libelle: 'TheSportsDB : Ligue 1 du Sénégal', etat: interrupteursSurga.theSportsDbCle() ? 'ok' : 'absent',
+      detail: interrupteursSurga.theSportsDbCle() ? 'Clé présente.' : 'Sans clé, la Ligue 1 du Sénégal reste indisponible.' },
+    { id: 'whatsapp', libelle: 'WhatsApp : routage Surga', etat: interrupteursSurga.whatsappActif() ? 'ok' : 'eteint',
+      detail: interrupteursSurga.whatsappActif() ? 'Allumé.' : 'Éteint au lancement (décision D51).' },
+    { id: 'assistant', libelle: 'Assistant de rédaction', etat: interrupteursSurga.assistantActif() ? 'ok' : 'eteint',
+      detail: interrupteursSurga.assistantActif() ? 'Allumé.' : 'Éteint au lancement (décision D52).' },
+  ];
+}
+
+async function chargerReglages() {
+  offre.invaliderCache();
+  return { reglages: await offre.getReglagesComplets(), fournisseurs: await etatFournisseurs() };
+}
+
+router.get('/reglages', async (req, res) => {
+  try {
+    res.json({ success: true, ...(await chargerReglages()) });
+  } catch (err) {
+    repondreErreurOffre(res, err);
+  }
+});
+
+// D38 : l'argent (tarifs, quotas qui déclenchent le paiement) est réservé à super_admin, finance et admin_operationnel.
+router.put('/reglages', reserveAuxFinances, async (req, res) => {
+  try {
+    const avant = Object.fromEntries((await offre.getReglagesComplets()).map((r) => [r.cle, r.valeur]));
+    const acteur = req.adminUser?.email || req.adminUser?.nom || req.adminUser?.role || null;
+    await offre.definirReglages(req.body?.reglages, acteur);
+    const apres = Object.fromEntries((await offre.getReglagesComplets()).map((r) => [r.cle, r.valeur]));
+    const changes = Object.keys(req.body.reglages).filter((c) => avant[c] !== apres[c]);
+    enregistrerAdminLog({
+      req,
+      adminRole: req.adminUser?.role,
+      action: 'surga_reglages_modifies',
+      cibleType: 'surga_reglages',
+      cibleId: null,
+      description: changes.length ? changes.map((c) => c + ' : ' + avant[c] + ' -> ' + apres[c]).join(' ; ') : 'Réglages enregistrés sans changement',
+      ancienneValeur: Object.fromEntries(changes.map((c) => [c, avant[c]])),
+      nouvelleValeur: Object.fromEntries(changes.map((c) => [c, apres[c]])),
+    }).catch(() => {});
+    res.json({ success: true, ...(await chargerReglages()) });
+  } catch (err) {
+    repondreErreurOffre(res, err);
   }
 });
 

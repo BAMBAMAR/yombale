@@ -1061,14 +1061,14 @@ async function verifierDroitSuiviDemarche(userId) {
     throw new Error('Identifiant utilisateur requis.');
   }
 
+  // Statut lu par offre-service (le service d'abonnement n'exportait pas cette fonction : un abonné restait limité).
   let estPremium = false;
-  if (abonnementService && typeof abonnementService.estUtilisateurPremium === 'function') {
-    try {
-      estPremium = await abonnementService.estUtilisateurPremium(userId);
-    } catch {
-      estPremium = false;
-    }
+  try {
+    estPremium = await require('./offre-service').estUtilisateurPremium(userId);
+  } catch {
+    estPremium = false;
   }
+  const limite = await require('./offre-service').getReglage('demarches_suivis_gratuits');
 
   if (estPremium) {
     return { autorise: true, estPremium: true, totalSuivis: 0, limite: Infinity };
@@ -1099,17 +1099,19 @@ async function verifierDroitSuiviDemarche(userId) {
     }
   }
 
-  if (count >= 1) {
+  if (count >= limite) {
     return {
       autorise: false,
       estPremium: false,
       totalSuivis: count,
-      limite: 1,
-      message: 'La formule gratuite vous permet de suivre 1 démarche avec rappel. Passez à Surga Premium pour des suivis et rappels illimités.',
+      limite,
+      message: limite > 0
+        ? `La formule gratuite vous permet de suivre ${limite} démarche${limite > 1 ? 's' : ''} avec rappel. Passez à Surga Plus pour des suivis et rappels sans limite.`
+        : 'Le suivi des démarches avec rappel est réservé aux abonnés Surga Plus.',
     };
   }
 
-  return { autorise: true, estPremium: false, totalSuivis: count, limite: 1 };
+  return { autorise: true, estPremium: false, totalSuivis: count, limite };
 }
 
 /**

@@ -6,293 +6,10 @@ const crypto = require('crypto');
 const { pool } = require('../../models/db');
 const wave = require('../wave');
 
-/**
- * Catalogue officiel des formules Surga
- */
-const CATALOGUE_PLANS = {
-  b2c_premium: {
-    id: 'b2c_premium',
-    nom: 'Surga Premium Particulier',
-    type: 'b2c',
-    description: 'Assistant de poche complet sans limite : vocal illimité, alertes prioritaires et accès audio exclusif.',
-    tarifs: {
-      mensuel: 1500, // 1 500 FCFA / mois
-      annuel: 15000, // 15 000 FCFA / an (2 mois offerts)
-    },
-    avantages: [
-      'Commandes vocales WhatsApp et web illimitées (au-delà des 20 requêtes/jour)',
-      'Accès permanent et fluide aux radios nationales et podcasts sans interruption',
-      'Alertes immobilières ultra-rapides notifiées en moins de 60 secondes',
-      'Rappels et notifications prioritaires J-30, J-7 et J-1 pour tous les concours',
-      'Sauvegarde cloud chiffrée de votre journal de dépenses et mémos',
-      'Assistance prioritaire directe',
-    ],
-  },
-  b2b_visibilite_resto: {
-    id: 'b2b_visibilite_resto',
-    nom: 'Surga Visibilité Bonnes Adresses',
-    type: 'b2b',
-    description: 'Mise en avant ciblée de votre établissement auprès des résidents et visiteurs de Dakar.',
-    tarifs: {
-      mensuel: 5000, // 5 000 FCFA / mois
-      annuel: 50000, // 50 000 FCFA / an
-    },
-    avantages: [
-      'Positionnement prioritaire en tête de liste dans votre quartier',
-      'Badge officiel "Recommandé par Surga"',
-      'Lien direct WhatsApp & appel direct vers votre standard de réservation',
-      'Statistiques mensuelles de consultations et intentions d\'itinéraires',
-      'Mise à jour instantanée de vos menus et promotions du jour',
-    ],
-  },
-  b2b_immo_pro: {
-    id: 'b2b_immo_pro',
-    nom: 'Surga Partenaire Immobilier',
-    type: 'b2b',
-    description: 'Diffusion prioritaire de vos mandats de location et vente aux acquéreurs qualifiés de Dakar.',
-    tarifs: {
-      mensuel: 5000,
-      annuel: 50000,
-    },
-    avantages: [
-      'Alerte immédiate transmise aux abonnés ciblant votre zone géographique',
-      'Mise en relation directe sans intermédiaire',
-      'Badge "Agence Immobilière Vérifiée"',
-      'Rapport d\'intérêt et volume d\'appels générés',
-    ],
-  },
-  b2b_education_pro: {
-    id: 'b2b_education_pro',
-    nom: 'Surga Prépa & Éducation Nationale',
-    type: 'b2b',
-    description: 'Visibilité exclusive sur les fiches des concours officiels du Sénégal auprès des candidats.',
-    tarifs: {
-      mensuel: 10000,
-      annuel: 100000,
-    },
-    avantages: [
-      'Encart dédié sur les pages des concours (FASTEF, ENA, Douanes, Police, Santé...)',
-      'Bouton d\'inscription directe à vos sessions de préparation intensives',
-      'Badge "Centre de Préparation Partenaire"',
-      'Mesure précise des clics et prospects qualifiés',
-    ],
-  },
-};
-
-// Cache dynamique en mémoire modifiable par l'administration en temps réel
-const plansMemoire = JSON.parse(JSON.stringify(CATALOGUE_PLANS));
-
-/**
- * Assure la création idempotente de la table surga_plans et son initialisation
- */
-async function assurerTablePlans() {
-  if (!pool) return;
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS surga_plans (
-        id VARCHAR(50) PRIMARY KEY,
-        nom VARCHAR(100) NOT NULL,
-        type VARCHAR(20) NOT NULL DEFAULT 'b2c',
-        description TEXT,
-        tarif_mensuel_xof INT NOT NULL,
-        tarif_annuel_xof INT NOT NULL,
-        avantages JSONB DEFAULT '[]'::jsonb,
-        actif BOOLEAN DEFAULT true,
-        badge_promo VARCHAR(50),
-        ordre INT DEFAULT 0,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-
-    const { rows } = await pool.query('SELECT COUNT(*)::int as count FROM surga_plans');
-    if (rows[0]?.count === 0) {
-      let ordre = 0;
-      for (const p of Object.values(CATALOGUE_PLANS)) {
-        ordre++;
-        await pool.query(
-          `INSERT INTO surga_plans (id, nom, type, description, tarif_mensuel_xof, tarif_annuel_xof, avantages, actif, ordre)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8)
-           ON CONFLICT (id) DO NOTHING`,
-          [
-            p.id,
-            p.nom,
-            p.type,
-            p.description,
-            p.tarifs.mensuel,
-            p.tarifs.annuel,
-            JSON.stringify(p.avantages || []),
-            ordre,
-          ]
-        );
-      }
-    }
-  } catch (err) {
-    console.warn('[SURGA PLANS TABLE WARN]:', err.message);
-  }
-}
-
-/**
- * Retourne la liste des formules disponibles (synchrone pour compatibilité immédiate)
- */
-function getCataloguePlans() {
-  return Object.values(plansMemoire);
-}
-
-/**
- * Retourne la liste des formules disponibles avec rafraîchissement depuis la base
- */
-async function getCataloguePlansAsync() {
-  if (pool) {
-    try {
-      await assurerTablePlans();
-      const { rows } = await pool.query('SELECT * FROM surga_plans WHERE actif = true ORDER BY ordre ASC, created_at ASC');
-      if (rows && rows.length > 0) {
-        // Synchroniser le cache mémoire
-        for (const r of rows) {
-          plansMemoire[r.id] = {
-            id: r.id,
-            nom: r.nom,
-            type: r.type,
-            description: r.description,
-            tarifs: {
-              mensuel: r.tarif_mensuel_xof,
-              annuel: r.tarif_annuel_xof,
-            },
-            avantages: Array.isArray(r.avantages) ? r.avantages : (typeof r.avantages === 'string' ? JSON.parse(r.avantages) : []),
-            actif: r.actif,
-            badge_promo: r.badge_promo,
-          };
-        }
-        return Object.values(plansMemoire);
-      }
-    } catch (e) {
-      console.warn('[SURGA PLANS DB READ WARN]:', e.message);
-    }
-  }
-  return Object.values(plansMemoire);
-}
-
-/**
- * Met à jour les tarifs ou caractéristiques d'une formule par l'administrateur
- */
-async function mettreAJourPlan(id, { nom, description, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo }) {
-  if (plansMemoire[id]) {
-    if (nom) plansMemoire[id].nom = nom;
-    if (description !== undefined) plansMemoire[id].description = description;
-    if (tarifMensuel !== undefined) plansMemoire[id].tarifs.mensuel = parseInt(tarifMensuel, 10);
-    if (tarifAnnuel !== undefined) plansMemoire[id].tarifs.annuel = parseInt(tarifAnnuel, 10);
-    if (avantages !== undefined) plansMemoire[id].avantages = Array.isArray(avantages) ? avantages : [];
-    if (actif !== undefined) plansMemoire[id].actif = !!actif;
-    if (badgePromo !== undefined) plansMemoire[id].badge_promo = badgePromo;
-  }
-
-  if (pool) {
-    try {
-      await assurerTablePlans();
-      const updateRes = await pool.query(
-        `UPDATE surga_plans
-         SET nom = COALESCE($1, nom),
-             description = COALESCE($2, description),
-             tarif_mensuel_xof = COALESCE($3, tarif_mensuel_xof),
-             tarif_annuel_xof = COALESCE($4, tarif_annuel_xof),
-             avantages = COALESCE($5, avantages),
-             actif = COALESCE($6, actif),
-             badge_promo = $7,
-             updated_at = NOW()
-         WHERE id = $8 RETURNING *`,
-        [
-          nom || null,
-          description !== undefined ? description : null,
-          tarifMensuel !== undefined ? parseInt(tarifMensuel, 10) : null,
-          tarifAnnuel !== undefined ? parseInt(tarifAnnuel, 10) : null,
-          avantages !== undefined ? JSON.stringify(avantages) : null,
-          actif !== undefined ? !!actif : null,
-          badgePromo !== undefined ? badgePromo : null,
-          id,
-        ]
-      );
-      if (updateRes.rows[0]) {
-        return plansMemoire[id] || updateRes.rows[0];
-      }
-    } catch (err) {
-      console.warn('[SURGA PLANS DB UPDATE WARN]:', err.message);
-    }
-  }
-
-  return plansMemoire[id];
-}
-
-/**
- * Crée un nouveau plan d'abonnement personnalisé
- */
-async function creerPlan({ id, nom, type = 'b2c', description = '', tarifMensuel, tarifAnnuel, avantages = [], badgePromo = '' }) {
-  const planId = (id || `plan_${Date.now().toString(36)}`).toLowerCase().replace(/[^a-z0-9_]/g, '_');
-  const nouveauPlan = {
-    id: planId,
-    nom,
-    type,
-    description,
-    tarifs: {
-      mensuel: parseInt(tarifMensuel, 10) || 0,
-      annuel: parseInt(tarifAnnuel, 10) || 0,
-    },
-    avantages: Array.isArray(avantages) ? avantages : [],
-    actif: true,
-    badge_promo: badgePromo || '',
-  };
-
-  plansMemoire[planId] = nouveauPlan;
-
-  if (pool) {
-    try {
-      await assurerTablePlans();
-      await pool.query(
-        `INSERT INTO surga_plans (id, nom, type, description, tarif_mensuel_xof, tarif_annuel_xof, avantages, actif, badge_promo)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8)
-         ON CONFLICT (id) DO UPDATE SET
-           nom = EXCLUDED.nom,
-           tarif_mensuel_xof = EXCLUDED.tarif_mensuel_xof,
-           tarif_annuel_xof = EXCLUDED.tarif_annuel_xof,
-           avantages = EXCLUDED.avantages,
-           badge_promo = EXCLUDED.badge_promo,
-           updated_at = NOW()`,
-        [
-          planId,
-          nom,
-          type,
-          description,
-          nouveauPlan.tarifs.mensuel,
-          nouveauPlan.tarifs.annuel,
-          JSON.stringify(nouveauPlan.avantages),
-          badgePromo || null,
-        ]
-      );
-    } catch (err) {
-      console.warn('[SURGA PLANS DB CREATE WARN]:', err.message);
-    }
-  }
-
-  return nouveauPlan;
-}
-
-/**
- * Désactive ou supprime une formule
- */
-async function supprimerPlan(id) {
-  if (plansMemoire[id]) {
-    plansMemoire[id].actif = false;
-  }
-  if (pool) {
-    try {
-      await assurerTablePlans();
-      await pool.query('UPDATE surga_plans SET actif = false, updated_at = NOW() WHERE id = $1', [id]);
-    } catch (err) {
-      console.warn('[SURGA PLANS DB DELETE WARN]:', err.message);
-    }
-  }
-  return { success: true };
-}
+// Formules, tarifs, réglages et statut d'abonné : voir offre-service.js (tout se règle depuis la console d'administration).
+const offre = require('./offre-service');
+const { CATALOGUE_PLANS, CYCLES, chargerPlans, getCataloguePlans, mettreAJourPlan, creerPlan, supprimerPlan, estUtilisateurPremium } = offre;
+const getCataloguePlansAsync = (options) => chargerPlans(options);
 
 /**
  * Vérifie si un utilisateur ou numéro de téléphone bénéficie d'un abonnement Premium actif
@@ -314,11 +31,17 @@ async function verifierStatutPremium({ userId, phone }) {
     conditions.push(`phone LIKE $${params.length}`);
   }
 
+  // Une formule professionnelle ne donne pas les avantages d'un particulier.
+  const plansParticuliers = (await chargerPlans({ inclureInactifs: true })).filter((p) => p.type === 'b2c').map((p) => p.id);
+  if (plansParticuliers.length === 0) return { estPremium: false, plan: null, abonnement: null, joursRestants: 0 };
+  params.push(plansParticuliers);
+
   const query = `
     SELECT id, plan, cycle, montant_xof, provider, statut, debut, fin
     FROM surga_abonnements
     WHERE statut = 'actif'
       AND fin > NOW()
+      AND plan = ANY($${params.length}::text[])
       AND (${conditions.join(' OR ')})
     ORDER BY fin DESC
     LIMIT 1
@@ -346,21 +69,33 @@ async function verifierStatutPremium({ userId, phone }) {
  * Initialise une intention de souscription et génère le lien de paiement
  */
 async function initierSouscription({ userId, phone, planKey, cycle = 'mensuel', provider = 'wave', metadata = {}, baseUrl }) {
-  const planInfo = plansMemoire[planKey] || CATALOGUE_PLANS[planKey];
+  if (!(await offre.getReglage('ventes_ouvertes'))) {
+    const e = new Error('Les abonnements ne sont pas ouverts pour le moment. Revenez bientôt.');
+    e.code = 'VENTES_FERMEES';
+    throw e;
+  }
+
+  const planInfo = (await chargerPlans({ inclureInactifs: true, frais: true })).find((p) => p.id === planKey);
   if (!planInfo) {
     throw new Error(`Le plan d'abonnement demandé '${planKey}' n'existe pas.`);
   }
+  if (!planInfo.actif) {
+    throw new Error('Cette formule n’est pas proposée actuellement.');
+  }
 
-  const cycleValid = cycle === 'annuel' ? 'annuel' : 'mensuel';
+  if (!CYCLES[cycle]) {
+    throw new Error('Durée d’abonnement inconnue : choisissez 7 jours, 30 jours ou 12 mois.');
+  }
+  const cycleValid = cycle;
   const montantXof = planInfo.tarifs[cycleValid];
-  if (!montantXof) {
-    throw new Error(`Tarif non défini pour le cycle ${cycleValid}.`);
+  if (!montantXof || montantXof <= 0) {
+    throw new Error(`Cette durée (${CYCLES[cycleValid].libelle}) n’est pas proposée pour cette formule.`);
   }
 
   const referencePaiement = `SURGA-${planKey.toUpperCase()}-${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`.toUpperCase();
 
   // Durée estimée selon le cycle
-  const intervalleJours = cycleValid === 'annuel' ? 365 : 30;
+  const intervalleJours = CYCLES[cycleValid].jours;
   const dateDebut = new Date();
   const dateFin = new Date(dateDebut.getTime() + intervalleJours * 24 * 60 * 60 * 1000);
 
@@ -501,7 +236,7 @@ async function activerAbonnementParReference(referencePaiement, options = {}) {
   }
 
   const dateDebut = new Date();
-  const jours = sub.cycle === 'annuel' ? 365 : 30;
+  const jours = (CYCLES[sub.cycle] || CYCLES.mensuel).jours;
   const dateFin = new Date(dateDebut.getTime() + jours * 24 * 60 * 60 * 1000);
 
   const updateRes = await pool.query(
@@ -572,6 +307,7 @@ async function getStatistiquesFinancieresAdmin() {
       COALESCE(SUM(CASE
         WHEN statut = 'actif' AND cycle = 'mensuel' THEN montant_xof
         WHEN statut = 'actif' AND cycle = 'annuel' THEN ROUND(montant_xof / 12)
+        WHEN statut = 'actif' AND cycle = 'hebdomadaire' THEN ROUND(montant_xof * 30.0 / 7)
         ELSE 0
       END), 0) AS mrr_estime_xof,
       COALESCE(SUM(CASE WHEN statut = 'actif' THEN montant_xof ELSE 0 END), 0) AS volume_encaisse_xof
@@ -646,11 +382,14 @@ async function listerAbonnementsAdmin({ page = 1, limit = 20, statut, plan } = {
 
 module.exports = {
   CATALOGUE_PLANS,
+  CYCLES,
+  chargerPlans,
   getCataloguePlans,
   getCataloguePlansAsync,
   mettreAJourPlan,
   creerPlan,
   supprimerPlan,
+  estUtilisateurPremium,
   verifierStatutPremium,
   initierSouscription,
   activerAbonnementParReference,

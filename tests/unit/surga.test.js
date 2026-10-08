@@ -1275,18 +1275,31 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(ids).toContain('b2b_education_pro');
     });
 
-    test('Surga Premium B2C : Tarifs conformes et avantage annuel (2 mois offerts)', () => {
+    test('Surga Plus : trois durées, tarifs de départ conformes, et seulement des avantages réellement fournis', () => {
       const planB2c = CATALOGUE_PLANS.b2c_premium;
       expect(planB2c).toBeDefined();
-      expect(planB2c.tarifs.mensuel).toBe(1500); // 1 500 FCFA / mois
-      expect(planB2c.tarifs.annuel).toBe(15000); // 15 000 FCFA / an
+      expect(planB2c.nom).toBe('Surga Plus');
+      expect(planB2c.tarifs.hebdomadaire).toBe(500); // pass 7 jours
+      expect(planB2c.tarifs.mensuel).toBe(1500); // 30 jours
+      expect(planB2c.tarifs.annuel).toBe(15000); // 12 mois (2 mois offerts)
+      expect(planB2c.actif).toBe(true);
 
-      // Vérification des privilèges
-      expect(planB2c.avantages.some((a) => a.toLowerCase().includes('vocales'))).toBe(true);
-      expect(planB2c.avantages.some((a) => a.toLowerCase().includes('immobili'))).toBe(true);
-      expect(planB2c.avantages.some((a) => a.toLowerCase().includes('concours'))).toBe(true);
+      // Aucune promesse que le code ne tient pas : ni voix, ni podcast, ni alerte rapide, ni sauvegarde réservée.
+      const texte = planB2c.avantages.join(' ').toLowerCase();
+      expect(texte).toContain('cv');
+      expect(texte).toContain('lettres');
+      expect(texte).toContain('entretien');
+      expect(texte).toContain('démarches');
+      for (const promesse of ['vocal', 'vocales', 'podcast', '60 secondes', 'whatsapp illimit', 'sauvegarde']) {
+        expect(texte).not.toContain(promesse);
+      }
     });
 
+    test('Les formules professionnelles sont proposées désactivées : aucun code ne tient encore leurs avantages', () => {
+      for (const id of ['b2b_visibilite_resto', 'b2b_immo_pro', 'b2b_education_pro']) {
+        expect(CATALOGUE_PLANS[id].actif).toBe(false);
+      }
+    });
     test('Espaces Professionnels B2B : Tarifs adaptés au marché dakarisé', () => {
       const resto = CATALOGUE_PLANS.b2b_visibilite_resto;
       expect(resto.tarifs.mensuel).toBe(5000); // 5 000 FCFA / mois
@@ -1312,6 +1325,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
 
       const paths = routes.map((r) => r.path);
       expect(paths).toContain('/abonnements/plans');
+      expect(paths).toContain('/abonnements/offre');
       expect(paths).toContain('/abonnements/mon-statut');
       expect(paths).toContain('/abonnements/initier');
       expect(paths).toContain('/abonnements/verifier');
@@ -1735,7 +1749,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(pdfHeader).toBe('%PDF-');
     });
 
-    test('Modèle de droits & quotas : 1 CV gratuit avec mention, puis blocage pour passage Premium / 500 FCFA', async () => {
+    test('Modèle de droits & quotas : 1 CV gratuit avec mention, puis blocage et renvoi vers Surga Plus', async () => {
       const userId = 'user-droits-cv-test-99';
 
       // 1. Premier CV : droit gratuit débloqué avec mention
@@ -1747,11 +1761,13 @@ describe('Module Surga — Tranches 1 & 2', () => {
       // Enregistrement du premier usage
       await emploiService.incrementerUsage(userId, 'cv_generation', 'global');
 
-      // 2. Deuxième tentative : bloqué avec message explicite de passage Premium ou achat 500 FCFA
+      // 2. Deuxième tentative : bloqué, avec renvoi vers Surga Plus. Aucun prix à l'acte n'est promis : aucun paiement à
+      // l'unité n'existe, la limite gratuite se règle dans la console (réglage emploi_cv_gratuits).
       const droit2 = await emploiService.verifierDroitCv(userId);
       expect(droit2.autorise).toBe(false);
       expect(droit2.motif).toBe('limite_atteinte');
-      expect(droit2.message).toContain('500 FCFA');
+      expect(droit2.message).toContain('Surga Plus');
+      expect(droit2.message).not.toContain('500 FCFA');
     });
 
     test('Sécurité Anti-IDOR stricte sur les documents professionnels', async () => {

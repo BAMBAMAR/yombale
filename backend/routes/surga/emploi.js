@@ -153,7 +153,6 @@ router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
         error: droit.message,
         motif: droit.motif,
         quotaAtteint: true,
-        prix_acte_xof: 500,
         requireAuth: !!req.user.guest,
       });
     }
@@ -161,13 +160,12 @@ router.post('/emploi/cv/generer', identifierSurgaUser, async (req, res) => {
     // SRG-A1-023 : le CV gratuit est pris avant la génération, en une instruction ; des demandes simultanées
     // n'en obtiennent qu'un.
     const cvGratuit = droit.motif === 'gratuit_decouverte';
-    if (cvGratuit && !(await emploiService.reserverUsage(userId, 'cv_generation', 'global', 1))) {
+    if (cvGratuit && !(await emploiService.reserverUsage(userId, 'cv_generation', 'global', droit.limite))) {
       return res.status(403).json({
         success: false,
-        error: 'Vous avez déjà généré votre CV gratuit. Passez à Surga Premium ou débloquez ce CV sans mention pour 500 FCFA.',
+        error: 'Vous avez utilisé vos CV gratuits. Passez à Surga Plus pour des CV sans mention et sans limite.',
         motif: 'limite_atteinte',
         quotaAtteint: true,
-        prix_acte_xof: 500,
         requireAuth: !!req.user.guest,
       });
     }
@@ -259,10 +257,10 @@ router.post('/emploi/lettre/generer', identifierSurgaUser, async (req, res) => {
     const moisCourant = new Date();
     const periodeLettre = `${moisCourant.getFullYear()}-${String(moisCourant.getMonth() + 1).padStart(2, '0')}`;
     const lettreGratuite = droit.motif === 'gratuit_mensuel';
-    if (lettreGratuite && !(await emploiService.reserverUsage(userId, 'lettre_generation', periodeLettre, 1))) {
+    if (lettreGratuite && !(await emploiService.reserverUsage(userId, 'lettre_generation', periodeLettre, droit.limite))) {
       return res.status(403).json({
         success: false,
-        error: 'Vous avez atteint votre quota gratuit d une lettre de motivation ce mois-ci. Passez à Surga Premium pour continuer.',
+        error: 'Vous avez utilisé vos lettres gratuites de ce mois. Passez à Surga Plus pour continuer.',
         motif: 'limite_atteinte',
         quotaAtteint: true,
         requireAuth: !!req.user.guest,
@@ -468,10 +466,10 @@ router.post('/emploi/entretien/session', identifierSurgaUser, async (req, res) =
 
     // SRG-A1-023 : la simulation gratuite de la semaine est prise en une instruction, sur la même période que
     // celle que lit le contrôle des droits.
-    if (!droits.estPremium && !(await emploiService.reserverUsage(userId, 'entretien_simulation', emploiService.getPeriodeSemaineCourante(), 1))) {
+    if (!droits.estPremium && !(await emploiService.reserverUsage(userId, 'entretien_simulation', emploiService.getPeriodeSemaineCourante(), droits.limite))) {
       return res.status(403).json({
         success: false,
-        error: 'Quota hebdomadaire atteint (1 simulation gratuite par semaine). Passez à Surga Premium pour vous entraîner sans limite.',
+        error: 'Quota hebdomadaire atteint. Passez à Surga Plus pour vous entraîner sans limite.',
         quotaAtteint: true,
       });
     }

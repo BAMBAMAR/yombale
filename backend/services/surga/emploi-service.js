@@ -5,6 +5,7 @@
 
 const PDFDocument = require('pdfkit');
 const { pool } = require('../../models/db');
+const offre = require('./offre-service');
 
 // Stockage mémoire en cas d'absence de base de données (ex: tests unitaires Jest)
 const profilsMemoire = new Map();
@@ -203,23 +204,8 @@ async function upsertProfilPro(userId, data) {
  * Vérifie si un utilisateur dispose du statut Premium actif
  */
 async function verifierEstPremium(userId) {
-  if (!userId) return false;
-
-  if (pool) {
-    try {
-      const { rows } = await pool.query(
-        `SELECT id FROM surga_abonnements
-         WHERE user_id = $1 AND statut = 'actif' AND (fin IS NULL OR fin > NOW())
-         LIMIT 1`,
-        [userId]
-      );
-      return rows.length > 0;
-    } catch (err) {
-      // repli
-    }
-  }
-
-  return false;
+  // Seul un abonnement à une formule particulier compte (offre-service) ; une formule professionnelle n'ouvre pas ces droits.
+  return offre.estUtilisateurPremium(userId);
 }
 
 /**
@@ -331,16 +317,21 @@ async function verifierDroitCv(userId) {
     return { autorise: true, avecMention: false, motif: 'premium' };
   }
 
+  // Le nombre de CV gratuits se règle dans la console (réglage emploi_cv_gratuits).
+  const limite = await offre.getReglage('emploi_cv_gratuits');
   const nbCvGeneres = await getUsageCompteur(userId, 'cv_generation', 'global');
-  if (nbCvGeneres === 0) {
-    return { autorise: true, avecMention: true, motif: 'gratuit_decouverte' };
+  if (nbCvGeneres < limite) {
+    return { autorise: true, avecMention: true, motif: 'gratuit_decouverte', limite };
   }
 
   return {
     autorise: false,
     avecMention: false,
     motif: 'limite_atteinte',
-    message: 'Vous avez déjà généré votre CV gratuit. Passez à Surga Premium ou débloquez ce CV sans mention pour 500 FCFA.',
+    limite,
+    message: limite > 0
+      ? `Vous avez utilisé ${limite > 1 ? `vos ${limite} CV gratuits` : 'votre CV gratuit'}. Passez à Surga Plus pour des CV sans mention et sans limite.`
+      : 'Les CV sont réservés aux abonnés Surga Plus.',
   };
 }
 
@@ -354,15 +345,19 @@ async function verifierDroitLettre(userId) {
   }
 
   const periode = getPeriodeMoisCourant();
+  const limite = await offre.getReglage('emploi_lettres_gratuites_mois');
   const nbLettresMois = await getUsageCompteur(userId, 'lettre_generation', periode);
-  if (nbLettresMois < 1) {
-    return { autorise: true, motif: 'gratuit_mensuel' };
+  if (nbLettresMois < limite) {
+    return { autorise: true, motif: 'gratuit_mensuel', limite };
   }
 
   return {
     autorise: false,
     motif: 'limite_atteinte',
-    message: 'Vous avez atteint votre quota gratuit d une lettre de motivation ce mois-ci. Passez à Surga Premium pour continuer.',
+    limite,
+    message: limite > 0
+      ? `Vous avez utilisé ${limite > 1 ? `vos ${limite} lettres gratuites` : 'votre lettre gratuite'} de ce mois. Passez à Surga Plus pour continuer.`
+      : 'Les lettres de motivation sont réservées aux abonnés Surga Plus.',
   };
 }
 
@@ -899,19 +894,22 @@ async function verifierDroitSimulationEntretien(userId) {
       quotaAtteint: false,
       estPremium: true,
       simulationsSemaine: 0,
-      message: 'Simulations d’entretien illimitées avec Surga Premium.',
+      message: 'Simulations d’entretien illimitées avec Surga Plus.',
     };
   }
 
   const periode = getPeriodeSemaineCourante();
+  const limite = await offre.getReglage('emploi_simulations_gratuites_semaine');
   const nbUtilise = await getUsageCompteur(userId, 'entretien_simulation', periode);
-  if (nbUtilise < 1) {
+  const pluriel = limite > 1 ? 's' : '';
+  if (nbUtilise < limite) {
     return {
       autorise: true,
       quotaAtteint: false,
       estPremium: false,
       simulationsSemaine: nbUtilise,
-      message: '1 simulation gratuite par semaine incluse.',
+      limite,
+      message: `${limite} simulation${pluriel} gratuite${pluriel} par semaine incluse${pluriel}.`,
     };
   }
 
@@ -920,7 +918,10 @@ async function verifierDroitSimulationEntretien(userId) {
     quotaAtteint: true,
     estPremium: false,
     simulationsSemaine: nbUtilise,
-    message: 'Quota hebdomadaire atteint (1 simulation gratuite par semaine). Passez à Surga Premium pour vous entraîner sans limite.',
+    limite,
+    message: limite > 0
+      ? `Quota hebdomadaire atteint (${limite} simulation${pluriel} gratuite${pluriel} par semaine). Passez à Surga Plus pour vous entraîner sans limite.`
+      : 'Les simulations d’entretien sont réservées aux abonnés Surga Plus.',
   };
 }
 

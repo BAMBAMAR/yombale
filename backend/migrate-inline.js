@@ -3353,6 +3353,33 @@ module.exports = async function migrateInline(customConnStr = null) {
        updated_at TIMESTAMPTZ DEFAULT NOW()
      )`,
     `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_user ON surga_abonnements(user_id, statut, fin)`,
+    // Offre commerciale (offre-service.js) : formules et réglages modifiables depuis la console. Le schéma vit ici, jamais dans le service.
+    `CREATE TABLE IF NOT EXISTS surga_plans (
+       id VARCHAR(50) PRIMARY KEY,
+       nom VARCHAR(100) NOT NULL,
+       type VARCHAR(20) NOT NULL DEFAULT 'b2c',
+       description TEXT,
+       tarif_mensuel_xof INT NOT NULL DEFAULT 0,
+       tarif_annuel_xof INT NOT NULL DEFAULT 0,
+       avantages JSONB DEFAULT '[]'::jsonb,
+       actif BOOLEAN DEFAULT true,
+       badge_promo VARCHAR(50),
+       ordre INT DEFAULT 0,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `ALTER TABLE surga_plans ADD COLUMN IF NOT EXISTS tarif_hebdo_xof INT NOT NULL DEFAULT 0`,
+    `CREATE TABLE IF NOT EXISTS surga_reglages (
+       cle VARCHAR(80) PRIMARY KEY,
+       valeur JSONB NOT NULL,
+       updated_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_by VARCHAR(150)
+     )`,
+    // Bases où l’ancien code avait créé surga_plans à la demande : la formule particulier est convertie en « Surga Plus » et les formules
+    // professionnelles sont retirées de la vente, MAIS seulement si la ligne n’a jamais été modifiée (nom d’origine encore en place,
+    // updated_at = created_at). Un réglage fait depuis la console n’est jamais écrasé. Idempotent.
+    `UPDATE surga_plans SET nom = 'Surga Plus', description = 'Le pôle Emploi et le suivi des démarches sans limite, pour 7 jours, 30 jours ou 12 mois.', tarif_hebdo_xof = 500, avantages = '["CV sans mention « Surga », sans limite","Lettres de motivation sans limite","Simulations d’entretien sans limite","Suivi et rappels de démarches administratives sans limite"]'::jsonb, updated_at = NOW() WHERE id = 'b2c_premium' AND nom = 'Surga Premium Particulier' AND tarif_hebdo_xof = 0`,
+    `UPDATE surga_plans SET actif = false, updated_at = NOW() WHERE id IN ('b2b_visibilite_resto', 'b2b_immo_pro', 'b2b_education_pro') AND actif = true AND updated_at = created_at`,
     `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_phone ON surga_abonnements(phone, statut, fin)`,
     `CREATE INDEX IF NOT EXISTS idx_surga_abonnements_statut_plan ON surga_abonnements(statut, plan)`,
     `CREATE TABLE IF NOT EXISTS surga_video_sources (

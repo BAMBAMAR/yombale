@@ -6,6 +6,7 @@ const { pool } = require('../../models/db');
 const { evaluerCalcul, formaterFCFA } = require('./calculator');
 const { sendWhatsAppText, normalisePhone } = require('../whatsapp');
 const { resolverComptesParTelephone } = require('../../lib/telephoneIntegrity');
+const offre = require('./offre-service');
 
 const QUOTA_JOURNALIER_GRATUIT = 2;
 
@@ -321,14 +322,17 @@ async function verifierQuota(phone, isVocal = false) {
   try {
     // Vérification préalable du statut Premium
     // SRG-A4-003 : numéro complet, jamais un suffixe (les neuf derniers chiffres confondaient deux pays).
+    const plansParticuliers = (await offre.chargerPlans({ inclureInactifs: true })).filter((p) => p.type === 'b2c').map((p) => p.id);
     const aboCheck = await pool.query(
       `SELECT id FROM surga_abonnements
        WHERE regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = $1
          AND statut = 'actif'
          AND fin > NOW()
+         AND plan = ANY($2::text[])
        LIMIT 1`,
-      [normPh.replace(/\D/g, '')]
+      [normPh.replace(/\D/g, ''), plansParticuliers]
     );
+    const quotaGratuit = await offre.getReglage('whatsapp_commandes_gratuites_jour');
 
     const estPremium = aboCheck.rows.length > 0;
 
@@ -340,7 +344,7 @@ async function verifierQuota(phone, isVocal = false) {
          nb_vocaux = surga_quotas.nb_vocaux + $2,
          updated_at = NOW()
        RETURNING nb_commandes, quota_max_gratuit`,
-      [normPh, isVocal ? 1 : 0, estPremium ? 99999 : QUOTA_JOURNALIER_GRATUIT]
+      [normPh, isVocal ? 1 : 0, estPremium ? 99999 : quotaGratuit]
     );
 
     const { nb_commandes, quota_max_gratuit } = res.rows[0];
@@ -442,9 +446,11 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
   // Vérification des quotas pour cette commande valide Surga
   const quotaValide = await verifierQuota(normPh, isVocal);
   if (!quotaValide) {
+    const quotaJour = await offre.getReglage('whatsapp_commandes_gratuites_jour');
+    const tarifs = await offre.libelleTarifsParticulier();
     const msgPlafond =
-      `Surga : Vous avez atteint votre quota découverte de ${QUOTA_JOURNALIER_GRATUIT} commandes gratuites pour aujourd'hui sur WhatsApp.\n\n` +
-      `Pour profiter de commandes WhatsApp illimitées, activez Surga Premium (1 500 FCFA/mois) : https://surga.nopalou.com.\n` +
+      `Surga : Vous avez atteint votre quota découverte de ${quotaJour} commandes gratuites pour aujourd'hui sur WhatsApp.\n\n` +
+      `Pour profiter de commandes WhatsApp illimitées, activez ${tarifs ? `${tarifs.nom} (${tarifs.texte})` : 'un abonnement Surga'} : https://surga.nopalou.com.\n` +
       `Votre application Web & PWA reste quant à elle 100% gratuite et sans limite : https://surga.nopalou.com`;
     await sendWhatsAppText(normPh, msgPlafond);
     return true;
@@ -846,9 +852,10 @@ async function traiterMessageWhatsAppSurga(phone, messageTexte, isVocal = false)
 
   // ── 3.18 Surga Premium ──────────────────────────────────────────────────────
   if (parseResult.intention === 'OPEN_PREMIUM') {
+    const tarifsPlus = await offre.libelleTarifsParticulier();
     await sendWhatsAppText(
       normPh,
-      `Surga : Surga Premium (1 500 FCFA/mois) :\n\n` +
+      `Surga : ${tarifsPlus ? `${tarifsPlus.nom} (${tarifsPlus.texte})` : 'Abonnement Surga'} :\n\n` +
       `Débloquez les commandes WhatsApp illimitées et les fonctionnalités prioritaires sur : https://surga.nopalou.com`
     );
     return true;

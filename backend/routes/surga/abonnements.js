@@ -6,24 +6,34 @@ const express = require('express');
 const router = express.Router();
 const { tokenOptional, verifierToken } = require('../../middlewares/surga-auth');
 const {
-  getCataloguePlans,
   verifierStatutPremium,
   initierSouscription,
   activerAbonnementParReference,
   traiterWebhookWaveSurga,
 } = require('../../services/surga/abonnement-service');
+const offre = require('../../services/surga/offre-service');
 
 /**
  * GET /api/surga/abonnements/plans
  * Liste des formules d'abonnements B2C et B2B
  */
-router.get('/abonnements/plans', (req, res) => {
+router.get('/abonnements/plans', async (req, res) => {
   try {
-    const plans = getCataloguePlans();
-    return res.json({
-      success: true,
-      plans,
-    });
+    // Formules en vente, lues en base : ce que la console fixe est ce que le public voit et ce qui est encaissé.
+    return res.json({ success: true, plans: await offre.chargerPlans() });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/surga/abonnements/offre
+ * L'offre complète pour l'écran d'abonnement : formules en vente avec leurs durées et tarifs, quotas gratuits,
+ * ouverture des ventes. Tout vient de la console d'administration.
+ */
+router.get('/abonnements/offre', async (req, res) => {
+  try {
+    return res.json({ success: true, ...(await offre.getOffrePublique()) });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -84,7 +94,8 @@ router.post('/abonnements/initier', tokenOptional, async (req, res) => {
 
     return res.json(resultat);
   } catch (err) {
-    return res.status(err.code === 'PAIEMENT_INDISPONIBLE' ? 503 : 400).json({ success: false, error: err.message });
+    const statut = err.code === 'PAIEMENT_INDISPONIBLE' ? 503 : err.code === 'VENTES_FERMEES' ? 403 : 400;
+    return res.status(statut).json({ success: false, error: err.message, code: err.code || undefined });
   }
 });
 
