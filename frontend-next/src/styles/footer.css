@@ -32,18 +32,8 @@
   color: #ffffff;
 }
 
-.footer-logo-name::after {
-  content: attr(data-suffix);
-  color: var(--accent);
-}
-
 .auth-logo-name {
   color: #ffffff;
-}
-
-.auth-logo-name::after {
-  content: attr(data-suffix);
-  color: var(--accent);
 }
 
 .footer-tagline {

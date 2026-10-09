@@ -83,16 +83,29 @@
 </head>
 <body>
   <div class="box">
-    <div class="badge">📡 NOPALOU PWA OFFLINE</div>
-    <div style="font-size: 48px; margin-bottom: 12px;">⚡</div>
+    <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+      <svg width="64" height="64" viewBox="0 0 512 512">
+        <defs>
+          <linearGradient id="offGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF7E22"/>
+            <stop offset="35%" stop-color="#EA580C"/>
+            <stop offset="70%" stop-color="#C75B00"/>
+            <stop offset="100%" stop-color="#9E3C00"/>
+          </linearGradient>
+        </defs>
+        <rect x="26" y="26" width="460" height="460" rx="118" fill="url(#offGrad)"/>
+        <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+      </svg>
+    </div>
+    <div class="badge">NOPALOU PWA · MODE HORS-LIGNE</div>
     <h1>Vous êtes actuellement Hors-Ligne</h1>
     <p>
       Votre connexion Internet mobile est momentanément interrompue. Les données précédemment consultées restent disponibles en cache local.
     </p>
     <div class="btn-group">
-      <button onclick="location.reload()">🔄 Réessayer la connexion</button>
-      <a href="/boutique/caisse" class="btn btn-sec">🛒 Retourner à la Caisse POS</a>
-      <a href="/" class="btn btn-sec">🏠 Consulter l'Accueil (Cache)</a>
+      <button onclick="location.reload()">Réessayer la connexion</button>
+      <a href="/boutique/caisse" class="btn btn-sec">Retourner à la Caisse POS</a>
+      <a href="/" class="btn btn-sec">Consulter l'Accueil (Cache)</a>
     </div>
   </div>
 

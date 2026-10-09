@@ -25,31 +25,29 @@ export function GET() {
             marginBottom: '24px',
           }}
         >
-          <div
-            style={{
-              width: '72px',
-              height: '72px',
-              background: 'white',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '40px',
-              fontWeight: '900',
-              color: '#C75B00',
-            }}
-          >
-            N
-          </div>
+          <svg width="76" height="76" viewBox="0 0 512 512" style={{ display: 'block' }}>
+            <defs>
+              <linearGradient id="nopalouOgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF7E22"/>
+                <stop offset="35%" stopColor="#EA580C"/>
+                <stop offset="70%" stopColor="#C75B00"/>
+                <stop offset="100%" stopColor="#9E3C00"/>
+              </linearGradient>
+            </defs>
+            <rect x="26" y="26" width="460" height="460" rx="118" fill="url(#nopalouOgGrad)"/>
+            <path fillRule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+          </svg>
           <span
             style={{
-              fontSize: '80px',
+              fontSize: '76px',
               fontWeight: '900',
-              color: 'white',
               letterSpacing: '-2px',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
-            Nopalou
+            <span style={{ color: '#FFFFFF' }}>Nopa</span>
+            <span style={{ color: '#C75B00' }}>lou</span>
           </span>
         </div>
         <div

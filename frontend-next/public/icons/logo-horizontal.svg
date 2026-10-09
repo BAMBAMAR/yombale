@@ -1,8 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="220" height="40" viewBox="0 0 220 40">
   <!-- Logo horizontal Nopalou — Monogramme vectoriel + Wordmark -->
   
-  <!-- Monogramme N sur carré orange (40×40) -->
-  <rect x="0" y="0" width="40" height="40" rx="9" fill="#C75B00"/>
+  <defs>
+    <linearGradient id="nopalouHGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7E22"/>
+      <stop offset="35%" stop-color="#EA580C"/>
+      <stop offset="70%" stop-color="#C75B00"/>
+      <stop offset="100%" stop-color="#9E3C00"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Monogramme N sur squircle dégradé solaire officiel (40×40) -->
+  <rect x="0" y="0" width="40" height="40" rx="9" fill="url(#nopalouHGrad)"/>
   <path fill-rule="evenodd" d="
     M9.4 8.4h21.2v23.2H9.4Z
     M25.3 8.4H14.7l10.6 15.5Z

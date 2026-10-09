@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import NopalouBrandLogo from '@/components/NopalouBrandLogo'
 import { AlertCircle } from 'lucide-react'
 import AdminLoginForm from './AdminLoginForm'
 
@@ -24,11 +25,9 @@ export default async function AdminLoginPage({ searchParams }: { searchParams?: 
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Image src="/icons/logo-n.svg" alt="Nopalou" width={48} height={48} priority style={{ marginBottom: 12 }} />
-          <a href="/" className="auth-brand">
-            Nopa<span className="auth-brand-accent">lou</span>
-          </a>
-          <p className="auth-brand-sub">Administration</p>
+          <div style={{ marginBottom: 16 }}>
+            <NopalouBrandLogo taille={44} priority={true} sousTitre="Administration" />
+          </div>
           <h1 className="auth-titre">Accès sécurisé</h1>
           <p className="auth-sous-titre">Réservé aux administrateurs Nopalou</p>
         </div>

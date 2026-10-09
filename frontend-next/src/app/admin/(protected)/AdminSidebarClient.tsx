@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import NopalouBrandLogo from '@/components/NopalouBrandLogo'
 import { usePathname } from 'next/navigation'
 import {
   Search,
@@ -178,11 +179,7 @@ export default function AdminSidebarClient({ logoutAction, adminUser }: AdminSid
       {/* En-tête mobile sticky (visible uniquement <= 900px) */}
       <header className="admin-mobile-topbar" aria-label="En-tête mobile administration">
         <Link href="/admin" className="admin-mobile-topbar-logo" onClick={() => setMobileMenuOpen(false)}>
-          <Image src="/icons/logo-n.svg" alt="" width={22} height={22} priority />
-          <div>
-            Nopa<span>lou</span>
-            <em>Control Center</em>
-          </div>
+          <NopalouBrandLogo taille={22} priority={true} lienAccueil={false} sousTitre="Control Center" />
         </Link>
         <button
           type="button"
@@ -210,11 +207,7 @@ export default function AdminSidebarClient({ logoutAction, adminUser }: AdminSid
             className="admin-logo"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <Image src="/icons/logo-n.svg" alt="" width={24} height={24} style={{ flexShrink: 0 }} priority />
-            <div>
-              Nopa<span>lou</span>
-              <em>Control Center</em>
-            </div>
+            <NopalouBrandLogo taille={24} priority={true} lienAccueil={false} sousTitre="Control Center" />
           </Link>
           <button
             type="button"

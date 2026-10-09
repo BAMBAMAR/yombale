@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import NopalouBrandLogo from '@/components/NopalouBrandLogo'
 import { useTranslation } from '@/i18n/context'
 import LanguageSelector from '@/components/LanguageSelector'
 import ConnexionForm from './ConnexionForm'
@@ -14,10 +15,7 @@ export default function ConnexionClient() {
     <div className="auth-page">
       {/* Panneau gauche — visuel */}
       <div className="auth-visual">
-        <Link href="/" className="auth-visual-logo">
-          <Image src="/icons/logo-n.svg" alt="" width={32} height={32} style={{ borderRadius: 7, flexShrink: 0 }} priority />
-          <span className="auth-logo-name"><span style={{ color: '#fff' }}>Nopa</span><span style={{ color: '#C75B00' }}>lou</span></span>
-        </Link>
+        <NopalouBrandLogo taille={32} theme="dark" priority={true} className="auth-visual-logo" />
         <div className="auth-visual-body">
           <h2 className="auth-visual-titre" style={{ whiteSpace: 'pre-line' }}>
             {t('auth.visualTitle')}

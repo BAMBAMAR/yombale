@@ -49,6 +49,16 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou / Correction & Harmonisation Globale du Logo Nopalou (Session 2026-10-09, `main`, commit local, aucun push)** :
+  - *Composant Unique & Sanctuarisé* : Création de `<NopalouBrandLogo />` (`src/components/NopalouBrandLogo.tsx`) assurant une source de vérité unique pour le logo Nopalou, le dégradé solaire 4-stop officiel (`#FF7E22` -> `#EA580C` -> `#C75B00` -> `#9E3C00`) et le wordmark bicolore avec gestion thème clair/sombre et accessibilité WCAG intégrée.
+  - *OpenGraph & Partage Réseaux* : Remplacement du faux logo "N" bricolé dans `src/app/api/og-image/route.tsx` par le monogramme vectoriel SVG officiel et le wordmark bicolore.
+  - *Favicon Binaire Conforme* : Génération d'un véritable binaire Microsoft `favicon.ico` (magic header `00-00-01-00`, 32x32) en remplacement du fichier PNG renommé.
+  - *Flux Catalogue Meta 404 Sécurisé* : Génération du visuel officiel `public/logo-placeholder.png` (PNG 600x600) et ajout d'une exception dans `.gitignore` pour éliminer le risque d'erreur 404 sur `backend/routes/flux-catalogue-meta.js`.
+  - *Harmonisation Actifs Graphiques* : Intégration du dégradé solaire officiel dans `logo-horizontal.svg` et `logo-horizontal-white.svg`.
+  - *Migration Globale des Composants* : Remplacement de toutes les implémentations ad-hoc par `<NopalouBrandLogo />` dans `layout.tsx` (header & footer), `MobileNav.tsx`, `ConnexionClient.tsx`, `InscriptionClient.tsx`, `MotDePasseOublieClient.tsx`, `AccountTopNavbar.tsx`, `BoutiqueTopNavbar.tsx`, `AgenceTopNavbar.tsx`, `AgenceMobileHeader.tsx`, `AdminSidebarClient.tsx` et `admin/(auth)/login/page.tsx`.
+  - *Nettoyage CSS & Anti-Slop* : Suppression du CSS mort `attr(data-suffix)` dans `footer.css`, retrait de l'emoji d'UI dans `PartnerLogos.tsx` et intégration du logo vectoriel dans `offline.html`.
+  - *Tests & Validation* : 97/97 tests unitaires passés, test `icones-versionnees.test.ts` validé, `npx tsc --noEmit` 0 erreur, `npm run lint:slop` conforme.
+
 - **Surga / D83 ACTIVÉ EN PRODUCTION : Surga est servie à `surga.nopalou.com/surga` (Session 2026-10-09)** :
   - *Fait par l'utilisateur* : domaine `surga.nopalou.com` ajouté au service frontend chez Render, enregistrement DNS pointé, règle de redirection Cloudflare « Surga sous-domaine » désactivée, `NEXT_PUBLIC_SURGA_ORIGINE=https://surga.nopalou.com` posée et frontend reconstruit. **D77 n'est plus en vigueur.**
   - *Vérifié en ligne* : `nopalou.com/surga` renvoie (307) vers `surga.nopalou.com/surga`, requête gardée ; la racine du sous-domaine ouvre Surga ; une page de Nopalou demandée au sous-domaine repart vers Nopalou ; `/surga/reprise` n'admet la mise en cadre que par l'origine de Surga. Dans un navigateur, visiteur anonyme : réglages et portefeuille de test posés à l'ancienne adresse retrouvés à la nouvelle ; manifeste lu sans obstacle ; service worker actif à la nouvelle origine ; aucune erreur de console. Compte de test créé en production avec l'accord de l'utilisateur : reconnu à la nouvelle adresse sans reconnexion.

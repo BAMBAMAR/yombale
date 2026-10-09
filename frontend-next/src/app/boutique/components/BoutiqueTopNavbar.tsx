@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import NopalouBrandLogo from '@/components/NopalouBrandLogo'
 import { Bell, ExternalLink, Menu, User, Store, Building2 } from 'lucide-react'
 import type { Boutique } from '../types'
 
@@ -47,17 +48,7 @@ export default function BoutiqueTopNavbar({
     >
       {/* ── Gauche : Logo Nopalou + Tag Boutique ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-        <Link
-          href="/"
-          style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
-          title="Retour à l'accueil Nopalou"
-        >
-          <Image src="/icons/logo-n.svg" alt="Nopalou" width={26} height={26} priority />
-          <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 }}>
-            <span style={{ color: 'var(--navy, #1C2B4A)' }}>Nopa</span>
-            <span style={{ color: 'var(--accent, #C75B00)' }}>lou</span>
-          </span>
-        </Link>
+        <NopalouBrandLogo taille={26} priority={true} />
 
         <span
           style={{

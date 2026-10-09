@@ -38,6 +38,7 @@ frontend-next/public/surga/unes/*.webp
 # ...mais les assets d'app sont versionnés (icônes PWA, apple-touch-icon, screenshots manifest)
 !frontend-next/public/icons/*.png
 !frontend-next/public/screenshots/*.png
+!frontend-next/public/logo-placeholder.png
 !frontend-next/src/app/apple-icon.png
 
 # Résultats de tests

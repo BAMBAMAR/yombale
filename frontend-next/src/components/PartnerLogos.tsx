@@ -8,11 +8,11 @@ export interface PartnerLogosProps {
 }
 
 const PARTNERS = [
-  { name: 'Jumia Senegal', emoji: '' },
-  { name: 'CoinAfrique', emoji: '' },
-  { name: 'Expat-Dakar', emoji: '' },
-  { name: 'Dakar-Deal', emoji: '' },
-  { name: 'SenMarket', emoji: '🏬' },
+  { name: 'Jumia Senegal' },
+  { name: 'CoinAfrique' },
+  { name: 'Expat-Dakar' },
+  { name: 'Dakar-Deal' },
+  { name: 'SenMarket' },
 ];
 
 export default function PartnerLogos({ className = '' }: PartnerLogosProps) {
@@ -24,7 +24,6 @@ export default function PartnerLogos({ className = '' }: PartnerLogosProps) {
       <div className="partner-logos-grid">
         {PARTNERS.map((p) => (
           <div key={p.name} className="partner-logo-item">
-            <span className="partner-logo-emoji">{p.emoji}</span>
             <span className="partner-logo-name">{p.name}</span>
           </div>
         ))}

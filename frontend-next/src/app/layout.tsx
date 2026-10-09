@@ -66,6 +66,7 @@ import NavbarLinksNav from './components/NavbarLinksNav';
 import NavbarProSwitcher from '@/components/NavbarProSwitcher';
 import NavbarCreerMenu from '@/components/NavbarCreerMenu';
 import EmailLien from '@/components/EmailLien';
+import NopalouBrandLogo from '@/components/NopalouBrandLogo';
 import MobileNav from './MobileNav';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import NavbarCartBtn from '@/components/NavbarCartBtn';
@@ -270,10 +271,7 @@ export default async function RootLayout({
           <header role="banner">
             <nav className="navbar" aria-label="Navigation principale">
               <div className="navbar-top-row">
-                <a href="/" className="logo" aria-label="Nopalou - Plateforme de commerce digital et comparateur au Sénégal">
-                  <Image src="/icons/logo-n.svg" alt="" className="logo-icon" width={28} height={28} priority />
-                  <span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>
-                </a>
+                <NopalouBrandLogo taille={28} priority={true} className="logo" />
                 <NavbarLinksNav />
                 <div className="navbar-search-desktop">
                   <NavbarSearch />
@@ -342,10 +340,7 @@ export default async function RootLayout({
           <div className="footer-inner">
             {/* Colonne 1 — Brand */}
             <div className="footer-brand">
-              <a href="/" className="footer-logo">
-                <Image src="/icons/logo-n.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
-                <span className="footer-logo-name"><span style={{ color: '#fff' }}>Nopa</span><span style={{ color: '#C75B00' }}>lou</span></span>
-              </a>
+              <NopalouBrandLogo taille={28} theme="dark" className="footer-logo" />
               <p className="footer-tagline">La plateforme de commerce digital au Sénégal : comparez les offres au meilleur prix, achetez auprès de boutiques partenaires et propulsez votre activité commerciale.</p>
               <div className="footer-social" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
                 <a href="https://www.tiktok.com/@nopalou.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok Officiel" className="footer-social-link footer-social-link--tiktok">
