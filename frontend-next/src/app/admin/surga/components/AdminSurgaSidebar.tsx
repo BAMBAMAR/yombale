@@ -82,6 +82,8 @@ export default function AdminSurgaSidebar({
         </div>
       </div>
 
+      {/* Rubriques et pied : colonne sur ordinateur, bande défilante sur une ligne sur téléphone (surga-admin.css) */}
+      <div className="surga-nav-defilant">
       {/* 1. Pilotage & Monétisation */}
       <div className="surga-nav-section">
         <div className="surga-section-label">Pilotage &amp; Monétisation</div>
@@ -289,7 +291,7 @@ export default function AdminSurgaSidebar({
           <span>Accès Nopalou Admin</span>
         </Link>
 
-        <div style={{ padding: '8px 10px', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 8, marginTop: 4 }}>
+        <div className="surga-session-info" style={{ padding: '8px 10px', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 8, marginTop: 4 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#CBD5E1' }}>
             <ShieldCheck size={13} color="#F59E0B" />
             <span style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -313,6 +315,7 @@ export default function AdminSurgaSidebar({
             </button>
           </form>
         )}
+      </div>
       </div>
     </aside>
   )

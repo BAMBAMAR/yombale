@@ -65,7 +65,10 @@ async function calculerStatistiques(pool, jours = 30) {
                        COALESCE(SUM(montant_xof) FILTER (WHERE statut = 'actif' AND created_at > NOW() - make_interval(days => $1)), 0)::bigint AS periode
                 FROM surga_abonnements`, [n]),
     lire(pool, `SELECT m AS libelle, COUNT(*)::int AS n FROM surga_preferences, jsonb_array_elements_text(modules_actifs::jsonb) m GROUP BY m ORDER BY n DESC LIMIT 8`),
-    lire(pool, `SELECT quartiers->>0 AS libelle, COUNT(*)::int AS n FROM surga_preferences WHERE quartiers->>0 IS NOT NULL GROUP BY 1 ORDER BY n DESC LIMIT 6`),
+    // Un quartier est un texte court : une valeur d'une autre forme (liste imbriquée) n'est pas un libellé à afficher.
+    lire(pool, `SELECT quartiers->>0 AS libelle, COUNT(*)::int AS n FROM surga_preferences
+                WHERE jsonb_typeof(quartiers::jsonb->0) = 'string' AND length(quartiers->>0) BETWEEN 1 AND 60
+                GROUP BY 1 ORDER BY n DESC LIMIT 6`),
     lire(pool, `SELECT heure_briefing AS libelle, COUNT(*)::int AS n FROM surga_preferences WHERE heure_briefing IS NOT NULL GROUP BY 1 ORDER BY n DESC LIMIT 5`),
     lire(pool, `SELECT COUNT(*) FILTER (WHERE audio_actif)::int AS n FROM surga_preferences`),
     lire(pool, `SELECT COUNT(DISTINCT user_id)::int AS n FROM surga_push_subscriptions`),
