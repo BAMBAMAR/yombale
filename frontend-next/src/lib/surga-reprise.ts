@@ -8,21 +8,6 @@ export const TYPE_MESSAGE_REPRISE = 'surga-reprise'
 // Sur la nouvelle origine : « faite », ou le nombre d'essais sans réponse.
 export const CLE_REPRISE = 'surga_reprise_appareil'
 export const ESSAIS_MAX = 3
-
-// Avis « Surga a une nouvelle adresse », pour qui utilisait déjà Surga à l'ancienne : un site ne peut ni installer
-// ni désinstaller une application à la place de la personne ; il peut seulement la prévenir et lui tendre le bouton.
-// Valeurs : « a_montrer », puis « fait » (installée, ou avis écarté ESSAIS_AVIS_MAX fois).
-export const CLE_AVIS_ADRESSE = 'surga_avis_nouvelle_adresse'
-export const CLE_AVIS_ECARTS = 'surga_avis_nouvelle_adresse_ecarts'
-// « 1 » : les rappels étaient autorisés à l'ancienne adresse, ils sont à réactiver à la nouvelle.
-export const CLE_AVIS_RAPPELS = 'surga_avis_nouvelle_adresse_rappels'
-export const EVENEMENT_AVIS_ADRESSE = 'surga-avis-nouvelle-adresse'
-export const ESSAIS_AVIS_MAX = 5
-
-/** La personne utilisait-elle déjà Surga à l'ancienne adresse ? */
-export function utilisaitAncienneAdresse(recu: unknown): boolean {
-  return !!recu && typeof recu === 'object' && (recu as Record<string, unknown>).surga_onboarding_done === 'true'
-}
 const TAILLE_MAX = 4 * 1024 * 1024
 
 // Compte auquel appartiennent les données gardées sur l'appareil (surga-offline-sync.ts).
@@ -67,9 +52,7 @@ export function pageDeReprise(origineSurga: string): string {
       if (cle && cle.indexOf('surga_') === 0) donnees[cle] = localStorage.getItem(cle);
     }
   } catch (e) {}
-  var notifications = false;
-  try { notifications = !!window.Notification && Notification.permission === 'granted'; } catch (e) {}
-  window.parent.postMessage({ type: ${JSON.stringify(TYPE_MESSAGE_REPRISE)}, donnees: donnees, notifications: notifications }, ${JSON.stringify(origineSurga)});
+  window.parent.postMessage({ type: ${JSON.stringify(TYPE_MESSAGE_REPRISE)}, donnees: donnees }, ${JSON.stringify(origineSurga)});
 })();
 </script></body></html>`
 }

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { ORIGINE_SURGA, ORIGINE_NOPALOU, CHEMIN_REPRISE } from '@/lib/surga-adresse'
-import { CLE_REPRISE, ESSAIS_MAX, TYPE_MESSAGE_REPRISE, CLE_AVIS_ADRESSE, CLE_AVIS_RAPPELS, EVENEMENT_AVIS_ADRESSE, donneesAReprendre, utilisaitAncienneAdresse } from '@/lib/surga-reprise'
+import { CLE_REPRISE, ESSAIS_MAX, TYPE_MESSAGE_REPRISE, donneesAReprendre } from '@/lib/surga-reprise'
 
 // D83 : à la première ouverture de Surga à sa propre origine, reprend ce que l'appareil gardait à l'ancienne adresse.
 // Sans effet tant que l'origine propre n'est pas réglée, ou ailleurs que sur elle.
@@ -33,12 +33,6 @@ export default function SurgaRepriseAppareil() {
         const donnees = donneesAReprendre(evenement.data.donnees, (cle) => localStorage.getItem(cle))
         if (donnees) for (const [cle, valeur] of Object.entries(donnees)) localStorage.setItem(cle, valeur)
         localStorage.setItem(CLE_REPRISE, 'faite')
-        // Qui utilisait Surga à l'ancienne adresse est prévenu du changement et invité à la réinstaller.
-        if (utilisaitAncienneAdresse(evenement.data.donnees)) {
-          localStorage.setItem(CLE_AVIS_ADRESSE, 'a_montrer')
-          if (evenement.data.notifications === true) localStorage.setItem(CLE_AVIS_RAPPELS, '1')
-          window.dispatchEvent(new CustomEvent(EVENEMENT_AVIS_ADRESSE))
-        }
         // Les écrans ont déjà lu un appareil vide : la page est relue avec les données reprises.
         if (donnees) window.location.reload()
       } catch {}

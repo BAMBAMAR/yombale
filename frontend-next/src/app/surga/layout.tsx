@@ -10,7 +10,6 @@ import SurgaFenetresClavier from './components/SurgaFenetresClavier'
 import SurgaAccessibiliteAuto from './components/SurgaAccessibiliteAuto'
 import SurgaPwaInstallPrompt from './components/SurgaPwaInstallPrompt'
 import SurgaRepriseAppareil from './components/SurgaRepriseAppareil'
-import SurgaAvisNouvelleAdresse from './components/SurgaAvisNouvelleAdresse'
 
 export const metadata: Metadata = {
   title: 'Surga — Assistant Personnel de Poche',
@@ -86,7 +85,6 @@ export default function SurgaLayout({ children }: { children: React.ReactNode })
       />
       <SurgaSwRegister />
       <SurgaRepriseAppareil />
-      <SurgaAvisNouvelleAdresse />
       <SurgaFenetresClavier />
       <SurgaAccessibiliteAuto />
       <SurgaPwaInstallPrompt />

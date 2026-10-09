@@ -86,16 +86,6 @@ describe('reprise des données de l’appareil', () => {
     expect(donneesAReprendre({ surga_x: { a: 1 }, surga_y: 3 }, appareil({}))).toBeNull()
   })
 
-  it('avis de nouvelle adresse : seulement pour qui utilisait déjà Surga à l’ancienne', async () => {
-    const { utilisaitAncienneAdresse } = await import('../lib/surga-reprise')
-    expect(utilisaitAncienneAdresse(ancien)).toBe(true)
-    expect(utilisaitAncienneAdresse({ surga_meteo_ville: 'Dakar' })).toBe(false)
-    expect(utilisaitAncienneAdresse({})).toBe(false)
-    expect(utilisaitAncienneAdresse(null)).toBe(false)
-    // La page de reprise dit si les rappels étaient autorisés à l'ancienne adresse.
-    expect(pageDeReprise(SURGA)).toContain("Notification.permission === 'granted'")
-  })
-
   it('la page de reprise n’adresse ses données qu’à l’origine de Surga', () => {
     const page = pageDeReprise(SURGA)
     expect(page).toContain('"https://surga.nopalou.com");')
