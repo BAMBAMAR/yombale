@@ -74,8 +74,13 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
     return `${min}:${reste < 10 ? '0' : ''}${reste}`
   }
 
+  // Navigateur sans synthèse vocale : le dire, plutôt que de ne rien afficher alors que l'audio est activé.
   if (!isAvailable) {
-    return null
+    return (
+      <div role="status" style={{ marginTop: 8, padding: '8px 10px', backgroundColor: 'var(--surga-bg, #F8FAFC)', borderRadius: 8, border: '1px solid var(--surga-border, #E2E8F0)', fontSize: 12, color: 'var(--surga-text2, #475569)' }}>
+        Ce navigateur ne propose pas la lecture à voix haute. Ouvrez Surga dans Chrome ou Safari pour écouter le briefing.
+      </div>
+    )
   }
 
   const enLecture = playerState.statut !== 'arrete'

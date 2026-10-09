@@ -542,5 +542,8 @@ audités par cette campagne.
 - [x] `DONE` Voix neuronale du briefing décidée (D78 à D81) : fichier commun par jour, gratuit seulement, à la demande, timbre choisi à l'oreille. Offres gratuites comparées.
 - [ ] `PROPOSED` Voix neuronale : compte et clé du fournisseur (Azure Speech F0 recommandé) posés par l'utilisateur, puis essais de deux ou trois voix, puis construction (production quotidienne, cache, bouton « Écouter » avec le poids, repli sur la voix de l'appareil). Écouter le briefing sur un téléphone Android et un iPhone.
 - [x] `DONE` Écran d'ouverture de la PWA Surga : jeu d'icônes régénéré (emblème détouré, fond nuit, halo), manifeste `?v=5` (D82). Commit local, aucun push.
+- [x] `DONE` Console d'administration sur téléphone : rubriques en bande collée en haut, statistiques d'usage visibles au premier écran, barre de Nopalou masquée. Poussé sur `main` le 2026-10-09 avec les trois livraisons précédentes du jour.
+- [x] `DONE` Essais de voix Piper (cinq voix, sans compte) dans `C:\Users\HP\essais-voix-surga\`.
+- [ ] `PROPOSED` Voix du briefing : choix de la voix par l'utilisateur, vérification de la licence retenue, puis construction ; ouvrir la console en production et sur un téléphone réel.
 - [ ] `PROPOSED` Retrouver un original de l'emblème plus grand que 321 pixels et relancer `scripts/surga/generer-icones-surga.js --source` ; vérifier l'ouverture sur un téléphone après réinstallation.
 - [ ] `PROPOSED` Vider le cache Cloudflare après déploiement (**toujours pas fait au 2026-10-09, 15 h UTC**) ; vérifier `FRONTEND_URL` chez Render ; essayer un paiement Wave refusé puis réussi ; décider d'une adresse propre pour Surga (`surga.nopalou.com`, D77) si Chrome ne propose pas l'installation avec Nopalou installé.

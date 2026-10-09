@@ -22,6 +22,7 @@ import {
 } from '@/lib/surga-offline-sync'
 import { quartierDe } from '@/lib/surga-meteo'
 import { useSurgaBriefing } from '@/lib/useSurgaBriefing'
+import { useSurgaAudioScript } from '@/lib/useSurgaAudioScript'
 import { useSurgaOnglet } from '@/lib/useSurgaOnglet'
 import { useRetourPaiement } from '@/lib/useRetourPaiement'
 import { useSurgaPreferences } from '@/lib/useSurgaPreferences'
@@ -64,7 +65,8 @@ export default function SurgaPage() {
   const [user, setUser] = useState<SurgaUser | null>(null)
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
   const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; source?: string; plan?: string | null; joursRestants?: number }>({ estPremium: false })
-  const [audioScript, setAudioScript] = useState<string>('')
+  // Texte du briefing audio : redemandé en cas d'échec, gardé sur l'appareil pour la lecture sans réseau.
+  const { audioScript, etatAudio, rechargerAudio } = useSurgaAudioScript(Boolean(preferences?.audio_actif), briefingData)
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
   const [soldeKalpeFormate, setSoldeKalpeFormate] = useState<string>('0 FCFA')
   const [nbNotes, setNbNotes] = useState<number>(0)
@@ -148,18 +150,6 @@ export default function SurgaPage() {
 
   // Retour de Wave (?paiement=succes|erreur) : message clair, offre rouverte en cas d'échec, abonnement vérifié en cas de succès.
   useRetourPaiement({ onActif: () => setStatutPremium({ estPremium: true, joursRestants: 30 }), onEchec: () => setIsPremiumOpen(true) })
-
-  // Chargement du script audio si l'option est active
-  useEffect(() => {
-    if (preferences?.audio_actif) {
-      fetch('/api/surga/audio/script')
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.success && data.script) setAudioScript(data.script)
-        })
-        .catch(() => {})
-    }
-  }, [preferences?.audio_actif, briefingData])
 
   const handleToggleAudio = () => appliquerChangement({ audio_actif: !preferences?.audio_actif })
   const handleUpdatePreferences = (patch: Partial<SurgaPreferencesData>) => appliquerChangement(patch)
@@ -329,6 +319,8 @@ export default function SurgaPage() {
             preferences={preferences}
             briefingData={briefingData} etatBriefing={etatBriefing} briefingRecuLe={briefingRecuLe}
             audioScript={audioScript}
+            etatAudio={etatAudio}
+            onRechargerAudio={rechargerAudio}
             onToggleAudio={handleToggleAudio}
             onEquipesChange={(equipes) => { appliquerChangement({ equipes_suivies: equipes }) }}
             soldeKalpeFormate={soldeKalpeFormate}

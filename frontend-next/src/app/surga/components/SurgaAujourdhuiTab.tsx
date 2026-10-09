@@ -7,6 +7,7 @@ import SurgaAudioPlayer from './SurgaAudioPlayer'
 import SurgaBriefingSkeleton from './SurgaBriefingSkeleton'
 import { SurgaBriefingIndisponible, SurgaBriefingNonActualise } from './SurgaBriefingEtat'
 import type { EtatBriefing } from '@/lib/useSurgaBriefing'
+import type { EtatScriptAudio } from '@/lib/useSurgaAudioScript'
 import SurgaMeteoCard, { type MeteoData } from './SurgaMeteoCard'
 import SurgaNewsList, { type BriefingNewsItem } from './SurgaNewsList'
 import SurgaSportCard, { type SportEventItem } from './SurgaSportCard'
@@ -38,6 +39,8 @@ interface SurgaAujourdhuiTabProps {
   etatBriefing?: EtatBriefing
   briefingRecuLe?: string | null
   audioScript: string
+  etatAudio?: EtatScriptAudio
+  onRechargerAudio?: () => void
   soldeKalpeFormate: string
   statsApercu: SurgaDepensesStats | null
   nbNotes: number
@@ -73,6 +76,8 @@ export default function SurgaAujourdhuiTab({
   etatBriefing = 'pret',
   briefingRecuLe = null,
   audioScript,
+  etatAudio = 'inactif',
+  onRechargerAudio,
   soldeKalpeFormate,
   statsApercu,
   nbNotes,
@@ -262,8 +267,25 @@ export default function SurgaAujourdhuiTab({
             onRefresh={chargerBriefing}
           />
 
+          {/* Audio activé : le lecteur, ou l'état de sa préparation. Jamais rien du tout sans explication. */}
           {preferences?.audio_actif && audioScript ? (
             <SurgaAudioPlayer script={audioScript} />
+          ) : preferences?.audio_actif && etatAudio !== 'inactif' ? (
+            <div
+              role="status"
+              style={{ marginTop: 8, padding: '8px 10px', backgroundColor: 'var(--surga-bg, #F8FAFC)', borderRadius: 8, border: '1px solid var(--surga-border, #E2E8F0)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 12, color: 'var(--surga-text2, #475569)' }}
+            >
+              <span>{etatAudio === 'erreur' ? 'L’audio du briefing n’a pas pu être préparé.' : 'Préparation de l’audio du briefing…'}</span>
+              {etatAudio === 'erreur' && onRechargerAudio && (
+                <button
+                  type="button"
+                  onClick={onRechargerAudio}
+                  style={{ background: 'none', border: 'none', padding: '4px 6px', minHeight: 32, fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', cursor: 'pointer', textDecoration: 'underline', whiteSpace: 'nowrap', flexShrink: 0 }}
+                >
+                  Réessayer
+                </button>
+              )}
+            </div>
           ) : null}
         </div>
       )}

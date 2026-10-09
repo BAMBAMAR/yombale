@@ -3,6 +3,17 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Console d'administration lisible sur téléphone, statistiques visibles, essais de voix Piper] — push de `main` ordonné par l'utilisateur
+- **Objet :** « les statistiques de Surga dans l'admin, je ne vois pas ».
+- **Cause :** menu de la console empilé en entier sur téléphone : les statistiques commençaient 1 200 px plus bas ; backend local resté sur un code sans la route (404), relancé.
+- **Console :** sous 900 px, bande de rubriques sur une ligne, collée en haut (statistiques à 221 px) ; barre, pied de page, panier et assistant de Nopalou masqués ; menu collé au défilement, sur ordinateur aussi ; trois `justifyContent` invalides corrigés. Quartiers des statistiques : textes courts seulement.
+- **Vérifié :** navigateur en local à 390 et 1 440 px, 13 rubriques, aucun débordement ; statistiques calculées sans échec sur la copie locale de la production. Console de production non ouverte.
+- **Tests :** typage 0 erreur ; frontend 193 sur 193 sur trois passes (deux passes à 192 auparavant, test non identifié).
+- **Lecteur audio absent « même activé » :** non reproduit (production en visiteur anonyme, local en invité et en compte connecté). Corrigé : le texte audio est redemandé trois fois, gardé sur l'appareil, et l'écran dit « préparation » ou « n'a pas pu être préparé » avec « Réessayer » (`useSurgaAudioScript.ts`, 5 tests) ; navigateur sans synthèse vocale signalé. Cause chez l'utilisateur non établie.
+- **Voix :** cinq essais Piper dans `C:\Users\HP\essais-voix-surga\`, sans compte ; choix à l'oreille en attente.
+- **Push :** les trois entrées ci-dessous notées « commit local » sont parties sur `main` (`a54eddad`) ; celle-ci suit.
+- **Retour arrière :** `git revert` du commit `fix(surga-admin)`.
+
 ### [2026-10-09 — Écran d'ouverture de la PWA : nouveau jeu d'icônes ; décisions sur la voix du briefing] — commit local, aucun push
 - **Objet :** logo « plat » à l'ouverture de la PWA sur Android ; questionnaire sur la voix du briefing.
 - **Cause :** icône = carré sombre contenant un second cadre, sur fond clair ; « maskable » identique à « any » ; `.svg` qui enveloppent une image.
