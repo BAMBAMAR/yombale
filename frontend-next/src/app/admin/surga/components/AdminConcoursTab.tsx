@@ -27,7 +27,7 @@ export interface AdminConcoursItem {
   niveau_requis: string
   age_max?: number | null
   frais_dossier_xof: number
-  statut: 'ouvert' | 'a_venir' | 'cloture' | 'epreuves_en_cours' | 'resultats'
+  statut: 'ouvert' | 'a_venir' | 'cloture' | 'epreuves_en_cours' | 'resultats' | 'termine'
   date_ouverture?: string
   date_cloture: string
   date_epreuves?: string

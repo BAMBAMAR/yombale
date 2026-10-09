@@ -43,13 +43,27 @@ export default function SurgaVideoCard({
             style={{
               padding: '2px 6px',
               borderRadius: 4,
-              backgroundColor: video.source_type === 'LUTTE' ? '#FEF2F2' : '#EFF6FF',
-              color: video.source_type === 'LUTTE' ? '#DC2626' : '#2563EB',
+              backgroundColor:
+                video.source_type === 'LUTTE'
+                  ? '#FEF2F2'
+                  : video.source_type === 'EMISSION'
+                  ? '#F0FDF4'
+                  : '#EFF6FF',
+              color:
+                video.source_type === 'LUTTE'
+                  ? '#DC2626'
+                  : video.source_type === 'EMISSION'
+                  ? 'var(--surga-emerald-ink, #047857)'
+                  : '#2563EB',
               fontWeight: 800,
               fontSize: 12,
             }}
           >
-            {video.source_type === 'LUTTE' ? 'LUTTE' : 'SÉRIE'}
+            {video.source_type === 'LUTTE'
+              ? 'LUTTE'
+              : video.source_type === 'EMISSION'
+              ? 'DÉBAT'
+              : 'SÉRIE'}
           </span>
           <span style={{ fontWeight: 600 }}>{video.source_nom?.split('(')[0]?.trim() || 'Chaîne officielle'}</span>
         </div>

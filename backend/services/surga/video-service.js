@@ -77,6 +77,51 @@ const SOURCES_DEFAUT = [
     identifiant_flux: 'https://www.youtube.com/@GastonProductions_/videos',
     actif: true,
   },
+  {
+    id: 'src-tfm-politique',
+    nom: 'TFM (Faram Facce & Jakarlo Bi)',
+    chaine_nom: 'TFM Sénégal',
+    type: 'EMISSION',
+    plateforme: 'youtube',
+    identifiant_flux: 'https://www.youtube.com/@tfmsn/videos',
+    actif: true,
+  },
+  {
+    id: 'src-walf-tv-debats',
+    nom: 'Walf TV (Dine Ak Diamono & Société)',
+    chaine_nom: 'Walf TV',
+    type: 'EMISSION',
+    plateforme: 'youtube',
+    identifiant_flux: 'https://www.youtube.com/@WalfadjriTV/videos',
+    actif: true,
+  },
+  {
+    id: 'src-7tv-politique',
+    nom: '7tv (L\'Invité de MNF & 7actu)',
+    chaine_nom: '7tv Sénégal',
+    type: 'EMISSION',
+    plateforme: 'youtube',
+    identifiant_flux: 'https://www.youtube.com/@7tvredaction187/videos',
+    actif: true,
+  },
+  {
+    id: 'src-sen-tv-societe',
+    nom: 'Sen TV (Teuss & Grands Débats)',
+    chaine_nom: 'Sen TV',
+    type: 'EMISSION',
+    plateforme: 'youtube',
+    identifiant_flux: 'https://www.youtube.com/@GroupeDMEDIACOM/videos',
+    actif: true,
+  },
+  {
+    id: 'src-rts-politique',
+    nom: 'RTS 1 (Point de Vue & Décryptage)',
+    chaine_nom: 'RTS 1 Sénégal',
+    type: 'EMISSION',
+    plateforme: 'youtube',
+    identifiant_flux: 'https://www.youtube.com/@rts-radiotelevisionsenegalaise/videos',
+    actif: true,
+  },
 ];
 
 /**
@@ -204,6 +249,72 @@ const ITEMS_MOCK = [
     publie_le: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
     miniature_url: 'https://i.ytimg.com/vi/Ip7a0N7gi34/hq720.jpg',
   },
+  {
+    id: 'vid-tfm-faram-facce',
+    source_id: 'src-tfm-politique',
+    source_nom: 'TFM (Faram Facce & Jakarlo Bi)',
+    source_type: 'EMISSION',
+    chaine_nom: 'TFM Sénégal',
+    titre: 'Faram Facce avec Pape Ngagne Ndiaye : Face-à-face politique et analyse de la gouvernance nationale',
+    url: 'https://www.youtube.com/watch?v=QiIvddPmkCY',
+    publie_le: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    miniature_url: 'https://i.ytimg.com/vi/QiIvddPmkCY/hqdefault.jpg',
+  },
+  {
+    id: 'vid-tfm-jakarlo-bi',
+    source_id: 'src-tfm-politique',
+    source_nom: 'TFM (Faram Facce & Jakarlo Bi)',
+    source_type: 'EMISSION',
+    chaine_nom: 'TFM Sénégal',
+    titre: 'Jakarlo Bi : Débat de société avec Khalifa Diakhaté, Pr Songué Diouf et Birima sur les urgences citoyennes',
+    url: 'https://www.youtube.com/watch?v=JakarloBiTFMSN',
+    publie_le: new Date(Date.now() - 10 * 3600 * 1000).toISOString(),
+    miniature_url: 'https://i.ytimg.com/vi/JakarloBiTFMSN/hqdefault.jpg',
+  },
+  {
+    id: 'vid-7tv-invite-mnf',
+    source_id: 'src-7tv-politique',
+    source_nom: '7tv (L\'Invité de MNF & 7actu)',
+    source_type: 'EMISSION',
+    chaine_nom: '7tv Sénégal',
+    titre: 'L\'Invité de MNF avec Maïmouna Ndour Faye : Entretien exclusif sur les réformes de l\'État',
+    url: 'https://www.youtube.com/watch?v=xfLN12fQsPU',
+    publie_le: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+    miniature_url: 'https://i.ytimg.com/vi/xfLN12fQsPU/hqdefault.jpg',
+  },
+  {
+    id: 'vid-walftv-dine-ak-diamono',
+    source_id: 'src-walf-tv-debats',
+    source_nom: 'Walf TV (Dine Ak Diamono & Société)',
+    source_type: 'EMISSION',
+    chaine_nom: 'Walf TV',
+    titre: 'Dine Ak Diamono : Débat sociétal, éthique publique et cohésion nationale au Sénégal',
+    url: 'https://www.youtube.com/watch?v=MCVFwzWsd5c',
+    publie_le: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
+    miniature_url: 'https://i.ytimg.com/vi/MCVFwzWsd5c/hqdefault.jpg',
+  },
+  {
+    id: 'vid-sentv-teuss',
+    source_id: 'src-sen-tv-societe',
+    source_nom: 'Sen TV (Teuss & Grands Débats)',
+    source_type: 'EMISSION',
+    chaine_nom: 'Sen TV',
+    titre: 'Teuss avec Ahmed Aïdara : Enquêtes, témoignages citoyens et réalités sociales dakaroises',
+    url: 'https://www.youtube.com/watch?v=SZoxmil9tKU',
+    publie_le: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
+    miniature_url: 'https://i.ytimg.com/vi/SZoxmil9tKU/hqdefault.jpg',
+  },
+  {
+    id: 'vid-rts-point-de-vue',
+    source_id: 'src-rts-politique',
+    source_nom: 'RTS 1 (Point de Vue & Décryptage)',
+    source_type: 'EMISSION',
+    chaine_nom: 'RTS 1 Sénégal',
+    titre: 'Point de Vue sur RTS 1 : Analyse des grands chantiers de la République et politiques publiques',
+    url: 'https://www.youtube.com/watch?v=t9yy2IdaREY',
+    publie_le: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
+    miniature_url: 'https://i.ytimg.com/vi/t9yy2IdaREY/hqdefault.jpg',
+  },
 ];
 
 let sourcesMemoire = JSON.parse(JSON.stringify(SOURCES_DEFAUT));
@@ -221,6 +332,7 @@ async function assurerSourcesInitiales() {
         `INSERT INTO surga_video_sources (id, type, nom, chaine_nom, plateforme, identifiant_flux, actif)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (id) DO UPDATE SET
+           type = EXCLUDED.type,
            nom = EXCLUDED.nom,
            chaine_nom = EXCLUDED.chaine_nom,
            identifiant_flux = EXCLUDED.identifiant_flux,
@@ -229,17 +341,14 @@ async function assurerSourcesInitiales() {
       );
     }
 
-    // Si la table surga_video_items est vide, insérer immédiatement les vidéos authentiques
-    const countRes = await pool.query('SELECT COUNT(*) FROM surga_video_items');
-    if (parseInt(countRes.rows[0].count, 10) === 0) {
-      for (const item of ITEMS_MOCK) {
-        await pool.query(
-          `INSERT INTO surga_video_items (id, source_id, titre, url, publie_le, miniature_url)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           ON CONFLICT (url) DO NOTHING`,
-          [item.id, item.source_id, item.titre, item.url, item.publie_le, item.miniature_url]
-        );
-      }
+    // Insérer les vidéos de référence avec dédoublonnage strict par URL
+    for (const item of ITEMS_MOCK) {
+      await pool.query(
+        `INSERT INTO surga_video_items (id, source_id, titre, url, publie_le, miniature_url)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (url) DO NOTHING`,
+        [item.id, item.source_id, item.titre, item.url, item.publie_le, item.miniature_url]
+      );
     }
   } catch (err) {
     console.warn('[SURGA VIDEO SERVICE] Initialisation sources warn:', err.message);

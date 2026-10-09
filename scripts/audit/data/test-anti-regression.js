@@ -131,6 +131,17 @@ async function executerTests() {
     assert(parseInt(pRes.rows[0].cnt, 10) >= 0, 'Table boutique_produits altérée');
   });
 
+  // TEST 11 : Émissions Célèbres Politique & Société (Surga Vidéos)
+  await tester('TST-DAT-11 : Émissions Politique & Société dans Surga Vidéos (TFM, Walf, 7tv, Sen TV, RTS)', async () => {
+    const { getSources, getDernieresVideos } = require('../../../backend/services/surga/video-service');
+    const sources = await getSources({ type: 'EMISSION' });
+    assert(Array.isArray(sources) && sources.length >= 5, 'Au moins 5 sources d émissions officielles attendues');
+    const videos = await getDernieresVideos({ type: 'EMISSION', limit: 10 });
+    assert(Array.isArray(videos) && videos.length >= 5, 'Au moins 5 vidéos d émissions récentes attendues');
+    const tfm = sources.find(s => s.id === 'src-tfm-politique');
+    assert(Boolean(tfm), 'Source TFM Politique attendue');
+  });
+
   console.log('\n===============================================================');
   console.log(`RÉSULTAT GLOBAL : ${reussis} / ${reussis + echoues} tests validés`);
   if (echoues > 0) {

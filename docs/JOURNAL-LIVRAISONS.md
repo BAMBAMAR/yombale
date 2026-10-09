@@ -14,8 +14,12 @@
   - *Résolution du Crash SQL Trafic & Kiosque* :
     - Migration SQL : colonnes `statut` et `updated_at` ajoutées sur `surga_trafic_signalements`, débloquant la lecture des signalements récents.
     - Kiosque des Unes : filtrage des titres génériques ("Journal N°44").
+  - *Intégration Vidéos des Grandes Émissions Politiques & Société* :
+    - Ajout de 5 chaînes officielles majeures du débat démocratique et de société au Sénégal : TFM (Faram Facce & Jakarlo Bi), Walf TV (Dine Ak Diamono), 7tv (L'Invité de MNF), Sen TV (Teuss & Grands Débats), RTS 1 (Point de Vue).
+    - Collecte réelle YouTube avec insertion de 151 vidéos de débats politiques et sociétaux en direct dans `surga_video_items`.
+    - UI : nouvel onglet « Politique & Société » (`Landmark`), badge « DÉBAT » haute lisibilité WCAG AA, filtrage contextuel des chaînes et 0 erreur tsc.
   - *Campagne Anti-Régression Automatisée (`scripts/audit/data/test-anti-regression.js`)* :
-    - 10 / 10 tests au vert (100% PASS) validant CESTI, idempotence, démarches, trafic sans erreur, météo MET Norway, sport ESPN, kiosque et étanchéité Nopalou.
+    - 11 / 11 tests au vert (100% PASS) validant CESTI, idempotence, démarches, trafic sans erreur, météo MET Norway, sport ESPN, kiosque, étanchéité Nopalou et flux vidéos débats politiques.
 
 - **Surga / Offre de Surga pilotée par la console d'administration (`feature/surga` : `425ce79d`, `29a97de2` ; aucun push)** :
   - Prix des trois durées (7 jours, 30 jours, 12 mois), formules, avantages, quotas gratuits (CV, lettres, simulations, démarches suivies) et ouverture des ventes se règlent dans `/admin/surga` et commandent l'application (offre publique, droits d'emploi, souscription Wave). Source unique : `backend/services/surga/offre-service.js` (tables `surga_plans`, `surga_reglages`). Écrans lus sur `frontend-next/src/lib/surga-offre.ts`. Sonde A5-131 : 20 sur 20. Détail : `CLAUDE.md` et `docs/surga/JOURNAL-LIVRAISONS.md`.

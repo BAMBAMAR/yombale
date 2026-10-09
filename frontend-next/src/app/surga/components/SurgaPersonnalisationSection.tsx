@@ -44,7 +44,7 @@ const CATALOGUE_SERVICES: ServiceConfigItem[] = [
   { id: 'concours', label: 'Concours nationaux', desc: 'Échéances officielles J-30/J-7/J-1 & dossiers', icon: Award, color: '#DC2626' },
   { id: 'demarches', label: 'Démarches administratives', desc: 'Fiches officielles & pièces certifiées', icon: FileCheck, color: '#0D9488' },
   { id: 'emploi', label: 'Emploi & Stages', desc: 'Offres, fiches de révision & CV pro', icon: Briefcase, color: '#475569' },
-  { id: 'videos', label: 'Séries & Vidéos', desc: 'Séries sénégalaises & vidéos de lutte', icon: Tv, color: '#EA580C' },
+  { id: 'videos', label: 'Séries & Émissions', desc: 'Séries, débats politiques & lutte sénégalaise', icon: Tv, color: '#EA580C' },
 ]
 
 interface WidgetConfigItem {

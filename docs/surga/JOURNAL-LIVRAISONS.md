@@ -17,8 +17,12 @@ ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant 
 - **Résolution du Crash SQL Trafic & Kiosque :**
   - Migration SQL : colonnes `statut` et `updated_at` ajoutées sur `surga_trafic_signalements`, débloquant `getEtatTraficComplet()`.
   - Kiosque des Unes : filtrage des faux titres génériques ("Journal N°44").
+- **Intégration Vidéos des Grandes Émissions Politiques & Société :**
+  - Ajout de 5 chaînes officielles majeures : TFM (Faram Facce & Jakarlo Bi), Walf TV (Dine Ak Diamono), 7tv (L'Invité de MNF), Sen TV (Teuss & Grands Débats), RTS 1 (Point de Vue).
+  - Collecte en direct YouTube et 151 vidéos réelles de débats et d'actualité politique sénégalaise insérées dans `surga_video_items`.
+  - UI : nouvel onglet « Politique & Société » (`Landmark`), badge « DÉBAT » haute lisibilité, filtrage contextuel et 0 erreur TypeScript.
 - **Campagne Anti-Régression Automatisée (`scripts/audit/data/test-anti-regression.js`) :**
-  - 10 / 10 tests au vert (100% PASS) validant CESTI, idempotence, démarches, trafic sans erreur SQL, météo MET Norway, sport ESPN, kiosque et étanchéité des tables Nopalou.
+  - 11 / 11 tests au vert (100% PASS) validant CESTI, idempotence, démarches, trafic sans erreur SQL, météo MET Norway, sport ESPN, kiosque, intégrité Nopalou et flux vidéos débats politiques.
 
 ### [2026-10-08 — Offre pilotée par la console] — `425ce79d`, `29a97de2` ; aucun push
 - **Objet :** « tout doit être gérable sur admin ». L'offre retenue (gratuit + Surga Plus : 500 FCFA / 7 jours, 1 500 FCFA / 30 jours, 15 000 FCFA / 12 mois) et ses quotas gratuits se règlent dans la console et commandent l'application.

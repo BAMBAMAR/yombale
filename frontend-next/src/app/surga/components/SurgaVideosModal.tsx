@@ -10,6 +10,7 @@ import {
   Check,
   RotateCw,
   Layers,
+  Landmark,
 } from 'lucide-react'
 import SurgaChargementEchoue from './SurgaChargementEchoue'
 import {
@@ -22,7 +23,7 @@ export interface VideoSource {
   id: string
   nom: string
   chaine_nom?: string
-  type: 'SERIE' | 'LUTTE' | 'AUTRE'
+  type: 'SERIE' | 'LUTTE' | 'EMISSION' | 'AUTRE'
   plateforme: string
   identifiant_flux: string
   actif: boolean
@@ -33,7 +34,7 @@ export interface VideoItem {
   id: string
   source_id: string
   source_nom?: string
-  source_type?: 'SERIE' | 'LUTTE' | 'AUTRE'
+  source_type?: 'SERIE' | 'LUTTE' | 'EMISSION' | 'AUTRE'
   chaine_nom?: string
   titre: string
   url: string
@@ -47,7 +48,7 @@ interface SurgaVideosModalProps {
 }
 
 export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalProps) {
-  const [onglet, setOnglet] = useState<'tous' | 'series' | 'lutte' | 'abonnements'>('tous')
+  const [onglet, setOnglet] = useState<'tous' | 'series' | 'emissions' | 'lutte' | 'abonnements'>('tous')
   const [sources, setSources] = useState<VideoSource[]>([])
   const [videos, setVideos] = useState<VideoItem[]>([])
   const [recherche, setRecherche] = useState('')
@@ -175,6 +176,8 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
     let liste = [...videos]
     if (onglet === 'series') {
       liste = liste.filter((v) => v.source_type === 'SERIE')
+    } else if (onglet === 'emissions') {
+      liste = liste.filter((v) => v.source_type === 'EMISSION')
     } else if (onglet === 'lutte') {
       liste = liste.filter((v) => v.source_type === 'LUTTE')
     } else if (onglet === 'abonnements') {
@@ -192,6 +195,15 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
     return liste
   }, [videos, onglet, abonnementsLocaux, recherche])
 
+  const sourcesAffichees = useMemo(() => {
+    return sources.filter((s) => {
+      if (onglet === 'series') return s.type === 'SERIE'
+      if (onglet === 'emissions') return s.type === 'EMISSION'
+      if (onglet === 'lutte') return s.type === 'LUTTE'
+      return true
+    })
+  }, [sources, onglet])
+
   if (!isOpen) return null
 
   return (
@@ -205,10 +217,10 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--surga-navy, #1C2B4A)' }}>
-                Séries TV &amp; Lutte du Sénégal
+                Séries, Émissions &amp; Lutte
               </div>
               <div style={{ fontSize: 12, color: '#64748B' }}>
-                Alertes de sorties et vidéos officielles &bull; Mode Low-Data
+                Alertes de sorties, débats officiels &bull; Mode Low-Data
               </div>
             </div>
           </div>
@@ -250,7 +262,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher un épisode, une série ou un combat..."
+              placeholder="Rechercher une émission, une série ou un combat..."
               style={{
                 border: 'none',
                 outline: 'none',
@@ -287,6 +299,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
           {[
             { key: 'tous', label: 'Toutes', icon: Layers },
             { key: 'series', label: 'Séries TV', icon: Tv },
+            { key: 'emissions', label: 'Politique & Société', icon: Landmark },
             { key: 'lutte', label: 'Lutte', icon: Flame },
             { key: 'abonnements', label: `Mes suivis (${abonnementsLocaux.length})`, icon: Bell },
           ].map((t) => {
@@ -327,7 +340,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
               Chaînes officielles à suivre pour vos alertes :
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {sources.map((s) => {
+              {sourcesAffichees.map((s) => {
                 const estSuivi = abonnementsLocaux.includes(s.id)
                 return (
                   <button

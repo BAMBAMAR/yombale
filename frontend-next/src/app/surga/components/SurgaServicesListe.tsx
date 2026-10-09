@@ -21,7 +21,7 @@ const SERVICES: Array<{ cle: CleService; titre: string; description: string; ico
   { cle: 'shopping', titre: 'Shopping Nopalou', description: 'Boutiques et produits de Nopalou', icone: ShoppingBag },
   { cle: 'places', titre: 'Bonnes adresses', description: 'Restaurants, cafés et sorties', icone: MapPin },
   { cle: 'radios', titre: 'Radios', description: 'Radios du Sénégal en direct', icone: Radio },
-  { cle: 'videos', titre: 'Séries et vidéos', description: 'Dernières vidéos des chaînes sénégalaises', icone: Tv },
+  { cle: 'videos', titre: 'Séries & Émissions', description: 'Séries, débats politiques et lutte sénégalaise', icone: Tv },
   { cle: 'calculatrice', titre: 'Calculatrice', description: 'Calculs exacts en FCFA', icone: Calculator },
 ]
 

@@ -65,8 +65,12 @@ L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé 
   4. **Résolution du Crash SQL Trafic & Assainissement du Kiosque des Unes (`trafic-service.js`, `kiosque-service.js`)** :
      - Migration SQL : ajout des colonnes `statut` et `updated_at` sur `surga_trafic_signalements` en base de production, restaurant la lecture des signalements citoyens dans `getEtatTraficComplet()`.
      - Élimination des faux titres de quotidiens génériques ("Journal N°44") dans le Kiosque des Unes (`WHERE nom_journal NOT LIKE 'Journal N°%'`).
-  5. **Validation Anti-Régression 10/10 PASS (`scripts/audit/data/test-anti-regression.js`)** :
-     - 10 tests automatisés au vert couvrant CESTI, idempotence DB, démarches, trafic sans crash, météo MET Norway, sport ESPN et étanchéité Nopalou.
+  5. **Intégration Vidéos des Grandes Émissions Politiques & Société (`video-service.js`, `surga_video_sources`, `SurgaVideosModal.tsx`)** :
+     - Ajout de 5 chaînes officielles majeures pour le débat d'idées et la société au Sénégal : TFM (Faram Facce & Jakarlo Bi), Walf TV (Dine Ak Diamono), 7tv (L'Invité de MNF), Sen TV (Teuss & Grands Débats), RTS 1 (Point de Vue).
+     - Collecte réelle YouTube avec insertion de 151 vidéos de débats politiques et sociétaux en direct dans `surga_video_items`.
+     - Ajout du nouvel onglet « Politique & Société » (`Landmark`), badge « DÉBAT » haute lisibilité WCAG AA, filtrage contextuel et typage 100% strict (`tsc --noEmit` 0 erreur).
+  6. **Validation Anti-Régression 11/11 PASS (`scripts/audit/data/test-anti-regression.js`)** :
+     - 11 tests automatisés au vert couvrant CESTI, idempotence DB, démarches, trafic sans crash, météo MET Norway, sport ESPN, kiosque, étanchéité Nopalou et flux vidéos débats politiques.
 
 - **Nopalou Admin & CRM / Éradication Flood CSP Report-Only & Résolution Erreurs 500 / 504 Prospection (Session 2026-10-07, branche `feature/surga`)** :
   1. **Éradication du Flood de logs CSP Report-Only sur /admin (`frontend-next/src/middleware.ts`)** :
