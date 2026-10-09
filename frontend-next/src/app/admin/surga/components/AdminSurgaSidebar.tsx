@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {
   Sparkles,
   LayoutDashboard,
+  BarChart3,
   Tag,
   CreditCard,
   Users,
@@ -25,6 +26,7 @@ import {
 
 export type SurgaAdminTab =
   | 'overview'
+  | 'statistiques'
   | 'plans'
   | 'abonnements'
   | 'comptes'
@@ -96,6 +98,17 @@ export default function AdminSurgaSidebar({
           <div className="surga-nav-item-left">
             <LayoutDashboard size={16} />
             <span>Tableau de Bord</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelectTab('statistiques')}
+          className={`surga-nav-item ${activeTab === 'statistiques' ? 'active' : ''}`}
+        >
+          <div className="surga-nav-item-left">
+            <BarChart3 size={16} />
+            <span>Statistiques</span>
           </div>
         </button>
 

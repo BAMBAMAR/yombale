@@ -544,6 +544,8 @@ audités par cette campagne.
 - [x] `DONE` Écran d'ouverture de la PWA Surga : jeu d'icônes régénéré (emblème détouré, fond nuit, halo), manifeste `?v=5` (D82). Commit local, aucun push.
 - [x] `DONE` Console d'administration sur téléphone : rubriques en bande collée en haut, statistiques d'usage visibles au premier écran, barre de Nopalou masquée. Poussé sur `main` le 2026-10-09 avec les trois livraisons précédentes du jour.
 - [x] `DONE` Guide d'installation sur ordinateur corrigé (libellés de Chrome et d'Edge, astuces véridiques quand Nopalou est installé). Commit local, aucun push.
+- [x] `DONE` Console : rubrique « Statistiques » au menu ; « Modération Trafic » réparée (colonnes réelles de `surga_trafic_signalements`). Commit local, aucun push.
+- [ ] `IN PROGRESS` Passage à `surga.nopalou.com` : accord de l'utilisateur le 2026-10-09 pour le préparer. Détail du point ci-dessous :
 - [ ] `PROPOSED` Décider de servir Surga à `surga.nopalou.com` (origine séparée, revient sur D77) : c'est le seul remède durable à « Surga ne s'installe pas quand Nopalou l'est ». À traiter : reprise des données de l'appareil, session partagée, Cloudflare et Render.
 - [x] `DONE` Essais de voix Piper (cinq voix, sans compte) dans `C:\Users\HP\essais-voix-surga\`.
 - [ ] `PROPOSED` Voix du briefing : choix de la voix par l'utilisateur, vérification de la licence retenue, puis construction ; ouvrir la console en production et sur un téléphone réel.

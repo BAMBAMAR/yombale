@@ -18,7 +18,6 @@ import {
   Zap,
 } from 'lucide-react'
 import type { SurgaAdminTab } from './AdminSurgaSidebar'
-import AdminStatistiquesUsage from './AdminStatistiquesUsage'
 
 interface AdminOverviewTabProps {
   stats: {
@@ -33,8 +32,23 @@ interface AdminOverviewTabProps {
 export default function AdminOverviewTab({ stats, onNavigateTab }: AdminOverviewTabProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Statistiques d'usage mesurées dans les tables surga_* */}
-      <AdminStatistiquesUsage />
+      {/* Les statistiques d'usage ont leur rubrique dans le menu : un seul endroit, nommé. */}
+      <button
+        type="button"
+        onClick={() => onNavigateTab('statistiques')}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', padding: '16px 20px', borderRadius: 12, border: '1px solid var(--surga-border)', backgroundColor: '#FFFFFF', cursor: 'pointer', textAlign: 'left' }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <span style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(28, 43, 74, 0.08)', color: 'var(--surga-navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden="true">
+            <TrendingUp size={20} />
+          </span>
+          <span style={{ minWidth: 0 }}>
+            <span style={{ display: 'block', fontSize: 15, fontWeight: 800, color: 'var(--surga-navy)' }}>Statistiques d’usage</span>
+            <span style={{ display: 'block', fontSize: 13, color: 'var(--surga-text3)', marginTop: 2 }}>Comptes actifs, nouveaux comptes, payants, contenus créés, rubriques et quartiers.</span>
+          </span>
+        </span>
+        <ArrowRight size={16} color="var(--surga-text3)" style={{ flexShrink: 0 }} />
+      </button>
 
       {/* 4 KPIs Métiers Principaux */}
       <div>

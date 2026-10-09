@@ -49,6 +49,16 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Surga / Console : rubrique « Statistiques » dans le menu, « Modération Trafic » réparée (Session 2026-10-09, `feature/surga`, commit local, aucun push)** :
+  - *Demandes* : « où se trouvent les statistiques de Surga dans l'admin » ; « modération trafic ne fonctionne pas », avec la trace `Cannot read properties of undefined (reading 'toUpperCase')`.
+  - *Statistiques* : elles n'avaient pas d'entrée au menu (section en tête du tableau de bord). Rubrique **« Statistiques »** ajoutée sous « Tableau de Bord » (`AdminSurgaSidebar.tsx`, `AdminSurgaClient.tsx`) ; le tableau de bord n'en garde qu'un lien, pour un seul endroit nommé.
+  - *Modération Trafic, cause* : `AdminTraficTab.tsx` lisait `type_incident` et `description`, absents de `surga_trafic_signalements` (colonnes réelles : `type_signalement`, `commentaire`), et appelait `toUpperCase()` dessus. La page plantait dès qu'un signalement existait (1 en production, 96 en base d'audit). **C'est l'erreur `toUpperCase` de production cherchée depuis l'audit mobile.**
+  - *Corrigé* : l'écran lit les colonnes réelles, libellé de type sûr (`libelleType`), date et heure de Dakar (`dateSignalement`), échec de chargement dit au lieu d'une liste vide ; la route `GET /api/admin/surga/signalements` joint le nom de l'axe (`surga_trafic_axes`) et ne rend plus le texte d'erreur de PostgreSQL.
+  - *Vérifié en local dans un navigateur* : les 14 rubriques de la console s'ouvrent sans erreur ; la modération affiche 96 lignes (axe, type, commentaire, date) ; validation puis remise en attente d'un signalement par la route. Test `surga-admin-trafic.test.ts` (3). Typage 0 erreur ; frontend 201 sur 201.
+  - *Échec « intermittent » des tests frontend, expliqué* : `csp-middleware.test.ts` échoue quand `env-surga.ps1` est chargé dans le même terminal. **Lancer `npx vitest` dans un terminal sans l'environnement d'audit.**
+  - *Limites* : console de production non ouverte (session administrateur) ; le libellé d'attente écrit dans `AdminSurgaClient.tsx` (42, 8, 6) reste.
+  - *Décision* : l'utilisateur dit oui à la préparation du passage de Surga à `surga.nopalou.com` (voir l'entrée suivante sur l'installation).
+
 - **Surga / Guide d'installation sur ordinateur faux, et cause de fond : deux applications sous une même adresse (Session 2026-10-09, `feature/surga`, commit local, aucun push)** :
   - *Demande* : l'utilisateur colle le guide « Sur ordinateur (Chrome) » : « ça ne marche pas comme ça ».
   - *Constat* : les libellés du guide avaient été écrits de mémoire. Chrome en français dit « Caster, enregistrer et partager » puis « Installer la page en tant qu'appli… », pas « Diffuser, enregistrer et partager » ; l'astuce « Créer un raccourci… / Ouvrir dans une fenêtre » n'existe plus dans Chrome ; pour Edge, le chemin de la page d'aide de Microsoft est « Autres outils », « Apps », « Installer ce site en tant qu'application ».

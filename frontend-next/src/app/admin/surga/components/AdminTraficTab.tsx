@@ -12,17 +12,38 @@ import {
   MapPin,
 } from 'lucide-react'
 
+// Colonnes de surga_trafic_signalements : type_signalement et commentaire. L'écran lisait type_incident et
+// description, absents de la table : la page plantait dès qu'un signalement existait.
 export interface AdminSignalementItem {
   id: string
-  axe_id?: string
-  nom_axe?: string
-  localisation?: string
-  type_incident: string
-  description?: string
+  axe_id?: string | null
+  nom_axe?: string | null
+  type_signalement?: string | null
+  commentaire?: string | null
   statut: 'en_attente' | 'valide' | 'rejete'
-  utilisateur_nom?: string
-  utilisateur_tel?: string
+  utilisateur_nom?: string | null
+  utilisateur_tel?: string | null
   created_at: string
+}
+
+const LIBELLES_TYPE: Record<string, string> = {
+  accident: 'Accident',
+  bouchon: 'Bouchon',
+  dense: 'Trafic dense',
+  travaux: 'Travaux',
+  panne: 'Panne',
+  fluide: 'Fluide',
+}
+
+export function libelleType(type?: string | null): string {
+  if (!type) return 'Non précisé'
+  return LIBELLES_TYPE[type] || type.charAt(0).toUpperCase() + type.slice(1)
+}
+
+export function dateSignalement(iso?: string | null): string {
+  const d = iso ? new Date(iso) : null
+  if (!d || Number.isNaN(d.getTime())) return 'Date inconnue'
+  return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Dakar' })
 }
 
 export default function AdminTraficTab() {
@@ -35,12 +56,17 @@ export default function AdminTraficTab() {
     setChargement(true)
     try {
       const res = await fetch(`/api/admin/surga/signalements?statut=${filtreStatut}`)
-      const data = await res.json()
-      if (data.success && Array.isArray(data.signalements)) {
+      const data = await res.json().catch(() => null)
+      if (res.ok && data?.success && Array.isArray(data.signalements)) {
         setSignalements(data.signalements)
+      } else {
+        // Une réponse en échec n'est pas une liste vide : on le dit, la liste précédente n'est pas présentée comme à jour.
+        setSignalements([])
+        setMessage({ type: 'erreur', texte: 'Les signalements n’ont pas pu être chargés.' })
       }
     } catch {
-      setMessage({ type: 'erreur', texte: 'Impossible de charger les signalements' })
+      setSignalements([])
+      setMessage({ type: 'erreur', texte: 'Les signalements n’ont pas pu être chargés.' })
     } finally {
       setChargement(false)
     }
@@ -209,7 +235,7 @@ export default function AdminTraficTab() {
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
                         <MapPin size={13} color="var(--accent, #C75B00)" />
-                        <span>{s.nom_axe || s.localisation || 'Dakar'}</span>
+                        <span>{s.nom_axe || s.axe_id || 'Axe non précisé'}</span>
                       </div>
                       {s.utilisateur_tel && (
                         <div style={{ fontSize: 11, color: 'var(--text3, #73675E)' }}>
@@ -224,30 +250,31 @@ export default function AdminTraficTab() {
                           fontWeight: 800,
                           padding: '2px 8px',
                           borderRadius: 6,
+                          whiteSpace: 'nowrap',
                           backgroundColor:
-                            s.type_incident === 'accident'
+                            s.type_signalement === 'accident'
                               ? 'rgba(239, 68, 68, 0.1)'
-                              : s.type_incident === 'bouchon'
+                              : s.type_signalement === 'bouchon' || s.type_signalement === 'dense'
                               ? 'rgba(199, 91, 0, 0.1)'
                               : 'rgba(28, 43, 74, 0.08)',
                           color:
-                            s.type_incident === 'accident'
+                            s.type_signalement === 'accident'
                               ? '#DC2626'
-                              : s.type_incident === 'bouchon'
+                              : s.type_signalement === 'bouchon' || s.type_signalement === 'dense'
                               ? 'var(--accent, #C75B00)'
                               : 'var(--navy, #1C2B4A)',
                         }}
                       >
-                        {s.type_incident.toUpperCase()}
+                        {libelleType(s.type_signalement)}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'var(--text2, #5A4E42)', maxWidth: 300 }}>
-                      {s.description || '—'}
+                    <td style={{ padding: '12px 16px', color: 'var(--text2, #5A4E42)', maxWidth: 300, overflowWrap: 'anywhere' }}>
+                      {s.commentaire || '—'}
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text3, #73675E)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Clock size={12} />
-                        <span>{new Date(s.created_at).toLocaleTimeString('fr-SN', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span style={{ whiteSpace: 'nowrap' }}>{dateSignalement(s.created_at)}</span>
                       </div>
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'right' }}>

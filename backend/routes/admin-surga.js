@@ -700,9 +700,11 @@ router.get('/signalements', async (req, res) => {
     }
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    // Le nom de l'axe vient de surga_trafic_axes : la table des signalements ne porte que son identifiant.
     const { rows } = await pool.query(
-      `SELECT s.*, u.nom AS utilisateur_nom, u.telephone AS utilisateur_tel
+      `SELECT s.*, a.nom AS nom_axe, u.nom AS utilisateur_nom, u.telephone AS utilisateur_tel
        FROM surga_trafic_signalements s
+       LEFT JOIN surga_trafic_axes a ON a.id = s.axe_id
        LEFT JOIN utilisateurs u ON u.id = s.user_id
        ${where}
        ORDER BY s.created_at DESC
@@ -712,7 +714,8 @@ router.get('/signalements', async (req, res) => {
 
     res.json({ success: true, signalements: rows, total: rows.length });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('[SURGA ADMIN SIGNALEMENTS]', err.message);
+    res.status(500).json({ success: false, error: 'Signalements indisponibles.' });
   }
 });
 

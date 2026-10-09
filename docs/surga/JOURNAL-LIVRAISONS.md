@@ -3,6 +3,14 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Console : rubrique « Statistiques », « Modération Trafic » réparée] — commit local, aucun push
+- **Objet :** statistiques introuvables dans le menu ; modération du trafic qui plante (`toUpperCase` sur une valeur absente).
+- **Statistiques :** rubrique « Statistiques » sous « Tableau de Bord » ; un lien sur le tableau de bord.
+- **Trafic :** l'écran lisait `type_incident` et `description`, absents de la table (`type_signalement`, `commentaire`) : plantage dès qu'un signalement existait. Colonnes réelles lues, nom de l'axe joint par la route, échec de chargement dit.
+- **Vérifié :** 14 rubriques ouvertes sans erreur en local ; 96 lignes de modération ; validation d'un signalement. Frontend 201 sur 201, typage 0 erreur.
+- **À savoir :** `csp-middleware.test.ts` échoue si `env-surga.ps1` est chargé dans le terminal : lancer `npx vitest` dans un terminal propre.
+- **Retour arrière :** `git revert` du commit `fix(surga-admin)` correspondant.
+
 ### [2026-10-09 — Guide d'installation sur ordinateur corrigé ; cause de fond : Surga imbriquée dans la portée de Nopalou] — commit local, aucun push
 - **Objet :** le guide « Sur ordinateur (Chrome) » ne correspond pas à ce que Chrome affiche.
 - **Constat :** libellés écrits de mémoire (« Diffuser… », « Créer un raccourci… / Ouvrir dans une fenêtre ») : faux ou disparus. Cause de fond : `/surga` est dans la portée `/` de Nopalou ; Nopalou installé, le navigateur ne propose pas Surga (web.dev, « Building multiple PWAs on the same domain »).

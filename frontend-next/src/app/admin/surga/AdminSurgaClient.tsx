@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import AdminSurgaSidebar, { SurgaAdminTab } from './components/AdminSurgaSidebar'
 import AdminOverviewTab from './components/AdminOverviewTab'
+import AdminStatistiquesUsage from './components/AdminStatistiquesUsage'
 import AdminPlansTab from './components/AdminPlansTab'
 import AdminAbonnementsTab from './components/AdminAbonnementsTab'
 import AdminComptesTab from './components/AdminComptesTab'
@@ -39,6 +40,10 @@ const TAB_TITLES: Record<SurgaAdminTab, { title: string; subtitle: string }> = {
   overview: {
     title: 'Tableau de Bord 360° & Supervision',
     subtitle: 'Centre de commandement unifié : métriques territoriales, santé des passerelles et activité temps réel.',
+  },
+  statistiques: {
+    title: 'Statistiques d’usage',
+    subtitle: 'Comptes actifs, nouveaux comptes, comptes payants, contenus créés, rubriques et quartiers choisis, sur 7, 30 ou 90 jours.',
   },
   plans: {
     title: 'Tarifs & Formules d\'Abonnement',
@@ -204,6 +209,7 @@ export default function AdminSurgaClient({
           {activeTab === 'overview' && (
             <AdminOverviewTab stats={stats} onNavigateTab={setActiveTab} />
           )}
+          {activeTab === 'statistiques' && <AdminStatistiquesUsage />}
           {activeTab === 'plans' && <AdminPlansTab />}
           {activeTab === 'abonnements' && <AdminAbonnementsTab />}
           {activeTab === 'comptes' && <AdminComptesTab />}
