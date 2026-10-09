@@ -1,5 +1,7 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga / Mise en ligne : fusion de `feature/surga` dans `main` (Session 2026-10-09)** : fusion `c3a4e2b7`, vérifiée (migrations base vide, typage, tests, `next build`), déployée par Render. WhatsApp, assistant, voix, podcast éteints. Contrôles après déploiement et retour arrière : `CLAUDE.md`.
+
 - **Surga / Accès total des abonnés Nopalou et push de `main` (Session 2026-10-09)** : tout compte avec un abonnement Nopalou en cours a Surga Plus (réglage `acces_total_abonnes_nopalou`, coupable depuis la console). `main` vérifié (migrations base vide, tests, typage) puis poussé : 11 correctifs Nopalou, aucun code Surga. Détail : `CLAUDE.md`.
 
 - **Surga / Audit Data, Émissions Politique & Société, et PWA Dédiée avec Emblème Premium (Session 2026-10-09, branche `feature/surga` ; aucun push)** :

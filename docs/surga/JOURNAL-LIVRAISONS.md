@@ -34,6 +34,12 @@ ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant 
 - **Campagne Anti-Régression Automatisée (`scripts/audit/data/test-anti-regression.js`) :**
   - 11 / 11 tests au vert (100% PASS) validant CESTI, idempotence, démarches, trafic sans erreur SQL, météo MET Norway, sport ESPN, kiosque, intégrité Nopalou et flux vidéos débats politiques.
 
+### [2026-10-09 — Mise en ligne de Surga] — fusion `c3a4e2b7` de `feature/surga` dans `main`
+- **Objet :** l'utilisateur constate l'absence de Surga sur nopalou.com après le push de `main` seul et ordonne la mise en ligne. Fusion avec 7 conflits (documents, middleware, worker généré, navigation admin déplacée sur `main`).
+- **Preuve :** migrations sur base vide en 2 passes, 0 erreur, 158 tables ; typage 0 ; frontend 153 sur 153 ; backend 249 sur 253 (4 échecs antérieurs) ; `next build` complet réussi.
+- **En ligne :** application `/surga`, console `/admin/surga`, lien dans la barre du haut et bannière de l'accueil. Éteints : WhatsApp, assistant, voix, podcast.
+- **Limites / à contrôler :** lignes d'essai possibles en production (fiche `dem-test-cycle-90j`) ; écrans non rejoués sur build de production ; Wave réel jamais essayé ; NO-GO de l'audit non révisé. Retour arrière : `git revert -m 1 c3a4e2b7`.
+
 ### [2026-10-09 — Accès total des abonnés Nopalou, vérification de `main`, push] — `42d53334`
 - **Objet :** « tout abonné Nopalou doit avoir un accès total à Surga ». `abonnementNopalouActif()` (table `abonnements`, essai compris) fait de `estUtilisateurPremium()` un vrai ; `mon-statut` rend `source: 'nopalou'` ; réglage `acces_total_abonnes_nopalou` dans la console (groupe « Abonnés Nopalou »). Écrans : mention « inclus avec votre abonnement Nopalou », bouton d'abonnement masqué.
 - **Preuve :** 5 tests ajoutés, `surga-offre` 25 sur 25 ; typage 0 erreur ; frontend 153 sur 153 ; backend Surga 174 sur 177 (3 échecs antérieurs, contenu de la base d'audit).
