@@ -82,18 +82,33 @@ utilisateur gratuit. *Règle* : quotas, mesure, premium. (`CLAUDE_SURGA.md`, sec
 
 ---
 
-## 9. À compléter avec l'historique réel de Nopalou
-- [ ] Incidents liés au paiement Mobile Money (double facturation, paiement non confirmé,
-  webhook manqué) ?
-- [ ] Abus constatés sur les limites gratuites (contournement, faux comptes) ?
-- [ ] Problèmes de fiabilité de l'API WhatsApp Business (suspension, quota, vérification) ?
-- [ ] Retours utilisateurs récurrents (lenteur, confusion, perte de confiance) non encore
-  traduits en règle ?
+## 9. Enseignements Démontrés de la Campagne de Finalisation Technique (P0-P2)
 
-Pour les combler : relire l'historique des corrections du dépôt
-(`git log --oneline --grep="fix\|bug\|correctif"`) ou lister de mémoire les 5 à 10 problèmes qui
-ont coûté le plus de temps. Chacun devient une entrée de plus.
+1. **Anti-IDOR & Validation Systématique de Session (`CORR-P0-01`)** :
+   - *Constat* : Utiliser `tokenOptional` pour une route de consultation/suppression de données personnelles ouvre une brèche IDOR critique dès qu'un paramètre non vérifié (`?phone=`) est accepté.
+   - *Règle* : Toute route de données personnelles ou de droit à l'oubli doit impérativement utiliser `verifierToken` et extraire `req.user.userId`. Les paramètres d'URL non authentifiés sont rigoureusement proscrits.
+
+2. **Vérification Cryptographique & Zéro Confiance Client pour la Facturation (`CORR-P0-02`)** :
+   - *Constat* : Confier la validation d'un abonnement payant à un identifiant transmis par le client sans contre-vérification synchrone ou signature HMAC de webhook permet des activations gratuites illimitées.
+   - *Règle* : Aucun droit Premium ne doit être délivré sans appel direct à l'API de checkout (Wave session `complete`) ou validation cryptographique de l'empreinte HMAC.
+
+3. **Homogénéité des Types d'Identifiants (UUID v4 vs Préfixes Locaux) (`CORR-P0-03`)** :
+   - *Constat* : En mode offline, générer des identifiants temporaires arbitraires (`srg_...`) provoque un crash PostgreSQL 22P02 irréversible lors de la synchronisation si la colonne est typée `UUID`.
+   - *Règle* : Utiliser un polyfill standard RFC4122 v4 dès la création locale dans IndexedDB, et doter le backend d'un résolveur de mapping (`assurerUUID` / `id_mappings`) pour réconcilier sans faille.
+
+4. **Auto-Provisioning des Flux WhatsApp & Zéro Succès Trompeur (`CORR-P0-04`)** :
+   - *Constat* : Une commande WhatsApp envoyant un accusé de réception positif alors que l'utilisateur n'est pas encore inscrit en base détruit la confiance utilisateur par perte silencieuse des données.
+   - *Règle* : Les flux conversationnels tiers doivent auto-provisionner le compte utilisateur à la première commande valide, et le message de succès ne doit être émis qu'après commit effectif de la transaction SQL.
+
+5. **Budgets de Poids & Lazy Loading des Modales (`CORR-P2-02`)** :
+   - *Constat* : Importer 12 modales secondaires de façon synchrone gonfle le bundle initial à plus de 145 Ko et dégrade le First Contentful Paint sur réseau mobile sénégalais.
+   - *Règle* : Utiliser `next/dynamic` (`ssr: false`) pour toute modale non immédiatement visible au premier affichage afin de maintenir le bundle initial sous 120 Ko.
+
+6. **Isolation Subdomain & Portée Service Worker (`CORR-P2-03`)** :
+   - *Constat* : Un Service Worker hébergé sous `/surga/sw.js` ne peut pas intercepter la racine `/` d'un sous-domaine dédié (`surga.nopalou.com`) sans l'en-tête HTTP explicite `Service-Worker-Allowed: /`.
+   - *Règle* : Configurer l'en-tête serveur `Service-Worker-Allowed: /` et conditionner dynamiquement le scope d'enregistrement selon l'hôte (`/` sur sous-domaine, `/surga/` sur domaine racine).
+
+---
 
 ## 10. Règle d'usage pour l'agent
-Avant d'implémenter une fonction touchant à l'un de ces thèmes, relire la section concernée de
-ce document en plus de `CLAUDE.md`.
+Avant d'implémenter une fonction touchant à l'un de ces thèmes, relire la section concernée de ce document en plus de `CLAUDE.md`.

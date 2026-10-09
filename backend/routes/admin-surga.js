@@ -1,0 +1,1331 @@
+// backend/routes/admin-surga.js
+// Routeur d'administration complète de Surga — Tout dynamique et administrable
+// Gère en direct : Bonnes Adresses, Concours Nationaux, Kiosque des Unes, Modération Trafic
+
+const router = require('express').Router();
+let pool = null;
+try {
+  pool = require('../models/db').pool;
+} catch {
+  try {
+    pool = require('../db');
+  } catch {
+    // Mode offline / test
+  }
+}
+
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
+const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
+const offre = require('../services/surga/offre-service');
+const interrupteursSurga = require('../services/surga/interrupteurs');
+
+// Protection RBAC obligatoire
+router.use(requireAdminAuth);
+// Sans base, la console ne montre pas des compteurs à zéro : elle dit que le service est indisponible.
+router.use(require('../middlewares/surga-base').exigerBase);
+router.use(requireAdminRole('super_admin', 'admin_operationnel', 'moderateur'));
+
+// SRG-A1-016, D38 : ce qui touche à l'argent ou à l'offre (formule accordée, tarif, statut d'un abonnement) et les
+// canaux officiels n'est pas ouvert au modérateur.
+const reserveAuxFinances = requireAdminRole('super_admin', 'finance', 'admin_operationnel');
+
+// SRG-A1-016 : toute écriture réussie de la console laisse une ligne au journal d'audit de l'administration.
+// Posé une fois ici plutôt que dans chaque route : une route ajoutée demain est tracée d'office.
+router.use((req, res, next) => {
+  if (req.method === 'GET') return next();
+  res.on('finish', () => {
+    if (res.statusCode >= 400) return;
+    const cible = req.path.split('/').filter(Boolean);
+    enregistrerAdminLog({
+      req,
+      adminRole: req.adminUser?.role,
+      action: `surga_${req.method.toLowerCase()}_${cible[0] || 'racine'}`,
+      cibleType: `surga_${cible[0] || 'racine'}`,
+      cibleId: cible[1] || null,
+      description: `${req.method} /api/admin/surga${req.path}`,
+      nouvelleValeur: resumerCorps(req.body),
+    }).catch(() => {});
+  });
+  next();
+});
+
+// Ce que le journal garde d'une écriture : les noms des champs et les valeurs courtes, jamais un texte long.
+function resumerCorps(corps) {
+  if (!corps || typeof corps !== 'object') return null;
+  const resume = {};
+  for (const [cle, valeur] of Object.entries(corps).slice(0, 20)) {
+    resume[cle] = ['string', 'number', 'boolean'].includes(typeof valeur) ? String(valeur).slice(0, 80) : '(objet)';
+  }
+  return resume;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. STATISTIQUES GLOBALES SURGA
+// ─────────────────────────────────────────────────────────────────────────────
+// SRG-A5-008 : santé de Surga : réponses et erreurs 5xx par famille de routes sur 5 minutes, dernier passage de
+// l'ordonnanceur de rappels. Compteurs du processus qui répond (remis à zéro à chaque redémarrage).
+router.get('/sante', (req, res) => {
+  res.json({ success: true, ...require('../services/surga/surveillance').surveillance().etat() });
+});
+
+router.get('/stats', async (req, res) => {
+  try {
+    if (!pool) {
+      return res.json({
+        success: true,
+        stats: {
+          nb_places: 0,
+          nb_concours: 0,
+          nb_unes: 0,
+          nb_signalements_attente: 0,
+          nb_demarches: 0,
+          nb_demarches_a_reverifier: 0,
+        },
+      });
+    }
+
+    const [placesRes, concoursRes, unesRes, signalementsRes, demarchesRes, demarchesReverifRes] = await Promise.all([
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_places WHERE actif = true`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_concours WHERE actif = true`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_unes_presse`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_trafic_signalements WHERE statut = 'en_attente'`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_demarches`).catch(() => ({ rows: [{ count: 0 }] })),
+      pool.query(`SELECT COUNT(*)::int AS count FROM surga_demarches WHERE statut = 'A_REVERIFIER' OR date_prochaine_verification <= NOW()`).catch(() => ({ rows: [{ count: 0 }] })),
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        nb_places: placesRes.rows[0]?.count || 0,
+        nb_concours: concoursRes.rows[0]?.count || 0,
+        nb_unes: unesRes.rows[0]?.count || 0,
+        nb_signalements_attente: signalementsRes.rows[0]?.count || 0,
+        nb_demarches: demarchesRes.rows[0]?.count || 0,
+        nb_demarches_a_reverifier: demarchesReverifRes.rows[0]?.count || 0,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. BONNES ADRESSES & BONS PLANS (surga_places)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/places', async (req, res) => {
+  try {
+    const { q, categorie, quartier, actif, page = 1, limit = 50 } = req.query;
+    const l = Math.min(100, Math.max(1, parseInt(limit) || 50));
+    const offset = (Math.max(1, parseInt(page) || 1) - 1) * l;
+
+    if (!pool) {
+      const placesDemo = require('../services/surga/places-service').PLACES_DAKAR_DEMO || [];
+      return res.json({ success: true, places: placesDemo, total: placesDemo.length, page: 1 });
+    }
+
+    const conds = [];
+    const vals = [];
+    let i = 1;
+
+    if (categorie && categorie !== 'tous') {
+      conds.push(`categorie = $${i}`);
+      vals.push(categorie);
+      i++;
+    }
+    if (quartier && quartier !== 'Tous les quartiers') {
+      conds.push(`quartier ILIKE $${i}`);
+      vals.push(`%${quartier}%`);
+      i++;
+    }
+    if (actif !== undefined && actif !== '') {
+      conds.push(`actif = $${i}`);
+      vals.push(actif === 'true');
+      i++;
+    }
+    if (q && q.trim()) {
+      conds.push(`(nom ILIKE $${i} OR specialite ILIKE $${i} OR resume_honnete ILIKE $${i} OR quartier ILIKE $${i})`);
+      vals.push(`%${q.trim()}%`);
+      i++;
+    }
+
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+
+    const countRes = await pool.query(`SELECT COUNT(*)::int AS total FROM surga_places ${where}`, vals);
+    const { rows } = await pool.query(
+      `SELECT * FROM surga_places ${where} ORDER BY created_at DESC LIMIT $${i} OFFSET $${i + 1}`,
+      [...vals, l, offset]
+    );
+
+    res.json({
+      success: true,
+      places: rows,
+      total: countRes.rows[0]?.total || 0,
+      page: parseInt(page) || 1,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/places', async (req, res) => {
+  try {
+    const {
+      nom,
+      categorie,
+      quartier,
+      ville = 'Dakar',
+      adresse,
+      budget_moyen_xof = 5000,
+      fourchette_prix = '€€',
+      tags_ambiance = [],
+      specialite,
+      note_moyenne = 4.5,
+      nb_avis = 10,
+      resume_honnete,
+      contact_tel,
+      contact_whatsapp,
+      horaires,
+      photos = [],
+      verifie = true,
+      actif = true,
+    } = req.body;
+
+    if (!nom || !categorie || !quartier || !resume_honnete || !specialite) {
+      return res.status(400).json({ success: false, error: 'Champs obligatoires manquants (nom, catégorie, quartier, spécialité, résumé honnête)' });
+    }
+
+    const id = `place-${Date.now()}`;
+    const slug = `${nom.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${quartier.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
+    if (!pool) {
+      return res.json({ success: true, place: { id, slug, ...req.body } });
+    }
+
+    const insertRes = await pool.query(
+      `INSERT INTO surga_places (
+        id, slug, nom, categorie, quartier, ville, adresse, budget_moyen_xof,
+        fourchette_prix, tags_ambiance, specialite, note_moyenne, nb_avis,
+        resume_honnete, contact_tel, contact_whatsapp, horaires, photos, verifie, actif
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+      RETURNING *`,
+      [
+        id,
+        slug,
+        nom.trim(),
+        categorie,
+        quartier.trim(),
+        ville,
+        adresse || quartier,
+        parseInt(budget_moyen_xof) || 0,
+        fourchette_prix,
+        JSON.stringify(tags_ambiance),
+        specialite.trim(),
+        parseFloat(note_moyenne) || 4.5,
+        parseInt(nb_avis) || 10,
+        resume_honnete.trim(),
+        contact_tel || null,
+        contact_whatsapp || null,
+        horaires || null,
+        JSON.stringify(photos),
+        Boolean(verifie),
+        Boolean(actif),
+      ]
+    );
+
+
+    res.json({ success: true, place: insertRes.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/places/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      nom,
+      categorie,
+      quartier,
+      ville,
+      adresse,
+      budget_moyen_xof,
+      fourchette_prix,
+      tags_ambiance,
+      specialite,
+      note_moyenne,
+      nb_avis,
+      resume_honnete,
+      contact_tel,
+      contact_whatsapp,
+      horaires,
+      photos,
+      verifie,
+      actif,
+    } = req.body;
+
+    if (!pool) {
+      return res.json({ success: true, place: { id, ...req.body } });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE surga_places SET
+        nom = COALESCE($1, nom),
+        categorie = COALESCE($2, categorie),
+        quartier = COALESCE($3, quartier),
+        ville = COALESCE($4, ville),
+        adresse = COALESCE($5, adresse),
+        budget_moyen_xof = COALESCE($6, budget_moyen_xof),
+        fourchette_prix = COALESCE($7, fourchette_prix),
+        tags_ambiance = CASE WHEN $8::text IS NOT NULL THEN $8::jsonb ELSE tags_ambiance END,
+        specialite = COALESCE($9, specialite),
+        note_moyenne = COALESCE($10, note_moyenne),
+        nb_avis = COALESCE($11, nb_avis),
+        resume_honnete = COALESCE($12, resume_honnete),
+        contact_tel = COALESCE($13, contact_tel),
+        contact_whatsapp = COALESCE($14, contact_whatsapp),
+        horaires = COALESCE($15, horaires),
+        photos = CASE WHEN $16::text IS NOT NULL THEN $16::jsonb ELSE photos END,
+        verifie = COALESCE($17, verifie),
+        actif = COALESCE($18, actif),
+        updated_at = NOW()
+      WHERE id = $19
+      RETURNING *`,
+      [
+        nom ? nom.trim() : null,
+        categorie || null,
+        quartier ? quartier.trim() : null,
+        ville || null,
+        adresse || null,
+        budget_moyen_xof !== undefined ? parseInt(budget_moyen_xof) : null,
+        fourchette_prix || null,
+        tags_ambiance ? JSON.stringify(tags_ambiance) : null,
+        specialite ? specialite.trim() : null,
+        note_moyenne !== undefined ? parseFloat(note_moyenne) : null,
+        nb_avis !== undefined ? parseInt(nb_avis) : null,
+        resume_honnete ? resume_honnete.trim() : null,
+        contact_tel || null,
+        contact_whatsapp || null,
+        horaires || null,
+        photos ? JSON.stringify(photos) : null,
+        verifie !== undefined ? Boolean(verifie) : null,
+        actif !== undefined ? Boolean(actif) : null,
+        id,
+      ]
+    );
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Adresse introuvable' });
+    }
+
+    res.json({ success: true, place: updateRes.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/places/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (pool) {
+      await pool.query(`DELETE FROM surga_places WHERE id = $1`, [id]);
+    }
+    res.json({ success: true, message: 'Adresse supprimée avec succès' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. CONCOURS & EXAMENS DU SÉNÉGAL (surga_concours)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/concours', async (req, res) => {
+  try {
+    const { statut, categorie, q } = req.query;
+
+    if (!pool) {
+      const concoursDemo = require('../services/surga/concours-service').CONCOURS_SENEGAL_DEMO || [];
+      return res.json({ success: true, concours: concoursDemo, total: concoursDemo.length });
+    }
+
+    const conds = [];
+    const vals = [];
+    let i = 1;
+
+    if (statut && statut !== 'tous') {
+      conds.push(`statut = $${i}`);
+      vals.push(statut);
+      i++;
+    }
+    if (categorie && categorie !== 'tous') {
+      conds.push(`categorie = $${i}`);
+      vals.push(categorie);
+      i++;
+    }
+    if (q && q.trim()) {
+      conds.push(`(titre ILIKE $${i} OR organisme ILIKE $${i} OR sigle ILIKE $${i})`);
+      vals.push(`%${q.trim()}%`);
+      i++;
+    }
+
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await pool.query(
+      `SELECT * FROM surga_concours ${where} ORDER BY date_cloture ASC`,
+      vals
+    );
+
+    res.json({ success: true, concours: rows, total: rows.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/concours', async (req, res) => {
+  try {
+    const {
+      titre,
+      sigle,
+      organisme,
+      categorie,
+      niveau_requis,
+      age_max,
+      frais_dossier_xof = 5000,
+      statut = 'ouvert',
+      date_ouverture,
+      date_cloture,
+      date_epreuves,
+      pieces_a_fournir = [],
+      centres_prepa = [],
+      description,
+      lien_officiel,
+    } = req.body;
+
+    if (!titre || !organisme || !categorie || !date_cloture) {
+      return res.status(400).json({ success: false, error: 'Titre, organisme, catégorie et date de clôture sont obligatoires' });
+    }
+
+    const id = `concours-${Date.now()}`;
+    const slug = (sigle || titre).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+    if (!pool) {
+      return res.json({ success: true, concours: { id, slug, ...req.body } });
+    }
+
+    const insertRes = await pool.query(
+      `INSERT INTO surga_concours (
+        id, slug, titre, sigle, organisme, categorie, niveau_requis, age_max,
+        frais_dossier_xof, statut, date_ouverture, date_cloture, date_epreuves,
+        pieces_a_fournir, centres_prepa, description, lien_officiel
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+      RETURNING *`,
+      [
+        id,
+        slug,
+        titre.trim(),
+        sigle ? sigle.trim().toUpperCase() : null,
+        organisme.trim(),
+        categorie,
+        niveau_requis || 'Baccalauréat',
+        age_max ? parseInt(age_max) : null,
+        parseInt(frais_dossier_xof) || 0,
+        statut,
+        date_ouverture || new Date().toISOString().slice(0, 10),
+        date_cloture,
+        date_epreuves || null,
+        JSON.stringify(pieces_a_fournir),
+        JSON.stringify(centres_prepa),
+        description || '',
+        lien_officiel || '',
+      ]
+    );
+
+    res.json({ success: true, concours: insertRes.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/concours/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      titre,
+      sigle,
+      organisme,
+      categorie,
+      niveau_requis,
+      age_max,
+      frais_dossier_xof,
+      statut,
+      date_ouverture,
+      date_cloture,
+      date_epreuves,
+      pieces_a_fournir,
+      centres_prepa,
+      description,
+      lien_officiel,
+    } = req.body;
+
+    if (!pool) {
+      return res.json({ success: true, concours: { id, ...req.body } });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE surga_concours SET
+        titre = COALESCE($1, titre),
+        sigle = COALESCE($2, sigle),
+        organisme = COALESCE($3, organisme),
+        categorie = COALESCE($4, categorie),
+        niveau_requis = COALESCE($5, niveau_requis),
+        age_max = COALESCE($6, age_max),
+        frais_dossier_xof = COALESCE($7, frais_dossier_xof),
+        statut = COALESCE($8, statut),
+        date_ouverture = COALESCE($9, date_ouverture),
+        date_cloture = COALESCE($10, date_cloture),
+        date_epreuves = COALESCE($11, date_epreuves),
+        pieces_a_fournir = CASE WHEN $12::text IS NOT NULL THEN $12::jsonb ELSE pieces_a_fournir END,
+        centres_prepa = CASE WHEN $13::text IS NOT NULL THEN $13::jsonb ELSE centres_prepa END,
+        description = COALESCE($14, description),
+        lien_officiel = COALESCE($15, lien_officiel),
+        updated_at = NOW()
+      WHERE id = $16
+      RETURNING *`,
+      [
+        titre ? titre.trim() : null,
+        sigle ? sigle.trim().toUpperCase() : null,
+        organisme ? organisme.trim() : null,
+        categorie || null,
+        niveau_requis || null,
+        age_max !== undefined ? parseInt(age_max) : null,
+        frais_dossier_xof !== undefined ? parseInt(frais_dossier_xof) : null,
+        statut || null,
+        date_ouverture || null,
+        date_cloture || null,
+        date_epreuves || null,
+        pieces_a_fournir ? JSON.stringify(pieces_a_fournir) : null,
+        centres_prepa ? JSON.stringify(centres_prepa) : null,
+        description || null,
+        lien_officiel || null,
+        id,
+      ]
+    );
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Concours introuvable' });
+    }
+
+    res.json({ success: true, concours: updateRes.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/concours/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (pool) {
+      await pool.query(`DELETE FROM surga_concours WHERE id = $1`, [id]);
+    }
+    res.json({ success: true, message: 'Concours supprimé avec succès' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. KIOSQUE DES UNES DE LA PRESSE (surga_unes_presse)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/unes', async (req, res) => {
+  try {
+    const { date, journal } = req.query;
+
+    if (!pool) {
+      const unesDemo = (require('../services/surga/kiosque-service').UNES_DEFAUT || []).map((u, i) => ({
+        id: `demo-${i}`,
+        ...u,
+        url_image: u.image_url,
+      }));
+      return res.json({ success: true, unes: unesDemo, total: unesDemo.length });
+    }
+
+    const conds = [];
+    const vals = [];
+    let i = 1;
+
+    if (date) {
+      conds.push(`date_parution = $${i}`);
+      vals.push(date);
+      i++;
+    }
+    if (journal) {
+      conds.push(`nom_journal ILIKE $${i}`);
+      vals.push(`%${journal}%`);
+      i++;
+    }
+
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await pool.query(
+      `SELECT id, nom_journal, date_parution, image_url, description, created_at
+       FROM surga_unes_presse ${where}
+       ORDER BY date_parution DESC, nom_journal ASC`,
+      vals
+    );
+
+    const unesNormalisees = rows.map((r) => ({
+      ...r,
+      url_image: r.image_url,
+      titre_principal: r.description || '',
+    }));
+
+    res.json({ success: true, unes: unesNormalisees, total: unesNormalisees.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/unes', async (req, res) => {
+  try {
+    const {
+      nom_journal,
+      date_parution,
+      url_image,
+      image_url,
+      titre_principal = '',
+      description_courte = '',
+      description = '',
+    } = req.body;
+
+    const imageUrlFinale = (image_url || url_image || '').trim();
+    if (!nom_journal || !imageUrlFinale) {
+      return res.status(400).json({ success: false, error: 'Nom du journal et URL de la photo obligatoires' });
+    }
+
+    const dateParutionCalculee = date_parution || new Date().toISOString().slice(0, 10);
+    const descFinale = (description || titre_principal || description_courte || '').trim();
+
+    if (!pool) {
+      return res.json({
+        success: true,
+        une: {
+          id: `une-${Date.now()}`,
+          nom_journal,
+          date_parution: dateParutionCalculee,
+          image_url: imageUrlFinale,
+          url_image: imageUrlFinale,
+          description: descFinale,
+        },
+      });
+    }
+
+    // Vérifier si une entrée existe déjà pour ce journal à cette date
+    const checkExistant = await pool.query(
+      `SELECT id FROM surga_unes_presse WHERE nom_journal = $1 AND date_parution = $2 LIMIT 1`,
+      [nom_journal.trim(), dateParutionCalculee]
+    );
+
+    let row;
+    if (checkExistant.rows.length > 0) {
+      const updateRes = await pool.query(
+        `UPDATE surga_unes_presse
+         SET image_url = $1, description = $2, created_at = NOW()
+         WHERE id = $3
+         RETURNING id, nom_journal, date_parution, image_url, description, created_at`,
+        [imageUrlFinale, descFinale, checkExistant.rows[0].id]
+      );
+      row = updateRes.rows[0];
+    } else {
+      const insertRes = await pool.query(
+        `INSERT INTO surga_unes_presse (nom_journal, date_parution, image_url, description)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, nom_journal, date_parution, image_url, description, created_at`,
+        [nom_journal.trim(), dateParutionCalculee, imageUrlFinale, descFinale]
+      );
+      row = insertRes.rows[0];
+    }
+
+    res.json({
+      success: true,
+      une: {
+        ...row,
+        url_image: row.image_url,
+        titre_principal: row.description,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/unes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (pool) {
+      await pool.query(`DELETE FROM surga_unes_presse WHERE id = $1`, [id]);
+    }
+    res.json({ success: true, message: 'Une de presse supprimée avec succès' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. MODÉRATION DU TRAFIC & SIGNALEMENTS (surga_trafic_signalements)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/signalements', async (req, res) => {
+  try {
+    const { statut } = req.query;
+
+    if (!pool) {
+      return res.json({ success: true, signalements: [], total: 0 });
+    }
+
+    const conds = [];
+    const vals = [];
+    let i = 1;
+
+    if (statut && statut !== 'tous') {
+      conds.push(`s.statut = $${i}`);
+      vals.push(statut);
+      i++;
+    }
+
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await pool.query(
+      `SELECT s.*, u.nom AS utilisateur_nom, u.telephone AS utilisateur_tel
+       FROM surga_trafic_signalements s
+       LEFT JOIN utilisateurs u ON u.id = s.user_id
+       ${where}
+       ORDER BY s.created_at DESC
+       LIMIT 100`,
+      vals
+    );
+
+    res.json({ success: true, signalements: rows, total: rows.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.patch('/signalements/:id/statut', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { statut } = req.body; // 'valide', 'rejete'
+
+    if (!['valide', 'rejete', 'en_attente'].includes(statut)) {
+      return res.status(400).json({ success: false, error: 'Statut invalide' });
+    }
+
+    if (!pool) {
+      return res.json({ success: true, signalement: { id, statut } });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE surga_trafic_signalements SET statut = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [statut, id]
+    );
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Signalement introuvable' });
+    }
+
+    res.json({ success: true, signalement: updateRes.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/signalements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (pool) {
+      await pool.query(`DELETE FROM surga_trafic_signalements WHERE id = $1`, [id]);
+    }
+    res.json({ success: true, message: 'Signalement supprimé avec succès' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// ABONNEMENTS & GESTION FINANCIÈRE (Tranche 15)
+// ==========================================
+const {
+  getStatistiquesFinancieresAdmin,
+  listerAbonnementsAdmin,
+  getCataloguePlansAsync,
+  mettreAJourPlan,
+  creerPlan,
+  supprimerPlan,
+} = require('../services/surga/abonnement-service');
+
+router.get('/abonnements', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, statut, plan } = req.query;
+
+    if (!pool) {
+      return res.json({
+        success: true,
+        stats: {
+          abonnementsActifs: 0,
+          enAttente: 0,
+          mrrEstimeXof: 0,
+          volumeEncaisseXof: 0,
+        },
+        repartition: [],
+        abonnements: [],
+        total: 0,
+      });
+    }
+
+    const statsFin = await getStatistiquesFinancieresAdmin();
+    const liste = await listerAbonnementsAdmin({
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      statut,
+      plan,
+    });
+
+    res.json({
+      success: true,
+      stats: statsFin.kpis,
+      repartition: statsFin.repartition,
+      ...liste,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/abonnements/:id/statut', reserveAuxFinances, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { statut } = req.body;
+
+    if (!['actif', 'en_attente', 'expire', 'resilie'].includes(statut)) {
+      return res.status(400).json({ success: false, error: 'Statut invalide' });
+    }
+
+    if (!pool) {
+      return res.json({ success: true, abonnement: { id, statut } });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE surga_abonnements SET statut = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [statut, id]
+    );
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Abonnement introuvable' });
+    }
+
+    res.json({ success: true, abonnement: updateRes.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// GESTION DES PLANS & TARIFICATION DYNAMIQUE
+// ==========================================
+// Une erreur de validation se dit à l'administrateur ; rien n'est enregistré à moitié.
+function repondreErreurOffre(res, err) {
+  const statut = { VALIDATION: 400, PLAN_INTROUVABLE: 404, PLAN_EXISTE: 409, BASE_INDISPONIBLE: 503 }[err.code] || 500;
+  return res.status(statut).json({ success: false, error: err.message, code: err.code || undefined });
+}
+
+// Toutes les formules, y compris celles retirées de la vente : sans elles, une formule désactivée ne se réactive plus.
+router.get('/plans', async (req, res) => {
+  try {
+    const plans = await offre.chargerPlans({ inclureInactifs: true, frais: true });
+    res.json({ success: true, plans });
+  } catch (err) {
+    repondreErreurOffre(res, err);
+  }
+});
+
+router.post('/plans', reserveAuxFinances, async (req, res) => {
+  try {
+    const { id, nom, type, description, tarifHebdo, tarifMensuel, tarifAnnuel, avantages, badgePromo, actif, ordre } = req.body;
+    const nouveauPlan = await creerPlan({ id, nom, type, description, tarifHebdo, tarifMensuel, tarifAnnuel, avantages, badgePromo, actif, ordre });
+    res.json({ success: true, plan: nouveauPlan });
+  } catch (err) {
+    repondreErreurOffre(res, err);
+  }
+});
+
+router.put('/plans/:id', reserveAuxFinances, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nom, type, description, tarifHebdo, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo, ordre } = req.body;
+    // Les champs absents ne sont pas touchés : enregistrer des prix ne réactive plus une formule désactivée.
+    const planModifie = await mettreAJourPlan(id, { nom, type, description, tarifHebdo, tarifMensuel, tarifAnnuel, avantages, actif, badgePromo, ordre });
+    res.json({ success: true, plan: planModifie });
+  } catch (err) {
+    repondreErreurOffre(res, err);
+  }
+});
+
+router.delete('/plans/:id', reserveAuxFinances, async (req, res) => {
+  try {
+    await supprimerPlan(req.params.id);
+    res.json({ success: true, message: 'Formule retirée de la vente ; elle peut être réactivée.' });
+  } catch (err) {
+    repondreErreurOffre(res, err);
+  }
+});
+
+// Quotas gratuits et ouverture des ventes, avec l'état réel des fournisseurs (booléens seulement, jamais une clé).
+async function etatFournisseurs() {
+  const cfg = require('../lib/settingsCache');
+  const present = async (cleReglage, ...variables) => {
+    if (variables.some((v) => (process.env[v] || '').trim())) return true;
+    try { return Boolean(String((await cfg.get(cleReglage)) || '').trim()); } catch { return false; }
+  };
+  const waveCle = await present('wave_api_key', 'WAVE_API_KEY');
+  const waveSecret = await present('wave_signing_secret', 'WAVE_SIGNING_SECRET', 'WAVE_WEBHOOK_SECRET');
+  const meteo = interrupteursSurga.openMeteo();
+  return [
+    { id: 'wave', libelle: 'Wave : paiement des abonnements', etat: waveCle && waveSecret ? 'ok' : waveCle ? 'partiel' : 'absent',
+      detail: waveCle && waveSecret ? 'Clé API et secret de signature du webhook présents.' : waveCle ? 'Clé API présente, secret de signature absent : un paiement ne sera pas confirmé automatiquement.' : 'Clé API absente : aucun paiement ne peut être ouvert.' },
+    { id: 'google_trafic', libelle: 'Google : trafic mesuré sur six axes', etat: interrupteursSurga.googleRoutesCle() ? 'ok' : 'absent',
+      detail: interrupteursSurga.googleRoutesCle() ? 'Clé présente.' : 'Sans clé, le trafic se limite aux signalements des usagers.' },
+    { id: 'open_meteo', libelle: 'Open-Meteo : marées et qualité de l’air', etat: meteo ? 'ok' : 'absent',
+      detail: meteo ? (meteo.cle ? 'Abonnement.' : 'Essai non commercial (à remplacer par un abonnement avant le lancement).') : 'Éteint : marées et qualité de l’air restent indisponibles.' },
+    { id: 'thesportsdb', libelle: 'TheSportsDB : Ligue 1 du Sénégal', etat: interrupteursSurga.theSportsDbCle() ? 'ok' : 'absent',
+      detail: interrupteursSurga.theSportsDbCle() ? 'Clé présente.' : 'Sans clé, la Ligue 1 du Sénégal reste indisponible.' },
+    { id: 'whatsapp', libelle: 'WhatsApp : routage Surga', etat: interrupteursSurga.whatsappActif() ? 'ok' : 'eteint',
+      detail: interrupteursSurga.whatsappActif() ? 'Allumé.' : 'Éteint au lancement (décision D51).' },
+    { id: 'assistant', libelle: 'Assistant de rédaction', etat: interrupteursSurga.assistantActif() ? 'ok' : 'eteint',
+      detail: interrupteursSurga.assistantActif() ? 'Allumé.' : 'Éteint au lancement (décision D52).' },
+  ];
+}
+
+async function chargerReglages() {
+  offre.invaliderCache();
+  return { reglages: await offre.getReglagesComplets(), fournisseurs: await etatFournisseurs() };
+}
+
+router.get('/reglages', async (req, res) => {
+  try {
+    res.json({ success: true, ...(await chargerReglages()) });
+  } catch (err) {
+    repondreErreurOffre(res, err);
+  }
+});
+
+// D38 : l'argent (tarifs, quotas qui déclenchent le paiement) est réservé à super_admin, finance et admin_operationnel.
+router.put('/reglages', reserveAuxFinances, async (req, res) => {
+  try {
+    const avant = Object.fromEntries((await offre.getReglagesComplets()).map((r) => [r.cle, r.valeur]));
+    const acteur = req.adminUser?.email || req.adminUser?.nom || req.adminUser?.role || null;
+    await offre.definirReglages(req.body?.reglages, acteur);
+    const apres = Object.fromEntries((await offre.getReglagesComplets()).map((r) => [r.cle, r.valeur]));
+    const changes = Object.keys(req.body.reglages).filter((c) => avant[c] !== apres[c]);
+    enregistrerAdminLog({
+      req,
+      adminRole: req.adminUser?.role,
+      action: 'surga_reglages_modifies',
+      cibleType: 'surga_reglages',
+      cibleId: null,
+      description: changes.length ? changes.map((c) => c + ' : ' + avant[c] + ' -> ' + apres[c]).join(' ; ') : 'Réglages enregistrés sans changement',
+      ancienneValeur: Object.fromEntries(changes.map((c) => [c, avant[c]])),
+      nouvelleValeur: Object.fromEntries(changes.map((c) => [c, apres[c]])),
+    }).catch(() => {});
+    res.json({ success: true, ...(await chargerReglages()) });
+  } catch (err) {
+    repondreErreurOffre(res, err);
+  }
+});
+
+// ==========================================
+// GESTION DES COMPTES & UTILISATEURS SURGA
+// ==========================================
+router.get('/utilisateurs', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, q = '', statut = '' } = req.query;
+    const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
+
+    if (!pool) {
+      return res.json({
+        success: true,
+        total: 2,
+        page: 1,
+        limit: 20,
+        utilisateurs: [
+          {
+            id: 'mock-user-1',
+            nom_complet: 'Bamba Mar (VIP Testeur)',
+            telephone: '+221 77 123 45 67',
+            email: 'bamba@surga.sn',
+            statut: 'actif',
+            created_at: new Date().toISOString(),
+            plan_actif: 'b2c_premium',
+            echeance_plan: new Date(Date.now() + 30 * 86400000).toISOString(),
+            quota_vocal_utilise: 4,
+            quartier_prefere: 'Dakar Plateau',
+          },
+          {
+            id: 'mock-user-2',
+            nom_complet: 'Aïssatou Sow (Utilisatrice)',
+            telephone: '+221 78 456 78 90',
+            email: 'aissatou@gmail.com',
+            statut: 'actif',
+            created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+            plan_actif: null,
+            echeance_plan: null,
+            quota_vocal_utilise: 12,
+            quartier_prefere: 'Almadies',
+          },
+        ],
+      });
+    }
+
+    const conditions = [];
+    const params = [];
+
+    if (q) {
+      params.push(`%${q}%`);
+      conditions.push(`(u.nom ILIKE $${params.length} OR u.telephone ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+    }
+
+    if (statut === 'premium') {
+      conditions.push(`EXISTS (SELECT 1 FROM surga_abonnements a WHERE (a.user_id = u.id OR (a.phone IS NOT NULL AND u.telephone IS NOT NULL AND a.phone = u.telephone)) AND a.statut = 'actif' AND a.fin > NOW())`);
+    } else if (statut === 'freemium') {
+      conditions.push(`NOT EXISTS (SELECT 1 FROM surga_abonnements a WHERE (a.user_id = u.id OR (a.phone IS NOT NULL AND u.telephone IS NOT NULL AND a.phone = u.telephone)) AND a.statut = 'actif' AND a.fin > NOW())`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countRes = await pool.query(
+      `SELECT COUNT(*)::int as count FROM utilisateurs u ${whereClause}`,
+      params
+    );
+    const total = countRes.rows[0]?.count || 0;
+
+    params.push(parseInt(limit, 10), offset);
+    const query = `
+      SELECT
+        u.id, u.nom AS nom_complet, u.telephone, u.email, u.created_at,
+        p.quartiers->>0 AS quartier_prefere, p.heure_briefing, p.equipes_suivies,
+        (
+          SELECT a.plan
+          FROM surga_abonnements a
+          WHERE (a.user_id = u.id OR (a.phone IS NOT NULL AND u.telephone IS NOT NULL AND a.phone = u.telephone))
+            AND a.statut = 'actif' AND a.fin > NOW()
+          ORDER BY a.fin DESC LIMIT 1
+        ) as plan_actif,
+        (
+          SELECT a.fin
+          FROM surga_abonnements a
+          WHERE (a.user_id = u.id OR (a.phone IS NOT NULL AND u.telephone IS NOT NULL AND a.phone = u.telephone))
+            AND a.statut = 'actif' AND a.fin > NOW()
+          ORDER BY a.fin DESC LIMIT 1
+        ) as echeance_plan,
+        COALESCE(
+          (SELECT (COALESCE(q.nb_commandes, 0) + COALESCE(q.nb_vocaux, 0)) FROM surga_quotas q WHERE (q.phone = u.telephone) AND q.date_jour = CURRENT_DATE LIMIT 1),
+          0
+        ) as quota_vocal_utilise
+      FROM utilisateurs u
+      LEFT JOIN surga_preferences p ON u.id = p.user_id
+      ${whereClause}
+      ORDER BY u.created_at DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+    `;
+
+    const { rows } = await pool.query(query, params);
+
+    res.json({
+      success: true,
+      total,
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      utilisateurs: rows,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/utilisateurs/:id/premium', reserveAuxFinances, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action = 'accorder', mois = 1, plan = 'b2c_premium' } = req.body;
+
+    if (!pool) {
+      return res.json({ success: true, message: 'Statut Premium mis à jour avec succès (mode local).' });
+    }
+
+    if (action === 'revoquer') {
+      await pool.query(
+        `UPDATE surga_abonnements SET statut = 'resilie', updated_at = NOW() WHERE user_id = $1 AND statut = 'actif'`,
+        [id]
+      );
+      return res.json({ success: true, message: 'Abonnement révoqué avec succès.' });
+    }
+
+    const { rows: userRows } = await pool.query(`SELECT id, telephone FROM utilisateurs WHERE id = $1`, [id]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Utilisateur introuvable' });
+    }
+
+    const user = userRows[0];
+    const debut = new Date();
+    const fin = new Date(debut.getTime() + mois * 30 * 86400000);
+    const ref = `SURGA-VIP-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
+
+    await pool.query(
+      `INSERT INTO surga_abonnements (
+         user_id, phone, plan, cycle, montant_xof, provider, statut, reference_paiement, debut, fin
+       ) VALUES ($1, $2, $3, $4, 0, 'admin_vip', 'actif', $5, $6, $7)`,
+      [id, user.telephone, plan, mois >= 12 ? 'annuel' : 'mensuel', ref, debut, fin]
+    );
+
+    res.json({ success: true, message: `Accès Premium accordé pour ${mois} mois.` });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/utilisateurs/:id/reset-quota', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (pool) {
+      await pool.query(
+        `DELETE FROM surga_quotas WHERE phone = (SELECT telephone FROM utilisateurs WHERE id = $1) AND date_jour = CURRENT_DATE`,
+        [id]
+      );
+    }
+    res.json({ success: true, message: 'Quota vocal journalier réinitialisé à zéro.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// RÉSEAUX SOCIAUX & CANAUX DE DIFFUSION
+// ==========================================
+let canauxMemoire = {
+  whatsapp_numero: '+221 77 845 00 00',
+  whatsapp_statut: 'connecte',
+  telegram_channel: 'https://t.me/surga_senegal',
+  facebook_page: 'https://facebook.com/surga.sn',
+  instagram_compte: 'https://instagram.com/surga.sn',
+  twitter_compte: 'https://x.com/surga_sn',
+  tiktok_compte: 'https://tiktok.com/@surga.sn',
+  templates_messages: {
+    bienvenue: "As-salamu alaykum ! Je suis Surga, votre assistant personnel de poche au Sénégal. Comment puis-je vous aider aujourd'hui ?",
+    briefing_matin: "Bonjour ! Voici votre briefing Surga du jour avec la météo, le trafic et l'essentiel de l'actualité.",
+    alerte_concours: "Rappel officiel Surga : le concours auquel vous participez a une échéance proche.",
+    alerte_trafic: "Alerte circulation Dakar : perturbation majeure signalée sur votre axe habituel."
+  }
+};
+
+router.get('/canaux', (req, res) => {
+  res.json({ success: true, canaux: canauxMemoire });
+});
+
+router.put('/canaux', reserveAuxFinances, (req, res) => {
+  try {
+    const updates = req.body;
+    canauxMemoire = {
+      ...canauxMemoire,
+      ...updates,
+      templates_messages: {
+        ...canauxMemoire.templates_messages,
+        ...(updates.templates_messages || {})
+      }
+    };
+    res.json({ success: true, canaux: canauxMemoire });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/canaux/test-whatsapp', (req, res) => {
+  try {
+    const { telephone, message } = req.body;
+    if (!telephone) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone requis.' });
+    }
+    // SRG-A1-016 : cette route répondait « transmis avec succès » sans rien envoyer. WhatsApp est éteint pour
+    // Surga (D51) : elle le dit, au lieu de simuler un envoi.
+    void message;
+    res.status(503).json({
+      success: false,
+      code: 'CANAL_ETEINT',
+      error: 'Aucun message n’a été envoyé : le canal WhatsApp de Surga n’est pas ouvert.',
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// SÉRIES TV & LUTTE (ALERTES VIDÉOS)
+// ==========================================
+const videoService = require('../services/surga/video-service');
+
+router.get('/videos/sources', async (req, res) => {
+  try {
+    const { type } = req.query;
+    const sources = await videoService.getSources({ type: type || null, actifOnly: false });
+    res.json({ success: true, sources, total: sources.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/videos/sources', async (req, res) => {
+  try {
+    const { nom, chaine_nom, type, identifiant_flux, plateforme, actif } = req.body;
+    if (!nom || !identifiant_flux) {
+      return res.status(400).json({ success: false, error: 'Nom et identifiant de flux requis.' });
+    }
+    const source = await videoService.sauvegarderSourceAdmin({
+      nom,
+      chaine_nom,
+      type: type || 'SERIE',
+      identifiant_flux,
+      plateforme: plateforme || 'youtube',
+      actif: actif !== undefined ? !!actif : true,
+    });
+    res.json({ success: true, source, message: 'Source vidéo enregistrée avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/videos/sources/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nom, chaine_nom, type, identifiant_flux, plateforme, actif } = req.body;
+    const source = await videoService.sauvegarderSourceAdmin({
+      id,
+      nom,
+      chaine_nom,
+      type,
+      identifiant_flux,
+      plateforme,
+      actif,
+    });
+    res.json({ success: true, source, message: 'Source vidéo mise à jour avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/videos/sources/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supprime = await videoService.supprimerSourceAdmin(id);
+    res.json({ success: supprime, message: supprime ? 'Source vidéo supprimée.' : 'Source introuvable.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/videos/sync', async (req, res) => {
+  try {
+    const rapport = await videoService.synchroniserTousLesFlux();
+    res.json(rapport);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// DÉMARCHES ADMINISTRATIVES (Tranche 20)
+// ==========================================
+const demarchesService = require('../services/surga/demarches-service');
+
+router.get('/demarches', async (req, res) => {
+  try {
+    const { q, categorie, statut } = req.query;
+    const resultat = await demarchesService.rechercherDemarches({
+      query: q,
+      categorie,
+      statut,
+      includeBrouillons: true,
+    });
+    res.json({ success: true, demarches: resultat.fiches, total: resultat.total });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/demarches', async (req, res) => {
+  try {
+    const donnees = req.body || {};
+    if (!donnees.titre || !donnees.titre.trim()) {
+      return res.status(400).json({ success: false, error: 'Titre de la démarche requis.' });
+    }
+    const demarche = await demarchesService.sauvegarderDemarcheAdmin(donnees);
+    res.json({ success: true, demarche, message: 'Fiche de démarche enregistrée avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/demarches/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const donnees = { ...req.body, id };
+    const demarche = await demarchesService.sauvegarderDemarcheAdmin(donnees);
+    res.json({ success: true, demarche, message: 'Fiche de démarche mise à jour avec succès.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/demarches/:id/reverifier', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const demarche = await demarchesService.reverifierDemarcheAdmin(id);
+    if (!demarche) {
+      return res.status(404).json({ success: false, error: 'Démarche introuvable.' });
+    }
+    res.json({
+      success: true,
+      demarche,
+      message: 'Cycle de vérification réinitialisé pour 90 jours avec statut PUBLIE.',
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/demarches/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supprime = await demarchesService.supprimerDemarcheAdmin(id);
+    res.json({ success: supprime, message: supprime ? 'Démarche supprimée.' : 'Démarche introuvable.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/demarches/signalements/liste', async (req, res) => {
+  try {
+    const { statut } = req.query;
+    const signalements = await demarchesService.getSignalementsAdmin({ statut });
+    res.json({ success: true, signalements, total: signalements.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/demarches/signalements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { statut, reponse_admin } = req.body || {};
+    const sig = await demarchesService.traiterSignalementAdmin(id, { statut, reponse_admin });
+    if (!sig) {
+      return res.status(404).json({ success: false, error: 'Signalement introuvable.' });
+    }
+    res.json({ success: true, signalement: sig, message: 'Statut du signalement mis à jour.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+module.exports = router;
+

@@ -34,6 +34,7 @@ backups/
 *.png
 *.jpg
 *.jpeg
+frontend-next/public/surga/unes/*.webp
 # ...mais les assets d'app sont versionnés (icônes PWA, apple-touch-icon, screenshots manifest)
 !frontend-next/public/icons/*.png
 !frontend-next/public/screenshots/*.png
@@ -62,3 +63,16 @@ docs/AUDIT-*.md
 docs/PLAN-*.md
 scripts/qa-campaign/report-*.json
 !docs/PLAN-MARKETING.md
+
+# Campagne d'audit pre-production Surga (decision utilisateur du 2026-10-07, meme regle que AUD-147) :
+# ces dossiers decrivent des failles ; conserves en local ou dans un stockage prive, jamais versionnes.
+# Les dossiers audit/00_GOUVERNANCE a audit/12_BENCHMARK (campagne Nopalou du 4 octobre) restent suivis.
+audit/00_PREPARATION/
+audit/01_ARCHITECTURE_SECURITE/
+audit/02_FONCTIONNEL_E2E/
+audit/03_FRONT_UX_PWA/
+audit/04_IA_VOIX_WHATSAPP_DONNEES/
+audit/05_PRODUCTION_RESILIENCE/
+audit/HANDOVER/
+# Dossiers des audits 2 a 5 : ajouter ici le nom exact de chaque dossier a sa creation.
+backend/cache/

@@ -47,7 +47,8 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
     (pathname.startsWith('/agence') && !isVitrine) ||
     pathname.startsWith('/boutique') ||
     pathname.startsWith('/compte') ||
-    pathname.startsWith('/admin')
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/surga')
   ) {
     return null
   }

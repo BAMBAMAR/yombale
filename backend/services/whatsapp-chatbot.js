@@ -98,6 +98,39 @@ async function telechargerMediaWhatsApp(mediaId, type = 'image') {
   }
 }
 
+// ── Téléchargement du buffer binaire direct pour STT (Surga Whisper) ─────────
+async function telechargerMediaBufferWhatsApp(mediaId) {
+  try {
+    const token = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_TOKEN;
+    if (!token || !mediaId) return null;
+
+    const resMeta = await fetch(`https://graph.facebook.com/v18.0/${mediaId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'User-Agent': 'curl/7.64.1',
+      },
+    });
+    if (!resMeta.ok) return null;
+
+    const dataMeta = await resMeta.json();
+    if (!dataMeta.url) return null;
+
+    const resAudio = await fetch(dataMeta.url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'User-Agent': 'curl/7.64.1',
+      },
+    });
+    if (!resAudio.ok) return null;
+
+    const arrayBuffer = await resAudio.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (err) {
+    console.warn('[TELECHARGER MEDIA BUFFER ERR]:', err.message);
+    return null;
+  }
+}
+
 // ── FAQ unifiée & Normalisation (backend/lib/faq.js) ──────────────────────────
 const { normaliserTexte, detecterFAQWhatsApp } = require('../lib/faq');
 
@@ -2293,6 +2326,57 @@ async function handleIncomingInternal(msg) {
       await setSession(phone, state || 'IDLE', updatedContext);
     }
 
+    // 0. Détection prioritaire Surga (utilisateur en flux Surga ou avec session active)
+    // D51 : uniquement quand le routage Surga est allumé (éteint par défaut, voir services/surga/interrupteurs.js).
+    if (require('./surga/interrupteurs').whatsappActif() && !state?.startsWith('COMMANDE_') && !context?.boutique_id) {
+      let estSessionSurga = false;
+      try {
+        const poolDb = require('../models/db').pool;
+        if (poolDb) {
+          const sRes = await poolDb.query(
+            'SELECT phone FROM surga_whatsapp_sessions WHERE phone = $1',
+            [phone]
+          );
+          if (sRes.rows.length > 0) estSessionSurga = true;
+        }
+      } catch {}
+
+      // Tenter la transcription STT via Groq Whisper pour Surga
+      const { transcrireAudioBuffer } = require('./surga/transcription-service');
+      const { traiterMessageWhatsAppSurga } = require('./surga/whatsapp-handler');
+
+      let audioBuffer = null;
+      try {
+        audioBuffer = await telechargerMediaBufferWhatsApp(msg.audio.id);
+      } catch (bufErr) {
+        console.warn('[SURGA STT BUFFER ERR]:', bufErr.message);
+      }
+
+      if (audioBuffer) {
+        const stt = await transcrireAudioBuffer(audioBuffer, {
+          filename: 'whatsapp_voice.ogg',
+          language: 'fr',
+        });
+
+        if (stt.success && stt.texte) {
+          console.log('[SURGA STT WHATSAPP SUCCESS]:', phone, 'Transcription =', stt.texte, `(${stt.latenceMs}ms)`);
+          const traite = await traiterMessageWhatsAppSurga(phone, stt.texte, true);
+          if (traite) {
+            return;
+          }
+        }
+      }
+
+      if (estSessionSurga) {
+        await sendWhatsAppText(
+          phone,
+          `Surga : Votre note vocale a été reçue mais n'a pas pu être transcrite avec précision.\n\n` +
+          `Veuillez taper votre demande (ex: "Note 3500 transport", "Calcule 100 / 3", "Rappelle-moi demain à 8h") : https://surga.nopalou.com`
+        );
+        return;
+      }
+    }
+
     // 1. Détection Commerçant (Boutique Yombale / Nopalou)
     const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
     if (bqMarchand) {
@@ -2654,6 +2738,25 @@ async function handleIncomingInternal(msg) {
     await setSession(phone, 'MENU', {});
     await sendMenu(phone);
     return;
+  }
+
+  // ── SURGA : Assistant personnel de poche (Tranche 5) ──────────────────────
+  // SRG-A4-001 / SRG-A4-002 (D51) : routage éteint par défaut. Allumé, Surga prenait tout message d'un numéro « libre »
+  // dont il reconnaissait un mot, y compris ceux des clients de Nopalou. À rallumer seulement avec le routage par
+  // numéros activés (D55).
+  try {
+    if (!require('./surga/interrupteurs').whatsappActif()) throw Object.assign(new Error('routage Surga éteint'), { silencieux: true });
+    const { traiterMessageWhatsAppSurga, parserIntentionWhatsApp } = require('./surga/whatsapp-handler');
+    const parseSurga = parserIntentionWhatsApp(text);
+    const estInvocationExplicite = text.toLowerCase().trim().startsWith('surga');
+    const estEtatLibre = !state || state === 'IDLE' || state === 'MENU' || state === 'ACCUEIL';
+
+    if (estInvocationExplicite || (estEtatLibre && parseSurga.intention !== 'INCONNU')) {
+      const traite = await traiterMessageWhatsAppSurga(phone, text, false);
+      if (traite) return;
+    }
+  } catch (errSurga) {
+    if (!errSurga.silencieux) console.warn('[SURGA ROUTER WARN]:', errSurga.message);
   }
 
   // ── 3. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─

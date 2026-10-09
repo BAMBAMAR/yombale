@@ -208,6 +208,7 @@ export default async function RootLayout({
   const headerList = await headers();
   const nonce = headerList.get('x-nonce') ?? undefined;
   const pathname = headerList.get('x-pathname') || headerList.get('next-url') || '';
+  const isSurga = pathname === '/surga' || pathname.startsWith('/surga/') || headerList.get('x-is-surga') === 'true';
   const isScoped = isI18nScopedRoute(pathname);
 
   const cookieStore = cookies();
@@ -240,91 +241,104 @@ export default async function RootLayout({
         <CartProvider>
         <ToastProvider>
         {/* Lien d'évitement pour la navigation au clavier (WCAG 2.4.1) */}
-        <a href="#app-main" className="skip-link">
-          Aller au contenu principal
-        </a>
+        {!isSurga && (
+          <a href="#app-main" className="skip-link">
+            Aller au contenu principal
+          </a>
+        )}
 
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-3KGE1YBMVJ"
-          strategy="lazyOnload"
-          nonce={nonce}
-        />
-        <Script id="ga4-init" strategy="lazyOnload" nonce={nonce}>
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-3KGE1YBMVJ');
-          `}
-        </Script>
+        {/* SRG-A3-009 / D48 : aucun traceur tiers sur Surga. */}
+        {!isSurga && (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-3KGE1YBMVJ"
+              strategy="lazyOnload"
+              nonce={nonce}
+            />
+            <Script id="ga4-init" strategy="lazyOnload" nonce={nonce}>
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-3KGE1YBMVJ');
+              `}
+            </Script>
+          </>
+        )}
 
-
-        <header role="banner">
-          <nav className="navbar" aria-label="Navigation principale">
-            <div className="navbar-top-row">
-              <a href="/" className="logo" aria-label="Nopalou - Plateforme de commerce digital et comparateur au Sénégal">
-                <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
-                <span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>
-              </a>
-              <NavbarLinksNav />
-              <div className="navbar-search-desktop">
-                <NavbarSearch />
-              </div>
-              <div className="navbar-actions">
-                <NavbarWhatsappBtn />
-                <NavbarCartBtn />
-                {session ? (
-                  <NavbarProSwitcher />
-                ) : (
-                  <a href="/creer-boutique" className="navbar-taftaf hidden-mobile" aria-label="Créer Boutique Taf Taf" style={{ background: 'var(--navy)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: '0 2px 6px rgba(28,43,74,0.15)' }}>
-                    <Zap size={14} style={{ color: 'var(--accent, #C75B00)' }} />
-                    <span>Boutique Taf Taf</span>
-                    <span style={{ background: '#16A34A', color: '#fff', fontSize: 9.5, padding: '1px 5px', borderRadius: 6, fontWeight: 800 }}>Offert</span>
-                  </a>
-                )}
-                <NavbarCreerMenu />
-                {session ? (
-                  <NavbarActions
-                    nom={session.nom?.trim() || session.email?.trim() || 'Mon compte'}
-                    userId={session.userId || (session as any).id}
+        {!isSurga && (
+          <header role="banner">
+            <nav className="navbar" aria-label="Navigation principale">
+              <div className="navbar-top-row">
+                <a href="/" className="logo" aria-label="Nopalou - Plateforme de commerce digital et comparateur au Sénégal">
+                  <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
+                  <span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>
+                </a>
+                <NavbarLinksNav />
+                <div className="navbar-search-desktop">
+                  <NavbarSearch />
+                </div>
+                <div className="navbar-actions">
+                  <NavbarWhatsappBtn />
+                  <NavbarCartBtn />
+                  {session ? (
+                    <NavbarProSwitcher />
+                  ) : (
+                    <a href="/creer-boutique" className="navbar-taftaf hidden-mobile" aria-label="Créer Boutique Taf Taf" style={{ background: 'var(--navy)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: '0 2px 6px rgba(28,43,74,0.15)' }}>
+                      <Zap size={14} style={{ color: 'var(--accent, #C75B00)' }} />
+                      <span>Boutique Taf Taf</span>
+                      <span style={{ background: '#16A34A', color: '#fff', fontSize: 9.5, padding: '1px 5px', borderRadius: 6, fontWeight: 800 }}>Offert</span>
+                    </a>
+                  )}
+                  <NavbarCreerMenu />
+                  {session ? (
+                    <NavbarActions
+                      nom={session.nom?.trim() || session.email?.trim() || 'Mon compte'}
+                      userId={session.userId || (session as any).id}
+                    />
+                  ) : (
+                    <>
+                      <a href="/connexion" className="navbar-link">Connexion</a>
+                      <a href="/inscription" className="navbar-inscription">S&apos;inscrire</a>
+                    </>
+                  )}
+                </div>
+                {/* Mobile: Accès Assistant WhatsApp + Panier + Drawer burger épuré */}
+                <div className="navbar-mobile-group">
+                  <NavbarWhatsappBtn />
+                  <NavbarCartBtn />
+                  <MobileNav
+                    isLoggedIn={!!session}
+                    nom={session?.nom ?? session?.email ?? undefined}
                   />
-                ) : (
-                  <>
-                    <a href="/connexion" className="navbar-link">Connexion</a>
-                    <a href="/inscription" className="navbar-inscription">S&apos;inscrire</a>
-                  </>
-                )}
+                </div>
               </div>
-              {/* Mobile: Accès Assistant WhatsApp + Panier + Drawer burger épuré */}
-              <div className="navbar-mobile-group">
-                <NavbarWhatsappBtn />
-                <NavbarCartBtn />
-                <MobileNav
-                  isLoggedIn={!!session}
-                  nom={session?.nom ?? session?.email ?? undefined}
-                />
-              </div>
-            </div>
-          </nav>
-        </header>
+            </nav>
+          </header>
+        )}
 
-        <main id="app-main" tabIndex={-1}>{children}</main>
+        <main id="app-main" tabIndex={-1} style={isSurga ? { padding: 0, margin: 0, minHeight: '100vh' } : undefined}>{children}</main>
 
-        <DrawerCart />
-        <BottomBars />
-        <ChatbotWidget />
-        <MobileBottomNav isLoggedIn={!!session} />
-        <RegisterSW />
+        {/* SRG-A3-002 : le worker de Nopalou n'est pas installé depuis Surga (il mettait tout le site en cache, 547 fichiers) */}
+        {!isSurga && <RegisterSW />}
         <VoiceConsentHost />
         <WebVitals />
-        <PwaInstallPrompt />
-        <FavToast />
-        <Suspense fallback={null}>
-          <VerifyEmailToast />
-        </Suspense>
+
         <Suspense fallback={null}>
           <UtmTracker />
         </Suspense>
+
+        {!isSurga && (
+          <>
+            <DrawerCart />
+            <BottomBars />
+            <ChatbotWidget />
+            <MobileBottomNav isLoggedIn={!!session} />
+            <PwaInstallPrompt />
+            <FavToast />
+            <Suspense fallback={null}>
+              <VerifyEmailToast />
+            </Suspense>
 
         <footer className="site-footer">
           <div className="footer-inner">
@@ -497,6 +511,8 @@ export default async function RootLayout({
             </div>
           </div>
         </footer>
+        </>
+        )}
         </ToastProvider>
         </CartProvider>
         </EssaiProvider>

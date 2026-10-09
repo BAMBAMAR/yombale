@@ -234,11 +234,35 @@ async function sendPayout({ amount, mobile, client_reference, boutique_nom, refe
   return data;
 }
 
+/**
+ * Récupère les détails d'une session Checkout Wave directement depuis l'API Wave
+ */
+async function getCheckoutSession(sessionId) {
+  const cfg = require('../lib/settingsCache');
+  const apiKey = (process.env.WAVE_API_KEY || (await cfg.get('wave_api_key')) || '').trim();
+
+  if (!apiKey || apiKey.includes('xxxxxxxx')) {
+    throw new Error(
+      'Clé API Wave non configurée. Veuillez renseigner WAVE_API_KEY dans vos variables d\'environnement.'
+    );
+  }
+
+  const response = await axios.get(`${WAVE_BASE_URL}/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    timeout: 10000,
+  });
+
+  return response.data;
+}
 
 module.exports = {
   createCheckoutSession,
+  getCheckoutSession,
   verifyWebhookSignature,
   generateWaveSignature,
   sendPayout,
 };
+
 

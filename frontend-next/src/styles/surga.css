@@ -1,0 +1,1370 @@
+/* frontend-next/src/styles/surga.css */
+/* Styles dédiés au module Surga — Design System Nopalou & Base 16px */
+
+/* ==========================================================================
+   ISOLATION TOTALE DE L'INTERFACE SURGA (Autonome vis-à-vis de Nopalou)
+   ========================================================================== */
+body:has(.surga-root) header[role="banner"]:not(.surga-header),
+body:has(.surga-root) .navbar,
+body:has(.surga-root) .site-footer,
+body:has(.surga-root) .mobile-bottom-nav,
+body:has(.surga-root) .drawer-cart,
+body:has(.surga-root) .bottom-bars,
+body:has(.surga-root) #chat-widget-root,
+body:has(.surga-root) .pwa-install-prompt,
+body:has(.surga-root) .fav-toast {
+  display: none !important;
+}
+
+body:has(.surga-root) {
+  background-color: #F8FAFC !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+html:has(.surga-root)::-webkit-scrollbar,
+body:has(.surga-root)::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html:has(.surga-root)::-webkit-scrollbar-track,
+body:has(.surga-root)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html:has(.surga-root)::-webkit-scrollbar-thumb,
+body:has(.surga-root)::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.28);
+  border-radius: 9999px;
+}
+
+html:has(.surga-root)::-webkit-scrollbar-button,
+body:has(.surga-root)::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body:has(.surga-root) #app-main {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+}
+
+.surga-root {
+  /* ==========================================================================
+     TOKENS OFFICIELS DU DESIGN SYSTEM SURGA (Version 1.0.0)
+     ========================================================================== */
+  --surga-primary: #0F172A;        /* Indigo Nuit Minérale (fond sombre, titres h1-h2) */
+  --surga-primary-light: #1E293B;  /* Indigo Nuit secondaire (cartes sombres, survols) */
+  --surga-accent: #D97706;         /* Ambre Sahélien (bouton micro FAB, CTA, focus) */
+  --surga-accent-hover: #B45309;   /* Ambre Sahélien assombri au survol */
+  --surga-accent-text: #92400E;    /* Ambre Sahélien Sombre (texte et badges, contraste 7.2:1 vérifié) */
+  --surga-accent-glow: #F59E0B;    /* Or Solaire (reflets, badges actifs, lueur) */
+  --surga-accent-soft: rgba(217, 119, 6, 0.08); /* Fond pastille ambre */
+  --surga-emerald: #059669;        /* Émeraude Teranga (dépenses en FCFA, validations) */
+  --surga-emerald-soft: rgba(5, 150, 105, 0.09);
+  --surga-danger: #DC2626;         /* Rouge Kolda (dettes en retard, alertes bouchons) */
+  --surga-danger-soft: rgba(220, 38, 38, 0.09);
+  --surga-info: #0284C7;           /* Bleu Gorée (veilles concours, météo, liens) */
+  --surga-bg: #F8FAFC;             /* Blanc Brume Minimal (fond d'écran principal) */
+  --surga-surface: #FFFFFF;        /* Blanc Pur (cartes, formulaires, tiroirs) */
+  --surga-border: #E2E8F0;         /* Gris Épure (lignes 1px de cartes et séparateurs) */
+  --surga-text1: #0F172A;          /* Encre Anthracite (texte principal, contraste 16.5:1) */
+  --surga-text2: #475569;          /* Ardoise Tempérée (métadonnées, labels secondaires) */
+  --surga-text3: #536175;          /* Gris Neutre : placeholders, sources, dates (6,3:1 sur blanc, 5,0:1 sur fond beige, SRG-A3-011 ; était #94A3B8 à 2,56:1) */
+  --surga-accent-ink: #A64B08;     /* Ambre lisible : couleur de TEXTE et d'icône ambre (5,9:1 sur blanc, 5,0:1 sur fond ambre teinté). #D97706 reste réservé aux fonds, bordures et au micro */
+  --surga-emerald-ink: #047857;    /* Émeraude lisible : couleur de TEXTE vert (5,5:1 sur blanc). #059669 reste réservé aux fonds */
+
+  /* Rétrocompatibilité transparente pour tous les composants existants */
+  --navy: var(--surga-primary);
+  --accent: var(--surga-accent);
+  --bg: var(--surga-bg);
+  --border: var(--surga-border);
+  --text1: var(--surga-text1);
+  --text2: var(--surga-text2);
+  --text3: var(--surga-text3);
+  --price: var(--surga-emerald-ink);
+
+  font-family: var(--font-inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--surga-text1);
+  background-color: var(--surga-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-bottom: 152px; /* Dégagement de sécurité garanti au-dessus du bouton FAB 56px + bottom 80px + 16px */
+}
+
+/* En-tête Surga */
+.surga-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--surga-border, #E2E8F0);
+  padding: 10px 16px;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+}
+
+.surga-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.surga-header-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surga-primary, #0F172A);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  padding: 4px;
+}
+
+.surga-header-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--surga-primary, #0F172A);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.surga-header-date {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--surga-text2, #475569);
+}
+
+.surga-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background-color: var(--surga-accent-soft, rgba(217, 119, 6, 0.08));
+  color: #B45309; /* Ambre assombri : contraste WCAG AA 4.65:1 */
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 32px;
+}
+
+/* Conteneur principal */
+.surga-container {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+  flex: 1;
+  padding-bottom: 40px;
+}
+
+/* Cartes Surga */
+.surga-card {
+  background-color: var(--surga-surface, #FFFFFF);
+  border: 1px solid var(--surga-border, #E2E8F0);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.surga-card:active {
+  transform: scale(0.99);
+}
+
+.surga-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.surga-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--surga-primary, #0F172A);
+  margin: 0;
+}
+
+.surga-card-subtitle {
+  font-size: 14px;
+  color: var(--surga-text2, #475569);
+  margin: 0;
+}
+
+/* Cartes en 2 sous-lignes calibrées */
+.surga-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--surga-surface, #FFFFFF);
+  border: 1px solid var(--surga-border, #E2E8F0);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.surga-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.surga-item-line1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--surga-text1, #0F172A);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.surga-item-line2 {
+  font-size: 13px;
+  color: var(--surga-text2, #475569);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.surga-price-tag {
+  font-weight: 700;
+  color: var(--surga-emerald-ink, #047857);
+  white-space: nowrap;
+}
+
+/* Boutons Surga */
+.surga-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #0F172A !important; /* Texte sombre bold : Contraste WCAG AAA 8:1 */
+  font-size: 16px;
+  font-weight: 800;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  min-height: 48px;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+  box-sizing: border-box;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.28);
+}
+
+.surga-btn-primary:hover {
+  background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+  transform: translateY(-1px);
+}
+
+.surga-btn-primary:active {
+  transform: translateY(0);
+  opacity: 0.92;
+}
+
+.surga-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #FFFFFF;
+  color: var(--surga-primary, #0F172A);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--surga-border, #E2E8F0);
+  cursor: pointer;
+  width: 100%;
+  min-height: 44px;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.surga-btn-secondary:hover {
+  background-color: var(--surga-bg, #F8FAFC);
+  border-color: #CBD5E1;
+}
+
+/* Micro flottant (FAB) */
+.surga-fab-mic {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.38);
+  border: none;
+  cursor: pointer;
+  z-index: 50;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, visibility 0.22s;
+}
+
+.surga-fab-mic:hover {
+  transform: scale(1.06);
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.46);
+}
+
+.surga-fab-mic:active {
+  transform: scale(0.95);
+}
+
+/* Auto-hide fluide du FAB lors du défilement de lecture */
+.surga-fab-mic.surga-fab-hidden {
+  transform: translateY(110px) scale(0.75) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* Masquage immédiat du FAB dès qu'une modale est active */
+body.surga-modal-open .surga-fab-mic,
+body:has([role="dialog"]) .surga-fab-mic {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0.7) !important;
+  visibility: hidden !important;
+}
+
+/* Défilement horizontal des filtres sans coupure de scrollbar */
+.surga-scroll-tabs,
+.surga-tabs-scroll {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-overflow-scrolling: touch;
+}
+.surga-scroll-tabs::-webkit-scrollbar,
+.surga-tabs-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@media (max-width: 480px) {
+  .surga-fab-mic {
+    bottom: 74px;
+    right: 14px;
+    width: 48px;
+    height: 48px;
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.32);
+  }
+
+  .surga-header {
+    padding: 8px 12px;
+  }
+
+  .surga-header-brand {
+    gap: 8px;
+  }
+
+  .surga-header-title {
+    font-size: 17px;
+  }
+
+  .surga-header-date {
+    font-size: 12px;
+  }
+
+  .surga-header-logo-wrap.hide-on-subview-mobile {
+    display: none !important;
+  }
+
+  .surga-header-badge-text {
+    display: none !important;
+  }
+
+  .surga-header-badge {
+    padding: 5px 8px !important;
+    min-height: 34px !important;
+  }
+
+  .surga-container {
+    padding: 12px 12px 120px 12px !important;
+  }
+}
+
+/* Navigation basse à 5 entrées Surga */
+.surga-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid var(--surga-border, #E2E8F0);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 50;
+  padding: 0 4px;
+}
+
+.surga-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  height: 100%;
+  color: var(--surga-text2, #475569);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.surga-nav-item.active {
+  color: var(--surga-accent-ink, #A64B08);
+  font-weight: 700;
+}
+
+/* Wizard Onboarding */
+.surga-onboarding-progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.surga-progress-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--surga-border, #E2E8F0);
+  transition: background-color 0.2s ease;
+}
+
+.surga-progress-bar.active {
+  background-color: var(--surga-accent, #D97706);
+}
+
+.surga-brick-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid var(--surga-border, #E2E8F0);
+  border-radius: 14px;
+  background-color: #FFFFFF;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.surga-brick-option.selected {
+  border-color: var(--surga-accent, #D97706);
+  background-color: var(--surga-accent-soft, rgba(217, 119, 6, 0.04));
+}
+
+/* Barre Radio Persistante & Égaliseur Audio Surga */
+@keyframes surgaEqualizer1 {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+@keyframes surgaEqualizer2 {
+  0%, 100% { height: 12px; }
+  50% { height: 4px; }
+}
+@keyframes surgaEqualizer3 {
+  0%, 100% { height: 6px; }
+  50% { height: 14px; }
+}
+
+.surga-eq-bar {
+  width: 2.5px;
+  background-color: var(--surga-accent, #D97706);
+  border-radius: 1.5px;
+}
+
+.surga-eq-1 {
+  animation: surgaEqualizer1 0.8s ease-in-out infinite;
+}
+
+.surga-eq-2 {
+  animation: surgaEqualizer2 0.7s ease-in-out infinite 0.15s;
+}
+
+.surga-eq-3 {
+  animation: surgaEqualizer3 0.9s ease-in-out infinite 0.3s;
+}
+
+body:has(.surga-persistent-radio-bar) .surga-fab-mic {
+  bottom: 124px;
+}
+
+body:has(.surga-persistent-radio-bar) .surga-global-toast {
+  bottom: 128px;
+}
+
+/* ==========================================================================
+   ANIMATIONS : SQUELETTE DE CHARGEMENT & ONDE VOCALE (FE-06, FE-08)
+   ========================================================================== */
+@keyframes surgaShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes surgaVoicePulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 16px rgba(217, 119, 6, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
+  }
+}
+
+.surga-voice-listening {
+  animation: surgaVoicePulse 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* ==========================================================================
+   RESPONSIVE PETITS ÉCRANS (<= 360px & 320px) (FE-10)
+   ========================================================================== */
+@media (max-width: 360px) {
+  .surga-header {
+    padding: 8px 10px !important;
+  }
+  .surga-header-brand {
+    gap: 8px !important;
+  }
+  .surga-header-title {
+    font-size: 17px !important;
+  }
+  .surga-header-date {
+    font-size: 12px !important;
+  }
+  .surga-header-badge {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+  .surga-card {
+    padding: 12px !important;
+  }
+  .surga-item-row {
+    padding: 10px 10px !important;
+  }
+}
+
+/* ==========================================================================
+   THEME : CLAIR SEULEMENT (decision D46, fiche SRG-A3-001)
+   Le theme sombre est retire pour le lancement : il passait les textes en blanc sur des surfaces restees
+   blanches (Sama Xaalis, Agenda, Notes). Il pourra revenir, termine et verifie ecran par ecran.
+   ========================================================================== */
+.surga-root { color-scheme: light; }
+
+/* ==========================================================================
+   LAYOUT RESPONSIVE : 2 DISPOSITIONS (téléphone jusqu'à 1 023 px, ordinateur à partir de 1 024 px)
+   ========================================================================== */
+
+/* 1. Téléphone et tablette (< 1 024 px) : barre d'onglets en bas, en-tête mobile.
+   D49 / SRG-A3-013 : de 600 à 1 023 px, un menu réduit à 68 px coupait ses icônes, n'avait aucun libellé et laissait
+   « Réglages » et « Compte » hors de l'écran. Cette plage reçoit la disposition du téléphone. */
+@media (max-width: 1023px) {
+  .surga-desktop-sidebar,
+  .surga-desktop-right-rail,
+  .surga-desktop-command-wrapper {
+    display: none !important;
+  }
+
+  .surga-mobile-header-wrap {
+    display: block !important;
+  }
+
+  .surga-bottom-nav {
+    display: flex !important;
+  }
+
+  .surga-fab-mic {
+    display: flex !important;
+  }
+
+  .surga-main-grid {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .surga-center-feed {
+    display: block !important;
+    width: 100% !important;
+    padding-bottom: calc(var(--surga-nav-height, 64px) + 36px) !important;
+  }
+
+  .surga-center-feed .surga-container {
+    padding-bottom: 24px !important;
+  }
+}
+
+/* Entre 600 et 1 023 px, le contenu garde une largeur de lecture et reste centré. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .surga-center-feed .surga-container,
+  .surga-mobile-header-wrap > * {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* 2. Ordinateur (>= 1024px) : Menu latéral 240px, flux central max 720px, rail droit 300px (360px à 1920px) */
+@media (min-width: 1024px) {
+  body:has(.surga-root) {
+    background-color: #EDE7E0 !important;
+  }
+
+  .surga-root {
+    padding-bottom: 0 !important;
+    background-color: #EDE7E0;
+  }
+
+  .surga-mobile-header-wrap,
+  .surga-bottom-nav,
+  .surga-fab-mic,
+  .surga-context-only-mobile {
+    display: none !important;
+  }
+
+  .surga-app-shell {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .surga-main-grid {
+    display: grid !important;
+    grid-template-columns: 240px minmax(0, 740px) 300px !important;
+    justify-content: center;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 100vh;
+    background: #FFFFFF;
+    border-left: 1px solid var(--surga-border, #E2E8F0);
+    border-right: 1px solid var(--surga-border, #E2E8F0);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  }
+
+  @media (min-width: 1920px) {
+    .surga-main-grid {
+      grid-template-columns: 240px minmax(0, 740px) 360px !important;
+      max-width: 1360px;
+    }
+  }
+
+  .surga-desktop-sidebar {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-y: overlay;
+    background: #FAFAF8;
+    border-right: 1px solid #ECE4DA;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 14px 12px;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .surga-desktop-sidebar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .surga-center-feed {
+    display: flex !important;
+    flex-direction: column;
+    min-width: 0;
+    height: 100vh;
+    background: #FFFFFF;
+    position: relative;
+    overflow-y: auto;
+    overflow-y: overlay;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+  }
+
+  .surga-center-feed::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .surga-center-feed::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .surga-center-feed::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.3);
+    border-radius: 9999px;
+  }
+
+  .surga-center-feed::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.55);
+  }
+
+  .surga-center-feed::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .surga-center-feed .surga-container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 28px 120px 28px !important;
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .surga-desktop-command-wrapper {
+    display: block !important;
+    position: sticky;
+    bottom: 0;
+    background: #FFFFFF !important;
+    border-top: 1px solid var(--surga-border, #E2E8F0);
+    padding: 12px 28px 24px 28px;
+    z-index: 20;
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04);
+  }
+
+  .surga-desktop-right-rail {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-y: overlay;
+    background: #FAFAF8;
+    border-left: 1px solid #ECE4DA;
+    padding: 16px 14px 110px 14px;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+  }
+
+  .surga-desktop-right-rail::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .surga-desktop-right-rail::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .surga-desktop-right-rail::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.25);
+    border-radius: 9999px;
+  }
+}
+
+/* Éradication globale des boutons/flèches de défilement Windows dans tout Surga */
+.surga-root *::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.surga-root *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.surga-root *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.surga-root *::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.28);
+  border-radius: 9999px;
+}
+
+.surga-root *::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(217, 119, 6, 0.45);
+}
+
+/* ==========================================================================
+   COMPOSANTS DE NAVIGATION DESKTOP (SIDEBAR, RAIL DROIT, OMNIBAR)
+   ========================================================================== */
+
+/* Titres de section dans la sidebar (SRG-UI-13 : étiquettes calmes, majuscule initiale, gris lisible) */
+.surga-sidebar-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--surga-text2, #64748B);
+  letter-spacing: 0.02em;
+  padding: 12px 10px 6px 10px;
+}
+
+/* Boutons de la sidebar */
+.surga-sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.surga-sidebar-btn:hover {
+  background: #F1EAE2;
+  color: #0F172A;
+}
+
+.surga-sidebar-btn.active {
+  background: #FEF3C7;
+  color: #92400E;
+  font-weight: 700;
+}
+
+.surga-sidebar-btn-more {
+  margin-top: 4px;
+  background: #F7F3EE;
+  border: 1px dashed #D9CFC4;
+  color: #1C2B4A;
+  font-weight: 600;
+}
+
+.surga-sidebar-btn-more:hover {
+  background: #EFE8DF;
+  border-color: #C75B00;
+  color: #C75B00;
+}
+
+.surga-sidebar-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #E2E8F0;
+  color: #475569;
+}
+
+.surga-sidebar-badge.live {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.surga-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 14px;
+  border-top: 1px solid #ECE4DA;
+  margin-top: 14px;
+}
+
+/* Widgets du rail droit (haute lisibilité et proportions glanceable) */
+.surga-desktop-widget {
+  background: #FFFFFF;
+  border: 1px solid #ECE4DA;
+  border-radius: 11px;
+  padding: 10px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+.surga-desktop-widget:hover {
+  border-color: #D97706;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.08);
+}
+
+.surga-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.surga-widget-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748B;
+  letter-spacing: 0.01em;
+}
+
+.surga-widget-icon {
+  color: var(--surga-text3, #536175);
+}
+
+.surga-widget-highlight {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.surga-widget-value-strong {
+  font-size: 17px;
+  font-weight: 900;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.surga-widget-desc {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+.surga-note-memo {
+  font-size: 12px;
+  color: #334155;
+  font-style: italic;
+  line-height: 1.35;
+  background: #F8F5F0;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+/* Indicateurs de trafic du rail droit */
+.surga-trafic-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.surga-trafic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.surga-trafic-axis {
+  color: #334155;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.surga-trafic-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.surga-trafic-dot.green {
+  background: #16A34A;
+}
+
+.surga-trafic-dot.orange {
+  background: #D97706;
+}
+
+.surga-trafic-time {
+  font-weight: 700;
+  color: #64748B;
+}
+
+/* Barre de commande centrale (Omnibar / Ctrl+K) */
+.surga-desktop-command-bar {
+  background: #FFFFFF;
+  border: 1.5px solid #DFD5C8;
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.surga-desktop-command-bar:hover,
+.surga-desktop-command-bar:focus-within {
+  border-color: #D97706;
+  box-shadow: 0 4px 22px rgba(217, 119, 6, 0.14);
+}
+
+.surga-command-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.surga-command-search-icon {
+  color: var(--surga-text3, #536175);
+  flex-shrink: 0;
+}
+
+.surga-command-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13.5px;
+  color: #0F172A;
+  width: 100%;
+  font-family: inherit;
+}
+
+.surga-command-input::placeholder {
+  color: var(--surga-text3, #536175);
+}
+
+.surga-command-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.surga-kbd-shortcut {
+  background: #F1ECE6;
+  color: #64748B;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid #DFD5C8;
+  letter-spacing: 0.02em;
+  font-family: inherit;
+}
+
+.surga-command-mic-btn {
+  background: #F8F5F0;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0F172A;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.surga-command-mic-btn:hover {
+  background: #FEF3C7;
+  color: var(--surga-accent-text, #92400E);
+}
+
+/* Bouton d'action unique par titre (SRG-UI-23 : un seul bouton, survol sur desktop, visible sur mobile) */
+.surga-share-btn {
+  opacity: 1;
+  transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (min-width: 1024px) {
+  .surga-article-row .surga-share-btn,
+  .surga-item-row .surga-share-btn,
+  .surga-news-item .surga-share-btn {
+    opacity: 0.35;
+  }
+  .surga-article-row:hover .surga-share-btn,
+  .surga-item-row:hover .surga-share-btn,
+  .surga-news-item:hover .surga-share-btn,
+  .surga-share-btn:hover,
+  .surga-share-btn:focus,
+  .surga-share-btn:focus-visible {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Dock Lecteur Radio Persistant (Zéro Superposition & Contrôles Rapides)
+   ========================================================================== */
+.surga-persistent-radio-bar {
+  position: fixed;
+  bottom: 64px;
+  left: 12px;
+  right: 12px;
+  z-index: 48;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition: bottom 0.2s ease, left 0.2s ease, right 0.2s ease;
+}
+
+.surga-persistent-radio-inner {
+  width: 100%;
+  max-width: 520px;
+  height: 52px;
+  background-color: var(--navy, #1C2B4A);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.32), 0 2px 6px rgba(0, 0, 0, 0.18);
+  border-top: 2px solid var(--accent, #C75B00);
+  border-radius: 14px;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.surga-radio-ctrl-btn {
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  cursor: pointer;
+  padding: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  opacity: 0.88;
+  transition: opacity 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+
+.surga-radio-ctrl-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.surga-radio-ctrl-btn:active {
+  transform: scale(0.94);
+}
+
+@media (min-width: 1024px) {
+  .surga-persistent-radio-bar {
+    /* Alignement parfait sur la colonne centrale : délimité par sidebar (240px) et rail droit (320px) */
+    left: 240px;
+    right: 320px;
+    bottom: 94px; /* Dégagement de 14px au-dessus de l'Omnibar (hauteur 80px) -> ZÉRO superposition */
+    justify-content: center;
+  }
+
+  .surga-persistent-radio-inner {
+    max-width: 500px;
+    border-radius: 12px;
+  }
+}
+
+/* ==========================================================================
+   DÉMARRAGE (SRG-A3-003) : sur un appareil déjà configuré, le serveur envoie l'attente de l'application à la place
+   de la page d'accueil publique. La classe est posée par app/surga/layout.tsx d'après le témoin « surga_configure ».
+   ========================================================================== */
+.surga-demarrage { display: none; padding-top: 16px; }
+.surga-deja-configure .surga-demarrage { display: block; }
+.surga-deja-configure .surga-accueil-public { display: none; }
+
+/* SRG-A2-015 : réglages propres à l'ordinateur (menu de gauche, colonne de droite), hors de vue sur téléphone. */
+.surga-ordinateur-seulement { display: none; }
+@media (min-width: 1024px) {
+  .surga-ordinateur-seulement { display: block; }
+}
+
+/* ==========================================================================
+   Accessibilité (SRG-A3-010) : texte réservé aux lecteurs d'écran, lien d'évitement, titre de niveau 1 du bureau
+   ========================================================================== */
+.surga-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.surga-lien-evitement {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10002;
+  transform: translateY(-250%);
+  background: var(--surga-primary);
+  color: #FFFFFF;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.surga-lien-evitement:focus {
+  transform: none;
+  outline: 3px solid var(--surga-accent);
+  outline-offset: 2px;
+}
+/* Sous 1024 px l'en-tête mobile porte déjà le titre de niveau 1 de l'écran. */
+.surga-h1-bureau { display: none; }
+@media (min-width: 1024px) { .surga-h1-bureau { display: block; } }
+.surga-center-feed:focus { outline: none; }
+
+/* ==========================================================================
+   Bannière et Guide d'installation PWA Surga
+   ========================================================================== */
+@keyframes surga-slide-down {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -24px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes surga-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.surga-pwa-banner {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 20px);
+  max-width: 480px;
+  z-index: 1100;
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  color: #FFFFFF;
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(217, 119, 6, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: surga-slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.surga-pwa-banner-icon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #0F172A;
+  border: 1.5px solid rgba(217, 119, 6, 0.5);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.surga-pwa-banner-sparkle {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.surga-pwa-banner-btn-install {
+  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4);
+  white-space: nowrap;
+}
+
+.surga-pwa-banner-btn-close {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.surga-pwa-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+
+.surga-pwa-modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.3);
+  color: var(--surga-primary, #0F172A);
+  animation: surga-slide-up 0.25s ease-out;
+}
+

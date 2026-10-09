@@ -6,7 +6,7 @@ import {
   DollarSign, TrendingUp, Users, Store, ShoppingBag, AlertCircle, CheckCircle2,
   Clock, ShieldAlert, Zap, MessageCircle, Package, Layers, Award,
   ArrowUpRight, RefreshCw, Smartphone, Home, Tag, Handshake, Briefcase, Flag,
-  Monitor, CreditCard, Building2, Wallet
+  Monitor, CreditCard, Building2, Wallet, Sparkles
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 
@@ -172,6 +172,54 @@ export default function AdminDashboardClient({
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Raccourci vers Surga Control Center */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, rgba(28, 43, 74, 0.04) 0%, rgba(199, 91, 0, 0.08) 100%)',
+          border: '1px solid rgba(199, 91, 0, 0.25)',
+          borderRadius: 12,
+          padding: '12px 18px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: 'var(--accent, #C75B00)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Sparkles size={18} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--navy, #1C2B4A)' }}>
+              Surga Control Center (Assistant de poche & Services)
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
+              Pilotage des 42 adresses dakaroises, concours nationaux, Unes de presse & signalements trafic.
+            </div>
+          </div>
+        </div>
+        <Link
+          href="/admin/surga"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: 'var(--navy, #1C2B4A)',
+            color: '#FFFFFF',
+            padding: '7px 14px',
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            textDecoration: 'none',
+          }}
+        >
+          <span>Ouvrir Surga Admin</span>
+          <ArrowUpRight size={14} />
+        </Link>
       </div>
 
       {/* ACTION CENTER : À Traiter Immédiatement */}

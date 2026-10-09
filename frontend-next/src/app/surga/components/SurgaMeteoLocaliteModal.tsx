@@ -1,0 +1,433 @@
+// frontend-next/src/app/surga/components/SurgaMeteoLocaliteModal.tsx
+'use client'
+
+import React, { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { X, Search, MapPin, LocateFixed, Check, Compass } from 'lucide-react'
+import {
+  LOCALITES_SENEGAL_LIST,
+  normaliserTexte,
+  trouverLocaliteParNom,
+  type LocaliteItem,
+} from '@/lib/surga-meteo'
+
+export type { LocaliteItem }
+
+interface SurgaMeteoLocaliteModalProps {
+  isOpen: boolean
+  onClose: () => void
+  localiteActuelle: string
+  estGpsActif: boolean
+  localites?: LocaliteItem[]
+  onSelectLocalite: (nom: string) => void
+  onDetecterGps: () => void
+  gpsEnCours: boolean
+}
+
+export default function SurgaMeteoLocaliteModal({
+  isOpen,
+  onClose,
+  localiteActuelle,
+  estGpsActif,
+  localites,
+  onSelectLocalite,
+  onDetecterGps,
+  gpsEnCours,
+}: SurgaMeteoLocaliteModalProps) {
+  const [mounted, setMounted] = useState(false)
+  const [recherche, setRecherche] = useState('')
+  const [zoneFiltre, setZoneFiltre] = useState<string>('tous')
+  const [selectionActive, setSelectionActive] = useState<string>(localiteActuelle)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (localiteActuelle) {
+      setSelectionActive(localiteActuelle)
+    }
+  }, [localiteActuelle])
+
+  // Fallback automatique sur le catalogue complet des 28 localités (14 régions) si la liste API est vide
+  const listeEffective = useMemo(() => {
+    return Array.isArray(localites) && localites.length > 0 ? localites : LOCALITES_SENEGAL_LIST
+  }, [localites])
+
+  const zonesDisponibles = useMemo(() => {
+    const set = new Set<string>()
+    listeEffective.forEach((l) => set.add(l.zone))
+    return ['tous', ...Array.from(set)]
+  }, [listeEffective])
+
+  const localitesFiltrees = useMemo(() => {
+    const normRecherche = normaliserTexte(recherche)
+    return listeEffective.filter((l) => {
+      const nomNorm = normaliserTexte(l.nom)
+      const zoneNorm = normaliserTexte(l.zone)
+      const matchRecherche =
+        !normRecherche ||
+        nomNorm.includes(normRecherche) ||
+        zoneNorm.includes(normRecherche) ||
+        l.id.includes(normRecherche)
+      const matchZone = zoneFiltre === 'tous' || l.zone === zoneFiltre
+      return matchRecherche && matchZone
+    })
+  }, [listeEffective, recherche, zoneFiltre])
+
+  if (!isOpen || !mounted) return null
+
+  const cibleNorm = normaliserTexte(selectionActive || localiteActuelle)
+
+  const handleConfirmer = (nom: string) => {
+    const resolu = trouverLocaliteParNom(nom)
+    setSelectionActive(resolu.nom)
+    onSelectLocalite(resolu.nom)
+    onClose()
+  }
+
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Choisir votre localité météo"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(20, 25, 38, 0.75)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        animation: 'fadeIn 0.2s ease-out',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 480,
+          maxHeight: '90vh',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 14,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 20px 48px rgba(0, 0, 0, 0.35)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header de la modale */}
+        <div
+          style={{
+            padding: '14px 16px',
+            backgroundColor: 'var(--navy, #1C2B4A)',
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Compass size={18} color="#FFFFFF" />
+            </div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 800 }}>Localité &amp; Position Météo</div>
+              <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.75)' }}>
+                Dakar, banlieue, 14 régions du Sénégal ou GPS
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#FFFFFF',
+              cursor: 'pointer',
+              padding: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Bouton de Géolocalisation GPS direct */}
+        <div
+          style={{
+            padding: '12px 14px',
+            borderBottom: '1px solid var(--border, #E8DDD2)',
+            backgroundColor: 'var(--bg, #F8F5F0)',
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={onDetecterGps}
+            disabled={gpsEnCours}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: '10px 14px',
+              borderRadius: 8,
+              border: estGpsActif ? '1.5px solid var(--price, #0A5C36)' : '1px solid var(--border, #E8DDD2)',
+              backgroundColor: estGpsActif ? 'rgba(10, 92, 54, 0.08)' : '#FFFFFF',
+              color: estGpsActif ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: gpsEnCours ? 'wait' : 'pointer',
+              transition: 'all 0.15s ease',
+              touchAction: 'manipulation',
+            }}
+          >
+            <LocateFixed size={16} color={estGpsActif ? 'var(--price, #0A5C36)' : 'var(--accent, #C75B00)'} className={gpsEnCours ? 'animate-spin' : ''} />
+            <span>
+              {gpsEnCours
+                ? 'Détection GPS en direct...'
+                : estGpsActif
+                ? 'Position GPS active (En direct)'
+                : 'Utiliser ma position GPS actuelle'}
+            </span>
+          </button>
+        </div>
+
+        {/* Barre de recherche (tolérante aux accents, tirets et majuscules) */}
+        <div style={{ padding: '10px 14px 6px', flexShrink: 0 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 12px',
+              backgroundColor: 'var(--bg, #F8F5F0)',
+              borderRadius: 8,
+              border: '1px solid var(--border, #E8DDD2)',
+            }}
+          >
+            <Search size={15} color="var(--text3, #73675E)" />
+            <input
+              type="text"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              placeholder="Rechercher (ex: Thiès, Guédiawaye, Almadies...)"
+              style={{
+                flex: 1,
+                border: 'none',
+                background: 'transparent',
+                fontSize: 13,
+                outline: 'none',
+                color: 'var(--navy, #1C2B4A)',
+              }}
+            />
+            {recherche && (
+              <button
+                type="button"
+                onClick={() => setRecherche('')}
+                aria-label="Effacer la recherche"
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text3, #73675E)' }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filtres par zone géographique */}
+        <div
+          style={{
+            padding: '8px 14px 10px',
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            flexShrink: 0,
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          {zonesDisponibles.map((z) => {
+            const estActif = zoneFiltre === z
+            const label = z === 'tous' ? 'Toutes' : z
+            return (
+              <button
+                key={z}
+                type="button"
+                onClick={() => setZoneFiltre(z)}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: estActif ? 700 : 500,
+                  border: estActif ? '1.5px solid var(--navy, #1C2B4A)' : '1px solid var(--border, #E8DDD2)',
+                  backgroundColor: estActif ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+                  color: estActif ? '#FFFFFF' : 'var(--text2, #5A4E42)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  height: 28,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  touchAction: 'manipulation',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Liste des localités */}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: '4px 14px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {localitesFiltrees.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
+              Aucune localité trouvée pour &laquo;&nbsp;{recherche}&nbsp;&raquo;.
+            </div>
+          ) : (
+            localitesFiltrees.map((loc) => {
+              const locNorm = normaliserTexte(loc.nom)
+              const parts = loc.nom.split('/').map((p) => normaliserTexte(p))
+              const estSelectionnee =
+                !estGpsActif &&
+                (locNorm === cibleNorm ||
+                  loc.id === cibleNorm ||
+                  parts.some((p) => p === cibleNorm))
+
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => handleConfirmer(loc.nom)}
+                  aria-pressed={estSelectionnee}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    backgroundColor: estSelectionnee ? 'rgba(199, 91, 0, 0.08)' : '#FFFFFF',
+                    border: estSelectionnee ? '1.5px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    flexShrink: 0,
+                    touchAction: 'manipulation',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                    <MapPin size={15} color={estSelectionnee ? 'var(--accent, #C75B00)' : 'var(--text3, #73675E)'} style={{ flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: estSelectionnee ? 800 : 600, color: 'var(--navy, #1C2B4A)' }}>
+                        {loc.nom}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text3, #73675E)', marginTop: 1 }}>
+                        {loc.zone} {loc.maritime ? '• Littoral (Marées directes)' : ''}
+                      </div>
+                    </div>
+                  </div>
+
+                  {estSelectionnee && (
+                    <div
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--accent, #C75B00)',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        marginLeft: 8,
+                      }}
+                    >
+                      <Check size={13} />
+                    </div>
+                  )}
+                </button>
+              )
+            })
+          )}
+        </div>
+
+        {/* Footer avec bouton explicite de confirmation directe */}
+        <div
+          style={{
+            padding: '10px 14px',
+            backgroundColor: '#FFFFFF',
+            borderTop: '1px solid var(--border, #E8DDD2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => handleConfirmer(selectionActive || localiteActuelle || 'Dakar')}
+            style={{
+              flex: 1,
+              height: 42,
+              borderRadius: 8,
+              border: 'none',
+              backgroundColor: 'var(--accent, #C75B00)',
+              color: '#FFFFFF',
+              fontSize: 13,
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              touchAction: 'manipulation',
+              boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
+            }}
+          >
+            <Check size={16} strokeWidth={2.5} />
+            <span>Valider la localité : {selectionActive || localiteActuelle}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  return createPortal(modalContent, document.body)
+}

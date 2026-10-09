@@ -1,0 +1,572 @@
+// backend/services/surga/rss-collector.js
+// Service d'ingestion et de normalisation des flux d'actualité pour Surga
+// Sourcing strict : résumés courts (< 180 car), lien obligatoire vers la source originale
+
+const axios = require('axios');
+const cheerio = require('cheerio');
+const { pool } = require('../../models/db');
+
+const SOURCES_DEFAUT = [
+  { nom: 'Seneweb', url: 'https://www.seneweb.com/feed', rss_url: 'https://www.seneweb.com/feed', categorie: 'actualites' },
+  { nom: 'APS', url: 'https://aps.sn/feed/', rss_url: 'https://aps.sn/feed/', categorie: 'actualites' },
+  { nom: 'Le Soleil', url: 'https://lesoleil.sn/feed/', rss_url: 'https://lesoleil.sn/feed/', categorie: 'actualites' },
+  { nom: 'PressAfrik', url: 'https://www.pressafrik.com/xml/syndication.rss', rss_url: 'https://www.pressafrik.com/xml/syndication.rss', categorie: 'actualites' },
+  { nom: 'SeneNews', url: 'https://www.senenews.com/feed', rss_url: 'https://www.senenews.com/feed', categorie: 'actualites' },
+  { nom: 'Leral.net', url: 'https://www.leral.net/xml/syndication.rss', rss_url: 'https://www.leral.net/xml/syndication.rss', categorie: 'actualites' },
+  { nom: 'Dakaractu', url: 'https://news.google.com/rss/search?q=site:dakaractu.com&hl=fr&gl=SN&ceid=SN:fr', rss_url: 'https://news.google.com/rss/search?q=site:dakaractu.com&hl=fr&gl=SN&ceid=SN:fr', categorie: 'actualites' },
+  { nom: 'Le Quotidien', url: 'https://news.google.com/rss/search?q=site:lequotidien.sn&hl=fr&gl=SN&ceid=SN:fr', rss_url: 'https://news.google.com/rss/search?q=site:lequotidien.sn&hl=fr&gl=SN&ceid=SN:fr', categorie: 'actualites' },
+  { nom: 'Sud Quotidien', url: 'https://news.google.com/rss/search?q=site:sudquotidien.sn&hl=fr&gl=SN&ceid=SN:fr', rss_url: 'https://news.google.com/rss/search?q=site:sudquotidien.sn&hl=fr&gl=SN&ceid=SN:fr', categorie: 'actualites' },
+  { nom: 'Presse Éco SN', url: 'https://news.google.com/rss/search?q=s%C3%A9n%C3%A9gal+%C3%A9conomie+commerce+pme+bceao&hl=fr&gl=SN&ceid=SN:fr', rss_url: 'https://news.google.com/rss/search?q=s%C3%A9n%C3%A9gal+%C3%A9conomie+commerce+pme+bceao&hl=fr&gl=SN&ceid=SN:fr', categorie: 'actualites' },
+  { nom: 'Presse Tech SN', url: 'https://news.google.com/rss/search?q=s%C3%A9n%C3%A9gal+num%C3%A9rique+fintech+startup+telecom&hl=fr&gl=SN&ceid=SN:fr', rss_url: 'https://news.google.com/rss/search?q=s%C3%A9n%C3%A9gal+num%C3%A9rique+fintech+startup+telecom&hl=fr&gl=SN&ceid=SN:fr', categorie: 'actualites' },
+  { nom: 'Presse Institutions SN', url: 'https://news.google.com/rss/search?q=s%C3%A9n%C3%A9gal+conseil+ministres+assembl%C3%A9e+gouvernement&hl=fr&gl=SN&ceid=SN:fr', rss_url: 'https://news.google.com/rss/search?q=s%C3%A9n%C3%A9gal+conseil+ministres+assembl%C3%A9e+gouvernement&hl=fr&gl=SN&ceid=SN:fr', categorie: 'actualites' },
+];
+
+const RUBRIQUES_VALIDES = ['economie', 'societe', 'tech', 'politique', 'general'];
+
+// Cache mémoire en direct des flux d'actualité pour garantir la résilience et zéro latence
+let _articlesRecentsMemoire = [];
+
+// Amorçage automatique en tâche de fond dès le chargement
+if (process.env.NODE_ENV !== 'test') {
+  setTimeout(() => {
+    collecterTousLesFlux().catch((err) => {
+      console.warn('[SURGA RSS INIT]:', err.message);
+    });
+  }, 1000);
+}
+
+/**
+ * Détermine la rubrique thématique d'un article par analyse de mots-clés
+ */
+function classerRubriquePresse(titre, resume) {
+  const texte = `${titre || ''} ${resume || ''}`
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (/economie|pme|commerce|investissement|banque|bceao|franc cfa|cfa|inflation|marche|entreprise|fiscalite|douane|budget|finances|export|import|industrie/i.test(texte)) {
+    return 'economie';
+  }
+  if (/numerique|digital|tech|startup|ia |intelligence artificielle|telecom|internet|mobile money|fintech|application|innovation|cyber/i.test(texte)) {
+    return 'tech';
+  }
+  if (/gouvernement|assemblee|depute|ministre|loi|decret|election|conseil des ministres|diplomatie|president|primature|etat |politique/i.test(texte)) {
+    return 'politique';
+  }
+  if (/education|ecole|universite|ucad|sante|hopital|docteur|transport|ter|brt|circulation|meteo|quartier|dakar|eau|senelec|woyofal|pluie|inondation|societe/i.test(texte)) {
+    return 'societe';
+  }
+  return 'general';
+}
+
+// SRG-A2-009 / D43 : les articles de secours écrits ici (« Innovation & Tech : l'écosystème des startups… ») étaient
+// servis comme l'actualité du jour quand la collecte ne rendait rien. Sans article collecté, la liste est vide.
+
+/**
+ * Nettoie le texte HTML et extrait un résumé court < 180 caractères
+ */
+function nettoyerResume(htmlOuTexte) {
+  if (!htmlOuTexte) return '';
+  const $ = cheerio.load(String(htmlOuTexte));
+  const brut = $.text() || '';
+  const propre = brut
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (propre.length <= 180) return propre;
+  const MAX_LEN = 177;
+  const tranche = propre.slice(0, MAX_LEN);
+  const dernierEspace = tranche.lastIndexOf(' ');
+  if (dernierEspace > 80) {
+    return tranche.slice(0, dernierEspace).replace(/[,;:\s.]+$/, '') + '...';
+  }
+  return tranche.trim() + '...';
+}
+
+// Mémoïsation pour éviter de multiplier les requêtes de synchronisation sur la base
+let _initialisationEnCours = null;
+let _derniereInitialisation = 0;
+const DELAI_REINIT_MS = 60 * 60 * 1000; // 1 heure
+
+/**
+ * Initialise et synchronise les sources officielles et les événements de sport par défaut
+ */
+async function assurerDonneesInitiales() {
+  const maintenant = Date.now();
+  if (_derniereInitialisation && maintenant - _derniereInitialisation < DELAI_REINIT_MS) {
+    return;
+  }
+  if (_initialisationEnCours) {
+    return _initialisationEnCours;
+  }
+
+  _initialisationEnCours = (async () => {
+    try {
+      for (const src of SOURCES_DEFAUT) {
+        await pool.query(
+          `UPDATE surga_sources
+           SET rss_url = $2, active = TRUE
+           WHERE nom = $1 AND rss_url != $2`,
+          [src.nom, src.url]
+        ).catch(() => {});
+
+        await pool.query(
+          `INSERT INTO surga_sources (nom, rss_url, categorie, active)
+           VALUES ($1, $2, $3, TRUE)
+           ON CONFLICT (rss_url) DO UPDATE SET active = TRUE, nom = EXCLUDED.nom`,
+          [src.nom, src.url, src.categorie]
+        ).catch(() => {});
+      }
+
+      await pool.query(
+        `UPDATE surga_sources
+         SET active = FALSE
+         WHERE rss_url IN (
+           'https://www.seneweb.com/news/rss.xml',
+           'https://www.dakaractu.com/feed',
+           'https://www.sudquotidien.sn/feed/',
+           'https://lequotidien.sn/feed/'
+         )`
+      ).catch(() => {});
+
+      // SRG-A4-014 : trois rencontres inventées étaient semées ici dans surga_sport_events.
+      _derniereInitialisation = Date.now();
+    } catch (err) {
+      console.warn('[SURGA RSS] Avertissement initialisation sources:', err.message);
+    } finally {
+      _initialisationEnCours = null;
+    }
+  })();
+
+  return _initialisationEnCours;
+}
+
+/**
+ * Parse un flux RSS XML avec détection précise de la source et nettoyage des métadonnées
+ */
+async function parserFluxRss(urlSource, nomSource, categorie) {
+  try {
+    const res = await axios.get(urlSource, {
+      timeout: 7000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (Surga-NewsBot)',
+        Accept: 'application/rss+xml, application/xml, text/xml, */*',
+      },
+    });
+
+    const $ = cheerio.load(res.data, { xmlMode: true });
+    const items = [];
+
+    $('item').each((_, elem) => {
+      let titre = $(elem).find('title').text().trim();
+      const link = $(elem).find('link').text().trim();
+      const description = $(elem).find('description').text() || $(elem).find('content\\:encoded').text();
+      const pubDateStr = $(elem).find('pubDate').text().trim() || $(elem).find('dc\\:date').text().trim();
+
+      if (titre && link) {
+        // SRG-UI-04 : Un article sans date de publication fiable est exclu du briefing.
+        // La date de publication est lue depuis la source, jamais déduite de la date de récupération.
+        if (!pubDateStr) {
+          return;
+        }
+
+        const parsedDate = new Date(pubDateStr);
+        if (isNaN(parsedDate.getTime())) {
+          return;
+        }
+
+        // Détection de la source exacte si transmise via tag <source> (notamment Google News)
+        let nomFinalSource = nomSource;
+        const sourceBalise = $(elem).find('source');
+        const sourceTexte = sourceBalise.text().trim();
+        if (sourceTexte) {
+          nomFinalSource = sourceTexte.replace(/\s*-\s*(Agence de Presse.*|Groupe.*)$/i, '').trim();
+        }
+
+        // Nettoyer les suffixes répétitifs de marque en fin de titre
+        titre = titre
+          .replace(/\s*[-–|]\s*(Seneweb|Dakaractu|SeneNews|Leral(\.net)?|PressAfrik|Le Soleil|APS|Le Quotidien|Sud Quotidien|Walfnet|RTS).*$/i, '')
+          .trim();
+
+        items.push({
+          source_nom: nomFinalSource,
+          titre: titre.slice(0, 250),
+          resume: nettoyerResume(description) || titre,
+          url: link,
+          categorie: categorie || 'actualites',
+          published_at: parsedDate.toISOString(),
+        });
+      }
+    });
+
+    return items;
+  } catch (err) {
+    console.warn(`[SURGA RSS] Échec fetch pour ${nomSource} (${urlSource}):`, err.message);
+    return [];
+  }
+}
+
+/**
+ * Ingestion globale de tous les flux actifs et persistance par lots en base
+ */
+async function collecterTousLesFlux() {
+  await assurerDonneesInitiales();
+
+  let sources = SOURCES_DEFAUT;
+  try {
+    const { rows } = await pool.query('SELECT * FROM surga_sources WHERE active = TRUE');
+    if (rows && rows.length > 0) sources = rows;
+  } catch {}
+
+  // Collecte simultanée de l'ensemble des sources pour un temps de réponse minimal (< 4s)
+  const resultatsFlux = await Promise.allSettled(
+    sources.map((src) => parserFluxRss(src.rss_url || src.url, src.nom, src.categorie))
+  );
+
+  let totalNouveaux = 0;
+  const tousItemsCollectes = [];
+
+  for (const resultat of resultatsFlux) {
+    if (resultat.status !== 'fulfilled' || !Array.isArray(resultat.value)) continue;
+    for (const item of resultat.value) {
+      const rub = classerRubriquePresse(item.titre, item.resume);
+      tousItemsCollectes.push({ ...item, rubrique_presse: rub });
+    }
+  }
+
+  // Immédiatement alimenter et mettre à jour le cache mémoire live en triant par date récente
+  if (tousItemsCollectes.length > 0) {
+    _articlesRecentsMemoire = [...tousItemsCollectes].sort(
+      (a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+    );
+  }
+
+  // Insertion par lots (batch) dans PostgreSQL pour préserver les connexions
+  if (tousItemsCollectes.length > 0) {
+    const CHUNK_SIZE = 30;
+    for (let i = 0; i < tousItemsCollectes.length; i += CHUNK_SIZE) {
+      const chunk = tousItemsCollectes.slice(i, i + CHUNK_SIZE);
+      const valueClauses = [];
+      const params = [];
+      let pIdx = 1;
+
+      for (const item of chunk) {
+        valueClauses.push(
+          `($${pIdx}, $${pIdx + 1}, $${pIdx + 2}, $${pIdx + 3}, $${pIdx + 4}, $${pIdx + 5}, $${pIdx + 6})`
+        );
+        params.push(
+          item.source_nom,
+          item.titre,
+          item.resume,
+          item.url,
+          item.categorie,
+          item.rubrique_presse,
+          item.published_at
+        );
+        pIdx += 7;
+      }
+
+      try {
+        const queryText = `
+          INSERT INTO surga_briefing_items (
+            source_nom, titre, resume, url, categorie, rubrique_presse, published_at
+          ) VALUES ${valueClauses.join(', ')}
+          ON CONFLICT (url) DO NOTHING
+          RETURNING id
+        `;
+        const res = await pool.query(queryText, params);
+        if (res && res.rowCount) {
+          totalNouveaux += res.rowCount;
+        }
+      } catch (e) {
+        // En cas de saturation ponctuelle, le cache mémoire est déjà garanti
+      }
+    }
+  }
+
+  return { totalNouveaux, totalCollectes: tousItemsCollectes.length };
+}
+
+/**
+ * Récupère les items de briefing récents ordonnés avec garantie de diversité des sources
+ */
+async function getBriefingItems({ categories = ['actualites', 'trafic'], limit = 6 } = {}) {
+  await assurerDonneesInitiales();
+
+  let candidats = [];
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, source_nom, titre, resume, url, categorie, rubrique_presse, published_at
+       FROM surga_briefing_items
+       WHERE categorie = ANY($1) AND published_at >= NOW() - INTERVAL '24 hours'
+       ORDER BY published_at DESC
+       LIMIT 80`,
+      [categories]
+    );
+    if (rows && rows.length > 0) candidats = rows;
+  } catch (err) {
+    console.warn('[SURGA BRIEFING DB WARN]:', err.message);
+  }
+
+  // Si la base est temporairement vide ou en latence, exploiter le cache mémoire des flux en direct
+  if (candidats.length === 0 && _articlesRecentsMemoire.length > 0) {
+    candidats = _articlesRecentsMemoire.filter((it) => categories.includes(it.categorie || 'actualites'));
+  }
+
+  // Filtrage strict de fraîcheur : 24h par défaut (SRG-UI-04 & Décision O10)
+  const maintenant = Date.now();
+  const FENETRE_FRAICHEUR_MS = 24 * 3600 * 1000;
+  candidats = candidats.filter((it) => {
+    if (!it.published_at) return false;
+    const t = new Date(it.published_at).getTime();
+    if (isNaN(t)) return false;
+    return (maintenant - t) <= FENETRE_FRAICHEUR_MS && (t - maintenant) <= 2 * 3600 * 1000;
+  });
+
+  // SRG-UI-21 : Filtrage des articles non factuels (top 10, galeries, quiz, classements sans lien d'actualité directe)
+  candidats = candidats.filter((it) => {
+    const t = (it.titre || '').trim();
+    if (!t) return false;
+    if (/^(top\s*\d+|les\s*\d+\s*(plus|meilleurs)|classement\s*des|galerie\s*photo|quiz\s*:|rétrospective\s*:)/i.test(t)) {
+      return false;
+    }
+    return true;
+  });
+
+  // SRG-UI-04 : Un article sans date de publication fiable est exclu du briefing.
+  // Zéro fabrication de fausses heures de fraîcheur. En absence de candidats récents, conserver la date source authentique.
+
+  // Algorithme d'équilibrage des sources sénégalaises
+  // Garantit une représentation équitable et variée (Seneweb, Le Soleil, APS, PressAfrik, SeneNews, Leral, etc.)
+  const itemsEquilibres = [];
+  const compteursParSource = {};
+  const maxParSource = Math.max(2, Math.floor(limit / 3));
+
+  // Passe 1 : Sélection diversifiée par source avec priorité aux plus récents
+  for (const item of candidats) {
+    const src = item.source_nom || 'Autre';
+    const count = compteursParSource[src] || 0;
+    if (count < maxParSource) {
+      itemsEquilibres.push(item);
+      compteursParSource[src] = count + 1;
+      if (itemsEquilibres.length >= limit) break;
+    }
+  }
+
+  // Passe 2 : Compléter avec les articles récents restants si la limite n'est pas atteinte
+  if (itemsEquilibres.length < limit) {
+    for (const item of candidats) {
+      if (!itemsEquilibres.some((it) => it.url === item.url || (it.id && it.id === item.id))) {
+        itemsEquilibres.push(item);
+        if (itemsEquilibres.length >= limit) break;
+      }
+    }
+  }
+
+  return itemsEquilibres.slice(0, limit);
+}
+
+/**
+ * Récupère la revue de presse avec filtrage optionnel par rubrique et équilibrage multi-sources
+ */
+async function recupererRevuePresse({ rubrique = null, limit = 20, offset = 0 } = {}) {
+  await assurerDonneesInitiales();
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 60);
+  const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+
+  let articlesTrouves = [];
+  try {
+    let query = `
+      SELECT id, source_nom, titre, resume, url, categorie, rubrique_presse, published_at
+      FROM surga_briefing_items
+    `;
+    const params = [];
+
+    if (rubrique && RUBRIQUES_VALIDES.includes(rubrique.toLowerCase())) {
+      params.push(rubrique.toLowerCase());
+      query += ` WHERE rubrique_presse = $${params.length}`;
+    }
+
+    params.push(safeLimit * 2);
+    query += ` ORDER BY published_at DESC LIMIT $${params.length}`;
+
+    params.push(safeOffset);
+    query += ` OFFSET $${params.length}`;
+
+    const { rows } = await pool.query(query, params);
+    if (rows && rows.length > 0) articlesTrouves = rows;
+  } catch (err) {
+    console.warn('[SURGA PRESSE DB WARN]:', err.message);
+  }
+
+  // Repli sur le cache mémoire live en direct si la DB n'a pas répondu
+  if (articlesTrouves.length === 0 && _articlesRecentsMemoire.length > 0) {
+    let memoire = _articlesRecentsMemoire;
+    if (rubrique && RUBRIQUES_VALIDES.includes(rubrique.toLowerCase())) {
+      memoire = memoire.filter((it) => it.rubrique_presse === rubrique.toLowerCase());
+    }
+    if (memoire.length > 0) {
+      articlesTrouves = memoire;
+    }
+  }
+
+
+  // Si on affiche toutes les rubriques, assurer une répartition équilibrée entre les sources
+  if (!rubrique || rubrique === 'toutes') {
+    const equilibres = [];
+    const compteurs = {};
+    const maxParSource = Math.max(3, Math.ceil(safeLimit / 4));
+
+    for (const art of articlesTrouves) {
+      const src = art.source_nom || 'Autre';
+      const c = compteurs[src] || 0;
+      if (c < maxParSource) {
+        equilibres.push(art);
+        compteurs[src] = c + 1;
+        if (equilibres.length >= safeLimit) break;
+      }
+    }
+
+    if (equilibres.length < safeLimit) {
+      for (const art of articlesTrouves) {
+        if (!equilibres.some((e) => e.url === art.url || (e.id && e.id === art.id))) {
+          equilibres.push(art);
+          if (equilibres.length >= safeLimit) break;
+        }
+      }
+    }
+
+    return equilibres.slice(safeOffset, safeOffset + safeLimit);
+  }
+
+  return articlesTrouves.slice(0, safeLimit);
+}
+
+/**
+ * Récupère les événements sportifs récents ou à venir
+ */
+async function getSportEvents({ limit = 4 } = {}) {
+  // SRG-A4-014 : la table surga_sport_events n'a jamais reçu que trois rencontres inventées. Les rencontres viennent
+  // du fournisseur de scores ; sans réponse de sa part, il n'y a rien à annoncer.
+  try {
+    const { filtrerMatchsSport } = require('./sport-service');
+    return await filtrerMatchsSport({ limit });
+  } catch (err) {
+    console.warn('[SURGA SPORT WARN]:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Calcule la similarité Jaccard entre deux titres pour déduplication stricte
+ */
+function similariteTitres(titreA, titreB) {
+  const motsA = new Set(String(titreA).toLowerCase().split(/\W+/).filter((w) => w.length > 3));
+  const motsB = new Set(String(titreB).toLowerCase().split(/\W+/).filter((w) => w.length > 3));
+  if (motsA.size === 0 || motsB.size === 0) return 0;
+  let intersection = 0;
+  for (const m of motsA) {
+    if (motsB.has(m)) intersection++;
+  }
+  const union = motsA.size + motsB.size - intersection;
+  return union > 0 ? intersection / union : 0;
+}
+
+/**
+ * Génère une synthèse de presse thématique sourcée et dédupliquée sans hallucination
+ * Regroupe par grand thème (Économie, Société, Politique, Tech) avec citation explicite de la source
+ */
+async function genererSynthesePresseThematique() {
+  const articlesBruts = await recupererRevuePresse({ limit: 30 });
+  if (!articlesBruts || articlesBruts.length === 0) {
+    return {
+      themes: [],
+      nbTotalArticles: 0,
+      syntheseGlobale: 'Aucune actualité disponible pour le moment.',
+      date: new Date().toISOString(),
+    };
+  }
+
+  // 1. Déduplication stricte
+  const articlesUniques = [];
+  for (const art of articlesBruts) {
+    const estDoublon = articlesUniques.some(
+      (existant) => similariteTitres(existant.titre, art.titre) > 0.65
+    );
+    if (!estDoublon) {
+      articlesUniques.push(art);
+    }
+  }
+
+  // 2. Regroupement par thématique
+  const parTheme = {
+    economie: [],
+    societe: [],
+    politique: [],
+    tech: [],
+  };
+
+  for (const art of articlesUniques) {
+    const rub = art.rubrique_presse || 'societe';
+    if (parTheme[rub]) {
+      parTheme[rub].push(art);
+    } else {
+      parTheme.societe.push(art);
+    }
+  }
+
+  // 3. Construction des résumés thématiques sourcés
+  const labelsThemes = {
+    economie: 'Économie & Marchés',
+    societe: 'Société & Vie quotidienne',
+    politique: 'Institutions & Gouvernance',
+    tech: 'Numérique & Innovation',
+  };
+
+  const themesResultats = [];
+
+  for (const [codeTheme, items] of Object.entries(parTheme)) {
+    if (items.length === 0) continue;
+
+    const topItems = items.slice(0, 3);
+    const faitsSources = topItems.map((it) => {
+      const src = it.source_nom ? `(source: ${it.source_nom})` : '';
+      return `${it.titre} ${src}`.trim();
+    });
+
+    themesResultats.push({
+      code: codeTheme,
+      label: labelsThemes[codeTheme] || codeTheme,
+      nbArticles: items.length,
+      faits: faitsSources,
+      sources: Array.from(new Set(topItems.map((it) => it.source_nom).filter(Boolean))),
+      articles: topItems.map((it) => ({
+        titre: it.titre,
+        resume: it.resume,
+        url: it.url,
+        source: it.source_nom,
+      })),
+    });
+  }
+
+  return {
+    date: new Date().toISOString(),
+    nbTotalArticles: articlesUniques.length,
+    themes: themesResultats,
+  };
+}
+
+module.exports = {
+  collecterTousLesFlux,
+  getBriefingItems,
+  getSportEvents,
+  recupererRevuePresse,
+  genererSynthesePresseThematique,
+  similariteTitres,
+  classerRubriquePresse,
+  nettoyerResume,
+  assurerDonneesInitiales,
+  SOURCES_DEFAUT,
+  RUBRIQUES_VALIDES,
+};

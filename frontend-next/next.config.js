@@ -36,6 +36,15 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   experimental: {
+    allowedDevOrigins: [
+      'localhost',
+      'localhost:3000',
+      'localhost:3001',
+      'surga.localhost',
+      'surga.localhost:3001',
+      '127.0.0.1:3000',
+      '127.0.0.1:3001',
+    ],
     serverActions: {
       allowedOrigins: [
         'nopalou.com',
@@ -43,6 +52,7 @@ const nextConfig = {
         'm.nopalou.com',
         'app.nopalou.com',
         'admin.nopalou.com',
+        'surga.nopalou.com',
         'nopalou-frontend.onrender.com',
         'nopalou-backend.onrender.com',
         'yombale-frontend.onrender.com',
@@ -50,6 +60,8 @@ const nextConfig = {
         'localhost',
         'localhost:3000',
         'localhost:3001',
+        'surga.localhost',
+        'surga.localhost:3001',
         '127.0.0.1:3000',
         '127.0.0.1:3001',
       ],
@@ -125,7 +137,7 @@ const nextConfig = {
           { key: 'X-XSS-Protection',          value: '1; mode=block' },
           { key: 'Content-Security-Policy',   value: "frame-ancestors 'self'; base-uri 'self'; form-action 'self' https:;" },
           { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy',        value: 'camera=(self), microphone=(self), geolocation=()' },
+          { key: 'Permissions-Policy',        value: 'camera=(self), microphone=(self), geolocation=(self)' },
         ],
       },
       {
@@ -149,6 +161,13 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
           { key: 'Pragma', value: 'no-cache' },
           { key: 'Expires', value: '0' },
+        ],
+      },
+      {
+        source: '/surga/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
         ],
       },
       // Note: Header pour sw.js supprimé ici car Serwist s'en charge

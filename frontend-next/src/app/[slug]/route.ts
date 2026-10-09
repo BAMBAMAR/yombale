@@ -14,7 +14,7 @@ const RESERVED_ROUTES = new Set([
   'paiement-en-ligne-senegal', 'partenaires', 'payer-annonce', 'payer-boost', 'payer-loyer',
   'payer-sponsoring-boutique', 'payer-sponsoring-immo', 'payer-sponsoring-produit', 'pos',
   'pourquoi-nopalou', 'produit', 'promo', 'recherche', 'retour-paiement', 'robots.txt',
-  'sitemap.xml', 'showcase', 'suivi-commande', 'tarifs-boutique', 'telecom',
+  'sitemap.xml', 'showcase', 'suivi-commande', 'surga', 'tarifs-boutique', 'telecom',
   'vendre-sur-whatsapp', 'whatsapp'
 ])
 

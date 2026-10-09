@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isI18nScopedRoute } from './i18n/config'
 import { verifierJetonSession } from './lib/session-verify'
+import { adresseDepuisSousDomaineSurga } from './lib/surga-adresse'
 
 const COOKIE_NAME = 'nopalou_session'
 
@@ -16,6 +17,16 @@ const verifyToken = verifierJetonSession
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const isDev = process.env.NODE_ENV === 'development'
+
+  // D77 : « surga.nopalou.com » renvoie vers « nopalou.com/surga », seule adresse où l'application est servie.
+  // Renvoi temporaire (307) : un renvoi permanent resterait dans les navigateurs si l'adresse principale changeait.
+  const versDomainePrincipal = adresseDepuisSousDomaineSurga(
+    req.headers.get('host') || req.nextUrl.host || '',
+    pathname,
+    req.nextUrl.search,
+    req.headers.get('x-forwarded-proto')?.split(',')[0].trim() || req.nextUrl.protocol,
+  )
+  if (versDomainePrincipal) return NextResponse.redirect(versDomainePrincipal, 307)
 
   // ── 1. Vérification session & Langue ─────────────────────────
   const token = req.cookies.get(COOKIE_NAME)?.value
@@ -108,19 +119,24 @@ export async function middleware(req: NextRequest) {
   const isScoped = isI18nScopedRoute(pathname)
   const effectiveLocale = isScoped ? locale : 'fr'
 
+  const isSurga = pathname === '/surga' || pathname.startsWith('/surga/')
+
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
   requestHeaders.set('x-pathname', pathname)
   requestHeaders.set('x-locale', effectiveLocale)
   requestHeaders.set('Content-Security-Policy', csp)
+  if (isSurga) {
+    requestHeaders.set('x-is-surga', 'true')
+  }
 
   const response = NextResponse.next({ request: { headers: requestHeaders } })
   response.headers.set('Content-Security-Policy', csp)
   // AUD-149 : politique stricte (nonce + strict-dynamic, sans unsafe-inline ni unsafe-eval) évaluée en RAPPORT SEUL.
   // Elle ne bloque rien ; les violations arrivent sur /api/csp-report. Passage en application réelle quand le flux est propre.
-  // Sur les routes /admin (outils et widgets d'administration), on omet le Report-Only pour ne pas inonder la console opérateur.
+  // En dev (isDev) ou sur les routes /admin (outils et widgets d'administration), on omet le Report-Only pour ne pas inonder la console opérateur.
   const isAdminRoute = pathname.startsWith('/admin')
-  if (!isAdminRoute) {
+  if (!isDev && !isAdminRoute) {
     const cspStricte = [
       "default-src 'self'",
       `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:`,
@@ -143,7 +159,7 @@ export async function middleware(req: NextRequest) {
   if (!isDev) {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
   }
-  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()')
+  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self)')
 
   // ── 3. Edge CDN Caching pour routes de catalogue publiques ────
   if (

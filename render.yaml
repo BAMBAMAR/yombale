@@ -99,6 +99,24 @@ services:
       - key: IG_USER_ID
         sync: false
 
+      # ── Surga : sources ouvertes en essai, sans dépense (docs/surga/DECISIONS.md, D74) ──
+      # Marées et qualité de l'air : accès gratuit d'Open-Meteo, réservé à un usage non commercial. À revoir avant
+      # le lancement (abonnement : SURGA_OPEN_METEO_CLE).
+      - key: SURGA_OPEN_METEO_ESSAI
+        value: "true"
+      # Ligue 1 du Sénégal : clé publique d'essai de TheSportsDB (calendrier partiel, dit à l'écran).
+      - key: SURGA_THESPORTSDB_CLE
+        value: "3"
+      # Contact transmis aux sources qui demandent d'identifier l'application (MET Norway).
+      - key: SURGA_SOURCES_CONTACT
+        value: "Surga/1.0 (https://nopalou.com; contact@nopalou.com)"
+      # Trafic mesuré : clé de l'API d'itinéraires de Google. Sans elle, la brique s'en tient aux signalements.
+      - key: SURGA_GOOGLE_ROUTES_CLE
+        sync: false
+      # Suivi des exceptions (SRG-A5-008) : actif seulement si la valeur est posée chez l'hébergeur.
+      - key: SENTRY_DSN
+        sync: false
+
       # ── Scrapers immo Facebook (optionnel) ───────────────────────────────────
       - key: FB_EMAIL
         sync: false
