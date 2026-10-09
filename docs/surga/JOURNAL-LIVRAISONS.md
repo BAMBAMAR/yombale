@@ -3,6 +3,16 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Écran d'ouverture de la PWA : nouveau jeu d'icônes ; décisions sur la voix du briefing] — commit local, aucun push
+- **Objet :** logo « plat » à l'ouverture de la PWA sur Android ; questionnaire sur la voix du briefing.
+- **Cause :** icône = carré sombre contenant un second cadre, sur fond clair ; « maskable » identique à « any » ; `.svg` qui enveloppent une image.
+- **Icônes (D82) :** `scripts/surga/generer-icones-surga.js` (emblème détouré, fond nuit, halo) ; tuile « any » aux bords `#0F172A`, « maskable » en carré plein, icône iPhone en carré plein ; manifeste `background_color` `#0F172A`, `?v=5`, entrée `.svg` retirée ; `surga-pwa-v5` ; faux logo `surga-whatsapp-avatar.png` remplacé.
+- **Tests :** `surga-manifeste-icones.test.ts` (3, en échec sur l'ancien jeu) ; frontend 193 sur 193 ; typage 0 erreur ; maquette de l'ouverture sans bord visible.
+- **Limites :** source de l'emblème en 321 × 320 pixels seulement (original 1 024 perdu) : emblème encore un peu flou en grand ; rien vu sur un téléphone ; fond clair de la page d'attente après l'ouverture sombre.
+- **Voix (D78 à D81) :** voix neuronale côté serveur, fichier commun par jour, gratuit seulement, téléchargement à la demande, timbre choisi à l'oreille.
+- **Offres comparées :** Azure Speech F0 (500 000 caractères par mois, recommandé), Google Cloud (1 million Neural2, facture au-delà), Amazon Polly (gratuit 12 mois), ElevenLabs (gratuit non commercial), Piper sur notre serveur (CC BY 4.0, sans compte). Détail et points non vérifiés : `docs/JOURNAL-LIVRAISONS.md`, première entrée.
+- **Retour arrière :** `git revert` du commit `feat(surga-pwa)`.
+
 ### [2026-10-09 — Briefing audio : lecture qui se coupait, voix et texte lus] — commit local, aucun push
 - **Objet :** l'audio du briefing se coupe ; la voix fait « trop IA », ni naturelle ni rassurante.
 - **Causes :** briefing remis au navigateur en un seul énoncé (Chrome le coupe vers quinze secondes), fin de lecture à la moindre erreur, pause qui vaut arrêt sur Android ; première voix française de la liste prise sans tri ; texte lu administratif, sigles épelés, compétition absente lue « undefined ».

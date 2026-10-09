@@ -3,7 +3,7 @@
 // Peu de données : rien n'est téléchargé d'avance en dehors de la page et de ses icônes ; le reste entre en cache
 // au fil de l'usage. Hors ligne : la page, son JavaScript et ses styles sont relus depuis le cache.
 
-const SURGA_CACHE_NAME = 'surga-pwa-v4';
+const SURGA_CACHE_NAME = 'surga-pwa-v5';
 const isSubdomain = self.location.hostname.startsWith('surga.');
 const PAGE = isSubdomain ? '/' : '/surga';
 

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: `${ADRESSE_SURGA}/icons/icon-512.png?v=19`,
+        url: `${ADRESSE_SURGA}/icons/icon-512.png?v=5`,
         width: 512,
         height: 512,
         alt: 'Surga — Assistant Personnel de Poche',
@@ -37,12 +37,13 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'Surga — Assistant Personnel de Poche',
     description: 'Votre assistant quotidien au Sénégal : briefing, dépenses FCFA, notes et agenda.',
-    images: [`${ADRESSE_SURGA}/icons/icon-512.png?v=19`],
+    images: [`${ADRESSE_SURGA}/icons/icon-512.png?v=5`],
   },
   icons: {
-    icon: '/surga/icons/favicon.svg',
-    shortcut: '/surga/icons/favicon.svg',
-    apple: '/surga/icons/icon-192.png',
+    icon: '/surga/icons/favicon.svg?v=5',
+    shortcut: '/surga/icons/favicon.svg?v=5',
+    // Carré plein : iOS découpe lui-même l'icône, des coins transparents y deviendraient noirs.
+    apple: '/surga/apple-touch-icon.png?v=5',
   },
   appleWebApp: {
     capable: true,
