@@ -30,61 +30,116 @@ function nettoyerPourSyntheseVocale(texte) {
 }
 
 /**
- * Compose un script textuel naturel, fluide et poli (vouvoiement strict D19)
+ * Écrit une heure comme on la dit : « 14:30 » ou « 14h30 » devient « 14 heures 30 », « 09:00 » devient « 9 heures ».
+ */
+function direHeure(heures, minutes) {
+  const h = parseInt(heures, 10);
+  const m = parseInt(minutes || '0', 10);
+  return `${h} heure${h > 1 ? 's' : ''}${m > 0 ? ` ${m}` : ''}`;
+}
+
+/**
+ * Prépare un texte pour l'oreille : sigles et signes écrits en toutes lettres, points de suspension et crochets retirés.
+ * Une voix de synthèse épelle « FCFA », lit « vs » ou bute sur « […] ».
+ */
+function ecrirePourLaVoix(texte) {
+  return nettoyerPourSyntheseVocale(texte)
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/\.{3,}|…/g, ' ')
+    .replace(/\b(?:F\s?CFA|FCFA)\b/gi, 'francs CFA')
+    .replace(/\s?%/g, ' pour cent')
+    .replace(/\s+vs\.?\s+/gi, ' contre ')
+    .replace(/\s*&\s*/g, ' et ')
+    .replace(/\bkm\/h\b/gi, 'kilomètres heure')
+    .replace(/\b(\d{1,2})\s?h\s?(\d{2})?\b/gi, (_, h, m) => direHeure(h, m))
+    .replace(/\s+([,.])/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Chaque titre est annoncé avec sa source (actualités toujours sourcées), d'une tournure différente : une même
+// formule répétée quatre fois donne une lecture mécanique.
+const ANNONCES_AVEC_SOURCE = [
+  (s) => `À la une, ${s} rapporte :`,
+  (s) => `${s} écrit :`,
+  (s) => `Autre titre, ${s} indique :`,
+];
+const ANNONCES_SANS_SOURCE = ['À la une :', 'Autre titre :', 'À noter aussi :'];
+
+function annoncerTitre(item, rang, total) {
+  const titre = ecrirePourLaVoix(item.titre || item.resume || '').replace(/[\s.:;,]+$/, '');
+  if (!titre) return null;
+  const source = ecrirePourLaVoix(item.source_nom || '');
+  const dernier = total > 2 && rang === total - 1;
+  const annonce = source
+    ? (dernier ? `Enfin, ${source} rapporte :` : ANNONCES_AVEC_SOURCE[rang % ANNONCES_AVEC_SOURCE.length](source))
+    : (dernier ? 'Enfin :' : ANNONCES_SANS_SOURCE[rang % ANNONCES_SANS_SOURCE.length]);
+  return `${annonce} ${titre}${/[!?]$/.test(titre) ? '' : '.'}`;
+}
+
+/**
+ * Compose le texte lu à voix haute : phrases courtes, ton posé, vouvoiement strict (D19).
+ * `briefingData.maintenant` (Date) fixe l'heure de référence ; Dakar est à l'heure universelle.
  */
 function preparerScriptAudio(briefingData = {}) {
-  const dateFormatee = briefingData.date || new Date().toLocaleDateString('fr-FR', {
+  const maintenant = briefingData.maintenant instanceof Date ? briefingData.maintenant : new Date();
+  const soir = maintenant.getUTCHours() >= 18;
+  const dateBrute = briefingData.date || maintenant.toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
+    timeZone: 'UTC',
   });
+  // L'année n'apporte rien à l'écoute.
+  const dateDite = String(dateBrute).replace(/\s+\d{4}$/, '').replace(/^./, (c) => c.toLowerCase());
 
   const quartier = briefingData.quartier || 'Dakar';
   const phrases = [];
 
-  // Salutation d'introduction
-  phrases.push(`Bonjour. Voici votre briefing quotidien Surga du ${dateFormatee} pour le secteur de ${quartier}.`);
+  phrases.push(`${soir ? 'Bonsoir' : 'Bonjour'}. Nous sommes le ${dateDite}. Voici l'essentiel du jour pour ${quartier}.`);
 
-  // Message de synthèse s'il existe
   if (briefingData.message_synthese) {
-    phrases.push(nettoyerPourSyntheseVocale(briefingData.message_synthese));
+    phrases.push(ecrirePourLaVoix(briefingData.message_synthese));
   }
 
-  // Section Agenda du jour
+  // Agenda du jour
   if (Array.isArray(briefingData.agenda_du_jour) && briefingData.agenda_du_jour.length > 0) {
     const nb = briefingData.agenda_du_jour.length;
-    phrases.push(`Côté agenda, vous avez ${nb} rendez-vous ou rappel${nb > 1 ? 's' : ''} prévu${nb > 1 ? 's' : ''} aujourd’hui.`);
+    phrases.push(nb === 1 ? "Dans votre agenda aujourd'hui, un rappel." : `Dans votre agenda aujourd'hui, ${nb} rappels.`);
     for (const item of briefingData.agenda_du_jour.slice(0, 3)) {
-      const heure = item.heure_evenement ? `à ${item.heure_evenement}` : '';
-      phrases.push(`${item.titre} ${heure}.`);
+      const hm = /^(\d{1,2}):(\d{2})/.exec(item.heure_evenement || '');
+      const titre = ecrirePourLaVoix(item.titre || '').replace(/[\s.:;,]+$/, '');
+      if (titre) phrases.push(hm ? `${titre}, à ${direHeure(hm[1], hm[2])}.` : `${titre}.`);
     }
   }
 
-  // Section Brèves d'actualité
+  // Actualités
   if (Array.isArray(briefingData.items) && briefingData.items.length > 0) {
-    phrases.push("Voici les principales actualités sénégalaises du matin.");
-    for (const item of briefingData.items.slice(0, 4)) {
-      const source = item.source_nom ? `d'après ${item.source_nom}` : '';
-      const resume = item.resume && item.resume !== item.titre ? item.resume : item.titre;
-      phrases.push(`${nettoyerPourSyntheseVocale(resume)}, ${source}.`);
-    }
+    const titres = briefingData.items.slice(0, 4);
+    phrases.push("Dans l'actualité.");
+    titres.forEach((item, rang) => {
+      const annonce = annoncerTitre(item, rang, titres.length);
+      if (annonce) phrases.push(annonce);
+    });
   }
 
-  // Section Sport
+  // Sport
   if (Array.isArray(briefingData.sports) && briefingData.sports.length > 0) {
-    phrases.push("Au rayon des sports :");
+    phrases.push('Côté sport.');
     for (const sp of briefingData.sports.slice(0, 2)) {
-      if (sp.statut === 'TERMINE' && sp.score_domicile !== null) {
+      const scoreConnu = sp.score_domicile !== null && sp.score_domicile !== undefined
+        && sp.score_exterieur !== null && sp.score_exterieur !== undefined;
+      if (sp.statut === 'TERMINE' && scoreConnu) {
         phrases.push(`${sp.equipe_domicile} ${sp.score_domicile}, ${sp.equipe_exterieur} ${sp.score_exterieur}.`);
+      } else if (sp.statut === 'EN_DIRECT' && scoreConnu) {
+        phrases.push(`En ce moment, ${sp.equipe_domicile} ${sp.score_domicile}, ${sp.equipe_exterieur} ${sp.score_exterieur}.`);
       } else {
-        phrases.push(`Match à venir entre ${sp.equipe_domicile} et ${sp.equipe_exterieur}, pour la compétition ${sp.competition}.`);
+        phrases.push(`À suivre, ${sp.equipe_domicile} contre ${sp.equipe_exterieur}${sp.competition ? `, ${ecrirePourLaVoix(sp.competition)}` : ''}.`);
       }
     }
   }
 
-  // Clôture
-  phrases.push("Passez une excellente journée avec Surga et Nopalou.");
+  phrases.push(`C'est tout pour le moment. ${soir ? 'Bonne soirée' : 'Bonne journée'}.`);
 
   return phrases.join(' ');
 }
@@ -269,6 +324,7 @@ module.exports = {
   regenererPodcastToken,
   genererOuRecupererAudioMp3,
   nettoyerPourSyntheseVocale,
+  ecrirePourLaVoix,
   echapperXml,
 };
 

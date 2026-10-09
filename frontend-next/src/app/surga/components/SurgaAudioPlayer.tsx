@@ -7,7 +7,10 @@ import {
   pauseLecture,
   reprendreLecture,
   arreterLecture,
+  changerVitesseLecture,
   estSyntheseDisponible,
+  prechargerVoix,
+  voixRetenueEstEnLigne,
   type AudioPlayerState,
 } from '@/lib/surga-audio'
 
@@ -28,9 +31,13 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
 
   const [vitesseChoisie, setVitesseChoisie] = useState<number>(1.0)
   const isAvailable = estSyntheseDisponible()
+  // Une voix diffusée par le réseau consomme des données : la mention « sans connexion » ne s'affiche pas avec elle.
+  const [voixEnLigne, setVoixEnLigne] = useState<boolean>(false)
 
   useEffect(() => {
+    const oublier = prechargerVoix(() => setVoixEnLigne(voixRetenueEstEnLigne()))
     return () => {
+      oublier()
       arreterLecture()
     }
   }, [])
@@ -40,10 +47,8 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
       demarrerLecture(script, vitesseChoisie, setPlayerState)
     } else if (playerState.statut === 'lecture') {
       pauseLecture()
-      setPlayerState((prev) => ({ ...prev, statut: 'pause' }))
     } else if (playerState.statut === 'pause') {
       reprendreLecture()
-      setPlayerState((prev) => ({ ...prev, statut: 'lecture' }))
     }
   }
 
@@ -60,9 +65,7 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
 
   const handleChangerVitesse = (nouvelleVitesse: number) => {
     setVitesseChoisie(nouvelleVitesse)
-    if (playerState.statut === 'lecture' || playerState.statut === 'pause') {
-      demarrerLecture(script, nouvelleVitesse, setPlayerState)
-    }
+    changerVitesseLecture(nouvelleVitesse)
   }
 
   const formaterTemps = (sec: number) => {
@@ -159,9 +162,11 @@ export default function SurgaAudioPlayer({ script }: SurgaAudioPlayerProps) {
                 ? 'En pause'
                 : `Écouter (${dureeTexte})`}
             </span>
-            <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', fontWeight: 500 }}>
-              · Lecture sans connexion
-            </span>
+            {!voixEnLigne && (
+              <span style={{ fontSize: 12, color: 'var(--surga-text2, #475569)', fontWeight: 500 }}>
+                · Lecture sans connexion
+              </span>
+            )}
           </div>
         </div>
 

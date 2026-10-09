@@ -241,6 +241,7 @@ describe('PHASE 2 — Voix, Audio Briefing, Podcast Stream MP3 & STT', () => {
   test('1. Route Podcast Stream MP3 : Génération et respect du format binaire ID3v2', async () => {
     const script = preparerScriptAudio({
       date: 'Mardi 6 octobre 2026',
+      maintenant: new Date('2026-10-06T08:00:00Z'),
       quartier: 'Dakar Plateau',
       items: [{ source_nom: 'APS', titre: 'Conseil des ministres', resume: 'Examen des dossiers' }],
     });

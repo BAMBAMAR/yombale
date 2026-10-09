@@ -3,6 +3,17 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Briefing audio : lecture qui se coupait, voix et texte lus] — commit local, aucun push
+- **Objet :** l'audio du briefing se coupe ; la voix fait « trop IA », ni naturelle ni rassurante.
+- **Causes :** briefing remis au navigateur en un seul énoncé (Chrome le coupe vers quinze secondes), fin de lecture à la moindre erreur, pause qui vaut arrêt sur Android ; première voix française de la liste prise sans tri ; texte lu administratif, sigles épelés, compétition absente lue « undefined ».
+- **Lecture :** `frontend-next/src/lib/surga-audio.ts` réécrit : phrases de 160 caractères au plus enchaînées, phrase refusée passée, moteur muet relancé, pause et vitesse sans retour au début.
+- **Voix :** `choisirVoixFrancaise` (voix la plus naturelle de l'appareil, voix installées seules hors connexion, jamais une voix étrangère) ; « Lecture sans connexion » masquée avec une voix du réseau.
+- **Texte :** `backend/services/surga/audio-service.js` : salutation selon l'heure, date sans l'année, annonces variées avec la source, `ecrirePourLaVoix` (heures, FCFA, %, vs).
+- **Tests :** `surga-audio.test.ts` (14, contrôle par mutation) ; frontend 190 sur 190 ; typage 0 erreur ; backend Tranche 9 : 5 sur 5.
+- **Limites :** rien écouté sur un appareil ; sur téléphone la voix reste celle du système ; écran verrouillé ou changement d'onglet : la lecture s'arrête.
+- **Décision attendue :** audio produit côté serveur par une voix neuronale (dépense D73, données mobiles, envoi de texte à un fournisseur).
+- **Retour arrière :** `git revert` du commit `fix(surga-audio)`.
+
 ### [2026-10-09 — Ancien logo sur la PWA de Nopalou : cause établie en ligne] — commit local, aucun push
 - **Objet :** l'utilisateur retrouve d'anciens logos sur la PWA de Nopalou. Surga n'est pas en cause : ses icônes (`/surga/icons/*`, cache de 4 heures) sont à jour en ligne.
 - **Constat :** le cache Cloudflare n'a pas été vidé après le déploiement de `8042b2ac` ; les icônes de Nopalou sans version y servent toujours l'image de juillet (`immutable` un an). Les adresses en `?v=19` sont justes.

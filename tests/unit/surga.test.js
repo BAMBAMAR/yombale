@@ -525,6 +525,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
       preparerScriptAudio,
       genererPodcastFeedXml,
       nettoyerPourSyntheseVocale,
+      ecrirePourLaVoix,
     } = require('../../backend/services/surga/audio-service');
 
     const regexEmoji = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
@@ -539,6 +540,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
     test('Composition du script audio naturel et respect strict du vouvoiement (D19)', () => {
       const briefingMock = {
         date: 'Lundi 4 octobre 2026',
+        maintenant: new Date('2026-10-04T08:00:00Z'),
         quartier: 'Médina',
         message_synthese: 'Le ciel est dégagé et la circulation est normale sur la corniche.',
         items: [
@@ -561,16 +563,54 @@ describe('Module Surga — Tranches 1 & 2', () => {
 
       const script = preparerScriptAudio(briefingMock);
 
-      expect(script).toContain('Bonjour.');
-      expect(script).toContain('Voici votre briefing quotidien Surga du Lundi 4 octobre 2026 pour le secteur de Médina.');
+      // L'année n'est pas dite, le quartier l'est
+      expect(script).toContain("Bonjour. Nous sommes le lundi 4 octobre. Voici l'essentiel du jour pour Médina.");
       expect(script).toContain('Le ciel est dégagé');
-      expect(script).toContain("d'après APS");
+      // Chaque titre est annoncé avec sa source
+      expect(script).toContain('À la une, APS rapporte : Le TER adapte ses horaires de pointe.');
       expect(script).toContain('Sénégal 2, Burkina Faso 0');
-      expect(script).toContain('Passez une excellente journée avec Surga et Nopalou.');
+      expect(script).toContain("C'est tout pour le moment. Bonne journée.");
       // Pas de tutoiement (D19)
       expect(script).not.toMatch(/\b(tu|te|toi|ton|ta|tes)\b/i);
       // Zéro émoji
       expect(regexEmoji.test(script)).toBe(false);
+    });
+
+    test('Texte écrit pour l\'oreille : sigles, heures et signes dits en toutes lettres', () => {
+      expect(ecrirePourLaVoix('Le sac de riz à 22 500 FCFA […]')).toBe('Le sac de riz à 22 500 francs CFA');
+      expect(ecrirePourLaVoix('Départ à 06h30, retour vers 18 h')).toBe('Départ à 6 heures 30, retour vers 18 heures');
+      expect(ecrirePourLaVoix('Jaraaf vs Casa Sports : +12% de spectateurs')).toBe('Jaraaf contre Casa Sports : +12 pour cent de spectateurs');
+      // « 2 hommes » n'est pas une heure
+      expect(ecrirePourLaVoix('2 hommes interpellés...')).toBe('2 hommes interpellés');
+    });
+
+    test('Script audio : le soir, un match sans compétition, un titre sans source, des annonces variées', () => {
+      const script = preparerScriptAudio({
+        date: 'vendredi 9 octobre 2026',
+        maintenant: new Date('2026-10-09T19:30:00Z'),
+        quartier: 'Rufisque',
+        agenda_du_jour: [{ titre: 'Rendez-vous banque', heure_evenement: '14:30:00' }],
+        items: [
+          { source_nom: 'APS', titre: 'Premier titre' },
+          { source_nom: 'Seneweb', titre: 'Deuxième titre ?' },
+          { titre: 'Troisième titre...' },
+        ],
+        sports: [
+          { equipe_domicile: 'ASC Jaraaf', equipe_exterieur: 'Teungueth FC', statut: 'A_VENIR', score_domicile: null, score_exterieur: null },
+          { equipe_domicile: 'Arsenal', equipe_exterieur: 'Chelsea', statut: 'EN_DIRECT', score_domicile: 1, score_exterieur: 0 },
+        ],
+      });
+
+      expect(script.startsWith('Bonsoir. Nous sommes le vendredi 9 octobre.')).toBe(true);
+      expect(script).toContain("Dans votre agenda aujourd'hui, un rappel. Rendez-vous banque, à 14 heures 30.");
+      expect(script).toContain('À la une, APS rapporte : Premier titre.');
+      expect(script).toContain('Seneweb écrit : Deuxième titre ?');
+      expect(script).toContain('Enfin : Troisième titre.');
+      expect(script).toContain('À suivre, ASC Jaraaf contre Teungueth FC.');
+      expect(script).toContain('En ce moment, Arsenal 1, Chelsea 0.');
+      expect(script).toContain('Bonne soirée.');
+      // Aucune valeur absente lue à voix haute, aucune ponctuation orpheline
+      expect(script).not.toMatch(/undefined|null|, \.|\.\./);
     });
 
     test('Génération de flux XML Podcast RSS 2.0 valide avec enclosures', () => {
