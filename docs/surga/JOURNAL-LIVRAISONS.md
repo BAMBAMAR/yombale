@@ -3,6 +3,13 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Ancien logo sur la PWA de Nopalou : cause établie en ligne] — commit local, aucun push
+- **Objet :** l'utilisateur retrouve d'anciens logos sur la PWA de Nopalou. Surga n'est pas en cause : ses icônes (`/surga/icons/*`, cache de 4 heures) sont à jour en ligne.
+- **Constat :** le cache Cloudflare n'a pas été vidé après le déploiement de `8042b2ac` ; les icônes de Nopalou sans version y servent toujours l'image de juillet (`immutable` un an). Les adresses en `?v=19` sont justes.
+- **Corrigé :** `?v=19` sur les trois adresses restantes, dont l'image du flux du podcast (`backend/services/surga/audio-service.js`, test de `tests/unit/surga.test.js` aligné) ; test `icones-versionnees.test.ts`.
+- **Tests :** typage 0 erreur ; frontend 176 sur 176 ; test du flux du podcast rejoué en base d'audit locale.
+- **Détail :** `docs/JOURNAL-LIVRAISONS.md`, première entrée.
+
 ### [2026-10-09 — Démarches sur mobile, logo de la PWA, Kiosque sans titres, retour de paiement Wave, guide d'installation adapté] — push de `main` ordonné par l'utilisateur
 - **Objet :** captures de l'utilisateur : fiches de démarches qui se chevauchent, bandeau du CV écrasé, ancien logo vu sur la PWA, titres de journaux faux dans le Kiosque, page JSON de Render après un paiement Wave refusé, guide d'installation limité à Safari, Surga introuvable à installer quand Nopalou l'est.
 - **Interface :** cartes de listes à défilement qui ne rétrécissent plus (`.surga-liste-fixe`) ; boutons `.surga-btn-*` à largeur propre dans les rangées ; noms de journaux retirés du Kiosque public.

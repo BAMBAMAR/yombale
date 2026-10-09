@@ -113,7 +113,7 @@ export default async function BoutiqueArticleDetailPage({
       url: 'https://nopalou.com',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://nopalou.com/icons/icon-512.svg',
+        url: 'https://nopalou.com/icons/icon-512.svg?v=19',
       },
     },
     keywords: article.tags?.join(', ') || undefined,

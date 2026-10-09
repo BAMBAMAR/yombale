@@ -50,7 +50,7 @@ function ssrPage({ title, desc, canonical, body, schema }) {
   <meta property="og:title" content="${esc(title)}">
   <meta property="og:description" content="${esc(desc)}">
   <meta property="og:url" content="${esc(canonical)}">
-  <meta property="og:image" content="https://nopalou.com/icons/icon-512.png">
+  <meta property="og:image" content="https://nopalou.com/icons/icon-512.png?v=19">
   ${schema ? `<script type="application/ld+json">${schema}</script>` : ''}
   <link rel="stylesheet" href="/style.css?v=15">
 </head>

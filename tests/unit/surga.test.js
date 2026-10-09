@@ -586,7 +586,7 @@ describe('Module Surga — Tranches 1 & 2', () => {
       expect(xml).toContain('<rss version="2.0"');
       expect(xml).toContain('<title>Surga — Briefing de Bamba Mar</title>');
       expect(xml).toContain('<language>fr-sn</language>');
-      expect(xml).toContain('<itunes:image href="https://nopalou.com/icons/icon-512.png"/>');
+      expect(xml).toContain('<itunes:image href="https://nopalou.com/icons/icon-512.png?v=19"/>');
       expect(xml).toContain('<enclosure url="https://nopalou.com/api/surga/podcast/550e8400-e29b-41d4-a716-446655440000/stream.mp3"');
       expect(xml).toContain('type="audio/mpeg"');
       expect(xml).toContain('</channel>');

@@ -122,7 +122,7 @@ function genererPodcastFeedXml({
       <itunes:name>Nopalou Surga</itunes:name>
       <itunes:email>contact@nopalou.com</itunes:email>
     </itunes:owner>
-    <itunes:image href="${baseUrl}/icons/icon-512.png"/>
+    <itunes:image href="${baseUrl}/icons/icon-512.png?v=19"/>
     <itunes:category text="News"/>
     <itunes:explicit>no</itunes:explicit>
 
