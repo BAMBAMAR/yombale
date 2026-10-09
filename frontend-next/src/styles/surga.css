@@ -1243,3 +1243,128 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
 .surga-h1-bureau { display: none; }
 @media (min-width: 1024px) { .surga-h1-bureau { display: block; } }
 .surga-center-feed:focus { outline: none; }
+
+/* ==========================================================================
+   Bannière et Guide d'installation PWA Surga
+   ========================================================================== */
+@keyframes surga-slide-down {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -24px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes surga-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.surga-pwa-banner {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 20px);
+  max-width: 480px;
+  z-index: 1100;
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  color: #FFFFFF;
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(217, 119, 6, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: surga-slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.surga-pwa-banner-icon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #0F172A;
+  border: 1.5px solid rgba(217, 119, 6, 0.5);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.surga-pwa-banner-sparkle {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.surga-pwa-banner-btn-install {
+  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4);
+  white-space: nowrap;
+}
+
+.surga-pwa-banner-btn-close {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.surga-pwa-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+
+.surga-pwa-modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.3);
+  color: var(--surga-primary, #0F172A);
+  animation: surga-slide-up 0.25s ease-out;
+}
+

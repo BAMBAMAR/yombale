@@ -3,12 +3,12 @@
 // Peu de données : rien n'est téléchargé d'avance en dehors de la page et de ses icônes ; le reste entre en cache
 // au fil de l'usage. Hors ligne : la page, son JavaScript et ses styles sont relus depuis le cache.
 
-const SURGA_CACHE_NAME = 'surga-pwa-v3';
+const SURGA_CACHE_NAME = 'surga-pwa-v4';
 const isSubdomain = self.location.hostname.startsWith('surga.');
 const PAGE = isSubdomain ? '/' : '/surga';
 
 // Sur le domaine principal, « / » est la page d'accueil de Nopalou : elle n'a rien à faire dans ce cache.
-const STATIC_ASSETS = [PAGE, '/surga/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
+const STATIC_ASSETS = [PAGE, '/surga/manifest.json', '/surga/icons/icon-192.png', '/surga/icons/icon-512.png', '/surga/surga-symbol.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

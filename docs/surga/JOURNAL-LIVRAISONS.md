@@ -3,8 +3,18 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
-### [2026-10-09 — Audit Technique de Fiabilité des Données, Cas CESTI & Anti-Régression 10/10 PASS] — aucun push
-- **Objet :** Audit approfondi de la chaîne complète `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE`. Éradication des données fausses, périmées, fictives ou hallucinées masquées sous une apparence soignée.
+### [2026-10-09 — Audit Data, Vidéos Politique & Société, et PWA Dédiée avec Emblème Premium] — aucun push
+- **Objet :**
+  1. Audit approfondi de la chaîne complète `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE`. Éradication des données fausses, périmées ou hallucinées.
+  2. Intégration des grandes émissions de débat politique et de société dans Surga Vidéos.
+  3. Module d'installation PWA dédié pour Surga avec emblème premium à l'ouverture et guide iOS/Android.
+- **Module PWA Surga Dédié & Emblème Premium (`SurgaPwaInstallPrompt.tsx`, `surga.css`, `layout.tsx`, `SurgaParametresTab.tsx`) :**
+  - Composant d'installation PWA exclusif (`<SurgaPwaInstallPrompt />`) à l'ouverture, déclenché si l'application n'est pas déjà installée en mode autonome (`standalone`) et non masquée récemment (7 jours).
+  - Mise en valeur spectaculaire de l'emblème officiel sanctuarisé (`/surga/surga-symbol.png`) dans un cadre nuit minérale ardoise (`#0F172A`) avec liseré or/ambre (`#D97706`), halo lumineux et étincelle dorée (`Sparkles`).
+  - Prise en charge native Chrome / Android / Edge via l'événement `beforeinstallprompt` avec bouton d'installation 1-clic (`Download`).
+  - Guide visuel étape par étape dédié pour iPhone / iPad sous Safari iOS (`Share` puis `Smartphone` « Sur l'écran d'accueil »).
+  - Déclencheur manuel accessible en permanence depuis l'onglet Réglages (`SurgaParametresTab.tsx`) via l'événement personnalisé `surga-demande-installation-pwa`.
+  - Animations fluides CSS `@keyframes surga-slide-down` et `@keyframes surga-slide-up` dans `surga.css`.
 - **Dossier Réglementaire Créé (`docs/surga/audits/data/`) :** 8 livrables normés (`README.md`, `AUDIT_DATA.md`, `EVIDENCES.md`, `ANOMALIES.md`, `CORRECTIONS.md`, `ANTI_REGRESSION.md`, `HANDOVER.md`, `REGRESSION_DATASET.md`).
 - **Cas CESTI 2026 & Catalogue Concours (`concours-service.js`, `surga_concours`) :**
   - Session 2026 démontrée terminée le 24/09/2026 (alors que Surga l'affichait ouverte jusqu'au 05/11/2026 avec un faux compte à rebours de 28 jours).

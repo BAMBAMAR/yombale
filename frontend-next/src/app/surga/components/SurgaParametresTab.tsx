@@ -11,6 +11,7 @@ import {
   UserCheck,
   LogOut,
   RefreshCw,
+  Smartphone,
 } from 'lucide-react'
 import SurgaServiceRow from './SurgaServiceRow'
 import { quartierDe } from '@/lib/surga-meteo'
@@ -358,7 +359,23 @@ export default function SurgaParametresTab({
         />
       )}
 
-      {/* 5. Bouton de réinitialisation des préférences de briefing */}
+      {/* 5. Application de poche Surga (Installation PWA) */}
+      <SurgaServiceRow
+        icon={Smartphone}
+        iconColor="var(--surga-accent-ink, #A64B08)"
+        iconBg="rgba(217, 119, 6, 0.08)"
+        titre="Application Surga (PWA)"
+        description="Installer sur l'écran d'accueil pour un accès direct & hors-ligne"
+        actionLabel="Installer"
+        actionVariant="primary"
+        onAction={() => {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('surga-demande-installation-pwa'))
+          }
+        }}
+      />
+
+      {/* 6. Bouton de réinitialisation des préférences de briefing */}
       <button
         type="button"
         onClick={onReinitialiser}

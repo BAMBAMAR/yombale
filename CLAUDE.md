@@ -49,8 +49,15 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-- **Surga Data / Audit Technique de Fiabilité, Exactitude & Anti-Régression (Session 2026-10-09, branche `feature/surga`)** :
-  1. **Audit Empirique Complet des 13 Modules Dynamiques & Dossier Réglementaire (`docs/surga/audits/data/`)** :
+- **Surga Data & PWA / Invite d'Installation Premium & Anti-Régression 11/11 (Session 2026-10-09, branche `feature/surga`)** :
+  1. **Invite d'Installation PWA avec Emblème Premium à l'Ouverture (`SurgaPwaInstallPrompt.tsx`, `surga.css`, `layout.tsx`)** :
+     - Création du composant dédié `SurgaPwaInstallPrompt.tsx` respectant l'étanchéité totale vis-à-vis de Nopalou (< 300 lignes, zéro émoji Unicode, 100% tokens du Design System).
+     - Mise en valeur de l'icône officielle sanctuarisée (`/surga/surga-symbol.png`) dans un cadre squircle ardoise nuit minérale (`#0F172A`) avec bordure ambre/or (`#D97706`), halo lumineux et pastille d'étincelle dorée (`Sparkles`).
+     - Bannière d'ouverture flottante fluide (`@keyframes surga-slide-down`) s'affichant si l'application n'est pas déjà en mode PWA autonome (`display-mode: standalone`) et n'a pas été masquée dans les 7 derniers jours (`localStorage`).
+     - Prise en charge native Chrome / Android / Edge via capture de l'événement `beforeinstallprompt` avec bouton d'installation 1-clic (`Download`).
+     - Guide visuel interactif dédié iOS Safari (iPhone / iPad) expliquant le flux en 2 étapes (`Share` puis `Smartphone` « Sur l'écran d'accueil »).
+     - Intégration d'un déclencheur manuel permanent dans l'onglet **Réglages** (`SurgaParametresTab.tsx`) via événement personnalisé `surga-demande-installation-pwa`.
+  2. **Audit Empirique Complet des 13 Modules Dynamiques & Dossier Réglementaire (`docs/surga/audits/data/`)** :
      - Cartographie rigoureuse de la chaîne `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE`.
      - Création des 8 documents de référence : `README.md`, `AUDIT_DATA.md`, `EVIDENCES.md`, `ANOMALIES.md`, `CORRECTIONS.md`, `ANTI_REGRESSION.md`, `HANDOVER.md`, `REGRESSION_DATASET.md`.
   2. **Cas de Référence CESTI & Rectification du Catalogue Concours (`backend/services/surga/concours-service.js`, `surga_concours`)** :

@@ -1,9 +1,17 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 09 Octobre 2026 (Audit Technique de Fiabilité des Données, Rectification CESTI, Intégration Émissions Politique & Société, Suite Anti-Régression 11/11 PASS ; voir `docs/surga/audits/data/`)  
+> **Dernière mise à jour** : 09 Octobre 2026 (Audit Technique Data 11/11 PASS, Émissions Politique & Société, PWA Dédiée avec Emblème Premium à l'Ouverture & Éradication Universelle des Faux Logos ; voir `docs/surga/audits/data/`)  
 > **Branche de travail** : `feature/surga`  
-> **Statut global** : 🟢 **Audit Data Réalisé & 11/11 Tests Anti-Régression PASS — Rectification CESTI 2026 (session terminée, pièces réelles sans hallucination, âge 17-24 ans bachelier / sans limite pro), Idempotence des concours (`ON CONFLICT DO NOTHING`), 20 Démarches officielles débloquées et publiées, Crash SQL Trafic corrigé (colonnes statut/updated_at), Kiosque assaini sans faux quotidiens, Émissions célèbres de politique & société intégrées (TFM, Walf, 7tv, Sen TV, RTS : 151 vidéos réelles), Intégrité Nopalou préservée à 100%**  
+> **Statut global** : 🟢 **Audit Data Réalisé & 11/11 Tests Anti-Régression PASS — Rectification CESTI 2026, 20 Démarches publiées, Crash SQL Trafic corrigé, Émissions politiques TFM/Walf/7tv/SenTV/RTS (151 vidéos), Module PWA Surga dédié (`SurgaPwaInstallPrompt.tsx`) avec support Chrome/Android (`beforeinstallprompt`) et guide iOS Safari, Éradication universelle de l'ancien faux logo abstrait et scellement du VRAI logo officiel sanctuarisé (personnage en caftan stylisé en rubans S avec ceinture ambre) sur tous les PNG/SVG, manifest.json et sw.js (v4)**  
 > **Auteur** : Antigravity (Expert Senior International en Architecture Logicielle & Fiabilité des Systèmes)
+
+> **Assainissement PWA & Sanctuarisation du VRAI Logo Officiel (09 Octobre 2026)** :
+> - Éradication totale de l'ancien faux symbole géométrique S avec point vert (`pwaAmberGrad`, `surgaAmberGrad`, `icon-512.svg`, `icon-192.svg`, `surga-symbol.svg`, etc.).
+> - Régénération universelle de l'ensemble des formats SVG et PNG dans `frontend-next/public/surga/` et `frontend-next/public/surga/icons/` avec le VRAI logo sanctuarisé : personnage en caftan blanc stylisé en rubans S avec ceinture ambre.
+> - `manifest.json` scopé sur `/surga` avec icônes officielles versionnées (`?v=4`).
+> - Service Worker `public/surga/sw.js` mis à jour en `surga-pwa-v4` avec mise en cache exclusive des icônes Surga.
+> - Composant `<SurgaPwaInstallPrompt />` (< 300 lignes, zéro émoji, 100% tokens du Design System) avec bannière haute animée et guide iOS Safari.
+> - Déclencheur permanent dans l'onglet Réglages (`SurgaParametresTab.tsx`) via `surga-demande-installation-pwa`.
 
 > **Audit Data & Fiabilité des Données (09 Octobre 2026)** : Dossier complet de 8 livrables sous `docs/surga/audits/data/` (`README.md`, `AUDIT_DATA.md`, `EVIDENCES.md`, `ANOMALIES.md`, `CORRECTIONS.md`, `ANTI_REGRESSION.md`, `HANDOVER.md`, `REGRESSION_DATASET.md`). Test de référence CESTI prouvé et corrigé sans hardcoding. Émissions politiques et sociétales sénégalaises connectées. Suite d'exécution automatique validée : `node scripts/audit/data/test-anti-regression.js` (11/11 PASS).
 
