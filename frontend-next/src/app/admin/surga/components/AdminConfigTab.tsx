@@ -40,6 +40,7 @@ interface Fournisseur {
 
 const GROUPES: { id: string; titre: string; aide: string }[] = [
   { id: 'ventes', titre: 'Ventes', aide: 'Ouvre ou ferme la souscription à tous les abonnements.' },
+  { id: 'nopalou', titre: 'Abonnés Nopalou', aide: 'Les abonnés de la place de marché (boutiques, agences) ont-ils Surga sans payer ?' },
   { id: 'gratuit', titre: 'Ce que le gratuit donne', aide: 'Par compte. 0 réserve la fonction aux abonnés. Les écrans de l’application affichent ces chiffres.' },
   { id: 'whatsapp', titre: 'WhatsApp', aide: 'Sans effet tant que WhatsApp est éteint côté serveur.' },
 ]

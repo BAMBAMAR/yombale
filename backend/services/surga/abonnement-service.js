@@ -53,6 +53,7 @@ async function verifierStatutPremium({ userId, phone }) {
       const sub = rows[0];
       return {
         estPremium: true,
+        source: 'surga',
         plan: sub.plan,
         abonnement: sub,
         joursRestants: Math.max(0, Math.ceil((new Date(sub.fin) - new Date()) / (1000 * 60 * 60 * 24))),
@@ -60,6 +61,20 @@ async function verifierStatutPremium({ userId, phone }) {
     }
   } catch (err) {
     console.warn('[SURGA ABONNEMENT] Erreur vérification statut:', err.message);
+  }
+
+  // Un abonné Nopalou (boutique, agence, essai compris) a l'accès total à Surga, sans paiement Surga.
+  if (userId) {
+    const nopalou = await offre.abonnementNopalouActif(userId);
+    if (nopalou) {
+      return {
+        estPremium: true,
+        source: 'nopalou',
+        plan: 'nopalou_' + nopalou.plan,
+        abonnement: null,
+        joursRestants: Math.max(0, Math.ceil((new Date(nopalou.fin) - new Date()) / (1000 * 60 * 60 * 24))),
+      };
+    }
   }
 
   return { estPremium: false, plan: null, abonnement: null, joursRestants: 0 };

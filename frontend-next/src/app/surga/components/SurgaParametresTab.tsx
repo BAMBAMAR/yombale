@@ -25,6 +25,7 @@ interface SurgaParametresTabProps {
     estPremium: boolean
     plan?: string | null
     joursRestants?: number
+    source?: string
   }
   user?: {
     id: string
@@ -66,6 +67,7 @@ export default function SurgaParametresTab({
 }: SurgaParametresTabProps) {
   const { offre } = useSurgaOffre()
   const estPremium = statutPremium?.estPremium ?? false
+  const inclusNopalou = estPremium && statutPremium?.source === 'nopalou'
   // Les espaces professionnels ne s'affichent que si au moins une formule pro est en vente (console d'administration).
   const proProposes = Boolean(offre?.plans.some((pl) => pl.type === 'b2b'))
   const joursRestants = statutPremium?.joursRestants ?? 0
@@ -270,16 +272,16 @@ export default function SurgaParametresTab({
             <Crown size={20} color={estPremium ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)'} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {estPremium ? `${nomOffre(offre)} actif` : 'Formule gratuite'}
+                {estPremium ? (inclusNopalou ? 'Accès total inclus' : `${nomOffre(offre)} actif`) : 'Formule gratuite'}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 {estPremium
-                  ? `Expiration dans ${joursRestants} jour(s)`
+                  ? (inclusNopalou ? `Inclus avec votre abonnement Nopalou (encore ${joursRestants} jour(s))` : `Expiration dans ${joursRestants} jour(s)`)
                   : resumeGratuit(offre?.gratuit) || 'Les droits gratuits se règlent dans la console.'}
               </div>
             </div>
           </div>
-          {onOpenPremium && (estPremium || offre?.ventes_ouvertes) && (
+          {onOpenPremium && !inclusNopalou && (estPremium || offre?.ventes_ouvertes) && (
             <button
               type="button"
               onClick={onOpenPremium}

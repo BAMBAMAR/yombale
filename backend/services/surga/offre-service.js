@@ -96,6 +96,11 @@ const DEFINITIONS_REGLAGES = {
     libelle: 'Ventes ouvertes',
     aide: 'Désactivé : plus aucune souscription ne peut être lancée ; les abonnements déjà payés restent valables.',
   },
+  acces_total_abonnes_nopalou: {
+    type: 'booleen', defaut: true, groupe: 'nopalou',
+    libelle: 'Accès total à Surga pour les abonnés Nopalou',
+    aide: 'Activé : tout compte ayant un abonnement Nopalou en cours (boutique Taf Taf, Pro, Business, agence, essai gratuit compris) a Surga Plus sans payer. L’accès cesse avec l’abonnement Nopalou.',
+  },
   emploi_cv_gratuits: {
     type: 'entier', defaut: 1, min: 0, max: 20, groupe: 'gratuit',
     libelle: 'CV gratuits par compte (avec la mention « Surga »)',
@@ -325,8 +330,34 @@ async function idsPlansParticuliers() {
  * Un compte est abonné s'il a un abonnement actif et non expiré à une formule PARTICULIER. Une formule professionnelle
  * ne donne pas les avantages d'un particulier ; une formule désactivée à la vente continue de servir ses abonnés.
  */
+/**
+ * Abonnement Nopalou en cours (boutique ou agence, essai gratuit compris) : il donne l'accès total à Surga tant que le
+ * réglage « acces_total_abonnes_nopalou » est ouvert dans la console. Rend la ligne de l'abonnement, ou null.
+ */
+async function abonnementNopalouActif(userId) {
+  if (!userId || !pool) return null;
+  try {
+    if (!(await getReglage('acces_total_abonnes_nopalou'))) return null;
+    const { rows } = await pool.query(
+      `SELECT plan, fin, is_trial FROM abonnements
+       WHERE utilisateur_id = $1 AND statut = 'actif' AND fin > NOW() AND plan NOT IN ('gratuit', 'decouverte')
+       ORDER BY fin DESC LIMIT 1`,
+      [userId]
+    );
+    return rows[0] || null;
+  } catch (err) {
+    console.warn('[SURGA OFFRE] Abonnement Nopalou illisible :', err.message);
+    return null;
+  }
+}
+
 async function estUtilisateurPremium(userId) {
   if (!userId || !pool) return false;
+  if (await estAbonneSurga(userId)) return true;
+  return Boolean(await abonnementNopalouActif(userId));
+}
+
+async function estAbonneSurga(userId) {
   try {
     const ids = await idsPlansParticuliers();
     if (ids.length === 0) return false;
@@ -472,6 +503,7 @@ module.exports = {
   creerPlan,
   supprimerPlan,
   estUtilisateurPremium,
+  abonnementNopalouActif,
   getReglage,
   getReglagesComplets,
   definirReglages,

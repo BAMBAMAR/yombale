@@ -62,7 +62,7 @@ export default function SurgaPage() {
   // Statuts et Utilisateur
   const [user, setUser] = useState<SurgaUser | null>(null)
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
-  const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; plan?: string | null; joursRestants?: number }>({ estPremium: false })
+  const [statutPremium, setStatutPremium] = useState<{ estPremium: boolean; source?: string; plan?: string | null; joursRestants?: number }>({ estPremium: false })
   const [audioScript, setAudioScript] = useState<string>('')
   const [statsApercu, setStatsApercu] = useState<SurgaDepensesStats | null>(null)
   const [soldeKalpeFormate, setSoldeKalpeFormate] = useState<string>('0 FCFA')
@@ -128,6 +128,7 @@ export default function SurgaPage() {
         if (data.success) {
           setStatutPremium({
             estPremium: data.estPremium,
+            source: data.source,
             plan: data.plan,
             joursRestants: data.joursRestants,
           })
@@ -216,6 +217,7 @@ export default function SurgaPage() {
         if (data.success) {
           setStatutPremium({
             estPremium: data.estPremium,
+            source: data.source,
             plan: data.plan,
             joursRestants: data.joursRestants,
           })

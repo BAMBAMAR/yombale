@@ -70,7 +70,7 @@ interface SurgaModalsContainerProps {
   onDonneesSupprimees?: () => void
   onCloseCompte?: () => void
   user?: any
-  statutPremium?: { estPremium: boolean; plan?: string | null; joursRestants?: number }
+  statutPremium?: { estPremium: boolean; source?: string; plan?: string | null; joursRestants?: number }
   onUserUpdated?: (user: any) => void
   onDeconnexion?: () => void
   onSynchroniser?: () => void

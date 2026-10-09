@@ -36,6 +36,7 @@ interface SurgaCompteModalProps {
     estPremium: boolean
     plan?: string | null
     joursRestants?: number
+    source?: string
   }
   onUserUpdated: (user: SurgaUser) => void
   onDeconnexion: () => void
@@ -183,7 +184,7 @@ export default function SurgaCompteModal({
                 display: 'inline-flex', alignItems: 'center', gap: 4,
               }}>
                 {estPremium ? <Crown size={12} strokeWidth={2.5} /> : <Sparkles size={12} strokeWidth={2.5} />}
-                <span>{estPremium ? `${nomOffre(offre)} (${joursRestants} j)` : 'Surga Gratuit'}</span>
+                <span>{estPremium ? (statutPremium?.source === 'nopalou' ? 'Abonné Nopalou : accès total' : `${nomOffre(offre)} (${joursRestants} j)`) : 'Surga Gratuit'}</span>
               </div>
             </div>
 

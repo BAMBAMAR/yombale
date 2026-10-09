@@ -130,6 +130,62 @@ describe('Réglages : quotas gratuits et ouverture des ventes', () => {
   });
 });
 
+describe('Abonnés Nopalou : accès total à Surga', () => {
+  const ajouterAboNopalou = async (plan, { statut = 'actif', finJours = 30, essai = false } = {}) => {
+    await pool.query(
+      `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, debut, fin, is_trial, commande_ref)
+       VALUES ($1, $2, $3, 1, NOW(), NOW() + ($4 || ' days')::interval, $5, $6)`,
+      [userId, plan, statut, String(finJours), essai, `NPL-TEST-${ts}-${plan}-${statut}-${finJours}`]
+    );
+  };
+  afterEach(() => pool.query("DELETE FROM abonnements WHERE commande_ref LIKE $1", [`NPL-TEST-${ts}-%`]));
+
+  test('sans abonnement Nopalou ni Surga : pas d’accès total', async () => {
+    expect(await offre.estUtilisateurPremium(userId)).toBe(false);
+    expect(await abonnements.verifierStatutPremium({ userId })).toMatchObject({ estPremium: false });
+  });
+
+  test('un abonnement Nopalou en cours (payant ou essai) ouvre Surga Plus', async () => {
+    for (const plan of ['taf_taf', 'pro', 'business', 'immo']) {
+      await pool.query("DELETE FROM abonnements WHERE commande_ref LIKE $1", [`NPL-TEST-${ts}-%`]);
+      await ajouterAboNopalou(plan);
+      expect(await offre.estUtilisateurPremium(userId)).toBe(true);
+    }
+    await pool.query("DELETE FROM abonnements WHERE commande_ref LIKE $1", [`NPL-TEST-${ts}-%`]);
+    await ajouterAboNopalou('business', { essai: true });
+    expect(await offre.estUtilisateurPremium(userId)).toBe(true);
+    const statut = await abonnements.verifierStatutPremium({ userId });
+    expect(statut).toMatchObject({ estPremium: true, source: 'nopalou', plan: 'nopalou_business' });
+    expect(statut.joursRestants).toBeGreaterThanOrEqual(29);
+  });
+
+  test('l’accès suit l’abonnement : expiré, annulé ou gratuit ne donnent rien', async () => {
+    await ajouterAboNopalou('pro', { finJours: -2 });
+    await ajouterAboNopalou('pro', { statut: 'annule' });
+    await ajouterAboNopalou('gratuit');
+    await ajouterAboNopalou('decouverte');
+    expect(await offre.estUtilisateurPremium(userId)).toBe(false);
+  });
+
+  test('le droit se retrouve dans les quotas : plus de plafond gratuit pour un abonné Nopalou', async () => {
+    await offre.definirReglages({ emploi_cv_gratuits: 0, emploi_lettres_gratuites_mois: 0 });
+    expect((await emploi.verifierDroitCv(userId)).autorise).toBe(false);
+    await ajouterAboNopalou('taf_taf');
+    expect(await emploi.verifierDroitCv(userId)).toMatchObject({ autorise: true, motif: 'premium' });
+    expect((await emploi.verifierDroitLettre(userId)).autorise).toBe(true);
+  });
+
+  test('la console peut couper cet accès, sans toucher aux abonnés Surga', async () => {
+    await ajouterAboNopalou('pro');
+    await offre.definirReglages({ acces_total_abonnes_nopalou: false }, 'essai');
+    expect(await offre.estUtilisateurPremium(userId)).toBe(false);
+    expect((await abonnements.verifierStatutPremium({ userId })).estPremium).toBe(false);
+    await abonner('b2c_premium');
+    expect(await offre.estUtilisateurPremium(userId)).toBe(true);
+    expect((await abonnements.verifierStatutPremium({ userId })).source).toBe('surga');
+  });
+});
+
 describe('Quotas gratuits : la console décide, le serveur applique', () => {
   test('CV : la limite réglée est appliquée, y compris 0 et la réservation atomique', async () => {
     await offre.definirReglages({ emploi_cv_gratuits: 0 });
