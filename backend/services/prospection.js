@@ -2007,54 +2007,188 @@ function genererLienWhatsApp(telephone, message) {
 }
 
 // ── Extraction et Import Intelligent de Leads depuis du Texte Brut ───────────
+// Supporte les exports bruts de groupes WhatsApp, listes séparées par virgules,
+// filtres anti-bruit de statuts, numéros obfusqués TikTok/Réseaux et numéros sous-régionaux UEMOA.
+const STATUT_WHATSAPP_BRUIT_RE = /^(?:au travail|occupé·?e?|disponible|en réunion|à la salle de sport|batterie faible|urgent uniquement|vous|you|at work|busy|available|en ligne|dernière présence|status)$/i;
+
+const INDICATIFS_SOUS_REGION = [
+  { prefix: '+227', code: '227', pays: 'Niger', minDigits: 8 },
+  { prefix: '+220', code: '220', pays: 'Gambie', minDigits: 7 },
+  { prefix: '+222', code: '222', pays: 'Mauritanie', minDigits: 8 },
+  { prefix: '+225', code: '225', pays: 'Côte d\'Ivoire', minDigits: 10 },
+  { prefix: '+223', code: '223', pays: 'Mali', minDigits: 8 },
+  { prefix: '+228', code: '228', pays: 'Togo', minDigits: 8 },
+  { prefix: '+229', code: '229', pays: 'Bénin', minDigits: 8 },
+  { prefix: '+226', code: '226', pays: 'Burkina Faso', minDigits: 8 },
+  { prefix: '+224', code: '224', pays: 'Guinée', minDigits: 9 },
+];
+
 function extraireLeadsDepuisTexte(rawText, defauts = {}) {
   if (!rawText || typeof rawText !== 'string') return [];
 
-  const lignes = rawText.split(/[\r\n]+/);
   const leadsTrouves = [];
   const telVus = new Set();
 
-  for (const ligne of lignes) {
-    const txt = ligne.trim();
-    if (!txt || txt.length < 5) continue;
+  // 1. Détection du contexte global éventuel (Nom du groupe WhatsApp, importateur, grossiste)
+  let nomGroupe = null;
+  const matchGroupe = rawText.match(/(?:^|\n)\s*([A-Za-z0-9À-ÿ_\s🇨🇳📦✈️🇸🇳-]{4,60}(?:GROS|FOURNISSEUR|IMPORT|COMMERCANT|BOUTIQUE|MARCHE|VENTE)[A-Za-z0-9À-ÿ_\s🇨🇳📦✈️🇸🇳-]*)\s*(?:\r?\n|$)/i);
+  if (matchGroupe && matchGroupe[1]) {
+    nomGroupe = matchGroupe[1].trim();
+  }
 
-    // Détection de tous les numéros sénégalais possibles dans la ligne
-    const phoneMatches = txt.match(/(?:\+?221\s?)?(?:7[05678]|3[03])[\s.-]?[0-9]{3}[\s.-]?[0-9]{2}[\s.-]?[0-9]{2}/g) || [];
-    
+  // Déduction de catégorie intelligente si défaut non personnalisé
+  let categorieFinale = defauts.categorie || 'mode';
+  if ((!defauts.categorie || defauts.categorie === 'mode') && nomGroupe) {
+    if (/chine|gros|fournisseur|import|conteneur|balle|cargo/i.test(nomGroupe)) {
+      categorieFinale = 'grossiste';
+    } else if (/tech|phone|ordinateur|sandaga/i.test(nomGroupe)) {
+      categorieFinale = 'tech';
+    }
+  }
+
+  // Détection d'un message spécifique de vendeur avec son nom (ex: "[14:21, 03/10/2026] amina Drap: Salam ...")
+  let vendeurMessageNom = null;
+  const matchVendeur = rawText.match(/(?:\[?\d{1,2}[:h]\d{2}(?:,\s*\d{1,2}[/-]\d{1,2}[/-]\d{2,4})?\]?)\s*([a-zA-Z0-9À-ÿ\s&'_-]{2,30})\s*:\s*/i);
+  if (matchVendeur && matchVendeur[1]) {
+    const vNom = matchVendeur[1].trim();
+    if (!STATUT_WHATSAPP_BRUIT_RE.test(vNom)) {
+      vendeurMessageNom = toTitleCase(vNom);
+    }
+  }
+
+  // 2. Découpage du texte :
+  // Si le texte contient une ligne massive de numéros séparés par des virgules ou points-virgules,
+  // on pré-segmente pour traiter chaque contact unitairement.
+  const blocsBruts = rawText.split(/[\r\n]+/);
+  const segments = [];
+
+  for (const bloc of blocsBruts) {
+    const bTrim = bloc.trim();
+    if (!bTrim || bTrim.length < 3) continue;
+
+    // Détection de bruit WhatsApp direct
+    if (STATUT_WHATSAPP_BRUIT_RE.test(bTrim)) continue;
+
+    // Compter le nombre de numéros ou virgules dans la ligne
+    const virgulesCount = (bTrim.match(/[,;]/g) || []).length;
+    if (virgulesCount >= 2 && /(?:\+?221|\+?22[0273589]|\b7[05678]\d{2})/.test(bTrim)) {
+      // C'est une liste de contacts en vrac (type participants de groupe WhatsApp)
+      const sousItems = bTrim.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+      for (const it of sousItems) {
+        if (!STATUT_WHATSAPP_BRUIT_RE.test(it)) {
+          segments.push(it);
+        }
+      }
+    } else {
+      segments.push(bTrim);
+    }
+  }
+
+  // 3. Traitement de chaque segment
+  for (const txt of segments) {
+    if (!txt || txt.length < 4) continue;
+    if (STATUT_WHATSAPP_BRUIT_RE.test(txt)) continue;
+
     // Détection d'email optionnel
     const emailMatch = txt.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const email = emailMatch ? emailMatch[0] : (defauts.email || null);
 
+    // Recherche de numéros sénégalais (y compris obfusqués TikTok type 77$175&59&35 ou 78-207-94-34)
+    // Regex adaptée permettant d'attraper les motifs avec $ & # - _ * /
+    const regexNum = /(?:(?:\+?221|00221)[-.\s$&#*_]*)?(7[05678]|33)[$&#*_.\s-]*([0-9]{1,3})[$&#*_.\s-]*([0-9]{1,3})[$&#*_.\s-]*([0-9]{1,3})[$&#*_.\s-]*([0-9]{0,3})/g;
+    const phoneMatches = [];
+    let m;
+    while ((m = regexNum.exec(txt)) !== null) {
+      phoneMatches.push(m[0]);
+    }
+
+    // Si aucun numéro sénégalais détecté par regex stricte, essayer la recherche de numéros internationaux UEMOA
+    const sousRegionMatches = [];
+    if (defauts.autoriserInternational !== false) {
+      for (const sr of INDICATIFS_SOUS_REGION) {
+        const reSr = new RegExp(`(?:\\${sr.prefix}|00${sr.code})[\\s.-]?[0-9]{1,4}(?:[\\s.-]?[0-9]{1,4})+`, 'g');
+        let sm;
+        while ((sm = reSr.exec(txt)) !== null) {
+          sousRegionMatches.push({ raw: sm[0], info: sr });
+        }
+      }
+    }
+
+    // Traitement des numéros sénégalais trouvés
     for (const rawNum of phoneMatches) {
-      const norm = normaliserTelephoneSenegal(rawNum);
+      // Dé-obfuscation préalable des symboles parasites ($, &, #, _, *, /)
+      let cleaned = rawNum.replace(/[$&#*_]/g, ' ').trim();
+      const norm = normaliserTelephoneSenegal(cleaned);
+
       if (norm.valide && !telVus.has(norm.national) && norm.operateur !== 'Fixe') {
         telVus.add(norm.national);
 
-        // Détection et enrichissement automatique
         const quartierDetecte = detecterQuartier(txt) || defauts.quartier || 'Dakar';
-        const rawNom = txt
+        let rawNom = txt
           .replace(rawNum, '')
           .replace(email || '', '')
           .replace(/[-:–—|•*#~,;|\t\/\\]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
 
-        const nomNettoye = nettoyerNomBoutique(rawNom, defauts.categorie || 'mode', quartierDetecte);
-        const estInvalide = estLeadEmploiOuInvalide({ nom_boutique: rawNom, notes: txt, categorie: defauts.categorie });
+        // Si le segment ne contenait que le numéro (liste en vrac), utiliser un nom élégant
+        let nomFinal;
+        if (!rawNom || rawNom.length < 2 || STATUT_WHATSAPP_BRUIT_RE.test(rawNom)) {
+          if (vendeurMessageNom) {
+            nomFinal = vendeurMessageNom;
+          } else if (nomGroupe) {
+            nomFinal = `${nomGroupe} (${norm.formate})`;
+          } else {
+            nomFinal = genererNomBoutiqueParDefaut(categorieFinale, quartierDetecte);
+          }
+        } else {
+          nomFinal = nettoyerNomBoutique(rawNom, categorieFinale, quartierDetecte);
+        }
+
+        const estInvalide = estLeadEmploiOuInvalide({ nom_boutique: nomFinal, notes: txt, categorie: categorieFinale });
 
         leadsTrouves.push({
-          nom_boutique: nomNettoye.slice(0, 255),
-          contact_nom: defauts.contact_nom ? toTitleCase(defauts.contact_nom) : null,
+          nom_boutique: nomFinal.slice(0, 255),
+          contact_nom: defauts.contact_nom ? toTitleCase(defauts.contact_nom) : (vendeurMessageNom || null),
           telephone: norm.national,
-          telephone_brut: norm.brut,
+          telephone_brut: rawNum.trim(),
           operateur: norm.operateur,
           email: email,
-          categorie: defauts.categorie || 'mode',
+          categorie: categorieFinale,
           ville: defauts.ville || 'Dakar',
           quartier: quartierDetecte,
-          source: defauts.source || 'import_texte',
+          source: nomGroupe ? `whatsapp_groupe` : (defauts.source || 'import_texte'),
           statut: estInvalide ? 'invalide' : 'nouveau',
-          notes: estInvalide ? 'Hors cible (Emploi/Recrutement)' : (defauts.notes || null),
+          notes: estInvalide
+            ? 'Hors cible (Emploi/Recrutement)'
+            : (nomGroupe ? `Importé depuis groupe WhatsApp: ${nomGroupe}` : (defauts.notes || null)),
+        });
+      }
+    }
+
+    // Traitement des numéros sous-régionaux (Niger, Gambie, Mauritanie, RCI, Mali...)
+    for (const srm of sousRegionMatches) {
+      const pureDigits = srm.raw.replace(/[^\d]/g, '');
+      if (pureDigits.length >= srm.info.code.length + srm.info.minDigits && !telVus.has(pureDigits)) {
+        telVus.add(pureDigits);
+
+        let nomFinal = nomGroupe
+          ? `${nomGroupe} (${srm.info.pays})`
+          : `Commerçant ${srm.info.pays} (${srm.raw.trim()})`;
+
+        leadsTrouves.push({
+          nom_boutique: nomFinal.slice(0, 255),
+          contact_nom: null,
+          telephone: pureDigits,
+          telephone_brut: srm.raw.trim(),
+          operateur: `${srm.info.pays} (${srm.info.prefix})`,
+          email: email,
+          categorie: categorieFinale,
+          ville: srm.info.pays,
+          quartier: srm.info.pays,
+          source: nomGroupe ? `whatsapp_groupe` : (defauts.source || 'import_texte'),
+          statut: 'nouveau',
+          notes: `Contact sous-régional ${srm.info.pays} importé depuis groupe commerçant`,
         });
       }
     }

@@ -1,6 +1,7 @@
 import { Layers, Zap, RefreshCw, ExternalLink, Info } from 'lucide-react'
 import type { DorkingRequete, AutoCollecteResult } from './types'
 import CrawlerAiCard from './CrawlerAiCard'
+import ProspectionCaptureScanCard from './ProspectionCaptureScanCard'
 
 interface Props {
   rawImportText: string
@@ -43,87 +44,93 @@ export default function ProspectionTabImport({
 }: Props) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-      {/* Bloc 1 : Importateur de texte brut & Groupes WhatsApp */}
-      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Layers size={20} color="#16A34A" /> Importeur Intelligent (Numéros &amp; Textes en Vrac)
-        </h2>
-        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px' }}>
-          Collez une liste de contacts exportés d&apos;un groupe WhatsApp, d&apos;un fichier CSV ou d&apos;un message brut. Le système extrait et normalise automatiquement les numéros <strong>+221 (Orange, Free, Expresso)</strong> sans doublon.
-        </p>
+      {/* Colonne 1 : Importation de contacts & Captures TikTok */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Bloc 1 : Importateur de texte brut & Groupes WhatsApp */}
+        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
+          <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Layers size={20} color="#16A34A" /> Importeur Intelligent (Numéros &amp; Textes en Vrac)
+          </h2>
+          <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px' }}>
+            Collez une liste de contacts exportés d&apos;un groupe WhatsApp, d&apos;un fichier CSV ou d&apos;un message brut. Le système extrait et normalise automatiquement les numéros <strong>+221 (Orange, Free, Expresso)</strong> ainsi que les numéros sous-régionaux UEMOA, filtre le bruit de statut et détecte les groupes.
+          </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <textarea
-            rows={8}
-            placeholder={`Collez vos contacts ici, par exemple :
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <textarea
+              rows={8}
+              placeholder={`Collez vos contacts ici, par exemple :
+FOURNISSEURS_EN GROS_CHINE :
++221 77 302 83 82, +221 76 417 23 49, +221 78 219 48 00, +227 92 01 45 55...
 Fatou Mode HLM - 77 123 45 67
-Ibrahima Tech Sandaga - 78 555 44 33
-+221 76 987 65 43, contact@boutique.sn
-Boutique Parcelles, 70 111 22 33`}
-            value={rawImportText}
-            onChange={(e) => setRawImportText(e.target.value)}
-            style={{
-              width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #CBD5E1',
-              fontSize: 13, fontFamily: 'monospace', outline: 'none', resize: 'vertical',
-            }}
-          />
+Ibrahima Tech Sandaga - 78 555 44 33`}
+              value={rawImportText}
+              onChange={(e) => setRawImportText(e.target.value)}
+              style={{
+                width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #CBD5E1',
+                fontSize: 13, fontFamily: 'monospace', outline: 'none', resize: 'vertical',
+              }}
+            />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
-                Catégorie par défaut
-              </label>
-              <select
-                value={importCat}
-                onChange={(e) => setImportCat(e.target.value)}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
-              >
-                <option value="mode">Mode &amp; Prêt-à-porter</option>
-                <option value="tech">Téléphonie &amp; Tech</option>
-                <option value="superette">Alimentation</option>
-                <option value="quincaillerie">Quincaillerie</option>
-                <option value="cosmetique">Cosmétique</option>
-                <option value="grossiste">Grossiste Chine</option>
-              </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  Catégorie par défaut
+                </label>
+                <select
+                  value={importCat}
+                  onChange={(e) => setImportCat(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                >
+                  <option value="mode">Mode &amp; Prêt-à-porter</option>
+                  <option value="tech">Téléphonie &amp; Tech</option>
+                  <option value="superette">Alimentation</option>
+                  <option value="quincaillerie">Quincaillerie</option>
+                  <option value="cosmetique">Cosmétique</option>
+                  <option value="grossiste">Grossiste Chine</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  Ville
+                </label>
+                <input
+                  type="text"
+                  value={importVille}
+                  onChange={(e) => setImportVille(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  Quartier / Marché
+                </label>
+                <input
+                  type="text"
+                  value={importQuartier}
+                  onChange={(e) => setImportQuartier(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                />
+              </div>
             </div>
 
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
-                Ville
-              </label>
-              <input
-                type="text"
-                value={importVille}
-                onChange={(e) => setImportVille(e.target.value)}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
-                Quartier / Marché
-              </label>
-              <input
-                type="text"
-                value={importQuartier}
-                onChange={(e) => setImportQuartier(e.target.value)}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
-              />
-            </div>
+            <button
+              onClick={onImportVrac}
+              disabled={isImporting}
+              style={{
+                background: '#16A34A', color: '#fff', border: 'none', padding: '12px 18px',
+                borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: isImporting ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              {isImporting ? 'Extraction en cours...' : 'Extraire & Importer les Leads'}
+            </button>
           </div>
-
-          <button
-            onClick={onImportVrac}
-            disabled={isImporting}
-            style={{
-              background: '#16A34A', color: '#fff', border: 'none', padding: '12px 18px',
-              borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: isImporting ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}
-          >
-            {isImporting ? 'Extraction en cours...' : 'Extraire & Importer les Leads'}
-          </button>
         </div>
+
+        {/* Bloc 1-bis : Scanner OCR Captures TikTok & Réseaux */}
+        <ProspectionCaptureScanCard secret={secret} onLeadImported={onCrawlSuccess} />
       </div>
 
       {/* Bloc 2 : Requêtes Google Dorking & Réseaux Sociaux + Auto-Collecteur */}

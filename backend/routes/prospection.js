@@ -22,6 +22,7 @@ const {
   auditerQualiteDonneesCRM,
   assainirEtEnrichirDonneesImmo,
 } = require('../services/prospection');
+const { analyserCaptureProspection } = require('../services/prospection-vision');
 
 // ── GET /api/prospection/leads ────────────────────────────────────────────────
 // Liste paginée avec filtres et statistiques globales
@@ -503,6 +504,72 @@ router.post('/leads/import-vrac', ...adminAccess('crm'), async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/prospection/leads/scan-image ────────────────────────────────────
+// Analyse OCR intelligente de captures d'écran (TikTok Live, WhatsApp Status, Instagram)
+router.post('/leads/scan-image', ...adminAccess('crm'), async (req, res) => {
+  try {
+    const { imageBase64, categorie = 'mode', ville = 'Dakar', quartier = 'Dakar', autoInserer = false } = req.body;
+
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
+      return res.status(400).json({ success: false, error: 'Image requise (format Base64 ou Data URL)' });
+    }
+
+    const resultat = await analyserCaptureProspection(imageBase64, { categorie, ville, quartier });
+
+    if (!resultat.leads || resultat.leads.length === 0) {
+      return res.json({
+        success: true,
+        totalDetectes: 0,
+        leads: [],
+        message: 'Aucun numéro de téléphone sénégalais détecté sur l\'image.',
+        texteOcr: resultat.rawOcr,
+        pseudoDetecte: resultat.pseudoDetecte,
+        estTikTokLive: resultat.estTikTokLive,
+      });
+    }
+
+    let inseres = 0;
+    let doublons = 0;
+
+    if (autoInserer) {
+      for (const l of resultat.leads) {
+        try {
+          const query = `
+            INSERT INTO prospection_leads (
+              nom_boutique, contact_nom, telephone, telephone_brut, operateur,
+              email, categorie, ville, quartier, source, statut, notes
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'nouveau', $11)
+            ON CONFLICT (telephone) DO NOTHING
+            RETURNING id
+          `;
+          const values = [
+            l.nom_boutique, l.contact_nom, l.telephone, l.telephone_brut, l.operateur,
+            null, l.categorie, l.ville, l.quartier, l.source, l.notes,
+          ];
+          const resDb = await pool.query(query, values);
+          if (resDb.rows.length > 0) inseres++;
+          else doublons++;
+        } catch (_) {}
+      }
+    }
+
+    res.json({
+      success: true,
+      totalDetectes: resultat.leads.length,
+      leads: resultat.leads,
+      pseudoDetecte: resultat.pseudoDetecte,
+      categorieSuggeree: resultat.categorieSuggeree,
+      estTikTokLive: resultat.estTikTokLive,
+      inseres,
+      doublons,
+      texteOcr: resultat.rawOcr,
+    });
+  } catch (err) {
+    console.error('[PROSPECTION SCAN-IMAGE ERR]:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

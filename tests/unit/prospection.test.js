@@ -69,6 +69,42 @@ describe('Moteur de Prospection & Normalisation Leads Sénégal', () => {
       expect(leads[1].nom_boutique).toBe('Touba Tech Sandaga');
       expect(leads[1].telephone).toBe('221785554433');
     });
+
+    test('filtre le bruit des statuts WhatsApp, détecte le groupe et extrait les numéros massifs', () => {
+      const exportWhatsApp = `
+        Au travail
+        Occupé·e
+        Disponible
+        amina, Honey, +221 77 302 83 82, +221 76 417 23 49, +221 78 219 48 00, +227 92 01 45 55, +220 338 6431, Vous
+        FOURNISSEURS_EN GROS_CHINE
+      `;
+
+      const leads = extraireLeadsDepuisTexte(exportWhatsApp, { categorie: 'mode', ville: 'Dakar', quartier: 'Dakar' });
+      expect(leads.length).toBe(5); // 3 sénégalais + 2 sous-régionaux (Niger, Gambie)
+      const phones = leads.map(l => l.telephone);
+      expect(phones).toContain('221773028382');
+      expect(phones).toContain('221764172349');
+      expect(phones).toContain('221782194800');
+      expect(phones).toContain('22792014555');
+      expect(phones).toContain('2203386431');
+      expect(leads[0].categorie).toBe('grossiste'); // auto-catégorisé grossiste grâce à FOURNISSEURS_EN GROS_CHINE
+      expect(leads[0].source).toBe('whatsapp_groupe');
+    });
+
+    test('dé-obfusque avec succès les numéros de téléphone issus de Lives TikTok', () => {
+      const tiktokText = `
+        Boutique Abdou : 78-207-94-34
+        KiaMass styliste 77$175&59&35 venez commander
+        Thioro63 tapis 778303832##
+      `;
+
+      const leads = extraireLeadsDepuisTexte(tiktokText);
+      expect(leads.length).toBe(3);
+      const phones = leads.map(l => l.telephone);
+      expect(phones).toContain('221782079434');
+      expect(phones).toContain('221771755935');
+      expect(phones).toContain('221778303832');
+    });
   });
 
   describe('3. Interpolation Dynamique des Messages', () => {
