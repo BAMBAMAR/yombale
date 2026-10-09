@@ -80,7 +80,7 @@ export const GUIDES: Record<Plateforme, GuidePlateforme> = {
       'Choisissez **« Installer l’application »** [[installer]] (ou **« Ajouter à l’écran d’accueil »**).',
     ],
     fin: 'Confirmez avec **Installer** : Surga apparaît dans vos applications, avec sa propre icône.',
-    astuce: 'Nopalou est déjà installé et Chrome ne propose pas Surga ? Choisissez **« Ajouter à l’écran d’accueil »** dans le même menu : Surga s’ouvre alors directement, avec sa propre icône.',
+    astuce: 'Nopalou est déjà installé sur ce téléphone ? Chrome traite alors Surga comme une page de Nopalou et ne la propose pas de lui-même : passez par le menu [[menu]] et **« Ajouter à l’écran d’accueil »**. Surga peut s’ouvrir dans la fenêtre de Nopalou.',
   },
   'android-samsung': {
     sousTitre: 'Sur Android (Samsung Internet)',
@@ -112,19 +112,21 @@ export const GUIDES: Record<Plateforme, GuidePlateforme> = {
     sousTitre: 'Sur ordinateur (Chrome)',
     etapes: [
       'Cherchez l’icône **Installer** [[installer]] tout à droite de la barre d’adresse.',
-      'Elle n’y est pas ? Ouvrez le menu [[menu]], puis **« Diffuser, enregistrer et partager »**, puis **« Installer Surga »**.',
+      'Elle n’y est pas ? Ouvrez le menu [[menu]] en haut à droite, puis **« Caster, enregistrer et partager »**, puis **« Installer la page en tant qu’appli… »** (ou **« Installer Surga… »**).',
     ],
     fin: 'Confirmez avec **Installer** : Surga s’ouvre dans sa propre fenêtre, avec une icône sur votre bureau.',
-    astuce: 'Nopalou est déjà installé et l’icône n’apparaît pas ? Menu [[menu]], **« Diffuser, enregistrer et partager »**, **« Créer un raccourci… »**, puis cochez **« Ouvrir dans une fenêtre »**.',
+    // Libellés du menu relevés en 2024 (Chrome 124 et suivants) ; l'ancien « Créer un raccourci… / Ouvrir dans une fenêtre » n'existe plus.
+    astuce: 'Nopalou est déjà installé sur cet ordinateur ? Chrome traite alors Surga comme une page de Nopalou : l’icône de la barre d’adresse n’apparaît pas, il faut passer par le menu (étape 2). Si le menu propose seulement **« Ouvrir dans Nopalou »**, Surga s’ouvre dans l’application Nopalou.',
   },
   'bureau-edge': {
     sousTitre: 'Sur ordinateur (Edge)',
     etapes: [
       'Cherchez l’icône **Application disponible** [[installer]] à droite de la barre d’adresse.',
-      'Elle n’y est pas ? Ouvrez le menu [[menu-horizontal]], puis **« Applications »**, puis **« Installer ce site en tant qu’application »**.',
+      'Elle n’y est pas ? Ouvrez le menu [[menu-horizontal]] en haut à droite, puis **« Autres outils »**, **« Applications »** (ou « Apps »), puis **« Installer ce site en tant qu’application »**.',
     ],
     fin: 'Confirmez avec **Installer** : Surga s’ouvre dans sa propre fenêtre.',
-    astuce: 'Nopalou est déjà installé et l’icône n’apparaît pas ? Menu [[menu-horizontal]], **« Plus d’outils »**, **« Épingler à la barre des tâches »**, puis cochez **« Ouvrir dans une fenêtre »**.',
+    // Chemin de la page d'aide de Microsoft (« Paramètres et plus », « Autres outils », « Apps »).
+    astuce: 'Nopalou est déjà installé sur cet ordinateur ? Edge traite alors Surga comme une page de Nopalou : l’icône de la barre d’adresse n’apparaît pas, il faut passer par le menu (étape 2).',
   },
   'bureau-safari': {
     sousTitre: 'Sur Mac (Safari)',

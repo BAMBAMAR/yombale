@@ -3,6 +3,14 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Guide d'installation sur ordinateur corrigé ; cause de fond : Surga imbriquée dans la portée de Nopalou] — commit local, aucun push
+- **Objet :** le guide « Sur ordinateur (Chrome) » ne correspond pas à ce que Chrome affiche.
+- **Constat :** libellés écrits de mémoire (« Diffuser… », « Créer un raccourci… / Ouvrir dans une fenêtre ») : faux ou disparus. Cause de fond : `/surga` est dans la portée `/` de Nopalou ; Nopalou installé, le navigateur ne propose pas Surga (web.dev, « Building multiple PWAs on the same domain »).
+- **Corrigé :** `surga-pwa-plateforme.ts` : « Caster, enregistrer et partager », « Installer la page en tant qu'appli… » ; Edge : « Autres outils », « Applications », « Installer ce site en tant qu'application » ; astuces véridiques quand Nopalou est installé.
+- **Mesuré :** manifeste de Surga lu et installable dans Chromium en production, sans Nopalou installé.
+- **Limites :** libellés non vérifiés dans un navigateur réel en français ; cas « Nopalou installé » non essayé.
+- **Décision attendue :** Surga servie à `surga.nopalou.com` (revient sur D77) ; données de l'appareil, session et hébergement à trancher.
+
 ### [2026-10-09 — Console d'administration lisible sur téléphone, statistiques visibles, essais de voix Piper] — push de `main` ordonné par l'utilisateur
 - **Objet :** « les statistiques de Surga dans l'admin, je ne vois pas ».
 - **Cause :** menu de la console empilé en entier sur téléphone : les statistiques commençaient 1 200 px plus bas ; backend local resté sur un code sans la route (404), relancé.
