@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Nopalou — Plateforme de Commerce Digital au Sénégal",
   "short_name": "Nopalou",
-  "version": "17",
+  "version": "20",
   "description": "Plateforme de commerce digital au Sénégal : comparez les offres, achetez auprès de boutiques vérifiées et gérez votre commerce avec caisse POS tactile.",
   "start_url": "/",
   "scope": "/",
@@ -20,37 +20,25 @@
   },
   "icons": [
     {
-      "src": "/icons/icon-1024.png?v=19",
+      "src": "/icons/icon-1024.png?v=20",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png?v=19",
+      "src": "/icons/icon-512.png?v=20",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192.png?v=19",
+      "src": "/icons/icon-192.png?v=20",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-192.png?v=19",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon-maskable-512.png?v=19",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon-512.svg?v=19",
+      "src": "/icons/icon-512.svg?v=20",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -78,28 +66,28 @@
       "short_name": "Caisse POS",
       "url": "/boutique/caisse",
       "description": "Accéder directement à la caisse tactile du magasin",
-      "icons": [{ "src": "/icons/icon-192.png?v=19", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=20", "sizes": "192x192" }]
     },
     {
       "name": "Déposer une annonce",
       "short_name": "Déposer",
       "url": "/deposer-annonce",
       "description": "Publier une nouvelle offre de vente",
-      "icons": [{ "src": "/icons/icon-192.png?v=19", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=20", "sizes": "192x192" }]
     },
     {
       "name": "Mes favoris",
       "short_name": "Favoris",
       "url": "/favoris",
       "description": "Consulter les articles et prix sauvegardés",
-      "icons": [{ "src": "/icons/icon-192.png?v=19", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=20", "sizes": "192x192" }]
     },
     {
       "name": "Assistant WhatsApp",
       "short_name": "WhatsApp",
       "url": "/assistant-whatsapp",
       "description": "Ouvrir l'assistant shopping et commandes WhatsApp",
-      "icons": [{ "src": "/icons/icon-192.png?v=19", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=20", "sizes": "192x192" }]
     }
   ],
   "share_target": {
@@ -122,7 +110,7 @@
       },
       "icons": [
         {
-          "src": "/icons/icon-192.png?v=19",
+          "src": "/icons/icon-192.png?v=20",
           "sizes": "192x192"
         }
       ]
@@ -148,14 +136,14 @@
       "type": "application/json",
       "screenshots": [
         {
-          "src": "/icons/icon-512.png?v=19",
+          "src": "/icons/icon-512.png?v=20",
           "sizes": "512x512",
           "label": "Bons Plans Nopalou"
         }
       ],
       "icons": [
         {
-          "src": "/icons/icon-192.png?v=19",
+          "src": "/icons/icon-192.png?v=20",
           "sizes": "192x192"
         }
       ],
