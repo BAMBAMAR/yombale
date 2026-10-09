@@ -34,6 +34,12 @@ ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant 
 - **Campagne Anti-Régression Automatisée (`scripts/audit/data/test-anti-regression.js`) :**
   - 11 / 11 tests au vert (100% PASS) validant CESTI, idempotence, démarches, trafic sans erreur SQL, météo MET Norway, sport ESPN, kiosque, intégrité Nopalou et flux vidéos débats politiques.
 
+### [2026-10-09 — Accès total des abonnés Nopalou, vérification de `main`, push] — `42d53334`
+- **Objet :** « tout abonné Nopalou doit avoir un accès total à Surga ». `abonnementNopalouActif()` (table `abonnements`, essai compris) fait de `estUtilisateurPremium()` un vrai ; `mon-statut` rend `source: 'nopalou'` ; réglage `acces_total_abonnes_nopalou` dans la console (groupe « Abonnés Nopalou »). Écrans : mention « inclus avec votre abonnement Nopalou », bouton d'abonnement masqué.
+- **Preuve :** 5 tests ajoutés, `surga-offre` 25 sur 25 ; typage 0 erreur ; frontend 153 sur 153 ; backend Surga 174 sur 177 (3 échecs antérieurs, contenu de la base d'audit).
+- **Vérification de `main` avant push :** migrations sur base vide en 2 passes, 0 erreur ; 20 tests ; typage 0 ; frontend 118 sur 118. `main` : 11 commits, aucune mention de Surga. Push de `main` (déploiement automatique Render) et de la branche `feature/surga` (sans fusion) sur ordre de l'utilisateur.
+- **Limites :** `next build` complet de `main` non rejoué ; essai gratuit inclus dans l'accès total (tout nouveau marchand a Surga Plus 14 jours) ; la console des comptes n'affiche pas encore l'origine de l'accès (Nopalou ou Surga).
+
 ### [2026-10-08 — Offre pilotée par la console] — `425ce79d`, `29a97de2` ; aucun push
 - **Objet :** « tout doit être gérable sur admin ». L'offre retenue (gratuit + Surga Plus : 500 FCFA / 7 jours, 1 500 FCFA / 30 jours, 15 000 FCFA / 12 mois) et ses quotas gratuits se règlent dans la console et commandent l'application.
 - **Serveur (`425ce79d`) :** `offre-service.js` (plans et réglages en base, validation, cache 15 s), migrations idempotentes, souscription au prix de la console, statut d'abonné limité aux formules particulier, `/abonnements/offre`, `/api/admin/surga/plans` et `/reglages` avec trace d'audit. 20 tests (`surga-offre.test.js`).

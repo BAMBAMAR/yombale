@@ -1,5 +1,7 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga / Accès total des abonnés Nopalou et push de `main` (Session 2026-10-09)** : tout compte avec un abonnement Nopalou en cours a Surga Plus (réglage `acces_total_abonnes_nopalou`, coupable depuis la console). `main` vérifié (migrations base vide, tests, typage) puis poussé : 11 correctifs Nopalou, aucun code Surga. Détail : `CLAUDE.md`.
+
 - **Surga / Audit Data, Émissions Politique & Société, et PWA Dédiée avec Emblème Premium (Session 2026-10-09, branche `feature/surga` ; aucun push)** :
   - *Mandat & Objectifs* :
     1. Audit approfondi de la chaîne complète `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE` pour garantir qu'aucune donnée fausse, incomplète ou fictive n'est présentée.
