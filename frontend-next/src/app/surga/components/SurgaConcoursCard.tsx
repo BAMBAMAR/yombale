@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { GraduationCap, Calendar, Clock, CheckCircle2, Bell, ChevronRight, FileText } from 'lucide-react'
+import { reparerApostrophes } from '@/lib/surga-formatting'
 
 export interface ConcoursItem {
   id: string
@@ -82,29 +83,24 @@ export default function SurgaConcoursCard({
         transition: 'transform 0.15s ease, box-shadow 0.15s ease',
       }}
     >
-      {/* Ligne 1 : Sigle, Niveau requis & Badge de délai */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {concours.sigle && (
-            <span
-              style={{
-                backgroundColor: 'var(--navy, #1C2B4A)',
-                color: '#FFFFFF',
-                fontSize: 12,
-                fontWeight: 800,
-                padding: '2px 7px',
-                borderRadius: 5,
-                letterSpacing: 0.5,
-              }}
-            >
-              {concours.sigle}
-            </span>
-          )}
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3, #73675E)' }}>
-            Niveau {concours.niveau_requis}
+      {/* Ligne 1 : sigle et délai. Le délai passe à la ligne plutôt que de sortir de la carte. */}
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+        {concours.sigle && (
+          <span
+            style={{
+              backgroundColor: 'var(--navy, #1C2B4A)',
+              color: '#FFFFFF',
+              fontSize: 12,
+              fontWeight: 800,
+              padding: '2px 7px',
+              borderRadius: 5,
+              letterSpacing: 0.5,
+              flexShrink: 0,
+            }}
+          >
+            {concours.sigle}
           </span>
-        </div>
-
+        )}
         <span
           style={{
             fontSize: 12,
@@ -114,13 +110,13 @@ export default function SurgaConcoursCard({
             backgroundColor: badgeStyle.bg,
             color: badgeStyle.text,
             border: `1px solid ${badgeStyle.border}`,
-            whiteSpace: 'nowrap',
+            maxWidth: '100%',
+            overflowWrap: 'anywhere',
           }}
         >
           {echeances.messageDelai || (echeances.estCloture ? 'Clôturé' : 'En cours')}
         </span>
       </div>
-
       {/* Ligne 2 : Titre complet */}
       <h3
         style={{
@@ -131,13 +127,20 @@ export default function SurgaConcoursCard({
           lineHeight: 1.35,
         }}
       >
-        {concours.titre}
+        {reparerApostrophes(concours.titre)}
       </h3>
 
       {/* Ligne 3 : Organisme officiel */}
       <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', lineHeight: 1.3 }}>
-        {concours.organisme}
+        {reparerApostrophes(concours.organisme)}
       </div>
+
+      {/* Niveau requis sur sa propre ligne : le texte est long (« Licence ou Master selon la filière ») */}
+      {concours.niveau_requis && (
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3, #536175)', lineHeight: 1.35 }}>
+          Niveau : {reparerApostrophes(concours.niveau_requis)}
+        </div>
+      )}
 
       {/* Ligne 4 : Métadonnées (Date limite, Frais de dossier) & Bouton d'action */}
       <div
@@ -145,13 +148,15 @@ export default function SurgaConcoursCard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          rowGap: 6,
           paddingTop: 8,
           marginTop: 2,
           borderTop: '1px solid var(--border, #E8DDD2)',
           fontSize: 12,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text3, #73675E)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', columnGap: 12, rowGap: 2, color: 'var(--text3, #536175)' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             <Calendar size={12} />
             <span>Clôture : {dateClotureFormattee}</span>

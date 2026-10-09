@@ -7,6 +7,7 @@ import {
   CheckCircle2, Info, Calendar, Wallet, Bookmark,
 } from 'lucide-react'
 import { type PlaceItem } from './SurgaPlaceCard'
+import { reparerApostrophes } from '@/lib/surga-formatting'
 import {
   estSortieAdressePlanifiee,
   toggleSortieAdresse,
@@ -122,7 +123,7 @@ export default function SurgaPlaceDetailModal({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--border, #E8DDD2)', backgroundColor: '#FFFFFF' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ backgroundColor: 'var(--navy, #1C2B4A)', color: '#FFFFFF', fontSize: 12, fontWeight: 800, padding: '3px 8px', borderRadius: 6 }}>
-              {place.categorie.toUpperCase()}
+              {(place.categorie || '').toUpperCase()}
             </span>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>
               {place.quartier}
@@ -154,7 +155,7 @@ export default function SurgaPlaceDetailModal({
                 margin: '0 0 6px 0',
               }}
             >
-              {place.nom}
+              {reparerApostrophes(place.nom)}
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <div
@@ -212,7 +213,7 @@ export default function SurgaPlaceDetailModal({
                 margin: 0,
               }}
             >
-              {place.resume_honnete}
+              {reparerApostrophes(place.resume_honnete)}
             </p>
           </div>
 
@@ -234,7 +235,7 @@ export default function SurgaPlaceDetailModal({
                 Spécialité incontournable
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy, #1C2B4A)', marginTop: 2 }}>
-                {place.specialite}
+                {reparerApostrophes(place.specialite)}
               </div>
             </div>
           </div>

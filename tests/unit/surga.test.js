@@ -1412,8 +1412,10 @@ describe('Module Surga — Tranches 1 & 2', () => {
       const espion = jest.spyOn(axios, 'get');
       try {
         // Source muette et aucun relevé connu : rien (l'ancien repli rendait 28 °C, « Ensoleillé », « Station locale »).
-        espion.mockRejectedValueOnce(new Error('coupure'));
+        // La source est interrogée deux fois avant d'y renoncer (un seul échec n'empêche plus le changement de localité).
+        espion.mockRejectedValueOnce(new Error('coupure')).mockRejectedValueOnce(new Error('coupure'));
         expect(await getMeteo('Kolda')).toBeNull();
+        expect(espion).toHaveBeenCalledTimes(2);
 
         // Prévision datée par la source : calculée dix minutes avant l'appel.
         const calculeLe = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -1433,11 +1435,17 @@ describe('Module Surga — Tranches 1 & 2', () => {
         expect(releve.maree).toBeNull();
         expect(releve.qualite_air).toBeNull();
         expect(releve.non_actualise).toBe(false);
-        expect(espion).toHaveBeenCalledTimes(2);
+        expect(espion).toHaveBeenCalledTimes(3);
+
+        // Une seule coupure est rattrapée par le second essai : la localité obtient son relevé.
+        espion.mockRejectedValueOnce(new Error('coupure')).mockResolvedValueOnce(reponseMetNo(new Date(Date.now() - 10 * 60 * 1000).toISOString(), 29.2));
+        const rattrape = await getMeteo('Fatick');
+        expect(rattrape).not.toBeNull();
+        expect(rattrape.temperature).toBe(29);
 
         // Une heure plus tard, la source est muette : dernière prévision reçue, à sa date, marquée « non actualisé ».
         const horloge = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 3600 * 1000);
-        espion.mockRejectedValueOnce(new Error('coupure'));
+        espion.mockRejectedValueOnce(new Error('coupure')).mockRejectedValueOnce(new Error('coupure'));
         const ancien = await getMeteo('Kolda');
         horloge.mockRestore();
         expect(ancien.temperature).toBe(31);

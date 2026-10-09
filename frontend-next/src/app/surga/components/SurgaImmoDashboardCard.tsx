@@ -100,7 +100,9 @@ export default function SurgaImmoDashboardCard({ onOuvrirModal }: SurgaImmoDashb
             fontSize: 12,
             fontWeight: 700,
             cursor: 'pointer',
-            padding: '2px 6px',
+            padding: '8px 6px',
+            minHeight: 32,
+            flexShrink: 0,
             display: 'inline-flex',
             alignItems: 'center',
             gap: 2,
@@ -113,7 +115,7 @@ export default function SurgaImmoDashboardCard({ onOuvrirModal }: SurgaImmoDashb
 
       {/* Synthèse textuelle D19 */}
       <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0, lineHeight: 1.45 }}>
-        {synthese || 'Le pôle immobilier Surga centralise les annonces certifiées et alerte votre WhatsApp dès qu un bien correspond à vos critères.'}
+        {synthese || 'Le pôle immobilier Surga centralise les annonces certifiées et alerte votre WhatsApp dès qu’un bien correspond à vos critères.'}
       </p>
 
       {/* Mini-liste des 2 dernières parutions */}
@@ -135,23 +137,18 @@ export default function SurgaImmoDashboardCard({ onOuvrirModal }: SurgaImmoDashb
               }}
             >
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: 'var(--navy, #1C2B4A)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+                {/* Ligne 1 : intitulé complet */}
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', lineHeight: 1.3 }}>
                   {b.titre}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>{b.quartier}</div>
+                {/* Ligne 2 : quartier et prix */}
+                <div style={{ marginTop: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8, fontSize: 12 }}>
+                  <span style={{ color: 'var(--text3, #536175)' }}>{b.quartier}</span>
+                  <span style={{ fontWeight: 800, color: 'var(--price, #0A5C36)', whiteSpace: 'nowrap' }}>
+                    {formatPrix(b.prix, b.transaction)}
+                  </span>
+                </div>
               </div>
-              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--price, #0A5C36)', whiteSpace: 'nowrap' }}>
-                {formatPrix(b.prix, b.transaction)}
-              </span>
             </div>
           ))}
         </div>

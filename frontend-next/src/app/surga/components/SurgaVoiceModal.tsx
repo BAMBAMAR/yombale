@@ -275,7 +275,7 @@ export default function SurgaVoiceModal({
             <div style={{ position: 'relative', flex: 1 }}>
               <input
                 type="text"
-                placeholder='Ex : "note 2500 taxi" ou "100 / 3"'
+                placeholder='Ex : note 2500 taxi'
                 value={texteSaisiManuel}
                 onChange={(e) => setTexteSaisiManuel(e.target.value)}
                 style={{

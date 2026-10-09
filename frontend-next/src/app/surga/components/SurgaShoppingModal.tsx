@@ -199,7 +199,7 @@ export default function SurgaShoppingModal({ isOpen, onClose }: SurgaShoppingMod
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher une boutique, caftan, smartphone, parfum..."
+              placeholder="Boutique, caftan, parfum…"
               style={{
                 width: '100%',
                 padding: '9px 12px 9px 36px',

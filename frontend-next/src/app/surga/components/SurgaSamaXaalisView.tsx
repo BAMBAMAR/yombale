@@ -205,8 +205,11 @@ export default function SurgaSamaXaalisView() {
                   type="button"
                   onClick={() => setActiveSubTab(tab.id as any)}
                   style={{
-                    flex: 1,
-                    padding: '10px 4px',
+                    // minWidth 0 et retour à la ligne permis : à 360 px, « Épargne (0) » sortait de l'écran
+                    flex: '1 1 0',
+                    minWidth: 0,
+                    lineHeight: 1.2,
+                    padding: '8px 2px',
                     border: 'none',
                     background: 'none',
                     borderBottom: isActive ? '3px solid var(--accent, #C75B00)' : '3px solid transparent',

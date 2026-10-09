@@ -331,12 +331,13 @@ export default function SurgaDemarchesModal({
                 type="text"
                 value={recherche}
                 onChange={(e) => setRecherche(e.target.value)}
-                placeholder="Rechercher une démarche (ex: Passeport, CNI, Casier...)"
+                placeholder="Passeport, CNI, casier…"
                 style={{
                   border: 'none',
                   background: 'none',
                   outline: 'none',
                   width: '100%',
+                  minWidth: 0,
                   fontSize: 13,
                   color: 'var(--navy, #1C2B4A)',
                 }}
@@ -354,7 +355,8 @@ export default function SurgaDemarchesModal({
                 </button>
               )}
             </div>
-            <button type="submit" className="surga-btn-primary" style={{ fontSize: 12, padding: '8px 14px' }}>
+            {/* width auto : le bouton prenait toute la largeur (.surga-btn-primary) et réduisait le champ à une lettre */}
+            <button type="submit" className="surga-btn-primary" style={{ fontSize: 12, padding: '8px 14px', width: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}>
               Rechercher
             </button>
           </form>

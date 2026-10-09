@@ -269,7 +269,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher par sigle, titre ou organisme (ENA, Douanes, FASTEF...)"
+              placeholder="ENA, Douanes, FASTEF…"
               style={{
                 width: '100%',
                 padding: '9px 12px 9px 34px',
@@ -347,7 +347,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
               </div>
               <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0, maxWidth: 360 }}>
                 {onglet === 'suivis'
-                  ? 'Activez le suivi d un concours pour recevoir vos alertes J-30, J-7 et J-1 directement dans votre agenda Surga.'
+                  ? 'Activez le suivi d’un concours pour recevoir vos alertes J-30, J-7 et J-1 directement dans votre agenda Surga.'
                   : 'Essayez un autre mot-clé ou modifiez la catégorie sélectionnée.'}
               </p>
             </div>

@@ -3,6 +3,13 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Audit mobile des fenêtres, CV, météo, Kiosque, aide, statistiques admin, barre de Nopalou] — push de `main` ordonné par l'utilisateur
+- **Objet :** retours de l'utilisateur après la mise en ligne : textes tronqués, superpositions et encombrement sur mobile ; CV de mauvaise qualité ; Kiosque (images 404, Unes d'hier) ; météo qui ne change pas de localité ; « Mes équipes » non mémorisées ; absence d'aide et de partage ; statistiques de Surga dans l'admin ; barre de Nopalou débordante.
+- **Mobile :** 26 écrans mesurés à 360 px (débordement, texte tronqué, retour à la ligne, petites cibles, superpositions) puis corrigés (liste dans `CLAUDE.md`, entrée du 2026-10-09). 0 texte tronqué après correction.
+- **Météo :** second essai de la source, réponses périmées ignorées, état d'échec avec « Réessayer ». **Kiosque :** dernière Une de chaque journal sur 3 jours, images relues de `www.projetbi.org`. **CV :** `cv-pdf.js`, deux modèles, 8 tests. **Équipes :** réglage du compte. **Aide :** `SurgaAideApropos.tsx`. **Admin :** `/api/admin/surga/statistiques` + `AdminStatistiquesUsage.tsx`. **Nopalou :** « S'inscrire » retiré, barre sans débordement de 1 141 à 2 400 px.
+- **Tests :** typage 0 erreur ; frontend 157 sur 157 ; backend Surga 214 sur 219 (4 échecs antérieurs + 1 test de météo mis à jour, contrôlé par mutation).
+- **Limites :** pas de téléphone réel ; détails de concours, immobilier, adresses, démarches et formulaires Lettre/Entretien non revus ; page admin non affichée ; erreur `toUpperCase` de production non retrouvée ; apostrophes réparées à l'affichage seulement.
+- **Retour arrière :** `git revert` du commit `feat(surga-mobile)`.
 ### [2026-10-09 — Correctif connexion (signature du cookie de session) et installation PWA depuis l'app Nopalou] — push de `main` ordonné par l'utilisateur
 - **Objet :** (1) connexion Surga par code WhatsApp acceptée mais compte resté déconnecté en production ; (2) impossibilité d'installer Surga depuis l'application Nopalou déjà installée.
 - **Connexion :** cause probable, non vérifiée sur Render : cookie `nopalou_session` signé avec `SESSION_SECRET` côté frontend, vérifié avec `JWT_SECRET` côté backend, deux secrets distincts dans `render.yaml` ; l'appel navigateur `/api/auth/profil` répondait 401. `session.ts` signe désormais avec `JWT_SECRET` d'abord (lecture des deux clés inchangée). `backend-fetch.ts` transmet `jwtVersion` (sans elle, comptes déjà déconnectés une fois refusés par le backend, SRG-A1-005).

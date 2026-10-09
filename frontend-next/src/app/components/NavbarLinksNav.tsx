@@ -41,7 +41,7 @@ export default function NavbarLinksNav() {
           >
             <span>{item.label}</span>
             {item.badge && (
-              <span className="navbar-pro-badge">
+              <span className={`navbar-pro-badge${item.badge === 'NOUVEAU' ? ' navbar-badge-nouveau' : ''}`}>
                 {item.badge}
               </span>
             )}

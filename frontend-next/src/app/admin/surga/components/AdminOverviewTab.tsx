@@ -18,6 +18,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { SurgaAdminTab } from './AdminSurgaSidebar'
+import AdminStatistiquesUsage from './AdminStatistiquesUsage'
 
 interface AdminOverviewTabProps {
   stats: {
@@ -32,6 +33,9 @@ interface AdminOverviewTabProps {
 export default function AdminOverviewTab({ stats, onNavigateTab }: AdminOverviewTabProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Statistiques d'usage mesurées dans les tables surga_* */}
+      <AdminStatistiquesUsage />
+
       {/* 4 KPIs Métiers Principaux */}
       <div>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-text3)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -322,55 +326,6 @@ export default function AdminOverviewTab({ stats, onNavigateTab }: AdminOverview
             </span>
             <ArrowRight size={14} color="var(--surga-text3)" />
           </button>
-        </div>
-      </div>
-
-      {/* État des Services & Passerelles */}
-      <div style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: '20px 24px', border: '1px solid var(--surga-border)' }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--surga-navy)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Server size={18} color="var(--surga-navy)" />
-          <span>Supervision des Services Surga</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
-          <div style={{ padding: '12px 14px', borderRadius: 8, backgroundColor: 'var(--surga-bg)', border: '1px solid var(--surga-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-navy)' }}>Base PostgreSQL</span>
-              <CheckCircle2 size={16} color="var(--surga-price)" />
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text3)', marginTop: 4 }}>
-              Tables surga_* opérationnelles
-            </div>
-          </div>
-
-          <div style={{ padding: '12px 14px', borderRadius: 8, backgroundColor: 'var(--surga-bg)', border: '1px solid var(--surga-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-navy)' }}>Passerelle Wave</span>
-              <CheckCircle2 size={16} color="var(--surga-price)" />
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text3)', marginTop: 4 }}>
-              Webhook actif &amp; checkout sécurisé
-            </div>
-          </div>
-
-          <div style={{ padding: '12px 14px', borderRadius: 8, backgroundColor: 'var(--surga-bg)', border: '1px solid var(--surga-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-navy)' }}>TomTom Live Trafic</span>
-              <CheckCircle2 size={16} color="var(--surga-price)" />
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text3)', marginTop: 4 }}>
-              Corridors VDN, Corniche, BRT synchronisés
-            </div>
-          </div>
-
-          <div style={{ padding: '12px 14px', borderRadius: 8, backgroundColor: 'var(--surga-bg)', border: '1px solid var(--surga-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--surga-navy)' }}>Synthèse &amp; IA</span>
-              <CheckCircle2 size={16} color="var(--surga-price)" />
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--surga-text3)', marginTop: 4 }}>
-              Interprète vocal &amp; briefing déterministe
-            </div>
-          </div>
         </div>
       </div>
     </div>

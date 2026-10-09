@@ -326,6 +326,7 @@ export default function SurgaPage() {
             briefingData={briefingData} etatBriefing={etatBriefing} briefingRecuLe={briefingRecuLe}
             audioScript={audioScript}
             onToggleAudio={handleToggleAudio}
+            onEquipesChange={(equipes) => { appliquerChangement({ equipes_suivies: equipes }) }}
             soldeKalpeFormate={soldeKalpeFormate}
             statsApercu={statsApercu}
             nbNotes={nbNotes}

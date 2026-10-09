@@ -202,7 +202,7 @@ export default function SurgaDonneesModal({
             </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 800 }}>Protection &amp; Données Personnelles</div>
-              <div style={{ fontSize: 12, opacity: 0.85 }}>Conformité CDP Sénégal &amp; Droit à l oubli</div>
+              <div style={{ fontSize: 12, opacity: 0.85 }}>Conformité CDP Sénégal &amp; Droit à l’oubli</div>
             </div>
           </div>
           <button
@@ -264,18 +264,19 @@ export default function SurgaDonneesModal({
                   borderRadius: 12,
                   border: '1px solid var(--border, #E8DDD2)',
                   backgroundColor: 'var(--bg, #F8F5F0)',
+                  flexWrap: 'wrap',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: 12,
                 }}
               >
-                <div>
+                <div style={{ flex: '1 1 160px', minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
                     Portabilité des données
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
-                    Exportez l ensemble de vos dépenses, notes et rappels en format JSON clair.
+                    Exportez l’ensemble de vos dépenses, notes et rappels en format JSON clair.
                   </div>
                 </div>
                 <button
@@ -283,7 +284,7 @@ export default function SurgaDonneesModal({
                   onClick={handleTelechargerExport}
                   disabled={chargementExport}
                   className="surga-btn-secondary"
-                  style={{ fontSize: 12, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
+                  style={{ fontSize: 12, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, width: 'auto', whiteSpace: 'nowrap' }}
                 >
                   <Download size={14} />
                   <span>{chargementExport ? 'Génération...' : 'Exporter'}</span>

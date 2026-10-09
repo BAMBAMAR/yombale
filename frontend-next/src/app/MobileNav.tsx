@@ -138,7 +138,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                 <span>Ouvrir une Boutique Pro</span>
                 <span style={{ background: '#16A34A', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 8, fontWeight: 900 }}>{essai} j offerts</span>
               </a>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                 <a
                   href="/connexion"
                   onClick={close}
@@ -157,24 +157,6 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                   }}
                 >
                   Connexion
-                </a>
-                <a
-                  href="/inscription"
-                  onClick={close}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '8px',
-                    borderRadius: 8,
-                    background: 'var(--accent, #C75B00)',
-                    color: '#ffffff',
-                    fontSize: 12.5,
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                  }}
-                >
-                  S&apos;inscrire
                 </a>
               </div>
             </div>

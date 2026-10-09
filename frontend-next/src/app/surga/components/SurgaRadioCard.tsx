@@ -31,7 +31,7 @@ export default function SurgaRadioCard({
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
             {station.nom}
           </span>
@@ -55,32 +55,31 @@ export default function SurgaRadioCard({
             fontSize: 12,
             color: 'var(--text2, #5A4E42)',
             marginTop: 2,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            lineHeight: 1.35,
           }}
         >
           {station.slogan}
         </div>
 
+        {/* Région et langues d'abord, débit à la fin : les éléments passent à la ligne entiers, jamais coupés au milieu */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            flexWrap: 'wrap',
+            columnGap: 10,
+            rowGap: 2,
             marginTop: 4,
             fontSize: 12,
-            color: 'var(--text3, #73675E)',
+            color: 'var(--text3, #536175)',
           }}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-            <MapPin size={10} />
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
+            <MapPin size={11} aria-hidden="true" />
             {station.region}
           </span>
-          <span>•</span>
-          <span>{station.bitrateKbps} kbps</span>
-          <span>•</span>
-          <span>{station.langues.slice(0, 2).join(', ')}</span>
+          <span style={{ whiteSpace: 'nowrap' }}>{station.langues.slice(0, 2).join(', ')}</span>
+          <span style={{ whiteSpace: 'nowrap' }}>{station.bitrateKbps} kbps</span>
         </div>
       </div>
 

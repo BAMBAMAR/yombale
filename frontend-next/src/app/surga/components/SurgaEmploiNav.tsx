@@ -15,8 +15,8 @@ interface SurgaEmploiNavProps {
 }
 
 const ONGLETS: Array<{ id: TabEmploi; label: string; icon: React.ElementType }> = [
-  { id: 'profil', label: 'Profil Pro', icon: User },
-  { id: 'cv', label: 'Mon CV PDF', icon: FileText },
+  { id: 'profil', label: 'Profil', icon: User },
+  { id: 'cv', label: 'CV', icon: FileText },
   { id: 'lettre', label: 'Lettres', icon: Mail },
   { id: 'entretien', label: 'Entretien', icon: HelpCircle },
   { id: 'documents', label: 'Docs', icon: FolderArchive },
@@ -33,8 +33,8 @@ export default function SurgaEmploiNav({
         display: 'flex',
         borderBottom: '1px solid var(--border, #E8DDD2)',
         backgroundColor: 'var(--bg, #F8F5F0)',
-        overflowX: 'auto',
       }}
+      role="tablist"
     >
       {ONGLETS.map(({ id, label, icon: Icon }) => {
         const estActif = activeTab === id
@@ -44,13 +44,18 @@ export default function SurgaEmploiNav({
             key={id}
             type="button"
             onClick={() => onSelectTab(id)}
+            role="tab"
+            aria-selected={estActif}
             style={{
-              flex: 1,
+              flex: '1 1 0',
+              minWidth: 0,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 5,
-              padding: '10px 8px',
+              gap: 3,
+              padding: '8px 2px',
+              minHeight: 48,
               fontSize: 12,
               fontWeight: 700,
               border: 'none',

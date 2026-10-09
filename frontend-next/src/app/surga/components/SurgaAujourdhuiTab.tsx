@@ -57,6 +57,8 @@ interface SurgaAujourdhuiTabProps {
   onOpenVoice: () => void
   onReinitialiser: () => void
   onToggleAudio?: () => void
+  // Les équipes choisies dans « Mes clubs » deviennent un réglage du compte (appareil, puis serveur).
+  onEquipesChange?: (equipes: string[]) => void
 }
 
 import {
@@ -90,6 +92,7 @@ export default function SurgaAujourdhuiTab({
   onOpenVoice,
   onReinitialiser,
   onToggleAudio,
+  onEquipesChange,
 }: SurgaAujourdhuiTabProps) {
   const heureBriefing = preferences?.heure_briefing || briefingData?.heure_briefing || '07:30'
   const quartier = quartierDe(preferences)
@@ -123,7 +126,9 @@ export default function SurgaAujourdhuiTab({
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                padding: '2px 4px',
+                padding: '6px 4px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 fontSize: 12,
                 fontWeight: 700,
                 color: 'var(--surga-text2, #475569)',
@@ -186,11 +191,9 @@ export default function SurgaAujourdhuiTab({
                             color: 'var(--surga-primary, #0F172A)',
                             textDecoration: 'none',
                             lineHeight: 1.35,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
+                            // Le titre d'un fait d'actualité s'affiche en entier : une coupure au milieu d'un mot ou d'un nom propre le rend ambigu.
+                            display: 'block',
+                            overflowWrap: 'anywhere',
                           }}
                           title={it.titre}
                         >
@@ -315,6 +318,7 @@ export default function SurgaAujourdhuiTab({
           sports={briefingData?.sports || []}
           sourceMuette={Boolean(briefingData?.sport_indisponible)}
           equipesFavoritesCompte={preferences?.equipes_suivies}
+          onEquipesChange={onEquipesChange}
         />
       )}
 

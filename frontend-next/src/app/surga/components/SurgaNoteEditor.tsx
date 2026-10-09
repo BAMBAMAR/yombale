@@ -153,7 +153,7 @@ export default function SurgaNoteEditor({
           </label>
           <input
             type="text"
-            placeholder="Ex : Courses du week-end, Idée de projet, Devis client..."
+            placeholder="Ex : Courses du week-end"
             value={titre}
             onChange={(e) => setTitre(e.target.value)}
             required
@@ -230,7 +230,7 @@ export default function SurgaNoteEditor({
               Contenu de la note
             </label>
             <textarea
-              placeholder="Contenu de votre note (idées, mémos, compte-rendu)..."
+              placeholder="Idées, mémos, compte-rendu…"
               value={contenu}
               onChange={(e) => setContenu(e.target.value)}
               rows={4}

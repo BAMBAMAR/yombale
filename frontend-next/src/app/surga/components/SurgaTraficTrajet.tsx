@@ -44,7 +44,7 @@ export default function SurgaTraficTrajet() {
           type="text"
           value={depart}
           onChange={(e) => setDepart(e.target.value)}
-          placeholder="Départ (vide : ma position)"
+          placeholder="Départ ou ma position"
           aria-label="Départ"
           autoComplete="off"
           style={{ ...champ, flexBasis: 140 }}
@@ -53,7 +53,7 @@ export default function SurgaTraficTrajet() {
           type="text"
           value={arrivee}
           onChange={(e) => setArrivee(e.target.value)}
-          placeholder="Arrivée, ex. Colobane"
+          placeholder="Arrivée (ex. Colobane)"
           aria-label="Arrivée"
           autoComplete="off"
           style={{ ...champ, flexBasis: 140 }}

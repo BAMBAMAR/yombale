@@ -26,6 +26,7 @@ function formatDateParution(dateStr?: string): string {
 
 export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosqueUnesProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [imagesEnEchec, setImagesEnEchec] = useState<Set<string | number>>(new Set())
 
   if (loading) {
     return (
@@ -51,8 +52,15 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
     )
   }
 
+  const aucuneDuJour = unes.every((u) => formatDateParution(u.date_parution) !== 'Aujourd’hui')
+
   return (
     <>
+      {aucuneDuJour && (
+        <div style={{ marginBottom: 12, padding: '10px 12px', borderRadius: 12, background: 'var(--surga-surface, #FFFFFF)', border: '1px solid var(--surga-border, #E2E8F0)', fontSize: 13, lineHeight: 1.4, color: 'var(--surga-text2, #334155)' }}>
+          Les Unes d’aujourd’hui ne sont pas encore parues : voici les dernières éditions.
+        </div>
+      )}
       <div
         style={{
           display: 'grid',
@@ -84,18 +92,28 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
                 overflow: 'hidden',
               }}
             >
-              <img
-                src={une.image_url}
-                alt={`Une du quotidien ${une.nom_journal}`}
-                loading="lazy"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  objectPosition: 'top center',
-                  display: 'block',
-                }}
-              />
+              {imagesEnEchec.has(une.id) ? (
+                // Image introuvable : le nom du journal remplace le texte de remplacement du navigateur.
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 10, textAlign: 'center', color: 'var(--surga-text3, #536175)' }}>
+                  <BookOpen size={22} aria-hidden="true" />
+                  <span style={{ fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>{une.nom_journal}</span>
+                  <span style={{ fontSize: 12, lineHeight: 1.3 }}>Image indisponible</span>
+                </div>
+              ) : (
+                <img
+                  src={une.image_url}
+                  alt={`Une du quotidien ${une.nom_journal}`}
+                  loading="lazy"
+                  onError={() => setImagesEnEchec((prev) => new Set(prev).add(une.id))}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'top center',
+                    display: 'block',
+                  }}
+                />
+              )}
               <div
                 style={{
                   position: 'absolute',

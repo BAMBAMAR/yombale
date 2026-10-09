@@ -71,8 +71,8 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
       }}
     >
       {/* En-tête épuré : Trafic seulement, monoligne et aéré */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '1 1 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '1 1 150px' }}>
           <div
             style={{
               width: 32,
@@ -123,10 +123,8 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
             <div
               style={{
                 fontSize: 12,
-                color: 'var(--surga-text3, #94A3B8)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                color: 'var(--surga-text3, #536175)',
+                lineHeight: 1.3,
               }}
             >
               Dakar • mesures et signalements
@@ -148,8 +146,9 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
               fontWeight: 700,
               color: 'var(--surga-accent-ink, #A64B08)',
               backgroundColor: 'rgba(217, 119, 6, 0.1)',
-              padding: '4px 8px',
-              borderRadius: 6,
+              padding: '8px 10px',
+              minHeight: 32,
+              borderRadius: 8,
               textDecoration: 'none',
               whiteSpace: 'nowrap',
             }}
@@ -172,7 +171,8 @@ export default function SurgaTraficCard({ onOuvrirDetail, ville = 'Dakar' }: Sur
               display: 'flex',
               alignItems: 'center',
               gap: 2,
-              padding: '4px 6px',
+              padding: '8px 6px',
+              minHeight: 32,
               whiteSpace: 'nowrap',
             }}
           >

@@ -98,7 +98,7 @@ export default function SurgaEntretienTab({
 
     const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRec) {
-      alert('La reconnaissance vocale n est pas supportée par votre navigateur. Vous pouvez saisir votre réponse au clavier.')
+      alert('La reconnaissance vocale n’est pas supportée par votre navigateur. Vous pouvez saisir votre réponse au clavier.')
       return
     }
 

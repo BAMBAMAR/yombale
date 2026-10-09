@@ -17,6 +17,7 @@ import SurgaServiceRow from './SurgaServiceRow'
 import { quartierDe } from '@/lib/surga-meteo'
 import { libelleAbonnement, nomOffre, resumeGratuit, useSurgaOffre } from '@/lib/surga-offre'
 import SurgaPersonnalisationSection from './SurgaPersonnalisationSection'
+import SurgaAideApropos from './SurgaAideApropos'
 import SurgaServicesListe, { type CleService } from './SurgaServicesListe'
 
 interface SurgaParametresTabProps {
@@ -355,7 +356,7 @@ export default function SurgaParametresTab({
           iconColor="var(--text3, #73675E)"
           iconBg="rgba(115, 103, 94, 0.08)"
           titre="Protection & Données personnelles"
-          description="Export JSON de vos données & droit à l oubli définitif"
+          description="Export JSON de vos données & droit à l’oubli définitif"
           actionLabel="Gérer"
           onAction={onOpenDonnees}
         />
@@ -387,6 +388,9 @@ export default function SurgaParametresTab({
         <RotateCcw size={14} />
         <span>Modifier mes préférences de briefing</span>
       </button>
+
+      {/* 7. Partage, aide, à propos de l'éditeur et contact */}
+      <SurgaAideApropos />
     </div>
   )
 }

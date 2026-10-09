@@ -149,7 +149,7 @@ export default function SurgaDesktopSidebar({
         </nav>
 
         {/* GROUPE 2 : SERVICES DAKAR ÉCLATÉS (PERSONNALISABLES) */}
-        <div className="surga-sidebar-section-title" style={{ marginTop: 14 }}>Services Dakar</div>
+        <div className="surga-sidebar-section-title" style={{ marginTop: 14 }}>Services</div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {listeServices.map((idService) => {
             const def = tableServices[idService]

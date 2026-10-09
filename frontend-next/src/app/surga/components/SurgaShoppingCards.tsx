@@ -150,7 +150,7 @@ export function BoutiqueCard({
             textDecoration: 'none',
           }}
         >
-          <ExternalLink size={13} /> Visiter la boutique
+          <ExternalLink size={13} /> Visiter
         </a>
         <button
           type="button"
@@ -169,7 +169,7 @@ export function BoutiqueCard({
             cursor: 'pointer',
           }}
         >
-          <MessageCircle size={13} /> WhatsApp Vendeur
+          <MessageCircle size={13} /> WhatsApp
         </button>
       </div>
     </div>

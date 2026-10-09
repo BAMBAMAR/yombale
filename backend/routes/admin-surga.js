@@ -68,6 +68,17 @@ router.get('/sante', (req, res) => {
   res.json({ success: true, ...require('../services/surga/surveillance').surveillance().etat() });
 });
 
+// Statistiques d'usage : comptes, activité, contenus, abonnements, préférences, suivis. Voir statistiques-admin.js.
+router.get('/statistiques', async (req, res) => {
+  try {
+    const stats = await require('../services/surga/statistiques-admin').calculerStatistiques(pool, req.query.jours);
+    res.json({ success: true, statistiques: stats, calcule_le: new Date().toISOString() });
+  } catch (err) {
+    console.error('[SURGA ADMIN STATISTIQUES]', err.message);
+    res.status(500).json({ success: false, error: 'Statistiques indisponibles.' });
+  }
+});
+
 router.get('/stats', async (req, res) => {
   try {
     if (!pool) {

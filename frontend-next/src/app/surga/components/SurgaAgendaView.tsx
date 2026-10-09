@@ -262,10 +262,11 @@ export default function SurgaAgendaView() {
           style={{
             display: 'flex',
             gap: 6,
-            overflowX: 'auto',
-            paddingBottom: 4,
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
+            // minWidth 0 : sans lui la rangée garde sa largeur de contenu et passe sous le bouton « Nouveau ».
+            flex: '1 1 0',
+            minWidth: 0,
+            // Les filtres passent à la ligne au lieu de défiler sous le bouton « Nouveau » : tous restent visibles.
+            flexWrap: 'wrap',
           }}
         >
           {(
@@ -285,7 +286,8 @@ export default function SurgaAgendaView() {
                 type="button"
                 onClick={() => setFiltre(tab.key)}
                 style={{
-                  padding: '5px 12px',
+                  padding: '7px 12px',
+                  flexShrink: 0,
                   borderRadius: 20,
                   border: '1px solid',
                   borderColor: estActif

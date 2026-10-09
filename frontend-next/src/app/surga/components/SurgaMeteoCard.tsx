@@ -1,7 +1,7 @@
 // frontend-next/src/app/surga/components/SurgaMeteoCard.tsx
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   RefreshCw,
   ChevronDown,
@@ -41,8 +41,12 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
   // Localité demandée, affichée pendant le chargement et quand la météo manque.
   const [villeDemandee, setVilleDemandee] = useState<string | null>(null)
 
+  // Numéro de la dernière demande : une réponse plus ancienne (la localité d'avant, arrivée en retard) est ignorée.
+  const derniereDemande = useRef(0)
+
   const chargerMeteo = useCallback(
     async (params?: { ville?: string; lat?: number; lon?: number }) => {
+      const numero = ++derniereDemande.current
       setLoading(true)
       let villeRecherche = params?.ville
       try {
@@ -72,8 +76,9 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
           }
         }
 
-        const res = await fetch(url)
+        const res = await fetch(url, { signal: AbortSignal.timeout(20000) })
         const data = await res.json()
+        if (numero !== derniereDemande.current) return
         if (data.success && data.meteo) {
           setMeteo(data.meteo)
           setEstGpsActif(Boolean(data.meteo.est_gps))
@@ -86,9 +91,9 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
         }
       } catch (err) {
         console.warn('[SURGA METEO FETCH ERR]:', err)
-        setMeteo(null)
+        if (numero === derniereDemande.current) setMeteo(null)
       } finally {
-        setLoading(false)
+        if (numero === derniereDemande.current) setLoading(false)
       }
     },
     [ville]
@@ -284,11 +289,21 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
             </div>
           ) : (
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--surga-text2, #475569)' }}>
-              {loading ? 'Chargement de la météo…' : 'Météo indisponible pour le moment.'}
+              {loading ? `Chargement de la météo de ${villeAffichee}…` : `Météo de ${villeAffichee} indisponible pour le moment.`}
             </span>
           )}
         </div>
 
+        {!meteo && !loading && (
+          <button
+            type="button"
+            onClick={() => chargerMeteo(villeDemandee ? { ville: villeDemandee } : undefined)}
+            style={{ background: 'none', border: 'none', padding: '8px 6px', minHeight: 32, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, whiteSpace: 'nowrap' }}
+          >
+            <RefreshCw size={13} />
+            <span>Réessayer</span>
+          </button>
+        )}
         {meteo && (
         <button
           type="button"

@@ -199,7 +199,7 @@ export default function SurgaRadioModal({ isOpen, onClose }: SurgaRadioModalProp
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher une radio, fréquence, région..."
+              placeholder="Radio, fréquence, région"
               style={{
                 border: 'none',
                 background: 'transparent',

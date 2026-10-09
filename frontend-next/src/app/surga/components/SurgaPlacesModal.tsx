@@ -213,7 +213,7 @@ export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalPr
             <Search size={16} color="var(--text3, #73675E)" />
             <input
               type="text"
-              placeholder="Ex: Un bon dibi aux Almadies, café calme..."
+              placeholder="Ex : un dibi aux Almadies"
               value={rechercheTexte}
               onChange={(e) => setRechercheTexte(e.target.value)}
               style={{

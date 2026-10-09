@@ -26,7 +26,7 @@ export default function SurgaImmoAlerteModal({
 }: SurgaImmoAlerteModalProps) {
   const [titre, setTitre] = useState<string>(
     criteresInitiaux?.typeBien
-      ? `${criteresInitiaux.typeBien.toUpperCase()} ${criteresInitiaux.quartier || 'Dakar'}`
+      ? `${(criteresInitiaux.typeBien || '').toUpperCase()} ${criteresInitiaux.quartier || 'Dakar'}`
       : 'Veille Immobilière Dakar'
   )
   const [typeBien, setTypeBien] = useState<string>(criteresInitiaux?.typeBien || 'tous')

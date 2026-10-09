@@ -119,7 +119,7 @@ export default function SurgaVoiceServiceCard({
         <ServiceItem
           icon={GraduationCap}
           badge="Concours & Examens du Sénégal"
-          title={actionDetectee.concoursData?.query ? `Recherche : « ${actionDetectee.concoursData.query.toUpperCase()} »` : 'Calendrier officiel des concours'}
+          title={actionDetectee.concoursData?.query ? `Recherche : « ${String(actionDetectee.concoursData.query).toUpperCase()} »` : 'Calendrier officiel des concours'}
           desc="Accédez aux 22 fiches officielles certifiées (dates limites, pièces, quittance Trésor)."
           actionLabel={actionDetectee.concoursData?.query ? 'Consulter la fiche du concours' : 'Voir tous les concours'}
           onClick={() => onOpenConcours && onOpenConcours(actionDetectee.concoursData?.query)}
@@ -130,7 +130,7 @@ export default function SurgaVoiceServiceCard({
         <ServiceItem
           icon={Car}
           badge="Bonnes Adresses & Bons Plans à Dakar"
-          title={actionDetectee.placesData?.query ? `Recherche : « ${actionDetectee.placesData.query.toUpperCase()} »` : 'Restaurants, dibiteries & sorties dakariliennes'}
+          title={actionDetectee.placesData?.query ? `Recherche : « ${String(actionDetectee.placesData.query).toUpperCase()} »` : 'Restaurants, dibiteries & sorties dakariliennes'}
           desc="Découvrez les meilleures tables, dibiteries, cafés calmes et adresses vérifiées."
           actionLabel="Explorer les bonnes adresses"
           onClick={() => onOpenPlaces && onOpenPlaces(actionDetectee.placesData?.query)}
@@ -298,7 +298,7 @@ export default function SurgaVoiceServiceCard({
             actionDetectee.radioData.action === 'STOP'
               ? 'Arrêter la radio en cours'
               : actionDetectee.radioData.station
-                ? `Station : ${actionDetectee.radioData.station.toUpperCase()}`
+                ? `Station : ${(actionDetectee.radioData.station || '').toUpperCase()}`
                 : 'Bouquet des radios nationales'
           }
           desc="Écoutez vos stations FM en direct et en haute fidélité."

@@ -176,15 +176,12 @@ export default function SurgaPwaInstallPrompt() {
           {/* Textes valorisants */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap' }}>
-              <span style={{ fontSize: 14, fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap' }}>
                 Installer Surga
               </span>
-              <span style={{ background: 'rgba(217, 119, 6, 0.22)', color: '#FCD34D', border: '1px solid rgba(217, 119, 6, 0.4)', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10 }}>
-                PWA
-              </span>
             </div>
-            <p style={{ margin: '2px 0 0', fontSize: 11, color: '#CBD5E1', lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Accès 1-clic &amp; disponible hors-ligne
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#CBD5E1', lineHeight: 1.35 }}>
+              Accès direct, même hors ligne
             </p>
           </div>
 

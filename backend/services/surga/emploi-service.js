@@ -4,6 +4,7 @@
 // Monétisation mixte : 1 CV gratuit avec mention, 1 lettre/mois, achat à l'acte 500 FCFA
 
 const PDFDocument = require('pdfkit');
+const { dessinerCv } = require('./cv-pdf');
 const { pool } = require('../../models/db');
 const offre = require('./offre-service');
 
@@ -560,116 +561,9 @@ function construireDocumentPdf(type, donnees, { modele = 'sobre_moderne', avecMe
   const LIGHT_BORDER = '#CBD5E1';
   const DARK = '#0F172A';
 
-  if (type === 'CV') {
-    // En-tête CV
-    const nom = cleanPdfText(donnees.nom_complet || 'CURRICULUM VITAE');
-    const titrePoste = cleanPdfText(donnees.titre_professionnel || donnees.titre_poste || '');
-
-    doc.fillColor(NAVY).fontSize(20).font('Helvetica-Bold').text(nom, 40, 40);
-    if (titrePoste) {
-      doc.fillColor('#C75B00').fontSize(12).font('Helvetica-Bold').text(titrePoste.toUpperCase(), 40, 66);
-    }
-
-    // Coordonnées
-    const coords = [donnees.telephone, donnees.email, donnees.adresse_ville || donnees.adresse].filter(Boolean).join('  •  ');
-    if (coords) {
-      doc.fillColor(SLATE).fontSize(9).font('Helvetica').text(coords, 40, 84);
-    }
-
-    // Ligne de séparation
-    doc.moveTo(40, 102).lineTo(555, 102).strokeColor(LIGHT_BORDER).lineWidth(1).stroke();
-
-    let currentY = 115;
-
-    // Résumé
-    const resumeTexte = donnees.resume_pro || donnees.resume;
-    if (resumeTexte) {
-      doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('PROFIL & OBJECTIF', 40, currentY);
-      currentY += 16;
-      doc.fillColor(DARK).fontSize(9.5).font('Helvetica').text(cleanPdfText(resumeTexte), 40, currentY, { width: 515, lineHeight: 1.25 });
-      currentY = doc.y + 16;
-    }
-
-    // Expériences professionnelles
-    if (Array.isArray(donnees.experiences) && donnees.experiences.length > 0) {
-      doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('EXPÉRIENCES PROFESSIONNELLES', 40, currentY);
-      currentY += 16;
-
-      for (const exp of donnees.experiences) {
-        const poste = cleanPdfText(exp.titre || exp.poste || '');
-        const entreprise = cleanPdfText(exp.entreprise || '');
-        const dates = [exp.date_debut, exp.date_fin || (exp.en_cours ? 'Présent' : '')].filter(Boolean).join(' - ');
-
-        doc.fillColor(DARK).fontSize(10).font('Helvetica-Bold').text(poste, 40, currentY);
-        if (dates) {
-          doc.fillColor(SLATE).fontSize(8.5).font('Helvetica').text(dates, 420, currentY, { align: 'right', width: 135 });
-        }
-        currentY += 14;
-
-        if (entreprise) {
-          doc.fillColor(SLATE).fontSize(9).font('Helvetica-Oblique').text(entreprise, 40, currentY);
-          currentY += 12;
-        }
-
-        if (exp.description) {
-          doc.fillColor(DARK).fontSize(9).font('Helvetica').text(cleanPdfText(exp.description), 40, currentY, { width: 515 });
-          currentY = doc.y + 10;
-        } else {
-          currentY += 6;
-        }
-      }
-      currentY += 6;
-    }
-
-    // Formations
-    if (Array.isArray(donnees.formations) && donnees.formations.length > 0) {
-      doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('FORMATIONS & DIPLÔMES', 40, currentY);
-      currentY += 16;
-
-      for (const form of donnees.formations) {
-        const diplome = cleanPdfText(form.diplome || form.titre || '');
-        const ecole = cleanPdfText(form.etablissement || form.ecole || '');
-        const annee = cleanPdfText(form.annee || form.date || '');
-
-        doc.fillColor(DARK).fontSize(10).font('Helvetica-Bold').text(diplome, 40, currentY);
-        if (annee) {
-          doc.fillColor(SLATE).fontSize(8.5).font('Helvetica').text(annee, 450, currentY, { align: 'right', width: 105 });
-        }
-        currentY += 13;
-
-        if (ecole) {
-          doc.fillColor(SLATE).fontSize(9).font('Helvetica').text(ecole, 40, currentY);
-          currentY += 14;
-        }
-      }
-      currentY += 6;
-    }
-
-    // Compétences & Langues
-    const compList = Array.isArray(donnees.competences)
-      ? donnees.competences.map((c) => (typeof c === 'string' ? c : c.nom)).filter(Boolean)
-      : [];
-
-    const langList = Array.isArray(donnees.langues)
-      ? donnees.langues.map((l) => (typeof l === 'string' ? l : `${l.langue} (${l.niveau || ''})`)).filter(Boolean)
-      : [];
-
-    if (compList.length > 0 || langList.length > 0) {
-      doc.fillColor(NAVY).fontSize(11).font('Helvetica-Bold').text('COMPÉTENCES & LANGUES', 40, currentY);
-      currentY += 16;
-
-      if (compList.length > 0) {
-        doc.fillColor(DARK).fontSize(9).font('Helvetica-Bold').text('Compétences : ', 40, currentY, { continued: true });
-        doc.font('Helvetica').text(compList.join('  •  '));
-        currentY = doc.y + 8;
-      }
-
-      if (langList.length > 0) {
-        doc.fillColor(DARK).fontSize(9).font('Helvetica-Bold').text('Langues : ', 40, currentY, { continued: true });
-        doc.font('Helvetica').text(langList.join('  •  '));
-        currentY = doc.y + 8;
-      }
-    }
+if (type === 'CV') {
+    // Mise en page dans cv-pdf.js : deux modèles distincts, pagination gérée, mention de la version gratuite incluse.
+    dessinerCv(doc, donnees, { modele, avecMention }, cleanPdfText);
   } else {
     // LETTRE DE MOTIVATION
     const exp = donnees.expediteur || {};
@@ -712,7 +606,7 @@ function construireDocumentPdf(type, donnees, { modele = 'sobre_moderne', avecMe
   }
 
   // Mention discrète en bas de page si version gratuite
-  if (avecMention) {
+  if (avecMention && type !== 'CV') {
     doc.fontSize(8).fillColor('#94A3B8').font('Helvetica')
       .text('Conçu avec Surga • Assistant personnel du Sénégal', 40, 800, { align: 'center', width: 515 });
   }

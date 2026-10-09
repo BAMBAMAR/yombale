@@ -350,7 +350,7 @@
   }
 }
 
-@media (max-width: 1140px) {
+@media (max-width: 1199px) {
   .navbar-links { display: none !important; }
   /* Connexion + S'inscrire sont dans le tiroir mobile — on les cache de la navbar */
   .navbar-link   { display: none !important; }
@@ -722,7 +722,7 @@
   display: none;
 }
 
-@media (max-width: 1140px) {
+@media (max-width: 1199px) {
   .navbar {
     height: auto !important;
     padding: 10px 4% !important;
@@ -1071,4 +1071,15 @@ body.in-account-workspace {
   .account-mobile-burger-btn {
     display: inline-flex !important;
   }
+}
+/* Le badge « NOUVEAU » du lien Surga n'apparaît que sur très grand écran : sur les largeurs courantes il ajoutait
+   environ 60 px à la barre et repoussait « Connexion » et « S'inscrire » hors de l'écran. */
+@media (max-width: 2300px) {
+  .navbar-badge-nouveau { display: none; }
+}
+/* Largeurs intermédiaires (1200 à 1279 px) : barre resserrée pour que « Connexion » et « S'inscrire » restent visibles. */
+@media (min-width: 1200px) and (max-width: 1279px) {
+  .navbar-links { gap: 0 !important; padding: 3px 3px !important; }
+  .navbar-link { padding: 6px 5px !important; font-size: 12px !important; gap: 3px !important; letter-spacing: -0.02em; }
+  .navbar-inscription { padding-left: 10px !important; padding-right: 10px !important; }
 }

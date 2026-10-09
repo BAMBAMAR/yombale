@@ -128,3 +128,16 @@ export function formaterHoraireMatch(match?: {
 
   return 'à venir'
 }
+
+/**
+ * Rétablit l'apostrophe perdue dans des textes de catalogue (« d Administration », « l École », « qu un ») : une
+ * lettre d'élision isolée devant une voyelle ou un « h » prend son apostrophe. Prudent : seules d, l, n, s, c et les
+ * formes « qu » / « jusqu » / « lorsqu » / « puisqu » sont reprises, en minuscule, et « L » ou « D » en capitale
+ * seulement devant un mot lui-même en capitale initiale (« L École »). Ne touche pas aux textes déjà corrects.
+ */
+export function reparerApostrophes(texte: string | null | undefined): string {
+  if (!texte) return ''
+  return String(texte)
+    .replace(/(?<![\p{L}'’])(d|l|n|s|c|qu|jusqu|lorsqu|puisqu) (?=[aeiouyhàâäéèêëîïôöùûüœAEIOUYHÀÂÄÉÈÊËÎÏÔÖÙÛÜŒ])/gu, '$1’')
+    .replace(/(?<![\p{L}'’])([LD]) (?=[AEIOUYÀÂÉÈÊËÎÏÔÖÙÛŒ][\p{Ll}])/gu, '$1’')
+}

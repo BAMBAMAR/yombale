@@ -33,6 +33,7 @@ interface SurgaSportCardProps {
   // La source des scores n'a pas répondu : l'écran dit « indisponible », pas « aucun match ».
   sourceMuette?: boolean
   equipesFavoritesCompte?: string[]
+  onEquipesChange?: (equipes: string[]) => void
   onRefresh?: () => void
 }
 
@@ -112,6 +113,7 @@ export default function SurgaSportCard({
   sports: initialSports,
   sourceMuette = false,
   equipesFavoritesCompte,
+  onEquipesChange,
 }: SurgaSportCardProps) {
   const [matchs, setMatchs] = useState<SportEventItem[]>(initialSports || [])
   const [loading, setLoading] = useState(false)
@@ -231,6 +233,9 @@ export default function SurgaSportCard({
 
   const handleEnregistrerEquipes = (nouvelles: string[]) => {
     setEquipesFavorites(nouvelles)
+    // Source de vérité : les réglages du compte. Sans cela, la liste des préférences (jamais vide : « Équipe Nationale »
+    // par défaut) reprenait la main à chaque rechargement et effaçait le choix.
+    onEquipesChange?.(nouvelles)
     if (nouvelles.length > 0) {
       setFiltreCategorie('mes_equipes')
       rechargerScores('mes_equipes', nouvelles)

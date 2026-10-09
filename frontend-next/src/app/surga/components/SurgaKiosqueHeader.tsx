@@ -60,11 +60,12 @@ export default function SurgaKiosqueHeader({
         justifyContent: 'space-between',
         backgroundColor: '#FFFFFF',
         flexShrink: 0,
-        gap: 10,
+        gap: 8,
+        flexWrap: 'wrap',
       }}
     >
-      {/* Titre et édition */}
-      <div style={{ minWidth: 0, flex: 1 }}>
+      {/* Titre et édition (le bouton Fermer reste sur cette ligne) */}
+      <div style={{ minWidth: 0, flex: '1 1 200px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span
             style={{
@@ -101,13 +102,40 @@ export default function SurgaKiosqueHeader({
             textOverflow: 'ellipsis',
           }}
         >
-          {selectedUne.date_parution ? `Édition du ${selectedUne.date_parution}` : 'Édition du jour'}
-          {selectedUne.description ? ` — ${selectedUne.description}` : ' — Quotidien national'}
+          {(() => {
+            // La date arrive au format « 2026-10-09T00:00:00.000Z » : elle s'écrit en français (« 9 octobre 2026 »).
+            const d = selectedUne.date_parution ? new Date(selectedUne.date_parution) : null
+            const lisible = d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : null
+            return lisible ? `Édition du ${lisible}` : 'Édition du jour'
+          })()}
+          {' — Quotidien national'}
         </div>
       </div>
 
+      {/* Fermer */}
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Fermer la vue"
+        title="Fermer (Échap)"
+        style={{
+          background: 'none',
+          border: 'none',
+          width: 30,
+          height: 30,
+          borderRadius: 8,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: 'var(--text2, #5A4E42)',
+        }}
+      >
+        <X size={20} />
+      </button>
+
       {/* Contrôles de zoom, plein écran, navigation et actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, flex: '1 1 100%', justifyContent: 'space-between' }}>
         <SurgaKiosqueZoomControls
           zoom={zoom}
           onZoomIn={onZoomIn}
@@ -196,27 +224,7 @@ export default function SurgaKiosqueHeader({
           {lienCopie ? <Check size={14} /> : <Copy size={14} />}
         </button>
 
-        {/* Fermer */}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Fermer la vue"
-          title="Fermer (Échap)"
-          style={{
-            background: 'none',
-            border: 'none',
-            width: 30,
-            height: 30,
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            color: 'var(--text2, #5A4E42)',
-          }}
-        >
-          <X size={20} />
-        </button>
+
       </div>
     </div>
   )

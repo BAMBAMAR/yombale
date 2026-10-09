@@ -297,10 +297,8 @@ export default async function RootLayout({
                       userId={session.userId || (session as any).id}
                     />
                   ) : (
-                    <>
-                      <a href="/connexion" className="navbar-link">Connexion</a>
-                      <a href="/inscription" className="navbar-inscription">S&apos;inscrire</a>
-                    </>
+                    // L'inscription se fait depuis la page de connexion : un seul bouton dans la barre.
+                    <a href="/connexion" className="navbar-link">Connexion</a>
                   )}
                 </div>
                 {/* Mobile: Accès Assistant WhatsApp + Panier + Drawer burger épuré */}

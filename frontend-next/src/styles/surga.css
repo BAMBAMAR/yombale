@@ -1367,4 +1367,12 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
   color: var(--surga-primary, #0F172A);
   animation: surga-slide-up 0.25s ease-out;
 }
-
+
+/* Cibles tactiles : sur écran tactile, aucun bouton n'est plus bas que 32 px (plusieurs liens d'action des cartes
+   mesuraient 20 à 26 px). Le contenu reste centré ; les pastilles de filtre posent déjà leur propre hauteur. */
+@media (pointer: coarse) {
+  .surga-root button,
+  .surga-root [role="button"] {
+    min-height: 32px;
+  }
+}

@@ -141,7 +141,7 @@ export default function SurgaAgendaForm({ onClose, onSubmit, initial }: SurgaAge
           </label>
           <input
             type="text"
-            placeholder="Ex : Récupérer commande, Rendez-vous médecin, Payer facture Senelec..."
+            placeholder="Ex : Rendez-vous médecin"
             value={titre}
             onChange={(e) => setTitre(e.target.value)}
             required
@@ -285,7 +285,7 @@ export default function SurgaAgendaForm({ onClose, onSubmit, initial }: SurgaAge
             <MapPin size={14} color="var(--text3, #73675E)" style={{ marginRight: 6 }} />
             <input
               type="text"
-              placeholder="Ex : Clinique Madeleine, Plateau, Appeler Moussa..."
+              placeholder="Ex : Plateau, clinique"
               value={lieu}
               onChange={(e) => setLieu(e.target.value)}
               style={{
@@ -342,7 +342,7 @@ export default function SurgaAgendaForm({ onClose, onSubmit, initial }: SurgaAge
             Détail / Note (optionnel)
           </label>
           <textarea
-            placeholder="Informations utiles, pièces à emporter..."
+            placeholder="Pièces à emporter, détails…"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}

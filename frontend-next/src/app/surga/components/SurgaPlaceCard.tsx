@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { reparerApostrophes } from '@/lib/surga-formatting'
 import {
   MapPin,
   Star,
@@ -126,7 +127,7 @@ export default function SurgaPlaceCard({
     >
       {/* Ligne 1 : Catégorie, Note et Bouton Favori */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexWrap: 'wrap' }}>
           <span
             style={{
               backgroundColor: 'rgba(28, 43, 74, 0.08)',
@@ -136,6 +137,7 @@ export default function SurgaPlaceCard({
               padding: '2px 8px',
               borderRadius: 6,
               letterSpacing: 0.3,
+              whiteSpace: 'nowrap',
             }}
           >
             {getCategorieLabel(place.categorie)}
@@ -148,6 +150,7 @@ export default function SurgaPlaceCard({
               backgroundColor: 'rgba(10, 92, 54, 0.08)',
               padding: '2px 6px',
               borderRadius: 4,
+              whiteSpace: 'nowrap',
             }}
           >
             {place.fourchette_prix}
@@ -208,7 +211,7 @@ export default function SurgaPlaceCard({
             lineHeight: 1.3,
           }}
         >
-          {place.nom}
+          {reparerApostrophes(place.nom)}
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text2, #5A4E42)' }}>
           <MapPin size={13} color="var(--accent, #C75B00)" style={{ flexShrink: 0 }} />
@@ -225,17 +228,15 @@ export default function SurgaPlaceCard({
           color: 'var(--text2, #5A4E42)',
           lineHeight: 1.45,
           margin: 0,
-          display: '-webkit-box',
-          WebkitLineClamp: 3,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
+          // Résumé de 3 lignes par construction (260 caractères au plus) : affiché en entier. Le clamp laissait voir le
+          // haut d'une 4e ligne dans le remplissage.
           backgroundColor: 'var(--bg, #F8F5F0)',
           padding: '8px 10px',
           borderRadius: 8,
           borderLeft: '3px solid var(--accent, #C75B00)',
         }}
       >
-        {place.resume_honnete}
+        {reparerApostrophes(place.resume_honnete)}
       </p>
 
       {/* Ligne 4 : Spécialité & Tags */}
@@ -253,7 +254,7 @@ export default function SurgaPlaceCard({
           }}
         >
           <UtensilsCrossed size={10} style={{ marginRight: 4 }} />
-          {place.specialite}
+          {reparerApostrophes(place.specialite)}
         </span>
         {place.tags_ambiance?.slice(0, 3).map((tag) => (
           <span
@@ -281,6 +282,9 @@ export default function SurgaPlaceCard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          rowGap: 6,
+          columnGap: 8,
           borderTop: '1px solid var(--border, #E8DDD2)',
           paddingTop: 8,
           marginTop: 2,
@@ -342,6 +346,8 @@ export default function SurgaPlaceCard({
             fontSize: 12,
             fontWeight: 700,
             color: 'var(--surga-accent-ink, #A64B08)',
+            whiteSpace: 'nowrap',
+            minHeight: 32,
           }}
         >
           <span>Détails &amp; avis</span>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { GraduationCap, ChevronRight, Bell, Calendar } from 'lucide-react'
+import { reparerApostrophes } from '@/lib/surga-formatting'
 
 interface ConcoursApercu {
   id: string
@@ -63,8 +64,8 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
   return (
     <div className="surga-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* En-tête */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
           <div
             style={{
               width: 28,
@@ -84,7 +85,7 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
               Concours &amp; Examens
             </div>
             <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
-              Fonction publique &bull; Alertes J-30 / J-7 / J-1
+              Fonction publique &bull; alertes avant la clôture
             </div>
           </div>
         </div>
@@ -99,7 +100,9 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
             fontSize: 12,
             fontWeight: 700,
             cursor: 'pointer',
-            padding: '2px 6px',
+            padding: '8px 6px',
+            minHeight: 32,
+            flexShrink: 0,
             display: 'inline-flex',
             alignItems: 'center',
             gap: 2,
@@ -124,16 +127,16 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
               onClick={onOuvrirModal}
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                flexDirection: 'column',
                 padding: '8px 10px',
                 backgroundColor: 'var(--bg, #F8F5F0)',
                 borderRadius: 8,
                 cursor: 'pointer',
-                gap: 8,
+                gap: 4,
               }}
             >
-              <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* Ligne 1 : sigle et intitulé complet, sans coupure */}
+              <div style={{ minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 {c.sigle && (
                   <span
                     style={{
@@ -141,35 +144,22 @@ export default function SurgaConcoursDashboardCard({ onOuvrirModal }: SurgaConco
                       color: '#FFFFFF',
                       fontSize: 12,
                       fontWeight: 800,
-                      padding: '1px 5px',
+                      padding: '1px 6px',
                       borderRadius: 4,
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {c.sigle}
                   </span>
                 )}
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: 'var(--navy, #1C2B4A)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {c.titre}
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', lineHeight: 1.3, minWidth: 0 }}>
+                  {reparerApostrophes(c.titre)}
                 </div>
               </div>
 
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: 'var(--surga-accent-ink, #A64B08)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+              {/* Ligne 2 : échéance */}
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-accent-ink, #A64B08)' }}>
                 {c.echeances?.messageDelai || 'En cours'}
               </span>
             </div>

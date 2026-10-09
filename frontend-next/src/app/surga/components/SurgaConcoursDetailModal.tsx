@@ -6,6 +6,7 @@ import {
   ExternalLink, GraduationCap, MapPin, Phone, CheckSquare, Wallet,
 } from 'lucide-react'
 import { ConcoursItem } from './SurgaConcoursCard'
+import { reparerApostrophes } from '@/lib/surga-formatting'
 import {
   estChecklistConcoursEnNote,
   toggleChecklistConcours,
@@ -136,7 +137,7 @@ export default function SurgaConcoursDetailModal({
                 </span>
               )}
               <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3, #73675E)' }}>
-                Niveau requis : {concours.niveau_requis}
+                Niveau requis : {reparerApostrophes(concours.niveau_requis)}
               </span>
             </div>
             <h2
@@ -148,10 +149,10 @@ export default function SurgaConcoursDetailModal({
                 lineHeight: 1.35,
               }}
             >
-              {concours.titre}
+              {reparerApostrophes(concours.titre)}
             </h2>
             <div style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', marginTop: 2 }}>
-              {concours.organisme}
+              {reparerApostrophes(concours.organisme)}
             </div>
           </div>
 
@@ -234,7 +235,7 @@ export default function SurgaConcoursDetailModal({
           {/* Description succincte */}
           {concours.description && (
             <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: 0, lineHeight: 1.45 }}>
-              {concours.description}
+              {reparerApostrophes(concours.description)}
             </p>
           )}
 
@@ -290,7 +291,7 @@ export default function SurgaConcoursDetailModal({
                         style={{ marginTop: 2 }}
                       />
                       <span style={{ textDecoration: coche ? 'line-through' : 'none', flex: 1, lineHeight: 1.35 }}>
-                        {piece}
+                        {reparerApostrophes(piece)}
                       </span>
                     </label>
                   )

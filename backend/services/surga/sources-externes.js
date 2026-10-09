@@ -121,8 +121,19 @@ function interpreterMetNo(json, maintenant = new Date()) {
 async function lireMeteo(lat, lon) {
   // La source demande au plus quatre décimales et un agent qui identifie l'application.
   const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
-  const res = await axios.get(url, { timeout: 6000, headers: { 'User-Agent': agent(), Accept: 'application/json' } });
-  return interpreterMetNo(res.data);
+  // Une localité jamais demandée n'a rien en mémoire : une seule coupure de la source la laissait sans météo (le
+  // changement de localité « ne passait pas »). Un second essai suit, puis l'erreur remonte comme avant.
+  let derniere;
+  for (let essai = 0; essai < 2; essai++) {
+    try {
+      const res = await axios.get(url, { timeout: 6000, headers: { 'User-Agent': agent(), Accept: 'application/json' } });
+      return interpreterMetNo(res.data);
+    } catch (err) {
+      derniere = err;
+      if (essai === 0) await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+  throw derniere;
 }
 
 // ───────────────────────── Open-Meteo : marées et qualité de l'air ─────────────────────────

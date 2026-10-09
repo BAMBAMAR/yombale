@@ -8,7 +8,8 @@ const { pool } = require('../../models/db');
 
 const LOCAL_LE_PROJET_DIR = path.resolve(__dirname, '../../../../LE-PROJET');
 const LOCAL_TARGET_UNES_DIR = path.resolve(__dirname, '../../../frontend-next/public/surga/unes');
-const REMOTE_PROJETBI_JSON = 'https://projetbi.org/press.json';
+// www : le domaine sans www répond par une redirection permanente (308) ; l'adresse directe évite le détour.
+const REMOTE_PROJETBI_JSON = 'https://www.projetbi.org/press.json';
 
 const KNOWN_PAPERS = [
   { keywords: ['rewmi sport', 'rewmisport'], name: 'Rewmi Sports' },
@@ -150,7 +151,7 @@ async function synchroniserUnesProjetBi() {
         try { fs.copyFileSync(localSourceFile, targetFile); } catch (_) {}
       }
     } else {
-      publicUrl = `https://projetbi.org/${imageRelative}`;
+      publicUrl = `https://www.projetbi.org/${imageRelative}`;
     }
 
     let nomJournal = item.title && item.title !== 'Quotidien' ? item.title : `Journal N°${idx + 1}`;
@@ -223,6 +224,21 @@ async function assurerUnesInitiales() {
 /**
  * Récupère les Unes des journaux parus récemment
  */
+// Une image enregistrée avec un chemin local (« /surga/unes/… ») par un poste où le dossier LE-PROJET existe n'est pas
+// servie en ligne (les fichiers sont ignorés par git) : elle est relue depuis projetbi.org, d'où elle vient.
+const DOSSIER_REVUE_PROJETBI = 'https://www.projetbi.org/revuedepresse';
+function urlImagePublique(url) {
+  if (typeof url !== 'string' || !url.startsWith('/surga/unes/')) return url;
+  const fichier = path.basename(url);
+  return fs.existsSync(path.join(LOCAL_TARGET_UNES_DIR, fichier)) ? url : `${DOSSIER_REVUE_PROJETBI}/${fichier}`;
+}
+
+// Sans Une du jour, la synchronisation était tentée à chaque lecture (5 s d'attente au pire) : une fois par quart d'heure.
+const INTERVALLE_SYNC_SANS_UNE_MS = 15 * 60 * 1000;
+let derniereSyncSansUne = 0;
+// Jours d'ancienneté au-delà desquels la Une d'un journal n'est plus montrée.
+const JOURS_UNE_ACCEPTES = 3;
+
 async function recupererUnesDuJour({ limit = 50 } = {}) {
   await assurerUnesInitiales();
 
@@ -231,7 +247,8 @@ async function recupererUnesDuJour({ limit = 50 } = {}) {
     const checkToday = await pool.query(
       `SELECT COUNT(*)::int as count FROM surga_unes_presse WHERE date_parution = CURRENT_DATE`
     );
-    if ((checkToday.rows[0]?.count || 0) === 0) {
+    if ((checkToday.rows[0]?.count || 0) === 0 && Date.now() - derniereSyncSansUne > INTERVALLE_SYNC_SANS_UNE_MS) {
+      derniereSyncSansUne = Date.now();
       await synchroniserUnesProjetBi();
     }
   } catch (err) {
@@ -239,16 +256,22 @@ async function recupererUnesDuJour({ limit = 50 } = {}) {
   }
 
   try {
+    // Pour chaque journal, sa dernière parution : celle d'hier tient lieu de Une tant que celle du jour n'est pas parue.
     const { rows } = await pool.query(
-      `SELECT id, nom_journal, image_url, description, date_parution, created_at
-       FROM surga_unes_presse
-       WHERE nom_journal NOT LIKE 'Journal N°%'
-       ORDER BY date_parution DESC, created_at DESC
+      `SELECT * FROM (
+         SELECT DISTINCT ON (nom_journal) id, nom_journal, image_url, description, date_parution, created_at
+         FROM surga_unes_presse
+         WHERE nom_journal NOT LIKE 'Journal N°%'
+           AND date_parution <= CURRENT_DATE
+           AND date_parution >= CURRENT_DATE - $2::int
+         ORDER BY nom_journal, date_parution DESC, created_at DESC
+       ) dernieres
+       ORDER BY date_parution DESC, created_at ASC
        LIMIT $1`,
-      [limit]
+      [limit, JOURS_UNE_ACCEPTES]
     );
 
-    if (rows.length > 0) return rows;
+    if (rows.length > 0) return rows.map((r) => ({ ...r, image_url: urlImagePublique(r.image_url) }));
   } catch (err) {
     console.warn('[SURGA KIOSQUE FETCH WARN]:', err.message);
   }

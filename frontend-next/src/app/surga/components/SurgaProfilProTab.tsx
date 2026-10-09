@@ -69,6 +69,7 @@ export default function SurgaProfilProTab({
 }: SurgaProfilProTabProps) {
   const [nouvelleCompetence, setNouvelleCompetence] = useState('')
   const [resultat, setResultat] = useState<ResultatEnregistrement | null>(null)
+  const [manquants, setManquants] = useState({ nom: false, titre: false })
 
   const handleChangeChamp = (champ: keyof ProfilProData, valeur: any) => {
     onChange({ ...profil, [champ]: valeur })
@@ -134,6 +135,16 @@ export default function SurgaProfilProTab({
   const handleSoumettre = async (e: React.FormEvent) => {
     e.preventDefault()
     setResultat(null)
+    // Champs obligatoires : contrôlés ici (le formulaire est en noValidate). La bulle du navigateur bloquait l'envoi
+    // sur un champ hors de l'écran, sans rien montrer près du bouton : « aucun message après enregistrement ».
+    const nom = !(profil.nom_complet || '').trim()
+    const titre = !(profil.titre_professionnel || '').trim()
+    setManquants({ nom, titre })
+    if (nom || titre) {
+      setResultat({ ok: false, message: `Profil non enregistré : renseignez ${nom && titre ? 'votre nom et votre titre professionnel' : nom ? 'votre nom et prénom' : 'votre titre professionnel'}.` })
+      document.getElementById(nom ? 'surga-profil-nom' : 'surga-profil-titre')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      return
+    }
     // « Enregistré » ne s'affiche que si le serveur l'a confirmé ; un refus reste à l'écran jusqu'au prochain essai.
     const donne = await onSave()
     setResultat(donne)
@@ -141,7 +152,7 @@ export default function SurgaProfilProTab({
   }
 
   return (
-    <form onSubmit={handleSoumettre} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <form onSubmit={handleSoumettre} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* 1. Coordonnées & Titre */}
       <div className="surga-card" style={{ padding: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -155,25 +166,31 @@ export default function SurgaProfilProTab({
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-text2, #475569)', display: 'block', marginBottom: 4 }}>Nom et prénom *</label>
             <input
+              id="surga-profil-nom"
               type="text"
               required
+              aria-invalid={manquants.nom}
               value={profil.nom_complet || ''}
-              onChange={(e) => handleChangeChamp('nom_complet', e.target.value)}
+              onChange={(e) => { handleChangeChamp('nom_complet', e.target.value); if (manquants.nom) setManquants((m) => ({ ...m, nom: false })) }}
               placeholder="Ex: Awa Ndiaye"
-              style={{ width: '100%', padding: '10px 12px', fontSize: 14, borderRadius: 8, border: '1px solid var(--surga-border, #E2E8F0)', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 12px', fontSize: 14, borderRadius: 8, border: `1px solid ${manquants.nom ? 'var(--surga-danger, #DC2626)' : 'var(--surga-border, #E2E8F0)'}`, boxSizing: 'border-box' }}
             />
+            {manquants.nom && <div role="alert" style={{ marginTop: 4, fontSize: 12, fontWeight: 700, color: 'var(--surga-danger, #DC2626)' }}>Indiquez votre nom et prénom.</div>}
           </div>
 
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--surga-text2, #475569)', display: 'block', marginBottom: 4 }}>Titre professionnel *</label>
             <input
+              id="surga-profil-titre"
               type="text"
               required
+              aria-invalid={manquants.titre}
               value={profil.titre_professionnel || ''}
-              onChange={(e) => handleChangeChamp('titre_professionnel', e.target.value)}
-              placeholder="Ex: Comptable Général / Développeur"
-              style={{ width: '100%', padding: '10px 12px', fontSize: 14, borderRadius: 8, border: '1px solid var(--surga-border, #E2E8F0)', boxSizing: 'border-box' }}
+              onChange={(e) => { handleChangeChamp('titre_professionnel', e.target.value); if (manquants.titre) setManquants((m) => ({ ...m, titre: false })) }}
+              placeholder="Ex : Comptable général"
+              style={{ width: '100%', padding: '10px 12px', fontSize: 14, borderRadius: 8, border: `1px solid ${manquants.titre ? 'var(--surga-danger, #DC2626)' : 'var(--surga-border, #E2E8F0)'}`, boxSizing: 'border-box' }}
             />
+            {manquants.titre && <div role="alert" style={{ marginTop: 4, fontSize: 12, fontWeight: 700, color: 'var(--surga-danger, #DC2626)' }}>Indiquez votre titre professionnel (ex : Comptable).</div>}
           </div>
 
           <div>
@@ -238,14 +255,14 @@ export default function SurgaProfilProTab({
             value={nouvelleCompetence}
             onChange={(e) => setNouvelleCompetence(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAjouterCompetence() } }}
-            placeholder="Ajouter une compétence (ex: Gestion de paie, React, SYSCOHADA)..."
-            style={{ flex: 1, padding: '10px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--surga-border, #E2E8F0)', boxSizing: 'border-box' }}
+            placeholder="Ex : SYSCOHADA, Excel"
+            style={{ flex: 1, minWidth: 0, padding: '10px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--surga-border, #E2E8F0)', boxSizing: 'border-box' }}
           />
           <button
             type="button"
             onClick={handleAjouterCompetence}
             className="surga-btn-secondary"
-            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 14px', fontSize: 13, minHeight: 40 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px', fontSize: 13, minHeight: 40, width: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}
           >
             <Plus size={15} />
             <span>Ajouter</span>

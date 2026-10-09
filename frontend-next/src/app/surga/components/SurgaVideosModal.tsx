@@ -262,7 +262,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
               type="text"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher une émission, une série ou un combat..."
+              placeholder="Émission, série, combat…"
               style={{
                 border: 'none',
                 outline: 'none',
@@ -292,8 +292,8 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
             gap: 6,
             padding: '8px 16px',
             borderBottom: '1px solid #F1F5F9',
-            overflowX: 'auto',
-            whiteSpace: 'nowrap',
+            // Les cinq onglets passent à la ligne : « Mes suivis » restait caché hors de l'écran dans un défilement.
+            flexWrap: 'wrap',
           }}
         >
           {[
