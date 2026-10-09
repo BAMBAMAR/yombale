@@ -528,3 +528,9 @@ audités par cette campagne.
 - En cas de doute (portée, conflit avec l'existant, flux WhatsApp), poser la question
   (`docs/surga/INTEGRATION_NOPALOU.md`, section 3).
 - Ne jamais toucher au comparateur d'achats ni à la Caisse PRO.
+
+---
+
+## Correctifs de mise en ligne (2026-10-09)
+- [x] `DONE` Connexion Surga : cookie de session signé avec `JWT_SECRET`, `jwtVersion` transmise aux appels serveur (à contrôler en production après déploiement).
+- [x] `DONE` Installation de Surga depuis l'application Nopalou installée (invite sur `beforeinstallprompt`, guide « Depuis votre navigateur »). Reste à essayer sur un téléphone réel.

@@ -3,7 +3,10 @@ import { SignJWT, decodeJwt } from 'jose'
 import { cookies } from 'next/headers'
 import { verifierJetonSession } from './session-verify'
 
-const key = new TextEncoder().encode(process.env.SESSION_SECRET || process.env.JWT_SECRET)
+// Le cookie est relu tel quel par le backend (appels du navigateur vers /api/*), qui ne vérifie qu'avec JWT_SECRET.
+// Signé avec un SESSION_SECRET distinct, il était refusé en 401 : la connexion « passait » puis le compte restait
+// déconnecté. La vérification (session-verify.ts) accepte les deux clés, donc les cookies déjà émis restent lus.
+const key = new TextEncoder().encode(process.env.JWT_SECRET || process.env.SESSION_SECRET)
 
 const COOKIE_NAME = 'nopalou_session'
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 jours

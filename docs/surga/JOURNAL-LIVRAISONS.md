@@ -3,6 +3,12 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Correctif connexion (signature du cookie de session) et installation PWA depuis l'app Nopalou] — push de `main` ordonné par l'utilisateur
+- **Objet :** (1) connexion Surga par code WhatsApp acceptée mais compte resté déconnecté en production ; (2) impossibilité d'installer Surga depuis l'application Nopalou déjà installée.
+- **Connexion :** cause probable, non vérifiée sur Render : cookie `nopalou_session` signé avec `SESSION_SECRET` côté frontend, vérifié avec `JWT_SECRET` côté backend, deux secrets distincts dans `render.yaml` ; l'appel navigateur `/api/auth/profil` répondait 401. `session.ts` signe désormais avec `JWT_SECRET` d'abord (lecture des deux clés inchangée). `backend-fetch.ts` transmet `jwtVersion` (sans elle, comptes déjà déconnectés une fois refusés par le backend, SRG-A1-005).
+- **Installation PWA :** `SurgaPwaInstallPrompt.tsx` ne s'arrête plus en mode autonome. Invite d'office seulement si `beforeinstallprompt` est reçu ; sinon le bouton des Réglages ouvre le guide « Depuis votre navigateur » (copie du lien, Chrome ou Safari, « Installer l'application » / « Sur l'écran d'accueil »). Composant à 306 lignes.
+- **Tests :** `tsc --noEmit` 0 erreur ; frontend 153 sur 153. **Limites :** connexion en production et installation sur téléphone réel non rejouées ; Chrome peut ne pas proposer l'installation depuis la fenêtre Nopalou (le guide sert alors de solution) ; dans l'app Surga déjà installée le bouton ouvre aussi ce guide (Surga et Nopalou indiscernables en mode autonome).
+- **Contrôle après déploiement :** `/surga`, connexion, rechargement, `/api/auth/profil` ≠ 401. **Retour arrière :** `git revert` du commit `fix(surga-session)`.
 ### [2026-10-09 — Audit Data, Vidéos Politique & Société, et PWA Dédiée avec Emblème Premium] — aucun push
 - **Objet :**
   1. Audit approfondi de la chaîne complète `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE`. Éradication des données fausses, périmées ou hallucinées.

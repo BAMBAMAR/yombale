@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
-import { Download, X, Share, Smartphone, Sparkles, CheckCircle2 } from 'lucide-react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { Download, X, Share, Smartphone, Sparkles, CheckCircle2, Copy, Globe } from 'lucide-react'
+import { ADRESSE_SURGA } from '@/lib/surga-adresse'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -23,6 +24,8 @@ export default function SurgaPwaInstallPrompt() {
   const [showBanner, setShowBanner] = useState(false)
   const [showIOSModal, setShowIOSModal] = useState(false)
   const [estInstalle, setEstInstalle] = useState(false)
+  const [lienCopie, setLienCopie] = useState(false)
+  const promptRef = useRef<BeforeInstallPromptEvent | null>(null)
 
   // Vérification de l'état PWA au montage
   useEffect(() => {
@@ -34,10 +37,10 @@ export default function SurgaPwaInstallPrompt() {
       (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
       document.referrer.includes('android-app://')
 
-    if (checkStandalone) {
-      setIsStandalone(true)
-      return
-    }
+    // Une fenêtre autonome n'est pas forcément Surga : dans l'application Nopalou installée, /surga s'ouvre dans la même
+    // fenêtre (portée « / »). On n'abandonne donc pas ici : l'invite ne s'affiche d'office que si le navigateur propose
+    // lui-même d'installer Surga (beforeinstallprompt), et le bouton des Réglages ouvre le guide « depuis le navigateur ».
+    if (checkStandalone) setIsStandalone(true)
 
     // 2. Détection iOS Safari
     const ua = window.navigator.userAgent
@@ -55,7 +58,7 @@ export default function SurgaPwaInstallPrompt() {
     }
 
     // Si iOS et pas encore masqué, afficher la proposition après un léger délai de démarrage (800ms)
-    if (isIOSDevice && doitAfficher) {
+    if (isIOSDevice && doitAfficher && !checkStandalone) {
       const timer = setTimeout(() => setShowBanner(true), 800)
       return () => clearTimeout(timer)
     }
@@ -63,6 +66,7 @@ export default function SurgaPwaInstallPrompt() {
     // 4. Écoute de l'événement natif Chrome / Android / Edge
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault()
+      promptRef.current = e as BeforeInstallPromptEvent
       setDeferredPrompt(e as BeforeInstallPromptEvent)
       if (doitAfficher) {
         setShowBanner(true)
@@ -80,6 +84,11 @@ export default function SurgaPwaInstallPrompt() {
 
     // 6. Écoute de la demande d'ouverture forcée (ex: depuis l'onglet Réglages)
     const handleDemandeManuelle = () => {
+      // Fenêtre autonome sans invite du navigateur : on est dans une autre application installée (Nopalou).
+      if (checkStandalone && !promptRef.current) {
+        setShowIOSModal(true)
+        return
+      }
       setShowBanner(true)
       if (isIOSDevice) {
         setShowIOSModal(true)
@@ -132,8 +141,18 @@ export default function SurgaPwaInstallPrompt() {
     } catch {}
   }, [])
 
-  // Ne rien afficher si déjà en mode PWA autonome
-  if (isStandalone || estInstalle) return null
+  // Fenêtre autonome d'une autre application installée (Nopalou) : Surga s'installe depuis le navigateur.
+  const guideNavigateur = isStandalone && !deferredPrompt
+
+  const copierLien = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(ADRESSE_SURGA)
+      setLienCopie(true)
+      setTimeout(() => setLienCopie(false), 2500)
+    } catch {}
+  }, [])
+
+  if (estInstalle) return null
 
   return (
     <>
@@ -215,7 +234,7 @@ export default function SurgaPwaInstallPrompt() {
                     Installer Surga
                   </h3>
                   <span style={{ fontSize: 12, color: 'var(--surga-text3, #536175)' }}>
-                    {isIOS ? 'Sur votre iPhone / iPad' : 'Sur votre écran d\'accueil'}
+                    {guideNavigateur ? 'Depuis votre navigateur' : isIOS ? 'Sur votre iPhone / iPad' : 'Sur votre écran d\'accueil'}
                   </span>
                 </div>
               </div>
@@ -229,7 +248,40 @@ export default function SurgaPwaInstallPrompt() {
               </button>
             </div>
 
-            {/* Étapes illustrées sans aucun émoji */}
+            {guideNavigateur ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--surga-text1, #0F172A)' }}>
+                  Vous êtes dans une application déjà installée (Nopalou) : Surga s&apos;installe séparément, depuis votre navigateur.
+                </p>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', borderRadius: 12, background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--surga-border, #E2E8F0)' }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(2, 132, 199, 0.12)', color: 'var(--surga-info, #0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, flexShrink: 0 }}>1</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--surga-text1, #0F172A)', minWidth: 0 }}>
+                    Copiez le lien <strong style={{ wordBreak: 'break-all' }}>{ADRESSE_SURGA.replace(/^https?:\/\//, '')}</strong>
+                    <div style={{ marginTop: 8 }}>
+                      <button type="button" onClick={copierLien} className="surga-btn-secondary" style={{ fontSize: 13, padding: '8px 14px', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                        {lienCopie ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                        <span>{lienCopie ? 'Lien copié' : 'Copier le lien'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', borderRadius: 12, background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--surga-border, #E2E8F0)' }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(217, 119, 6, 0.12)', color: 'var(--surga-accent-ink, #A64B08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, flexShrink: 0 }}>2</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--surga-text1, #0F172A)' }}>
+                    Ouvrez Chrome ou Safari{' '}
+                    <span style={{ display: 'inline-flex', verticalAlign: 'middle', color: 'var(--surga-accent-ink, #A64B08)' }}><Globe size={14} /></span>{' '}
+                    et collez le lien dans la barre d&apos;adresse.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', borderRadius: 12, background: 'rgba(5, 150, 105, 0.05)', border: '1px solid rgba(5, 150, 105, 0.2)' }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(5, 150, 105, 0.12)', color: 'var(--surga-emerald-ink, #047857)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><CheckCircle2 size={15} /></div>
+                  <div style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--surga-text1, #0F172A)' }}>
+                    Touchez <strong>Installer</strong> dans la bannière Surga, ou le menu du navigateur puis <strong>« Installer l&apos;application »</strong> (sur iPhone : <strong>Partager</strong>, puis <strong>« Sur l&apos;écran d&apos;accueil »</strong>).
+                  </div>
+                </div>
+              </div>
+            ) : (
+            /* Étapes illustrées sans aucun émoji */
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', borderRadius: 12, background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--surga-border, #E2E8F0)' }}>
                 <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(2, 132, 199, 0.12)', color: 'var(--surga-info, #0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, flexShrink: 0 }}>
@@ -266,6 +318,7 @@ export default function SurgaPwaInstallPrompt() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Bouton de confirmation */}
             <button

@@ -31,7 +31,8 @@ export async function backendFetch(
     const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET
     if (secret) {
       const key = new TextEncoder().encode(secret)
-      const token = await new SignJWT({ userId: session.userId, email: session.email })
+      // Sans la version de session, le backend lit « version 1 » et refuse tout compte qui s'est déjà déconnecté une fois.
+      const token = await new SignJWT({ userId: session.userId, email: session.email, jwtVersion: session.jwtVersion })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime('2m')
         .sign(key)
