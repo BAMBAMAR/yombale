@@ -78,10 +78,6 @@ router.post('/abonnements/initier', tokenOptional, async (req, res) => {
       });
     }
 
-    const host = req.get('host');
-    const protocol = req.protocol;
-    const baseUrl = `${protocol}://${host}`;
-
     const resultat = await initierSouscription({
       userId,
       phone,
@@ -89,7 +85,6 @@ router.post('/abonnements/initier', tokenOptional, async (req, res) => {
       cycle,
       provider,
       metadata,
-      baseUrl,
     });
 
     return res.json(resultat);

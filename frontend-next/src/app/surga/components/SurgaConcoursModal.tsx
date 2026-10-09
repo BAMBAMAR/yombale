@@ -262,7 +262,7 @@ export default function SurgaConcoursModal({ isOpen, onClose, onOpenAuth }: Surg
         </div>
 
         {/* Corps principal */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="surga-liste-fixe" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* Recherche */}
           <div style={{ position: 'relative' }}>
             <input

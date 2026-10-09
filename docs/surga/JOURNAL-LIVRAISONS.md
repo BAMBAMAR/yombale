@@ -3,6 +3,15 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Démarches sur mobile, logo de la PWA, Kiosque sans titres, retour de paiement Wave, guide d'installation adapté] — push de `main` ordonné par l'utilisateur
+- **Objet :** captures de l'utilisateur : fiches de démarches qui se chevauchent, bandeau du CV écrasé, ancien logo vu sur la PWA, titres de journaux faux dans le Kiosque, page JSON de Render après un paiement Wave refusé, guide d'installation limité à Safari, Surga introuvable à installer quand Nopalou l'est.
+- **Interface :** cartes de listes à défilement qui ne rétrécissent plus (`.surga-liste-fixe`) ; boutons `.surga-btn-*` à largeur propre dans les rangées ; noms de journaux retirés du Kiosque public.
+- **Logo :** cache Cloudflare `immutable` d'un an sur des adresses d'icônes sans version. Nouvelle adresse `/icons/logo-n.svg`, `?v=19`, `/apple-icon`, cache 24 h, service worker v30. À faire : vider le cache Cloudflare.
+- **Paiement :** adresse de retour de Wave = site (`FRONTEND_URL`, sinon `https://nopalou.com`) ; `useRetourPaiement` (message clair, offre rouverte, vérification après succès) ; redirection des navigateurs vers le site depuis le backend ; 3 tests.
+- **Installation :** `surga-pwa-plateforme.ts` + `SurgaPwaGuide.tsx` (guide par appareil et navigateur) ; bannière sans invite du navigateur après 3,5 s ; `id` du manifeste de Surga. Chrome peut ne pas proposer Surga tant que Nopalou est installé et que Surga reste sous `nopalou.com/surga` : adresse propre à décider (D77).
+- **Tests :** typage 0 erreur ; frontend 174 sur 174 ; backend Surga 239 sur 244 (5 échecs antérieurs).
+- **Limites :** téléphone réel, Nopalou installé et Wave réel non essayés ; `FRONTEND_URL` à contrôler chez Render ; avertissements CSP « report-only » laissés.
+- **Retour arrière :** `git revert` du commit `fix(surga-ui)`.
 ### [2026-10-09 — Audit mobile des fenêtres, CV, météo, Kiosque, aide, statistiques admin, barre de Nopalou] — push de `main` ordonné par l'utilisateur
 - **Objet :** retours de l'utilisateur après la mise en ligne : textes tronqués, superpositions et encombrement sur mobile ; CV de mauvaise qualité ; Kiosque (images 404, Unes d'hier) ; météo qui ne change pas de localité ; « Mes équipes » non mémorisées ; absence d'aide et de partage ; statistiques de Surga dans l'admin ; barre de Nopalou débordante.
 - **Mobile :** 26 écrans mesurés à 360 px (débordement, texte tronqué, retour à la ligne, petites cibles, superpositions) puis corrigés (liste dans `CLAUDE.md`, entrée du 2026-10-09). 0 texte tronqué après correction.

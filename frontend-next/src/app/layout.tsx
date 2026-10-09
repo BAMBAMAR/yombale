@@ -132,16 +132,16 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/icon', type: 'image/png', sizes: '32x32' },
-      { url: '/icons/icon-192.png?v=18', type: 'image/png', sizes: '192x192' },
-      { url: '/icons/icon-512.png?v=18', type: 'image/png', sizes: '512x512' },
-      { url: '/icons/icon-1024.png?v=18', type: 'image/png', sizes: '1024x1024' },
+      { url: '/icons/icon-192.png?v=19', type: 'image/png', sizes: '192x192' },
+      { url: '/icons/icon-512.png?v=19', type: 'image/png', sizes: '512x512' },
+      { url: '/icons/icon-1024.png?v=19', type: 'image/png', sizes: '1024x1024' },
     ],
-    shortcut: '/icons/icon-192.png?v=18',
+    shortcut: '/icons/icon-192.png?v=19',
     apple: [
-      { url: '/apple-icon.png?v=18', sizes: '180x180', type: 'image/png' },
-      { url: '/icons/icon-192.png?v=18', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png?v=18', sizes: '512x512', type: 'image/png' },
-      { url: '/icons/icon-1024.png?v=18', sizes: '1024x1024', type: 'image/png' },
+      { url: '/apple-icon?v=19', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/icon-192.png?v=19', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png?v=19', sizes: '512x512', type: 'image/png' },
+      { url: '/icons/icon-1024.png?v=19', sizes: '1024x1024', type: 'image/png' },
     ],
   },
 };
@@ -151,7 +151,7 @@ const ORG_JSON_LD = {
   '@type': 'WebSite',
   name: 'Nopalou',
   url: 'https://nopalou.com',
-  logo: 'https://nopalou.com/icons/icon-512.svg',
+  logo: 'https://nopalou.com/icons/icon-512.svg?v=19',
   description: 'Plateforme de commerce digital, comparateur de prix et solutions marchandes au Sénégal (boutiques en ligne, caisse tactile POS, commandes WhatsApp).',
   inLanguage: 'fr',
 }
@@ -167,7 +167,7 @@ const ORG_ENTITY_JSON_LD = {
   url: 'https://nopalou.com',
   logo: {
     '@type': 'ImageObject',
-    url: 'https://nopalou.com/icons/icon-512.svg',
+    url: 'https://nopalou.com/icons/icon-512.svg?v=19',
     width: 512,
     height: 512,
   },
@@ -271,7 +271,7 @@ export default async function RootLayout({
             <nav className="navbar" aria-label="Navigation principale">
               <div className="navbar-top-row">
                 <a href="/" className="logo" aria-label="Nopalou - Plateforme de commerce digital et comparateur au Sénégal">
-                  <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
+                  <Image src="/icons/logo-n.svg" alt="" className="logo-icon" width={28} height={28} priority />
                   <span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>
                 </a>
                 <NavbarLinksNav />
@@ -343,7 +343,7 @@ export default async function RootLayout({
             {/* Colonne 1 — Brand */}
             <div className="footer-brand">
               <a href="/" className="footer-logo">
-                <Image src="/icons/logo-mark.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
+                <Image src="/icons/logo-n.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
                 <span className="footer-logo-name"><span style={{ color: '#fff' }}>Nopa</span><span style={{ color: '#C75B00' }}>lou</span></span>
               </a>
               <p className="footer-tagline">La plateforme de commerce digital au Sénégal : comparez les offres au meilleur prix, achetez auprès de boutiques partenaires et propulsez votre activité commerciale.</p>

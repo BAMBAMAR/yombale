@@ -178,7 +178,7 @@ export default function AdminSidebarClient({ logoutAction, adminUser }: AdminSid
       {/* En-tête mobile sticky (visible uniquement <= 900px) */}
       <header className="admin-mobile-topbar" aria-label="En-tête mobile administration">
         <Link href="/admin" className="admin-mobile-topbar-logo" onClick={() => setMobileMenuOpen(false)}>
-          <Image src="/icons/logo-mark.svg" alt="" width={22} height={22} priority />
+          <Image src="/icons/logo-n.svg" alt="" width={22} height={22} priority />
           <div>
             Nopa<span>lou</span>
             <em>Control Center</em>
@@ -210,7 +210,7 @@ export default function AdminSidebarClient({ logoutAction, adminUser }: AdminSid
             className="admin-logo"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <Image src="/icons/logo-mark.svg" alt="" width={24} height={24} style={{ flexShrink: 0 }} priority />
+            <Image src="/icons/logo-n.svg" alt="" width={24} height={24} style={{ flexShrink: 0 }} priority />
             <div>
               Nopa<span>lou</span>
               <em>Control Center</em>

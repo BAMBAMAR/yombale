@@ -84,7 +84,7 @@ export function organizationSchema() {
     '@type': 'Organization',
     name: 'Nopalou',
     url: 'https://nopalou.com',
-    logo: 'https://nopalou.com/icons/icon-512.svg',
+    logo: 'https://nopalou.com/icons/icon-512.svg?v=19',
     description: 'Plateforme de commerce digital, comparateur de prix et solutions marchandes au Sénégal',
     sameAs: [
       'https://www.facebook.com/profile.php?id=61591675701726',

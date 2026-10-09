@@ -197,12 +197,12 @@ export default function SurgaDemarchesModal({
             justifyContent: 'space-between',
           }}
         >
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
               Démarches Administratives
             </h2>
             <p style={{ fontSize: 12, color: 'var(--text2, #5A4E42)', margin: '2px 0 0 0' }}>
-              Fiches officielles vérifiées du Sénégal • Pièces, coûts FCFA &amp; délais réels
+              Fiches officielles du Sénégal : pièces, coûts et délais
             </p>
           </div>
           <button
@@ -246,7 +246,7 @@ export default function SurgaDemarchesModal({
                 type="button"
                 onClick={onOpenPremium}
                 className="surga-btn-primary"
-                style={{ fontSize: 12, padding: '4px 8px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ fontSize: 12, padding: '4px 8px', whiteSpace: 'nowrap', width: 'auto', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 }}
               >
                 <Sparkles size={11} />
                 <span>{libelleAbonnement(offre)}</span>
@@ -284,7 +284,7 @@ export default function SurgaDemarchesModal({
             }}
           >
             <BookOpen size={15} />
-            <span>Guide officiel ({demarches.length})</span>
+            <span style={{ whiteSpace: 'nowrap' }}>Guide ({demarches.length})</span>
           </button>
           <button
             type="button"
@@ -307,7 +307,7 @@ export default function SurgaDemarchesModal({
             }}
           >
             <BookmarkCheck size={15} />
-            <span>Mes démarches en cours ({suivis.length})</span>
+            <span style={{ whiteSpace: 'nowrap' }}>En cours ({suivis.length})</span>
           </button>
         </div>
 
@@ -362,13 +362,14 @@ export default function SurgaDemarchesModal({
           </form>
 
           {/* Filtres par catégorie */}
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+          <div className="surga-scroll-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, flexShrink: 0 }}>
             {CATEGORIES_FILTRE.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => setCategorieFiltre(cat.id)}
                 style={{
+                  flexShrink: 0,
                   padding: '4px 10px',
                   borderRadius: 20,
                   fontSize: 12,
@@ -391,7 +392,7 @@ export default function SurgaDemarchesModal({
         </div>
 
         {/* Corps de la modale / Liste */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="surga-liste-fixe" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {chargement ? (
             <div style={{ textAlign: 'center', padding: '30px 0', fontSize: 13, color: 'var(--text3, #73675E)' }}>
               Recherche dans le guide officiel...

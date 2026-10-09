@@ -31,8 +31,8 @@ export default function SurgaBandeauDroit({ produit, estPremium, limite, utilise
         border: estPremium ? '1.5px solid var(--price, #0A5C36)' : '1px solid var(--border, #E8DDD2)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '1 1 180px' }}>
           {estPremium ? <Crown size={18} color="var(--price, #0A5C36)" /> : <Icone size={18} color="var(--navy, #1C2B4A)" />}
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{etat.titre}</div>
@@ -40,7 +40,7 @@ export default function SurgaBandeauDroit({ produit, estPremium, limite, utilise
           </div>
         </div>
         {!estPremium && offre && offre.ventes_ouvertes && (
-          <button type="button" onClick={onOpenPremium} className="surga-btn-secondary" style={{ fontSize: 12, padding: '5px 10px', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <button type="button" onClick={onOpenPremium} className="surga-btn-secondary" style={{ fontSize: 12, padding: '5px 10px', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap', width: 'auto' }}>
             {libelleAbonnement(offre)}
           </button>
         )}

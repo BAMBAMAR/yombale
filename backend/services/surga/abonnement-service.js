@@ -147,7 +147,8 @@ async function initierSouscription({ userId, phone, planKey, cycle = 'mensuel', 
   const abonnementCree = rows[0];
 
   // Construction des URLs de retour
-  const origin = baseUrl || process.env.PUBLIC_URL || 'https://nopalou.com';
+  // Adresse du SITE (nopalou.com), jamais l'hôte du backend : Wave y renvoie le client, et le backend ne sert aucune page.
+  const origin = (process.env.FRONTEND_URL || process.env.PUBLIC_URL || 'https://nopalou.com').replace(/\/+$/, '');
   const successUrl = `${origin}/surga?paiement=succes&ref=${referencePaiement}`;
   const errorUrl = `${origin}/surga?paiement=erreur&ref=${referencePaiement}`;
 

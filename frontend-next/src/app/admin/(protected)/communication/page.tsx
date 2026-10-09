@@ -8,25 +8,25 @@ const VISUELS = [
   {
     titre: 'Logo Master Vectoriel SVG (Format Original)',
     desc: 'Format SVG vectoriel infini sans perte — Idéal pour impression grand format, packaging, sérigraphie, presse et découpe',
-    url: '/icons/logo-mark.svg',
+    url: '/icons/logo-n.svg',
     usage: 'Vectoriel · Print & Packaging',
   },
   {
     titre: 'Logo Master PNG Ultra-HD (1024 × 1024 px)',
     desc: '1024 × 1024 px — Fond transparent alpha, dégradé solaire 4 étapes officiel, haute précision 1:1',
-    url: '/icons/icon-1024.png',
+    url: '/icons/icon-1024.png?v=19',
     usage: 'Master Graphisme · Transparent',
   },
   {
     titre: 'Logo Master PNG Web & App (512 × 512 px)',
     desc: '512 × 512 px — Fond transparent alpha, format standard haute fidélité pour web, applications et signatures',
-    url: '/icons/icon-512.png',
+    url: '/icons/icon-512.png?v=19',
     usage: 'Web & Digital · Transparent',
   },
   {
     titre: 'Avatar Profil WhatsApp Business (512 × 512 px)',
     desc: '512 × 512 px — Format carré avec marge de sécurité anti-rogne spécialement calibré pour la photo de profil ronde Meta WhatsApp',
-    url: '/icons/icon-maskable-512.png',
+    url: '/icons/icon-maskable-512.png?v=19',
     usage: 'WhatsApp Meta · Photo de Profil',
   },
   {

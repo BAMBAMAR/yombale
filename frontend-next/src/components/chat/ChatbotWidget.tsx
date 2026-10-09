@@ -176,7 +176,7 @@ export default function ChatbotWidget() {
           aria-label="Afficher l'assistant Nopalou"
         >
           <img
-            src="/icons/logo-mark.svg"
+            src="/icons/logo-n.svg"
             alt="Assistant Nopalou"
             width={20}
             height={20}
@@ -198,7 +198,7 @@ export default function ChatbotWidget() {
               <X size={18} />
             ) : (
               <img
-                src="/icons/logo-mark.svg"
+                src="/icons/logo-n.svg"
                 alt=""
                 width={18}
                 height={18}
@@ -235,7 +235,7 @@ export default function ChatbotWidget() {
             <div className="npl-chat-header-info">
               <div className="npl-chat-header-avatar">
                 <img
-                  src="/icons/logo-mark.svg"
+                  src="/icons/logo-n.svg"
                   alt="Nopalou Officiel"
                   width={36}
                   height={36}

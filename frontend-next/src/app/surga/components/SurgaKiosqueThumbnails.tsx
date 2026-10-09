@@ -47,7 +47,7 @@ export default function SurgaKiosqueThumbnails({
             key={une.id}
             type="button"
             onClick={() => onSelectIndex(idx)}
-            title={une.nom_journal}
+            aria-label={`Une ${idx + 1}`}
             style={{
               background: 'none',
               border: estActif ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
@@ -62,7 +62,7 @@ export default function SurgaKiosqueThumbnails({
           >
             <img
               src={une.image_url}
-              alt={une.nom_journal}
+              alt=""
               loading="lazy"
               style={{
                 width: 34,

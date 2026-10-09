@@ -23,6 +23,7 @@ import {
 import { quartierDe } from '@/lib/surga-meteo'
 import { useSurgaBriefing } from '@/lib/useSurgaBriefing'
 import { useSurgaOnglet } from '@/lib/useSurgaOnglet'
+import { useRetourPaiement } from '@/lib/useRetourPaiement'
 import { useSurgaPreferences } from '@/lib/useSurgaPreferences'
 import { parametresBriefing, enregistrerPreferences } from '@/lib/surga-preferences-sync'
 import { deposerMontantCalcule } from '@/lib/surga-calculator'
@@ -144,6 +145,9 @@ export default function SurgaPage() {
     window.addEventListener('surga-session-perdue', surSessionPerdue)
     return () => window.removeEventListener('surga-session-perdue', surSessionPerdue)
   }, [])
+
+  // Retour de Wave (?paiement=succes|erreur) : message clair, offre rouverte en cas d'échec, abonnement vérifié en cas de succès.
+  useRetourPaiement({ onActif: () => setStatutPremium({ estPremium: true, joursRestants: 30 }), onEchec: () => setIsPremiumOpen(true) })
 
   // Chargement du script audio si l'option est active
   useEffect(() => {

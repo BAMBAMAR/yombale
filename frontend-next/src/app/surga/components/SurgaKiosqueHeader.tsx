@@ -77,7 +77,7 @@ export default function SurgaKiosqueHeader({
               textOverflow: 'ellipsis',
             }}
           >
-            {selectedUne.nom_journal}
+            Kiosque des Unes
           </span>
           <span
             style={{
@@ -108,7 +108,6 @@ export default function SurgaKiosqueHeader({
             const lisible = d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : null
             return lisible ? `Édition du ${lisible}` : 'Édition du jour'
           })()}
-          {' — Quotidien national'}
         </div>
       </div>
 
@@ -192,8 +191,8 @@ export default function SurgaKiosqueHeader({
         {/* Partager */}
         <SurgaShareButton
           payload={{
-            titre: `Une de ${selectedUne.nom_journal}`,
-            texte: `*Surga — Kiosque de la Presse Sénégalaise*\n• Journal : ${selectedUne.nom_journal}\n• Date : ${selectedUne.date_parution || 'Aujourd’hui'}\nConsulter la revue de presse sur Surga : https://surga.nopalou.com`,
+            titre: 'Une de la presse sénégalaise',
+            texte: `*Surga — Kiosque de la Presse Sénégalaise*\n• Date : ${selectedUne.date_parution || 'Aujourd’hui'}\nConsulter la revue de presse sur Surga : https://surga.nopalou.com`,
             url: SURGA_BASE_URL,
           }}
           libelle="Partager"

@@ -114,6 +114,7 @@ export default function SurgaTraficReportForm({
           maxLength={180}
           style={{
             flex: 1,
+            minWidth: 0,
             padding: '6px 10px',
             fontSize: 12,
             borderRadius: 6,
@@ -125,7 +126,7 @@ export default function SurgaTraficReportForm({
           type="submit"
           disabled={envoiEnCours}
           className="surga-btn-primary"
-          style={{ fontSize: 12, padding: '6px 12px', gap: 4 }}
+          style={{ width: 'auto', flexShrink: 0, whiteSpace: 'nowrap', fontSize: 12, padding: '6px 12px', gap: 4 }}
         >
           <Send size={12} />
           <span>Envoyer</span>

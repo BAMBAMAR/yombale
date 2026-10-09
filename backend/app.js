@@ -444,6 +444,21 @@ app.get(['/comparateur', '/comparer'], (req, res) => {
   res.redirect(301, '/');
 });
 
+// ── Navigateur sur une page inconnue du backend → renvoi vers le site ───────────
+// Le backend (yombale.onrender.com) ne sert aucune page : un client renvoyé ici (ancien lien de retour de paiement Wave,
+// lien copié, favori) voyait du JSON brut. Seules les requêtes de navigateur (Accept: text/html) sont renvoyées ; les
+// routes /api/* (traitées plus haut) et les clients d'API gardent leur 404 JSON strict.
+app.get('*', (req, res, next) => {
+  try {
+    if (req.accepts(['json', 'html']) !== 'html') return next();
+    const site = new URL(process.env.FRONTEND_URL || 'https://nopalou.com');
+    if (site.host === req.get('host')) return next(); // pas de boucle si le backend est servi sous l'adresse du site
+    return res.redirect(302, `${site.origin}${req.originalUrl}`);
+  } catch (_) {
+    return next();
+  }
+});
+
 // ── Catch-all 404 JSON (API pure) ─────────────────────────────
 app.all('*', (req, res) => {
   res.status(404).json({

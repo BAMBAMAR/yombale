@@ -154,6 +154,7 @@ export default function SurgaPodcastModal({ isOpen, onClose }: SurgaPodcastModal
             value={loading ? 'Génération du lien...' : feedUrl || 'Chargement...'}
             style={{
               flex: 1,
+              minWidth: 0,
               padding: '9px 12px',
               fontSize: 12,
               borderRadius: 6,
@@ -168,7 +169,7 @@ export default function SurgaPodcastModal({ isOpen, onClose }: SurgaPodcastModal
             onClick={handleCopier}
             disabled={!feedUrl}
             className="surga-btn-primary"
-            style={{ padding: '8px 14px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ width: 'auto', flexShrink: 0, whiteSpace: 'nowrap', padding: '8px 14px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
             <span>{copied ? 'Copié' : 'Copier'}</span>

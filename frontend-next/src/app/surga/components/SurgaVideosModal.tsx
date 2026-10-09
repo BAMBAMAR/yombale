@@ -333,7 +333,7 @@ export default function SurgaVideosModal({ isOpen, onClose }: SurgaVideosModalPr
         </div>
 
         {/* Corps défilable */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="surga-liste-fixe" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Section 1 : Sources & Boutons Suivre */}
           <div style={{ padding: '10px 12px', backgroundColor: '#F8FAFC', borderRadius: 10, border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>

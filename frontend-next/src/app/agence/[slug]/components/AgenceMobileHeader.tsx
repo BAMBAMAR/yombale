@@ -46,7 +46,7 @@ export function AgenceMobileHeader({
       {/* ── Gauche : Logo Nopalou + Tag Agence ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none' }}>
-          <Image src="/icons/logo-mark.svg" alt="Nopalou" width={24} height={24} priority />
+          <Image src="/icons/logo-n.svg" alt="Nopalou" width={24} height={24} priority />
           <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 }}>
             <span style={{ color: 'var(--navy, #1C2B4A)' }}>Nopa</span>
             <span style={{ color: 'var(--accent, #C75B00)' }}>lou</span>

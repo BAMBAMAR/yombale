@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: `${ADRESSE_SURGA}/icons/icon-512.png`,
+        url: `${ADRESSE_SURGA}/icons/icon-512.png?v=19`,
         width: 512,
         height: 512,
         alt: 'Surga — Assistant Personnel de Poche',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'Surga — Assistant Personnel de Poche',
     description: 'Votre assistant quotidien au Sénégal : briefing, dépenses FCFA, notes et agenda.',
-    images: [`${ADRESSE_SURGA}/icons/icon-512.png`],
+    images: [`${ADRESSE_SURGA}/icons/icon-512.png?v=19`],
   },
   icons: {
     icon: '/surga/icons/favicon.svg',

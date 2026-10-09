@@ -331,7 +331,7 @@ export default function SurgaPlacesModal({ isOpen, onClose }: SurgaPlacesModalPr
         </div>
 
         {/* Liste des adresses */}
-        <div style={{ padding: '16px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="surga-liste-fixe" style={{ padding: '16px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {chargement ? (
             <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text3, #73675E)', fontSize: 13 }}>
               <RefreshCw size={22} className="animate-spin" style={{ margin: '0 auto 8px auto', display: 'block' }} />

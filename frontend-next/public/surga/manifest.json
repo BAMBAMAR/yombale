@@ -1,5 +1,5 @@
 {
-  "name": "Surga — Assistant Personnel de Poche",
+  "id": "/surga","name": "Surga — Assistant Personnel de Poche",
   "short_name": "Surga",
   "description": "Votre assistant personnel au quotidien au Sénégal : briefing, notes, dépenses et actualités.",
   "start_url": "/surga",

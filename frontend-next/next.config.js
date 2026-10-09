@@ -144,7 +144,7 @@ const nextConfig = {
         // Aggressive caching for static assets
         source: '/icons/(.*)',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
         ],
       },
       {

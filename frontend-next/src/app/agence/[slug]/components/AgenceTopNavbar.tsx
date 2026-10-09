@@ -53,7 +53,7 @@ export default function AgenceTopNavbar({
           style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
           title="Retour à l'accueil Nopalou"
         >
-          <Image src="/icons/logo-mark.svg" alt="Nopalou" width={26} height={26} priority />
+          <Image src="/icons/logo-n.svg" alt="Nopalou" width={26} height={26} priority />
           <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 }}>
             <span style={{ color: 'var(--navy, #1C2B4A)' }}>Nopa</span>
             <span style={{ color: 'var(--accent, #C75B00)' }}>lou</span>

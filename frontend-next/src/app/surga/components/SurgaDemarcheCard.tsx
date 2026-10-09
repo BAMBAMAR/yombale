@@ -86,10 +86,14 @@ export default function SurgaDemarcheCard({
         gap: 10,
         transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         width: '100%',
+        // Dans une colonne à défilement, une carte qui rétrécit déborde sur la suivante : hauteur toujours entière
+        flexShrink: 0,
+        minWidth: 0,
+        boxSizing: 'border-box',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', minWidth: 0 }}>
           <span
             style={{
               fontSize: 12,
@@ -139,13 +143,13 @@ export default function SurgaDemarcheCard({
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text3, #73675E)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text3, #73675E)', flexShrink: 0, whiteSpace: 'nowrap' }}>
           <span style={{ fontSize: 12, fontWeight: 700 }}>Consulter</span>
           <ChevronRight size={14} />
         </div>
       </div>
 
-      <div>
+      <div style={{ minWidth: 0 }}>
         <h3
           style={{
             fontSize: 14,
@@ -153,6 +157,7 @@ export default function SurgaDemarcheCard({
             color: 'var(--navy, #1C2B4A)',
             margin: '0 0 4px 0',
             lineHeight: 1.3,
+            overflowWrap: 'anywhere',
           }}
         >
           {demarche.titre}
@@ -168,6 +173,7 @@ export default function SurgaDemarcheCard({
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
+              overflowWrap: 'anywhere',
             }}
           >
             {demarche.public_concerne}
@@ -183,6 +189,8 @@ export default function SurgaDemarcheCard({
           paddingTop: 8,
           borderTop: '1px dashed var(--border, #E8DDD2)',
           fontSize: 12,
+          flexWrap: 'wrap',
+          gap: '4px 10px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text2, #5A4E42)' }}>

@@ -25,7 +25,7 @@ export default function SurgaDemarchePiecesSection({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
         <h4 style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
           Pièces à fournir ({pieces.length})
         </h4>
@@ -34,7 +34,7 @@ export default function SurgaDemarchePiecesSection({
             type="button"
             onClick={onExporterNote}
             className="surga-btn-secondary"
-            style={{ fontSize: 12, padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
+            style={{ width: 'auto', flexShrink: 0, whiteSpace: 'nowrap', fontSize: 12, padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
           >
             <FileText size={12} />
             <span>Exporter en Note</span>

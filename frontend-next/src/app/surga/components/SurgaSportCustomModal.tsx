@@ -278,7 +278,7 @@ export default function SurgaSportCustomModal({
         </div>
 
         {/* Liste des équipes à cocher */}
-        <div style={{ padding: '12px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="surga-liste-fixe" style={{ padding: '12px 20px', overflowY: 'auto', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading && catalogue.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--text3, #73675E)' }}>
               <RefreshCw size={20} className="animate-spin" style={{ margin: '0 auto 8px auto' }} />

@@ -218,7 +218,7 @@ export default function SurgaKiosqueLightbox({
       ref={lightboxRef}
       role="dialog"
       aria-modal="true"
-      aria-label={`Une de ${selectedUne.nom_journal}`}
+      aria-label="Une de la presse sénégalaise"
       data-surga-echap="propre" style={{
         position: 'fixed',
         inset: 0,
@@ -328,7 +328,7 @@ export default function SurgaKiosqueLightbox({
           <img
             key={selectedUne.id}
             src={selectedUne.image_url}
-            alt={`Une complète de ${selectedUne.nom_journal}`}
+            alt="Une complète"
             onDoubleClick={handleDoubleClick}
             draggable={false}
             style={{

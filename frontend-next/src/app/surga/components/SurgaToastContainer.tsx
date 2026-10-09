@@ -16,7 +16,7 @@ export default function SurgaToastContainer() {
     let timeoutId: NodeJS.Timeout
 
     const handleToastEvent = (e: Event) => {
-      const custom = e as CustomEvent<{ message: string; type?: 'succes' | 'info' }>
+      const custom = e as CustomEvent<{ message: string; type?: 'succes' | 'info'; duree?: number }>
       if (custom.detail?.message) {
         setToast({
           id: Date.now(),
@@ -26,7 +26,7 @@ export default function SurgaToastContainer() {
         clearTimeout(timeoutId)
         timeoutId = setTimeout(() => {
           setToast(null)
-        }, 3200)
+        }, custom.detail.duree || 3200)
       }
     }
 

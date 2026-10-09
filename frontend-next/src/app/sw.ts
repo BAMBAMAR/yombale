@@ -10,7 +10,7 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v29';
+const CACHE_VERSION = 'v30';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
@@ -617,8 +617,8 @@ self.addEventListener("push", (event: any) => {
   let data = {
     title: "Nopalou Sénégal",
     body: "Baisse de prix détectée sur vos articles suivis !",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
+    icon: "/icons/icon-192.png?v=19",
+    badge: "/icons/icon-192.png?v=19",
     url: "/",
   };
 

@@ -93,16 +93,15 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
               }}
             >
               {imagesEnEchec.has(une.id) ? (
-                // Image introuvable : le nom du journal remplace le texte de remplacement du navigateur.
+                // Image introuvable : un message sobre remplace le texte de remplacement du navigateur.
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 10, textAlign: 'center', color: 'var(--surga-text3, #536175)' }}>
                   <BookOpen size={22} aria-hidden="true" />
-                  <span style={{ fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>{une.nom_journal}</span>
-                  <span style={{ fontSize: 12, lineHeight: 1.3 }}>Image indisponible</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>Image indisponible</span>
                 </div>
               ) : (
                 <img
                   src={une.image_url}
-                  alt={`Une du quotidien ${une.nom_journal}`}
+                  alt="Une de la presse sénégalaise"
                   loading="lazy"
                   onError={() => setImagesEnEchec((prev) => new Set(prev).add(une.id))}
                   style={{
@@ -132,21 +131,8 @@ export default function SurgaKiosqueUnes({ unes, loading = false }: SurgaKiosque
               </div>
             </div>
 
-            {/* Légende & Nom du Quotidien */}
+            {/* Légende : la date seule (le titre associé à une image n'était pas fiable) */}
             <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  color: 'var(--navy, #1C2B4A)',
-                  lineHeight: 1.25,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {une.nom_journal}
-              </div>
               <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
                 {formatDateParution(une.date_parution)}
               </div>

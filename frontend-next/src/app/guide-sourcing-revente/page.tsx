@@ -79,7 +79,7 @@ const JSON_LD_ARTICLE = {
     name: 'Nopalou',
     logo: {
       '@type': 'ImageObject',
-      url: 'https://nopalou.com/icons/icon-512.svg'
+      url: 'https://nopalou.com/icons/icon-512.svg?v=19'
     }
   },
   mainEntityOfPage: {

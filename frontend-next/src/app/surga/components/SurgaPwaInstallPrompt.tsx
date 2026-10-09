@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { Download, X, Share, Smartphone, Sparkles, CheckCircle2, Copy, Globe } from 'lucide-react'
+import { Download, X, Smartphone, Sparkles, CheckCircle2, Copy, Globe } from 'lucide-react'
 import { ADRESSE_SURGA } from '@/lib/surga-adresse'
+import { detecterPlateforme, GUIDES, type Plateforme } from '@/lib/surga-pwa-plateforme'
+import SurgaPwaGuide from './SurgaPwaGuide'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -20,6 +22,7 @@ const DISMISS_DURATION_DAYS = 7
 export default function SurgaPwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isIOS, setIsIOS] = useState(false)
+  const [plateforme, setPlateforme] = useState<Plateforme>('inconnu')
   const [isStandalone, setIsStandalone] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
   const [showIOSModal, setShowIOSModal] = useState(false)
@@ -46,6 +49,8 @@ export default function SurgaPwaInstallPrompt() {
     const ua = window.navigator.userAgent
     const isIOSDevice = /iPhone|iPad|iPod/i.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream
     setIsIOS(isIOSDevice)
+    const plateformeDetectee = detecterPlateforme(ua, { maxTouchPoints: window.navigator.maxTouchPoints })
+    setPlateforme(plateformeDetectee)
 
     // 3. Vérifier si l'utilisateur a masqué récemment
     const dismissedTime = localStorage.getItem(STORAGE_KEY_DISMISSED)
@@ -95,11 +100,18 @@ export default function SurgaPwaInstallPrompt() {
       }
     }
 
+    // Le navigateur n'émet pas toujours son invite (ex. : Nopalou déjà installé couvre "/surga", ou navigateur sans installation
+    // automatique). Comme sur Nopalou, Surga propose alors l'installation lui-même ; le bouton ouvre le guide du bon navigateur.
+    const proposerSansInvite = setTimeout(() => {
+      if (!promptRef.current && doitAfficher && plateformeDetectee !== 'bureau-firefox' && plateformeDetectee !== 'inconnu') setShowBanner(true)
+    }, 3500)
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstall)
     window.addEventListener('appinstalled', handleAppInstalled)
     window.addEventListener('surga-demande-installation-pwa', handleDemandeManuelle)
 
     return () => {
+      clearTimeout(proposerSansInvite)
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
       window.removeEventListener('appinstalled', handleAppInstalled)
       window.removeEventListener('surga-demande-installation-pwa', handleDemandeManuelle)
@@ -231,7 +243,7 @@ export default function SurgaPwaInstallPrompt() {
                     Installer Surga
                   </h3>
                   <span style={{ fontSize: 12, color: 'var(--surga-text3, #536175)' }}>
-                    {guideNavigateur ? 'Depuis votre navigateur' : isIOS ? 'Sur votre iPhone / iPad' : 'Sur votre écran d\'accueil'}
+                    {guideNavigateur ? 'Depuis votre navigateur' : GUIDES[plateforme].sousTitre}
                   </span>
                 </div>
               </div>
@@ -278,43 +290,7 @@ export default function SurgaPwaInstallPrompt() {
                 </div>
               </div>
             ) : (
-            /* Étapes illustrées sans aucun émoji */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', borderRadius: 12, background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--surga-border, #E2E8F0)' }}>
-                <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(2, 132, 199, 0.12)', color: 'var(--surga-info, #0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, flexShrink: 0 }}>
-                  1
-                </div>
-                <div style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--surga-text1, #0F172A)' }}>
-                  Touchez le bouton <strong>Partager</strong>{' '}
-                  <span style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', color: 'var(--surga-info, #0284C7)', margin: '0 2px' }}>
-                    <Share size={14} />
-                  </span>{' '}
-                  dans la barre Safari en bas.
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', borderRadius: 12, background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--surga-border, #E2E8F0)' }}>
-                <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(217, 119, 6, 0.12)', color: 'var(--surga-accent-ink, #A64B08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, flexShrink: 0 }}>
-                  2
-                </div>
-                <div style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--surga-text1, #0F172A)' }}>
-                  Faites défiler et sélectionnez{' '}
-                  <strong>« Sur l&apos;écran d&apos;accueil »</strong>{' '}
-                  <span style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', color: 'var(--surga-accent-ink, #A64B08)', margin: '0 2px' }}>
-                    <Smartphone size={14} />
-                  </span>.
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', borderRadius: 12, background: 'rgba(5, 150, 105, 0.05)', border: '1px solid rgba(5, 150, 105, 0.2)' }}>
-                <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(5, 150, 105, 0.12)', color: 'var(--surga-emerald-ink, #047857)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <CheckCircle2 size={15} />
-                </div>
-                <div style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--surga-text1, #0F172A)' }}>
-                  Appuyez sur <strong>Ajouter</strong> en haut à droite. Surga apparaîtra avec sa propre icône comme une vraie application !
-                </div>
-              </div>
-            </div>
+            <SurgaPwaGuide plateforme={plateforme} adresse={ADRESSE_SURGA} lienCopie={lienCopie} onCopier={copierLien} />
             )}
 
             {/* Bouton de confirmation */}

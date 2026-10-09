@@ -1376,3 +1376,6 @@ body:has(.surga-persistent-radio-bar) .surga-global-toast {
     min-height: 32px;
   }
 }
+/* Colonnes a defilement des fenetres : une carte ne doit jamais retrecir sous sa hauteur naturelle (sinon elle deborde sur la suivante) */
+.surga-liste-fixe > * { flex-shrink: 0; min-width: 0; }
+

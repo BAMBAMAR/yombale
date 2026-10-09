@@ -30,7 +30,7 @@ export default function SurgaProfilProExperiences({
           type="button"
           onClick={onAjouter}
           className="surga-btn-secondary"
-          style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', fontSize: 12, fontWeight: 700, minHeight: 34 }}
+          style={{ width: 'auto', flexShrink: 0, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', fontSize: 12, fontWeight: 700, minHeight: 34 }}
         >
           <Plus size={14} />
           <span>Ajouter</span>
