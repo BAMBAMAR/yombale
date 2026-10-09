@@ -7,7 +7,8 @@ ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant 
 - **Activation :** par l'utilisateur (domaine chez Render, DNS et règle Cloudflare, variable `NEXT_PUBLIC_SURGA_ORIGINE`, reconstruction).
 - **Vérifié en ligne :** renvois dans les deux sens ; reprise des données de l'appareil (données de test) ; manifeste et service worker à la nouvelle origine ; compte de test reconnu sans reconnexion (suppression différée au 2026-11-08).
 - **Non vérifié :** téléphone réel, icône d'installation avec Nopalou installé, Safari.
-- **Reste :** push de l'avis de nouvelle adresse (`d03d82c8`) ; guide d'installation à réécrire.
+- **Retiré :** l'avis « Surga a une nouvelle adresse » (`d03d82c8`), à la demande de l'utilisateur, sans avoir été poussé.
+- **Reste :** guide d'installation à réécrire.
 - **Retour arrière :** `docs/surga/PASSAGE-ORIGINE-PROPRE.md`.
 
 ### [2026-10-09 — Passage à `surga.nopalou.com` préparé derrière un interrupteur (D83)] — poussé (`9c65300a`)

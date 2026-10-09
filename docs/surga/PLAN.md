@@ -547,7 +547,7 @@ audités par cette campagne.
 - [x] `DONE` Console : rubrique « Statistiques » au menu ; « Modération Trafic » réparée (colonnes réelles de `surga_trafic_signalements`). Commit local, aucun push.
 - [x] `DONE` Passage à `surga.nopalou.com` (D83) préparé dans le code, derrière `NEXT_PUBLIC_SURGA_ORIGINE` : renvois, passage de la session, reprise des données de l'appareil. Essayé en local. Commit local, aucun push.
 - [x] `DONE` D83 activé en production le 2026-10-09 par l'utilisateur ; renvois, reprise, manifeste, service worker et session vérifiés en ligne.
-- [ ] `PROPOSED` Après l'activation : pousser l'avis de nouvelle adresse (`d03d82c8`) ; vérifier sur un téléphone réel, avec Nopalou installé, et dans Safari ; réécrire le guide d'installation pour la nouvelle adresse.
+- [ ] `PROPOSED` Après l'activation (l'avis de nouvelle adresse est retiré, demande de l'utilisateur) : vérifier sur un téléphone réel, avec Nopalou installé, et dans Safari ; réécrire le guide d'installation pour la nouvelle adresse.
 - [x] `DONE` Essais de voix Piper (cinq voix, sans compte) dans `C:\Users\HP\essais-voix-surga\`.
 - [ ] `PROPOSED` Voix du briefing : choix de la voix par l'utilisateur, vérification de la licence retenue, puis construction ; ouvrir la console en production et sur un téléphone réel.
 - [ ] `PROPOSED` Retrouver un original de l'emblème plus grand que 321 pixels et relancer `scripts/surga/generer-icones-surga.js --source` ; vérifier l'ouverture sur un téléphone après réinstallation.
