@@ -16,7 +16,8 @@ Décision D83 du 2026-10-09. Ce document dit ce qui est prêt dans le code, ce q
 - **Compte connecté sur Nopalou** : il arrive connecté sur Surga, sans se reconnecter.
 - **Données gardées sur l'appareil** (réglages, notes et dépenses pas encore envoyées, portefeuille Sama Xaalis) : reprises une fois, à la première ouverture de la nouvelle adresse, sur le même appareil et le même navigateur. Rien n'est effacé à l'ancienne adresse.
 - **Application déjà installée** (Surga, ou Nopalou utilisé pour ouvrir Surga) : elle renvoie vers la nouvelle adresse, qui s'ouvre dans le navigateur. Il faut installer Surga depuis la nouvelle adresse.
-- **Notifications** : à réactiver une fois dans Surga à la nouvelle adresse.
+- **Notifications** : à réactiver une fois dans Surga à la nouvelle adresse. Les rappels déjà activés continuent d'arriver par l'ancienne adresse tant que l'ancienne application n'est pas retirée.
+- **Avis automatique** : un site ne peut ni installer ni désinstaller une application à la place de la personne. Qui utilisait déjà Surga à l'ancienne adresse voit donc, à la nouvelle, l'avis « Surga a une nouvelle adresse » avec les boutons « Installer Surga » et « Réactiver les rappels » (`SurgaAvisNouvelleAdresse.tsx`). Il revient à chaque ouverture jusqu'à l'installation, ou jusqu'à cinq fermetures. Non vu à l'écran : écrit et testé en logique seulement.
 
 ## Ce qui est prêt dans le code
 
