@@ -1,13 +1,11 @@
 // frontend-next/public/surga/sw.js
-// Service worker de Surga. Portée : « /surga » sur le domaine principal, « / » sur le sous-domaine surga.*
+// Service worker de Surga. Portée : « /surga », à « nopalou.com » comme à l'origine propre de Surga (D83).
 // Peu de données : rien n'est téléchargé d'avance en dehors de la page et de ses icônes ; le reste entre en cache
 // au fil de l'usage. Hors ligne : la page, son JavaScript et ses styles sont relus depuis le cache.
 
 const SURGA_CACHE_NAME = 'surga-pwa-v5';
-const isSubdomain = self.location.hostname.startsWith('surga.');
-const PAGE = isSubdomain ? '/' : '/surga';
+const PAGE = '/surga';
 
-// Sur le domaine principal, « / » est la page d'accueil de Nopalou : elle n'a rien à faire dans ce cache.
 const STATIC_ASSETS = [PAGE, '/surga/manifest.json', '/surga/icons/icon-192.png', '/surga/icons/icon-512.png', '/surga/surga-symbol.png'];
 
 self.addEventListener('install', (event) => {
@@ -84,13 +82,8 @@ self.addEventListener('fetch', (event) => {
 
 // SRG-A1-029 : l'adresse « /surga/agenda » n'existe pas (404). L'agenda s'ouvre par « ?tab=agenda ».
 const AGENDA = `${PAGE}?tab=agenda`;
-// Une adresse reçue du serveur est toujours écrite pour le domaine principal ; sur le sous-domaine, « /surga » tombe.
-const adresseLocale = (adresse) => {
-  if (!adresse) return AGENDA;
-  if (!isSubdomain) return adresse;
-  const sans = adresse.replace(/^\/surga(?=$|[/?#])/, '');
-  return sans.startsWith('/') ? sans : `/${sans}`;
-};
+// Une adresse reçue du serveur s'écrit « /surga?… » : elle vaut aux deux origines.
+const adresseLocale = (adresse) => adresse || AGENDA;
 
 self.addEventListener('push', (event) => {
   let data = {

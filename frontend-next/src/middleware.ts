@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isI18nScopedRoute } from './i18n/config'
 import { verifierJetonSession } from './lib/session-verify'
-import { adresseDepuisSousDomaineSurga } from './lib/surga-adresse'
+import { adresseDepuisSousDomaineSurga, renvoiOrigineSurga, domaineCommun, ORIGINE_SURGA, ORIGINE_NOPALOU, CHEMIN_REPRISE, COOKIE_PASSAGE_SESSION } from './lib/surga-adresse'
 
 const COOKIE_NAME = 'nopalou_session'
 
@@ -18,19 +18,49 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const isDev = process.env.NODE_ENV === 'development'
 
-  // D77 : « surga.nopalou.com » renvoie vers « nopalou.com/surga », seule adresse où l'application est servie.
-  // Renvoi temporaire (307) : un renvoi permanent resterait dans les navigateurs si l'adresse principale changeait.
-  const versDomainePrincipal = adresseDepuisSousDomaineSurga(
-    req.headers.get('host') || req.nextUrl.host || '',
-    pathname,
-    req.nextUrl.search,
-    req.headers.get('x-forwarded-proto')?.split(',')[0].trim() || req.nextUrl.protocol,
-  )
-  if (versDomainePrincipal) return NextResponse.redirect(versDomainePrincipal, 307)
+  const hote = req.headers.get('host') || req.nextUrl.host || ''
+  if (ORIGINE_SURGA) {
+    // D83 : Surga vit à sa propre origine ; « nopalou.com/surga » y renvoie, et l'origine de Surga rend à Nopalou ses pages.
+    const versAutreOrigine = renvoiOrigineSurga(hote, pathname, req.nextUrl.search)
+    if (versAutreOrigine) {
+      const renvoi = NextResponse.redirect(versAutreOrigine, 307)
+      // La session suit le visiteur : un cookie de passage de deux minutes, lisible par les deux origines, converti
+      // en cookie de session à l'arrivée. Sans lui, un compte connecté sur Nopalou arriverait déconnecté.
+      const jeton = req.cookies.get(COOKIE_NAME)?.value
+      const domaine = domaineCommun()
+      if (pathname === '/surga' && jeton && domaine) {
+        renvoi.cookies.set(COOKIE_PASSAGE_SESSION, jeton, { domain: domaine, httpOnly: true, secure: !isDev, sameSite: 'lax', path: '/', maxAge: 120 })
+      }
+      return renvoi
+    }
+  } else {
+    // D77 : « surga.nopalou.com » renvoie vers « nopalou.com/surga », seule adresse où l'application est servie.
+    // Renvoi temporaire (307) : un renvoi permanent resterait dans les navigateurs si l'adresse principale changeait.
+    const versDomainePrincipal = adresseDepuisSousDomaineSurga(
+      hote,
+      pathname,
+      req.nextUrl.search,
+      req.headers.get('x-forwarded-proto')?.split(',')[0].trim() || req.nextUrl.protocol,
+    )
+    if (versDomainePrincipal) return NextResponse.redirect(versDomainePrincipal, 307)
+  }
 
   // ── 1. Vérification session & Langue ─────────────────────────
   const token = req.cookies.get(COOKIE_NAME)?.value
   const session = token ? await verifyToken(token) : null
+
+  // D83 : arrivée à l'origine de Surga avec le cookie de passage. Il devient le cookie de session de cette origine
+  // (s'il est valide et qu'aucune session n'y existe), puis il est retiré dans tous les cas.
+  const passage = ORIGINE_SURGA ? req.cookies.get(COOKIE_PASSAGE_SESSION)?.value : undefined
+  const retirerPassage = (reponse: NextResponse) => {
+    reponse.cookies.set(COOKIE_PASSAGE_SESSION, '', { domain: domaineCommun() || undefined, path: '/', maxAge: 0 })
+    return reponse
+  }
+  if (passage && !session && (pathname === '/surga' || pathname.startsWith('/surga/')) && (await verifyToken(passage))) {
+    const suite = NextResponse.redirect(new URL(pathname + req.nextUrl.search, ORIGINE_SURGA), 307)
+    suite.cookies.set(COOKIE_NAME, passage, { httpOnly: true, secure: !isDev, sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 })
+    return retirerPassage(suite)
+  }
 
   const rawLocale = req.cookies.get('nopalou_locale')?.value
   const locale = (rawLocale === 'en' || rawLocale === 'ar') ? rawLocale : 'fr'
@@ -94,6 +124,9 @@ export async function middleware(req: NextRequest) {
 
   // ── 2. CSP compatible Next.js App Router ─────────────────────
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  // D83 : la page de reprise est la seule à pouvoir être affichée dans un cadre, et seulement par l'origine de Surga.
+  const cadreAdmis = ORIGINE_SURGA && pathname === CHEMIN_REPRISE ? ORIGINE_SURGA : null
+  const ancetres = `frame-ancestors ${cadreAdmis || "'none'"}`
 
   const cspDirectives = [
     "default-src 'self'",
@@ -103,11 +136,11 @@ export async function middleware(req: NextRequest) {
     "media-src 'self' blob: data: https: https://res.cloudinary.com",
     "font-src 'self' data:",
     `connect-src 'self' blob: data: https: wss: https://www.instagram.com https://*.instagram.com https://*.fbcdn.net https://www.tiktok.com https://*.tiktok.com https://*.tiktokcdn.com https://*.ttwstatic.com ${process.env.BACKEND_URL ?? ''} ${process.env.NEXT_PUBLIC_BACKEND_URL ?? ''}`,
-    `frame-src 'self' https://www.instagram.com https://instagram.com https://www.tiktok.com https://*.tiktok.com https://www.facebook.com https://web.facebook.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://my.matterport.com https://*.matterport.com`,
+    `frame-src 'self' ${ORIGINE_SURGA ? ORIGINE_NOPALOU : ''} https://www.instagram.com https://instagram.com https://www.tiktok.com https://*.tiktok.com https://www.facebook.com https://web.facebook.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://my.matterport.com https://*.matterport.com`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'",
+    ancetres,
   ]
 
   if (!isDev) {
@@ -148,13 +181,14 @@ export async function middleware(req: NextRequest) {
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-      "frame-ancestors 'none'",
+      ancetres,
       'report-uri /api/csp-report',
     ].join('; ')
     response.headers.set('Content-Security-Policy-Report-Only', cspStricte)
   }
   response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('X-Frame-Options', 'DENY')
+  if (!cadreAdmis) response.headers.set('X-Frame-Options', 'DENY')
+  if (passage) retirerPassage(response)
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   if (!isDev) {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')

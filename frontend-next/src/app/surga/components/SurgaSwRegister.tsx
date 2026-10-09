@@ -8,8 +8,8 @@ import { useEffect } from 'react'
 export default function SurgaSwRegister() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
-    const isSurgaDomain = window.location.hostname.startsWith('surga.')
-    const swScope = isSurgaDomain ? '/' : '/surga'
+    // D83 : à sa propre origine aussi, Surga est servie au chemin « /surga » : la portée ne change pas.
+    const swScope = '/surga'
 
     navigator.serviceWorker.getRegistrations()
       .then((inscriptions) => Promise.all(

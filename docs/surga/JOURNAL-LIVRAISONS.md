@@ -3,6 +3,14 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Passage à `surga.nopalou.com` préparé derrière un interrupteur (D83)] — commit local, aucun push
+- **Objet :** donner à Surga sa propre origine, pour qu'elle s'installe à côté de Nopalou. Accord de l'utilisateur.
+- **État :** prêt dans le code, **inactif** tant que `NEXT_PUBLIC_SURGA_ORIGINE` n'est pas posée (D77 reste en vigueur, vérifié).
+- **Contenu :** renvois (`surga-adresse.ts`, `middleware.ts`), passage de la session (cookie de deux minutes), reprise des données de l'appareil (`surga-reprise.ts`, `/surga/reprise`, `SurgaRepriseAppareil.tsx`), portée `/surga` du service worker aux deux adresses.
+- **Essai :** local, deux adresses de test, invité et compte connecté : réglages, portefeuille et session suivent. 17 tests ; frontend 219 sur 219 ; typage 0 erreur.
+- **Limites :** rien en production ; service worker et installation non essayés en local ; reprise essayée dans Chromium seulement.
+- **Marche à suivre et retour arrière :** `docs/surga/PASSAGE-ORIGINE-PROPRE.md`.
+
 ### [2026-10-09 — Console : rubrique « Statistiques », « Modération Trafic » réparée] — commit local, aucun push
 - **Objet :** statistiques introuvables dans le menu ; modération du trafic qui plante (`toUpperCase` sur une valeur absente).
 - **Statistiques :** rubrique « Statistiques » sous « Tableau de Bord » ; un lien sur le tableau de bord.

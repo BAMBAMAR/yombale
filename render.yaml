@@ -159,6 +159,10 @@ services:
       # URL canonique du site (metadataBase, og:url, liens dans emails)
       - key: NEXT_PUBLIC_SITE_URL
         value: "https://nopalou.com"
+      # D83 : origine propre de Surga (ex: https://surga.nopalou.com). Vide = D77 : Surga reste à nopalou.com/surga.
+      # À ne poser qu'une fois le sous-domaine branché sur ce service (voir docs/surga/PASSAGE-ORIGINE-PROPRE.md).
+      - key: NEXT_PUBLIC_SURGA_ORIGINE
+        sync: false
 
       # ── Secrets (REQUIRED) ──────────────────────────────────────────────────
       # Générer : node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
