@@ -49,6 +49,25 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Surga Data / Audit Technique de Fiabilité, Exactitude & Anti-Régression (Session 2026-10-09, branche `feature/surga`)** :
+  1. **Audit Empirique Complet des 13 Modules Dynamiques & Dossier Réglementaire (`docs/surga/audits/data/`)** :
+     - Cartographie rigoureuse de la chaîne `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE`.
+     - Création des 8 documents de référence : `README.md`, `AUDIT_DATA.md`, `EVIDENCES.md`, `ANOMALIES.md`, `CORRECTIONS.md`, `ANTI_REGRESSION.md`, `HANDOVER.md`, `REGRESSION_DATASET.md`.
+  2. **Cas de Référence CESTI & Rectification du Catalogue Concours (`backend/services/surga/concours-service.js`, `surga_concours`)** :
+     - Démontré et corrigé : Le concours CESTI 2026 s'est terminé le 24 septembre 2026 alors que Surga l'affichait ouvert jusqu'en novembre avec un faux compte à rebours de 28 jours.
+     - Éradication de la fausse lettre de motivation manuscrite hallucinée dans les pièces à fournir.
+     - Rectification des conditions d'âge officielles (17-24 ans bachelier / sans limite d'âge professionnels et titulaires de Master).
+     - Remplacement de l'écrasement destructeur au boot (`ON CONFLICT (id) DO NOTHING`) pour préserver les statuts et dates administrées.
+     - Gestion explicite des concours terminés dans le calcul des échéances (`calculerEcheances`) et dans l'interface (`SurgaConcoursCard.tsx`, `SurgaConcoursDetailModal.tsx`).
+  3. **Déblocage et Publication des 20 Démarches Administratives (`backend/services/surga/demarches-service.js`, `surga_demarches`)** :
+     - Résolution de l'anomalie critique de l'écran vide : passage des 20 fiches certifiées du statut `'BROUILLON'` à `'PUBLIE'` en base PostgreSQL et dans le code source.
+     - L'API publique `/api/surga/demarches` sert désormais les 20 démarches officielles avec pièces, coûts légaux et étapes.
+  4. **Résolution du Crash SQL Trafic & Assainissement du Kiosque des Unes (`trafic-service.js`, `kiosque-service.js`)** :
+     - Migration SQL : ajout des colonnes `statut` et `updated_at` sur `surga_trafic_signalements` en base de production, restaurant la lecture des signalements citoyens dans `getEtatTraficComplet()`.
+     - Élimination des faux titres de quotidiens génériques ("Journal N°44") dans le Kiosque des Unes (`WHERE nom_journal NOT LIKE 'Journal N°%'`).
+  5. **Validation Anti-Régression 10/10 PASS (`scripts/audit/data/test-anti-regression.js`)** :
+     - 10 tests automatisés au vert couvrant CESTI, idempotence DB, démarches, trafic sans crash, météo MET Norway, sport ESPN et étanchéité Nopalou.
+
 - **Nopalou Admin & CRM / Éradication Flood CSP Report-Only & Résolution Erreurs 500 / 504 Prospection (Session 2026-10-07, branche `feature/surga`)** :
   1. **Éradication du Flood de logs CSP Report-Only sur /admin (`frontend-next/src/middleware.ts`)** :
      - Exclusion des routes `/admin` (`!pathname.startsWith('/admin')`) de l'en-tête `Content-Security-Policy-Report-Only` (AUD-149).

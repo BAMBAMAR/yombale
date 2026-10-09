@@ -447,23 +447,25 @@ const CONCOURS_NATIONAUX_SENEGAL = [
     sigle: 'CESTI',
     organisme: 'Université Cheikh Anta Diop de Dakar (UCAD)',
     categorie: 'grandes_ecoles',
-    niveau_requis: 'Baccalauréat ou Licence',
-    age_max: 27,
+    niveau_requis: 'Baccalauréat (L1) ou Master (accès direct L2)',
+    age_max: 24,
     frais_dossier_xof: 10000,
-    statut: 'ouvert',
-    date_ouverture: '2026-09-01T08:00:00.000Z',
-    date_cloture: '2026-11-05T17:00:00.000Z',
-    date_epreuves: '2026-11-25T08:00:00.000Z',
-    date_resultats: '2026-12-18T14:00:00.000Z',
+    statut: 'termine',
+    date_ouverture: '2026-05-02T08:00:00.000Z',
+    date_cloture: '2026-06-25T17:00:00.000Z',
+    date_epreuves: '2026-09-03T08:00:00.000Z',
+    date_resultats: '2026-09-24T14:00:00.000Z',
     pieces_a_fournir: [
-      'Formulaire de candidature en ligne CESTI',
-      'Photocopie légalisée de l attestation du Baccalauréat ou de la Licence',
-      'Extrait d acte de naissance',
-      'Relevé de notes officiel du Baccalauréat',
-      'Lettre de motivation manuscrite détaillant le projet journalistique',
-      'Reçu de versement des frais de dossier de 10 000 FCFA',
+      'Demande manuscrite adressée au Directeur du CESTI',
+      'Fiche individuelle de candidature dûment remplie',
+      'Photocopie certifiée conforme de la CNI ou extrait d acte de naissance',
+      'Une photo d identité récente',
+      'Photocopie légalisée de l attestation du Baccalauréat (ou certificat de scolarité et relevés de notes de 2nde et 1ère pour les candidats en Terminale)',
+      'Quittance de versement des frais de dossier (10 000 FCFA dans les CAOSP régionaux / 10 100 FCFA au CESTI Dakar)',
+      'Pour les professionnels : contrat de travail ou bulletins de salaire justifiant 4 années d expérience',
+      'Pour les titulaires d un Master (admission en L2) : copie légalisée du diplôme de Master',
     ],
-    description: 'Formation d excellence aux métiers du journalisme (presse écrite, radio, télévision, journalisme web et nouveaux médias).',
+    description: 'Formation d excellence aux métiers du journalisme (presse écrite, radio, télévision, journalisme numérique). Inscriptions ouvertes aux bacheliers de 17 à 24 ans et aux professionnels des médias sans limite d âge.',
     lien_officiel: 'https://cesti.ucad.sn',
     centres_prepa: [],
     actif: true,
@@ -681,26 +683,7 @@ async function assurerConcoursInitiaux() {
            actif, updated_at
          )
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, TRUE, NOW())
-         ON CONFLICT (id) DO UPDATE SET
-           slug = EXCLUDED.slug,
-           titre = EXCLUDED.titre,
-           sigle = EXCLUDED.sigle,
-           organisme = EXCLUDED.organisme,
-           categorie = EXCLUDED.categorie,
-           niveau_requis = EXCLUDED.niveau_requis,
-           age_max = EXCLUDED.age_max,
-           frais_dossier_xof = EXCLUDED.frais_dossier_xof,
-           statut = EXCLUDED.statut,
-           date_ouverture = EXCLUDED.date_ouverture,
-           date_cloture = EXCLUDED.date_cloture,
-           date_epreuves = EXCLUDED.date_epreuves,
-           date_resultats = EXCLUDED.date_resultats,
-           description = EXCLUDED.description,
-           lien_officiel = EXCLUDED.lien_officiel,
-           pieces_a_fournir = EXCLUDED.pieces_a_fournir,
-           centres_prepa = EXCLUDED.centres_prepa,
-           actif = TRUE,
-           updated_at = NOW()`,
+         ON CONFLICT (id) DO NOTHING`,
         [
           c.id, c.slug, c.titre, c.sigle, c.organisme, c.categorie, c.niveau_requis,
           c.age_max, c.frais_dossier_xof, c.statut, c.date_ouverture, c.date_cloture,
@@ -737,11 +720,12 @@ function calculerEcheances(concours, dateRef = new Date()) {
   const diffMs = cloture - maintenant;
   const joursRestants = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  if (joursRestants < 0) {
+  if (concours.statut === 'termine' || concours.statut === 'cloture' || joursRestants < 0) {
+    const libelleDelai = concours.statut === 'termine' ? 'Session 2026 terminée' : 'Inscriptions closes';
     return {
       joursRestantsCloture: 0,
       phaseAlerte: 'cloture',
-      messageDelai: 'Inscriptions closes',
+      messageDelai: libelleDelai,
       estCloture: true,
     };
   }

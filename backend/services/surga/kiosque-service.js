@@ -242,6 +242,7 @@ async function recupererUnesDuJour({ limit = 50 } = {}) {
     const { rows } = await pool.query(
       `SELECT id, nom_journal, image_url, description, date_parution, created_at
        FROM surga_unes_presse
+       WHERE nom_journal NOT LIKE 'Journal N°%'
        ORDER BY date_parution DESC, created_at DESC
        LIMIT $1`,
       [limit]
@@ -255,7 +256,7 @@ async function recupererUnesDuJour({ limit = 50 } = {}) {
   return UNES_DEFAUT.map((u, idx) => ({
     id: `default_${idx}`,
     ...u,
-    date_parution: new Date().toISOString().slice(0, 10),
+    date_parution: null,
     est_archive_locale: true,
   }));
 }

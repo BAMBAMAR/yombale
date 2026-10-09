@@ -3,6 +3,23 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-09 — Audit Technique de Fiabilité des Données, Cas CESTI & Anti-Régression 10/10 PASS] — aucun push
+- **Objet :** Audit approfondi de la chaîne complète `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE`. Éradication des données fausses, périmées, fictives ou hallucinées masquées sous une apparence soignée.
+- **Dossier Réglementaire Créé (`docs/surga/audits/data/`) :** 8 livrables normés (`README.md`, `AUDIT_DATA.md`, `EVIDENCES.md`, `ANOMALIES.md`, `CORRECTIONS.md`, `ANTI_REGRESSION.md`, `HANDOVER.md`, `REGRESSION_DATASET.md`).
+- **Cas CESTI 2026 & Catalogue Concours (`concours-service.js`, `surga_concours`) :**
+  - Session 2026 démontrée terminée le 24/09/2026 (alors que Surga l'affichait ouverte jusqu'au 05/11/2026 avec un faux compte à rebours de 28 jours).
+  - Éradication de la fausse lettre de motivation manuscrite hallucinée ; rétablissement des pièces officielles (fiche individuelle, attestations de scolarité/relevés de notes sous réserve Bac).
+  - Conditions d'âge réelles restaurées : 17 à 24 ans pour les bacheliers, aucune limite d'âge pour les professionnels et titulaires de Master (remplace le scalaire arbitraire de 27 ans).
+  - Idempotence garantie : `ON CONFLICT (id) DO NOTHING` dans `assurerConcoursInitiaux()` pour ne plus écraser les dates réelles au redémarrage.
+  - Prise en charge explicite du statut `termine` dans le calcul d'échéances (`calculerEcheances()`) et dans l'interface (`SurgaConcoursDetailModal.tsx`).
+- **Déblocage et Publication des 20 Démarches Administratives (`demarches-service.js`, `surga_demarches`) :**
+  - Résolution de l'anomalie critique de l'écran vide : passage des 20 fiches certifiées du statut `'BROUILLON'` à `'PUBLIE'`. L'API publique sert désormais les 20 démarches officielles avec coûts légaux et pièces.
+- **Résolution du Crash SQL Trafic & Kiosque :**
+  - Migration SQL : colonnes `statut` et `updated_at` ajoutées sur `surga_trafic_signalements`, débloquant `getEtatTraficComplet()`.
+  - Kiosque des Unes : filtrage des faux titres génériques ("Journal N°44").
+- **Campagne Anti-Régression Automatisée (`scripts/audit/data/test-anti-regression.js`) :**
+  - 10 / 10 tests au vert (100% PASS) validant CESTI, idempotence, démarches, trafic sans erreur SQL, météo MET Norway, sport ESPN, kiosque et étanchéité des tables Nopalou.
+
 ### [2026-10-08 — Offre pilotée par la console] — `425ce79d`, `29a97de2` ; aucun push
 - **Objet :** « tout doit être gérable sur admin ». L'offre retenue (gratuit + Surga Plus : 500 FCFA / 7 jours, 1 500 FCFA / 30 jours, 15 000 FCFA / 12 mois) et ses quotas gratuits se règlent dans la console et commandent l'application.
 - **Serveur (`425ce79d`) :** `offre-service.js` (plans et réglages en base, validation, cache 15 s), migrations idempotentes, souscription au prix de la console, statut d'abonné limité aux formules particulier, `/abonnements/offre`, `/api/admin/surga/plans` et `/reglages` avec trace d'audit. 20 tests (`surga-offre.test.js`).

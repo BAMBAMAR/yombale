@@ -52,6 +52,7 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Spike de validation trafic à Dakar (faisabilité, modèle heuristique heures de pointe + TomTom Routing API 2 500 req/jour gratuites).
 - [x] `DONE` Spike de validation transcription vocale (Groq Whisper-large-v3-turbo, latence < 400 ms, français africain & FCFA).
 - [x] `DONE` Test PWA et Service Worker (navigation offline, Web Push VAPID en tâche de fond opérationnel).
+- [x] `DONE` **Audit Technique Data — Fiabilité, Exactitude & Anti-Régression (Session 2026-10-09)** : Audit complet de la chaîne `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE` sur les 13 modules dynamiques. Dossier réglementaire de 8 livrables sous `docs/surga/audits/data/`. Rectification du cas de référence CESTI (session 2026 terminée, pièces sans hallucination, conditions d'âge 17-24 bachelier / sans limite pro), idempotence `ON CONFLICT DO NOTHING`, publication des 20 démarches administratives, correction crash SQL trafic et assainissement kiosque. Suite de test de non-régression validée à 10/10 PASS (`test-anti-regression.js`).
 
 ---
 

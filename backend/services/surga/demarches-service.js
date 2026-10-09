@@ -85,7 +85,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['cni', 'carte identite', 'biometrique', 'cedeao', 'enrolement', 'daf'],
   },
   {
@@ -113,7 +113,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['passeport', 'voyage', 'dpetv', 'dieuppeul', 'quittance', 'timbre'],
   },
   {
@@ -138,7 +138,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['casier judiciaire', 'bulletin 3', 'tribunal', 'justice', 'greffe', 'tgi'],
   },
   {
@@ -165,7 +165,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['nationalite', 'certificat de nationalite', 'tribunal d instance', 'filiation'],
   },
   {
@@ -192,7 +192,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['naissance', 'extrait de naissance', 'etat civil', 'mairie', 'jugement suppletif'],
   },
   {
@@ -221,7 +221,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['permis', 'conduire', 'transports terrestres', 'capp karange', 'auto-ecole'],
   },
   {
@@ -247,7 +247,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['residence', 'domicile', 'certificat de residence', 'commissariat', 'gendarmerie'],
   },
   {
@@ -274,7 +274,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['entreprise', 'gie', 'creation', 'apix', 'ninea', 'rccm', 'commerce', 'registre'],
   },
   {
@@ -301,7 +301,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['sarl', 'societe', 'statuts', 'apix', 'ninea', 'capital', 'commerce'],
   },
   {
@@ -327,7 +327,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['quitus fiscal', 'dgid', 'impots', 'etax', 'regularite fiscale', 'marches publics'],
   },
   {
@@ -352,7 +352,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['ipres', 'css', 'securite sociale', 'retraite', 'employeur', 'salaries', 'cotisations'],
   },
   {
@@ -378,7 +378,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['mariage', 'acte de mariage', 'livret de famille', 'extrait de mariage', 'etat civil', 'mairie'],
   },
   {
@@ -405,7 +405,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['deces', 'acte de deces', 'permis d inhumer', 'succession', 'etat civil', 'mairie'],
   },
   {
@@ -432,7 +432,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['certificat de vie', 'pension', 'retraite', 'ipres', 'etat civil', 'mairie'],
   },
   {
@@ -459,7 +459,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['permis de construire', 'urbanisme', 'teledac', 'architecte', 'mairie', 'construction'],
   },
   {
@@ -486,7 +486,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['titre foncier', 'foncier', 'notaire', 'dgid', 'conservation fonciere', 'mutation', 'cadastre'],
   },
   {
@@ -514,7 +514,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['carte grise', 'immatriculation', 'vehicule', 'capp karange', 'transports terrestres', 'douanes', 'mutation'],
   },
   {
@@ -540,7 +540,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['visite technique', 'cctva', 'controle technique', 'vehicule', 'vignette', 'hann', 'securite routiere'],
   },
   {
@@ -567,7 +567,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['legalisation', 'certification conforme', 'copie certifiee', 'mairie', 'commissariat', 'timbre'],
   },
   {
@@ -592,7 +592,7 @@ const DEMARCHES_INITIALES = [
     source_officielle: 'https://e-senegal.sn/#/home/demarches',
     date_verification: new Date().toISOString(),
     date_prochaine_verification: new Date(Date.now() + CYCLE_REVERIFICATION_JOURS * 24 * 3600 * 1000).toISOString(),
-    statut: 'BROUILLON',
+    statut: 'PUBLIE',
     mots_cles: ['perte', 'certificat de perte', 'police', 'gendarmerie', 'cni perdue', 'passeport perdu', 'vol'],
   },
 ];

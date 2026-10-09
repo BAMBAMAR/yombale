@@ -173,7 +173,7 @@ export default function SurgaConcoursDetailModal({
 
         {/* Corps défilable */}
         <div style={{ padding: 18, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Calendrier officiel */}
+          {/* Calendrier des étapes */}
           <div
             style={{
               backgroundColor: 'var(--bg, #F8F5F0)',
@@ -184,20 +184,38 @@ export default function SurgaConcoursDetailModal({
               gap: 8,
             }}
           >
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-              Calendrier officiel des étapes
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+                {concours.statut === 'termine' ? 'Calendrier de la session (Terminée)' : 'Calendrier des étapes'}
+              </div>
+              {concours.statut === 'termine' && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    backgroundColor: '#F3F4F6',
+                    color: 'var(--text3, #73675E)',
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                  }}
+                >
+                  Session terminée
+                </span>
+              )}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12 }}>
               <div>
                 <span style={{ color: 'var(--text3, #73675E)', display: 'block' }}>Date limite de dépôt :</span>
-                <strong style={{ color: 'var(--surga-accent-ink, #A64B08)' }}>{formaterDate(concours.date_cloture)}</strong>
+                <strong style={{ color: concours.statut === 'termine' ? 'var(--text3, #73675E)' : 'var(--surga-accent-ink, #A64B08)' }}>
+                  {concours.statut === 'termine' ? `Clôturé (${formaterDate(concours.date_cloture)})` : formaterDate(concours.date_cloture)}
+                </strong>
               </div>
               <div>
-                <span style={{ color: 'var(--text3, #73675E)', display: 'block' }}>Épreuves prévues :</span>
+                <span style={{ color: 'var(--text3, #73675E)', display: 'block' }}>Épreuves :</span>
                 <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{formaterDate(concours.date_epreuves)}</strong>
               </div>
               <div>
-                <span style={{ color: 'var(--text3, #73675E)', display: 'block' }}>Frais d inscription :</span>
+                <span style={{ color: 'var(--text3, #73675E)', display: 'block' }}>Frais de dossier :</span>
                 <strong style={{ color: 'var(--price, #0A5C36)' }}>
                   {concours.frais_dossier_xof > 0
                     ? `${new Intl.NumberFormat('fr-FR').format(concours.frais_dossier_xof)} FCFA`
@@ -207,7 +225,7 @@ export default function SurgaConcoursDetailModal({
               {concours.age_max && (
                 <div>
                   <span style={{ color: 'var(--text3, #73675E)', display: 'block' }}>Âge maximum :</span>
-                  <strong>{concours.age_max} ans au 31 décembre</strong>
+                  <strong>{concours.age_max} ans (selon profil)</strong>
                 </div>
               )}
             </div>
@@ -419,7 +437,8 @@ export default function SurgaConcoursDetailModal({
 
           <button
             type="button"
-            onClick={() => onToggleSuivi(concours)}
+            onClick={() => concours.statut !== 'termine' && onToggleSuivi(concours)}
+            disabled={concours.statut === 'termine'}
             style={{
               flex: 1,
               display: 'inline-flex',
@@ -429,15 +448,26 @@ export default function SurgaConcoursDetailModal({
               padding: '10px 14px',
               borderRadius: 8,
               border: 'none',
-              backgroundColor: estSuivi ? 'var(--navy, #1C2B4A)' : 'var(--accent, #C75B00)',
-              color: '#FFFFFF',
+              backgroundColor: concours.statut === 'termine' ? '#F3F4F6' : estSuivi ? 'var(--navy, #1C2B4A)' : 'var(--accent, #C75B00)',
+              color: concours.statut === 'termine' ? 'var(--text3, #73675E)' : '#FFFFFF',
               fontSize: 12,
               fontWeight: 700,
-              cursor: 'pointer',
+              cursor: concours.statut === 'termine' ? 'default' : 'pointer',
             }}
           >
-            {estSuivi ? <CheckCircle2 size={14} /> : <Bell size={14} />}
-            <span>{estSuivi ? 'Suivi actif (Rappels J-30, J-7, J-1)' : 'Suivre ce concours'}</span>
+            {concours.statut === 'termine' ? (
+              <span>Session terminée — Inscriptions closes</span>
+            ) : estSuivi ? (
+              <>
+                <CheckCircle2 size={14} />
+                <span>Suivi actif (Rappels J-30, J-7, J-1)</span>
+              </>
+            ) : (
+              <>
+                <Bell size={14} />
+                <span>Suivre ce concours</span>
+              </>
+            )}
           </button>
         </div>
       </div>

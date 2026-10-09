@@ -1,5 +1,22 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga / Audit Technique de Fiabilité des Données, Rectification du Cas CESTI & Anti-Régression 10/10 PASS (Session 2026-10-09, branche `feature/surga` ; aucun push)** :
+  - *Mandat & Objectif* : Audit approfondi de la chaîne complète `SOURCE → COLLECTE → EXTRACTION → INTERPRÉTATION → NORMALISATION → STOCKAGE → API → AFFICHAGE` pour garantir qu'aucune donnée fausse, incomplète ou fictive n'est présentée sous une forme soignée.
+  - *Dossier Réglementaire Créé (`docs/surga/audits/data/`)* : 8 livrables normés (`README.md`, `AUDIT_DATA.md`, `EVIDENCES.md`, `ANOMALIES.md`, `CORRECTIONS.md`, `ANTI_REGRESSION.md`, `HANDOVER.md`, `REGRESSION_DATASET.md`).
+  - *Cas CESTI 2026 & Catalogue Concours* :
+    - Démontré par preuves réelles : session 2026 terminée le 24/09/2026 alors que Surga l'affichait ouverte jusqu'au 05/11/2026 avec un faux compte à rebours de 28 jours.
+    - Éradication de la fausse lettre de motivation manuscrite hallucinée ; rétablissement des pièces officielles (fiche individuelle, attestations scolarité/relevés de notes sous réserve Bac).
+    - Conditions d'âge rétablies : 17 à 24 ans bachelier, aucune limite pour les pros et masters (remplace l'entier arbitraire 27 ans).
+    - Suppression de l'écrasement destructeur au boot : `assurerConcoursInitiaux()` migré en `ON CONFLICT (id) DO NOTHING`.
+    - Prise en charge explicite du statut `termine` dans `calculerEcheances()`, `SurgaConcoursCard.tsx` et `SurgaConcoursDetailModal.tsx`.
+  - *Publication des 20 Démarches Administratives* :
+    - Correction de l'anomalie de l'écran vide : passage des 20 démarches de `'BROUILLON'` à `'PUBLIE'` en base de production et dans `demarches-service.js`. L'API publique sert désormais les 20 fiches certifiées avec coûts et pièces.
+  - *Résolution du Crash SQL Trafic & Kiosque* :
+    - Migration SQL : colonnes `statut` et `updated_at` ajoutées sur `surga_trafic_signalements`, débloquant la lecture des signalements récents.
+    - Kiosque des Unes : filtrage des titres génériques ("Journal N°44").
+  - *Campagne Anti-Régression Automatisée (`scripts/audit/data/test-anti-regression.js`)* :
+    - 10 / 10 tests au vert (100% PASS) validant CESTI, idempotence, démarches, trafic sans erreur, météo MET Norway, sport ESPN, kiosque et étanchéité Nopalou.
+
 - **Surga / Offre de Surga pilotée par la console d'administration (`feature/surga` : `425ce79d`, `29a97de2` ; aucun push)** :
   - Prix des trois durées (7 jours, 30 jours, 12 mois), formules, avantages, quotas gratuits (CV, lettres, simulations, démarches suivies) et ouverture des ventes se règlent dans `/admin/surga` et commandent l'application (offre publique, droits d'emploi, souscription Wave). Source unique : `backend/services/surga/offre-service.js` (tables `surga_plans`, `surga_reglages`). Écrans lus sur `frontend-next/src/lib/surga-offre.ts`. Sonde A5-131 : 20 sur 20. Détail : `CLAUDE.md` et `docs/surga/JOURNAL-LIVRAISONS.md`.
 
