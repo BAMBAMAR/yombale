@@ -3,7 +3,14 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
-### [2026-10-09 — Passage à `surga.nopalou.com` préparé derrière un interrupteur (D83)] — commit local, aucun push
+### [2026-10-09 — D83 activé en production : Surga à `surga.nopalou.com/surga`]
+- **Activation :** par l'utilisateur (domaine chez Render, DNS et règle Cloudflare, variable `NEXT_PUBLIC_SURGA_ORIGINE`, reconstruction).
+- **Vérifié en ligne :** renvois dans les deux sens ; reprise des données de l'appareil (données de test) ; manifeste et service worker à la nouvelle origine ; compte de test reconnu sans reconnexion (suppression différée au 2026-11-08).
+- **Non vérifié :** téléphone réel, icône d'installation avec Nopalou installé, Safari.
+- **Reste :** push de l'avis de nouvelle adresse (`d03d82c8`) ; guide d'installation à réécrire.
+- **Retour arrière :** `docs/surga/PASSAGE-ORIGINE-PROPRE.md`.
+
+### [2026-10-09 — Passage à `surga.nopalou.com` préparé derrière un interrupteur (D83)] — poussé (`9c65300a`)
 - **Objet :** donner à Surga sa propre origine, pour qu'elle s'installe à côté de Nopalou. Accord de l'utilisateur.
 - **État :** prêt dans le code, **inactif** tant que `NEXT_PUBLIC_SURGA_ORIGINE` n'est pas posée (D77 reste en vigueur, vérifié).
 - **Contenu :** renvois (`surga-adresse.ts`, `middleware.ts`), passage de la session (cookie de deux minutes), reprise des données de l'appareil (`surga-reprise.ts`, `/surga/reprise`, `SurgaRepriseAppareil.tsx`), portée `/surga` du service worker aux deux adresses.
