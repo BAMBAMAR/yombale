@@ -1,5 +1,10 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga / Identité : Harmonisation Universelle du Logo et Éradication de l'Icône Sparkles dans l'Admin (Session 2026-10-10, `feature/surga`, commit local, aucun push)** :
+  - *Console Admin (`/admin/surga`)* : Éradication de l'icône générique `<Sparkles size={18} />` dans `AdminSurgaSidebar.tsx` et intégration de l'emblème officiel sanctuarisé `<SurgaBrandLogo taille={36} afficherTexte={false} />` avec le titre bicolore `SURGA Console Pro` (`#FFFFFF` et `#F59E0B`).
+  - *Composants Frontend* : Remplacement des balises manuelles `<img>` par `<SurgaBrandLogo />` dans `SurgaHeader.tsx` (avec respect de la classe `hide-on-subview-mobile`) et dans `SurgaPwaInstallPrompt.tsx` (bannière 48px et modale 38px).
+  - *Validation* : 0 erreur de typage TypeScript (`npx tsc --noEmit`), 97/97 tests unitaires passés, 3/3 tests d'icônes PWA Surga validés.
+
 - **Nopalou / PWA : Éradication Définitive du Carré Brut au Splash Screen Android (Session 2026-10-09, `main`, commit local, aucun push)** :
   - *Cause Racine Identifiée (Régression)* : La réintroduction d'entrées `purpose: "maskable"` dans `manifest.json` lors des ajustements d'icônes récents (`8042b2ac`) avait provoqué la réutilisation par le compilateur WebAPK d'Android de l'icône maskable pleine page (`<rect width="512" height="512">` à 90° sans marges de sécurité ni border-radius). Sur Android, WebAPK sélectionne en priorité absolue l'icône maskable pour le splash screen de démarrage, affichant un gros carré orange brut agressif au lieu du logo flottant.
   - *Restauration de l'Architecture Fonctionnelle de Septembre (v20)* :

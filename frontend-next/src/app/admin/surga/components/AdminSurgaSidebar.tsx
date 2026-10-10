@@ -3,7 +3,6 @@
 import React from 'react'
 import Link from 'next/link'
 import {
-  Sparkles,
   LayoutDashboard,
   BarChart3,
   Tag,
@@ -23,6 +22,7 @@ import {
   Tv,
   FileCheck,
 } from 'lucide-react'
+import SurgaBrandLogo from '@/app/surga/components/SurgaBrandLogo'
 
 export type SurgaAdminTab =
   | 'overview'
@@ -69,13 +69,13 @@ export default function AdminSurgaSidebar({
     <aside className="surga-admin-sidebar">
       {/* En-tête de marque Surga Admin */}
       <div className="surga-admin-brand">
-        <div className="surga-brand-logo">
-          <div className="surga-logo-icon">
-            <Sparkles size={18} />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <SurgaBrandLogo taille={36} afficherTexte={false} />
           <div>
-            <div className="surga-brand-title">SURGA</div>
-            <div className="surga-brand-sub">Console Pro</div>
+            <div className="surga-brand-title" style={{ display: 'flex', alignItems: 'center', fontWeight: 900, lineHeight: 1 }}>
+              <span style={{ color: '#FFFFFF' }}>SUR</span><span style={{ color: '#F59E0B' }}>GA</span>
+            </div>
+            <div className="surga-brand-sub" style={{ marginTop: 2 }}>Console Pro</div>
           </div>
         </div>
         <div className="surga-status-pill">

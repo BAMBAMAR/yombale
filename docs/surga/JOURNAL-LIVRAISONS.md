@@ -3,6 +3,12 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-10 — Harmonisation Universelle du Logo Surga et Éradication de l'Icône Sparkles dans l'Admin] — commit local, aucun push
+- **Objet :** Corriger les disparités d'affichage du logo Surga et sanctuariser l'emblème officiel conformément aux directives permanentes.
+- **Admin Surga (`/admin/surga`) :** Remplacement de l'icône générique `<Sparkles size={18} />` dans `AdminSurgaSidebar.tsx` par l'emblème officiel `<SurgaBrandLogo taille={36} afficherTexte={false} />` et le wordmark stylisé bicolore `SURGA Console Pro`.
+- **Composants Frontend :** Unification complète par `<SurgaBrandLogo />` dans l'en-tête mobile `SurgaHeader.tsx` (remplacement de l'injection brute de balise `<img />`) et dans la bannière / modale d'installation de `SurgaPwaInstallPrompt.tsx`.
+- **Validation :** Typage TypeScript 0 erreur (`npx tsc --noEmit`), suite de tests unitaires passée (97/97 tests), tests icônes manifeste Surga passés 100% (3/3).
+
 ### [2026-10-09 — D83 activé en production : Surga à `surga.nopalou.com/surga`]
 - **Activation :** par l'utilisateur (domaine chez Render, DNS et règle Cloudflare, variable `NEXT_PUBLIC_SURGA_ORIGINE`, reconstruction).
 - **Vérifié en ligne :** renvois dans les deux sens ; reprise des données de l'appareil (données de test) ; manifeste et service worker à la nouvelle origine ; compte de test reconnu sans reconnexion (suppression différée au 2026-11-08).

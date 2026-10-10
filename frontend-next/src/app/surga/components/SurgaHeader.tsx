@@ -3,6 +3,7 @@
 import React from 'react'
 import { Wifi, WifiOff, ChevronLeft, ChevronDown, User, UserCheck } from 'lucide-react'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
+import SurgaBrandLogo from './SurgaBrandLogo'
 
 interface SurgaHeaderProps {
   titre?: string
@@ -88,29 +89,11 @@ export default function SurgaHeader({
             <ChevronLeft size={18} strokeWidth={2.5} />
           </div>
         )}
-        <div
-          className={`surga-header-logo-wrap${afficherRetour ? ' hide-on-subview-mobile' : ''}`}
-          title="Surga — Assistant de poche"
-          aria-hidden="true"
-          style={{
-            width: 34,
-            height: 34,
-            flexShrink: 0,
-            borderRadius: 8,
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <img
-            src="/surga/surga-symbol.png"
-            alt="Surga"
-            width={34}
-            height={34}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-        </div>
+        <SurgaBrandLogo
+          taille={34}
+          afficherTexte={false}
+          classeNom={afficherRetour ? 'hide-on-subview-mobile' : ''}
+        />
         <div>
           <h1 className="surga-header-title">
             {titre === 'Surga' ? (

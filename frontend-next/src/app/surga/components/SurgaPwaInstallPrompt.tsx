@@ -5,6 +5,7 @@ import { Download, X, Smartphone, Sparkles, CheckCircle2, Copy, Globe } from 'lu
 import { ADRESSE_SURGA } from '@/lib/surga-adresse'
 import { detecterPlateforme, GUIDES, type Plateforme } from '@/lib/surga-pwa-plateforme'
 import SurgaPwaGuide from './SurgaPwaGuide'
+import SurgaBrandLogo from './SurgaBrandLogo'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -173,13 +174,7 @@ export default function SurgaPwaInstallPrompt() {
         <aside role="region" aria-label="Installer Surga" className="surga-pwa-banner">
           {/* L'icône officielle et premium de Surga */}
           <div className="surga-pwa-banner-icon">
-            <img
-              src="/surga/surga-symbol.png"
-              alt="Surga"
-              width={48}
-              height={48}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
+            <SurgaBrandLogo taille={48} afficherTexte={false} />
             <div className="surga-pwa-banner-sparkle">
               <Sparkles size={9} color="#F59E0B" />
             </div>
@@ -235,9 +230,7 @@ export default function SurgaPwaInstallPrompt() {
             {/* En-tête de la modale avec icône premium Surga */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: '#0F172A', border: '1px solid rgba(217, 119, 6, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/surga/surga-symbol.png" alt="Surga" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
+                <SurgaBrandLogo taille={38} afficherTexte={false} />
                 <div>
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: 'var(--surga-primary, #0F172A)' }}>
                     Installer Surga

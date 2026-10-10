@@ -64,6 +64,7 @@ donne lieu à une entrée dans `docs/surga/JOURNAL-LIVRAISONS.md`.
 - [x] `DONE` Audit universel auth Nopalou vs Surga : Éradication des 7 doublons PostgreSQL, pose de l'index UNIQUE partiel `uidx_utilisateurs_tel_norm`, normalisation 115 comptes `+221...` et contrôles déterministes sur tous les services à quotas.
 - [x] `DONE` Résolution déterministe des conflits 409 multi-comptes par téléphone dans `telephoneIntegrity.js` (`supprime_le IS NULL`) et dédoublonnage PostgreSQL des comptes marchands rattachés à bamba.
 - [x] `DONE` PWA installable (manifest `/surga/manifest.json`, service worker dédié `/surga/sw.js`, icônes).
+- [x] `DONE` Harmonisation universelle de l'emblème et du logo officiel Surga (`<SurgaBrandLogo />`, éradication du placeholder Sparkles dans `AdminSurgaSidebar`, standardisation dans `SurgaHeader` et `SurgaPwaInstallPrompt`).
 - [x] `DONE` Profil de personnalisation : briques choisies, heure du briefing, langue, quartiers, équipes suivies (table `surga_preferences`, API `/api/surga/preferences` et `/api/surga/onboarding`).
 - [x] `DONE` Fixer le budget de poids de l'app connectée (point de départ : JS initial < 120 Ko tenu, zéro dépendance lourde).
 - [x] `DONE` Point d'entrée visible sur l'accueil (`/`) et dans la navigation desktop (D20).
