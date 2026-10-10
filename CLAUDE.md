@@ -49,6 +49,124 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou / SEO : Contre-Expertise Indépendante, Revue Contradictoire & Matrice d'Arbitrage (Agent 7, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Conduire une contre-expertise indépendante et contradictoire des travaux réalisés par les Agents 0 à 6 afin d'éviter qu'un plan SEO soit bâti sur des données incorrectes, des tests incomplets ou des extrapolations non vérifiables. Vérifier l'ensemble des chiffres et hypothèses sur la base de données PostgreSQL de production (`nopalou_db`, Render Frankfurt), les sondes HTTP réelles sur `https://nopalou.com`, et l'inspection minutieuse du code source Next.js 14 et Express. Établir la matrice des 12 arbitrages officiels opposables pour les phases suivantes.
+  - *Livrables Clés Produits & Validés* :
+    1. `audit/seo/RAPPORT_CONTRE_EXPERTISE_INDEPENDANTE.md` : Rapport officiel d'audit contradictoire (350+ lignes) couvrant les 6 domaines d'évaluation (Fiabilité des données, Benchmark Google & Concurrents, Architecture & Mapping, Audit Technique, Qualité Éditoriale & Catalogue, Mesure & Conversion) avec statuts formels (CONFIRMÉ, PARTIELLEMENT CONFIRMÉ, NON VÉRIFIABLE, RÉFUTÉ / INVALIDÉ, RISQUE IDENTIFIÉ).
+    2. `audit/seo/REGISTRE_ARBITRAGES_CONTRE_EXPERTISE.md` : Registre des 12 fiches d'arbitrage officielles opposables (`ARB-01` à `ARB-12`) consignant le diagnostic du biais, la preuve matérielle et la directive exécutive pour la suite de la campagne.
+    3. `audit/seo/HANDOVER_AGENT_8.md` : Document de passation officiel vers l'Agent 8 (Stratège CRO & Monétisation Marchands) avec bilan exhaustif des 10 points obligatoires, verrous anti-doorway et recommandations de conversion sans friction de carte bancaire.
+    4. `audit/seo/00_GOUVERNANCE/HISTORIQUE_SESSIONS_SEO.md` : Actualisation du registre chronologique avec l'entrée immuable de la Session 07.
+  - *Découvertes Majeures & Redressements Méthodologiques* :
+    * **Correction de l'Erreur de Dénominateur sur les Prix Immo (`TIT-ANO-05`)** : Démonstration mathématique que le taux de 67,8 % d'annonces immo sans prix (Agent 5) résultait de la division du total base (1 749) par les seules annonces actives (2 576). Le taux de défaut réel sur les annonces actives est de **5,47 % (141 / 2 576)** !
+    * **Rectification de l'Échantillon SERP Réel** : Réfutation de l'extrapolation affirmant que 150 groupes P0 ont été testés en direct ; exactement **40 groupes** ont fait l'objet d'un relevé SERP dans `ANALYSE_SERP.md` (taux réel : 4,0 %).
+    * **Redressement de la Sur-confiance** : Réfutation du `niveau_confiance: Élevé` appliqué aveuglément sur 100 % des 1 000 clusters dans `BASE_REQUETES_SEO.csv` ; barème révisé en fonction des sondes SERP réelles.
+    * **Verrou Anti-Doorway Pages Immo** : Détection que 62,4 % des couples type+quartier ont moins de 3 annonces actives ; conditionnement impératif de toute page de quartier à un minimum de **5 annonces actives vérifiées**.
+    * **Confirmation des Failles Techniques P0** : Soft-404 HTTP 200 sur fiches inexistantes, cannibalisation active `/creer-boutique`, redirection 307 temporaire sur `/b/[slug]`, inclusion illégitime de `/surga` dans `sitemap.xml`.
+    * **Comptabilité Stricte des Abonnements SaaS** : Distinction nette entre les 101 commerçants en période d'essai gratuit de 30 jours et les **7 abonnements Business payants réels** (MRR : 80 000 FCFA).
+  - *Contrôle Qualité & Métriques* : Zéro modification de code en production, respect strict de la branche `main` (`git branch --show-current -> main`), aucun push git. Verdict : Contre-expertise validée à 100 %.
+
+- **Nopalou / SEO : Audit & Conception du Système de Mesure SEO, Télémétrie, Alertes & Cockpit (Agent 6, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Auditer et concevoir le dispositif complet de mesure SEO de Nopalou pour suivre la visibilité organique, les positions observées, l'indexabilité, les performances des pages et les conversions commerciales (abonnements payants Wave/OM, commandes et caisse POS). Établir le dictionnaire normatif des indicateurs, cartographier les événements pour les 4 tunnels, spécifier l'architecture du Cockpit SEO en 8 vues étanches, définir la méthode de suivi des 1 000 clusters, le plan d'alertes multi-canal et le modèle d'attribution commerciale avec ses limites transparentes.
+  - *Livrables Clés Produits & Validés* :
+    1. `audit/seo/AUDIT_MESURE_SEO.md` : Inventaire contradictoire des sources (Search Console, GA4, PostgreSQL, Pixels, Semrush), diagnostic des flux, identification de l'identifiant réel `G-3KGE1YBMVJ` (résolution de la dérive documentaire `G-GD7365PKTS`), analyse des ruptures de mesure et 6 fiches d'anomalies de mesure formalisées (`MES-ANO-01` à `MES-ANO-06`).
+    2. `audit/seo/DICTIONNAIRE_INDICATEURS.md` : Référentiel normatif des 20 KPI (Visibilité, Qualité, Engagement, Conversion, Revenu) avec définitions, formules, sources certifiées, fréquences, fuseau horaire `Africa/Dakar` (UTC+0), limites et conditions de validation (zéro score composite opaque).
+    3. `audit/seo/CARTOGRAPHIE_EVENEMENTS_CONVERSION.md` : Cartographie des événements pour les 4 tunnels de conversion (B2B Marchands, B2C Comparateur, Immobilier, Agences), analyse des statuts réels (6 fiables, 4 partiels, 8 manquants/faussés), spécification du module unifié `trackConversion` et règles de confidentialité sans PII.
+    4. `audit/seo/SPECIFICATION_DASHBOARD_SEO.md` : Spécification complète du Cockpit `/admin/(protected)/seo` en 8 vues étanches (Visibilité Globale, Catégories & Pages, Suivi 1 000 Groupes, Mouvements SERP, Santé Indexation, Qualité Catalogue, Tunnels & MRR, Alertes & Anomalies) avec architecture des composants Next.js et requêtes SQL optimisées.
+    5. `audit/seo/SUIVI_1000_GROUPES.md` : Matrice de couverture des 1 000 clusters sur 10 échelons étanches (150 vérifiés en direct SERP SN, 850 en attente de cycle — zéro zéro artificiel), protocole de sonde mobile `gl=sn` et schéma relationnel PostgreSQL (`seo_clusters`, `seo_positions_historique`, `seo_performances_gsc`).
+    6. `audit/seo/PLAN_ALERTES_SEO.md` : Matrice de 8 règles d'alerte opérationnelles (chute de clics, erreurs HTTP 5xx, résurgence Soft-404, sitemap corrompu, régression P0, arrêt GA4, arrêt abonnements, dérive TTFB) interconnectée avec le moteur multi-canal existant `admin-alerts.js` (WhatsApp, Telegram, Email).
+    7. `audit/seo/PLAN_ATTRIBUTION_COMMERCIALE.md` : Modèle d'attribution first-touch amorti pour le SaaS marchand, traçabilité des 11 événements métier, protocole de continuité WhatsApp, persistance UTM et limites franches (cross-device, espèces POS).
+    8. `audit/seo/HANDOVER_AGENT_7.md` : Document de passation officiel vers l'Agent 7 (Designer UI & Frontend Admin) avec bilan des 10 points obligatoires et verdict validé à 100%.
+  - *Contrôle Qualité & Métriques* : Inspection syntaxique exhaustive de `frontend-next` et `backend`, 20 indicateurs formalisés, 18 événements de conversion cartographiés, 6 fiches d'anomalies de mesure formalisées, 0 code de production modifié, respect strict de la branche `main`, aucun push git. Verdict : Système de mesure documenté et validé à 100%.
+
+- **Nopalou / SEO : Audit Éditorial, Qualité des Contenus, Plan de Réécriture & Conversion (Agent 5, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Réaliser un audit éditorial approfondi et contradictoire des contenus publics de Nopalou, évaluer la réponse aux intentions de recherche sur 45 pages représentatives, cartographier les 1 000 groupes de requêtes au niveau éditorial, diagnostiquer la qualité des données de production PostgreSQL (23 549 produits, 143 boutiques, 14 246 immo, 6 875 annonces) et concevoir la stratégie éditoriale, le plan de réécriture priorisé (P0-P2) et l'optimisation des tunnels de conversion B2B/B2C.
+  - *Livrables Clés Produits & Validés* :
+    1. `audit/seo/AUDIT_QUALITE_CONTENUS.md` : Rapport exhaustif de l'échantillon de 45 pages, analyse des 10 critères directeurs, examen des 8 anomalies de snippets SERP et diagnostic de pureté des données.
+    2. `audit/seo/MAPPING_CONTENUS_REQUETES.csv` : Matrice intégrale des 1 000 clusters enrichie des titres actuels, qualités, défauts, titres optimisés cibles, méta-descriptions et H1.
+    3. `audit/seo/PLAN_REECRITURE_SEO.md` : Registre de 10 fiches de réécriture priorisées (P0 à P2) respectant les 12 rubriques normatives (résolution du contresens sur `/guide-emploi`, correction des chiffres de stock gonflés, nettoyage Facebook scraping, cannibalisation B2B).
+    4. `audit/seo/QUALITE_DONNEES_CATALOGUE.md` : Analyse approfondie de la pureté du catalogue PostgreSQL (99,95 % de `description = nom`, 73,3 % sans marque, 65,7 % sans prix) et protocole d'assainissement déterministe.
+    5. `audit/seo/STRATEGIE_CONTENUS.md` : Spécification des 6 guides piliers sénégalais d'autorité (Baromètre des loyers Dakar, Guide Recrutement & Salaires, Guide Climatiseur Woyofal, Bail OHADA, Import Chine Afrety, Caisse & Dettes Bor) et justification des sujets rejetés.
+    6. `audit/seo/PLAN_CONVERSION_PAGES.md` : Optimisation UX et éditoriale des 4 tunnels de transformation (B2B Marchands, B2C Acheteurs, Locataires, Agences) et plan de mesure GA4.
+    7. `audit/seo/HANDOVER_AGENT_6.md` : Document de passation officiel vers l'Agent 6 (Mesure, Données & Automatisation SEO) avec bilan des 10 points obligatoires et verdict validé à 100%.
+  - *Contrôle Qualité & Métriques* : 45 pages réelles inspectées, 1 000 clusters mappés avec métadonnées cibles, 10 fiches de réécriture formalisées, 0 code de production modifié, respect strict de la branche `main`, aucun push git. Verdict : Audit éditorial validé à 100%.
+
+- **Nopalou / SEO : Audit Technique Approfondi, Rendu SSR, Indexabilité, Schema.org & Plan de Corrections (Agent 4, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Diagnostiquer les problèmes techniques réels limitant l'exploration, le rendu, l'indexation, la compréhension et les performances des pages publiques de Nopalou, confronter le code réel et l'architecture cible, tester 30 URLs réelles en laboratoire Googlebot 2.1 et établir le plan de corrections techniques pour l'Agent 5.
+  - *Livrables Clés Produits & Validés* :
+    1. `audit/seo/AUDIT_TECHNIQUE_SEO.md` : Synthèse globale des contrôles, résultats, risques et diagnostic approfondi par pilier technique.
+    2. `audit/seo/RESULTATS_TESTS_SEO.csv` : Matrice de 30 tests réels avec statuts HTTP, TTFB, temps total, poids HTML, canonicals, H1 et preuves (22 PASS, 8 FAIL, 0 BLOCKED).
+    3. `audit/seo/AUDIT_RENDU_INDEXABILITE.md` : Radiographie du SSR Next.js 14, diagnostic du Soft-404 P0 sur entités dynamiques, écran blanc SSR agence immo P1 et canonicalisation paginée.
+    4. `audit/seo/AUDIT_METADONNEES_SCHEMA.md` : Examen complet des balises On-Page et validation de la conformité Schema.org JSON-LD (Product, Store, RealEstateListing, SoftwareApplication, FAQPage) en devises XOF sans avis fictifs.
+    5. `audit/seo/AUDIT_PERFORMANCES_MOBILE.md` : Évaluation des temps de réponse, poids HTML et Core Web Vitals sur mobile au Sénégal (0 police CDN externe, AVIF/WebP Cloudinary).
+    6. `audit/seo/AUDIT_SITEMAP_URL.md` : Audit de `robots.txt` (explication du blocage de SemrushBot), du sitemap XML de 27 328 URLs (5,17 Mo), de la redirection 307 sur `/b/[slug]` et présence anormale de `/surga`.
+    7. `audit/seo/PLAN_CORRECTIONS_TECHNIQUES.md` : Registre de 12 corrections (P0 à P3) avec causes démontrées, fichiers concernés, étapes et critères d'acceptation stricts.
+    8. `audit/seo/HANDOVER_AGENT_5.md` : Document de passation officiel vers l'Agent 5 (développement et implémentation des corrections).
+  - *Contrôle Qualité & Métriques* : 10 modèles de pages inspectés, 30 URLs contrôlées en conditions réelles, 12 fiches de correction formalisées, 0 code de production modifié, respect strict de la branche `main`, aucun push git. Verdict : Audit technique validé à 100%.
+
+- **Nopalou / SEO : Audit d'Architecture SEO, Cartographie des Routes, Mapping 1 000 Requêtes & Politique d'Indexation (Agent 3, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Concevoir l'architecture SEO cible de Nopalou au Sénégal à partir des 1 000 groupes de requêtes (`BASE_REQUETES_SEO.csv`), de la contre-analyse SERP d'Agent 2, de l'inspection directe du code source Next.js 14 et des données réelles PostgreSQL (23 549 produits, 2 576 immo, 3 372 annonces, 101 boutiques).
+  - *Livrables Clés Produits & Validés* :
+    1. `audit/seo/CARTOGRAPHIE_ARCHITECTURE_SEO.md` : Cartographie exhaustive des 9 types de pages et 21 motifs d'URL réels, analyse des composants, modes de rendu (SSR/ISR/CSR), relations inter-entités et arborescence cible complète.
+    2. `audit/seo/MAPPING_REQUETES_PAGES.csv` : Matrice intégrale reliant les 1 000 groupes d'intentions aux URL cibles (804 satisfaisantes, 164 insuffisantes, 32 absentes) avec identification des cannibalisations, données SQL requises et justifications.
+    3. `audit/seo/POLITIQUE_INDEXATION_URL.md` : Guide normatif d'indexation par typologie d'URL, statuts HTTP stricts (200, 301, 404, 410), gestion du cycle de vie des annonces et spécification technique de résolution du Soft-404 (`SEO-ANO-01`).
+    4. `audit/seo/PLAN_DE_MAILLAGE_INTERNE.md` : Plan de distribution du PageRank, maillage contextuel P0-P2, spécification universelle du fil d'Ariane et interdiction des ancres sur-optimisées.
+    5. `audit/seo/REGLES_CREATION_PAGES_SEO.md` : Garde-fous anti-doorway et anti-thin content, seuils d'inventaire minimaux (≥ 10 annonces pour quartier immo, ≥ 8 offres pour sous-catégorie) et algorithmes de génération dynamique de métadonnées.
+    6. `audit/seo/ANOMALIES_ARCHITECTURE.md` : Registre de 9 anomalies d'architecture confirmées avec causes racines démontrées, plans de correction, tests de validation et non-régression.
+    7. `audit/seo/HANDOVER_AGENT_4.md` : Document de passation officiel vers l'Agent 4 (optimisation On-Page, contenu et Schema.org) avec bilan des 10 points obligatoires et verdict validé à 100%.
+
+- **Nopalou / SEO : Contre-Analyse SERP Google Sénégal, Benchmark Concurrentiel & Radiographie de Positionnement (Agent 2, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Réaliser une analyse concurrentielle SEO fondée sur des observations réelles des SERP Google au Sénégal (`google.sn`, `gl=sn`, `hl=fr`), disséquer les forces/faiblesses des concurrents réels, mesurer la visibilité de Nopalou et préparer les feuilles de route d'opportunités et de risques pour l'Agent 3.
+  - *Livrables Clés Produits & Validés* :
+    1. `audit/seo/ANALYSE_SERP.md` : Radiographie complète des résultats observés sur un échantillon de 40 groupes prioritaires couvrant les 9 familles de `BASE_REQUETES_SEO.csv`, Top 5 organique, formats enrichis (PAA, Pack Local, Carrousels), et analyse du cas de succès de `/telecom` (Top 3 Google).
+    2. `audit/seo/BENCHMARK_CONCURRENTIEL.md` : Cartographie des 6 profils d'acteurs et inspection exhaustive des 12 critères de qualité sur les 8 concurrents majeurs (`jaay.sn`, `sen-caisse.com`, `keur-immo.com`, `expat-dakar.com`, `jumia.sn`, `promo.sn`, `istar-dakar.net`, `comparek.sn`).
+    3. `audit/seo/ECARTS_NOPALOU_CONCURRENTS.md` : Évaluation systématique sur les 8 questions directrices, classification étanche des Défauts confirmés (absence landing POS, cannibalisation boutique, Soft-404), Avantages vérifiés (suite marchande unifiée, comparateur multi-vendeurs, zéro CDN externe), Opportunités plausibles et Hypothèses à tester.
+    4. `audit/seo/OPPORTUNITES_SEO_VALIDATION.md` : Feuille de route en 4 vagues (V1 POS/Boutique P0, V2 Climatiseurs/Électro P0, V3 Immo Dakar P1, V4 Tech venant P1) avec calcul de faisabilité, prévention du Thin Content et KPI.
+    5. `audit/seo/RISQUES_SEO.md` : Registre des 9 pratiques SEO dangereuses (Doorway pages, Crawl trap facettes, spam Schema.org, Soft-404, fuite Surga) et garde-fous techniques obligatoires (seuil minimal de 5 offres).
+    6. `audit/seo/BASE_REQUETES_SEO.csv` : Mise à jour ciblée et traçable des colonnes `position_observee` et `difficulte_concurrence` sur les 40 groupes échantillonnés (960 groupes préservés en `Non mesurée`).
+    7. `audit/seo/HANDOVER_AGENT_3.md` : Passation officielle avec les 10 points obligatoires et instructions pour l'Agent 3 (Audit 3 : Architecture & Couverture).
+  - *Contrôle Qualité & Métriques* : 40 groupes analysés en direct, 40 SERP contrôlées, 28 concurrents recensés dont 8 audités en profondeur, 0 code de production modifié, respect strict de la branche `main`, aucun push git. Verdict : Analyse validée à 100%.
+
+- **Nopalou / SEO : Cartographie des 1 000 Groupes de Requêtes, Matrice de Priorisation & Registre des Lacunes (Agent 1, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Construire une cartographie sémantique exhaustive et déterministe de 1 000 groupes de requêtes Google au Sénégal (`gl=sn`, `hl=fr`), les classer par potentiel commercial réel, documenter la méthode SOC et préparer le handover pour l'Agent 2.
+  - *Livrables Clés Produits & Validés* :
+    1. `audit/seo/BASE_REQUETES_SEO.csv` : 1 000 groupes qualifiés (IDs `GRP-0001` à `GRP-1000`), 17 colonnes structurées, encodage UTF-8 BOM, format RFC-4180 strict.
+    2. `audit/seo/CARTOGRAPHIE_INTENTIONS.md` : Taxonomie complète des 9 familles métiers, 5 intentions (transactionnelle, commerciale, locale, info, B2B), maillage géographique Dakar/régions et saisonnalités sénégalaises.
+    3. `audit/seo/METHODE_PRIORISATION.md` : Modèle multicritères à 5 dimensions (Demande, Pertinence, Monétisation, Concurrence, Faisabilité) et formule déterministe du Score d'Opportunité Composite (SOC).
+    4. `audit/seo/OPPORTUNITES_PRIORITAIRES.md` : Feuilles de route des 242 groupes P0 (Urgence B2B SaaS MRR, Climatiseurs Astech, Immobilier Almadies/Plateau/Diamniadio, Smartphones phares).
+    5. `audit/seo/LACUNES_DE_DONNEES.md` : Registre transparent des accès absents (API GSC, Google Ads Planner en direct) et des catégories SQL à stock nul.
+    6. `audit/seo/HANDOVER_AGENT_2.md` & `audit/seo/HANDOVER/HANDOVER_AGENT_1_VERS_AGENT_2.md` : Passation officielle avec les 11 métriques obligatoires et instructions pour l'Agent 2 (Audit 2 : Analyse SERP Google Sénégal sur les 150 P0).
+  - *Contrôle Qualité & Métriques* : Exactement 1 000 groupes (242 P0, 444 P1, 294 P2, 20 P3), 1 000 adossés à des fonctionnalités existantes, 0 donnée inventée, zéro modification de code en production, branche `main` préservée. Verdict : Base validée à 100%.
+
+- **Nopalou / SEO : Diagnostic Initial, Mesures Réelles & Recensement Exhaustif (Agent 0, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Réaliser l'état des lieux SEO technique, structurel, éditorial et opérationnel réel de Nopalou sur la base des données mesurables du dépôt et de la production (sans simulation, sans modification de code applicatif, sans push git).
+  - *Mesures & Faits Confirmés (Type A)* :
+    - Volumétrie réelle en base PostgreSQL (`nopalou_db`) : 23 549 produits, 31 886 offres, 143 boutiques, 350 boutique_produits, 14 236 annonces immo, 8 agences immo, 6 848 annonces classifiées.
+    - Sitemap XML de production (`https://nopalou.com/sitemap.xml`) : 27 291 URLs éligibles actives (dont 21 180 fiches comparateur, 3 345 annonces, 2 432 immo, 101 boutiques), 163 685 lignes, 5,16 Mo.
+    - Fichier `robots.txt` en production : Disallow des zones privées (`/admin/`, `/api/`, `/compte`, `/boutique/`, `/agence/`) et blocage anti-scraping de 20 bots incluant `SemrushBot`, `AhrefsBot` et `DataForSeoBot`.
+    - Temps de réponse serveur (TTFB) mesurés : 334 ms sur silos B2B, 704 ms sur agences, 1 793 ms sur la page d'accueil.
+  - *Anomalies Identifiées & Classées (`audit/seo/ANOMALIES_SEO.md`)* :
+    - **P0 (Critique - SEO-ANO-01)** : Soft-404 généralisé — les fiches dynamiques inexistantes renvoient le corps "Page introuvable" avec un code HTTP 200 OK au lieu de 404 (prouvé sur `/produit/test-non-existant`, `/boutiques/test-invalide`, `/annonces/test-invalide`, `/immo/test-invalide`).
+    - **P1 (Majeur - SEO-ANO-02)** : Blocage robots.txt de SemrushBot démontrant la cause exacte des 89 erreurs de crawl signalées par le propriétaire.
+    - **P1 (Majeur - SEO-ANO-03)** : Cannibalisation interne directe entre `/creer-boutique` et `/creer-boutique-en-ligne` sur la même intention de recherche.
+    - **P1 (Majeur - SEO-ANO-04)** : Absence d'atterrissage canonique sur les catégories d'annonces classifiées (`/annonces?categorie=...` forçant le canonical racine).
+    - **P2 (Moyen - SEO-ANO-05 & 06)** : Redirection 307 temporaire sur `/b/[slug]` au lieu de 301 ; présence de `/surga` dans le sitemap de Nopalou.
+    - **P3 (Mineur - SEO-ANO-07)** : Absence de découpage en sitemap index multi-fichiers pour le fichier sitemap de 5,16 Mo.
+  - *Livrables Créés sous `audit/seo/`* :
+    - `ETAT_INITIAL_SEO.md`, `INVENTAIRE_PAGES_ET_URLS.md`, `DONNEES_ET_SOURCES.md`, `ANOMALIES_SEO.md`, `OPPORTUNITES_REQUETES.md`, `PLAN_DE_MESURE.md`, `HANDOVER_AGENT_1.md`.
+  - *Transmission* : Handover complet consigné autorisant le démarrage de l'Agent 1 (Audit 1 : Découverte des requêtes) sans refaire l'inventaire. Zéro code modifié, aucun push git.
+
+- **Nopalou / SEO : Cadrage Stratégique & Préparation du Programme de Domination SEO (Agent -1, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif Stratégique* : Bâtir le programme d'audit visant à découvrir, qualifier, surveiller et exploiter les 1 000 groupes de requêtes Google les plus recherchés et pertinents au Sénégal pour convertir le trafic organique qualifié en abonnements marchands (POS caisse, e-commerce) et agences immobilières.
+  - *Architecture Documentaire (`audit/seo/` & `audit/`)* :
+    - `audit/README_SEO_PROGRAMME.md` : Référentiel stratégique unifié et principes directeurs.
+    - `audit/seo/00_GOUVERNANCE/` : Diagnostic technique initial (`ETAT_INITIAL_ET_CADRE.md`), déontologie/quotas/règles d'or (`REGLES_ET_SECURITE_SEO.md`), journal immuable (`HISTORIQUE_SESSIONS_SEO.md`).
+    - `audit/seo/01_SOURCES_ET_COLLECTE/` : Triangulation des 5 sources (GSC, Keyword Planner Geo 2686 SN, PostgreSQL, SERP publiques, APIs) et typologie stricte A/B/C (`METHODOLOGIE_SOURCES_DONNEES.md`), cartographie des accès et plans de repli (`SOURCES_LIMITES_ET_ACCES.md`).
+    - `audit/seo/02_METHODE_1000_GROUPES/` : Définition des 7 familles métier réelles (`PERIMETRE_FAMILLES_METIER.md`), pipeline de normalisation linguistique et clustering « 1 intention = 1 page cible » (`TAXONOMIE_ET_CLUSTERING.md`), algorithme du Score d'Opportunité Composite $SOC = \frac{\log_{10}(V+10) \times P}{\sqrt{D}} \times S$ et seuils P0 à P3 (`MATRICE_SCORING_ET_PRIORISATION.md`).
+    - `audit/seo/03_VISIBILITE_ET_ARCHITECTURE/` : Protocole SERP Sénégal avec isolation des annonces et pondération mobile 85%+ (`CADRE_ANALYSE_SERP_SENEGAL.md`), audit d'adéquation sémantique, détection de cannibalisation et politique anti-doorway pages (`AUDIT_ARCHITECTURE_COUVERTURE.md`).
+    - `audit/seo/04_PROGRAMME_10_AUDITS/` : Spécification exhaustive des 10 audits spécialisés avec objectifs, tests, preuves, livrables, risques, critères PASS/FAIL (`PLAN_GLOBAL_10_AUDITS.md`), matrice de classification des anomalies SEO-P0 à SEO-P3 et 14 piliers d'homologation GO/NO-GO (`CRITERES_PASS_FAIL_ET_METRIQUES.md`).
+    - `audit/seo/HANDOVER/` et `audit/HANDOVER/` : Dossier de passation officiel à l'Agent 0 (`HANDOVER_AGENT_MINUS_1_VERS_AGENT_0.md`).
+  - *Intégrité Code & Règles* : Zéro code applicatif modifié en production, respect strict de la branche `main` pour Nopalou, aucun push git.
+
 - **Nopalou / PWA : Éradication Définitive du Carré Brut au Splash Screen Android (Session 2026-10-09, `main`, commit local, aucun push)** :
   - *Cause Racine Identifiée (Régression)* : La réintroduction d'entrées `purpose: "maskable"` dans `manifest.json` lors des ajustements d'icônes récents (`8042b2ac`) avait provoqué la réutilisation par le compilateur WebAPK d'Android de l'icône maskable pleine page (`<rect width="512" height="512">` à 90° sans marges de sécurité ni border-radius). Sur Android, WebAPK sélectionne en priorité absolue l'icône maskable pour le splash screen de démarrage, affichant un gros carré orange brut agressif au lieu du logo flottant.
   - *Restauration de l'Architecture Fonctionnelle de Septembre (v20)* :
