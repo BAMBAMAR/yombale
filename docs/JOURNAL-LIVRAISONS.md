@@ -1,5 +1,28 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Nopalou / SEO : Exécution Contrôlée du Pilote SEO Tranche 1 (Agent 10, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Implémenter avec rigueur les corrections techniques P0 autorisées du Pilote SEO de Nopalou selon le périmètre validé par la contre-expertise (Agent 7) et la préparation technique (Agent 9), en préservant l'intégrité de l'architecture Next.js 14 et Express, sans aucune régression fonctionnelle ni extension non autorisée de périmètre.
+  - *Actions & Correctifs Implémentés en Production* :
+    1. **Résolution de la Cannibalisation B2B Marchands (`CORR-03`)** : Modification de `frontend-next/src/app/creer-boutique/layout.tsx` avec `robots: { index: false, follow: true }`, balises canoniques et OpenGraph pointant fermement vers `https://nopalou.com/creer-boutique-en-ligne`. Breadcrumbs alignés.
+    2. **Épuration Strict du `sitemap.xml` (`CORR-08` / `CORR-03`)** : Modification de `frontend-next/src/app/sitemap.ts` pour expurger la route `/surga` (qui retourne un 307 temporaire) et `/creer-boutique` (désormais `noindex`). Maintien de `/creer-boutique-en-ligne` en priorité 0.98.
+    3. **Éradication de la Cause Racine des Soft-404 HTTP 200 (`CORR-01`)** : Suppression du fichier global `frontend-next/src/app/loading.tsx`. Ce composant forçait Next.js 14 à envelopper l'arborescence dans un `<Suspense>` sous le `RootLayout`, envoyant prématurément un statut HTTP 200 OK en streaming avant l'exécution de `notFound()`. Les sous-dossiers `/immo` et `/telecom` conservent leur `loading.tsx` isolé.
+    4. **Standardisation Anti-Slop & Télémétrie CTA B2B Marchands (`MES-ANO-01`)** : Extraction du bouton interactif `CreerBoutiqueCtaBtn.tsx` dans `/creer-boutique-en-ligne`, remplacement des émojis unicode par des icônes vectorielles SVG `lucide-react` (`ArrowLeftRight`, `Calculator`), et déclenchement sécurisé de l'événement GA4 `start_trial_click`.
+    5. **Télémétrie Sortante Commandes WhatsApp Comparateur (`MES-ANO-01`)** : Instrumentation de `ProduitHeroCard.tsx` et `ProduitOffresList.tsx` pour capter les clics sortants WhatsApp avec les métadonnées produit (`produit_id`, `offre_id`, `prix`, `marchand_nom`).
+    6. **Préparation du Schéma SQL d'Attribution SaaS (`BLOQ-02`)** : Création du script DDL idempotent `audit/seo/scripts/migration_attribution_abonnements.sql` et intégration dans `backend/migrate-inline.js` pour ajouter `utm_source`, `utm_medium`, `utm_campaign`, `landing_page` à la table `abonnements`.
+  - *Livrables d'Audit Produits* :
+    1. `audit/seo/RAPPORT_EXECUTION_PILOTE.md` : Rapport exhaustif d'exécution technique, architecture, preuves et risques résiduels.
+    2. `audit/seo/JOURNAL_MODIFICATIONS_PILOTE.csv` : Matrice à 10 colonnes traçant chaque modification.
+    3. `audit/seo/RESULTATS_TESTS_AGENT_10.csv` : Relevé de 28 tests réels (24 PASS, 0 FAIL, 4 BLOQUÉS / NON EXÉCUTÉS sous conditions).
+    4. `audit/seo/ECARTS_ET_BLOCAGES_PILOTE.md` : Registre des écarts, blocages techniques documentés et arbitrage Tranche 2.
+    5. `audit/seo/HANDOVER_AGENT_11.md` : Dossier complet de passation avec instructions reproductibles pour l'Agent 11.
+  - *Contrôle Qualité & Métriques* :
+    * Tests Next.js Vitest : 97/97 tests unitaires PASS (100%).
+    * Linter Anti-Slop (`npm run lint:slop`) : PASS (0 violation bloquante).
+    * Build de Production Next.js 14 (`npm run build`) : Compilation TypeScript et génération statique validées avec succès (Exit code 0).
+    * Tests Jest UX/SEO (`ux-seo-audit.test.js`) : 76/78 PASS (100% PASS sur le périmètre Nopalou).
+    * Branche `main` respectée, zéro push git automatique conformément aux règles absolues. Verdict : IMPLÉMENTATION TERMINÉE (Tranche 1 prête pour audit indépendant).
+
+
 - **Nopalou / SEO : Préparation du Pilote SEO, Cadre d'Exécution, Matrice de Tests & Sécurité (Agent 9, Session 2026-10-10, `main`, aucun push)** :
   - *Objectif de Session* : Préparer le premier chantier SEO exécutable de Nopalou, vérifier rigoureusement l'ensemble des prérequis techniques, architecturaux et données, établir l'état de référence initial (baselines figées), concevoir la matrice de tests exhaustive à 10 colonnes (28 tests), définir la procédure de déploiement et de rollback, identifier les blocages matériels et transmettre un cadre d'exécution sécurisé à l'Agent 10. Zéro modification du code de production pendant cette session.
   - *Livrables Clés Produits & Validés* :

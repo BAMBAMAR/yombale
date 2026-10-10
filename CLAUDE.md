@@ -49,6 +49,30 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou / SEO : Exécution Contrôlée du Pilote SEO (Tranche 1 Complétée & Tranche 2 Cadrée) (Agent 10, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Implémenter rigoureusement les corrections autorisées du premier pilote SEO de Nopalou sans étendre le périmètre, valider l'ensemble des quality gates techniques et éditoriales, et préparer la recette indépendante par l'Agent 11.
+  - *Modifications de Code Réalisées (Tranche 1)* :
+    1. `frontend-next/src/app/creer-boutique/layout.tsx` : Éradication de la cannibalisation B2B (`CORR-03`). Ajout de `robots: { index: false, follow: true }`, alignement du `canonical` et d'`openGraph.url` vers `https://nopalou.com/creer-boutique-en-ligne`. Formulaire d'onboarding 100% préservé et fonctionnel.
+    2. `frontend-next/src/app/sitemap.ts` : Nettoyage du sitemap XML officiel (`CORR-08`). Retrait de `/surga` (redirection 307) et de `/creer-boutique` (désormais en noindex). Maintien prioritaire de `/creer-boutique-en-ligne` (prio 0.98).
+    3. `frontend-next/src/app/loading.tsx` : Résolution radicale du Soft-404 streaming (`CORR-01`). Suppression du skeleton global racine qui forçait un streaming `<Suspense>` sous RootLayout émettant un code HTTP 200 avant l'évaluation de `notFound()`.
+    4. `frontend-next/src/app/creer-boutique-en-ligne/CreerBoutiqueCtaBtn.tsx` & `page.tsx` : Création du composant client CTA instrumenté avec GA4 `start_trial_click`, et élimination des émojis Unicode de maillage (remplacés par des icônes Lucide).
+    5. `frontend-next/src/app/produit/[id]/components/ProduitHeroCard.tsx`, `ProduitOffresList.tsx` & `page.tsx` : Télémétrie clics WhatsApp / marchands sortants (`MES-ANO-01`). Ajout de `'use client'` et gestionnaires onClick émettant `click_whatsapp_order` (avec `produit_id`, `prix`, `marchand_nom`).
+  - *Préparation SQL & Architecture (Tranche 2)* :
+    1. `backend/migrate-inline.js` : Ajout DDL idempotent des 4 colonnes UTM (`utm_source`, `utm_medium`, `utm_campaign`, `landing_page`) sur la table `abonnements` (`MES-ANO-03`), sans appel réseau direct risquant de déclencher les alertes d'urgence WhatsApp de Render (`BLOQ-02`).
+    2. `audit/seo/scripts/migration_attribution_abonnements.sql` : Script DDL SQL idempotent documenté avec index partiel.
+  - *Livrables Clés Produits & Validés* :
+    1. `audit/seo/RAPPORT_EXECUTION_PILOTE.md` : Rapport complet d'exécution et analyse technique détaillée.
+    2. `audit/seo/JOURNAL_MODIFICATIONS_PILOTE.csv` : Matrice des 10 modifications techniques avec tests, preuves et commandes de rollback.
+    3. `audit/seo/RESULTATS_TESTS_AGENT_10.csv` : Résultats des 22 tests réels (unitaires, statiques, métadonnées, build, non-régression).
+    4. `audit/seo/ECARTS_ET_BLOCAGES_PILOTE.md` : Suivi des arbitrages (streaming vs loading, routage Astech Tranche 2).
+    5. `audit/seo/HANDOVER_AGENT_11.md` : Passation opérationnelle avec commandes reproductibles pour l'auditeur de test indépendant.
+  - *Validation Qualité & Non-Régression* :
+    - `npm run test` : 97/97 tests unitaires passés (100%).
+    - `npm run lint:slop` : 0 violation bloquante, standard ingénieur senior respecté.
+    - `npx jest tests/unit/ux-seo-audit.test.js` : 76 tests Nopalou conformes (0 régression).
+    - `npm run build` : Compilation Next.js 14 TypeScript sans aucune erreur (code 0).
+    - Zéro `git push` exécuté.
+
 - **Nopalou / SEO : Préparation du Pilote SEO, Cadre d'Exécution, Matrice de Tests & Sécurité (Agent 9, Session 2026-10-10, `main`, aucun push)** :
   - *Objectif de Session* : Préparer le premier chantier SEO exécutable de Nopalou, vérifier rigoureusement l'ensemble des prérequis techniques, architecturaux et données, établir l'état de référence initial (baselines figées), concevoir la matrice de tests exhaustive à 10 colonnes (28 tests), définir la procédure de déploiement et de rollback, identifier les blocages matériels et transmettre un cadre d'exécution sécurisé à l'Agent 10. Zéro modification du code de production pendant cette session.
   - *Livrables Clés Produits & Validés* :

@@ -19,7 +19,6 @@ const BUDGETS_SITEMAP = BUDGETS_PAGES
 
 const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/`,              changeFrequency: 'daily',   priority: 1.0 },
-  { url: `${BASE}/surga`,         changeFrequency: 'daily',   priority: 0.95 },
   { url: `${BASE}/immo`,          changeFrequency: 'hourly',  priority: 0.9 },
   { url: `${BASE}/telecom`,       changeFrequency: 'weekly',  priority: 0.8 },
   { url: `${BASE}/annonces`,      changeFrequency: 'daily',   priority: 0.8 },
@@ -72,7 +71,6 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/sama-xaalis`,          changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/partenaires`,          changeFrequency: 'monthly', priority: 0.8 },
   { url: `${BASE}/migration`,            changeFrequency: 'monthly', priority: 0.85 },
-  { url: `${BASE}/creer-boutique`,       changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/tarifs-boutique`,      changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/guide-creer-boutique`, changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/guide-sourcing-revente`, changeFrequency: 'monthly', priority: 0.85 },

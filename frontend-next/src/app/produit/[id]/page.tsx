@@ -276,7 +276,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
             )}
 
             {/* Liste des offres */}
-            <ProduitOffresList valides={valides} prixMin={prixMin} nbExclues={nbExclues} />
+            <ProduitOffresList valides={valides} prixMin={prixMin} nbExclues={nbExclues} produitId={produit.id} />
 
             {/* CTA comparaison mobile */}
             {proches.length > 0 && (

@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import { AlertTriangle, Store } from 'lucide-react'
 import { fcfa, tempsRelatif } from '@/lib/format'
@@ -7,14 +9,28 @@ interface ProduitOffresListProps {
   valides: Offre[]
   prixMin: number | null
   nbExclues: number
+  produitId?: string | number
 }
 
 export default function ProduitOffresList({
   valides,
   prixMin,
   nbExclues,
+  produitId,
 }: ProduitOffresListProps) {
   if (valides.length === 0) return null
+
+  const handleOfferClick = (offre: Offre) => {
+    if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+      (window as any).gtag('event', 'click_whatsapp_order', {
+        produit_id: produitId != null ? String(produitId) : null,
+        offre_id: String(offre.id),
+        prix: offre.prix || 0,
+        marchand_nom: offre.marchand_nom || 'Marchand',
+        source: 'liste_offres',
+      })
+    }
+  }
 
   return (
     <div className="offres-section">
@@ -101,6 +117,7 @@ export default function ProduitOffresList({
                     href={`/api/click/${o.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => handleOfferClick(o)}
                     className={`offre-btn${isBest ? ' offre-btn--best' : ''}`}
                   >
                     Voir l&apos;offre →

@@ -3,8 +3,9 @@ import Link from 'next/link'
 import {
   Store, Smartphone, ShieldCheck, Zap, TrendingUp, CheckCircle2,
   ArrowRight, Users, MessageSquare, CreditCard, Sparkles, HelpCircle,
-  Clock, Award, ShoppingBag, Globe, RefreshCw
+  Clock, Award, ShoppingBag, Globe, RefreshCw, ArrowLeftRight, Calculator
 } from 'lucide-react'
+import CreerBoutiqueCtaBtn from './CreerBoutiqueCtaBtn'
 import { safeJsonLd } from '@/lib/jsonld'
 import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
 
@@ -152,26 +153,7 @@ export default async function CreerBoutiquePage() {
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 40 }}>
-              <Link
-                href="/creer-boutique"
-                style={{
-                  background: '#C75B00',
-                  color: '#ffffff',
-                  padding: '16px 36px',
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  fontSize: 17,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  textDecoration: 'none',
-                  boxShadow: '0 8px 24px rgba(199,91,0,0.4)',
-                  transition: 'transform 0.15s ease'
-                }}
-              >
-                <span>Créer ma boutique gratuitement</span>
-                <ArrowRight size={18} />
-              </Link>
+              <CreerBoutiqueCtaBtn />
 
               <Link
                 href="/alternative-shopify-senegal"
@@ -342,10 +324,10 @@ export default async function CreerBoutiquePage() {
             </h3>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
               <Link href="/alternative-shopify-senegal" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                🆚 Nopalou vs Shopify
+                <ArrowLeftRight size={14} style={{ color: "var(--navy)" }} /> <span>Nopalou vs Shopify</span>
               </Link>
               <Link href="/logiciel-caisse-senegal" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                📟 Caisse POS sans Internet
+                <Calculator size={14} style={{ color: "var(--navy)" }} /> <span>Caisse POS sans Internet</span>
               </Link>
               <Link href="/vendre-sur-whatsapp" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
                 Commandes WhatsApp

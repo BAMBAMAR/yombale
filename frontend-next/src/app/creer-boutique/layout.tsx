@@ -26,14 +26,18 @@ export async function generateMetadata(): Promise<Metadata> {
     'solution e-commerce pas chère Dakar',
     'Nopalou boutique',
   ],
+  robots: {
+    index: false,
+    follow: true,
+  },
   alternates: {
-    canonical: `${BASE}/creer-boutique`,
+    canonical: `${BASE}/creer-boutique-en-ligne`,
   },
   openGraph: { images: OG_IMAGES,
     title: `Créer une Boutique en Ligne au Sénégal | ${essai} Jours Offerts | Nopalou`,
     description:
       'Créez votre commerce en ligne et vendez sur WhatsApp sans carte bancaire avec paiement Wave & Orange Money. Découvrez nos formules d’abonnement dès 2.500 FCFA/mois.',
-    url: `${BASE}/creer-boutique`,
+    url: `${BASE}/creer-boutique-en-ligne`,
     siteName: 'Nopalou',
     locale: 'fr_SN',
     type: 'website',
@@ -139,7 +143,7 @@ const JSON_LD_BREADCRUMB = {
       '@type': 'ListItem',
       position: 3,
       name: 'Créer une boutique',
-      item: `${BASE}/creer-boutique`,
+      item: `${BASE}/creer-boutique-en-ligne`,
     },
   ],
 }

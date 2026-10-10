@@ -894,6 +894,10 @@ module.exports = async function migrateInline(customConnStr = null) {
       ALTER TABLE abonnements DROP CONSTRAINT IF EXISTS abonnements_plan_check;
       ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS is_trial BOOLEAN DEFAULT FALSE;
       CREATE INDEX IF NOT EXISTS idx_abonnements_is_trial ON abonnements(is_trial) WHERE statut = 'actif';
+      ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS utm_source VARCHAR(100);
+      ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS utm_medium VARCHAR(100);
+      ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS utm_campaign VARCHAR(100);
+      ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS landing_page VARCHAR(255);
     `);
     console.log('[MIGRATE] ✅ Table abonnements OK');
   } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }

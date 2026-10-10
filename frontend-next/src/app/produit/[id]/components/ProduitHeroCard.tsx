@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
@@ -11,6 +13,18 @@ interface ProduitHeroCardProps {
 }
 
 export default function ProduitHeroCard({ produit, prixMin, best }: ProduitHeroCardProps) {
+  const handleBuyClick = () => {
+    if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+      (window as any).gtag('event', 'click_whatsapp_order', {
+        produit_id: produit.id,
+        produit_nom: produit.nom,
+        prix: prixMin || best?.prix || 0,
+        marchand_nom: best?.marchand_nom || 'inconnu',
+        source: 'hero_buybox',
+      })
+    }
+  }
+
   return (
     <div className="produit-hero-card">
       {produit.image_url && (
@@ -65,6 +79,7 @@ export default function ProduitHeroCard({ produit, prixMin, best }: ProduitHeroC
               href={`/api/click/${best.id}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleBuyClick}
               className="produit-hero-cta"
               aria-label={`Acheter au meilleur prix${best.marchand_nom ? ` chez ${best.marchand_nom}` : ''}`}
             >

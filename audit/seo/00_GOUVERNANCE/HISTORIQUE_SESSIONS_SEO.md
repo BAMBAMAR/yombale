@@ -332,5 +332,51 @@ Politique      : Aucune entrée passée ne doit être effacée ou modifiée. Ajo
   - `CLAUDE.md` & `docs/JOURNAL-LIVRAISONS.md`
 * **MODIFICATIONS DE CODE EN PRODUCTION** : Zéro (respect strict des règles). Aucun push git.
 * **STATUT FINAL** : Contre-expertise indépendante validée à 100 %. Biais et erreurs méthodologiques corrigés.
-* **PROCHAINE SESSION** : `SEO-NOPALOU-AGENT-08-20261010` (Agent 8 : Stratège CRO & Monétisation E-commerce — Tunnels de Conversion et Monétisation Marchands).
+* **PROCHAINE SESSION** : `SEO-NOPALOU-AGENT-08-20261010` (Agent 8 : Synthèse Finale et Plan d'Exécution SEO Nopalou).
+
+---
+
+## Session N° 08
+
+* **SESSION-ID** : `SEO-NOPALOU-AGENT-08-20261010`
+* **DATE** : 2026-10-10
+* **AGENT** : `AGENT 8` (Synthèse Finale & Plan d'Exécution SEO Nopalou)
+* **BRANCHE GIT** : `main` (Vérifiée par `git branch --show-current`, HEAD vérifié)
+* **OBJECTIF** :
+  - Transformer l'ensemble des travaux d'audit (Agents 0 à 6) et la contre-expertise contradictoire (Agent 7) en une feuille de route opérationnelle, réaliste, vérifiable et priorisée.
+  - Relier explicitement la visibilité Google à l'acquisition marchande et aux abonnements payants récurrents SaaS (Wave/OM).
+  - Établir la matrice des priorités P0 à P3 et le backlog CSV détaillé (25 actions).
+  - Définir le protocole de déploiement progressif en 5 phases (Phases 0 à 4) avec critères de sortie stricts.
+  - Concevoir le plan pilote à double-axe (Acquisition B2B Marchands + Verticale Climatiseurs Astech).
+  - Formaliser le plan de mesure normatif (13 KPI) et le manuel de règles de gouvernance SEO et standards qualité.
+  - Rédiger le handover officiel pour l'Agent 9 (Équipe d'Exécution).
+* **DOCUMENTS LUS & EXAMINÉS** :
+  - `AGENTS.md` (Sanctuarisation branche `main` pour Nopalou, interdiction formelle de git push automatique, règles anti-slop, neutralité polices système).
+  - `audit/seo/RAPPORT_CONTRE_EXPERTISE_INDEPENDANTE.md` & `REGISTRE_ARBITRAGES_CONTRE_EXPERTISE.md` (12 arbitrages officiels ARB-01 à ARB-12).
+  - `audit/seo/HANDOVER_AGENT_8.md` et handovers des Agents 0 à 6.
+  - `audit/seo/PLAN_CORRECTIONS_TECHNIQUES.md`, `ANOMALIES_SEO.md`, `RESULTATS_TESTS_SEO.csv`.
+  - `audit/seo/PLAN_CONVERSION_PAGES.md`, `PLAN_ATTRIBUTION_COMMERCIALE.md`, `AUDIT_MESURE_SEO.md`, `DICTIONNAIRE_INDICATEURS.md`.
+  - Base de données PostgreSQL réelle et code source Next.js 14 / Express.
+* **TRAVAIL EFFECTUÉ & DÉCISIONS STRUCTURANTES** :
+  - Rédaction intégrale de la synthèse finale d'audit SEO consolidant état initial, conclusions fiables, anomalies critiques et 3 piliers stratégiques.
+  - Élaboration de la roadmap d'exécution en 5 phases ordonnées sans échéance arbitraire, conditionnée par des critères de sortie mesurables.
+  - Création du backlog CSV officiel à 15 colonnes (`BACKLOG_CORRECTIONS_SEO.csv`) ventilant 25 actions de P0 à P3.
+  - Définition du Pilote SEO à double-axe : Axe B2B Marchands (`/creer-boutique-en-ligne`, `/logiciel-caisse-senegal`, relances WhatsApp J-5/J-1 pour convertir les 101 commerçants en essai vers Wave/OM) et Axe B2C Climatiseurs Astech (702 produits en stock).
+  - Établissement du plan de mesure et d'objectifs (13 KPI) avec baselines vérifiées (101 essais, 7 payants, 80 000 FCFA MRR, 27 291 URLs sitemap, 40 requêtes SERP) et seuils d'alertes interconnectés à `admin-alerts.js`.
+  - Rédaction du manuel de gouvernance SEO (anti-doorway pages, gestion stricte des codes 404/301, qualité données, Web Vitals, checklist de déploiement en 7 points).
+  - Rédaction du handover pour l'Agent 9.
+* **LIVRABLES CRÉÉS OU ACTUALISÉS** :
+  - `audit/seo/SYNTHESE_FINALE_AUDIT_SEO.md`
+  - `audit/seo/ROADMAP_EXECUTION_SEO.md`
+  - `audit/seo/BACKLOG_CORRECTIONS_SEO.csv`
+  - `audit/seo/PLAN_PILOTE_SEO.md`
+  - `audit/seo/PLAN_MESURE_ET_OBJECTIFS.md`
+  - `audit/seo/REGLES_GOUVERNANCE_SEO.md`
+  - `audit/seo/HANDOVER_AGENT_9.md`
+  - `audit/seo/00_GOUVERNANCE/HISTORIQUE_SESSIONS_SEO.md`
+  - `CLAUDE.md` & `docs/JOURNAL-LIVRAISONS.md`
+* **MODIFICATIONS DE CODE EN PRODUCTION** : Zéro (respect absolu du mandat de synthèse). Aucun git push.
+* **STATUT FINAL** : Synthèse finale, feuille de route, backlog, plan pilote et gouvernance validés à 100 %.
+* **PROCHAINE SESSION** : `SEO-NOPALOU-AGENT-09-20261010` (Agent 9 : Exécution des Phases 0 & 1 — Filet de Tests & Corrections Critiques P0/P1).
+
 
