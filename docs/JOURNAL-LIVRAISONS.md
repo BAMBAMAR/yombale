@@ -1,5 +1,18 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Nopalou / Scraping : Audit Approfondi du Scraping, Volume, Couverture des Sources & Diagnostic de Performance (Agent 1/3, Session 2026-10-10, `main`, 0 push, mission diagnostique)** :
+  - *Objectif de Session* : Examiner en profondeur le système de collecte et de scraping existant de Nopalou, quantifier le volume réel observé, évaluer la couverture des sources et catégories au Sénégal, diagnostiquer les 21 causes démontrées du faible volume et établir un benchmark technique pour l'Agent 2.
+  - *Résultats et Mesures Réelles Démontrées (Base `nopalou_audit_data` & 35 jours de logs `logs/scraper-task.log`)* :
+    1. **Offres E-Commerce** : 12 348 offres en base, dont 11 625 actives/visibles et 723 en quarantaine (5,9 %). 10 882 fiches comparables, mais 90,8 % (9 878) sont mono-vendeurs (seuls 9,2 % des produits ont 2 marchands ou plus). 34 661 fiches orphelines sans aucune offre (73,7 % de la table `produits`).
+    2. **Couverture des Sources** : Sur 21 sources déclarées, 4 ont 0 offre (Nova Sénégal, Dakar Market, Dakar-Deal, SenMarket). Decathlon n'a qu'1 seule offre (PrestaShop mal ciblé et division erronée par 100). Jumia, Expat-Dakar et Jiji silencieux pendant 3 à 5 jours sans alerte.
+    3. **Immobilier** : 4 058 annonces, dominées à 62 % par CoinAfrique (2 522 annonces), dont 99,9 % n'ont pas de numéro de téléphone direct sur le listing (rejet systématique lors des re-scrapings).
+    4. **Petites Annonces Classifiées & Facebook** : 4 652 annonces dont 4 590 issues de groupes Facebook. Sur 165 passages de tâches planifiées réels, 38,8 % (64 passages) se terminent à 0 post pour cause de session invalidée. 100 % des photos sont sur CDN Facebook (`fbcdn`) périssables.
+    5. **Omnisource (Bing/OSM)** : Rendement quasi nul (2 annonces créées sur 49 passages, 98,0 % de passages à zéro).
+  - *Causes Démontrées du Faible Volume* : Plafonds rigides de pagination (4/5/8 pages limitant la collecte à 2-8 % du stock réel), interaction destructive avec le dé-stockage à 45 jours (2 249 offres purgées), fausse déclaration "Statut OK" sans données, contrainte SQL limitant à 1 offre par (produit, marchand), ordre séquentiel affamant la queue de liste, quarantaine à sens unique (57 % de baisses de prix bloquées), et absence de gestion des flux structurés / JSON-LD.
+  - *Benchmark & Recommandations Techniques* : Évaluation des 10 approches, tarifs réels vérifiés d'octobre 2026 (Apify 49-499 $/m, Firecrawl 16-399 $/m vs VPS dédié Hetzner 14,50 €/m illimité). Recommandation formelle d'une architecture hybride à 4 niveaux (Niveau 1 Store API JSON, Niveau 2 Schema.org JSON-LD, Niveau 3 Cheerio/Crawlee, Niveau 4 Playwright réservé aux cas complexes).
+  - *Livrables Créés sous `audit/scraping/`* : `ETAT_INITIAL_SCRAPING.md`, `INVENTAIRE_SOURCES_SCRAPING.csv`, `ANALYSE_CAUSES_VOLUME_FAIBLE.md`, `PLAN_EXTENSION_SOURCES.md`, `BENCHMARK_TECHNIQUES_SCRAPING.md`, `PLAN_MESURE_QUALITE_VOLUME.md`, `HANDOVER_AGENT_2.md` (+ miroir `audit/HANDOVER/HANDOVER_SCRAPING_AGENT_1_VERS_AGENT_2.md`).
+  - *Verdict Officiel Agent 1* : **DIAGNOSTIC ÉTABLI** — Prêt pour la conception d'architecture par l'Agent 2.
+
 - **Nopalou / SEO : Corrections Finales, Anti-Régression & Cockpit SEO Admin de Pilotage (Agent 12, Session 2026-10-10, `main`, aucun push)** :
   - *Objectif de Session* : Clôturer le cycle d'audit SEO en traitant l'ensemble des anomalies documentées par l'Agent 11 (Mission A), garantir l'absence totale de régressions, et déployer un cockpit de pilotage décisionnel en 7 onglets pour l'administration de Nopalou (Mission B).
   - *Actions & Correctifs Implémentés (Mission A)* :
