@@ -49,6 +49,22 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou / SEO : Tests Indépendants et Contre-Validation du Pilote SEO (Agent 11, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Évaluer de manière autonome, contradictoire et sans complaisance les corrections du Pilote SEO (Tranche 1) réalisées par l'Agent 10, reproduire l'intégralité des tests de recette, auditer le code et décider du verdict officiel.
+  - *Résultats de Recette Indépendante* :
+    1. **Matrice de Validation Exigences** : 27/30 exigences validées avec succès avec preuves reproductibles (PASS), 0 échec bloquant (FAIL), 3 exigences bloquées ou reportées (TEST-PIL-20 instrumentation applicative, TEST-PIL-22/23 sous-hub climatiseurs soumis à arbitrage).
+    2. **Éradication de la Cannibalisation B2B & Noindex (`CORR-03`)** : Confirmé (layout de `/creer-boutique` applique `robots: { index: false, follow: true }` et `canonical` pointant vers `/creer-boutique-en-ligne`).
+    3. **Épuration du Sitemap XML (`CORR-08`)** : Confirmé (0 occurrence de `/surga` ni `/creer-boutique`, `/creer-boutique-en-ligne` valorisé avec priorité 0.98).
+    4. **Éradication du Soft-404 Streaming (`CORR-01`)** : Confirmé (suppression de `app/loading.tsx` à la racine élimine le `<Suspense>` global et permet l'émission du code HTTP 404 strict par `notFound()`).
+    5. **Télémétrie GA4 (`TEST-PIL-17` & `MES-ANO-01`)** : Validé par tests de contrainte (`test-telemetry.mjs`) sans aucun plantage en SSR, avec ou sans `window.gtag`.
+    6. **Non-Régression & Sécurité** : 97/97 tests unitaires frontend PASS, 76/76 tests de garde Nopalou PASS, build de production Next.js 14 compilé avec succès (code 0). Sanctuarisation totale de Surga et de la Caisse POS vérifiée (0 fichier modifié).
+  - *Réserves & Anomalies Documentées* :
+    - `ANO-A11-01` : Imports concaténés sans saut de ligne dans `creer-boutique/layout.tsx` (ligne 4) et `creer-boutique-en-ligne/page.tsx` (ligne 10) (dette de style cosmétique).
+    - `ANO-A11-02` : Index partiel `idx_abonnements_utm_source` omis dans `backend/migrate-inline.js` (présent dans le script `.sql`).
+    - `ANO-A11-03` : Capture applicative des UTM reportée en Tranche 2.
+  - *Verdict Officiel* : **VALIDÉ SOUS RÉSERVES** (Autorisé pour le déploiement de la Tranche 1 dès correction des 2 réserves mineures par l'Agent 12).
+  - *Livrables Produits* : `RAPPORT_TESTS_INDEPENDANTS.md`, `MATRICE_VALIDATION_EXIGENCES.csv`, `ANOMALIES_ET_REGRESSIONS.md`, `VERDICT_PILOTE_SEO.md`, `HANDOVER_AGENT_12.md`.
+
 - **Nopalou / SEO : Exécution Contrôlée du Pilote SEO (Tranche 1 Complétée & Tranche 2 Cadrée) (Agent 10, Session 2026-10-10, `main`, aucun push)** :
   - *Objectif de Session* : Implémenter rigoureusement les corrections autorisées du premier pilote SEO de Nopalou sans étendre le périmètre, valider l'ensemble des quality gates techniques et éditoriales, et préparer la recette indépendante par l'Agent 11.
   - *Modifications de Code Réalisées (Tranche 1)* :
