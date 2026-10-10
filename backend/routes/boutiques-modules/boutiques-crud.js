@@ -117,7 +117,7 @@ function authSiEnTete(req, res, next) {
 
 router.post('/taf-taf', authSiEnTete, async (req, res) => {
   try {
-    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme, categorie, code_apporteur, preuve_telephone } = req.body;
+    let { nom, email, mot_de_passe, telephone, couleur, couleur_theme, categorie, code_apporteur, preuve_telephone, utm_source, utm_medium, utm_campaign, landing_page } = req.body;
     if (!nom || !telephone) return res.status(400).json({ error: 'Nom et téléphone requis' });
 
     // Normaliser téléphone
@@ -245,7 +245,16 @@ router.post('/taf-taf', authSiEnTete, async (req, res) => {
     // Durée pilotée par le réglage admin `abonnement_essai_jours` (AUD-111).
     // AUD-109 : un seul essai par utilisateur, jamais d'annulation d'un abonnement existant.
     const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
-    await demarrerEssaiSiPremiereFois(pool, { userId: user.id, plan: planChoisi, prix, jours: essaiJours });
+    await demarrerEssaiSiPremiereFois(pool, {
+      userId: user.id,
+      plan: planChoisi,
+      prix,
+      jours: essaiJours,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      landing_page,
+    });
 
     // 3.5 Initialiser 2 articles modèles pour que la caisse POS et la vitrine soient immédiatement opérationnelles
     // Initialiser le pack d'articles de démarrage par catégorie (Anti-Boutique-Vide)

@@ -208,8 +208,25 @@ export default function CreerBoutiqueWizard() {
         storedApporteur ||
         ''
 
+      const utm_source = searchParams?.get('utm_source') || (typeof window !== 'undefined' ? sessionStorage.getItem('nopalou_utm_source') || '' : '')
+      const utm_medium = searchParams?.get('utm_medium') || (typeof window !== 'undefined' ? sessionStorage.getItem('nopalou_utm_medium') || '' : '')
+      const utm_campaign = searchParams?.get('utm_campaign') || (typeof window !== 'undefined' ? sessionStorage.getItem('nopalou_utm_campaign') || '' : '')
+      const landing_page = searchParams?.get('landing_page') || (typeof window !== 'undefined' ? sessionStorage.getItem('nopalou_landing_page') || window.location.pathname : '')
+
       // AUD-214 : appel côté serveur pour que la session éventuelle accompagne la requête
-      const resultat = await creerBoutiqueTafTafAction({ nom, telephone, couleur, plan, categorie, code_apporteur, preuve_telephone: preuveTelephone })
+      const resultat = await creerBoutiqueTafTafAction({
+        nom,
+        telephone,
+        couleur,
+        plan,
+        categorie,
+        code_apporteur,
+        preuve_telephone: preuveTelephone,
+        utm_source: utm_source || undefined,
+        utm_medium: utm_medium || undefined,
+        utm_campaign: utm_campaign || undefined,
+        landing_page: landing_page || undefined,
+      })
       if (!resultat.ok || !resultat.data) throw new Error(resultat.error || 'Erreur lors de la création de la boutique.')
       const data = resultat.data
 

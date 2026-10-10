@@ -49,6 +49,26 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou / SEO : Corrections Finales, Anti-Régression et Cockpit SEO Admin 7 Onglets (Agent 12, Session 2026-10-10, `main`, aucun push)** :
+  - *Objectif de Session* : Traiter l'ensemble des anomalies documentées par l'Agent 11 (Mission A), revalider l'absence de régression, et faire évoluer le SEO Admin de Nopalou en un véritable cockpit de pilotage décisionnel en 7 onglets (Mission B).
+  - *Résultats de la Mission A (Fiabilisation du Pilote & Traitement des Anomalies)* :
+    1. **Correction ANO-A11-01** : Séparation CRLF explicite des imports sur deux lignes physiques dans `creer-boutique/layout.tsx` et `creer-boutique-en-ligne/page.tsx`.
+    2. **Correction ANO-A11-02** : Insertion de l'index partiel `idx_abonnements_utm_source` dans `backend/migrate-inline.js`.
+    3. **Correction ANO-A11-03 & TEST-FIN-20** : Câblage applicatif complet des paramètres d'attribution UTM de la landing B2B jusqu'à la base de données PostgreSQL (`boutique-creation.ts`, `demarrerEssaiSiPremiereFois`, `CreerBoutiqueCtaBtn.tsx`).
+    4. **Correction ANO-A11-05 & TEST-FIN-28** : Bascule de l'ensemble des redirections raccourcies de vitrines marchandes `/b/[slug]` en HTTP 301 Permanent Redirect (au lieu de 307).
+    5. **Non-Régression & Sécurité** : 97/97 tests unitaires frontend PASS (100%), 76/76 tests de garde Nopalou PASS, lint anti-slop validé (0 régression, composants < 450 lignes), compilation Next.js 14 App Router de production validée (code 0). Sanctuarisation totale de Surga et de la Caisse POS vérifiée (0 fichier touché).
+  - *Résultats de la Mission B (Déploiement du Cockpit SEO Admin 7 Onglets)* :
+    1. **Architecture Modulaire Senior** : Refonte de `frontend-next/src/app/admin/(protected)/seo/page.tsx` en Server Component rapide (< 70 lignes) et délégation au composant client modulaire `SeoCockpitClient.tsx` (< 180 lignes).
+    2. **Vue 1 : Visibilité Globale** : Sélecteur de période temporelle dynamique (7j, 28j, 90j, 12m), calcul automatique des variations $\pm X\%$, Top 5 requêtes stars, bandeau diagnostic d'indexation.
+    3. **Vue 2 : Suivi 1 000 Groupes de Requêtes** : Portefeuille granulaire complet filtrable par priorité (P0-P3), intention, statut du suivi (`SUIVI ACTIF`, `DONNÉES INSUFFISANTES`, `SOURCE NON CONNECTÉE`, `À VÉRIFIER`, `SUSPENDU`) et export CSV direct avec délimiteur point-virgule et encodage UTF-8 BOM.
+    4. **Vue 3 : Surveillance Pages & URLs Stratégiques** : Contrôle des statuts HTTP (200 OK), balises robots (`index, follow` vs `noindex`), canonicals déclarés, sitemap XML et scores qualité.
+    5. **Vue 4 : Registre de l'Audit & Backlog** : Backlog interactif des 32 points d'audit et corrections avec cycle de vie (`VALIDÉ`, `BLOQUÉ`), causes démontrées, actions correctives et risques résiduels.
+    6. **Vue 5 : Tunnels Commerciaux & MRR Organique SaaS** : Entonnoir 5 étapes (Visites Silos → Clics CTA → Boutiques Créées → Boutiques Actives → Forfaits Payants), calcul du MRR SEO (45 000 FCFA/mois en baseline) et mix d'acquisition par canal.
+    7. **Vue 6 : Détection des Régressions & Alertes Actives** : Surveillance continue P0/P1/P2 avec seuils déclencheurs, conditions de déclenchement et actions recommandées.
+    8. **Vue 7 : Matrice des Sources & Télémétrie GA4** : Cartographie d'intégrité (`[GSC]`, `[GA4]`, `[SQL-PG]`, `[SERP-SN]`), module GA4 `G-3KGE1YBMVJ` et guide d'activation Search Console.
+  - *Livrables Créés dans `audit/seo/`* : `RAPPORT_CORRECTIONS_FINALES.md`, `RAPPORT_TESTS_FINAUX.csv`, `AUDIT_SEO_ADMIN_IMPLEMENTATION.md`, `DICTIONNAIRE_INDICATEURS_SEO_ADMIN.md`, `GUIDE_UTILISATION_SEO_ADMIN.md`, `ETAT_INITIAL_ET_SUIVI_POST_AUDIT.md`, `ANOMALIES_RESIDUELLES.md`, `BILAN_FINAL_AUDIT_SEO_NOPALOU.md`, `HANDOVER_FINAL_SEO.md`.
+  - *Verdict Officiel A12* : **TERMINÉ ET VALIDÉ** (Prêt pour le déploiement `git push origin main` dès demande explicite de l'utilisateur).
+
 - **Nopalou / SEO : Tests Indépendants et Contre-Validation du Pilote SEO (Agent 11, Session 2026-10-10, `main`, aucun push)** :
   - *Objectif de Session* : Évaluer de manière autonome, contradictoire et sans complaisance les corrections du Pilote SEO (Tranche 1) réalisées par l'Agent 10, reproduire l'intégralité des tests de recette, auditer le code et décider du verdict officiel.
   - *Résultats de Recette Indépendante* :

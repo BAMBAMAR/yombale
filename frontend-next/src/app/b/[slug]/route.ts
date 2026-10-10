@@ -15,20 +15,20 @@ export async function GET(
   const baseUrl = `${proto}://${host}`
 
   if (!slug) {
-    return NextResponse.redirect(new URL('/boutiques', baseUrl), 307)
+    return NextResponse.redirect(new URL('/boutiques', baseUrl), 301)
   }
 
   // Si le paramètre produit est présent, redirection directe vers la fiche produit
   if (produitId) {
     return NextResponse.redirect(
       new URL(`/boutiques/${slug}/produits/${produitId}`, baseUrl),
-      307
+      301
     )
   }
 
   // Sinon redirection vers la vitrine boutique
   return NextResponse.redirect(
     new URL(`/boutiques/${slug}`, baseUrl),
-    307
+    301
   )
 }

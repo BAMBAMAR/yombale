@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { ReactNode } from 'react'
 import { safeJsonLd } from '@/lib/jsonld'
-import { getEssaiJours } from '@/lib/essai'import { OG_IMAGES } from '@/lib/social'
+import { getEssaiJours } from '@/lib/essai'
+import { OG_IMAGES } from '@/lib/social'
 
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'

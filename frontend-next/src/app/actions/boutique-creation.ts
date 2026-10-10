@@ -13,6 +13,10 @@ export interface CreationBoutiquePayload {
   categorie: string
   code_apporteur: string
   preuve_telephone: string
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  landing_page?: string
 }
 
 export interface CreationBoutiqueResultat {

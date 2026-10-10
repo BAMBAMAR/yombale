@@ -898,6 +898,7 @@ module.exports = async function migrateInline(customConnStr = null) {
       ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS utm_medium VARCHAR(100);
       ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS utm_campaign VARCHAR(100);
       ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS landing_page VARCHAR(255);
+      CREATE INDEX IF NOT EXISTS idx_abonnements_utm_source ON abonnements(utm_source) WHERE utm_source IS NOT NULL;
     `);
     console.log('[MIGRATE] ✅ Table abonnements OK');
   } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }

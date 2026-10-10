@@ -15,7 +15,7 @@ export default function CreerBoutiqueCtaBtn() {
 
   return (
     <Link
-      href="/creer-boutique"
+      href="/creer-boutique?utm_source=seo_landing&utm_medium=organic&utm_campaign=creer_boutique_en_ligne&landing_page=%2Fcreer-boutique-en-ligne"
       onClick={handleClick}
       data-event="start_trial_click"
       style={{
