@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import RechercheClient from './RechercheClient'
 
-export const dynamic = 'force-dynamic'
+import { apiFetch } from '@/lib/api'
 
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ q?: string }> }): Promise<Metadata> {
   const { q } = await searchParams
@@ -14,17 +14,13 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 }
 
 type Params = { q?: string; prix_max?: string; tri?: string }
+type SearchData = NonNullable<React.ComponentProps<typeof RechercheClient>['data']>
 
 async function search(q: string, prixMax: string, tri: string) {
   if (!q || q.length < 2) return null
   try {
     const extra = `${prixMax ? `&prix_max=${encodeURIComponent(prixMax)}` : ''}${tri ? `&tri=${encodeURIComponent(tri)}` : ''}`
-    const r = await fetch(
-      `${BACKEND}/api/search?q=${encodeURIComponent(q)}&limit=12${extra}`,
-      { cache: 'no-store' }
-    )
-    if (!r.ok) return null
-    return await r.json()
+    return await apiFetch<SearchData>(`/search?q=${encodeURIComponent(q)}&limit=12${extra}`)
   } catch { return null }
 }
 

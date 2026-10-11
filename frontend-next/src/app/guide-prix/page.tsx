@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
-import GuidePrixPage from './GuidePrixContent'import { OG_IMAGES } from '@/lib/social'
+import GuidePrixPage from './GuidePrixContent'
+import { OG_IMAGES } from '@/lib/social'
 
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
-const SSR_SECRET = process.env.SSR_SECRET || ''
-const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
+
 
 export const metadata: Metadata = {
   title: 'Guide prix — Comparer les prix et créer des alertes au Sénégal',
@@ -19,14 +18,15 @@ export const metadata: Metadata = {
   alternates: { canonical: `${BASE}/guide-prix` },
 }
 
+import { apiFetch } from '@/lib/api'
+
 export default async function Page() {
   let categoriesActives: string[] | null = null
   try {
-    const res = await fetch(`${BACKEND}/api/produits/categories-actives`, { cache: 'no-store', headers: SSR_HEADERS })
-    if (res.ok) {
-      categoriesActives = await res.json()
-    }
-  } catch (e) { console.warn('[Nopalou:page:L28]', e); }
+    categoriesActives = await apiFetch<string[]>('/produits/categories-actives')
+  } catch (e) {
+    console.warn('[Nopalou:GuidePrix:categoriesActives]', e)
+  }
 
   return <GuidePrixPage categoriesActives={categoriesActives} />
 }

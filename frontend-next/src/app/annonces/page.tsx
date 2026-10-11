@@ -28,9 +28,7 @@ async function fetchAnnonces(
   if (prixMax)   params.set('prixMax', prixMax)
   if (ville)     params.set('ville', ville)
   if (source)    params.set('source', source)
-  try {
-    return await apiFetch<AnnoncesResponse>(`/annonces?${params}`)
-  } catch { return { annonces: [], total: 0 } }
+  return await apiFetch<AnnoncesResponse>(`/annonces?${params}`)
 }
 
 const CATEGORIES = [
@@ -150,14 +148,26 @@ export default async function AnnoncesPage({
     q = '', prixMax = '', ville = '', source = '', introuvable = '',
   } = await searchParams
   const page = Math.max(1, parseInt(pageStr))
+  let annonces: Annonce[] = []
+  let total = 0
+  let erreurChargement = false
+  let categoriesActives: string[] | null = null
 
-  const [categoriesActives, { annonces, total }] = await Promise.all([
-    apiFetch<string[]>('/annonces/categories-actives').catch(e => {
-      console.warn('[Nopalou:page:categoriesActives]', e)
-      return null
-    }),
-    fetchAnnonces(categorie, page, tri, q, prixMax, ville, source),
-  ])
+  try {
+    const [catAct, annoncesRes] = await Promise.all([
+      apiFetch<string[]>('/annonces/categories-actives').catch(e => {
+        console.warn('[Nopalou:page:categoriesActives]', e)
+        return null
+      }),
+      fetchAnnonces(categorie, page, tri, q, prixMax, ville, source),
+    ])
+    categoriesActives = catAct
+    annonces = annoncesRes.annonces ?? []
+    total = annoncesRes.total ?? annonces.length
+  } catch (err) {
+    console.error('[Nopalou:AnnoncesPage] Erreur chargement annonces:', err)
+    erreurChargement = true
+  }
 
   const filteredCategories = CATEGORIES.filter(cat => !cat.slug || categoriesActives === null || categoriesActives.includes(cat.slug))
 
@@ -194,8 +204,10 @@ export default async function AnnoncesPage({
         breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Annonces' }]}
         titre="Petites annonces — Sénégal"
         compteur={
-          (total > 0 ? `${total.toLocaleString('fr-SN')} annonce${total > 1 ? 's' : ''}` : 'Aucune annonce')
-          + (catActuelle.slug ? ` en ${catActuelle.label}` : '')
+          erreurChargement
+            ? 'Connexion en cours…'
+            : (total > 0 ? `${total.toLocaleString('fr-SN')} annonce${total > 1 ? 's' : ''}` : 'Aucune annonce')
+            + (catActuelle.slug ? ` en ${catActuelle.label}` : '')
         }
         cta={{ label: '+ Publier une annonce', href: '/deposer-annonce' }}
       />
@@ -255,7 +267,19 @@ export default async function AnnoncesPage({
       />
 
       {/* Grille */}
-      {annonces.length === 0 ? (
+      {erreurChargement ? (
+        <div className="annonces-empty" style={{ background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)' }}>
+          <p style={{ color: 'var(--navy, #1C2B4A)', fontWeight: 700, fontSize: 15 }}>
+            Le service des petites annonces est momentanément indisponible.
+          </p>
+          <p style={{ color: 'var(--text-muted, #786C5E)', fontSize: 13, marginTop: 4 }}>
+            Le serveur se reconnecte. Veuillez actualiser la page dans un instant.
+          </p>
+          <a href="/annonces" className="btn-primary" style={{ marginTop: '14px', display: 'inline-block' }}>
+            Actualiser
+          </a>
+        </div>
+      ) : annonces.length === 0 ? (
         <div className="annonces-empty">
           <p>Aucune annonce{catActuelle.slug ? ` en ${catActuelle.label}` : ''} pour le moment.</p>
           <Link href="/deposer-annonce" className="btn-primary" style={{ marginTop: '16px', display: 'inline-block' }}>

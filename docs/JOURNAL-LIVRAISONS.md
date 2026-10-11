@@ -1,5 +1,28 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Nopalou / Catalogue & API : Éradication de l'Empoisonnement du Cache ISR & Résolution du Bug d'Affichage Vide des Catégories (`/categorie/...`) et Annonces (`/annonces`) (Session 2026-10-11, `main`, 0 push)** :
+  - *Symptôme Constaté par l'Utilisateur* : Les catégories cliquées depuis le pied de page (`/categorie/smartphones`, `/categorie/informatique`) et la page `/annonces` affichaient intempestivement *"Aucun produit disponible dans cette catégorie"* ou *"Aucune annonce pour le moment"*, alors que les filtres de la page d'accueil près de la barre de recherche (`/?categorie=...`) fonctionnaient.
+  - *Cause Racine Forensique* :
+    1. **Timeout SSR ultra-court (5 000 ms)** : `apiFetch` coupait la requête à 5s, échouant systématiquement lors des réveils *cold start* de Render (10-25s) ou lors de fortes charges.
+    2. **Swallowing d'erreur silencieux & Empoisonnement ISR** : Les pages `/categorie/[slug]`, `sousCategorie` et `/annonces` capturaient l'exception silencieusement (`catch { /* empty state */ }`) et fixaient la liste à `[]`. Next.js et le CDN Vercel interprétaient ce retour comme un succès de génération et **mettaient en cache statique la page vide pendant 10 minutes (`revalidate = 600`)**, la servant à tous les internautes.
+    3. **Disparité Home vs Pages Dédiées** : La home est en `force-dynamic` et utilise un simple filtre d'URL (`/?categorie=...`), fonctionnant dès que le serveur est réveillé.
+    4. **Appels directs `BACKEND` non sécurisés** : `sousCategorie`, `recherche`, `guide-prix` et `guide-achat` utilisaient des `fetch` bruts vers `http://localhost:3000` en fallback au lieu de passer par `apiFetch`.
+  - *Modifications Implémentées* :
+    1. `frontend-next/src/lib/api.ts` :
+       - Timeout relevé à 12 000 ms (`timeoutMs = 12000`).
+       - Retry automatique (`retries = 1`) avec délai de 700 ms lors des cold starts (502/503/504 ou timeout).
+       - Filtrage automatique des URLs `localhost` / `127.0.0.1` en production.
+    2. `frontend-next/src/app/categorie/[slug]/page.tsx` & `[sousCategorie]/page.tsx` :
+       - Remplacement des appels bruts par `apiFetch`.
+       - En mode ISR statique (URL sans filtre), relance de l'erreur en cas d'échec API afin que Next.js conserve le cache HTML valide pré-existant au lieu d'écraser par 0 produit.
+       - Introduction d'un état `erreurChargement` propre invitant à l'actualisation au lieu d'affirmer faussement que le catalogue est vide.
+    3. `frontend-next/src/app/annonces/page.tsx` :
+       - Suppression du fallback silencieux à `{ annonces: [], total: 0 }`.
+       - Affichage d'un statut clair de reconnexion en cas d'incident réseau.
+    4. `frontend-next/src/app/recherche/page.tsx`, `guide-prix/page.tsx`, `guide-achat/page.tsx` :
+       - Migration vers `apiFetch` avec typage strict synchronisé (`SearchData`).
+  - *Validation* : `npx tsc --noEmit` vérifié à 100 % (0 erreur), conformité anti-slop validée (`npm run lint:slop`).
+
 - **Nopalou / UI Hero : Comblement de l'Espace Vide de la Carte Garantie Shopping Desktop (Session 2026-10-11, `main`, 0 push)** :
   - *Demande du Propriétaire* : Combler le vide vertical de la carte de réassurance « Garantie Shopping Nopalou » sur desktop afin d'équilibrer la grille vis-à-vis de la colonne de gauche.
   - *Modifications Implémentées* :

@@ -12,12 +12,13 @@ import { breadcrumbSchema } from '@/lib/schema-org'
 import { CATEGORIES } from '../../categories-data'
 import { SOUS_CATEGORIES } from '../../sous-categories-data'
 import { safeJsonLd } from '@/lib/jsonld'
-import { budgetAutorise } from '@/lib/budgets-categorie'import { OG_IMAGES } from '@/lib/social'
+import { budgetAutorise } from '@/lib/budgets-categorie'
+import { OG_IMAGES } from '@/lib/social'
+import { apiFetch } from '@/lib/api'
 
 
 export const revalidate = 600
 
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 const BUDGET_RE = /^moins-de-(\d{4,9})$/
 
@@ -92,15 +93,19 @@ export default async function SousCategoriePage({
   let produits: Produit[] = []
   let total = 0
   let pages = 1
+  let erreurChargement = false
   try {
-    const res = await fetch(`${BACKEND}/api/produits?${qs}`, { cache: 'no-store' })
-    if (res.ok) {
-      const data: ApiResponse = await res.json()
-      produits = data.produits ?? data.data ?? []
-      total = data.total ?? produits.length
-      pages = Math.ceil(total / 24) || 1
+    const data = await apiFetch<ApiResponse>(`/produits?${qs}`)
+    produits = data.produits ?? data.data ?? []
+    total = data.total ?? produits.length
+    pages = Math.ceil(total / 24) || 1
+  } catch (err) {
+    console.error(`[Nopalou:SousCategoriePage] Erreur pour ${params.slug}/${params.sousCategorie}:`, err)
+    erreurChargement = true
+    if (!searchParams.page && !searchParams.tri) {
+      throw err
     }
-  } catch { /* état vide */ }
+  }
 
   const currentPage = Number(page)
   const h1 = r.kind === 'budget' ? `${r.cat.label} à moins de ${fcfa(r.budget)}` : r.sousCat.h1
@@ -162,9 +167,21 @@ export default async function SousCategoriePage({
           )}
         </div>
 
-        {produits.length === 0 ? (
+        {erreurChargement ? (
+          <div className="empty-state" style={{ background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)' }}>
+            <p style={{ color: 'var(--navy, #1C2B4A)', fontWeight: 700, fontSize: 15 }}>
+              Le catalogue de cette sélection est momentanément indisponible.
+            </p>
+            <p style={{ color: 'var(--text-muted, #786C5E)', fontSize: 13, marginTop: 4 }}>
+              Le serveur se reconnecte. Veuillez actualiser la page dans un instant.
+            </p>
+            <a href={self} className="budget-pill active" style={{ marginTop: 14, display: 'inline-block' }}>
+              Actualiser la page
+            </a>
+          </div>
+        ) : produits.length === 0 ? (
           <div className="empty-state">
-                        <p>Aucun produit disponible pour l&apos;instant.</p>
+            <p>Aucun produit disponible pour l&apos;instant.</p>
             <Link href={`/categorie/${params.slug}`} className="budget-pill active" style={{ marginTop: 12 }}>
               Voir toute la catégorie {r.cat.label}
             </Link>

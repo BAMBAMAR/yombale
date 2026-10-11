@@ -133,14 +133,22 @@ export default async function CategoriePage({
   let produits: Produit[] = []
   let total = 0
   let pages = 1
+  let erreurChargement = false
 
   try {
     const res  = await apiFetch<ApiResponse>(`/produits?${qs}`)
     produits = res.produits ?? res.data ?? []
     total    = res.total ?? produits.length
     pages    = Math.ceil(total / 24) || 1
-  } catch {
-    // empty state
+  } catch (err) {
+    console.error(`[Nopalou:CategoriePage] Erreur de chargement pour ${slug}:`, err)
+    erreurChargement = true
+    // En mode ISR sans filtre personnalisé, relancer l'erreur empêche Next.js
+    // d'écraser la version en cache précédente par un résultat vide "0 produit".
+    const isStaticIsr = !prixMin && !prixMax && tri === 'pertinence' && !sousType && !q && page === '1'
+    if (isStaticIsr) {
+      throw err
+    }
   }
 
   const currentPage = Number(page)
@@ -300,7 +308,19 @@ export default async function CategoriePage({
 
         {/* Grille produits */}
         <CompareFilterBanner />
-        {produits.length === 0 ? (
+        {erreurChargement ? (
+          <div className="empty-state" style={{ background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)' }}>
+            <p style={{ color: 'var(--navy, #1C2B4A)', fontWeight: 700, fontSize: 15 }}>
+              Le catalogue de cette catégorie est momentanément indisponible.
+            </p>
+            <p style={{ color: 'var(--text-muted, #786C5E)', fontSize: 13, marginTop: 4 }}>
+              Le serveur se reconnecte. Veuillez actualiser la page dans un instant.
+            </p>
+            <a href={`/categorie/${slug}`} className="budget-pill active" style={{ marginTop: 14, display: 'inline-block' }}>
+              Actualiser la page
+            </a>
+          </div>
+        ) : produits.length === 0 ? (
           <div className="empty-state">
             <p>Aucun produit disponible dans cette catégorie pour l&apos;instant.</p>
             <Link href="/" className="budget-pill active" style={{ marginTop: 12 }}>

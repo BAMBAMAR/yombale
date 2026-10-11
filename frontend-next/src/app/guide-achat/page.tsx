@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
 import '@/styles/guides.css'
-import GuideAchatPage from './GuideAchatContent'import { OG_IMAGES } from '@/lib/social'
+import GuideAchatPage from './GuideAchatContent'
+import { OG_IMAGES } from '@/lib/social'
 
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
-const SSR_SECRET = process.env.SSR_SECRET || ''
-const SSR_HEADERS: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
+
 
 export const metadata: Metadata = {
   title: 'Guide d\'achat — Trouver le meilleur produit au Sénégal',
@@ -20,14 +19,15 @@ export const metadata: Metadata = {
   alternates: { canonical: `${BASE}/guide-achat` },
 }
 
+import { apiFetch } from '@/lib/api'
+
 export default async function Page() {
   let categoriesActives: string[] | null = null
   try {
-    const res = await fetch(`${BACKEND}/api/produits/categories-actives`, { cache: 'no-store', headers: SSR_HEADERS })
-    if (res.ok) {
-      categoriesActives = await res.json()
-    }
-  } catch (e) { console.warn('[Nopalou:page:L28]', e); }
+    categoriesActives = await apiFetch<string[]>('/produits/categories-actives')
+  } catch (e) {
+    console.warn('[Nopalou:GuideAchat:categoriesActives]', e)
+  }
 
   return <GuideAchatPage categoriesActives={categoriesActives} />
 }

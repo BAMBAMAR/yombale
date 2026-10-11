@@ -49,6 +49,15 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou / Catalogue & API : Éradication de l'Empoisonnement du Cache ISR & Résolution du Bug d'Affichage Vide des Catégories (`/categorie/...`) et Annonces (`/annonces`) (Session 2026-10-11, `main`, 0 push)** :
+  - *Symptôme Résolu* : Les pages `/categorie/[slug]` et `/annonces` affichaient intempestivement *"Aucun produit disponible dans cette catégorie"* ou *"Aucune annonce pour le moment"* suite à un timeout court ou un cold start de Render, alors que le filtre d'accueil in-page (`/?categorie=...`) fonctionnait.
+  - *Correctifs Implémentés* :
+    1. `frontend-next/src/lib/api.ts` : Timeout augmenté de 5s à 12s (`timeoutMs = 12000`) avec retry automatique (`retries = 1`) après 700ms en cas de cold start ou indisponibilité temporaire (502/503/504). Filtrage automatique des URLs localhost en production.
+    2. `frontend-next/src/app/categorie/[slug]/page.tsx` & `[sousCategorie]/page.tsx` : En mode ISR statique, relance de l'erreur en cas d'échec API pour que Next.js conserve la version valide en cache au lieu d'écraser avec 0 produit. Affichage d'un état de reconnexion explicite avec bouton d'actualisation.
+    3. `frontend-next/src/app/annonces/page.tsx` : Suppression du swallowing d'erreur silencieux ; état clair de reconnexion au lieu de « Soyez le premier à publier ».
+    4. `frontend-next/src/app/recherche/page.tsx`, `guide-prix/page.tsx`, `guide-achat/page.tsx` : Remplacement des fetchs bruts par `apiFetch`.
+  - *Validation* : 0 erreur TypeScript (`npx tsc --noEmit`), linter anti-slop validé.
+
 - **Nopalou / UI Hero : Comblement de l'Espace Vide de la Carte Garantie Shopping Desktop (Session 2026-10-11, `main`, 0 push)** :
   - *Demande du Propriétaire* : Combler le vide vertical de la carte de réassurance « Garantie Shopping Nopalou » sur desktop afin d'équilibrer la grille vis-à-vis de la colonne de gauche.
   - *Modifications Implémentées* :
