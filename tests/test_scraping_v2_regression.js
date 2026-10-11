@@ -300,8 +300,8 @@ async function lancerSuite() {
   console.log('\n► 7. Tests d’intégrité du registre unifié (SourcesRegistry)');
   // ───────────────────────────────────────────────────────────────────────────
 
-  test('SourcesRegistry : intégrité des 9 sources V2 déclarées', () => {
-    assert.strictEqual(REGISTRE_SOURCES.length, 9);
+  test('SourcesRegistry : intégrité des 15 sources V2 déclarées', () => {
+    assert.strictEqual(REGISTRE_SOURCES.length, 15);
     for (const src of REGISTRE_SOURCES) {
       assert.ok(src.id, `Source ${src.nom} sans ID`);
       assert.ok(src.baseUrl, `Source ${src.nom} sans baseUrl`);

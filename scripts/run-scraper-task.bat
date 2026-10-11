@@ -41,7 +41,26 @@ set "NODE_ARGS=%NODE_ARGS:  = %"
 
 :: AUD-177 : le code de sortie de Node est propage (sans '; exit $LASTEXITCODE' le pipeline Tee-Object le remplaçait par 0)
 :: Script cible selon les options
-set "TARGET_SCRIPT=scripts\sync-immo-local.js"
+set "TARGET_SCRIPT=scripts\run-collecte-v2.js"
+
+echo %NODE_ARGS% | findstr /i /c:"--facebook" >nul
+if %errorlevel% equ 0 (
+    set "TARGET_SCRIPT=scripts\sync-immo-local.js"
+    set "NODE_ARGS=--facebook"
+)
+
+echo %NODE_ARGS% | findstr /i /c:"--coinafrique" >nul
+if %errorlevel% equ 0 (
+    set "TARGET_SCRIPT=scripts\sync-immo-local.js"
+    set "NODE_ARGS=--coinafrique"
+)
+
+echo %NODE_ARGS% | findstr /i /c:"--expat" >nul
+if %errorlevel% equ 0 (
+    set "TARGET_SCRIPT=scripts\sync-immo-local.js"
+    set "NODE_ARGS="
+)
+
 echo %NODE_ARGS% | findstr /i /c:"--omnisource" >nul
 if %errorlevel% equ 0 (
     set "TARGET_SCRIPT=scripts\collecte-omnisource.js"
@@ -54,7 +73,11 @@ if %errorlevel% equ 0 (
     set "NODE_ARGS="
 )
 
-if "%NODE_ARGS%"=="" if not "%TARGET_SCRIPT%"=="scripts\run-full-combo.js" set "NODE_ARGS=--facebook"
+echo %NODE_ARGS% | findstr /i /c:"--v2" >nul
+if %errorlevel% equ 0 (
+    set "TARGET_SCRIPT=scripts\run-collecte-v2.js"
+    set "NODE_ARGS="
+)
 
 echo [!DATE! !TIME!] Lancement tâche: %TARGET_SCRIPT% %NODE_ARGS% >> "%LOG_FILE%"
 echo ========================================================

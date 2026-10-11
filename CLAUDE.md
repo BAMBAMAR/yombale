@@ -49,6 +49,18 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou / Scraping & Planificateur : Intégration de 5 Nouveaux E-Commerces Sénégalais (WooCommerce Store API) & Stabilisation de la Tâche Planifiée (Session 2026-10-11, `main`, 0 push)** :
+  - *Diagnostic & Correction Tâche Planifiée Windows* : Le script `scripts/run-scraper-task.bat` pointait par défaut sur `sync-immo-local.js --facebook`. En raison d'une session Facebook expirée (`.fb-session.json`), le script s'arrêtait immédiatement sur code 1. Le batch a été réorienté pour exécuter par défaut la collecte autonome et robuste V2 (`scripts/run-collecte-v2.js`), sans dépendance à des identifiants tiers.
+  - *Audit Technique du Top 50 Sites et Découverte d'APIs Publiques* : Audit approfondi de la liste de 50 sites proposée par l'utilisateur. Découverte empirique que les principaux distributeurs et marchands légitimes de Dakar exploitent l'API publique standardisée WooCommerce `/wp-json/wc/store/v1/products` :
+    1. **Fabellashop** (`fabellashop.com`) : 1 243 produits (beauté, cosmétiques, soins dakarois).
+    2. **Kabirex** (`kabirex.com`) : 1 656 produits (informatique, gaming, petit électroménager).
+    3. **Digital Stores** (`digitalstores.sn`) : 520 produits (smartphones, ordinateurs, accessoires).
+    4. **Teranga Tech Store** (`terangatechstore.com`) : 345 produits (électroménager, TV, téléphonie).
+    5. **Etounature** (`etounature.com`) : 191 produits (bio, produits naturels sénégalais).
+  - *Enrichissement du Registre V2 (`SourcesRegistry.js`)* : Enregistrement de ces 5 nouveaux marchands via `JsonStoreCollector` (100 articles/seconde, devises FCFA/XOF natives, auto-provisioning des marchands en base). Inactivation de `passcourses.com` (domaine actuellement redirigé / parqué).
+  - *Validation Live & Insertion BDD Réelle (`nopalou_db`)* : Exécution de tests live en base de données. Démonstration de l'insertion et du matching : offres réelles insérées et rattachées aux produits comparateur avec prix FCFA exacts, images et liens d'achat.
+  - *Anti-Régression* : Suite de non-régression mise à jour et validée : **23/23 tests passés avec succès (0 échec)**.
+
 - **Nopalou / Scraping : Validation Indépendante, Supervision Administrative, Anti-Régression & Clôture de l'Audit (Agent 3/3, Session 2026-10-11, `main`, 0 push, validation finale)** :
   - *Objectif de Session* : Vérifier indépendamment les résultats des Agents 1 et 2, auditer le volume et la qualité réelle en base (`nopalou_db`), tester les améliorations apportées, concevoir et déployer une supervision d'administration native, exécuter une suite de tests de non-régression et sceller l'audit final avec les 7 livrables obligatoires.
   - *Vérification Forensique des Volumes & Données Réelles (`nopalou_db`)* :
