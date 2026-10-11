@@ -24,7 +24,7 @@ class KeurImmoCollector extends BaseCollector {
       timeoutMs: 25000,
       ...config,
     });
-    this.maxPagesParSection = config.maxPagesParSection || 5;
+    this.maxPagesParSection = config.maxPages || config.maxPagesParSection || 5;
     this.enrichirDetails = config.enrichirDetails !== false; // Active par défaut
   }
 

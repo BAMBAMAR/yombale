@@ -21,12 +21,13 @@ const REGISTRE_SOURCES = [
     cadence: '0 6,18 * * *', // 2x / jour
     actif: true,
     delaiMs: 1500,
-    creerCollecteur: () => new JsonStoreCollector({
+    creerCollecteur: (opts = {}) => new JsonStoreCollector({
       sourceId: 'soumari',
       nom: 'Soumari',
       baseUrl: 'https://soumari.com',
       delaiMs: 1200,
       maxPagesMax: 100, // Permet de couvrir les 8 185 produits (82 pages de 100)
+      ...opts,
     }),
   },
   {
@@ -40,12 +41,13 @@ const REGISTRE_SOURCES = [
     cadence: '0 6,18 * * *',
     actif: true,
     delaiMs: 1500,
-    creerCollecteur: () => new JsonStoreCollector({
+    creerCollecteur: (opts = {}) => new JsonStoreCollector({
       sourceId: 'promosn',
       nom: 'Promo.sn',
       baseUrl: 'https://promo.sn',
       delaiMs: 1200,
       maxPagesMax: 60, // Permet de couvrir les 4 610 produits (47 pages)
+      ...opts,
     }),
   },
   {
@@ -59,12 +61,13 @@ const REGISTRE_SOURCES = [
     cadence: '0 8 * * *', // 1x / jour
     actif: true,
     delaiMs: 1500,
-    creerCollecteur: () => new JsonStoreCollector({
+    creerCollecteur: (opts = {}) => new JsonStoreCollector({
       sourceId: 'universcosmetix',
       nom: 'Univers Cosmetix',
       baseUrl: 'https://universcosmetix.com',
       delaiMs: 1500,
       maxPagesMax: 50,
+      ...opts,
     }),
   },
   {
@@ -78,12 +81,13 @@ const REGISTRE_SOURCES = [
     cadence: '0 10 * * *',
     actif: true,
     delaiMs: 1500,
-    creerCollecteur: () => new JsonStoreCollector({
+    creerCollecteur: (opts = {}) => new JsonStoreCollector({
       sourceId: 'masterofficedeco',
       nom: 'Master Office Déco',
       baseUrl: 'https://masterofficedeco.sn',
       delaiMs: 1500,
       maxPagesMax: 40,
+      ...opts,
     }),
   },
   {
@@ -97,12 +101,13 @@ const REGISTRE_SOURCES = [
     cadence: '0 12 * * *',
     actif: true,
     delaiMs: 1500,
-    creerCollecteur: () => new JsonStoreCollector({
+    creerCollecteur: (opts = {}) => new JsonStoreCollector({
       sourceId: 'electroniccorp',
       nom: 'Electronic Corp SN',
       baseUrl: 'https://electroniccorp.sn',
       delaiMs: 1500,
       maxPagesMax: 15,
+      ...opts,
     }),
   },
   {
@@ -116,12 +121,13 @@ const REGISTRE_SOURCES = [
     cadence: '0 14 * * *',
     actif: true,
     delaiMs: 1500,
-    creerCollecteur: () => new JsonStoreCollector({
+    creerCollecteur: (opts = {}) => new JsonStoreCollector({
       sourceId: 'electroluxdakar',
       nom: 'Electrolux Dakar',
       baseUrl: 'https://electroluxdakar.com',
       delaiMs: 1500,
       maxPagesMax: 15,
+      ...opts,
     }),
   },
   {
@@ -135,12 +141,13 @@ const REGISTRE_SOURCES = [
     cadence: '0 16 * * *',
     actif: true,
     delaiMs: 1500,
-    creerCollecteur: () => new JsonStoreCollector({
+    creerCollecteur: (opts = {}) => new JsonStoreCollector({
       sourceId: 'dakarmondialtelephone',
       nom: 'Dakar Mondial Téléphone',
       baseUrl: 'https://dakarmondialtelephone.com',
       delaiMs: 1500,
       maxPagesMax: 10,
+      ...opts,
     }),
   },
 
@@ -156,9 +163,10 @@ const REGISTRE_SOURCES = [
     cadence: '0 4 * * *', // 1x / jour
     actif: true,
     delaiMs: 2500,
-    creerCollecteur: () => new DecathlonCollector({
+    creerCollecteur: (opts = {}) => new DecathlonCollector({
       delaiMs: 2000,
       maxPagesParCategorie: 8,
+      ...opts,
     }),
   },
 
@@ -174,10 +182,11 @@ const REGISTRE_SOURCES = [
     cadence: '0 2 */2 * *', // Tous les 2 jours
     actif: true,
     delaiMs: 2000,
-    creerCollecteur: () => new KeurImmoCollector({
+    creerCollecteur: (opts = {}) => new KeurImmoCollector({
       delaiMs: 1500,
       maxPagesParSection: 6,
       enrichirDetails: true,
+      ...opts,
     }),
   },
 ];

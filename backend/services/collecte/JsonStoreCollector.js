@@ -15,7 +15,7 @@ class JsonStoreCollector extends BaseCollector {
   constructor(config) {
     super({ ...config, systeme: 'produits' });
     this.perPage = config.perPage || 100;
-    this.maxPagesMax = config.maxPagesMax || 100;
+    this.maxPagesMax = config.maxPages || config.maxPagesMax || 100;
   }
 
   async collecter({ run = null, dryRun = false, onBatch = null } = {}) {
