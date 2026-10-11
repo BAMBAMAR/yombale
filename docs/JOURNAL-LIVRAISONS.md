@@ -1,5 +1,24 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Nopalou / Catalogue Boutique : Correction du Flux « Choisir mes options » & Refonte Responsive de la Modale Aperçu Rapide (Session 2026-10-11, `main`, 0 push)** :
+  - *Symptôme Constaté par l'Utilisateur* : Sur une carte produit possédant des variantes (ex: *Air fryer grande capacité 12litres ecran* avec options de couleur ou variantes), le clic sur le bouton « Choisir mes options » ouvrait une modale tronquée à l'écran, sans aucun sélecteur d'options ni de variantes visible. La description longue du produit poussait les boutons d'action hors de la zone visible (sous la barre des tâches Windows), sans possibilité de défilement, empêchant l'utilisateur de choisir son option et d'ajouter au panier.
+  - *Causes Racines Forensiques* :
+    1. `BoutiqueQuickViewModal.tsx` ne gérait absolument pas les attributs `variantes` ni `variantes_skus` du produit (aucun sélecteur interactif, pas d'affichage des options, pas de résolution de SKU ni de prix variable).
+    2. La modale n'avait aucune hauteur maximale contrainte (`maxHeight: 'min(90vh, 700px)'`) ni de conteneur interne en défilement (`overflowY: 'auto'`). Avec les descriptions détaillées (caractéristiques complètes), la modale dépassait de l'écran et masquait les boutons d'action.
+    3. Dans `ProduitCard.tsx`, la détection des options reposait sur un test naïf `p.variantes && p.variantes.length > 0` sans normalisation des types (cas des chaînes JSON non parsées ou des tableaux avec valeurs vides).
+  - *Modifications Implémentées* :
+    1. `frontend-next/src/app/boutiques/[id]/components/BoutiqueQuickViewModal.tsx` :
+       - **Sélecteur d'Options Interactif Complet** : Rendu dynamique des options (Couleur, Taille, Capacité...) sous forme de boutons/pilules élégants avec état actif (fond thème, texte contrasté, icône `Check`). Pré-sélection ergonomique de la 1ère option disponible à l'ouverture pour éliminer toute friction.
+       - **Résolution Dynamique des Variantes & SKUs** : Calcul en temps réel du SKU correspondant (`variantes_skus`), mise à jour automatique du prix FCFA, du prix barré, du badge de réduction (-XX%), du stock en temps réel et de l'image de la variante sélectionnée.
+       - **Mise en Page Responsive & Scroll Sécurisé** : En-tête image compacte (220px), corps défilable (`flex: 1, overflowY: 'auto'`), et pied de page d'action fixe et toujours visible (`flexShrink: 0`) avec bouton « Ajouter au panier » (état de feedback « Ajouté au panier ! ») et « Fiche produit ».
+       - **Accessibilité & Ergonomie** : Rôle dialog avec `aria-modal="true"`, gestion de la touche `Échap` pour fermer et verrouillage du défilement de l'arrière-plan (`body.overflow = 'hidden'`).
+       - **Ajout Panier Structuré** : Transmission de `varianteId`, `detailsVariante` (ex: `Couleur: Noir`), `images` et `uniteVente` au panier (`CartContext`), avec ouverture fluide du tiroir panier.
+    2. `frontend-next/src/app/boutiques/[id]/components/ProduitCard.tsx` :
+       - Parsing sécurisé et mémoïsé `parsedVariantes` gérant les formats tableaux et chaînes JSON.
+       - Propriété `hasOptions` stricte vérifiant la présence effective de valeurs de variantes.
+       - Typage TypeScript strict validé avec `useMemo`.
+  - *Validation* : TypeScript propre (`npx tsc --noEmit` : 0 erreur), 97/97 tests unitaires réussis (`npm run test`), conformité anti-slop validée (`npm run lint:slop`).
+
 - **Nopalou / Catalogue & API : Éradication de l'Empoisonnement du Cache ISR & Résolution du Bug d'Affichage Vide des Catégories (`/categorie/...`) et Annonces (`/annonces`) (Session 2026-10-11, `main`, 0 push)** :
   - *Symptôme Constaté par l'Utilisateur* : Les catégories cliquées depuis le pied de page (`/categorie/smartphones`, `/categorie/informatique`) et la page `/annonces` affichaient intempestivement *"Aucun produit disponible dans cette catégorie"* ou *"Aucune annonce pour le moment"*, alors que les filtres de la page d'accueil près de la barre de recherche (`/?categorie=...`) fonctionnaient.
   - *Cause Racine Forensique* :

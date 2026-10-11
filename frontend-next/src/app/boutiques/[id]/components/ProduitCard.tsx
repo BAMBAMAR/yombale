@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Eye, Check } from 'lucide-react'
 import { cloudinaryHQ } from '@/lib/cloudinary'
@@ -51,8 +51,25 @@ export default function ProduitCard({
   const displayPrice = isVariablePrice ? minSkuPrix : (p.prix ?? minSkuPrix)
   const uniteSuffix = p.unite_vente && p.unite_vente !== 'piece' ? ` / ${p.unite_vente}` : ''
 
+  // Sécurisation et extraction des variantes déclarées
+  const parsedVariantes = useMemo<Array<{ nom: string; valeurs: string[] }>>(() => {
+    if (!p.variantes) return []
+    let list: Array<{ nom: string; valeurs: string[] }> = []
+    if (Array.isArray(p.variantes)) {
+      list = p.variantes
+    } else if (typeof p.variantes === 'string') {
+      try {
+        const parsed = JSON.parse(p.variantes)
+        if (Array.isArray(parsed)) list = parsed
+      } catch {}
+    }
+    return list.filter(v => v && typeof v.nom === 'string' && Array.isArray(v.valeurs))
+  }, [p.variantes])
+
+  const hasOptions = parsedVariantes.some(v => v && v.nom && Array.isArray(v.valeurs) && v.valeurs.length > 0)
+
   // Puces sectorielles (Mode tailles, Tech RAM/Stockage)
-  const taillesDispo = p.variantes?.find(v => v.nom.toLowerCase().includes('taille'))?.valeurs || []
+  const taillesDispo: string[] = parsedVariantes.find(v => v.nom.toLowerCase().includes('taille'))?.valeurs || []
   const techSpecs = [p.caracteristiques?.stockage, p.caracteristiques?.ram].filter(Boolean).join(' · ')
 
   if (viewMode === 'list') {
@@ -116,7 +133,7 @@ export default function ProduitCard({
           </button>
           <button
             onClick={() => {
-              if (p.variantes && p.variantes.length > 0) {
+              if (hasOptions) {
                 onQuickView(p)
               } else {
                 addToCart(boutiqueId, boutiqueNom, p, whatsapp)
@@ -141,7 +158,7 @@ export default function ProduitCard({
               gap: 6,
             }}
           >
-            {addedCart ? 'Ajouté' : (isEnStock ? (p.variantes && p.variantes.length > 0 ? 'Choisir options' : <><ShoppingCart size={14} /> Ajouter</>) : 'Rupture')}
+            {addedCart ? 'Ajouté' : (isEnStock ? (hasOptions ? 'Choisir options' : <><ShoppingCart size={14} /> Ajouter</>) : 'Rupture')}
           </button>
         </div>
       </div>
@@ -264,7 +281,7 @@ export default function ProduitCard({
         <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={boutiqueId} />
         <button
           onClick={() => {
-            if (p.variantes && p.variantes.length > 0) {
+            if (hasOptions) {
               onQuickView(p)
             } else {
               addToCart(boutiqueId, boutiqueNom, p, whatsapp)
@@ -298,7 +315,7 @@ export default function ProduitCard({
               <span>Ajouté au panier</span>
             </span>
           ) : isEnStock ? (
-            p.variantes && p.variantes.length > 0 ? (
+            hasOptions ? (
               <span>Choisir mes options</span>
             ) : (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>

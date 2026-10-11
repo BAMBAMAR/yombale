@@ -49,7 +49,23 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
-- **Nopalou / Catalogue & API : Éradication de l'Empoisonnement du Cache ISR & Résolution du Bug d'Affichage Vide des Catégories (`/categorie/...`) et Annonces (`/annonces`) (Session 2026-10-11, `main`, 0 push)** :
+- **Nopalou / Catalogue Boutique : Correction du Flux « Choisir mes options » & Refonte Responsive de la Modale Aperçu Rapide (Session 2026-10-11, `main`, 0 push)** :
+  - *Symptôme Constaté par l'Utilisateur* : Sur une carte produit possédant des variantes (ex: *Air fryer grande capacité 12litres ecran*), le clic sur le bouton « Choisir mes options » ouvrait une modale tronquée sans aucun sélecteur d'options/variantes affiché. La description longue du produit poussait les boutons d'action hors de l'écran sous la barre des tâches sans possibilité de défilement, bloquant l'achat.
+  - *Causes Racines Forensiques* :
+    1. `BoutiqueQuickViewModal.tsx` ne contenait aucun composant de sélection pour les variantes (`quickViewProduct.variantes`) ni de résolution de SKU (`variantes_skus`).
+    2. La modale n'avait aucune hauteur maximale contrainte (`maxHeight: 'min(90vh, 700px)'`) ni conteneur défilable (`overflowY: 'auto'`), provoquant un débordement sous l'écran.
+    3. `ProduitCard.tsx` évaluait les options avec un test naïf sans parsing robuste des variantes.
+  - *Modifications Implémentées* :
+    1. `frontend-next/src/app/boutiques/[id]/components/BoutiqueQuickViewModal.tsx` :
+       - **Sélecteur d'Options Interactif** : Rendu des attributs (Couleur, Taille...) sous forme de boutons pilules interactifs avec mise en valeur de la sélection (`couleurTheme`, contraste, icône Lucide `Check`). Pré-sélection de la première option disponible pour fluidifier l'expérience d'achat.
+       - **Résolution Dynamique SKU & Prix** : Calcul automatique du SKU correspondant avec ajustement instantané du prix FCFA, du prix barré, du badge réduction (-XX%), de la photo active et du statut de stock.
+       - **Mise en Page Responsive & Pied Fixe** : Conteneur borné à `maxHeight: 'min(90vh, 700px)'`, corps central scrollable (`overflowY: 'auto'`), et pied d'actions fixe (`flexShrink: 0`) maintenant les boutons « Ajouter au panier » et « Fiche produit » systématiquement visibles et accessibles.
+       - **Accessibilité & Ergonomie** : Support de la touche Échap, verrouillage du scroll de fond (`body.overflow = 'hidden'`), et ajout d'article complet dans le panier avec `detailsVariante` et `varianteId`.
+    2. `frontend-next/src/app/boutiques/[id]/components/ProduitCard.tsx` :
+       - Sécurisation du parsing des variantes avec `parsedVariantes` et drapeau `hasOptions` strict.
+       - Typage TypeScript exhaustif et validation sans `any`.
+  - *Validation* : TypeScript propre (`npx tsc --noEmit` : 0 erreur), 97/97 tests unitaires réussis (`npm run test`), conformité anti-slop validée (`npm run lint:slop`).
+
   - *Symptôme Résolu* : Les pages `/categorie/[slug]` et `/annonces` affichaient intempestivement *"Aucun produit disponible dans cette catégorie"* ou *"Aucune annonce pour le moment"* suite à un timeout court ou un cold start de Render, alors que le filtre d'accueil in-page (`/?categorie=...`) fonctionnait.
   - *Correctifs Implémentés* :
     1. `frontend-next/src/lib/api.ts` : Timeout augmenté de 5s à 12s (`timeoutMs = 12000`) avec retry automatique (`retries = 1`) après 700ms en cas de cold start ou indisponibilité temporaire (502/503/504). Filtrage automatique des URLs localhost en production.
