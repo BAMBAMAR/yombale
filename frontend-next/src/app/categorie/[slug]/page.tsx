@@ -143,12 +143,6 @@ export default async function CategoriePage({
   } catch (err) {
     console.error(`[Nopalou:CategoriePage] Erreur de chargement pour ${slug}:`, err)
     erreurChargement = true
-    // En mode ISR sans filtre personnalisé, relancer l'erreur empêche Next.js
-    // d'écraser la version en cache précédente par un résultat vide "0 produit".
-    const isStaticIsr = !prixMin && !prixMax && tri === 'pertinence' && !sousType && !q && page === '1'
-    if (isStaticIsr) {
-      throw err
-    }
   }
 
   const currentPage = Number(page)

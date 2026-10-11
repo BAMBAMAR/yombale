@@ -102,9 +102,6 @@ export default async function SousCategoriePage({
   } catch (err) {
     console.error(`[Nopalou:SousCategoriePage] Erreur pour ${params.slug}/${params.sousCategorie}:`, err)
     erreurChargement = true
-    if (!searchParams.page && !searchParams.tri) {
-      throw err
-    }
   }
 
   const currentPage = Number(page)

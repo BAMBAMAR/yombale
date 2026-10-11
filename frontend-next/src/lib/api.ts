@@ -22,7 +22,7 @@ export interface ApiFetchOptions {
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { timeoutMs = 12000, retries = 1, headers: customHeaders } = options
+  const { timeoutMs = 8000, retries = 1, headers: customHeaders } = options
 
   const headers: Record<string, string> = {
     ...(SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}),
@@ -40,14 +40,15 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         if (attempt > 0) {
-          // Attente 700ms pour laisser à Render le temps de finaliser son démarrage
-          await new Promise((r) => setTimeout(r, 700))
+          // Attente 400ms pour laisser à Render le temps de finaliser son démarrage
+          await new Promise((r) => setTimeout(r, 400))
         }
 
+        const currentTimeout = attempt === 0 ? timeoutMs : Math.min(timeoutMs, 5000)
         const res = await fetch(url, {
           cache: 'no-store',
           headers,
-          signal: AbortSignal.timeout(timeoutMs),
+          signal: AbortSignal.timeout(currentTimeout),
         })
 
         if (res.ok) {

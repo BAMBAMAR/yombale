@@ -166,10 +166,11 @@ export async function middleware(req: NextRequest) {
   const response = NextResponse.next({ request: { headers: requestHeaders } })
   response.headers.set('Content-Security-Policy', csp)
   // AUD-149 : politique stricte (nonce + strict-dynamic, sans unsafe-inline ni unsafe-eval) évaluée en RAPPORT SEUL.
-  // Elle ne bloque rien ; les violations arrivent sur /api/csp-report. Passage en application réelle quand le flux est propre.
-  // En dev (isDev) ou sur les routes /admin (outils et widgets d'administration), on omet le Report-Only pour ne pas inonder la console opérateur.
+  // Elle ne bloque rien. Afin de ne pas inonder la console du navigateur avec des dizaines d'avertissements
+  // sur les pages publiques, on l'active uniquement si ENABLE_CSP_REPORT_ONLY=true ou en environnement de test.
   const isAdminRoute = pathname.startsWith('/admin')
-  if (!isDev && !isAdminRoute) {
+  const shouldSendReportOnly = (process.env.ENABLE_CSP_REPORT_ONLY === 'true' || process.env.NODE_ENV === 'test') && !isAdminRoute
+  if (shouldSendReportOnly) {
     const cspStricte = [
       "default-src 'self'",
       `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:`,
