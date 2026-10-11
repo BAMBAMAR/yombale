@@ -49,6 +49,14 @@ Surga (assistant de poche) s'intègre à Nopalou. Règles complètes : `CLAUDE_S
 
 L'historique complet des livraisons (~11 500 lignes, ~1,7 Mo) a été déplacé dans [`docs/JOURNAL-LIVRAISONS.md`](docs/JOURNAL-LIVRAISONS.md) pour ne plus être chargé automatiquement dans le contexte. Le consulter avec `grep` / `head` ciblés, jamais en entier.
 
+- **Nopalou / UI Hero : Comblement de l'Espace Vide de la Carte Garantie Shopping Desktop (Session 2026-10-11, `main`, 0 push)** :
+  - *Demande du Propriétaire* : Combler le vide vertical de la carte de réassurance « Garantie Shopping Nopalou » sur desktop afin d'équilibrer la grille vis-à-vis de la colonne de gauche.
+  - *Modifications Implémentées* :
+    - `frontend-next/src/app/hero/HeroAcheteurView.tsx` :
+      1. Ajout de 2 piliers de réassurance supplémentaires avec icônes Lucide SVG dédiées (`BadgePercent` et `Truck`) : *« Tarifs Clairs & 0 FCFA de Frais »* (comparaison directe sans commission) et *« Retrait Magasin ou Livraison »* (achat en magasin ou livraison express Sénégal).
+      2. Intégration d'un bandeau de chiffres clés de confiance (+30 000 Offres & Produits, 0 FCFA Frais Cachés, 100% Local Sénégal) au design harmonieux avec les tokens Nopalou (`--navy`, `--accent`, `--price`, `--border`).
+  - *Validation* : Tests unitaires ciblés passés avec succès (1/1), linter anti-slop sans avertissement, suite scraping non-régression validée (23/23).
+
 - **Nopalou / UI Catalogue : Retrait du Compteur de Résultats et de la Mention de Classement (Session 2026-10-11, `main`, 0 push)** :
   - *Demande du Propriétaire* : Suppression de l'affichage du bloc situé sous la barre de tri du catalogue (« 21 545 résultats » et « Les boutiques Nopalou sont affichées en premier. »).
   - *Modifications Implémentées* :

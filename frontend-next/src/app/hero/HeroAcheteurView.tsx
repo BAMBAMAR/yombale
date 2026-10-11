@@ -9,7 +9,9 @@ import {
   Building2,
   ArrowRight,
   Store,
-  CreditCard
+  CreditCard,
+  BadgePercent,
+  Truck
 } from 'lucide-react'
 
 interface HeroAcheteurViewProps {
@@ -177,6 +179,59 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
                       Négociez et commandez en direct avec le commerçant ou l&apos;agence.
                     </div>
                   </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#DCFCE7', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <BadgePercent size={13} strokeWidth={2.5} />
+                  </div>
+                  <div style={{ fontSize: 12, lineHeight: 1.3 }}>
+                    <strong style={{ color: 'var(--navy, #1C2B4A)' }}>Tarifs Clairs &amp; 0 FCFA de Frais</strong>
+                    <div style={{ color: 'var(--text2, #5A4E42)', fontSize: 11 }}>
+                      Comparez les prix réels en boutique sans aucune commission ajoutée.
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#DCFCE7', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <Truck size={13} strokeWidth={2.5} />
+                  </div>
+                  <div style={{ fontSize: 12, lineHeight: 1.3 }}>
+                    <strong style={{ color: 'var(--navy, #1C2B4A)' }}>Retrait Magasin ou Livraison</strong>
+                    <div style={{ color: 'var(--text2, #5A4E42)', fontSize: 11 }}>
+                      Achetez sur place au magasin ou faites-vous livrer partout au Sénégal.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini-bandeau de réassurance chiffré */}
+              <div style={{
+                marginTop: 14,
+                padding: '9px 12px',
+                background: 'rgba(255, 255, 255, 0.75)',
+                border: '1px solid #FED7AA',
+                borderRadius: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-around',
+                textAlign: 'center',
+                gap: 6
+              }}>
+                <div>
+                  <div style={{ fontWeight: 900, color: 'var(--accent, #C75B00)', fontSize: 13, lineHeight: 1.1 }}>+30 000</div>
+                  <div style={{ fontSize: 10, color: 'var(--text2, #5A4E42)', fontWeight: 600 }}>Offres &amp; Produits</div>
+                </div>
+                <div style={{ width: 1, height: 22, background: '#FED7AA' }} />
+                <div>
+                  <div style={{ fontWeight: 900, color: 'var(--price, #0A5C36)', fontSize: 13, lineHeight: 1.1 }}>0 FCFA</div>
+                  <div style={{ fontSize: 10, color: 'var(--text2, #5A4E42)', fontWeight: 600 }}>Frais Cachés</div>
+                </div>
+                <div style={{ width: 1, height: 22, background: '#FED7AA' }} />
+                <div>
+                  <div style={{ fontWeight: 900, color: 'var(--navy, #1C2B4A)', fontSize: 13, lineHeight: 1.1 }}>100%</div>
+                  <div style={{ fontSize: 10, color: 'var(--text2, #5A4E42)', fontWeight: 600 }}>Local Sénégal</div>
                 </div>
               </div>
             </div>
