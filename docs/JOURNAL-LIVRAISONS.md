@@ -1,5 +1,12 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Nopalou / UI Catalogue : Retrait du Compteur de Résultats et de la Mention de Classement (Session 2026-10-11, `main`, 0 push)** :
+  - *Demande du Propriétaire* : Suppression de l'affichage du bloc situé sous la barre de tri du catalogue (« 21 545 résultats » et « Les boutiques Nopalou sont affichées en premier. »).
+  - *Modifications Implémentées* :
+    1. `frontend-next/src/app/ProduitsListe.tsx` : Suppression du paragraphe `<p className="resultats-count">` sous la barre de tri. Conservation intacte de l'état `currentTotal` pour le calcul du bouton de pagination (« Voir plus (X restants) »).
+    2. `frontend-next/src/components/MentionClassement.tsx` : Désactivation du rendu de la mention (retourne systématiquement `null`), supprimant le texte de l'ensemble des vues publiques (catalogue d'accueil et pages de catégories/sous-catégories) tout en maintenant la compatibilité des tests unitaires UX (`ux-seo-audit.test.js`).
+  - *Validation* : Tests unitaires ciblés passés avec succès (4/4), non-régression scraping validée (23/23).
+
 - **Nopalou / Scraping & Planificateur : Intégration de 5 Nouveaux E-Commerces Sénégalais (WooCommerce Store API) & Stabilisation de la Tâche Planifiée (Session 2026-10-11, `main`, 0 push)** :
   - *Diagnostic & Correction Tâche Planifiée Windows* : Le script `scripts/run-scraper-task.bat` pointait par défaut sur `sync-immo-local.js --facebook`. En raison d'une session Facebook expirée (`.fb-session.json`), le script s'arrêtait immédiatement sur code 1. Le batch a été réorienté pour exécuter par défaut la collecte autonome et robuste V2 (`scripts/run-collecte-v2.js`), sans dépendance à des identifiants tiers.
   - *Audit Technique du Top 50 Sites et Découverte d'APIs Publiques* : Audit approfondi de la liste de 50 sites proposée par l'utilisateur. Découverte empirique que les principaux distributeurs et marchands légitimes de Dakar exploitent l'API publique standardisée WooCommerce `/wp-json/wc/store/v1/products` :

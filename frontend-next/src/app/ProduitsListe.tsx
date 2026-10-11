@@ -146,12 +146,6 @@ export default function ProduitsListe({
 
   return (
     <>
-      {currentTotal > 0 && (
-        <p className="resultats-count">
-          {currentTotal.toLocaleString('fr-SN')} résultat{currentTotal > 1 ? 's' : ''}
-        </p>
-      )}
-
       <MentionClassement produits={produits} />
       <div className="grid-produits">
         {(() => { let promoIdx = 0; return produits.filter(p => isValidPhoto(p.image_url)).map((p) => {
