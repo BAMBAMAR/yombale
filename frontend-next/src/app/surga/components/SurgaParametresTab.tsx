@@ -1,17 +1,14 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import {
   RotateCcw,
   Volume2,
   Crown,
   Briefcase,
   Shield,
-  User,
-  UserCheck,
-  LogOut,
-  RefreshCw,
   Smartphone,
+  MapPin,
 } from 'lucide-react'
 import SurgaServiceRow from './SurgaServiceRow'
 import { quartierDe } from '@/lib/surga-meteo'
@@ -19,6 +16,8 @@ import { libelleAbonnement, nomOffre, resumeGratuit, useSurgaOffre } from '@/lib
 import SurgaPersonnalisationSection from './SurgaPersonnalisationSection'
 import SurgaAideApropos from './SurgaAideApropos'
 import SurgaServicesListe, { type CleService } from './SurgaServicesListe'
+import SurgaMeteoLocaliteModal from './SurgaMeteoLocaliteModal'
+import SurgaCompteCarte from './SurgaCompteCarte'
 
 interface SurgaParametresTabProps {
   preferences: any
@@ -47,6 +46,7 @@ interface SurgaParametresTabProps {
   onSavePreferences?: (nouveauxParametres: { sidebar_services?: string[]; rail_widgets?: string[] }) => void
   // Téléphone : ouvre un service depuis la liste de l'onglet (SRG-A2-015).
   onOuvrirService?: (cle: CleService) => void
+  onVilleChange?: (nouvelleVille: string) => void
 }
 
 export default function SurgaParametresTab({
@@ -65,6 +65,7 @@ export default function SurgaParametresTab({
   onReinitialiser,
   onSavePreferences,
   onOuvrirService,
+  onVilleChange,
 }: SurgaParametresTabProps) {
   const { offre } = useSurgaOffre()
   const estPremium = statutPremium?.estPremium ?? false
@@ -72,6 +73,42 @@ export default function SurgaParametresTab({
   // Les espaces professionnels ne s'affichent que si au moins une formule pro est en vente (console d'administration).
   const proProposes = Boolean(offre?.plans.some((pl) => pl.type === 'b2b'))
   const joursRestants = statutPremium?.joursRestants ?? 0
+
+  const [isLocaliteModalOpen, setIsLocaliteModalOpen] = useState(false)
+  const [gpsEnCours, setGpsEnCours] = useState(false)
+
+  const handleChoisirLocalite = (nomVille: string) => {
+    setIsLocaliteModalOpen(false)
+    if (onVilleChange) onVilleChange(nomVille)
+  }
+
+  const handleDetecterGps = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      alert('La géolocalisation n’est pas disponible sur votre navigateur.')
+      return
+    }
+    setGpsEnCours(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude
+        const lon = pos.coords.longitude
+        try {
+          localStorage.setItem('surga_meteo_gps', JSON.stringify({ lat, lon }))
+          localStorage.removeItem('surga_meteo_ville')
+          window.dispatchEvent(new CustomEvent('surga-meteo-change', { detail: { lat, lon, isGps: true } }))
+          window.dispatchEvent(new CustomEvent('surga-data-change'))
+        } catch {}
+        setIsLocaliteModalOpen(false)
+        setGpsEnCours(false)
+      },
+      (err) => {
+        console.warn('[SURGA GPS ERR]:', err.message)
+        alert('Impossible de récupérer la position GPS. Vérifiez les autorisations de localisation.')
+        setGpsEnCours(false)
+      },
+      { timeout: 9000, enableHighAccuracy: true }
+    )
+  }
 
   return (
     <div
@@ -102,159 +139,55 @@ export default function SurgaParametresTab({
         >
           Réglages &amp; Préférences
         </h2>
-        <p
+        <div
           style={{
             fontSize: 12,
             color: 'var(--text3, #73675E)',
             margin: '4px 0 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            flexWrap: 'wrap',
           }}
         >
-          Heure du briefing : <strong>{preferences?.heure_briefing || '07:30'}</strong>
-          {' • '}
-          Quartier : <strong>{quartierDe(preferences)}</strong>
-        </p>
+          <span>Heure du briefing : <strong>{preferences?.heure_briefing || '07:30'}</strong></span>
+          <span>•</span>
+          <span>Quartier : <strong>{quartierDe(preferences)}</strong></span>
+          {onVilleChange && (
+            <button
+              type="button"
+              onClick={() => setIsLocaliteModalOpen(true)}
+              style={{
+                background: 'rgba(199, 91, 0, 0.08)',
+                border: '1px solid rgba(199, 91, 0, 0.25)',
+                color: 'var(--accent, #C75B00)',
+                borderRadius: 6,
+                padding: '2px 8px',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+              title="Changer de quartier ou de localité de référence"
+            >
+              <MapPin size={11} />
+              <span>Modifier</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 1. Carte Compte & Authentification */}
-      <div
-        style={{
-          padding: '14px 16px',
-          borderRadius: 12,
-          backgroundColor: user ? 'rgba(28, 43, 74, 0.04)' : 'var(--bg, #F8F5F0)',
-          border: '1px solid var(--border, #E8DDD2)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                backgroundColor: user ? 'rgba(10, 92, 54, 0.12)' : 'rgba(28, 43, 74, 0.08)',
-                color: user ? 'var(--price, #0A5C36)' : 'var(--navy, #1C2B4A)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {user ? <UserCheck size={18} /> : <User size={18} />}
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {user ? (user.nom || user.telephone || 'Compte Surga actif') : 'Mode invité (Stockage local)'}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text3, #73675E)' }}>
-                {user
-                  ? `WhatsApp : ${user.telephone || 'Connecté'} • Synchronisé`
-                  : 'Données enregistrées uniquement sur cet appareil'}
-              </div>
-            </div>
-          </div>
-
-          {user ? (
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-              {onOpenCompte && (
-                <button
-                  type="button"
-                  onClick={onOpenCompte}
-                  className="surga-btn-secondary"
-                  style={{
-                    fontSize: 12,
-                    padding: '6px 10px',
-                    fontWeight: 700,
-                    width: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                  title="Gérer mon profil et compte"
-                >
-                  <User size={12} />
-                  <span>Mon Compte</span>
-                </button>
-              )}
-              {onSynchroniser && (
-                <button
-                  type="button"
-                  onClick={onSynchroniser}
-                  className="surga-btn-secondary"
-                  disabled={isSyncing}
-                  style={{
-                    fontSize: 12,
-                    padding: '6px 9px',
-                    fontWeight: 700,
-                    width: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                  title="Forcer la synchronisation avec le cloud"
-                >
-                  <RefreshCw size={12} className={isSyncing ? 'surga-spin' : ''} />
-                  <span>{isSyncing ? 'Sync...' : 'Sync'}</span>
-                </button>
-              )}
-              {onDeconnexion && (
-                <button
-                  type="button"
-                  onClick={onDeconnexion}
-                  className="surga-btn-secondary"
-                  style={{
-                    fontSize: 12,
-                    padding: '6px 9px',
-                    fontWeight: 700,
-                    width: 'auto',
-                    color: 'var(--surga-accent-ink, #A64B08)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                  title="Se déconnecter"
-                >
-                  <LogOut size={12} />
-                  <span>Déconnexion</span>
-                </button>
-              )}
-            </div>
-          ) : (
-            onOpenAuth && (
-              <button
-                type="button"
-                onClick={onOpenAuth}
-                className="surga-btn-primary"
-                style={{
-                  fontSize: 12,
-                  padding: '6px 14px',
-                  fontWeight: 700,
-                  width: 'auto',
-                  flexShrink: 0,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Se connecter
-              </button>
-            )
-          )}
-        </div>
-
-        {!user && (
-          <div
-            style={{
-              paddingTop: 8,
-              borderTop: '1px dashed var(--border, #E8DDD2)',
-              fontSize: 12,
-              color: 'var(--text2, #5A4E42)',
-            }}
-          >
-            <span>Connectez-vous avec WhatsApp pour sauvegarder et synchroniser vos données.</span>
-          </div>
-        )}
-      </div>
+      <SurgaCompteCarte
+        user={user}
+        onOpenCompte={onOpenCompte}
+        onSynchroniser={onSynchroniser}
+        onDeconnexion={onDeconnexion}
+        onOpenAuth={onOpenAuth}
+        isSyncing={isSyncing}
+      />
 
       {/* 2. Carte Statut Abonnement */}
       <div
@@ -391,6 +324,17 @@ export default function SurgaParametresTab({
 
       {/* 7. Partage, aide, à propos de l'éditeur et contact */}
       <SurgaAideApropos />
+
+      {/* Modale de changement de quartier/localité de référence */}
+      <SurgaMeteoLocaliteModal
+        isOpen={isLocaliteModalOpen}
+        onClose={() => setIsLocaliteModalOpen(false)}
+        onSelectLocalite={handleChoisirLocalite}
+        onDetecterGps={handleDetecterGps}
+        gpsEnCours={gpsEnCours}
+        estGpsActif={false}
+        localiteActuelle={quartierDe(preferences)}
+      />
     </div>
   )
 }

@@ -3,6 +3,27 @@
 Ce document trace les déploiements, fonctionnalités livrées et correctifs. **Les agents IA
 ajoutent obligatoirement l'entrée la plus récente en haut de ce fichier avant tout `git push`.**
 
+### [2026-10-11 — Réactivité & Persistance du Changement de Localité Météo / Trafic] — commit local, aucun push
+- **Objet :** Corriger le blocage où le changement de localité restait figé sur « Dakar Plateau » dans Surga, assurer la persistance et la synchronisation réactive instantanée entre widgets, modales, préférences et briefing.
+- **Rail Droit Desktop (`SurgaRailContexte.tsx`) :**
+  - `SurgaRailMeteo` initialise désormais sa ville active à partir de `localStorage.getItem('surga_meteo_ville')` (ou de la prop `ville`).
+  - Écoute réactive des événements `surga-meteo-change`, `surga-data-change` et `storage` pour actualiser immédiatement le titre et le relevé météo.
+  - `SurgaRailTrafic` mis à niveau pour refléter en direct la localité choisie (ex. affichage de message contextuel adapté en cas de sortie de la zone de couverture Dakar).
+  - Élimination de tout risque de boucle de rétroaction circulaire d'événements.
+- **Propagation Hiérarchique React :**
+  - Raccordement du callback `onVilleChange` de `<SurgaMeteoCard />` à travers `<SurgaMeteoFenetre />`, `<SurgaDesktopRightRail />` et `<SurgaLayoutShell />`.
+- **Persistance & Briefing (`page.tsx`) :**
+  - Implémentation complète de `handleVilleChange(nouvelleVille)` : mise à jour réactive des préférences (`appliquerChangement({ quartiers: [nouvelleVille] })`), enregistrement dans `localStorage` (`surga_meteo_ville`), émission de l'événement `surga-meteo-change`, et réactualisation automatique du briefing (`chargerBriefing()`).
+- **Gestionnaire Direct de Localité (`SurgaParametresTab.tsx`) :**
+  - Ajout d'un bouton contextuel `<MapPin size={11} /> Modifier` à côté du quartier de référence dans l'en-tête de la section réglages.
+  - Intégration de `SurgaMeteoLocaliteModal` pour permettre le choix immédiat de n'importe quelle localité sénégalaise ou la bascule par géolocalisation GPS.
+- **Modularisation Senior (< 450 lignes) :**
+  - Découpage et extraction de `<SurgaCompteCarte />` (`SurgaCompteCarte.tsx`, 169 lignes) ramenant `SurgaParametresTab.tsx` de 474 lignes à 339 lignes en stricte conformité avec le standard anti-monolithe.
+- **Validation & Contrôles :**
+  - Typage TypeScript : 0 erreur (`npx tsc --noEmit`).
+  - Tests unitaires : 97/97 tests passés avec succès (100%).
+  - Linter qualité : `npm run lint:slop` 100% conforme.
+
 ### [2026-10-10 — Harmonisation Universelle du Logo Surga et Éradication de l'Icône Sparkles dans l'Admin] — commit local, aucun push
 - **Objet :** Corriger les disparités d'affichage du logo Surga et sanctuariser l'emblème officiel conformément aux directives permanentes.
 - **Admin Surga (`/admin/surga`) :** Remplacement de l'icône générique `<Sparkles size={18} />` dans `AdminSurgaSidebar.tsx` par l'emblème officiel `<SurgaBrandLogo taille={36} afficherTexte={false} />` et le wordmark stylisé bicolore `SURGA Console Pro`.

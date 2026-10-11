@@ -47,7 +47,7 @@ export default function SurgaMeteoLocaliteModal({
     if (localiteActuelle) {
       setSelectionActive(localiteActuelle)
     }
-  }, [localiteActuelle])
+  }, [localiteActuelle, isOpen])
 
   // Fallback automatique sur le catalogue complet des 28 localités (14 régions) si la liste API est vide
   const listeEffective = useMemo(() => {
@@ -74,6 +74,13 @@ export default function SurgaMeteoLocaliteModal({
       return matchRecherche && matchZone
     })
   }, [listeEffective, recherche, zoneFiltre])
+
+  // Si une recherche filtre à 1 seul résultat, présélectionner automatiquement cette localité
+  useEffect(() => {
+    if (recherche.trim() && localitesFiltrees.length === 1) {
+      setSelectionActive(localitesFiltrees[0].nom)
+    }
+  }, [recherche, localitesFiltrees])
 
   if (!isOpen || !mounted) return null
 

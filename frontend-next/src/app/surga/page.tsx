@@ -154,6 +154,17 @@ export default function SurgaPage() {
   const handleToggleAudio = () => appliquerChangement({ audio_actif: !preferences?.audio_actif })
   const handleUpdatePreferences = (patch: Partial<SurgaPreferencesData>) => appliquerChangement(patch)
 
+  const handleVilleChange = (nouvelleVille: string) => {
+    if (!nouvelleVille || typeof nouvelleVille !== 'string') return
+    appliquerChangement({ quartiers: [nouvelleVille] })
+    try {
+      localStorage.setItem('surga_meteo_ville', nouvelleVille)
+      localStorage.removeItem('surga_meteo_gps')
+      window.dispatchEvent(new CustomEvent('surga-meteo-change', { detail: { ville: nouvelleVille } }))
+    } catch {}
+    chargerBriefing()
+  }
+
   const handleOnboardingComplete = (data: SurgaPreferencesData) => {
     setPreferences(data)
     setIsOnboarded(true)
@@ -312,6 +323,7 @@ export default function SurgaPage() {
         onConfirmerDepense={handleVoiceDepense}
         onConfirmerNote={handleVoiceNote}
         onConfirmerRappel={handleVoiceRappel}
+        onVilleChange={handleVilleChange}
       >
         {/* Onglet 1 : Aujourd'hui */}
         {activeTab === 'aujourdhui' && (
@@ -330,9 +342,7 @@ export default function SurgaPage() {
             chargerBriefing={chargerBriefing}
             onOpenPodcastModal={() => setIsPodcastOpen(true)}
             openRadioModal={openRadioModal}
-            onVilleChange={() => {
-              // SRG-UI-01 : Consulter une autre ville ponctuellement ne modifie pas la ville de référence du profil
-            }}
+            onVilleChange={handleVilleChange}
             onOpenPresse={() => setIsPresseOpen(true)}
             onOpenTrafic={() => setIsTraficOpen(true)}
             onOpenImmo={() => setIsImmoOpen(true)}
@@ -369,6 +379,7 @@ export default function SurgaPage() {
             onOpenDonnees={() => setIsDonneesOpen(true)}
             onReinitialiser={handleReinitialiser}
             onSavePreferences={handleUpdatePreferences}
+            onVilleChange={handleVilleChange}
           />
         )}
       </SurgaLayoutShell>

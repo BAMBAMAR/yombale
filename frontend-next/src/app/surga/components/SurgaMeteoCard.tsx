@@ -39,7 +39,14 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
   const [estGpsActif, setEstGpsActif] = useState(Boolean(initialMeteo?.est_gps))
   const [estDeplie, setEstDeplie] = useState(false)
   // Localité demandée, affichée pendant le chargement et quand la météo manque.
-  const [villeDemandee, setVilleDemandee] = useState<string | null>(null)
+  const [villeDemandee, setVilleDemandee] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem('surga_meteo_ville') || null
+      } catch {}
+    }
+    return null
+  })
 
   // Numéro de la dernière demande : une réponse plus ancienne (la localité d'avant, arrivée en retard) est ignorée.
   const derniereDemande = useRef(0)
@@ -82,6 +89,9 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
         if (data.success && data.meteo) {
           setMeteo(data.meteo)
           setEstGpsActif(Boolean(data.meteo.est_gps))
+          if (data.meteo.ville) {
+            setVilleDemandee(data.meteo.ville)
+          }
           if (Array.isArray(data.localites) && data.localites.length > 0) {
             setLocalitesList(data.localites)
           }
@@ -112,6 +122,8 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
         try {
           localStorage.setItem('surga_meteo_gps', JSON.stringify({ lat, lon }))
           localStorage.removeItem('surga_meteo_ville')
+          window.dispatchEvent(new CustomEvent('surga-meteo-change', { detail: { lat, lon, isGps: true } }))
+          window.dispatchEvent(new CustomEvent('surga-data-change'))
         } catch {}
         setEstGpsActif(true)
         setIsLocaliteModalOpen(false)
@@ -133,6 +145,8 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
     try {
       localStorage.setItem('surga_meteo_ville', nomCanonique)
       localStorage.removeItem('surga_meteo_gps')
+      window.dispatchEvent(new CustomEvent('surga-meteo-change', { detail: { ville: nomCanonique } }))
+      window.dispatchEvent(new CustomEvent('surga-data-change'))
     } catch {}
     setEstGpsActif(false)
     setIsLocaliteModalOpen(false)
@@ -151,14 +165,14 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
   }
 
   useEffect(() => {
-    let hasLocalPref = false
+    let storedVille: string | null = null
+    let hasLocalGps = false
     try {
-      if (localStorage.getItem('surga_meteo_gps') || localStorage.getItem('surga_meteo_ville')) {
-        hasLocalPref = true
-      }
+      storedVille = localStorage.getItem('surga_meteo_ville')
+      hasLocalGps = Boolean(localStorage.getItem('surga_meteo_gps'))
     } catch {}
 
-    if (hasLocalPref) {
+    if (hasLocalGps || (storedVille && (!initialMeteo || initialMeteo.ville !== storedVille))) {
       chargerMeteo()
     } else if (initialMeteo) {
       setMeteo(initialMeteo)
@@ -167,6 +181,18 @@ export default function SurgaMeteoCard({ initialMeteo, ville = 'Dakar', onVilleC
       chargerMeteo()
     }
   }, [initialMeteo, chargerMeteo])
+
+  useEffect(() => {
+    const handleMeteoChange = (e: any) => {
+      const nv = e?.detail?.ville
+      if (nv && typeof nv === 'string' && nv !== meteo?.ville) {
+        setVilleDemandee(nv)
+        chargerMeteo({ ville: nv })
+      }
+    }
+    window.addEventListener('surga-meteo-change', handleMeteoChange)
+    return () => window.removeEventListener('surga-meteo-change', handleMeteoChange)
+  }, [meteo?.ville, chargerMeteo])
 
   const villeAffichee = meteo?.ville || villeDemandee || ville
   const estMaritime = estLocaliteMaritime(villeAffichee)

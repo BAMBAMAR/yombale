@@ -44,6 +44,7 @@ interface SurgaLayoutShellProps {
   onConfirmerDepense?: (depense: { montant: number; categorie: string; note: string }) => Promise<void>
   onConfirmerNote?: (note: { titre: string; contenu: string }) => Promise<void>
   onConfirmerRappel?: (rappel: { titre: string; date: string; heure: string }) => Promise<void>
+  onVilleChange?: (nouvelleVille: string) => void
 }
 
 export default function SurgaLayoutShell({
@@ -78,6 +79,7 @@ export default function SurgaLayoutShell({
   onConfirmerDepense,
   onConfirmerNote,
   onConfirmerRappel,
+  onVilleChange,
 }: SurgaLayoutShellProps) {
   // État de l'Assistant IA Unifié (Omnibar LLM & Actions)
   const [isAssistantOpen, setIsAssistantOpen] = useState(false)
@@ -248,6 +250,7 @@ export default function SurgaLayoutShell({
           onNavigateTab={onTabChange}
           onOpenTrafic={onOpenTrafic}
           onOpenRadios={onOpenRadios}
+          onVilleChange={onVilleChange}
         />
       </div>
 

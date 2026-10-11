@@ -32,12 +32,13 @@ interface SurgaDesktopRightRailProps {
   onNavigateTab: (tab: SurgaTab) => void
   onOpenTrafic: () => void
   onOpenRadios?: () => void
+  onVilleChange?: (nouvelleVille: string) => void
 }
 
 export default function SurgaDesktopRightRail({
   statsApercu, soldeKalpeFormate, nbNotes, nbAgenda,
   derniereNoteTitre, prochainRdvTitre, ville = 'Dakar Plateau', widgetsActifs,
-  onNavigateTab, onOpenTrafic, onOpenRadios,
+  onNavigateTab, onOpenTrafic, onOpenRadios, onVilleChange,
 }: SurgaDesktopRightRailProps) {
   const moisActuelNom = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
   const moisCapitalise = moisActuelNom.charAt(0).toUpperCase() + moisActuelNom.slice(1)
@@ -210,7 +211,7 @@ export default function SurgaDesktopRightRail({
 
         {/* 3 et 4. Trafic et météo : données reçues du serveur, ou « indisponible » (SRG-A3-005, D53) */}
         {estActif('trafic') && <SurgaRailTrafic ville={ville} onOuvrir={onOpenTrafic} />}
-        {estActif('meteo') && <SurgaRailMeteo ville={ville} />}
+        {estActif('meteo') && <SurgaRailMeteo ville={ville} onVilleChange={onVilleChange} />}
 
         {/* 5. Mémo épinglé */}
         {estActif('notes') && (

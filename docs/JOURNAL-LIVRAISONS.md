@@ -1,5 +1,13 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Surga / Météo : Réactivité & Persistance du Changement de Localité (Session 2026-10-11, `feature/surga`, commit local, aucun push)** :
+  - *Correction du Blocage « Dakar Plateau »* : Résolution de l'anomalie où le widget météo du rail droit desktop restait figé sur « Dakar Plateau ». `SurgaRailContexte.tsx` (`SurgaRailMeteo`) lit désormais `localStorage.getItem('surga_meteo_ville')`, écoute réactivement les événements `surga-meteo-change`, `surga-data-change` et `storage`, et synchronise également `SurgaRailTrafic` sans circularité d'événement.
+  - *Chaîne de Propagation Complète* : Raccordement du callback `onVilleChange` à travers toute la hiérarchie (`SurgaMeteoFenetre.tsx` -> `SurgaDesktopRightRail.tsx` -> `SurgaLayoutShell.tsx` -> `page.tsx`).
+  - *Synchronisation Préférences & Briefing* : Dans `page.tsx`, `handleVilleChange` met à jour immédiatement les préférences utilisateur (`appliquerChangement({ quartiers: [nouvelleVille] })`), persiste la sélection dans `localStorage` et déclenche le rechargement du briefing (`chargerBriefing()`).
+  - *Accès Direct Réglages & Préférences* : Ajout dans `SurgaParametresTab.tsx` d'un bouton d'action contextuel `<MapPin size={11} /> Modifier` à côté du quartier de référence permettant d'ouvrir `SurgaMeteoLocaliteModal` pour changer de localité ou basculer en GPS.
+  - *Modularisation Senior (< 450 lignes)* : Extraction de la carte de compte dans `<SurgaCompteCarte />` (`SurgaCompteCarte.tsx`, 169 lignes), ramenant `SurgaParametresTab.tsx` de 474 à 339 lignes en strict respect de la règle d'or Nopalou.
+  - *Validation* : 0 erreur de typage TypeScript (`npx tsc --noEmit`), suite de tests unitaires passée à 100% (97/97 tests), `npm run lint:slop` 100% conforme.
+
 - **Surga / Identité : Harmonisation Universelle du Logo et Éradication de l'Icône Sparkles dans l'Admin (Session 2026-10-10, `feature/surga`, commit local, aucun push)** :
   - *Console Admin (`/admin/surga`)* : Éradication de l'icône générique `<Sparkles size={18} />` dans `AdminSurgaSidebar.tsx` et intégration de l'emblème officiel sanctuarisé `<SurgaBrandLogo taille={36} afficherTexte={false} />` avec le titre bicolore `SURGA Console Pro` (`#FFFFFF` et `#F59E0B`).
   - *Composants Frontend* : Remplacement des balises manuelles `<img>` par `<SurgaBrandLogo />` dans `SurgaHeader.tsx` (avec respect de la classe `hide-on-subview-mobile`) et dans `SurgaPwaInstallPrompt.tsx` (bannière 48px et modale 38px).

@@ -33,7 +33,44 @@ const COULEUR_NIVEAU: Record<string, string> = {
 const PASTILLE_NIVEAU: Record<string, string> = { bouche: 'red', dense: 'orange', fluide: 'green' }
 
 export function SurgaRailTrafic({ ville, onOuvrir }: RailProps) {
-  const couvreTrafic = estZoneCouverteParTrafic(ville)
+  const [villeActive, setVilleActive] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('surga_meteo_ville')
+        if (stored && stored.trim()) return stored.trim()
+      } catch {}
+    }
+    return ville
+  })
+
+  useEffect(() => {
+    const handleChangement = (e: any) => {
+      const nv = e?.detail?.ville
+      if (nv && typeof nv === 'string') {
+        setVilleActive(nv)
+      } else {
+        try {
+          const stored = localStorage.getItem('surga_meteo_ville')
+          if (stored) setVilleActive(stored)
+        } catch {}
+      }
+    }
+    window.addEventListener('surga-meteo-change', handleChangement)
+    window.addEventListener('surga-data-change', handleChangement)
+    window.addEventListener('storage', handleChangement)
+    return () => {
+      window.removeEventListener('surga-meteo-change', handleChangement)
+      window.removeEventListener('surga-data-change', handleChangement)
+      window.removeEventListener('storage', handleChangement)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (ville) setVilleActive(ville)
+  }, [ville])
+
+  const cible = villeActive || ville
+  const couvreTrafic = estZoneCouverteParTrafic(cible)
   const [chargement, setChargement] = useState(true)
   const [axes, setAxes] = useState<AxeTrafic[]>([])
 
@@ -66,7 +103,7 @@ export function SurgaRailTrafic({ ville, onOuvrir }: RailProps) {
       </div>
 
       {!couvreTrafic ? (
-        <div style={TEXTE_ETAT}>Trafic indisponible pour {ville}. Disponible pour Dakar.</div>
+        <div style={TEXTE_ETAT}>Trafic indisponible pour {cible}. Disponible pour Dakar.</div>
       ) : chargement ? (
         <div style={TEXTE_ETAT}>Chargement du trafic…</div>
       ) : visibles.length === 0 ? (
@@ -96,24 +133,95 @@ export function SurgaRailTrafic({ ville, onOuvrir }: RailProps) {
 
 // Le widget ouvre sa propre fenêtre : renvoyer vers l'écran Aujourd'hui ne montrait rien sur ordinateur (la carte
 // météo y est masquée, un seul exemplaire des blocs de contexte).
-export function SurgaRailMeteo({ ville }: { ville: string }) {
-  const estMaritime = estLocaliteMaritime(ville)
+export function SurgaRailMeteo({ ville, onVilleChange }: { ville: string; onVilleChange?: (nouvelleVille: string) => void }) {
+  const getVilleInitiale = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('surga_meteo_ville')
+        if (stored && stored.trim()) return stored.trim()
+      } catch {}
+    }
+    return ville
+  }
+
+  const [villeActive, setVilleActive] = useState<string>(getVilleInitiale)
+  const estMaritime = estLocaliteMaritime(villeActive || ville)
   const [chargement, setChargement] = useState(true)
   const [meteo, setMeteo] = useState<MeteoData | null>(null)
   const [fenetreOuverte, setFenetreOuverte] = useState(false)
   const onOuvrir = () => setFenetreOuverte(true)
 
+  // Synchronisation si la prop ville change et qu'aucun choix local n'est posé
+  useEffect(() => {
+    let stored = null
+    try {
+      stored = localStorage.getItem('surga_meteo_ville')
+    } catch {}
+    if (!stored && ville) {
+      setVilleActive(ville)
+    }
+  }, [ville])
+
   useEffect(() => {
     let actif = true
     setChargement(true)
-    setMeteo(null)
-    fetch(`/api/surga/meteo?ville=${encodeURIComponent(ville)}`)
+    const cible = villeActive || ville
+    let url = `/api/surga/meteo?ville=${encodeURIComponent(cible)}`
+    try {
+      const gpsStr = localStorage.getItem('surga_meteo_gps')
+      if (gpsStr) {
+        const coords = JSON.parse(gpsStr)
+        if (coords?.lat && coords?.lon) {
+          url = `/api/surga/meteo?lat=${coords.lat}&lon=${coords.lon}`
+        }
+      }
+    } catch {}
+
+    fetch(url)
       .then((r) => r.json())
-      .then((d) => { if (actif) setMeteo(d?.success && d.meteo ? d.meteo : null) })
+      .then((d) => {
+        if (actif) {
+          if (d?.success && d.meteo) {
+            setMeteo(d.meteo)
+            if (d.meteo.ville && d.meteo.ville !== cible) {
+              setVilleActive(d.meteo.ville)
+            }
+          } else {
+            setMeteo(null)
+          }
+        }
+      })
       .catch(() => { if (actif) setMeteo(null) })
       .finally(() => { if (actif) setChargement(false) })
     return () => { actif = false }
-  }, [ville])
+  }, [villeActive, ville])
+
+  // Écoute réactive des changements de météo / localité déclenchés ailleurs dans l'application
+  useEffect(() => {
+    const handleChangement = (e: any) => {
+      const nv = e?.detail?.ville
+      if (nv && typeof nv === 'string') {
+        setVilleActive(nv)
+      } else {
+        try {
+          const stored = localStorage.getItem('surga_meteo_ville')
+          if (stored) {
+            setVilleActive(stored)
+          }
+        } catch {}
+      }
+    }
+    window.addEventListener('surga-meteo-change', handleChangement)
+    window.addEventListener('surga-data-change', handleChangement)
+    window.addEventListener('storage', handleChangement)
+    return () => {
+      window.removeEventListener('surga-meteo-change', handleChangement)
+      window.removeEventListener('surga-data-change', handleChangement)
+      window.removeEventListener('storage', handleChangement)
+    }
+  }, [])
+
+  const villeTitre = meteo?.ville || villeActive || ville
 
   // La fenêtre est posée à côté du widget, pas dedans : un clic sur « Fermer » remonterait au widget (qui la rouvrirait).
   return (
@@ -127,7 +235,7 @@ export function SurgaRailMeteo({ ville }: { ville: string }) {
       title="Voir les détails météo"
     >
       <div className="surga-widget-header">
-        <span className="surga-widget-label">Météo · {meteo?.ville || ville}</span>
+        <span className="surga-widget-label">Météo · {villeTitre}</span>
         <Sun size={14} className="surga-widget-icon" />
       </div>
 
@@ -143,7 +251,17 @@ export function SurgaRailMeteo({ ville }: { ville: string }) {
         <div style={TEXTE_ETAT}>{chargement ? 'Chargement de la météo…' : 'Météo indisponible pour le moment.'}</div>
       )}
     </div>
-    {fenetreOuverte && <SurgaMeteoFenetre ville={ville} meteo={meteo} onClose={() => setFenetreOuverte(false)} />}
+    {fenetreOuverte && (
+      <SurgaMeteoFenetre
+        ville={villeTitre}
+        meteo={meteo}
+        onClose={() => setFenetreOuverte(false)}
+        onVilleChange={(nv) => {
+          setVilleActive(nv)
+          onVilleChange?.(nv)
+        }}
+      />
+    )}
     </>
   )
 }

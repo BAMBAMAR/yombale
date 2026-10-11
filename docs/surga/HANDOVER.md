@@ -1,6 +1,14 @@
 # 🤝 DOCUMENT DE HANDOVER & REPRISE DE SESSION — MODULE SURGA
 
-> **Dernière mise à jour** : 10 Octobre 2026 (Harmonisation universelle du logo officiel Surga, éradication de l'icône Sparkles dans l'admin, généralisation de <SurgaBrandLogo /> dans les composants React ; 97/97 tests unitaires PASS, 3/3 tests d'icônes PASS)
+> **Dernière mise à jour** : 11 Octobre 2026 (Réactivité & Persistance du Changement de Localité Météo/Trafic, éradication du blocage « Dakar Plateau », synchronisation réactive instantanée des préférences et briefing, modale de sélection de localité dans les réglages, modularisation senior < 450 l. avec SurgaCompteCarte ; 97/97 tests unitaires PASS, 0 erreur TypeScript)
+
+> **Réactivité & Persistance du Changement de Localité Météo / Trafic, 11 Octobre 2026 (commit local, aucun push)** :
+> - **Cause Racine Identifiée & Éradiquée** : Blocage du widget météo desktop sur « Dakar Plateau » dû à une prop statique dans `SurgaRailContexte.tsx`, l'absence d'écouteurs réactifs et une fonction `onVilleChange` vide dans `page.tsx`.
+> - **Synchronisation Omnicanale** : `SurgaRailMeteo` et `SurgaRailTrafic` synchronisés avec `localStorage.getItem('surga_meteo_ville')` et réactifs aux événements `surga-meteo-change`, `surga-data-change` et `storage` sans boucle de rétroaction.
+> - **Persistance Profil & Briefing** : `handleVilleChange` dans `page.tsx` applique la nouvelle sélection aux préférences (`preferences.quartiers`), au cache local, et déclenche le rechargement immédiat du briefing (`chargerBriefing()`).
+> - **Accès Réglages** : Bouton contextuel `<MapPin size={11} /> Modifier` ajouté dans l'en-tête de `SurgaParametresTab.tsx` pour changer de localité ou basculer en GPS à tout moment.
+> - **Modularisation Senior (< 450 lignes)** : Extraction de `<SurgaCompteCarte />` (`SurgaCompteCarte.tsx`, 169 lignes) ramenant `SurgaParametresTab.tsx` à 339 lignes (strict respect de la règle d'or Nopalou < 450 l.).
+> - **Validation & Tests** : `npx tsc --noEmit` 0 erreur, `npm test` 97/97 passés (100%), `npm run lint:slop` 100% conforme.
 
 > **Harmonisation Universelle du Logo Surga, 10 Octobre 2026 (commit local, aucun push)** :
 > - **Console Admin (`/admin/surga`)** : Éradication du placeholder arbitraire `<Sparkles size={18} />` dans `AdminSurgaSidebar.tsx` et intégration de l'emblème officiel `<SurgaBrandLogo taille={36} afficherTexte={false} />` avec le titre bicolore `SURGA Console Pro` (`#FFFFFF` et `#F59E0B`).

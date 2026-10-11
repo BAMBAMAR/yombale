@@ -14,9 +14,10 @@ interface Props {
   ville: string
   meteo?: MeteoData | null
   onClose: () => void
+  onVilleChange?: (nouvelleVille: string) => void
 }
 
-export default function SurgaMeteoFenetre({ ville, meteo, onClose }: Props) {
+export default function SurgaMeteoFenetre({ ville, meteo, onClose, onVilleChange }: Props) {
   return (
     <div
       data-surga-fenetre="Météo"
@@ -67,7 +68,7 @@ export default function SurgaMeteoFenetre({ ville, meteo, onClose }: Props) {
             <X size={18} />
           </button>
         </div>
-        <SurgaMeteoCard initialMeteo={meteo} ville={ville} />
+        <SurgaMeteoCard initialMeteo={meteo} ville={ville} onVilleChange={onVilleChange} />
       </div>
     </div>
   )
