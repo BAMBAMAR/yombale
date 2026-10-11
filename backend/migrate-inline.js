@@ -3066,6 +3066,9 @@ module.exports = async function migrateInline(customConnStr = null) {
     `ALTER TABLE historique_prix ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
     `CREATE INDEX IF NOT EXISTS idx_historique_prix_created_at ON historique_prix(created_at DESC)`,
     `ALTER TABLE scraping_runs ADD COLUMN IF NOT EXISTS items_valides INTEGER`,
+    `ALTER TABLE scraping_runs ADD COLUMN IF NOT EXISTS http_codes JSONB DEFAULT '{}'::jsonb`,
+    `ALTER TABLE scraping_runs ADD COLUMN IF NOT EXISTS items_rejetes JSONB DEFAULT '{}'::jsonb`,
+    `ALTER TABLE scraping_runs ADD COLUMN IF NOT EXISTS couverture NUMERIC(5,2)`,
     // AUD-187 : prix tel que publié par la source (provenance), à côté du prix normalisé
     `ALTER TABLE offres ADD COLUMN IF NOT EXISTS prix_brut TEXT`,
     // AUD-181 : nom normalisé (même normalisation que matching.js), indexé ; alias des fiches fusionnées (retour arrière possible)

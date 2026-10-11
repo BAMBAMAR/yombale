@@ -279,4 +279,179 @@ router.post('/lancer-immo', ...adminAccess('settings'), async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ── GET /api/scraper/runs ─────────────────────────────────────
+// Historique, métriques et diagnostic des passages de collecte
+router.get('/runs', ...adminAccess('settings'), async (req, res) => {
+  try {
+    const { source, statut, systeme, limite = 50, page = 1 } = req.query;
+    const limitNum = Math.min(parseInt(limite, 10) || 50, 200);
+    const offsetNum = (Math.max(parseInt(page, 10) || 1, 1) - 1) * limitNum;
+
+    const whereClauses = [];
+    const values = [];
+    let idx = 1;
+
+    if (source) {
+      whereClauses.push(`(source ILIKE $${idx} OR source ILIKE $${idx + 1})`);
+      values.push(`%${source}%`, `${source}`);
+      idx += 2;
+    }
+    if (statut && statut !== 'all') {
+      whereClauses.push(`statut = $${idx}`);
+      values.push(statut);
+      idx++;
+    }
+    if (systeme && systeme !== 'all') {
+      whereClauses.push(`systeme = $${idx}`);
+      values.push(systeme);
+      idx++;
+    }
+
+    const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const [runsRes, totalRes, kpisRes, sourcesRes] = await Promise.all([
+      pool.query(`
+        SELECT id, source, systeme, started_at, ended_at, statut,
+               pages_cibles, pages_ok, pages_erreur, http_codes,
+               items_extraits, items_inseres, items_maj, items_filtres,
+               items_doublons, items_rejetes, couverture, duree_ms, erreur_msg
+        FROM scraping_runs
+        ${whereSql}
+        ORDER BY started_at DESC
+        LIMIT $${idx} OFFSET $${idx + 1}
+      `, [...values, limitNum, offsetNum]),
+      pool.query(`SELECT COUNT(*) FROM scraping_runs ${whereSql}`, values),
+      pool.query(`
+        SELECT 
+          COUNT(*) as total_runs,
+          COUNT(*) FILTER (WHERE statut = 'ok') as runs_ok,
+          COUNT(*) FILTER (WHERE statut = 'degrade') as runs_degrade,
+          COUNT(*) FILTER (WHERE statut = 'echec') as runs_echec,
+          COALESCE(SUM(items_extraits), 0) as total_extraits,
+          COALESCE(SUM(items_inseres), 0) as total_inseres,
+          COALESCE(SUM(items_maj), 0) as total_maj,
+          COALESCE(AVG(duree_ms), 0) as duree_moyenne_ms
+        FROM scraping_runs
+        WHERE started_at >= NOW() - INTERVAL '30 days'
+      `),
+      pool.query(`
+        SELECT 
+          source,
+          systeme,
+          COUNT(*) as nb_runs,
+          MAX(started_at) as dernier_run_at,
+          (ARRAY_AGG(statut ORDER BY started_at DESC))[1] as dernier_statut,
+          (ARRAY_AGG(items_extraits ORDER BY started_at DESC))[1] as derniers_extraits,
+          (ARRAY_AGG(erreur_msg ORDER BY started_at DESC))[1] as derniere_erreur,
+          COUNT(*) FILTER (WHERE statut = 'echec') as total_echecs
+        FROM scraping_runs
+        GROUP BY source, systeme
+        ORDER BY dernier_run_at DESC NULLS LAST
+      `),
+    ]);
+
+    res.json({
+      success: true,
+      total: parseInt(totalRes.rows[0].count, 10),
+      page: parseInt(page, 10) || 1,
+      limite: limitNum,
+      runs: runsRes.rows,
+      kpis: kpisRes.rows[0] || {},
+      sources_synthese: sourcesRes.rows,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/scraper/v2/sources ──────────────────────────────
+// Registre unifié des sources V2 et état de synchronisation
+router.get('/v2/sources', ...adminAccess('settings'), async (req, res) => {
+  try {
+    const { REGISTRE_SOURCES } = require('../services/collecte/SourcesRegistry');
+    const { rows: marchands } = await pool.query(`
+      SELECT m.id, m.nom, m.actif, m.derniere_sync,
+             COUNT(o.id) as nb_offres,
+             COUNT(o.id) FILTER (WHERE o.stock = true) as nb_stock
+      FROM marchands m
+      LEFT JOIN offres o ON o.marchand_id = m.id
+      GROUP BY m.id, m.nom, m.actif, m.derniere_sync
+    `);
+
+    const marchandsMap = new Map();
+    for (const m of marchands) {
+      marchandsMap.set(m.nom.toLowerCase(), m);
+    }
+
+    const { rows: lastRuns } = await pool.query(`
+      SELECT DISTINCT ON (source) source, statut, started_at, items_extraits, items_inseres, erreur_msg
+      FROM scraping_runs
+      ORDER BY source, started_at DESC
+    `);
+    const lastRunsMap = new Map();
+    for (const r of lastRuns) {
+      lastRunsMap.set(r.source.toLowerCase(), r);
+    }
+
+    const sources = REGISTRE_SOURCES.map(s => {
+      const dbMarchand = marchandsMap.get(s.nom.toLowerCase()) || {};
+      const dbLastRun = lastRunsMap.get(s.nom.toLowerCase()) || lastRunsMap.get(s.id.toLowerCase()) || null;
+      return {
+        id: s.id,
+        nom: s.nom,
+        domaine: s.domaine,
+        baseUrl: s.baseUrl,
+        systeme: s.systeme,
+        type_methode: s.type_methode,
+        categories: s.categories,
+        cadence: s.cadence,
+        actif: s.actif,
+        marchand_id: dbMarchand.id || null,
+        nb_offres: parseInt(dbMarchand.nb_offres || 0, 10),
+        nb_stock: parseInt(dbMarchand.nb_stock || 0, 10),
+        derniere_sync: dbMarchand.derniere_sync || null,
+        dernier_run: dbLastRun ? {
+          statut: dbLastRun.statut,
+          started_at: dbLastRun.started_at,
+          items_extraits: dbLastRun.items_extraits,
+          items_inseres: dbLastRun.items_inseres,
+          erreur: dbLastRun.erreur_msg,
+        } : null,
+      };
+    });
+
+    res.json({ success: true, total: sources.length, sources });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/scraper/v2/run/:sourceId ───────────────────────
+// Déclenche une collecte contrôlée V2 avec traçabilité dans scraping_runs
+router.post('/v2/run/:sourceId', ...adminAccess('settings'), async (req, res) => {
+  try {
+    const { sourceId } = req.params;
+    const { obtenirSource } = require('../services/collecte/SourcesRegistry');
+    const sourceConfig = obtenirSource(sourceId);
+
+    if (!sourceConfig) {
+      return res.status(404).json({ error: `Source inconnue : ${sourceId}` });
+    }
+
+    const collector = sourceConfig.creerCollecteur();
+    res.json({
+      success: true,
+      message: `Collecte V2 lancée en arrière-plan pour ${sourceConfig.nom} (${sourceConfig.type_methode})`,
+      source: sourceConfig.id,
+    });
+
+    // Exécution asynchrone sécurisée
+    collector.executer({ categoriesCibles: sourceConfig.categories?.length || 1 })
+      .then(resRun => console.log(`[SCRAPER V2] Fin de collecte ${sourceConfig.nom}:`, resRun.statut))
+      .catch(errRun => console.error(`[SCRAPER V2 ERR] ${sourceConfig.nom}:`, errRun.message));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

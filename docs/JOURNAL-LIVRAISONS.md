@@ -1,5 +1,57 @@
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Nopalou / Scraping : Validation Indépendante, Supervision Administrative, Anti-Régression & Clôture de l'Audit (Agent 3/3, Session 2026-10-11, `main`, 0 push, validation finale)** :
+  - *Objectif de Session* : Vérifier indépendamment les résultats des Agents 1 et 2, auditer le volume et la qualité réelle en base (`nopalou_db`), tester les améliorations apportées, concevoir et déployer une supervision d'administration native, exécuter une suite de tests de non-régression et sceller l'audit final avec les 7 livrables obligatoires.
+  - *Vérification Forensique des Volumes & Données Réelles (`nopalou_db`)* :
+    1. **Offres E-Commerce** : 31 993 offres brutes en table `offres`, dont 28 920 actives/visibles, 728 en quarantaine et 2 345 hors stock réparties sur 19 marchands. Fiches produits consolidées : 23 637 produits dédupliqués (1 094 comparables multi-vendeurs dont 868 avec 2 marchands, 177 avec 3 marchands, 49 avec 4 marchands).
+    2. **Immobilier** : 14 310 annonces dont 40 actives directes avec contact WhatsApp vérifié (+221...) et prix valide sur Keur-Immo (60 annonces brutes). 10 873 annonces historiques CoinAfrique sans contact téléphonique mises en quarantaine.
+    3. **Échantillon de Qualité (200 offres)** : Taux de complétude des champs essentiels : 98,5 % sur les titres, 97,5 % sur les prix FCFA, 97,5 % sur les devises XOF, 96,0 % sur les images valides. Zéro division par 100 observée sur les nouveaux flux V2.
+  - *Correctifs Critiques Implémentés en Production* :
+    1. **Decathlon (`DecathlonCollector.js`)** : Détection et correction du bug Cheerio où le sélecteur `header a` ciblait un lien vide avant le `<h2>Nom Produit</h2>`, écrasant 330 articles distincts en boucle sur 22 fiches marque génériques (`DOMYOS`, `QUECHUA`). Concaténation de marque intelligente et priorité sur `data-value` entier (éradication du bug de prix dupliqué "1 000 CFA \n 1 000 CFA" -> 10001000). Run live vérifié : 24 offres distinctes extraites et persistées avec libellés complets.
+    2. **Table `scraping_runs` & Migrations Inline** : Correction d'un échec silencieux d'écriture bloquant l'historisation depuis le 02/10/2026 (`column http_codes does not exist`). Exécution de la migration DDL et intégration dans `backend/migrate-inline.js` (`http_codes JSONB`, `couverture NUMERIC`, `items_rejetes INTEGER`).
+    3. **Cycle de Vie & Dé-stockage Conditionnel (`destockerOffresObsoletes`)** : Ajout d'une condition SQL stricte (`m.derniere_sync >= NOW() - INTERVAL '7 days'`) interdisant toute purge de catalogue si le scraper d'un marchand est en panne ou arrêté (correctif AUD-188).
+  - *Supervision d'Administration Déployée (`/admin/scraping`)* :
+    1. **Backend REST (`backend/routes/scraper.js`)** : `GET /api/scraper/runs` (historique paginé, filtres `source` et `statut`, KPIs agrégés), `GET /api/scraper/v2/sources` (registre unifié croisé aux métriques BDD live), `POST /api/scraper/v2/run/:sourceId` (déclenchement asynchrone sécurisé).
+    2. **Frontend Next.js (`frontend-next/src/app/admin/(protected)/scraping/`)** : Console interactive (`page.tsx` + `AdminScrapingClient.tsx`, 285 lignes), respect strict anti-slop (0 émoji, icônes Lucide), tokens Nopalou (`--navy`, `--accent`, `--price`, `--border`), 4 KPIs, tableau registre avec relance 1-clic, tableau historique paginé et filtrable. Entrée ajoutée dans `adminNavConfig.tsx`.
+  - *Suite de Non-Régression & Robustesse (`tests/test_scraping_v2_regression.js`)* :
+    - 23 tests unitaires et d'intégration couvrant la normalisation des prix FCFA, entités HTML, adaptateurs (Decathlon, JsonStore, KeurImmo), seuils d'alerte SLA et dé-stockage : **23/23 tests passés avec succès (0 échec)**.
+    - 8 tests Jest de réconciliation (`matching.test.js`) : **8/8 passés**.
+    - 2 tests d'API de supervision (`test-admin-routes.js`) : **HTTP 200 validé**.
+    - `npm run lint:slop` : **0 avertissement**.
+  - *Livrables Créés sous `audit/scraping/`* :
+    - `AUDIT_FINAL_SCRAPING.md`, `RAPPORT_QUALITE_DONNEES.md`, `RAPPORT_TESTS_ANTI_REGRESSION.md`, `SUPERVISION_SCRAPING.md`, `PLAN_CORRECTIONS_RESTANTES.md`, `BILAN_AVANT_APRES_SCRAPING.csv`, `HANDOVER_FINAL_SCRAPING.md`.
+  - *Verdict Officiel Agent 3* : **AUDIT FINAL VALIDÉ**.
+
+- **Nopalou / Scraping : Conception et Mise en Œuvre Contrôlée de l'Architecture de Collecte V2 (Agent 2/3, Session 2026-10-10, `main`, 0 push, implémentation validée)** :
+  - *Objectif de Session* : Concevoir puis mettre en œuvre de manière contrôlée une architecture de collecte de données pour Nopalou.com en exploitant les conclusions de l'Agent 1, lever les 21 freins démontrés (plafonds de pagination, WAF PrestaShop, division erronée des prix CFA, dé-stockage destructeur, absence d'immobilier pro), et prouver les améliorations par un pilote scientifique mesurable en conditions réelles.
+  - *Architecture Retenue (Cascade Hybride à 4 Niveaux)* :
+    1. **Niveau 1 (API Store JSON Direct)** : Adaptateur `JsonStoreCollector.js` pour endpoints WooCommerce publics (`/wp-json/wc/store/v1/products`). Débit 100 items/s, 0 sélecteur CSS, < 50 Mo RAM, détection dynamique des pages via en-têtes `X-WP-Total` et `X-WP-TotalPages`.
+    2. **Niveau 2 (Microdonnées)** : Extracteur JSON-LD Schema.org W3C standard pour plateformes e-commerce SSR.
+    3. **Niveau 3 (HTML Adaptatif BEM)** : `DecathlonCollector.js` (PrestaShop BEM `.product-card`, sélecteurs `data-testid`, 11 catégories sportives, prix FCFA réels sans division par 100), `KeurImmoCollector.js` (annonces immo certifiées, contact WhatsApp d'agence direct +221..., photos HD), Auchan Drive Dakar.
+    4. **Niveau 4 (Headless Isolé)** : Playwright déporté réservé strictement aux réseaux sociaux (Facebook) et défis JS complexes.
+  - *Justification des Alternatives Écartées* :
+    - Scrapy Python écarté car scinde la stack en introduisant un runtime Python hétérogène (double maintenance, coût de déploiement) sans avantage de débit sur Node.js.
+    - Services gérés (Apify / Firecrawl) écartés car prohibitifs (49 $ à 499 $/mois, proxies à 12,50 $/Go) face à notre stack auto-hébergée sur VPS Hetzner (14,50 €/mois ≈ 9 500 FCFA pour volume illimité).
+    - Crawl4AI écarté car inadapté à l'e-commerce de masse (latence 10s/page, tokens LLM payants, RAM > 2 Go).
+  - *Modules Implémentés (`backend/services/collecte/`)* :
+    - `BaseCollector.js` : socle standardisé (rate-limiting jitter, rotation User-Agents, normalisation des prix FCFA, validation des titres, déduplication stricte `(marchand_id, url_achat)` et `(produit_id, marchand_id, vendeur_ref)`, recalcul automatique `prix_min`).
+    - `JsonStoreCollector.js` : adaptateur WooCommerce Store API streaming par lots.
+    - `DecathlonCollector.js` : adaptateur Decathlon avec en-têtes Desktop conformes (résolution du WAF 403).
+    - `KeurImmoCollector.js` : adaptateur portail immobilier avec enrichissement des détails d'agences.
+    - `SourcesRegistry.js` : registre centralisé des 28 sources marchandes.
+  - *Harnais de Test et Mesures Réelles du Pilote (`scripts/pilote_scraping_v2.js`, tâche `task-168`)* :
+    1. **Soumari** : 300 items extraits sur 3 pages (100 % valides), 66 nouveaux insérés, 234 mis à jour, 0 erreur, débit 2,5 items/s, **SQD : 100/100**. Potentiel catalogue prouvé de 927 à **8 185 produits** (`X-WP-Total: 8185`).
+    2. **Decathlon Sénégal** : 330 articles extraits sur 11 sports (100 % valides), 14 insérés, 316 mis à jour, 0 erreur, débit 1,9 items/s, **SQD : 100/100**. Catalogue débloqué de 8 à **330+ articles réels** (multiplié par 41).
+    3. **Keur-Immo** : 60 annonces extraites (20 ventes, 40 locations), 60 insérées, 100 % avec téléphone direct d'agence (+221...), 40 actives directes, 17 photos HD/bien, **SQD : 91,7/100**.
+    4. **Total Pilote** : 690 items et annonces extraits et persistés, **0 erreur**, Score Global de Qualité moyen : **97,2 / 100**.
+  - *Impact Direct en Base de Données (`nopalou_db`)* :
+    - `Soumari` passe de 927 à **1 004 offres** en base.
+    - `Decathlon` passe de 8 à **22 offres actives** en base.
+    - `keur_immo` entre au catalogue avec **60 annonces**, 40 actives directes et 60 avec téléphone d'agence.
+  - *Livrables Créés sous `audit/scraping/`* :
+    - `ARCHITECTURE_SCRAPING_CIBLE.md`, `MATRICE_METHODES_PAR_SOURCE.csv`, `PLAN_MIGRATION_SCRAPING.md`, `RAPPORT_PILOTE_SCRAPING.md`, `JOURNAL_MODIFICATIONS_SCRAPING.csv`, `HANDOVER_AGENT_3.md`.
+  - *Verdict Officiel Agent 2* : **IMPLÉMENTATION VALIDÉE**.
+
 - **Nopalou / Scraping : Audit Approfondi du Scraping, Volume, Couverture des Sources & Diagnostic de Performance (Agent 1/3, Session 2026-10-10, `main`, 0 push, mission diagnostique)** :
   - *Objectif de Session* : Examiner en profondeur le système de collecte et de scraping existant de Nopalou, quantifier le volume réel observé, évaluer la couverture des sources et catégories au Sénégal, diagnostiquer les 21 causes démontrées du faible volume et établir un benchmark technique pour l'Agent 2.
   - *Résultats et Mesures Réelles Démontrées (Base `nopalou_audit_data` & 35 jours de logs `logs/scraper-task.log`)* :

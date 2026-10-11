@@ -61,6 +61,7 @@ export const DOMAINS: DomainSection[] = [
     items: [
       { href: '/admin', label: 'Dashboard Métier', icon: <LayoutDashboard size={15} /> },
       { href: '/admin/system', label: 'Santé Système & Exports', icon: <Server size={15} /> },
+      { href: '/admin/scraping', label: 'Supervision Scraping & Flux', icon: <Activity size={15} />, highlight: '#0284c7' },
       { href: '/admin/surga', label: 'Surga Control Center', icon: <Sparkles size={15} />, highlight: '#C75B00', badge: 'IA' },
     ],
   },

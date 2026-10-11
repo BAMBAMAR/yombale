@@ -1413,13 +1413,18 @@ async function nettoyerOffresExpirees(limite = parseInt(process.env.VERIF_OFFRES
 }
 
 async function destockerOffresObsoletes(jours = 45) {
+  // AUD-188 : Dé-stockage conditionnel — ne dé-stocke que si le marchand a été synchronisé
+  // avec succès dans les 7 derniers jours (évite de vider le catalogue en cas de panne de collecteur).
   const { rows: updated } = await pool.query(`
-    UPDATE offres
+    UPDATE offres o
     SET stock = false
-    WHERE stock = true
-      AND scraped_at < NOW() - INTERVAL '1 day' * $1
-      AND quarantinee = false
-    RETURNING id, produit_id
+    FROM marchands m
+    WHERE o.marchand_id = m.id
+      AND o.stock = true
+      AND o.quarantinee = false
+      AND o.scraped_at < NOW() - INTERVAL '1 day' * $1
+      AND m.derniere_sync >= NOW() - INTERVAL '7 days'
+    RETURNING o.id, o.produit_id
   `, [jours]);
 
   if (updated.length > 0) {
@@ -1444,7 +1449,7 @@ async function destockerOffresObsoletes(jours = 45) {
       `, [batch]);
     }
   }
-  console.log(`[DESTOCKAGE] ${updated.length} offres obsolètes (> ${jours} jours) passées à stock = false.`);
+  console.log(`[DESTOCKAGE] ${updated.length} offres obsolètes (> ${jours} jours sur marchands actifs) passées à stock = false.`);
   return { destockees: updated.length };
 }
 
@@ -1472,7 +1477,7 @@ async function nettoyerAnnoncesImmoExpirees(limite = 200) {
 }
 
 async function lancerScrapingImmo() {
-  const stats = { expat: null, coinafrique: null };
+  const stats = { expat: null, coinafrique: null, keur_immo: null };
   try {
     const expat = require('./scraper-immo-expat');
     if (expat && typeof expat.scraperImmo === 'function') {
@@ -1488,6 +1493,13 @@ async function lancerScrapingImmo() {
     }
   } catch (e) {
     console.error('[SCRAPER IMMO COINAFRIQUE ERR]', e.message);
+  }
+  try {
+    const KeurImmoCollector = require('./collecte/KeurImmoCollector');
+    const collector = new KeurImmoCollector({ delaiMs: 1500, maxPagesParSection: 4 });
+    stats.keur_immo = await collector.executer({ categoriesCibles: 2 });
+  } catch (e) {
+    console.error('[SCRAPER IMMO KEUR-IMMO ERR]', e.message);
   }
   return stats;
 }
@@ -1550,8 +1562,37 @@ async function verifierAlertsPrix() {
   }
 }
 
+async function lancerCollecteV2(sourceIds = null) {
+  const { REGISTRE_SOURCES, obtenirSource } = require('./collecte/SourcesRegistry');
+  const sources = sourceIds 
+    ? sourceIds.map(id => obtenirSource(id)).filter(Boolean)
+    : REGISTRE_SOURCES.filter(s => s.actif);
+
+  console.log(`\n[SCRAPER V2] ══════ DÉBUT COLLECTE V2 (${sources.length} sources) ══════`);
+  const rapport = { debut: new Date(), sources: {} };
+
+  for (const src of sources) {
+    try {
+      console.log(`[SCRAPER V2] Démarrage ${src.nom} (${src.type_methode})...`);
+      const collector = src.creerCollecteur();
+      const res = await collector.executer({ categoriesCibles: src.categories?.length || 1 });
+      rapport.sources[src.id] = res;
+      console.log(`[SCRAPER V2] ${src.nom} terminé : ${res.statut} (${res.extraits} extraits)`);
+    } catch (err) {
+      console.error(`[SCRAPER V2 ERR] ${src.nom}:`, err.message);
+      rapport.sources[src.id] = { statut: 'echec', erreur: err.message };
+    }
+  }
+
+  rapport.fin = new Date();
+  rapport.duree_s = Math.round((rapport.fin - rapport.debut) / 1000);
+  console.log(`[SCRAPER V2] ══════ FIN COLLECTE V2 (${rapport.duree_s}s) ══════\n`);
+  return rapport;
+}
+
 function demarrerScraping() {
   cron.schedule('0 */12 * * *', () => lancerScraping(['expat', 'jumia', 'coinafrique', 'auchan', 'kaynoo', 'decathlon', 'jiji']).catch(console.error));
+  cron.schedule('0 5,17 * * *', () => lancerCollecteV2(['soumari', 'promosn', 'universcosmetix', 'masterofficedeco', 'electroniccorp', 'electroluxdakar', 'dakarmondialtelephone', 'decathlon']).catch(console.error));
   cron.schedule('0 6,18 * * *', () => lancerScrapingNouveauxSites().catch(console.error));
   cron.schedule('0 * * * *', () => publierPostsApprouves().catch(console.error));
   cron.schedule('0 3 * * *', () => {
@@ -1565,13 +1606,14 @@ function demarrerScraping() {
     nettoyerAnnoncesImmoExpirees().catch(err => console.error('[NETTOYAGE IMMO]', err.message));
     destockerOffresObsoletes(45).catch(err => console.error('[DESTOCKAGE CRON]', err.message));
   });
-  // Scraping immobilier régulier (tous les 2 jours à 02h00)
+  // Scraping immobilier régulier (tous les 2 jours à 02h00 : Expat, CoinAfrique et Keur-Immo)
   cron.schedule('0 2 */2 * *', () => {
     lancerScrapingImmo().catch(err => console.error('[SCRAPING IMMO]', err.message));
   });
 
   setTimeout(() => lancerScraping(['coinafrique']).catch(console.error), 10 * 60 * 1000);
   setTimeout(() => lancerScrapingNouveauxSites().catch(console.error), 15 * 60 * 1000);
+  setTimeout(() => lancerCollecteV2(['soumari', 'decathlon']).catch(console.error), 20 * 60 * 1000);
 }
 
 function demarrerCronsMetier() {
@@ -1630,6 +1672,7 @@ module.exports = {
   scraperJiji,
   sauvegarderProduits, 
   lancerScraping, 
+  lancerCollecteV2,
   lancerScrapingNouveauxSites, 
   lancerScrapingImmo,
   demarrerScraping, 
